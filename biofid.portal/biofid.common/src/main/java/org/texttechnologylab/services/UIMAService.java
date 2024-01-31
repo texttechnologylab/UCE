@@ -82,6 +82,7 @@ public class UIMAService {
             JCasUtil.select(jCas, NamedEntity.class).forEach(ne -> {
                 // We don't want all NE types
                 if (ne == null || ne.getValue() == null || !WANTED_NE_TYPES.contains(ne.getValue())) return;
+
                 var namedEntity = new org.texttechnologylab.models.corpus.NamedEntity(ne.getBegin(), ne.getEnd());
                 namedEntity.setType(ne.getValue());
                 namedEntity.setLemmaValue(String.join(" ", JCasUtil.selectCovered(Lemma.class, ne)
