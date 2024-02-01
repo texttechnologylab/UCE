@@ -2,6 +2,7 @@ package org.texttechnologylab.services;
 
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
+import org.apache.uima.UIMAException;
 import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
@@ -14,7 +15,11 @@ import org.texttechnologylab.annotation.ocr.OCRPage;
 import org.texttechnologylab.annotation.ocr.OCRParagraph;
 import org.texttechnologylab.models.corpus.*;
 
+import java.io.File;
+
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.IOException;
 import java.util.*;
 
 @Service
@@ -32,6 +37,22 @@ public class UIMAService {
     }
 
     /**
+     * Imports all UIMA xmi files in a folder
+     *
+     * @param foldername
+     * @return
+     */
+    public List<Document> XMIFolderToDocuments(String foldername) {
+        var docs = new ArrayList<Document>();
+        for (var file : Objects.requireNonNull(new File(foldername).listFiles())) {
+            var doc = XMIToDocument(file.getPath());
+            if (doc != null)
+                docs.add(doc);
+        }
+        return docs;
+    }
+
+    /**
      * Converts an XMI to an OCRDocument by path
      *
      * @param filename
@@ -45,7 +66,8 @@ public class UIMAService {
             CasIOUtils.load(file, jCas.getCas());
 
             return XMIToDocument(jCas);
-        } catch (Exception ex) {
+        } catch (IOException | UIMAException ex) {
+            // TODO: Log!
             return null;
         }
     }

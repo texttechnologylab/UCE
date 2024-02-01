@@ -1,0 +1,104 @@
+:root {
+    --prime: #5c7a17;
+}
+
+.site-container {
+    min-height: 100vh !important;
+    background-color: ghostwhite;
+}
+
+footer {
+    min-height: 150px;
+    background-color: var(--prime);
+    width: 100%;
+}
+
+* {
+}
+
+nav {
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    border-bottom: var(--prime) 2px solid;
+}
+
+nav .logo {
+    height: 60px;
+}
+
+nav .nav-buttons a {
+    margin: 6px;
+    border-radius: 0;
+    cursor: pointer;
+}
+
+nav .nav-buttons a:hover{
+    color:black !important;
+    background-color: ghostwhite;
+    border-bottom: 2px solid var(--prime);
+}
+
+nav .selected-nav-btn {
+    position: relative;
+    border-bottom: var(--prime) 2px solid;
+    color:black !important;
+    transition: 0.25s;
+}
+
+nav .selected-nav-btn::before{
+    position: absolute;
+    bottom: -30px;
+    width:2px;
+    left:calc(50% - 1px);
+    background-color: var(--prime);
+    height:30px;
+    content: '';
+}
+
+.text {
+    color: rgba(0, 0, 0, 0.5) !important;
+}
+
+.large-font {
+    font-size: large;
+}
+
+.color-prime {
+    color: var(--prime);
+}
+
+.btn-primary {
+    background-color: var(--prime);
+    border: 1px solid var(--prime);
+}
+
+.btn-primary:hover {
+    background-color: white;
+    border-color: var(--prime);
+    color: black;
+}
+
+
+.bg-prime {
+    background-color: var(--prime);
+}
+
+.flexed {
+    display: flex;
+}
+
+.display-none{
+    display: none;
+}
+
+.main-content-container{
+
+}
+
+.view{
+    height:100%;
+    width: 100%;
+}
+
+.view div:first-child{
+    width: 100%;
+}
