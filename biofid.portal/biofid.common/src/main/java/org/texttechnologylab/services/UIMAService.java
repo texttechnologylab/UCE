@@ -1,13 +1,11 @@
 package org.texttechnologylab.services;
 
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
-import de.tudarmstadt.ukp.dkpro.core.api.ner.type.Location;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
-import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma;
-import de.unihd.dbs.uima.types.heideltime.Sentence_Type;
 import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.jcas.tcas.Annotation;
 import org.apache.uima.util.CasIOUtils;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotation.ocr.OCRBlock;
@@ -16,7 +14,6 @@ import org.texttechnologylab.annotation.ocr.OCRPage;
 import org.texttechnologylab.annotation.ocr.OCRParagraph;
 import org.texttechnologylab.models.corpus.*;
 
-import java.io.File;
 import java.io.FileInputStream;
 import java.util.*;
 
@@ -44,7 +41,7 @@ public class UIMAService {
         try {
             var jCas = JCasFactory.createJCas();
             // Read in the contents of a single xmi cas
-            var file = new FileInputStream(new File(filename));
+            var file = new FileInputStream(filename);
             CasIOUtils.load(file, jCas.getCas());
 
             return XMIToDocument(jCas);
@@ -60,6 +57,14 @@ public class UIMAService {
      * @return
      */
     public Document XMIToDocument(JCas jCas) {
+
+        // Read in the contents of a single xmi cas
+        var unique = new HashSet<String>();
+        JCasUtil.select(jCas, Annotation.class).stream().forEach(a -> {
+            unique.add(a.getType().getName());
+        });
+        unique.forEach(a -> System.out.println(a));
+
         try {
             // First, metadata
             var metadata = JCasUtil.selectSingle(jCas, DocumentMetaData.class);
@@ -71,6 +76,7 @@ public class UIMAService {
 
             // Set the full text
             document.setFullText(jCas.getDocumentText());
+
             // Set the sentences
             document.setSentences(JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence.class)
                     .stream()
@@ -85,13 +91,46 @@ public class UIMAService {
 
                 var namedEntity = new org.texttechnologylab.models.corpus.NamedEntity(ne.getBegin(), ne.getEnd());
                 namedEntity.setType(ne.getValue());
-                namedEntity.setLemmaValue(String.join(" ", JCasUtil.selectCovered(Lemma.class, ne)
-                        .stream()
-                        .map(Lemma::getValue)
-                        .toArray(String[]::new)));
+                namedEntity.setCoveredText(ne.getCoveredText());
                 nes.add(namedEntity);
             });
             document.setNamedEntities(nes);
+
+            // Set the times
+            var times = new ArrayList<Time>();
+            JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Time.class).forEach(t -> {
+                var time = new Time(t.getBegin(), t.getEnd());
+                time.setValue(t.getValue());
+                time.setCoveredText(t.getCoveredText());
+                times.add(time);
+            });
+            document.setTimes(times);
+
+            // Set the taxons
+            var taxons = new ArrayList<Taxon>();
+            JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Taxon.class).forEach(t -> {
+                var taxon = new Taxon(t.getBegin(), t.getEnd());
+                taxon.setValue(t.getValue());
+                taxon.setCoveredText(t.getCoveredText());
+                taxons.add(taxon);
+            });
+            document.setTaxons(taxons);
+
+            // Wikipedia/Wikidata?
+            var wikiDatas = new ArrayList<org.texttechnologylab.models.corpus.WikipediaLink>();
+            JCasUtil.select(jCas, org.hucompute.textimager.uima.type.wikipedia.WikipediaLink.class).forEach(w -> {
+                var data = new org.texttechnologylab.models.corpus.WikipediaLink(w.getBegin(), w.getEnd());
+                data.setLinkType(w.getLinkType());
+                data.setTarget(w.getTarget());
+                data.setCoveredText(w.getCoveredText());
+                data.setWikiData(w.getWikiData());
+                data.setWikiDataHyponyms(
+                        Arrays.stream(w.getWikiDataHyponyms().toArray()).filter(wd -> !wd.isEmpty()).map(WikiDataHyponym::new).toList()
+                );
+
+                wikiDatas.add(data);
+            });
+            document.setWikipediaLinks(wikiDatas);
 
             // Set the OCRpages
             var pages = new ArrayList<Page>();

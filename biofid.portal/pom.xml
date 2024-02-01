@@ -12,6 +12,7 @@
   <modules>
     <module>biofid.common</module>
     <module>biofid.corpus-importer</module>
+    <module>biofid.web</module>
   </modules>
 
   <properties>
@@ -28,6 +29,7 @@
       <version>3.8.1</version>
       <scope>test</scope>
     </dependency>
+
 
   </dependencies>
 </project>

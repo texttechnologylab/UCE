@@ -16,11 +16,36 @@ public class Document extends ModelBase {
     private List<Page> pages;
     private List<Sentence> sentences;
     private List<NamedEntity> namedEntities;
+    private List<Time> times;
+    private List<Taxon> taxons;
+    private List<WikipediaLink> wikipediaLinks;
 
     public Document(String language, String documentTitle, String documentId){
         this.language = language;
         this.documentTitle = documentTitle;
         this.documentId = documentId;
+    }
+
+    public List<WikipediaLink> getWikipediaLinks() {
+        return wikipediaLinks;
+    }
+
+    public void setWikipediaLinks(List<WikipediaLink> wikipediaLinks) {
+        this.wikipediaLinks = wikipediaLinks;
+    }
+
+    public List<Taxon> getTaxons() {
+        return taxons;
+    }
+    public void setTaxons(List<Taxon> taxons) {
+        this.taxons = taxons;
+    }
+
+    public List<Time> getTimes() {
+        return times;
+    }
+    public void setTimes(List<Time> times) {
+        this.times = times;
     }
 
     public List<NamedEntity> getNamedEntities() {

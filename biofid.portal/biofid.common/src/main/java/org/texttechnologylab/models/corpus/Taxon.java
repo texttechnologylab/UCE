@@ -2,20 +2,13 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
 
-public class NamedEntity extends UIMAAnnotation {
+public class Taxon extends UIMAAnnotation {
 
-    private String type;
+    private String value;
     private String coveredText;
 
-    public NamedEntity(int begin, int end) {
+    public Taxon(int begin, int end) {
         super(begin, end);
-    }
-
-    public String getType() {
-        return type;
-    }
-    public void setType(String type) {
-        this.type = type;
     }
 
     public String getCoveredText() {
@@ -23,5 +16,12 @@ public class NamedEntity extends UIMAAnnotation {
     }
     public void setCoveredText(String coveredText) {
         this.coveredText = coveredText;
+    }
+
+    public void setValue(String value) {
+        this.value = value;
+    }
+    public String getValue() {
+        return value;
     }
 }
