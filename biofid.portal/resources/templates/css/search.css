@@ -6,5 +6,71 @@
 }
 
 .search-input{
+    border-right:0;
     border-radius: 0;
+    border-bottom: 2px solid var(--prime);
+}
+
+.search-header{
+    position: sticky;
+    top:0;
+    z-index: 2;
+}
+
+.search-result-container{
+    min-height: 100vh;
+    width: 100%;
+    padding: 16px;
+    position: relative;
+    border-left:var(--prime) 2px solid;
+    border-right:lightgray 1px solid;
+}
+
+.search-result-container .header{
+    text-align: center;
+    margin-bottom: 16px;
+}
+
+.search-result-container .document-card{
+    padding: 16px;
+    border-bottom:lightgray 1px solid;
+    border-right:lightgray 1px solid;
+    border-top:lightgray 1px solid;
+    border-left:var(--secondary) 4px solid;
+    background-color: white;
+    margin-bottom: 24px;
+    transition: 0.1s;
+    position: relative;
+}
+
+.search-result-container .document-card:hover{
+    border-left-width: 8px;
+    transition: 0.1s;
+}
+
+.search-result-container .document-card::before{
+    content: '';
+    left:-22px;
+    position: absolute;
+    top:50%;
+    border-top:solid var(--secondary) 2px;
+    width: 20px;
+}
+
+.search-result-container .document-card::after{
+    content: '';
+    left:-26px;
+    position: absolute;
+    top:calc(50% - 4px);
+    border-radius: 50%;
+    border:1px solid var(--prime);
+    background-color: white;
+    width: 10px;
+    height: 10px;
+}
+
+.search-result-container .document-header{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }

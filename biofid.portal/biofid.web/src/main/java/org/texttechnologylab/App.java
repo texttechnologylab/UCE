@@ -6,6 +6,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.routes.DocumentApi;
 import org.texttechnologylab.routes.SearchApi;
+import spark.ExceptionHandler;
 import spark.ModelAndView;
 import spark.template.freemarker.FreeMarkerEngine;
 
@@ -39,7 +40,7 @@ public class App {
 
     private static void initSparkRoutes(ApplicationContext context) {
 
-        var searchApi = new SearchApi(context);
+        var searchApi = new SearchApi(context, configuration);
         var documentApi = new DocumentApi(context);
 
         // Landing page
@@ -51,13 +52,21 @@ public class App {
             return new ModelAndView(model, "index.ftl");
         }, new FreeMarkerEngine(configuration));
 
+        // Define default exception handler. This shows an error view then in the body.
+        ExceptionHandler<Exception> defaultExceptionHandler = (exception, request, response) -> {
+            response.status(500);
+            response.body(new FreeMarkerEngine(configuration).render(new ModelAndView(null, "defaultError.ftl")));
+        };
+
         // API routes
         path("/api", () -> {
+
+            exception(Exception.class, defaultExceptionHandler);
 
             before("/*", (q, a) -> System.out.println("Received API call."));
 
             path("/search", () -> {
-                get("/default", searchApi.search);
+                post("/default", searchApi.search);
             });
 
             path("/document", () -> {

@@ -2,6 +2,8 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.ModelBase;
 
+import java.text.Normalizer;
+import java.util.Arrays;
 import java.util.List;
 
 /*
@@ -13,6 +15,7 @@ public class Document extends ModelBase {
     private final String documentTitle;
     private final String documentId;
     private String fullText;
+    private String fullTextCleaned;
     private List<Page> pages;
     private List<Sentence> sentences;
     private List<NamedEntity> namedEntities;
@@ -24,6 +27,15 @@ public class Document extends ModelBase {
         this.language = language;
         this.documentTitle = documentTitle;
         this.documentId = documentId;
+    }
+
+    public String getFullTextCleaned() {
+        return fullTextCleaned;
+    }
+    public void setFullTextCleaned(String fullTextCleaned) {
+        // Remove control characters: https://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html
+        fullTextCleaned = fullTextCleaned.replaceAll("\\p{Cntrl}", "");
+        this.fullTextCleaned = fullTextCleaned;
     }
 
     public List<WikipediaLink> getWikipediaLinks() {
@@ -65,6 +77,23 @@ public class Document extends ModelBase {
     public String getFullText() {
         return fullText;
     }
+    public String getFullTextCleanedSnippet(int take){
+        if (fullTextCleaned == null || fullTextCleaned.isEmpty()) {
+            return "";
+        }
+        String[] words = fullTextCleaned.trim().split("\\s+");
+        // Take the first 30 words
+        StringBuilder result = new StringBuilder();
+        int count = 0;
+        for (String word : words) {
+            result.append(word).append(" ");
+            count++;
+            if (count == take) {
+                break;
+            }
+        }
+        return result.toString().trim();
+    }
     public void setFullText(String fullText) {
         this.fullText = fullText;
     }
@@ -82,7 +111,7 @@ public class Document extends ModelBase {
     }
 
     public String getDocumentTitle() {
-        return documentTitle;
+        return documentTitle == null ? "(-)" : documentTitle;
     }
 
     public String getLanguage() {

@@ -1,5 +1,6 @@
 :root {
     --prime: #5c7a17;
+    --secondary: darkgreen;
 }
 
 .site-container {
@@ -31,8 +32,8 @@ nav .nav-buttons a {
     cursor: pointer;
 }
 
-nav .nav-buttons a:hover{
-    color:black !important;
+nav .nav-buttons a:hover {
+    color: black !important;
     background-color: ghostwhite;
     border-bottom: 2px solid var(--prime);
 }
@@ -40,17 +41,17 @@ nav .nav-buttons a:hover{
 nav .selected-nav-btn {
     position: relative;
     border-bottom: var(--prime) 2px solid;
-    color:black !important;
+    color: black !important;
     transition: 0.25s;
 }
 
-nav .selected-nav-btn::before{
+nav .selected-nav-btn::before {
     position: absolute;
     bottom: -30px;
-    width:2px;
-    left:calc(50% - 1px);
+    width: 2px;
+    left: calc(50% - 1px);
     background-color: var(--prime);
-    height:30px;
+    height: 30px;
     content: '';
 }
 
@@ -58,12 +59,28 @@ nav .selected-nav-btn::before{
     color: rgba(0, 0, 0, 0.5) !important;
 }
 
+.small-font{
+    font-size: small;
+}
+
+.underlined{
+    text-decoration: underline;
+}
+
 .large-font {
     font-size: large;
 }
 
+.xlarge-font{
+    font-size: x-large;
+}
+
 .color-prime {
     color: var(--prime);
+}
+
+.color-secondary {
+    color: var(--secondary);
 }
 
 .btn-primary {
@@ -77,7 +94,6 @@ nav .selected-nav-btn::before{
     color: black;
 }
 
-
 .bg-prime {
     background-color: var(--prime);
 }
@@ -86,19 +102,18 @@ nav .selected-nav-btn::before{
     display: flex;
 }
 
-.display-none{
+.display-none {
     display: none;
 }
 
-.main-content-container{
-
+.main-content-container {
 }
 
-.view{
-    height:100%;
+.view {
+    height: 100%;
     width: 100%;
 }
 
-.view div:first-child{
+.view div:first-child {
     width: 100%;
 }

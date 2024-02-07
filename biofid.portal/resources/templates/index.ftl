@@ -36,16 +36,21 @@
         </div>
     </nav>
 
-    <div class="container mt-5 mb-2 p-3 main-content-container">
+    <div class="container mt-5 main-content-container">
 
         <div class="view" data-id="search">
 
-            <div class="flexed align-items-stretch">
+            <div class="flexed align-items-stretch search-header">
                 <input type="text" class="search-input form-control large-font" placeholder="Suche..."/>
                 <button class="btn btn-primary search-btn">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
+
+            <div class="search-result-container">
+
+            </div>
+
         </div>
 
         <div class="view display-none" data-id="team">
@@ -81,6 +86,7 @@
 
 <script>
     <#include "js/site.js">
+    <#include "js/search.js">
 </script>
 
 </html>

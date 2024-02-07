@@ -1,7 +1,9 @@
 package org.texttechnologylab.services;
 
+import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.Anomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import org.apache.uima.UIMAException;
 import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
@@ -9,10 +11,7 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.tcas.Annotation;
 import org.apache.uima.util.CasIOUtils;
 import org.springframework.stereotype.Service;
-import org.texttechnologylab.annotation.ocr.OCRBlock;
-import org.texttechnologylab.annotation.ocr.OCRLine;
-import org.texttechnologylab.annotation.ocr.OCRPage;
-import org.texttechnologylab.annotation.ocr.OCRParagraph;
+import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.models.corpus.*;
 
 import java.io.File;
@@ -32,8 +31,10 @@ public class UIMAService {
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOC", "MISC", "PER", "ORG"
     );
+    private final GoetheUniversityService goetheUniversityService;
 
-    public UIMAService() {
+    public UIMAService(GoetheUniversityService goetheUniversityService) {
+        this.goetheUniversityService = goetheUniversityService;
     }
 
     /**
@@ -98,6 +99,18 @@ public class UIMAService {
 
             // Set the full text
             document.setFullText(jCas.getDocumentText());
+
+            // Set the cleaned full text. That is the sum of all tokens except of all anomalies
+            var cleanedText = new StringJoiner(" ");
+            JCasUtil.select(jCas, Token.class).forEach(t -> {
+                // We dont want any tokens with suspicous chars here.
+                if(t instanceof OCRToken ocr && ocr.getSuspiciousChars() > 0){
+                    return;
+                }
+                var coveredAnomalies = JCasUtil.selectCovered(Anomaly.class, t).size();
+                if(coveredAnomalies == 0) cleanedText.add(t.getCoveredText());
+            });
+            document.setFullTextCleaned(cleanedText.toString());
 
             // Set the sentences
             document.setSentences(JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence.class)
