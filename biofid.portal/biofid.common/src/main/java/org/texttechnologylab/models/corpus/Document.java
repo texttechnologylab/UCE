@@ -1,12 +1,15 @@
 package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.ModelBase;
+import org.texttechnologylab.models.UIMAAnnotation;
 
 import java.text.Normalizer;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /*
 The documents should be scanned and extracted via OCR. This is a base class for that.
@@ -110,6 +113,18 @@ public class Document extends ModelBase {
             }
         }
         return result.toString().trim();
+    }
+
+    /**
+     * Gets all objects of type UIMAAnnotation of this document
+     * @return
+     */
+    public List<UIMAAnnotation> getAllAnnotations(){
+        var annotations = new ArrayList<UIMAAnnotation>();
+        annotations.addAll(namedEntities);
+        annotations.addAll(times);
+        annotations.addAll(wikipediaLinks);
+        return annotations;
     }
 
     public void setFullText(String fullText) {

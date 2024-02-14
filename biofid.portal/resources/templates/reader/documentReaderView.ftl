@@ -40,7 +40,7 @@
                     <div>
                         <#list page.getParagraphs() as paragraph>
                             <p class="text paragraph" style="text-align: ${paragraph.getAlign()};">
-                                ${paragraph.buildHTMLString(document.getNamedEntities())}
+                                ${paragraph.buildHTMLString(document.getAllAnnotations())}
                             </p>
                         </#list>
                     </div>

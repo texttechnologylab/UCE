@@ -55,7 +55,7 @@ body{
     border-bottom: lightgray solid 1px;
 }
 
-.document-content .ne{
+.document-content .annotation{
     position: relative;
     color:var(--dark);
     text-decoration-line: underline;
@@ -76,4 +76,8 @@ body{
 
 .document-content .ne-LOCATION{
     text-decoration-color: rgba(58, 128, 42, 1);
+}
+
+.document-content .wiki{
+    background-color: red;
 }
