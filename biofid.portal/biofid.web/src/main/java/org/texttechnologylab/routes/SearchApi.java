@@ -15,21 +15,17 @@ import java.util.List;
 
 public class SearchApi {
 
-    private final UIMAService uimaService;
+    private UIMAService uimaService = null;
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
-    ;
-    private List<Document> testDocs;
 
     public SearchApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
         this.freemakerConfig = freemakerConfig;
         this.uimaService = serviceContext.getBean(UIMAService.class);
-        // TODO: This is only testing for now.
-        this.testDocs = uimaService.XMIFolderToDocuments("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
     }
 
     public Route search = ((request, response) -> {
         var model = new HashMap<String, Object>();
-        model.put("documents", this.testDocs);
+        model.put("documents", uimaService.TestDocument);
 
         return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
     });

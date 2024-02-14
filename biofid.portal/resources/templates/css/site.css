@@ -1,6 +1,7 @@
 :root {
     --prime: #5c7a17;
     --secondary: darkgreen;
+    --dark: rgba(38,38,38,1);
 }
 
 .site-container {

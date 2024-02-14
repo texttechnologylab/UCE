@@ -41,7 +41,7 @@ public class App {
     private static void initSparkRoutes(ApplicationContext context) {
 
         var searchApi = new SearchApi(context, configuration);
-        var documentApi = new DocumentApi(context);
+        var documentApi = new DocumentApi(context, configuration);
 
         // Landing page
         get("/", (request, response) -> {
@@ -51,6 +51,9 @@ public class App {
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");
         }, new FreeMarkerEngine(configuration));
+
+        // A document reader view
+        get("/documentReader", documentApi.getSingleDocumentReadView);
 
         // Define default exception handler. This shows an error view then in the body.
         ExceptionHandler<Exception> defaultExceptionHandler = (exception, request, response) -> {
@@ -70,9 +73,7 @@ public class App {
             });
 
             path("/document", () -> {
-                get("/single", documentApi.getSingleDocument);
             });
-
         });
     }
 }

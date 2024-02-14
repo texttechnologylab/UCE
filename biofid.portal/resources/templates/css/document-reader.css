@@ -1,0 +1,79 @@
+*{
+    font-family: Georgia;
+}
+
+body{
+}
+
+.site-container{
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+.reader-container {
+    min-height:100vh;
+    border:lightgray 1px solid;
+    padding-left: 2.5rem;
+    padding-right: 2.5rem;
+    /*box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;*/
+}
+
+.reader-container .header{
+    position: sticky;
+    border-bottom: lightgray 1px solid;
+    padding-top:2.5rem;
+    padding-bottom:2rem;
+    z-index: 2;
+    top:0;
+    background-color: ghostwhite;
+}
+
+.open-goethe-url-btn {
+    border: Lightgray 1px solid;
+    height: 50px;
+    width: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.document-content{
+    padding: 2rem;
+}
+
+.document-content p{
+    text-align: justify;
+    line-height: 25px;
+    z-index: 1;
+}
+
+.document-content .page{
+    min-height: 100vh;
+    padding-top:2rem;
+    padding-bottom:2rem;
+    border-bottom: lightgray solid 1px;
+}
+
+.document-content .ne{
+    position: relative;
+    color:var(--dark);
+    text-decoration-line: underline;
+    text-decoration-thickness: 2px;
+}
+
+.document-content .ne-MISC{
+    text-decoration-color: rgba(125, 125, 125, 1);
+}
+
+.document-content .ne-PERSON{
+    text-decoration-color: rgba(237, 187, 36, 1);
+}
+
+.document-content .ne-ORGANIZATION{
+    text-decoration-color: rgba(50, 134, 237, 1);
+}
+
+.document-content .ne-LOCATION{
+    text-decoration-color: rgba(58, 128, 42, 1);
+}

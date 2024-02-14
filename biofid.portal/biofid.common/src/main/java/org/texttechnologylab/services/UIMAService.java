@@ -17,7 +17,6 @@ import org.texttechnologylab.models.corpus.*;
 import java.io.File;
 
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.util.*;
 
@@ -29,13 +28,18 @@ Holds logic for interacting with any UIMA associated data
 public class UIMAService {
 
     private static final Set<String> WANTED_NE_TYPES = Set.of(
-            "LOC", "MISC", "PER", "ORG"
+            "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
     private final GoetheUniversityService goetheUniversityService;
 
     public UIMAService(GoetheUniversityService goetheUniversityService) {
         this.goetheUniversityService = goetheUniversityService;
+
+        // TODO: Just for testing!
+        TestDocument = XMIFolderToDocuments("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
     }
+
+    public List<Document> TestDocument;
 
     /**
      * Imports all UIMA xmi files in a folder
@@ -100,6 +104,9 @@ public class UIMAService {
             // Set the full text
             document.setFullText(jCas.getDocumentText());
 
+            // See if we can get any more informatiom from the goethe collections
+            document.setGoetheTitleInfo(goetheUniversityService.scrapeDocumentTitleInfo(document.getDocumentId()));
+
             // Set the cleaned full text. That is the sum of all tokens except of all anomalies
             var cleanedText = new StringJoiner(" ");
             JCasUtil.select(jCas, Token.class).forEach(t -> {
@@ -121,6 +128,7 @@ public class UIMAService {
             // Set the named entities
             var nes = new ArrayList<org.texttechnologylab.models.corpus.NamedEntity>();
             JCasUtil.select(jCas, NamedEntity.class).forEach(ne -> {
+                var xd = ne.getValue();
                 // We don't want all NE types
                 if (ne == null || ne.getValue() == null || !WANTED_NE_TYPES.contains(ne.getValue())) return;
 
@@ -248,6 +256,7 @@ public class UIMAService {
             paragraph.setLineSpacing(pg.getLineSpacing());
             paragraph.setRightIndent(pg.getRightIndent());
             paragraph.setStartIndent(pg.getStartIndent());
+            paragraph.setCoveredText(pg.getCoveredText());
 
             paragraphs.add(paragraph);
         });

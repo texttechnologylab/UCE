@@ -4,7 +4,9 @@ import org.texttechnologylab.models.ModelBase;
 
 import java.text.Normalizer;
 import java.util.Arrays;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /*
 The documents should be scanned and extracted via OCR. This is a base class for that.
@@ -12,7 +14,7 @@ The documents should be scanned and extracted via OCR. This is a base class for 
 public class Document extends ModelBase {
 
     private final String language;
-    private final String documentTitle;
+    private String documentTitle;
     private final String documentId;
     private String fullText;
     private String fullTextCleaned;
@@ -22,8 +24,9 @@ public class Document extends ModelBase {
     private List<Time> times;
     private List<Taxon> taxons;
     private List<WikipediaLink> wikipediaLinks;
+    private GoetheTitleInfo goetheTitleInfo;
 
-    public Document(String language, String documentTitle, String documentId){
+    public Document(String language, String documentTitle, String documentId) {
         this.language = language;
         this.documentTitle = documentTitle;
         this.documentId = documentId;
@@ -32,10 +35,19 @@ public class Document extends ModelBase {
     public String getFullTextCleaned() {
         return fullTextCleaned;
     }
+
     public void setFullTextCleaned(String fullTextCleaned) {
         // Remove control characters: https://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html
         fullTextCleaned = fullTextCleaned.replaceAll("\\p{Cntrl}", "");
         this.fullTextCleaned = fullTextCleaned;
+    }
+
+    public GoetheTitleInfo getGoetheTitleInfo() {
+        return goetheTitleInfo;
+    }
+
+    public void setGoetheTitleInfo(GoetheTitleInfo goetheTitleInfo) {
+        this.goetheTitleInfo = goetheTitleInfo;
     }
 
     public List<WikipediaLink> getWikipediaLinks() {
@@ -49,6 +61,7 @@ public class Document extends ModelBase {
     public List<Taxon> getTaxons() {
         return taxons;
     }
+
     public void setTaxons(List<Taxon> taxons) {
         this.taxons = taxons;
     }
@@ -56,6 +69,7 @@ public class Document extends ModelBase {
     public List<Time> getTimes() {
         return times;
     }
+
     public void setTimes(List<Time> times) {
         this.times = times;
     }
@@ -63,6 +77,7 @@ public class Document extends ModelBase {
     public List<NamedEntity> getNamedEntities() {
         return namedEntities;
     }
+
     public void setNamedEntities(List<NamedEntity> namedEntities) {
         this.namedEntities = namedEntities;
     }
@@ -70,6 +85,7 @@ public class Document extends ModelBase {
     public List<Sentence> getSentences() {
         return sentences;
     }
+
     public void setSentences(List<Sentence> sentences) {
         this.sentences = sentences;
     }
@@ -77,7 +93,8 @@ public class Document extends ModelBase {
     public String getFullText() {
         return fullText;
     }
-    public String getFullTextCleanedSnippet(int take){
+
+    public String getFullTextCleanedSnippet(int take) {
         if (fullTextCleaned == null || fullTextCleaned.isEmpty()) {
             return "";
         }
@@ -94,6 +111,7 @@ public class Document extends ModelBase {
         }
         return result.toString().trim();
     }
+
     public void setFullText(String fullText) {
         this.fullText = fullText;
     }
@@ -103,7 +121,7 @@ public class Document extends ModelBase {
     }
 
     public List<Page> getPages() {
-        return pages;
+        return pages.stream().sorted(Comparator.comparingInt(Page::getPageNumber)).collect(Collectors.toList());
     }
 
     public String getDocumentId() {
@@ -111,7 +129,12 @@ public class Document extends ModelBase {
     }
 
     public String getDocumentTitle() {
-        return documentTitle == null ? "(-)" : documentTitle;
+        var title = goetheTitleInfo.getTitle().isEmpty() ? documentTitle : goetheTitleInfo.getTitle();
+        return title == null ? "(-)" : title;
+    }
+
+    public void setDocumentTitle(String documentTitle) {
+        this.documentTitle = documentTitle;
     }
 
     public String getLanguage() {

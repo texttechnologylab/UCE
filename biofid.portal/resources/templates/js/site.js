@@ -37,6 +37,26 @@ $('body').on('click', '.view .search-btn', function (event) {
     startNewSearch($('.view .search-input').val());
 })
 
+/**
+ * Triggers whenever an open-document element is clicked. This causes to load a new full read vioew of a doc
+ */
+$('body').on('click', '.view .open-document', function (){
+    var modelId = $(this).data('id');
+    openNewDocumentReadView(modelId);
+})
+
+/**
+ * Opens a new Document reader view
+ * @param modelId
+ */
+function openNewDocumentReadView(modelId){
+    if(modelId === undefined || modelId === ''){
+        return;
+    }
+    console.log('New Document Reader View for: ' + modelId);
+    window.open("/documentReader?modelId=" + modelId, '_blank');
+}
+
 $(document).ready(function () {
     console.log('Webpage loaded!');
     // TODO: Just testing

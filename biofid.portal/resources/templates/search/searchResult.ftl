@@ -5,10 +5,17 @@
 
     <div>
         <#list documents as document>
-            <div class="document-card">
+            <div class="document-card open-document" data-id="${document.getModelId()}">
+
+                <div class="hoverable-content">
+                    <div class="readme">
+                        <h5 class="m-0"><i class="text-dark large-font fab fa-readme"></i></h5>
+                    </div>
+                </div>
 
                 <div class="document-header">
-                    <p class="mb-0"><i class="fas fa-book color-secondary mr-1"></i> ${document.getDocumentTitle()}</p>
+                    <p class="mb-0"><i class="fas fa-book color-secondary mr-1"></i> ${document.getDocumentTitle()}
+                        <span class="text-secondary small-font">(${document.getGoetheTitleInfo().getPublished()})</span></p>
                     <p class="mb-0 underlined"> ${document.getLanguage()?upper_case}</p>
                 </div>
 
