@@ -24,9 +24,11 @@ public class CommonConfig {
     public String getProperty(String key) {
         return properties.getProperty(key);
     }
-
     public String getUniversityBotanikBaseUrl(){
         return getProperty("university.botanik.base.url");
+    }
+    public String getUniversityCollectionBaseUrl(){
+        return getProperty("university.collection.base.url");
     }
 
 }

@@ -33,6 +33,15 @@ public class GoetheUniversityService {
             var title = titleInfo.select(".value, .title").select(".valueDiv").html();
             goetheTitleInfo.setTitle(title);
 
+            var titleImageUrl = doc.select("td[id='td-titleInfoImage']").select("img").attr("src");
+            goetheTitleInfo.setTitleImageUrl(config.getUniversityCollectionBaseUrl() + titleImageUrl);
+
+            var pageViewStartUrl = doc.select("td[id='td-titleInfoImage']").select("a").attr("href");
+            goetheTitleInfo.setPageViewStartUrl(config.getUniversityCollectionBaseUrl() + pageViewStartUrl);
+
+            var pdfUrl = doc.select("table[id='titleInfoLinkActions'] #titleinfoDownloads").select("a").attr("href");
+            goetheTitleInfo.setPdfUrl(config.getUniversityCollectionBaseUrl() + pdfUrl);
+
             var published = titleInfo.select("#mods_originInfoNotEditionElectronicEdition .value").select("a").html();
             goetheTitleInfo.setPublished(published);
 

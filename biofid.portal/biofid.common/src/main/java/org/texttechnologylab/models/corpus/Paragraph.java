@@ -2,10 +2,7 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
@@ -64,6 +61,14 @@ public class Paragraph extends UIMAAnnotation {
         this.lineSpacing = lineSpacing;
     }
 
+    public String getFontWeight(){
+        return Objects.equals(getAlign().toLowerCase(), "center") ? "bold" : "inherit";
+    }
+
+    public String getUnderlined(){
+        return Objects.equals(getAlign().toLowerCase(), "center") ? "underline" : "inherit";
+    }
+
     /**
      * Gets an HTML string of this blocks text to simply add to the UI
      * @return
@@ -82,7 +87,7 @@ public class Paragraph extends UIMAAnnotation {
                             Stream.of(annotation)).collect(Collectors.toList()));
         }
         // In here we store all possible ends
-        var ends = new ArrayList<Integer>();
+        var ends = new ArrayList<Map.Entry<Integer, String>>();
 
         var finalText = new StringBuilder();
 
@@ -94,18 +99,22 @@ public class Paragraph extends UIMAAnnotation {
             var annos = beginToAnnotations.getOrDefault(i, new ArrayList<>());
             for(var a: annos){
 
-                var cssClass = "";
+                var html = "";
 
                 if(a instanceof NamedEntity ne){
-                    cssClass = "ne-" + ne.getType();
+                    html = String.format("<span class='annotation custom-context-menu ne-%1$s'>", ne.getType());
+                    ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</span>"));
                 } else if (a instanceof Time time) {
-                    cssClass = "time";
+                    html = String.format("<span class='annotation custom-context-menu time'>");
+                    ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</span>"));
                 } else if(a instanceof WikipediaLink wikipediaLink){
-                    cssClass = "wiki";
+                    html = String.format("<span class='annotation custom-context-menu wiki'>");
+                    ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</span>"));
+                } else if(a instanceof Taxon taxon){
+                    html = String.format("<a class='annotation custom-context-menu taxon' href='%1$s' target='_blank'>", taxon.getValue());
+                    ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</a><i class='mr-1 fas fa-external-link-alt'></i>"));
                 }
-
-                finalText.append(String.format("<span class='annotation %1$s'>", cssClass));
-                ends.add(a.getEnd() - offset);
+                finalText.append(html);
             }
 
             // Append the original text as well.
@@ -113,8 +122,8 @@ public class Paragraph extends UIMAAnnotation {
 
             // Are there any end spans we need to close?
             for(var end: ends){
-                if(end == i){
-                    finalText.append("</span>");
+                if(end.getKey() == i){
+                    finalText.append(end.getValue());
                 }
             }
         }

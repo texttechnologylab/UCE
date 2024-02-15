@@ -124,6 +124,7 @@ public class Document extends ModelBase {
         annotations.addAll(namedEntities);
         annotations.addAll(times);
         annotations.addAll(wikipediaLinks);
+        annotations.addAll(taxons);
         return annotations;
     }
 
@@ -135,8 +136,12 @@ public class Document extends ModelBase {
         this.pages = pages;
     }
 
-    public List<Page> getPages() {
-        return pages.stream().sorted(Comparator.comparingInt(Page::getPageNumber)).collect(Collectors.toList());
+    public List<Page> getPages(int take, int skip) {
+        return pages.stream()
+                .sorted(Comparator.comparingInt(Page::getPageNumber))
+                .skip(skip)
+                .limit(skip + take)
+                .collect(Collectors.toList());
     }
 
     public String getDocumentId() {
@@ -144,7 +149,7 @@ public class Document extends ModelBase {
     }
 
     public String getDocumentTitle() {
-        var title = goetheTitleInfo.getTitle().isEmpty() ? documentTitle : goetheTitleInfo.getTitle();
+        var title = goetheTitleInfo.getTitle() == null ? documentTitle : goetheTitleInfo.getTitle();
         return title == null ? "(-)" : title;
     }
 

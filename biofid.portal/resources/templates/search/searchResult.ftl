@@ -24,7 +24,7 @@
                         "${document.getFullTextCleanedSnippet(75)}..."
                     </p>
                     <div class="mb-0 flexed align-items-center">
-                        <i class="fas fa-file-alt color-secondary"></i> <label class="mb-0 ml-2">${document.getPages()?size}</label>
+                        <i class="fas fa-file-alt color-secondary"></i> <label class="mb-0 ml-2">${document.getPages(10000, 0)?size}</label>
                     </div>
                 </div>
 

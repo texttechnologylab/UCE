@@ -13,45 +13,111 @@
     <style>
         <#include "../css/site.css">
         <#include "../css/document-reader.css">
+        <#include "../css/custom-context-menu.css">
     </style>
     <title>${document.getDocumentTitle()}</title>
 </head>
 
-<body>
+<body class="no-cursor">
 <div class="site-container">
 
-    <div class="container reader-container">
+    <div class="dot" id="custom-cursor"></div>
 
-        <div class="header text-center flexed align-items-center justify-content-around">
-            <a class="open-goethe-url-btn m-0" href="${document.getGoetheTitleInfo().getScrapedUrl()}" target="_blank">
-                <i class="color-prime m-0 large-font fas fa-university"></i>
-            </a>
-            <div>
-                <h5>${document.getDocumentTitle()}</h5>
-                <p class="text mb-0">${document.getGoetheTitleInfo().getPublished()}</p>
-            </div>
-            <p class="m-0 text">${document.getLanguage()?upper_case}</p>
-        </div>
+    <ul class='custom-menu'>
+        <li data-action="first"><i class="fab fa-readme mr-2"></i> Mehr dazu</li>
+        <li data-action="first"><i class="fas fa-search mr-2"></i> Suchen</li>
+        <li data-action="first"><i class="fas fa-highlighter mr-2"></i> Hervorheben</li>
+    </ul>
 
-        <div class="document-content">
+    <div class="container-fluid">
+        <div class="flexed m-0 p-0">
 
-            <#list document.getPages() as page>
-                <div class="page">
-                    <div>
-                        <#list page.getParagraphs() as paragraph>
-                            <p class="text paragraph" style="text-align: ${paragraph.getAlign()};">
-                                ${paragraph.buildHTMLString(document.getAllAnnotations())}
-                            </p>
+            <div class="w-100">
+                <div class="reader-container container">
+
+                    <div class="header text-center flexed align-items-center justify-content-around">
+                        <a class="open-goethe-url-btn m-0" href="${document.getGoetheTitleInfo().getScrapedUrl()}"
+                           target="_blank">
+                            <i class="color-prime m-0 large-font fas fa-university"></i>
+                        </a>
+                        <div>
+                            <h5>${document.getDocumentTitle()}</h5>
+                            <p class="text mb-0">${document.getGoetheTitleInfo().getPublished()}</p>
+                        </div>
+                        <p class="m-0 text">${document.getLanguage()?upper_case}</p>
+                    </div>
+
+                    <div class="document-content">
+
+                        <#list document.getPages(10, 0) as page>
+                            <div class="page" data-id="${page.getPageNumber() + 1}">
+                                <div class="blurrer display-none" data-toggled="false"></div>
+                                <div>
+                                    <#list page.getParagraphs() as paragraph>
+                                        <p class="text paragraph" style="
+                                                text-align: ${paragraph.getAlign()};
+                                                font-weight: ${paragraph.getFontWeight()};
+                                                text-decoration: ${paragraph.getUnderlined()};">
+                                            ${paragraph.buildHTMLString(document.getAllAnnotations())}
+                                        </p>
+                                    </#list>
+                                </div>
+                                <p class="text-center text-dark mb-0">
+                                    — ${page.getPageNumber() + 1} —
+                                </p>
+                            </div>
                         </#list>
                     </div>
-                    <p class="text-center text-dark mb-0">
-                        — ${page.getPageNumber() + 1} —
-                    </p>
+
                 </div>
-            </#list>
+            </div>
+
+            <div class="side-bar">
+
+                <div class="expander" data-expanded="true"><i class="m-0 xlarge-font fas fa-chevron-right"></i></div>
+
+                <div class="side-bar-content">
+                    <div class="header">
+                        <h5 class="text-center">Navigator</h5>
+                    </div>
+
+                    <a href="${document.getGoetheTitleInfo().getScrapedUrl()}" target="_blank" class="title-image mb-3">
+                        <img src="${document.getGoetheTitleInfo().getTitleImageUrl()}"/>
+                    </a>
+
+                    <div class="group-box">
+                        <p class="title">Einstellungen</p>
+                        <div class="flexed align-items-center">
+                            <i class="fas fa-text-height mr-2"></i>
+                            <input min="10" max="21" class="font-size-range w-100 hoverable" value="16" type="range"/>
+                        </div>
+                    </div>
+
+                    <div class="group-box">
+                        <p class="title">Seite <span class="current-page">1</span></p>
+                        <a class="btn open-goethe-url-page-btn" target="_blank" data-href="${document.getGoetheTitleInfo().getPageViewStartUrl()}"
+                           href="${document.getGoetheTitleInfo().getPageViewStartUrl()}">
+                            <i class="mr-2 fas fa-university"></i> Original
+                        </a>
+                    </div>
+
+                    <div class="buttons group-box">
+                        <p class="title">Funktionen</p>
+                        <button class="btn toggle-focus-btn">
+                            <i class="fas fa-satellite-dish mr-2"></i> Toggle Fokus
+                        </button>
+                        <a href="${document.getGoetheTitleInfo().getPdfUrl()}" class="btn">
+                            <i class="fas fa-file-pdf mr-2"></i> Download PDF
+                        </a>
+                    </div>
+
+                </div>
+
+            </div>
         </div>
 
     </div>
+
 
 </div>
 </body>
@@ -71,6 +137,8 @@
 
 <script>
     <#include "../js/site.js">
+    <#include "../js/documentReader.js">
+    <#include "../js/customContextMenu.js">
 </script>
 
 </html>
