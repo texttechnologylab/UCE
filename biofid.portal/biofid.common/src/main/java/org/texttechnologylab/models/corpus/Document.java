@@ -3,6 +3,7 @@ package org.texttechnologylab.models.corpus;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 
+import javax.persistence.*;
 import java.text.Normalizer;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -11,6 +12,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Entity
+@Table(name="document")
 /*
 The documents should be scanned and extracted via OCR. This is a base class for that.
  */
@@ -21,6 +24,9 @@ public class Document extends ModelBase {
     private final String documentId;
     private String fullText;
     private String fullTextCleaned;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="document_modelId")
     private List<Page> pages;
     private List<Sentence> sentences;
     private List<NamedEntity> namedEntities;

@@ -77,7 +77,7 @@ function handleFocusedPageChanged(){
     // We have to adjust the href of the goethe uni page
     const url = $('.open-goethe-url-page-btn').data('href');
     const splited = url.split('/');
-    const newId = parseInt(splited[splited.length - 1]) + currentFocusedPage;
+    const newId = parseInt(splited[splited.length - 1]) + currentFocusedPage - 1;
     let newUrl = "";
     for(let i = 0; i < splited.length - 1; i++){
         newUrl += splited[i] + "/";
@@ -89,7 +89,7 @@ function handleFocusedPageChanged(){
  * Handle the changing of the font size
  */
 $('body').on('change', '.font-size-range', function(){
-    var fontSize = $(this).val();
+    const fontSize = $(this).val();
     $('.document-content p').each(function(){
        $(this).css('font-size', fontSize + 'px');
     });

@@ -3,6 +3,7 @@ package org.texttechnologylab.config;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Import;
 import org.texttechnologylab.services.DatabaseService;
 import org.texttechnologylab.services.GoetheUniversityService;
 import org.texttechnologylab.services.UIMAService;
@@ -17,7 +18,7 @@ public class SpringConfig {
 
     @Bean
     public UIMAService uimaService(){
-        return new UIMAService(goetheUniversityService());
+        return new UIMAService(goetheUniversityService(), databaseService());
     }
 
     @Bean

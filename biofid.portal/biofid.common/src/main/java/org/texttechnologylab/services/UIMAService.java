@@ -31,12 +31,15 @@ public class UIMAService {
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
     private final GoetheUniversityService goetheUniversityService;
+    private final DatabaseService db;
 
-    public UIMAService(GoetheUniversityService goetheUniversityService) {
+    public UIMAService(GoetheUniversityService goetheUniversityService, DatabaseService db) {
         this.goetheUniversityService = goetheUniversityService;
+        this.db = db;
 
         // TODO: Just for testing!
         TestDocument = XMIFolderToDocuments("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
+        this.db.test(TestDocument.get(0));
     }
 
     public List<Document> TestDocument;

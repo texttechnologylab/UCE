@@ -24,9 +24,9 @@
     <div class="dot" id="custom-cursor"></div>
 
     <ul class='custom-menu'>
-        <li data-action="first"><i class="fab fa-readme mr-2"></i> Mehr dazu</li>
-        <li data-action="first"><i class="fas fa-search mr-2"></i> Suchen</li>
-        <li data-action="first"><i class="fas fa-highlighter mr-2"></i> Hervorheben</li>
+        <li data-action="open-more"><i class="fab fa-readme mr-2"></i> Mehr dazu</li>
+        <li data-action="search"><i class="fas fa-search mr-2"></i> Suchen</li>
+        <li data-action="highlight" data-target=""><i class="fas fa-highlighter mr-2"></i> Hervorheben</li>
     </ul>
 
     <div class="container-fluid">
@@ -81,9 +81,13 @@
                         <h5 class="text-center">Navigator</h5>
                     </div>
 
-                    <a href="${document.getGoetheTitleInfo().getScrapedUrl()}" target="_blank" class="title-image mb-3">
-                        <img src="${document.getGoetheTitleInfo().getTitleImageUrl()}"/>
-                    </a>
+                    <div class="group-box">
+                        <p class="title">Original Dokument</p>
+                        <a href="${document.getGoetheTitleInfo().getScrapedUrl()}" target="_blank"
+                           class="title-image mb-3">
+                            <img src="${document.getGoetheTitleInfo().getTitleImageUrl()}"/>
+                        </a>
+                    </div>
 
                     <div class="group-box">
                         <p class="title">Einstellungen</p>
@@ -95,7 +99,8 @@
 
                     <div class="group-box">
                         <p class="title">Seite <span class="current-page">1</span></p>
-                        <a class="btn open-goethe-url-page-btn" target="_blank" data-href="${document.getGoetheTitleInfo().getPageViewStartUrl()}"
+                        <a class="btn open-goethe-url-page-btn" target="_blank"
+                           data-href="${document.getGoetheTitleInfo().getPageViewStartUrl()}"
                            href="${document.getGoetheTitleInfo().getPageViewStartUrl()}">
                             <i class="mr-2 fas fa-university"></i> Original
                         </a>

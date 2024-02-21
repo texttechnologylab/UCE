@@ -2,8 +2,12 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
 
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.util.List;
 
+@Entity
+@Table(name="page")
 public class Page extends UIMAAnnotation {
 
     private final int pageNumber;

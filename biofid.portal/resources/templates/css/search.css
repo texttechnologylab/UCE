@@ -3,17 +3,24 @@
 
 .search-btn {
     border-radius: 0;
+    width: auto;
+    padding-left: 18px !important;
+    padding-right: 18px !important;
 }
 
 .search-input {
     border-right: 0;
     border-radius: 0;
-    border-bottom: 2px solid var(--prime);
+    font-size: x-large;
+    border-top:0;
+    border-left:0;
+    border-bottom: 3px solid var(--prime);
 }
 
 .search-header {
     position: sticky;
     top: 0;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     z-index: 2;
 }
 
@@ -22,33 +29,31 @@
     width: 100%;
     padding: 16px;
     position: relative;
-    border-left: var(--prime) 2px solid;
-    border-right: lightgray 1px solid;
+    border-left: var(--prime) 3px solid;
 }
 
 .search-result-container .header {
     text-align: center;
-    margin-bottom: 16px;
+    margin-bottom: 3rem;
 }
 
 .search-result-container .document-card {
-    padding: 16px;
-    border-bottom: lightgray 1px solid;
-    border-right: lightgray 1px solid;
-    border-top: lightgray 1px solid;
+    padding: 24px;
     border-left: var(--secondary) 4px solid;
     background-color: white;
-    margin-bottom: 24px;
+    margin-bottom: 4rem;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     transition: 0.1s;
     position: relative;
 }
 
 .search-result-container .document-card .hoverable-content{
     position: absolute;
-    background-color: rgba(255,255,255,0.7);
+    background-color: rgba(255,255,255,0.2);
     pointer-events: none;
     z-index: 2;
     left:0;
+    backdrop-filter: blur(2px);
     top:0;
     display: flex;
     align-items: start;
@@ -60,7 +65,7 @@
 
 .search-result-container .document-card .hoverable-content .readme{
     border-radius: 0% 0% 50% 50%;
-    width: 50px;
+    width: 75px;
     box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
     height:0%;
     display: flex;

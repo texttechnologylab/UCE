@@ -3,6 +3,7 @@ package org.texttechnologylab;
 import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.routes.DocumentApi;
 import org.texttechnologylab.routes.SearchApi;

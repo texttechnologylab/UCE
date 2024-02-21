@@ -66,16 +66,19 @@ body {
 .site-container {
     padding-top: 3rem;
     padding-bottom: 3rem;
-    background-color: ghostwhite;
+    background-color: rgba(125,125,125,0.25);
 }
 
 .reader-container {
+    padding: 0 !important;
+    background-color: ghostwhite;
     border: lightgray 1px solid;
     box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
 }
 
 .reader-container .header {
     position: sticky;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 50px;
     padding: 2.5rem;
     border-bottom: lightgray 1px solid;
     z-index: 4;
@@ -138,6 +141,13 @@ body {
     color:white
 }
 
+.document-content .annotation.highlighted{
+    font-weight: bold;
+    background-color: rgba(235, 226, 52, 1);
+    font-size: large;
+    color:black !important;
+}
+
 .document-content .ne-MISC {
     color: rgba(125, 125, 125, 1);
 }
@@ -196,9 +206,6 @@ body {
 
 .side-bar .title-image img{
     object-fit: contain;
-    border:lightgray 1px solid;
-    border-radius: 6px;
-    box-shadow: rgba(0, 0, 0, 0.1) 0px 0px 5px 0px, rgba(0, 0, 0, 0.1) 0px 0px 1px 0px;
     max-height: 200px;
     width: 100%;
 }
@@ -228,7 +235,6 @@ body {
 
 .side-bar .header {
     padding: 1.5rem;
-    border-bottom: lightgray 1px solid;
     margin-bottom: 2rem;
 }
 

@@ -1,10 +1,9 @@
-
 // Trigger action when the contexmenu is about to be shown
 $(document).bind("contextmenu", function (event) {
 
     // Check if we want the custom or normal context menu here
     var c = event.target.className.includes('custom-context-menu');
-    if(!c) return;
+    if (!c) return;
 
     // Avoid the real one
     event.preventDefault();
@@ -20,6 +19,18 @@ $(document).bind("contextmenu", function (event) {
     // Update cursor
     $('.dot').addClass('expanded-cursor');
     $('body').removeClass('no-cursor');
+
+    // Highlight the correct menu entries
+    if (event.target.className.includes('taxon')) {
+        $('.custom-menu [data-action="open-more"]').show();
+        $('.custom-menu [data-action="open-more"]').attr('href', event.target.href);
+    } else {
+        $('.custom-menu [data-action="open-more"]').hide();
+    }
+
+    // Store the correct data in the menu entries
+    console.log(event.target);
+    $('.custom-menu [data-action="highlight"]').data('target', event.target.title);
 });
 
 
@@ -39,14 +50,27 @@ $(document).bind("mousedown", function (e) {
 
 
 // If the menu element is clicked
-$(".custom-menu li").click(function(){
+$(".custom-menu li").click(function () {
     // This is the triggered action name
-    switch($(this).attr("data-action")) {
+    switch ($(this).attr("data-action")) {
 
         // A case for each action. Your actions here
-        case "first": alert("first"); break;
-        case "second": alert("second"); break;
-        case "third": alert("third"); break;
+        case "open-more":
+            window.open($(this).attr('href'));
+            break;
+        case "search":
+            break;
+        case "highlight":
+            const toHighlight = $(this).data('target');
+            console.log(toHighlight);
+            $('.document-content .annotation').each(function () {
+               if($(this).attr('title').toLowerCase().includes(toHighlight.toLowerCase())){
+                   $(this).addClass('highlighted');
+               } else {
+                   $(this).removeClass('highlighted');
+               }
+            });
+            break;
     }
 
     // Hide it AFTER the action was triggered
