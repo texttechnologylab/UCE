@@ -33,40 +33,9 @@
 body {
 }
 
-
-.group-box {
-    width: 100%;
-    border: 1px solid lightgray;
-    padding: 16px;
-    margin-bottom: 16px;
-    border-radius: 6px;
-}
-
-.group-box .title {
-    text-align: center;
-    text-decoration: underline;
-}
-
-.group-box .btn {
-    width: 100%;
-    border: 1px solid lightgray;
-    padding: 12px;
-    border-left:4px var(--secondary) solid;
-    transition: 0.2s;
-    margin-bottom: 12px;
-    border-radius: 0px !important;
-}
-
-.group-box .btn:hover{
-    background-color: var(--prime);
-    color:white;
-    transition: 0.2s;
-}
-
 .site-container {
     padding-top: 3rem;
     padding-bottom: 3rem;
-    background-color: rgba(125,125,125,0.25);
 }
 
 .reader-container {

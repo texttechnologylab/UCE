@@ -40,22 +40,20 @@
 }
 
 .search-result-container .document-card {
-    margin-bottom: 4rem;
+    margin-bottom: 2rem;
     transition: 0.1s;
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     background-color: white;
     position: relative;
-    border-left:solid 4px var(--secondary);
-    border-top:solid 4px var(--secondary);
+    border-left:solid 3px var(--secondary);
 }
 
 .search-result-container .document-card .thumbnail{
     height:100%;
-    width: 125px;
+    width: 150px;
 }
 
 .search-result-container .document-card .content{
-    padding: 24px;
     height: 100%;
 }
 
@@ -76,18 +74,15 @@
 }
 
 .search-result-container .document-card .hoverable-content .readme{
-    border-radius: 0% 0% 50% 50%;
     width: 75px;
     box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
     height:0%;
     display: flex;
+    top:50%;
     transition: 0.15s;
-    border-left:var(--secondary) 1px solid;
-    border-right:var(--secondary) 1px solid;
-    border-bottom:var(--secondary) 1px solid;
     justify-content: center;
     align-items: center;
-    background-color: white;
+    background-color: rgba(255,255,255,0.8);
 }
 
 .search-result-container .document-card .hoverable-content .readme h5{
@@ -105,7 +100,9 @@
 }
 
 .search-result-container .document-card:hover .hoverable-content .readme{
-    height: 75%;
+    height: 100%;
+    width: 100%;
+    top:0;
     transition: 0.15s;
 }
 
@@ -136,6 +133,11 @@
 }
 
 .search-result-container .document-header {
+    text-align: center;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 20px;
+    padding-right: 20px;
     display: flex;
     align-items: center;
     justify-content: space-between;

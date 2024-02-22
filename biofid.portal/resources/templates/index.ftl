@@ -12,15 +12,16 @@
             crossorigin="anonymous"></script>
     <style>
         <#include "css/site.css">
-        <#include "css/search.css">
+        <#include "css/search-redesign.css">
     </style>
     <title>${title}</title>
 </head>
 
 <body>
+
 <div class="site-container">
 
-    <nav class="p-3 bg-light">
+    <nav class="p-3">
         <div class="container-fluid flexed align-items-center justify-content-around">
             <img class="mb-0 logo" src="https://biofid.de/static/images/logo_fid_biodiversity.png">
 
@@ -36,9 +37,9 @@
         </div>
     </nav>
 
-    <div class="container mt-5 main-content-container">
+    <div class="mt-5 main-content-container">
 
-        <div class="view" data-id="search">
+        <div class="view container-fluid" data-id="search">
 
             <div class="flexed align-items-stretch search-header">
                 <input type="text" class="search-input form-control large-font" placeholder="Suche..."/>

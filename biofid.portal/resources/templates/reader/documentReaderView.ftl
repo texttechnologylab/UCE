@@ -14,11 +14,18 @@
         <#include "../css/site.css">
         <#include "../css/document-reader.css">
         <#include "../css/custom-context-menu.css">
+        <#include "../css/bg-anim.css">
     </style>
     <title>${document.getDocumentTitle()}</title>
 </head>
 
 <body class="no-cursor">
+
+<link href='https://fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css'>
+<div id='stars'></div>
+<div id='stars2'></div>
+<div id='stars3'></div>
+
 <div class="site-container">
 
     <div class="dot" id="custom-cursor"></div>

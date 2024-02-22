@@ -5,8 +5,8 @@
 }
 
 .site-container {
+    background-color: rgb(245, 245, 247);
     min-height: 100vh !important;
-    background-color: ghostwhite;
 }
 
 footer {
@@ -25,6 +25,7 @@ footer {
 nav {
     box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     border-bottom: var(--prime) 2px solid;
+    background-color: ghostwhite;
 }
 
 nav .logo {
@@ -119,6 +120,32 @@ nav .selected-nav-btn::before {
     width: 100%;
 }
 
-.view div:first-child {
+
+.group-box {
     width: 100%;
+    border: 1px solid lightgray;
+    padding: 16px;
+    margin-bottom: 16px;
+    border-radius: 6px;
+}
+
+.group-box .title {
+    text-align: center;
+    text-decoration: underline;
+}
+
+.group-box .btn {
+    width: 100%;
+    border: 1px solid lightgray;
+    padding: 12px;
+    border-left:4px var(--secondary) solid;
+    transition: 0.2s;
+    margin-bottom: 12px;
+    border-radius: 0px !important;
+}
+
+.group-box .btn:hover{
+    background-color: var(--prime);
+    color:white;
+    transition: 0.2s;
 }
