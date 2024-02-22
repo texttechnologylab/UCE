@@ -2,24 +2,35 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
 
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.List;
 
 @Entity
 @Table(name="page")
 public class Page extends UIMAAnnotation {
 
-    private final int pageNumber;
-    private final String pageId;
+    private int pageNumber;
+    private String pageId;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="page_Id")
     private List<Paragraph> paragraphs;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="page_Id")
     private List<Block> blocks;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="page_Id")
     private List<Line> lines;
 
     public Page(int begin, int end, int pageNumber, String pageId){
         super(begin, end);
         this.pageNumber = pageNumber;
         this.pageId = pageId;
+    }
+    public Page(){
+        super(-1, -1);
     }
 
     public List<Line> getLines() {

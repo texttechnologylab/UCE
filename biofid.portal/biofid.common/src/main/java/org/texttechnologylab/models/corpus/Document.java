@@ -19,21 +19,48 @@ The documents should be scanned and extracted via OCR. This is a base class for 
  */
 public class Document extends ModelBase {
 
-    private final String language;
+    private String language;
+    @Column(columnDefinition = "TEXT")
     private String documentTitle;
-    private final String documentId;
+    private String documentId;
+
+    @Column(columnDefinition = "TEXT")
     private String fullText;
+
+    @Column(columnDefinition = "TEXT")
     private String fullTextCleaned;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name="document_modelId")
+    @JoinColumn(name="document_Id")
     private List<Page> pages;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="document_Id")
     private List<Sentence> sentences;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="document_Id")
     private List<NamedEntity> namedEntities;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="document_Id")
     private List<Time> times;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="document_Id")
     private List<Taxon> taxons;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="document_Id")
     private List<WikipediaLink> wikipediaLinks;
+
+    @OneToOne(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_id")
     private GoetheTitleInfo goetheTitleInfo;
+
+    public Document(){
+
+    }
 
     public Document(String language, String documentTitle, String documentId) {
         this.language = language;
@@ -103,7 +130,7 @@ public class Document extends ModelBase {
         return fullText;
     }
 
-    public String getFullTextCleanedSnippet(int take) {
+    public String getFullTextSnippet(int take) {
         if (fullTextCleaned == null || fullTextCleaned.isEmpty()) {
             return "";
         }
@@ -142,6 +169,9 @@ public class Document extends ModelBase {
         this.pages = pages;
     }
 
+    public List<Page> getPages(){
+        return pages;
+    }
     public List<Page> getPages(int take, int skip) {
         return pages.stream()
                 .sorted(Comparator.comparingInt(Page::getPageNumber))

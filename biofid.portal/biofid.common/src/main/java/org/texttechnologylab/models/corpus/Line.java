@@ -2,13 +2,28 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
+
+@Entity
+@Table(name="line")
 public class Line extends UIMAAnnotation {
 
     private int baseline;
+
     private int top;
     private int bottom;
+
+    @Column(name = "\"leftt\"")
     private int left;
+
+    @Column(name = "\"rightt\"")
     private int right;
+
+    public Line(){
+        super(-1, -1);
+    }
 
     public Line(int begin, int end) {
         super(begin, end);

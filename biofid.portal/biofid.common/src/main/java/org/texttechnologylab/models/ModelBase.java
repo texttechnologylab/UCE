@@ -1,27 +1,32 @@
 package org.texttechnologylab.models;
 
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-
+import javax.persistence.*;
 import java.util.Date;
 import java.util.UUID;
 
+@MappedSuperclass
 public class ModelBase {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    private UUID modelId;
+    private long id;
 
     private Date created;
 
     public ModelBase() {
-        modelId = UUID.randomUUID();
         created = new Date();
     }
 
-    public UUID getModelId() {
-        return modelId;
+    public long getId() {
+        return id;
+    }
+
+    public void setId(long id) {
+        this.id = id;
+    }
+
+    public void setCreated(Date created) {
+        this.created = created;
     }
 
     public Date getCreated() {

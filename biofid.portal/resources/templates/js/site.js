@@ -41,20 +41,20 @@ $('body').on('click', '.view .search-btn', function (event) {
  * Triggers whenever an open-document element is clicked. This causes to load a new full read vioew of a doc
  */
 $('body').on('click', '.view .open-document', function (){
-    var modelId = $(this).data('id');
-    openNewDocumentReadView(modelId);
+    var id = $(this).data('id');
+    openNewDocumentReadView(id);
 })
 
 /**
  * Opens a new Document reader view
  * @param modelId
  */
-function openNewDocumentReadView(modelId){
-    if(modelId === undefined || modelId === ''){
+function openNewDocumentReadView(id){
+    if(id === undefined || id === ''){
         return;
     }
-    console.log('New Document Reader View for: ' + modelId);
-    window.open("/documentReader?modelId=" + modelId, '_blank');
+    console.log('New Document Reader View for: ' + id);
+    window.open("/documentReader?id=" + id, '_blank');
 }
 
 $(document).ready(function () {

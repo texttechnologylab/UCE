@@ -27,7 +27,9 @@
 .search-result-container {
     min-height: 100vh;
     width: 100%;
-    padding: 16px;
+    padding-left: 16px;
+    padding-top: 16px;
+    padding-bottom: 20px;
     position: relative;
     border-left: var(--prime) 3px solid;
 }
@@ -38,13 +40,23 @@
 }
 
 .search-result-container .document-card {
-    padding: 24px;
-    border-left: var(--secondary) 4px solid;
-    background-color: white;
     margin-bottom: 4rem;
-    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
     transition: 0.1s;
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    background-color: white;
     position: relative;
+    border-left:solid 4px var(--secondary);
+    border-top:solid 4px var(--secondary);
+}
+
+.search-result-container .document-card .thumbnail{
+    height:100%;
+    width: 125px;
+}
+
+.search-result-container .document-card .content{
+    padding: 24px;
+    height: 100%;
 }
 
 .search-result-container .document-card .hoverable-content{

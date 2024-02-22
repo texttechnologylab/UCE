@@ -37,9 +37,14 @@ public class UIMAService {
         this.goetheUniversityService = goetheUniversityService;
         this.db = db;
 
+        // var storedDocument = db.getCompleteDocumentById(1);
+        // var pages = storedDocument.getPages(10, 0);
         // TODO: Just for testing!
-        TestDocument = XMIFolderToDocuments("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
-        this.db.test(TestDocument.get(0));
+        // TestDocument = XMIFolderToDocuments("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
+        //for(var doc: TestDocument){
+        //    db.saveDocument(doc);
+        //}
+        //XMIFolderDocumentsToDb("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
     }
 
     public List<Document> TestDocument;
@@ -50,14 +55,15 @@ public class UIMAService {
      * @param foldername
      * @return
      */
-    public List<Document> XMIFolderToDocuments(String foldername) {
-        var docs = new ArrayList<Document>();
+    public void XMIFolderDocumentsToDb(String foldername) {
         for (var file : Objects.requireNonNull(new File(foldername).listFiles())) {
             var doc = XMIToDocument(file.getPath());
             if (doc != null)
-                docs.add(doc);
+            {
+                db.saveDocument(doc);
+                System.out.println("Stored document with document id " + doc.getDocumentId());
+            }
         }
-        return docs;
     }
 
     /**

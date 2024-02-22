@@ -1,10 +1,16 @@
 package org.texttechnologylab.models.corpus;
 
+import org.texttechnologylab.models.ModelBase;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name="goetheTitleInfo")
 /**
  * A class that holds information which we scrape from the goethe bib page like here:
  * https://sammlungen.ub.uni-frankfurt.de/botanik/periodical/titleinfo/3671225
  */
-public class GoetheTitleInfo {
+public class GoetheTitleInfo extends ModelBase {
     private String scrapedUrl;
     private String title;
     private String published;

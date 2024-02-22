@@ -1,6 +1,5 @@
 package org.texttechnologylab.config;
 
-import org.apache.tomcat.dbcp.dbcp2.BasicDataSource;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
@@ -12,7 +11,7 @@ import org.springframework.orm.hibernate5.HibernateTransactionManager;
 import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.test.test;
 
 import javax.sql.DataSource;
@@ -32,6 +31,18 @@ public class HibernateConf {
 
         var metadataSources = new MetadataSources(serviceRegistry);
         metadataSources.addAnnotatedClass(test.class);
+        metadataSources.addAnnotatedClass(Block.class);
+        metadataSources.addAnnotatedClass(GoetheTitleInfo.class);
+        metadataSources.addAnnotatedClass(Line.class);
+        metadataSources.addAnnotatedClass(NamedEntity.class);
+        metadataSources.addAnnotatedClass(Paragraph.class);
+        metadataSources.addAnnotatedClass(Sentence.class);
+        metadataSources.addAnnotatedClass(Taxon.class);
+        metadataSources.addAnnotatedClass(Time.class);
+        metadataSources.addAnnotatedClass(WikiDataHyponym.class);
+        metadataSources.addAnnotatedClass(WikipediaLink.class);
+        metadataSources.addAnnotatedClass(Page.class);
+        metadataSources.addAnnotatedClass(Document.class);
 
         var metadata = metadataSources.buildMetadata();
 
@@ -41,16 +52,16 @@ public class HibernateConf {
     @NotNull
     private static HashMap<Object, Object> getSettings() {
         var settings = new HashMap<>();
-        settings.put("connection.driver_class", "org.postgresql.Driver");
-        settings.put("dialect", "org.hibernate.dialect.PostgreSQL82Dialect");
-        settings.put("hibernate.connection.url",
-                "jdbc:postgresql://localhost:5432/biofid");
-        settings.put("hibernate.connection.username", "postgres");
-        settings.put("hibernate.connection.password", "1234");
-        settings.put("hibernate.current_session_context_class", "thread");
-        settings.put("hibernate.show_sql", "true");
-        settings.put("hibernate.format_sql", "true");
-        settings.put("hibernate.hbm2ddl.auto", "update");
+        var config = new CommonConfig();
+        settings.put("connection.driver_class", config.getPostgresqlProperty("connection.driver_class"));
+        settings.put("dialect", config.getPostgresqlProperty("dialect"));
+        settings.put("hibernate.connection.url",config.getPostgresqlProperty("hibernate.connection.url"));
+        settings.put("hibernate.connection.username", config.getPostgresqlProperty("hibernate.connection.username"));
+        settings.put("hibernate.connection.password", config.getPostgresqlProperty("hibernate.connection.password"));
+        settings.put("hibernate.current_session_context_class", config.getPostgresqlProperty("hibernate.current_session_context_class"));
+        settings.put("hibernate.show_sql", config.getPostgresqlProperty("hibernate.show_sql"));
+        settings.put("hibernate.format_sql", config.getPostgresqlProperty("hibernate.format_sql"));
+        settings.put("hibernate.hbm2ddl.auto", config.getPostgresqlProperty("hibernate.hbm2ddl.auto"));
         return settings;
     }
 }

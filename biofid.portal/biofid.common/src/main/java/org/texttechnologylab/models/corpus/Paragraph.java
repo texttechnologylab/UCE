@@ -2,10 +2,15 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
 
+import javax.persistence.Column;
+import javax.persistence.Entity;
+import javax.persistence.Table;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
+@Entity
+@Table(name="paragraph")
 public class Paragraph extends UIMAAnnotation {
 
     private int leftIndent;
@@ -13,7 +18,12 @@ public class Paragraph extends UIMAAnnotation {
     private int startIndent;
     private String align;
     private int lineSpacing;
+    @Column(columnDefinition = "TEXT")
     private String coveredText;
+
+    public Paragraph(){
+        super(-1, -1);
+    }
 
     public Paragraph(int begin, int end){
         super(begin, end);

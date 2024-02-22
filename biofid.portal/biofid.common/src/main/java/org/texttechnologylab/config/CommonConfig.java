@@ -30,5 +30,5 @@ public class CommonConfig {
     public String getUniversityCollectionBaseUrl(){
         return getProperty("university.collection.base.url");
     }
-
+    public String getPostgresqlProperty(String prop) {return getProperty("postgresql." + prop);}
 }

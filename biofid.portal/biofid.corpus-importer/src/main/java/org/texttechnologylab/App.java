@@ -22,6 +22,6 @@ public class App {
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
         var uimaService = context.getBean(UIMAService.class);
 
-        var test = uimaService.XMIToDocument("C:\\kevin\\projects\\biofid\\test_data\\064_10801712.xml.gz.xmi");
+        var test = uimaService.XMIToDocument("C:\\kevin\\projects\\biofid\\test_data\\064_10801712.xml.gz.xmi", false);
     }
 }
