@@ -13,6 +13,7 @@
     <module>biofid.common</module>
     <module>biofid.corpus-importer</module>
     <module>biofid.web</module>
+      <module>biofid.search</module>
   </modules>
 
   <properties>

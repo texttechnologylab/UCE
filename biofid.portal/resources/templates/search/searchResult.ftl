@@ -87,6 +87,14 @@
                                                 "${document.getFullTextSnippet(85)}..."
                                             </p>
                                         </div>
+
+                                        <div class="search-hits">
+                                            <span><i class="fas fa-map-marker-alt"></i> Schweiz</span>
+                                            <span><i class="fas fa-user-tag"></i> Arnold</span>
+                                            <span><i class="fas fa-sitemap"></i> Verein</span>
+                                            <span><i class="fas fa-th"></i> Bett</span>
+                                            <span><i class="fas fa-tenge"></i> Pflanzen</span>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -106,28 +114,28 @@
 
                         <div class="entry">
                             <div class="flexed align-items-center w-100 justify-content-between">
-                                <p class="mb-0">Orte</p>
+                                <p class="mb-0"><i class="fas fa-map-marker-alt mr-1"></i> Orte</p>
                                 <label class="text mb-0">134</label>
                             </div>
                         </div>
 
                         <div class="entry">
                             <div class="flexed align-items-center w-100 justify-content-between">
-                                <p class="mb-0">Personen</p>
+                                <p class="mb-0"><span><i class="fas fa-user-tag mr-1"></i> Personen</p>
                                 <label class="text mb-0">134</label>
                             </div>
                         </div>
 
                         <div class="entry">
                             <div class="flexed align-items-center w-100 justify-content-between">
-                                <p class="mb-0">Organisationen</p>
+                                <p class="mb-0"><i class="fas fa-sitemap mr-1"></i> Organisationen</p>
                                 <label class="text mb-0">134</label>
                             </div>
                         </div>
 
                         <div class="entry">
                             <div class="flexed align-items-center w-100 justify-content-between">
-                                <p class="mb-0">Sonstiges</p>
+                                <p class="mb-0"><i class="fas fa-th mr-1"></i> Sonstiges</p>
                                 <label class="text mb-0">134</label>
                             </div>
                         </div>
@@ -136,7 +144,7 @@
 
                         <div class="entry">
                             <div class="flexed align-items-center w-100 justify-content-between">
-                                <p class="mb-0">Taxone</p>
+                                <p class="mb-0"><i class="fas fa-tenge mr-1"></i> Taxone</p>
                                 <label class="text mb-0">134</label>
                             </div>
                         </div>
