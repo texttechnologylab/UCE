@@ -1,17 +1,8 @@
 package org.texttechnologylab;
 
-import org.apache.jena.rdf.model.Model;
-import org.apache.jena.rdf.model.ModelFactory;
-import org.apache.jena.rdf.model.Resource;
-import org.apache.jena.riot.RDFDataMgr;
-import org.apache.jena.vocabulary.VCARD;
-import org.apache.jena.query.Query;
-import org.apache.jena.query.QueryFactory;
-import org.apache.jena.query.ResultSetFormatter;
-import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionRemote;
-
-import java.io.InputStream;
+import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.texttechnologylab.config.SpringConfig;
+import org.texttechnologylab.sparql.JenaSparqlFactory;
 
 /**
  * Hello world!
@@ -28,22 +19,26 @@ public class App {
      */
     private static void testing() {
 
+        try {
+            var context = new AnnotationConfigApplicationContext(SpringConfig.class);
+
+            var search = new BiofidSearch(context,
+                    "Biol in Paris und Montana",
+                    new BiofidSearchLayer[]{BiofidSearchLayer.NAMED_ENTITIES, BiofidSearchLayer.TAXON});
+            var result = search.search(0, 15);
+        } catch (Exception ex) {
+            var xd = "";
+        }
+
         JenaSparqlFactory.initialize();
 
         var command = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                 "PREFIX dwc: <http://rs.tdwg.org/dwc/terms/>\n" +
-                "\n" +
-                "SELECT ?scientificName ?authorship ?taxonRank ?taxonomicStatus ?kingdom\n" +
+                "SELECT ?subject ?predicate ?object\n" +
                 "WHERE {\n" +
-                "\t?subject rdf:type ?type ;\n" +
-                "  \tdwc:scientificName ?scientificName ;\n" +
-                "    dwc:scientificNameAuthorship ?authorship ;\n" +
-                "    dwc:taxonRank ?taxonRank ;\n" +
-                "    dwc:kingdom ?kingdom ;\n" +
-                "    dwc:taxonomicStatus ?taxonomicStatus .\n" +
-                "  \n" +
-                "  FILTER(CONTAINS(str(?scientificName), \"para\"))\n" +
-                "} LIMIT 100";
+                "  <https://www.biofid.de/bio-ontologies/gbif/11389112> ?predicate ?object .\n" +
+                "}\n" +
+                "LIMIT 100";
         var result = JenaSparqlFactory.executeCommand(command);
     }
 }

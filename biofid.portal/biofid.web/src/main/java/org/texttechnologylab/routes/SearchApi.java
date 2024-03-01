@@ -1,8 +1,11 @@
 package org.texttechnologylab.routes;
 
+import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.texttechnologylab.BiofidSearch;
+import org.texttechnologylab.BiofidSearchLayer;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.services.DatabaseService;
 import org.texttechnologylab.services.UIMAService;
@@ -13,22 +16,34 @@ import spark.template.freemarker.FreeMarkerEngine;
 
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 public class SearchApi {
 
+    private ApplicationContext context = null;
     private UIMAService uimaService = null;
     private DatabaseService db = null;
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
 
     public SearchApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
         this.freemakerConfig = freemakerConfig;
+        this.context = serviceContext;
         this.uimaService = serviceContext.getBean(UIMAService.class);
         this.db = serviceContext.getBean(DatabaseService.class);
     }
 
     public Route search = ((request, response) -> {
         var model = new HashMap<String, Object>();
-        var docs = this.db.searchForDocuments(15, 0);
+        var gson = new Gson();
+        Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
+        var searchInput = requestBody.get("searchInput").toString();
+
+        var biofidSearch = new BiofidSearch(context, searchInput, new BiofidSearchLayer[]{BiofidSearchLayer.NAMED_ENTITIES});
+        var docs = biofidSearch.search(0, 15);
+
+        if(searchInput.equals("TEST")){
+            docs = this.db.searchForDocuments(0, 15);
+        }
         model.put("documents", docs);
 
         return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));

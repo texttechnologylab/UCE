@@ -41,7 +41,7 @@
 
         <div class="view container-fluid" data-id="search">
 
-            <div class="flexed align-items-stretch search-header">
+            <div class="flexed align-items-stretch search-header container p-0">
                 <input type="text" class="search-input form-control large-font" placeholder="Suche..."/>
                 <button class="btn btn-primary search-btn">
                     <i class="fas fa-search"></i>

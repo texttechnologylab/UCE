@@ -13,40 +13,49 @@
         <div class="col-md-3 position-relative">
             <div class="side-bar-container">
                 <div class="side-bar">
-                    <div class="content">
-                        <h6 class="text-center mb-3 underlined">Navigation</h6>
+                    <div class="content pb-0">
 
-                        <div class="pagination">
-                            <a class="btn mr-3 rounded-a"><i class="fas fa-chevron-left"></i></a>
-                            <a class="btn current-page rounded-a">1</a>
-                            <a class="btn rounded-a">2</a>
-                            <a class="btn rounded-a">3</a>
-                            <a class="btn rounded-a">4</a>
-                            <a class="btn ml-3 rounded-a"><i class="fas fa-chevron-right"></i></a>
+                        <h6 class="text-center underlined mb-4">Taxonomie</h6>
+
+                        <div class="taxonomy-tree">
+                            <div class="layer" style="background-color: rgba(87, 99, 255, 0.2)">
+                                <label>Lebewesen</label>
+                                <input type="checkbox" checked/>
+                            </div>
+                            <div class="layer" style="background-color: rgba(87, 182, 255, 0.2)">
+                                <label>Domäne</label>
+                                <input type="checkbox" checked/>
+                            </div>
+                            <div class="layer" style="background-color: rgba(87, 255, 247, 0.2)">
+                                <label>Reich</label>
+                                <input type="checkbox" checked/>
+                            </div>
+                            <div class="layer" style="background-color: rgba(87, 255, 166, 0.2)">
+                                <label>Stamm</label>
+                                <input type="checkbox" checked/>
+                            </div>
+                            <div class="layer" style="background-color: rgba(93, 255, 87, 0.2)">
+                                <label>Klasse</label>
+                                <input type="checkbox" checked/>
+                            </div>
+                            <div class="layer" style="background-color: rgba(177, 255, 87, 0.2)">
+                                <label>Ordnung</label>
+                                <input type="checkbox" checked/>
+                            </div>
+                            <div class="layer" style="background-color: rgba(255, 253, 87, 0.2)">
+                                <label>Familie</label>
+                                <input type="checkbox" checked/>
+                            </div>
+                            <div class="layer" style="background-color: rgba(255, 172, 87, 0.25)">
+                                <label>Gattung</label>
+                                <input type="checkbox" checked/>
+                            </div>
+                            <div class="layer" style="background-color: rgba(227, 142, 83, 0.25)">
+                                <label>Art</label>
+                                <input type="checkbox" checked/>
+                            </div>
                         </div>
 
-                        <hr class="mt-4 mb-4"/>
-
-                        <h6 class="text-center mb-3 underlined">Sortierung</h6>
-                        <div class="sort">
-
-                            <div class="mb-2 flexed align-items-center w-100 justify-content-between">
-                                <p class="mb-0">Titel</p>
-                                <a class="btn mb-0 rounded-a small-font">
-                                    <i class="fas fa-sort-amount-up"></i>
-                                </a>
-                            </div>
-
-                            <div class="mb-2 flexed align-items-center w-100 justify-content-between">
-                                <p class="mb-0">Seiten</p>
-                                <a class="btn mb-0 rounded-a small-font">
-                                    <i class="fas fa-sort-amount-up"></i>
-                                </a>
-                            </div>
-
-                            <hr class="mt-4 mb-4"/>
-
-                        </div>
                     </div>
                 </div>
             </div>
@@ -150,6 +159,38 @@
                         </div>
 
                         <hr />
+
+                        <h6 class="text-center mb-3 underlined">Navigation</h6>
+
+                        <div class="pagination">
+                            <a class="btn mr-3 rounded-a"><i class="fas fa-chevron-left"></i></a>
+                            <a class="btn current-page rounded-a">1</a>
+                            <a class="btn rounded-a">2</a>
+                            <a class="btn rounded-a">3</a>
+                            <a class="btn rounded-a">4</a>
+                            <a class="btn ml-3 rounded-a"><i class="fas fa-chevron-right"></i></a>
+                        </div>
+
+                        <hr class="mt-4 mb-4"/>
+
+                        <h6 class="text-center mb-3 underlined">Sortierung</h6>
+                        <div class="sort">
+
+                            <div class="mb-2 flexed align-items-center w-100 justify-content-between">
+                                <p class="mb-0">Titel</p>
+                                <a class="btn mb-0 rounded-a small-font">
+                                    <i class="fas fa-sort-amount-up"></i>
+                                </a>
+                            </div>
+
+                            <div class="mb-2 flexed align-items-center w-100 justify-content-between">
+                                <p class="mb-0">Seiten</p>
+                                <a class="btn mb-0 rounded-a small-font">
+                                    <i class="fas fa-sort-amount-up"></i>
+                                </a>
+                            </div>
+
+                        </div>
 
                     </div>
                 </div>

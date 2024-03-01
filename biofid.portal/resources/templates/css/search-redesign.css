@@ -1,15 +1,15 @@
 
 .search-header{
     position: sticky;
-    top:-1px;
+    top:0;
     z-index: 5;
-    box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 15px -3px, rgba(0, 0, 0, 0.05) 0px 4px 6px -2px;    height: 40px;
+    box-shadow: rgba(0, 0, 0, 0.1) -4px 9px 25px -6px;
 }
 
 .search-input {
     border-radius: 0;
     background-color: ghostwhite;
-    border-bottom:0;
+    border-color:lightgray;
 }
 
 .search-btn {
@@ -77,6 +77,40 @@
     cursor: pointer;
 }
 
+.side-bar-container .side-bar .taxonomy-tree{
+    width: 100%;
+}
+
+.side-bar-container .side-bar .taxonomy-tree .layer{
+    text-align: center;
+    padding-top: 6px;
+    padding-bottom: 6px;
+    padding-left: 12px;
+    padding-right: 12px;
+    margin-bottom: 20px;
+    position: relative;
+    width: 100%;
+    border-radius: 0px 16px 16px 0;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border:rgba(125,125,125, 0.3) 1px solid;
+}
+
+.side-bar-container .side-bar .taxonomy-tree .layer::before{
+    position: absolute;
+    bottom:-21px;
+    left:calc(50% - 1px);
+    height: 20px;
+    border-right:1px solid lightgray;
+    content: '';
+}
+
+.side-bar-container .side-bar .taxonomy-tree .layer label{
+    color:var(--dark);
+    margin: 0;
+}
+
 .thumbnail {
     width: 75px;
 }
@@ -105,6 +139,7 @@
 
 .document-card .document-header .title{
     font-weight: bold;
+    font-size: 16px;
     color:var(--secondary);
 }
 

@@ -1,4 +1,4 @@
-package org.texttechnologylab;
+package org.texttechnologylab.sparql;
 
 import io.micrometer.common.lang.Nullable;
 import org.apache.jena.query.QuerySolution;
@@ -19,6 +19,8 @@ public final class JenaSparqlFactory {
      */
     public static boolean initialize(){
         try{
+            if(isInitialized) return true;
+
             // TODO: Add there confg connectionstring loading and more.
             defaultConnection = RDFConnectionRemote.newBuilder()
                     .destination("http://localhost:3030/")

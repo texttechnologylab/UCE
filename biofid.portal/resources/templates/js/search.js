@@ -11,6 +11,10 @@ function startNewSearch(searchInput){
     $.ajax({
         url: "/api/search/default",
         type: "POST",
+        data: JSON.stringify({
+           searchInput: searchInput
+        }),
+        contentType: "application/json",
         //dataType: "json",
         success: function(response) {
             $('.view .search-result-container').html(response);
