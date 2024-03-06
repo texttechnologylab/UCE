@@ -2,6 +2,7 @@ package org.texttechnologylab;
 
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.search.DocumentSearchResult;
 import org.texttechnologylab.services.DatabaseService;
 import org.texttechnologylab.sparql.JenaSparqlFactory;
 
@@ -24,9 +25,12 @@ public class BiofidSearch {
      */
     private String searchPhrase;
     private List<String> searchTokens;
-    private List<String> stopwords;
     private List<BiofidSearchLayer> searchLayers;
-    private DatabaseService db = null;
+
+    private Integer currentPage = 0;
+    private final List<String> stopwords;
+    private final DatabaseService db;
+    private final Integer take = 15;
 
     /**
      * Creates a new instance of the BiofidSearch, throws exceptions if components couldn't be inited.
@@ -54,19 +58,37 @@ public class BiofidSearch {
     }
 
     /**
-     * Starts a new search with the Search instance
-     * @param skip
-     * @param take
+     * Starts a new search with the Search instance and returns the first results of the search
      * @return
      */
-    public List<Document> search(int skip, int take){
-        var foundDocuments = new ArrayList<Document>();
+    public List<Document> initSearch(){
+        DocumentSearchResult documentSearchResult = null;
 
-        if(searchLayers.contains(BiofidSearchLayer.NAMED_ENTITIES)){
-            foundDocuments.addAll(db.searchForDocuments(0, 15, searchTokens));
+        // Execute the metadata search. This layer is contained in the other layers, but there are some instances where
+        // we ONLY want to use the metadata search, so handle that specific case here.
+        if(searchLayers.stream().count() == 1 && searchLayers.contains(BiofidSearchLayer.METADATA)){
+            documentSearchResult = db.searchForDocuments(currentPage, take, searchTokens, BiofidSearchLayer.METADATA.name().toLowerCase());
         }
 
-        return foundDocuments;
+        // Execute the Named Entity search, which automatically executes metadata as well
+        if(searchLayers.contains(BiofidSearchLayer.NAMED_ENTITIES)){
+            documentSearchResult = db.searchForDocuments(currentPage, take, searchTokens, BiofidSearchLayer.NAMED_ENTITIES.name().toLowerCase());
+        }
+
+        assert documentSearchResult != null;
+        return db.getManyDocumentsByIds(documentSearchResult.getDocumentIds());
+    }
+
+    /**
+     * Returns the next X documents from the paginated search. Determine the page offset in the variable.
+     * @return
+     */
+    public List<Document> getSearchesForPage(int page){
+        currentPage = page;
+
+        // TODO: COntinue here: make the pagination happen
+
+        return null;
     }
 
     /**

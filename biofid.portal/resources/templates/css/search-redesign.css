@@ -1,3 +1,8 @@
+.search-result-container{
+    margin-top: 50px;
+    background-color: rgba(245, 245, 247, 0.9);
+    border-top:lightgray 1px solid;
+}
 
 .search-header{
     position: sticky;
@@ -29,7 +34,7 @@
     top: 1px;
     right:0;
     pointer-events: none;
-    margin-top: 24px;
+    margin-top:18px;
     border-bottom: 1px lightgray solid;
     margin-bottom: 48px;
 }
@@ -129,6 +134,7 @@
 .document-card:hover{
     border:1px gray solid;
     transition: 0.15s;
+    transform: scale(1.01, 1.01);
 }
 
 .document-card .document-header{

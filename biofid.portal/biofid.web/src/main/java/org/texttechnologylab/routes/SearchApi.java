@@ -3,19 +3,15 @@ package org.texttechnologylab.routes;
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
-import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.BiofidSearch;
 import org.texttechnologylab.BiofidSearchLayer;
-import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.services.DatabaseService;
 import org.texttechnologylab.services.UIMAService;
 import spark.ModelAndView;
 import spark.Route;
-import freemarker.template.Configuration;
 import spark.template.freemarker.FreeMarkerEngine;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class SearchApi {
@@ -38,10 +34,13 @@ public class SearchApi {
         Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
         var searchInput = requestBody.get("searchInput").toString();
 
-        var biofidSearch = new BiofidSearch(context, searchInput, new BiofidSearchLayer[]{BiofidSearchLayer.NAMED_ENTITIES});
-        var docs = biofidSearch.search(0, 15);
+        var biofidSearch = new BiofidSearch(context, searchInput, new BiofidSearchLayer[]{
+                BiofidSearchLayer.METADATA,
+                BiofidSearchLayer.NAMED_ENTITIES
+        });
+        var docs = biofidSearch.initSearch();
 
-        if(searchInput.equals("TEST")){
+        if (searchInput.equals("TEST")) {
             docs = this.db.searchForDocuments(0, 15);
         }
         model.put("documents", docs);

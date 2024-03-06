@@ -43,13 +43,13 @@
                 <div class="reader-container container">
 
                     <div class="header text-center flexed align-items-center justify-content-around">
-                        <a class="open-goethe-url-btn m-0" href="${document.getGoetheTitleInfo().getScrapedUrl()}"
+                        <a class="open-metadata-url-btn m-0" href="${document.getMetadataTitleInfo().getScrapedUrl()}"
                            target="_blank">
                             <i class="color-prime m-0 large-font fas fa-university"></i>
                         </a>
                         <div>
                             <h5>${document.getDocumentTitle()}</h5>
-                            <p class="text mb-0">${document.getGoetheTitleInfo().getPublished()}</p>
+                            <p class="text mb-0">${document.getMetadataTitleInfo().getPublished()}</p>
                         </div>
                         <p class="m-0 text">${document.getLanguage()?upper_case}</p>
                     </div>
@@ -90,9 +90,9 @@
 
                     <div class="group-box">
                         <p class="title">Original Dokument</p>
-                        <a href="${document.getGoetheTitleInfo().getScrapedUrl()}" target="_blank"
+                        <a href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank"
                            class="title-image mb-3">
-                            <img src="${document.getGoetheTitleInfo().getTitleImageUrl()}"/>
+                            <img src="${document.getMetadataTitleInfo().getTitleImageUrl()}"/>
                         </a>
                     </div>
 
@@ -106,9 +106,9 @@
 
                     <div class="group-box">
                         <p class="title">Seite <span class="current-page">1</span></p>
-                        <a class="btn open-goethe-url-page-btn" target="_blank"
-                           data-href="${document.getGoetheTitleInfo().getPageViewStartUrl()}"
-                           href="${document.getGoetheTitleInfo().getPageViewStartUrl()}">
+                        <a class="btn open-metadata-url-page-btn" target="_blank"
+                           data-href="${document.getMetadataTitleInfo().getPageViewStartUrl()}"
+                           href="${document.getMetadataTitleInfo().getPageViewStartUrl()}">
                             <i class="mr-2 fas fa-university"></i> Original
                         </a>
                     </div>
@@ -118,7 +118,7 @@
                         <button class="btn toggle-focus-btn">
                             <i class="fas fa-satellite-dish mr-2"></i> Toggle Fokus
                         </button>
-                        <a href="${document.getGoetheTitleInfo().getPdfUrl()}" class="btn">
+                        <a href="${document.getMetadataTitleInfo().getPdfUrl()}" class="btn">
                             <i class="fas fa-file-pdf mr-2"></i> Download PDF
                         </a>
                     </div>

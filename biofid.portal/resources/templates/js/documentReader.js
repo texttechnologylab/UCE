@@ -74,15 +74,15 @@ function checkScroll(){
 function handleFocusedPageChanged(){
     $('.side-bar-content .current-page').html(currentFocusedPage);
 
-    // We have to adjust the href of the goethe uni page
-    const url = $('.open-goethe-url-page-btn').data('href');
+    // We have to adjust the href of the metadata page
+    const url = $('.open-metadata-url-page-btn').data('href');
     const splited = url.split('/');
     const newId = parseInt(splited[splited.length - 1]) + currentFocusedPage - 1;
     let newUrl = "";
     for(let i = 0; i < splited.length - 1; i++){
         newUrl += splited[i] + "/";
     }
-    $('.side-bar-content .open-goethe-url-page-btn').attr('href', newUrl + newId.toString());
+    $('.side-bar-content .open-metadata-url-page-btn').attr('href', newUrl + newId.toString());
 }
 
 /**

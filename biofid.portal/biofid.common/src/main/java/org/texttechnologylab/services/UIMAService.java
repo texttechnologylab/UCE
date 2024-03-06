@@ -36,18 +36,7 @@ public class UIMAService {
     public UIMAService(GoetheUniversityService goetheUniversityService, DatabaseService db) {
         this.goetheUniversityService = goetheUniversityService;
         this.db = db;
-
-        // var storedDocument = db.getCompleteDocumentById(1);
-        // var pages = storedDocument.getPages(10, 0);
-        // TODO: Just for testing!
-        // TestDocument = XMIFolderToDocuments("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
-        //for(var doc: TestDocument){
-        //    db.saveDocument(doc);
-        //}
-        //XMIFolderDocumentsToDb("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
     }
-
-    public List<Document> TestDocument;
 
     /**
      * Imports all UIMA xmi files in a folder
@@ -114,7 +103,7 @@ public class UIMAService {
             document.setFullText(jCas.getDocumentText());
 
             // See if we can get any more informatiom from the goethe collections
-            document.setGoetheTitleInfo(goetheUniversityService.scrapeDocumentTitleInfo(document.getDocumentId()));
+            document.setMetadataTitleInfo(goetheUniversityService.scrapeDocumentTitleInfo(document.getDocumentId()));
 
             // Set the cleaned full text. That is the sum of all tokens except of all anomalies
             var cleanedText = new StringJoiner(" ");

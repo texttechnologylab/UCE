@@ -1,27 +1,21 @@
 package org.texttechnologylab.services;
 
+import org.apache.http.annotation.Obsolete;
 import org.hibernate.Hibernate;
 import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.Transaction;
-import org.hibernate.query.NativeQuery;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.search.DocumentSearchResult;
 import org.texttechnologylab.models.test.test;
-import org.texttechnologylab.utils.StringUtils;
 
-import javax.persistence.TypedQuery;
-import javax.persistence.criteria.Join;
-import javax.persistence.criteria.JoinType;
-import javax.persistence.criteria.Predicate;
-import javax.persistence.criteria.Root;
-import javax.print.Doc;
+import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
-import java.util.function.Consumer;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 @Service
 public class DatabaseService {
@@ -55,24 +49,65 @@ public class DatabaseService {
     }
 
     /**
+     * Returns a list of documents by a list of ids
+     * @return
+     */
+    public List<Document> getManyDocumentsByIds(List<Integer> documentIds){
+        return executeOperationSafely((session) -> {
+            var builder = session.getCriteriaBuilder();
+            var query = builder.createQuery(Document.class);
+            var root = query.from(Document.class);
+
+            // HARDCODED_SQL
+            query.select(root).where(root.get("id").in(documentIds));
+
+            var q = session.createQuery(query);
+            var docs = q.getResultList();
+            // We show the amount of pages so init these
+            for(var doc: docs){
+                Hibernate.initialize(doc.getPages());
+            }
+            return docs;
+        });
+    }
+
+    /**
      * Searches for documents with a variety of criterias. It's the main db search of the biofid portal
      * @param skip
      * @param take
      * @param searchTokens
      * @return
      */
-    public List<Document> searchForDocuments(int skip, int take, List<String> searchTokens){
+    public DocumentSearchResult searchForDocuments(int skip, int take, List<String> searchTokens, String layer){
 
         return executeOperationSafely((session) -> {
-            String queryString = "SELECT DISTINCT d.* " +
-                    "FROM document d " +
-                    "JOIN namedentity ne ON d.document_id = ne.document_id " +
-                    //"JOIN time t ON d.document_id = t.document_id " +
-                    "WHERE LOWER(ne.coveredtext) IN :searchTokens " +
-                    //"OR LOWER(t.coveredtext) IN :searchTokens " +
-                    "OFFSET :skip LIMIT :take ";
 
-            queryString = "SELECT * FROM (\n" +
+            var searchResult = session.doReturningWork((connection) -> {
+                DocumentSearchResult search = null;
+                try(var storedProcedure = connection.prepareCall("{call biofid_search_layer_" + layer + "(?, ?, ?, ?)}")){
+                    storedProcedure.setArray(1, connection.createArrayOf("text", searchTokens.toArray()));
+                    storedProcedure.setString(2, String.join("|", searchTokens).trim());
+                    storedProcedure.setInt(3, 10);
+                    storedProcedure.setInt(4, 0);
+
+                    var result = storedProcedure.executeQuery();
+                    while(result.next()){
+                        var documentCount = result.getInt("total_count_out");
+                        var documentIds = new ArrayList<Integer>();
+                        var documentIdsResult = result.getArray("document_ids");
+                        if (documentIdsResult != null) {
+                            var ids = (Integer[]) documentIdsResult.getArray();
+                            documentIds.addAll(Arrays.asList(ids));
+                        }
+                        search = new DocumentSearchResult(documentCount, documentIds);
+                    }
+                    return search;
+                }
+            });
+
+            return searchResult;
+
+            /*var queryString = "SELECT * FROM (\n" +
                     "    SELECT DISTINCT d.* \n" +
                     "    FROM document d \n" +
                     "    JOIN namedentity ne ON d.document_id = ne.document_id \n" +
@@ -94,15 +129,13 @@ public class DatabaseService {
             query.setParameter("searchTokens", searchTokens);
             query.setParameter("skip", skip);
             query.setParameter("take", take);
-            //query.setFirstResult(skip);
-            //query.setMaxResults(take);
 
             var docs = query.getResultList();
             // In the search view, for now we show the amount of pages so init them
             for(var doc: docs){
                 Hibernate.initialize(doc.getPages());
             }
-            return docs;
+            return docs; */
         });
     }
 
@@ -115,13 +148,6 @@ public class DatabaseService {
         return executeOperationSafely((session) -> {
             var criteriaQuery = session.getCriteriaBuilder().createQuery(Document.class);
             var docRoot = criteriaQuery.from(Document.class);
-
-            // Here, we can later insert more search critieras if we want
-            /*if (searchTerm != null && !searchTerm.isEmpty()) {
-                // Assuming you want to search by some property of Document
-                Predicate searchPredicate = criteriaBuilder.like(docRoot.get("propertyName"), "%" + searchTerm + "%");
-                criteriaQuery.where(searchPredicate);
-            }*/
 
             var query = session.createQuery(criteriaQuery);
             query.setFirstResult(skip);

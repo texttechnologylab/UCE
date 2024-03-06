@@ -4,13 +4,10 @@ import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 
 import javax.persistence.*;
-import java.text.Normalizer;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Entity
 @Table(name="document")
@@ -56,7 +53,7 @@ public class Document extends ModelBase {
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_id")
-    private GoetheTitleInfo goetheTitleInfo;
+    private MetadataTitleInfo metadataTitleInfo;
 
     public Document(){
 
@@ -78,12 +75,12 @@ public class Document extends ModelBase {
         this.fullTextCleaned = fullTextCleaned;
     }
 
-    public GoetheTitleInfo getGoetheTitleInfo() {
-        return goetheTitleInfo;
+    public MetadataTitleInfo getMetadataTitleInfo() {
+        return metadataTitleInfo;
     }
 
-    public void setGoetheTitleInfo(GoetheTitleInfo goetheTitleInfo) {
-        this.goetheTitleInfo = goetheTitleInfo;
+    public void setMetadataTitleInfo(MetadataTitleInfo metadataTitleInfo) {
+        this.metadataTitleInfo = metadataTitleInfo;
     }
 
     public List<WikipediaLink> getWikipediaLinks() {
@@ -185,7 +182,7 @@ public class Document extends ModelBase {
     }
 
     public String getDocumentTitle() {
-        var title = goetheTitleInfo.getTitle() == null ? documentTitle : goetheTitleInfo.getTitle();
+        var title = metadataTitleInfo.getTitle() == null ? documentTitle : metadataTitleInfo.getTitle();
         return title == null ? "(-)" : title;
     }
 

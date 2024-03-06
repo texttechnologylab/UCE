@@ -1,4 +1,4 @@
-<div class="mt-3">
+<div class="mt-0">
 
     <div class="header">
         <div class="flexed w-100 align-items-center justify-content-center">
@@ -78,7 +78,7 @@
                                             <div class="w-100">
                                                 <h6 class="open-document mb-0 title"
                                                     data-id="${document.getId()}">${document.getDocumentTitle()} </h6>
-                                                <label class="text-secondary small-font">(${document.getGoetheTitleInfo().getPublished()}
+                                                <label class="text-secondary small-font">(${document.getMetadataTitleInfo().getPublished()}
                                                     )</label>
                                             </div>
 

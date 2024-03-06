@@ -21,7 +21,7 @@ public class App {
         // Init DI
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
         var uimaService = context.getBean(UIMAService.class);
-
-        var test = uimaService.XMIToDocument("C:\\kevin\\projects\\biofid\\test_data\\064_10801712.xml.gz.xmi", false);
+        // Decomment if you want to import test documents
+        uimaService.XMIFolderDocumentsToDb("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
     }
 }

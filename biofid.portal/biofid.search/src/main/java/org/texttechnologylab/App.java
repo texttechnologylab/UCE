@@ -25,7 +25,7 @@ public class App {
             var search = new BiofidSearch(context,
                     "Biol in Paris und Montana",
                     new BiofidSearchLayer[]{BiofidSearchLayer.NAMED_ENTITIES, BiofidSearchLayer.TAXON});
-            var result = search.search(0, 15);
+            var result = search.initSearch();
         } catch (Exception ex) {
             var xd = "";
         }

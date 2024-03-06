@@ -24,7 +24,8 @@ footer {
 
 nav {
     border-bottom: var(--prime) 2px solid;
-    background-color: white;
+    background-color: ghostwhite;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
 
 nav .logo {
@@ -58,6 +59,10 @@ nav .selected-nav-btn::before {
     background-color: var(--prime);
     height: 30px;
     content: '';
+}
+
+.position-relative{
+    position: relative;
 }
 
 .text {

@@ -1,23 +1,15 @@
 package org.texttechnologylab.config;
 
-import org.hibernate.Session;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.jetbrains.annotations.NotNull;
-import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.orm.hibernate5.HibernateTransactionManager;
-import org.springframework.orm.hibernate5.LocalSessionFactoryBean;
-import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.test.test;
 
-import javax.sql.DataSource;
 import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
 
 @Configuration
 @EnableTransactionManagement
@@ -32,7 +24,7 @@ public class HibernateConf {
         var metadataSources = new MetadataSources(serviceRegistry);
         metadataSources.addAnnotatedClass(test.class);
         metadataSources.addAnnotatedClass(Block.class);
-        metadataSources.addAnnotatedClass(GoetheTitleInfo.class);
+        metadataSources.addAnnotatedClass(MetadataTitleInfo.class);
         metadataSources.addAnnotatedClass(Line.class);
         metadataSources.addAnnotatedClass(NamedEntity.class);
         metadataSources.addAnnotatedClass(Paragraph.class);
