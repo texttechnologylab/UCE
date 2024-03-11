@@ -63,11 +63,17 @@ public class DatabaseService {
 
             var q = session.createQuery(query);
             var docs = q.getResultList();
-            // We show the amount of pages so init these
-            for(var doc: docs){
+
+            // We show the amount of pages so init these and we want the documents to be in the same
+            // order the documentIds passed in were since they could have been sorted!
+            var sortedDocs = new Document[documentIds.size()];
+            for(var id: documentIds){
+                var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
+                // doc cannot be null.
                 Hibernate.initialize(doc.getPages());
+                sortedDocs[documentIds.indexOf(id)] = doc;
             }
-            return docs;
+            return Arrays.stream(sortedDocs).toList();
         });
     }
 
@@ -78,17 +84,24 @@ public class DatabaseService {
      * @param searchTokens
      * @return
      */
-    public DocumentSearchResult searchForDocuments(int skip, int take, List<String> searchTokens, String layer){
+    public DocumentSearchResult searchForDocuments(int skip,
+                                                   int take,
+                                                   List<String> searchTokens,
+                                                   String layer,
+                                                   boolean countAll){
 
         return executeOperationSafely((session) -> {
 
             var searchResult = session.doReturningWork((connection) -> {
                 DocumentSearchResult search = null;
-                try(var storedProcedure = connection.prepareCall("{call biofid_search_layer_" + layer + "(?, ?, ?, ?)}")){
+                try(var storedProcedure = connection.prepareCall("{call biofid_search_layer_" + layer + "(?, ?, ?, ?, ?, ?, ?)}")){
                     storedProcedure.setArray(1, connection.createArrayOf("text", searchTokens.toArray()));
                     storedProcedure.setString(2, String.join("|", searchTokens).trim());
-                    storedProcedure.setInt(3, 10);
-                    storedProcedure.setInt(4, 0);
+                    storedProcedure.setInt(3, take);
+                    storedProcedure.setInt(4, skip);
+                    storedProcedure.setBoolean(5, countAll);
+                    storedProcedure.setString(6, "ASC");
+                    storedProcedure.setString(7, "title");
 
                     var result = storedProcedure.executeQuery();
                     while(result.next()){

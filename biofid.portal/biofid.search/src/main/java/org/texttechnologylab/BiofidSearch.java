@@ -62,20 +62,8 @@ public class BiofidSearch {
      * @return
      */
     public List<Document> initSearch(){
-        DocumentSearchResult documentSearchResult = null;
-
-        // Execute the metadata search. This layer is contained in the other layers, but there are some instances where
-        // we ONLY want to use the metadata search, so handle that specific case here.
-        if(searchLayers.stream().count() == 1 && searchLayers.contains(BiofidSearchLayer.METADATA)){
-            documentSearchResult = db.searchForDocuments(currentPage, take, searchTokens, BiofidSearchLayer.METADATA.name().toLowerCase());
-        }
-
-        // Execute the Named Entity search, which automatically executes metadata as well
-        if(searchLayers.contains(BiofidSearchLayer.NAMED_ENTITIES)){
-            documentSearchResult = db.searchForDocuments(currentPage, take, searchTokens, BiofidSearchLayer.NAMED_ENTITIES.name().toLowerCase());
-        }
-
-        assert documentSearchResult != null;
+        DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
+        if(documentSearchResult == null) throw new NullPointerException("Document Init Search returned null - not empty.");
         return db.getManyDocumentsByIds(documentSearchResult.getDocumentIds());
     }
 
@@ -83,10 +71,31 @@ public class BiofidSearch {
      * Returns the next X documents from the paginated search. Determine the page offset in the variable.
      * @return
      */
-    public List<Document> getSearchesForPage(int page){
+    public List<Document> getSearchHitsForPage(int page){
+        // Adjust the current page and execute the search again
         currentPage = page;
+        var documentSearchResult = executeSearchOnDatabases(false);
+        if(documentSearchResult == null) throw new NullPointerException("Document Search returned null - not empty.");
+        // TODO: Continue here: make the pagination happen
+        return db.getManyDocumentsByIds(documentSearchResult.getDocumentIds());
+    }
 
-        // TODO: COntinue here: make the pagination happen
+    /**
+     * Executes a search request on the databases and returns a result object
+     * @param countAll determines whether we also count all search hits or just using pagination
+     * @return
+     */
+    private DocumentSearchResult executeSearchOnDatabases(boolean countAll){
+        // Execute the metadata search. This layer is contained in the other layers, but there are some instances where
+        // we ONLY want to use the metadata search, so handle that specific case here.
+        if(searchLayers.stream().count() == 1 && searchLayers.contains(BiofidSearchLayer.METADATA)){
+            return db.searchForDocuments(currentPage, take, searchTokens, BiofidSearchLayer.METADATA.name().toLowerCase(), countAll);
+        }
+
+        // Execute the Named Entity search, which automatically executes metadata as well
+        if(searchLayers.contains(BiofidSearchLayer.NAMED_ENTITIES)){
+            return db.searchForDocuments(currentPage, take, searchTokens, BiofidSearchLayer.NAMED_ENTITIES.name().toLowerCase(), countAll);
+        }
 
         return null;
     }
