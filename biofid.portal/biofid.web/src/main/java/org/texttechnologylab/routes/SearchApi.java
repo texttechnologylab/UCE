@@ -4,7 +4,7 @@ import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.BiofidSearch;
-import org.texttechnologylab.BiofidSearchLayer;
+import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.services.DatabaseService;
 import org.texttechnologylab.services.UIMAService;
 import spark.ModelAndView;
@@ -34,16 +34,16 @@ public class SearchApi {
         Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
         var searchInput = requestBody.get("searchInput").toString();
 
-        var biofidSearch = new BiofidSearch(context, searchInput, new BiofidSearchLayer[]{
-                BiofidSearchLayer.METADATA,
-                BiofidSearchLayer.NAMED_ENTITIES
+        var biofidSearch = new BiofidSearch(context, searchInput, new SearchLayer[]{
+                SearchLayer.METADATA,
+                SearchLayer.NAMED_ENTITIES
         });
-        var docs = biofidSearch.initSearch();
+        var searchState = biofidSearch.initSearch();
 
-        if (searchInput.equals("TEST")) {
-            docs = this.db.searchForDocuments(0, 15);
-        }
-        model.put("documents", docs);
+        //if (searchInput.equals("TEST")) {
+        //    docs = this.db.searchForDocuments(0, 15);
+        //}
+        model.put("searchState", searchState);
 
         return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
     });

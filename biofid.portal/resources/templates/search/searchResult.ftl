@@ -63,7 +63,7 @@
 
         <div class="col-md-6">
             <div>
-                <#list documents as document>
+                <#list searchState.getCurrentDocuments() as document>
                     <div class="flexed justify-content-center">
                         <div class="document-card">
                             <div>

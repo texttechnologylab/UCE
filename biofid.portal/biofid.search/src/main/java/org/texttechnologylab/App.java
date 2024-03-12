@@ -2,6 +2,7 @@ package org.texttechnologylab;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.SpringConfig;
+import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.sparql.JenaSparqlFactory;
 
 /**
@@ -22,10 +23,10 @@ public class App {
         try {
             var context = new AnnotationConfigApplicationContext(SpringConfig.class);
 
-            var search = new BiofidSearch(context,
+            /*var search = new BiofidSearch(context,
                     "Biol in Paris und Montana",
-                    new BiofidSearchLayer[]{BiofidSearchLayer.NAMED_ENTITIES, BiofidSearchLayer.TAXON});
-            var result = search.initSearch();
+                    new SearchLayer[]{SearchLayer.NAMED_ENTITIES, SearchLayer.TAXON});
+            var result = search.initSearch();*/
         } catch (Exception ex) {
             var xd = "";
         }

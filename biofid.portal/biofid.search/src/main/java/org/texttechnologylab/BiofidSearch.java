@@ -3,6 +3,9 @@ package org.texttechnologylab;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.search.DocumentSearchResult;
+import org.texttechnologylab.models.search.OrderByColumn;
+import org.texttechnologylab.models.search.SearchLayer;
+import org.texttechnologylab.models.search.SearchOrder;
 import org.texttechnologylab.services.DatabaseService;
 import org.texttechnologylab.sparql.JenaSparqlFactory;
 
@@ -19,18 +22,9 @@ import java.util.UUID;
  * Class that encapsulates all search layers within the biofid class
  */
 public class BiofidSearch {
-    private UUID searchId;
-    /**
-     * The raw search phrase
-     */
-    private String searchPhrase;
-    private List<String> searchTokens;
-    private List<BiofidSearchLayer> searchLayers;
-
-    private Integer currentPage = 0;
-    private final List<String> stopwords;
-    private final DatabaseService db;
-    private final Integer take = 15;
+    private final BiofidSearchState biofidSearchState;
+    private List<String> stopwords;
+    private DatabaseService db;
 
     /**
      * Creates a new instance of the BiofidSearch, throws exceptions if components couldn't be inited.
@@ -40,44 +34,48 @@ public class BiofidSearch {
      */
     public BiofidSearch(ApplicationContext serviceContext,
                         String searchPhrase,
-                        BiofidSearchLayer[] searchLayers) throws URISyntaxException, IOException {
+                        SearchLayer[] searchLayers) throws URISyntaxException, IOException {
 
-        this.searchLayers = Arrays.stream(searchLayers).toList();
+        this.biofidSearchState = new BiofidSearchState();
+        this.biofidSearchState.setSearchLayers(Arrays.stream(searchLayers).toList());
         // In case we want taxon search, we need to init the sparql database
-        if(Arrays.stream(searchLayers).anyMatch(l -> l == BiofidSearchLayer.TAXON)){
+        if(Arrays.stream(searchLayers).anyMatch(l -> l == SearchLayer.TAXON)){
             JenaSparqlFactory.initialize();
         }
+        initServices(serviceContext);
 
-        this.searchId = UUID.randomUUID();
-        this.db = serviceContext.getBean(DatabaseService.class);
-        // TODO: Add more language support in the future
-        this.stopwords = loadStopwords("de-DE");
+        this.biofidSearchState.setSearchPhrase(searchPhrase);
+        this.biofidSearchState.setSearchTokens(cleanSearchPhrase(searchPhrase));
+    }
 
-        this.searchPhrase = searchPhrase;
-        this.searchTokens = cleanSearchPhrase(searchPhrase);
+    public BiofidSearch(ApplicationContext serviceContext, BiofidSearchState biofidSearchState) throws URISyntaxException, IOException {
+        initServices(serviceContext);
+        this.biofidSearchState = biofidSearchState;
     }
 
     /**
      * Starts a new search with the Search instance and returns the first results of the search
      * @return
      */
-    public List<Document> initSearch(){
+    public BiofidSearchState initSearch(){
         DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
         if(documentSearchResult == null) throw new NullPointerException("Document Init Search returned null - not empty.");
-        return db.getManyDocumentsByIds(documentSearchResult.getDocumentIds());
+        biofidSearchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
+        return biofidSearchState;
     }
 
     /**
      * Returns the next X documents from the paginated search. Determine the page offset in the variable.
      * @return
      */
-    public List<Document> getSearchHitsForPage(int page){
+    public BiofidSearchState getSearchHitsForPage(int page){
         // Adjust the current page and execute the search again
-        currentPage = page;
+        this.biofidSearchState.setCurrentPage(page);
         var documentSearchResult = executeSearchOnDatabases(false);
         if(documentSearchResult == null) throw new NullPointerException("Document Search returned null - not empty.");
         // TODO: Continue here: make the pagination happen
-        return db.getManyDocumentsByIds(documentSearchResult.getDocumentIds());
+        biofidSearchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
+        return biofidSearchState;
     }
 
     /**
@@ -88,15 +86,26 @@ public class BiofidSearch {
     private DocumentSearchResult executeSearchOnDatabases(boolean countAll){
         // Execute the metadata search. This layer is contained in the other layers, but there are some instances where
         // we ONLY want to use the metadata search, so handle that specific case here.
-        if(searchLayers.stream().count() == 1 && searchLayers.contains(BiofidSearchLayer.METADATA)){
-            return db.searchForDocuments(currentPage, take, searchTokens, BiofidSearchLayer.METADATA.name().toLowerCase(), countAll);
+        if(biofidSearchState.getSearchLayers().stream().count() == 1 && biofidSearchState.getSearchLayers().contains(SearchLayer.METADATA)){
+            return db.searchForDocuments(biofidSearchState.getCurrentPage(),
+                    biofidSearchState.getTake(),
+                    biofidSearchState.getSearchTokens(),
+                    SearchLayer.METADATA,
+                    countAll,
+                    SearchOrder.ASCENDING,
+                    OrderByColumn.TITLE);
         }
 
         // Execute the Named Entity search, which automatically executes metadata as well
-        if(searchLayers.contains(BiofidSearchLayer.NAMED_ENTITIES)){
-            return db.searchForDocuments(currentPage, take, searchTokens, BiofidSearchLayer.NAMED_ENTITIES.name().toLowerCase(), countAll);
+        if(biofidSearchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES)){
+            return db.searchForDocuments(biofidSearchState.getCurrentPage(),
+                    biofidSearchState.getTake(),
+                    biofidSearchState.getSearchTokens(),
+                    SearchLayer.NAMED_ENTITIES,
+                    countAll,
+                    SearchOrder.ASCENDING,
+                    OrderByColumn.TITLE);
         }
-
         return null;
     }
 
@@ -123,6 +132,13 @@ public class BiofidSearch {
 
         return splited;
     }
+
+    private void initServices(ApplicationContext serviceContext) throws URISyntaxException, IOException {
+        this.db = serviceContext.getBean(DatabaseService.class);
+        // TODO: Add more language support in the future
+        this.stopwords = loadStopwords("de-DE");
+    }
+
 
 }
 
