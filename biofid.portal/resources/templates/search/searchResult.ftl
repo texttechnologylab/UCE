@@ -3,7 +3,7 @@
     <div class="header">
         <div class="flexed w-100 align-items-center justify-content-center">
             <button class="btn selected-btn">
-                Suchergebnisse <span class="hits">12.138</span>
+                Suchergebnisse <span class="hits">${searchState.getTotalHits()}</span>
             </button>
         </div>
     </div>
@@ -97,13 +97,84 @@
                                             </p>
                                         </div>
 
-                                        <div class="search-hits">
-                                            <span><i class="fas fa-map-marker-alt"></i> Schweiz</span>
-                                            <span><i class="fas fa-user-tag"></i> Arnold</span>
-                                            <span><i class="fas fa-sitemap"></i> Verein</span>
-                                            <span><i class="fas fa-th"></i> Bett</span>
-                                            <span><i class="fas fa-tenge"></i> Pflanzen</span>
+                                        <#assign foundLocations = searchState.getAnnotationsByTypeAndDocumentId("NamedEntities", document.getId(), "LOCATION")>
+                                        <#assign foundPersons = searchState.getAnnotationsByTypeAndDocumentId("NamedEntities", document.getId(), "PERSON")>
+                                        <#assign foundOrgas = searchState.getAnnotationsByTypeAndDocumentId("NamedEntities", document.getId(), "ORGANIZATION")>
+                                        <#assign foundMisc = searchState.getAnnotationsByTypeAndDocumentId("NamedEntities", document.getId(), "MISC")>
+                                        <#assign foundTaxons = searchState.getAnnotationsByTypeAndDocumentId("Taxons", document.getId(), "")>
+                                        <#assign foundTimes = searchState.getAnnotationsByTypeAndDocumentId("Times", document.getId(), "")>
+
+                                        <div class="flexed align-items-center justify-content-between small text mt-2 text-center">
+                                            <span class="w-100 text-center"><i
+                                                        class="fas fa-map-marker-alt mr-1"></i>${foundLocations?size}</span>
+                                            <span class="w-100 text-center"><i
+                                                        class="fas fa-user-tag mr-1"></i>${foundPersons?size}</span>
+                                            <span class="w-100 text-center"><i
+                                                        class="fas fa-sitemap mr-1"></i>${foundOrgas?size}</span>
+                                            <span class="w-100 text-center"><i
+                                                        class="fas fa-th mr-1"></i>${foundMisc?size}</span>
+                                            <span class="w-100 text-center"><i
+                                                        class="fas fa-tenge mr-1"></i>${foundTaxons?size}</span>
+                                            <span class="w-100 text-center"><i
+                                                        class="fas fa-clock mr-1"></i>${foundTimes?size}</span>
+                                            <a class="btn annotation-hit-container-expander" data-expanded="false">
+                                                <i class="fas fa-chevron-down"></i>
+                                            </a>
                                         </div>
+
+                                        <#function getClassForAnnotation coveredText>
+                                            <#assign class = "text"?string>
+                                            <#assign coveredTextLowerCase = coveredText?lower_case>
+                                            <#list searchState.getSearchTokens() as token>
+                                                <#if coveredTextLowerCase?contains(token?lower_case)>
+                                                    <#assign class = "color-secondary font-weight-bold">
+                                                    <#break>
+                                                </#if>
+                                            </#list>
+                                            <#return class>
+                                        </#function>
+
+                                        <div class="annotation-hit-container display-none">
+                                            <div class="row m-0">
+                                                <div class="search-hits col-2">
+                                                    <#list foundLocations as annotation>
+                                                        <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
+                                                        <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                                    </#list>
+                                                </div>
+                                                <div class="search-hits col-2">
+                                                    <#list foundPersons as annotation>
+                                                        <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
+                                                        <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                                    </#list>
+                                                </div>
+                                                <div class="search-hits col-2">
+                                                    <#list foundOrgas as annotation>
+                                                        <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
+                                                        <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                                    </#list>
+                                                </div>
+                                                <div class="search-hits col-2">
+                                                    <#list foundMisc as annotation>
+                                                        <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
+                                                        <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                                    </#list>
+                                                </div>
+                                                <div class="search-hits col-2">
+                                                    <#list foundTaxons as annotation>
+                                                        <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
+                                                        <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                                    </#list>
+                                                </div>
+                                                <div class="search-hits col-2">
+                                                    <#list foundTimes as annotation>
+                                                        <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
+                                                        <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                                    </#list>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                     </div>
                                 </div>
                             </div>
@@ -124,50 +195,59 @@
                         <div class="entry">
                             <div class="flexed align-items-center w-100 justify-content-between">
                                 <p class="mb-0"><i class="fas fa-map-marker-alt mr-1"></i> Orte</p>
-                                <label class="text mb-0">134</label>
+                                <label class="text mb-0">${searchState.getNamedEntitiesByType("LOCATION")?size}</label>
                             </div>
                         </div>
 
                         <div class="entry">
                             <div class="flexed align-items-center w-100 justify-content-between">
                                 <p class="mb-0"><span><i class="fas fa-user-tag mr-1"></i> Personen</p>
-                                <label class="text mb-0">134</label>
+                                <label class="text mb-0">${searchState.getNamedEntitiesByType("PERSON")?size}</label>
                             </div>
                         </div>
 
                         <div class="entry">
                             <div class="flexed align-items-center w-100 justify-content-between">
                                 <p class="mb-0"><i class="fas fa-sitemap mr-1"></i> Organisationen</p>
-                                <label class="text mb-0">134</label>
+                                <label class="text mb-0">${searchState.getNamedEntitiesByType("ORGANIZATION")?size}</label>
                             </div>
                         </div>
 
                         <div class="entry">
                             <div class="flexed align-items-center w-100 justify-content-between">
                                 <p class="mb-0"><i class="fas fa-th mr-1"></i> Sonstiges</p>
-                                <label class="text mb-0">134</label>
+                                <label class="text mb-0">${searchState.getNamedEntitiesByType("MISC")?size}</label>
                             </div>
                         </div>
 
-                        <hr />
+                        <hr/>
 
                         <div class="entry">
                             <div class="flexed align-items-center w-100 justify-content-between">
                                 <p class="mb-0"><i class="fas fa-tenge mr-1"></i> Taxone</p>
-                                <label class="text mb-0">134</label>
+                                <label class="text mb-0">${searchState.getFoundTaxons()?size}</label>
+                            </div>
+                        </div>
+                        <div class="entry">
+                            <div class="flexed align-items-center w-100 justify-content-between">
+                                <p class="mb-0"><i class="fas fa-clock mr-1"></i> Zeiten</p>
+                                <label class="text mb-0">${searchState.getFoundTimes()?size}</label>
                             </div>
                         </div>
 
-                        <hr />
+                        <hr/>
 
                         <h6 class="text-center mb-3 underlined">Navigation</h6>
 
                         <div class="pagination">
                             <a class="btn mr-3 rounded-a"><i class="fas fa-chevron-left"></i></a>
-                            <a class="btn current-page rounded-a">1</a>
-                            <a class="btn rounded-a">2</a>
-                            <a class="btn rounded-a">3</a>
-                            <a class="btn rounded-a">4</a>
+                            <#list 1..(searchState.getTotalPages()) as i>
+                                <#if i == searchState.getCurrentPage() + 1>
+                                    <a class="btn rounded-a current-page">${i}</a>
+                                <#else>
+                                    <a class="btn rounded-a">${i}</a>
+                                </#if>
+                            </#list>
                             <a class="btn ml-3 rounded-a"><i class="fas fa-chevron-right"></i></a>
                         </div>
 

@@ -1,7 +1,6 @@
 package org.texttechnologylab;
 
 import org.springframework.context.ApplicationContext;
-import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.search.DocumentSearchResult;
 import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
@@ -13,10 +12,8 @@ import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
-import java.util.UUID;
 
 /**
  * Class that encapsulates all search layers within the biofid class
@@ -61,6 +58,10 @@ public class BiofidSearch {
         DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
         if(documentSearchResult == null) throw new NullPointerException("Document Init Search returned null - not empty.");
         biofidSearchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
+        biofidSearchState.setTotalHits(documentSearchResult.getDocumentCount());
+        biofidSearchState.setFoundNamedEntities(documentSearchResult.getFoundNamedEntities());
+        biofidSearchState.setFoundTaxons(documentSearchResult.getFoundTaxons());
+        biofidSearchState.setFoundTimes(documentSearchResult.getFoundTimes());
         return biofidSearchState;
     }
 
@@ -73,7 +74,6 @@ public class BiofidSearch {
         this.biofidSearchState.setCurrentPage(page);
         var documentSearchResult = executeSearchOnDatabases(false);
         if(documentSearchResult == null) throw new NullPointerException("Document Search returned null - not empty.");
-        // TODO: Continue here: make the pagination happen
         biofidSearchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
         return biofidSearchState;
     }
@@ -92,7 +92,7 @@ public class BiofidSearch {
                     biofidSearchState.getSearchTokens(),
                     SearchLayer.METADATA,
                     countAll,
-                    SearchOrder.ASCENDING,
+                    SearchOrder.ASC,
                     OrderByColumn.TITLE);
         }
 
@@ -103,7 +103,7 @@ public class BiofidSearch {
                     biofidSearchState.getSearchTokens(),
                     SearchLayer.NAMED_ENTITIES,
                     countAll,
-                    SearchOrder.ASCENDING,
+                    SearchOrder.ASC,
                     OrderByColumn.TITLE);
         }
         return null;

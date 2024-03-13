@@ -28,7 +28,7 @@ BEGIN
     WITH documents_query AS (
         SELECT DISTINCT d.id
         FROM document d
-        WHERE d.documenttitle = ANY(input1) OR d.language = ANY(input1)
+        WHERE d.documenttitle ~* input2 OR d.language ~* input2
         
         UNION
         
@@ -42,21 +42,21 @@ BEGIN
         SELECT DISTINCT d.id
         FROM document d 
         JOIN namedentity ne ON d.id = ne.document_id 
-        WHERE ne.coveredtext = ANY(input1)
+        WHERE ne.coveredtext ~* input2
         
         UNION
         
         SELECT DISTINCT d.id
         FROM document d 
         JOIN time t ON d.id = t.document_id
-        WHERE t.coveredtext = ANY(input1)
+        WHERE t.coveredtext ~* input2
         
         UNION
         
         SELECT DISTINCT d.id
         FROM document d
         JOIN taxon ta ON d.id = ta.document_id
-        WHERE ta.coveredtext = ANY(input1)
+        WHERE ta.coveredtext ~* input2
     ),
     -- Count all found documents
     counted_documents AS (

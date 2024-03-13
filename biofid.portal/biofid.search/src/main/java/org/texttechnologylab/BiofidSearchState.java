@@ -1,9 +1,12 @@
 package org.texttechnologylab;
 
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.corpus.Page;
+import org.texttechnologylab.models.search.AnnotationSearchResult;
 import org.texttechnologylab.models.search.SearchLayer;
 
 import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 import java.util.UUID;
 
@@ -21,6 +24,10 @@ public class BiofidSearchState {
     private List<SearchLayer> searchLayers;
     private Integer currentPage = 0;
     private Integer take = 15;
+    private Integer totalHits;
+    private ArrayList<AnnotationSearchResult> foundNamedEntities;
+    private ArrayList<AnnotationSearchResult> foundTimes;
+    private ArrayList<AnnotationSearchResult> foundTaxons;
 
     /**
      * These are the current, paginated list of documents
@@ -29,6 +36,62 @@ public class BiofidSearchState {
 
     public BiofidSearchState(){
         this.searchId = UUID.randomUUID();
+    }
+
+    public Integer getTotalPages(){
+        if(totalHits < take) return 1;
+        return (int) Math.ceil((double) totalHits / take);
+    }
+
+    public Integer getTotalHits() {
+        return totalHits;
+    }
+
+    public void setTotalHits(Integer totalHits) {
+        this.totalHits = totalHits;
+    }
+
+    /**
+     * Returns the anootation type (NamedEntities, Taxons, Times etc.) of the given document
+     */
+    public List<AnnotationSearchResult> getAnnotationsByTypeAndDocumentId(String annotationType, Integer documentId, String neType){
+        List<AnnotationSearchResult> currentAnnotations = new ArrayList<>();
+        switch (annotationType){
+            case "NamedEntities": currentAnnotations = getNamedEntitiesByType(neType); break;
+            case "Taxons": currentAnnotations = foundTaxons; break;
+            case "Times": currentAnnotations = foundTimes; break;
+        }
+        currentAnnotations = currentAnnotations.stream().filter(a -> a.getDocumentId() == documentId).toList();
+        currentAnnotations = currentAnnotations.stream().sorted(Comparator.comparingInt(AnnotationSearchResult::getOccurrences).reversed()).toList();
+        return currentAnnotations;
+    }
+
+    public List<AnnotationSearchResult> getNamedEntitiesByType(String type){
+        return  foundNamedEntities.stream().filter(ne -> ne.getInfo().equals(type)).toList();
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundNamedEntities() {
+        return foundNamedEntities;
+    }
+
+    public void setFoundNamedEntities(ArrayList<AnnotationSearchResult> foundNamedEntities) {
+        this.foundNamedEntities = foundNamedEntities;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundTimes() {
+        return foundTimes;
+    }
+
+    public void setFoundTimes(ArrayList<AnnotationSearchResult> foundTimes) {
+        this.foundTimes = foundTimes;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundTaxons() {
+        return foundTaxons;
+    }
+
+    public void setFoundTaxons(ArrayList<AnnotationSearchResult> foundTaxons) {
+        this.foundTaxons = foundTaxons;
     }
 
     public void setCurrentDocuments(List<Document> currentDocuments) {

@@ -85,6 +85,10 @@ nav .selected-nav-btn::before {
     font-size: x-large;
 }
 
+.color-dark{
+    color: var(--dark);
+}
+
 .color-prime {
     color: var(--prime);
 }

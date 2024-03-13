@@ -60,5 +60,5 @@ function openNewDocumentReadView(id){
 $(document).ready(function () {
     console.log('Webpage loaded!');
     // TODO: Just testing
-    startNewSearch('TEST');
+    startNewSearch('1885');
 })

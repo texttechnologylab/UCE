@@ -25,3 +25,20 @@ function startNewSearch(searchInput){
         }
     });
 }
+
+/**
+ * Handles the expanding and de-expanding of the annotation hit container in each document card
+ */
+$('body').on('click', '.search-result-container .annotation-hit-container-expander', function(){
+    const $hitContainer = $(this).parent().next('.annotation-hit-container');
+    const expanded = $(this).data('expanded');
+    if(expanded){
+        $(this).find('i').removeClass('fa-chevron-up').addClass('fa-chevron-down');
+        $hitContainer.fadeOut(150);
+    } else{
+        $(this).find('i').removeClass('fa-chevron-down').addClass('fa-chevron-up');
+        $hitContainer.fadeIn(150);
+    }
+
+    $(this).data('expanded', !expanded);
+})

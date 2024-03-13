@@ -1,5 +1,6 @@
 .search-result-container{
     margin-top: 50px;
+    min-height: 100vh;
     background-color: rgba(245, 245, 247, 0.9);
     border-top:lightgray 1px solid;
 }
@@ -122,6 +123,7 @@
 
 .document-card{
     max-width: 900px;
+    width: 100%;
     border:lightgray 1px solid;
     background-color: ghostwhite;
     padding: 16px;
@@ -134,7 +136,6 @@
 .document-card:hover{
     border:1px gray solid;
     transition: 0.15s;
-    transform: scale(1.01, 1.01);
 }
 
 .document-card .document-header{
@@ -156,24 +157,54 @@
     cursor: pointer;
 }
 
-.document-card .search-hits{
-    display: flex;
-    align-items: center;
-    justify-content: start;
-    margin-top: 8px;
+.document-card .annotation-hit-container-expander{
+    border:lightgray 1px solid;
+    cursor: pointer;
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
 }
 
-.document-card span{
+.document-card .annotation-hit-container-expander i{
+    color:var(--secondary);
+    margin: 0;
+    font-weight:bold;
+}
+
+.document-card .annotation-hit-container{
+    width: 100%;
+    margin-top: -1px !important;
+    overflow-y: auto;
+    border: Lightgray 1px solid;
+    border-bottom-left-radius: 6px;
+    border-bottom-right-radius: 6px;
+    padding-left: 6px;
+    overflow-x: hidden;
+    max-height: 400px;
+}
+
+.document-card .search-hits{
+    width: 100%;
+    margin-top: 8px;
+    padding: 0;
+}
+
+.document-card .search-hits span{
     font-size: small;
-    color:gray;
-    text-decoration: underline;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    word-break: break-word;
     border-radius: 16px;
     margin-right: 12px;
-    flex-wrap: wrap;
+}
+
+.document-card .search-hits span i{
+    display: none;
 }
 
 .document-card .content {
     height: 100%;
+    max-width: 100%;
 }
 
 .document-card .snippet-content{
