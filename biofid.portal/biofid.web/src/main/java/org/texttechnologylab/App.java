@@ -71,6 +71,7 @@ public class App {
 
             path("/search", () -> {
                 post("/default", searchApi.search);
+                get("/active/page", searchApi.activeSearchPage);
             });
 
             path("/document", () -> {

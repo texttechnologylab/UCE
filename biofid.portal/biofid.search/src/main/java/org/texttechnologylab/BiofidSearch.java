@@ -87,7 +87,7 @@ public class BiofidSearch {
         // Execute the metadata search. This layer is contained in the other layers, but there are some instances where
         // we ONLY want to use the metadata search, so handle that specific case here.
         if(biofidSearchState.getSearchLayers().stream().count() == 1 && biofidSearchState.getSearchLayers().contains(SearchLayer.METADATA)){
-            return db.searchForDocuments(biofidSearchState.getCurrentPage(),
+            return db.searchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
                     biofidSearchState.getTake(),
                     biofidSearchState.getSearchTokens(),
                     SearchLayer.METADATA,
@@ -98,7 +98,7 @@ public class BiofidSearch {
 
         // Execute the Named Entity search, which automatically executes metadata as well
         if(biofidSearchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES)){
-            return db.searchForDocuments(biofidSearchState.getCurrentPage(),
+            return db.searchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
                     biofidSearchState.getTake(),
                     biofidSearchState.getSearchTokens(),
                     SearchLayer.NAMED_ENTITIES,

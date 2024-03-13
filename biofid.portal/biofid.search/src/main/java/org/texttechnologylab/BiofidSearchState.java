@@ -22,7 +22,7 @@ public class BiofidSearchState {
     private String searchPhrase;
     private List<String> searchTokens;
     private List<SearchLayer> searchLayers;
-    private Integer currentPage = 0;
+    private Integer currentPage = 1;
     private Integer take = 15;
     private Integer totalHits;
     private ArrayList<AnnotationSearchResult> foundNamedEntities;
