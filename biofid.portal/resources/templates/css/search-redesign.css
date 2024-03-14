@@ -121,6 +121,21 @@
     width: 75px;
 }
 
+.sort-container {
+    border: 1px lightgray solid;
+    position: sticky;
+    top:40px;
+    background-color: ghostwhite;
+}
+
+.sort-container .active-sort-btn{
+    background-color: var(--prime) !important;
+}
+
+.sort-container .active-sort-btn i{
+    color: white;
+}
+
 .document-card{
     max-width: 900px;
     width: 100%;
@@ -160,8 +175,7 @@
 .document-card .annotation-hit-container-expander{
     border:lightgray 1px solid;
     cursor: pointer;
-    border-bottom-left-radius: 0;
-    border-bottom-right-radius: 0;
+    border-radius: 0;
 }
 
 .document-card .annotation-hit-container-expander i{

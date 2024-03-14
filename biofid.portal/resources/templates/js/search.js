@@ -80,3 +80,39 @@ $('body').on('click', '.search-result-container .annotation-hit-container-expand
 
     $(this).data('expanded', !expanded);
 })
+
+/**
+ * Handles the sorting of the documents through their sort buttons
+ */
+$('body').on('click', '.sort-container .sort-btn', function(){
+    const orderBy = $(this).data('orderby');
+    const curOrder = $(this).data('curorder');
+    const searchId = $('.search-state').data('id');
+
+    $.ajax({
+        url: "/api/search/active/sort?searchId=" + searchId + "&order=" + curOrder + "&orderBy=" + orderBy,
+        type: "GET",
+        success: function (response) {
+            // Render the new documents
+            $('.view .search-result-container .document-list-include').html(response);
+        },
+        error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+            $('.view .search-result-container .document-list-include').html(xhr.responseText);
+        }
+    });
+
+    // Highlight the correct button
+    if(curOrder === "ASC"){
+        $(this).find('i').removeClass('fa-sort-amount-up').addClass('fa-sort-amount-down');
+        $(this).data('curorder', 'DESC');
+    } else{
+        $(this).find('i').removeClass('fa-sort-amount-down').addClass('fa-sort-amount-up');
+        $(this).data('curorder', 'ASC');
+    }
+
+    $(this).closest('.sort-container').find('.sort-btn').each(function(){
+        $(this).removeClass('active-sort-btn');
+    })
+    $(this).addClass('active-sort-btn');
+})

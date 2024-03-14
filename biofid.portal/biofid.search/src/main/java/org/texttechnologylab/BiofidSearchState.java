@@ -3,7 +3,9 @@ package org.texttechnologylab;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.corpus.Page;
 import org.texttechnologylab.models.search.AnnotationSearchResult;
+import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
+import org.texttechnologylab.models.search.SearchOrder;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -25,6 +27,8 @@ public class BiofidSearchState {
     private Integer currentPage = 1;
     private Integer take = 15;
     private Integer totalHits;
+    private SearchOrder order = SearchOrder.ASC;
+    private OrderByColumn orderBy = OrderByColumn.TITLE;
     private ArrayList<AnnotationSearchResult> foundNamedEntities;
     private ArrayList<AnnotationSearchResult> foundTimes;
     private ArrayList<AnnotationSearchResult> foundTaxons;
@@ -36,6 +40,22 @@ public class BiofidSearchState {
 
     public BiofidSearchState(){
         this.searchId = UUID.randomUUID();
+    }
+
+    public SearchOrder getOrder() {
+        return order;
+    }
+
+    public void setOrder(SearchOrder order) {
+        this.order = order;
+    }
+
+    public OrderByColumn getOrderBy() {
+        return orderBy;
+    }
+
+    public void setOrderBy(OrderByColumn orderBy) {
+        this.orderBy = orderBy;
     }
 
     public Integer getTotalPages(){

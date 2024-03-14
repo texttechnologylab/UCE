@@ -23,8 +23,29 @@
             </div>
         </div>
 
-        <div class="col-md-6 document-list-include">
-            <#include "*/search/components/documentList.ftl" >
+
+        <div class="col-md-6">
+            <div class="flexed align-items-center justify-content-between sort-container pl-3 pr-3 pt-2 pb-2 mb-3">
+                <h6 class="m-0">Sortierung</h6>
+                <div class="flexed">
+                    <div class="flexed align-items-center w-100">
+                        <p class="mb-0 mr-1">Published</p>
+                        <a class="btn m-0 rounded-a small-font sort-btn" data-orderby="published" data-curorder="ASC">
+                            <i class="fas fa-sort-amount-up"></i>
+                        </a>
+                    </div>
+                    <div class="ml-2 flexed align-items-center w-100 justify-content-between">
+                        <p class="mb-0 mr-1">Titel</p>
+                        <a class="btn m-0 rounded-a small-font sort-btn active-sort-btn" data-orderby="title"
+                           data-curorder="ASC">
+                            <i class="fas fa-sort-amount-up"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="document-list-include">
+                <#include "*/search/components/documentList.ftl" >
+            </div>
         </div>
 
         <div class="col-md-3 position-relative">
@@ -83,27 +104,6 @@
 
                         <div class="navigation-include">
                             <#include "*/search/components/navigation.ftl">
-                        </div>
-
-                        <hr class="mt-4 mb-4"/>
-
-                        <h6 class="text-center mb-3 underlined">Sortierung</h6>
-                        <div class="sort">
-
-                            <div class="mb-2 flexed align-items-center w-100 justify-content-between">
-                                <p class="mb-0">Titel</p>
-                                <a class="btn mb-0 rounded-a small-font">
-                                    <i class="fas fa-sort-amount-up"></i>
-                                </a>
-                            </div>
-
-                            <div class="mb-2 flexed align-items-center w-100 justify-content-between">
-                                <p class="mb-0">Seiten</p>
-                                <a class="btn mb-0 rounded-a small-font">
-                                    <i class="fas fa-sort-amount-up"></i>
-                                </a>
-                            </div>
-
                         </div>
 
                     </div>

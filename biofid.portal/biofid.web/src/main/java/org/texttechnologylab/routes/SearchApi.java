@@ -5,7 +5,9 @@ import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.BiofidSearch;
 import org.texttechnologylab.BiofidSearchState;
+import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
+import org.texttechnologylab.models.search.SearchOrder;
 import org.texttechnologylab.services.DatabaseService;
 import org.texttechnologylab.services.UIMAService;
 import spark.ModelAndView;
@@ -32,6 +34,27 @@ public class SearchApi {
         this.db = serviceContext.getBean(DatabaseService.class);
         this.activeSearches = new HashMap<String, BiofidSearchState>();
     }
+
+    public Route activeSearchSort = ((request, response) -> {
+        var searchId = request.queryParams("searchId");
+        var order = request.queryParams("order").toUpperCase();
+        var orderBy = request.queryParams("orderBy").toUpperCase();
+        if(!activeSearches.containsKey(searchId)){
+            // TODO: Log here and return something? Dont know what yet
+        }
+
+        // Sort the current search state.
+        var activeSearchState = activeSearches.get(searchId);
+        activeSearchState.setOrder(SearchOrder.valueOf(order));
+        activeSearchState.setOrderBy(OrderByColumn.valueOf(orderBy));
+        var biofidSearch = new BiofidSearch(this.context, activeSearchState);
+        activeSearchState = biofidSearch.getSearchHitsForPage(activeSearchState.getCurrentPage());
+
+        var model = new HashMap<String, Object>();
+        model.put("searchState", activeSearchState);
+
+        return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/components/documentList.ftl"));
+    });
 
     public Route activeSearchPage = ((request, response) -> {
         var result = new HashMap<>();
@@ -81,4 +104,5 @@ public class SearchApi {
 
         return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
     });
+
 }

@@ -1,7 +1,7 @@
 <div class="pagination" data-max="${searchState.getTotalPages()}" data-cur="${searchState.getCurrentPage()}">
     <a class="btn mr-3 rounded-a next-page-btn" data-direction="-"><i class="fas fa-chevron-left"></i></a>
-    <#assign start = searchState.getCurrentPage() - 3>
-    <#assign end = searchState.getCurrentPage() + 3>
+    <#assign start = searchState.getCurrentPage() - 2>
+    <#assign end = searchState.getCurrentPage() + 2>
     <#assign totalPages = searchState.getTotalPages()>
 
     <#if (start < 1)>

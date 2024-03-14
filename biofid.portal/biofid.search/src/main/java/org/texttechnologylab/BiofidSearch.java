@@ -92,8 +92,8 @@ public class BiofidSearch {
                     biofidSearchState.getSearchTokens(),
                     SearchLayer.METADATA,
                     countAll,
-                    SearchOrder.ASC,
-                    OrderByColumn.TITLE);
+                    biofidSearchState.getOrder(),
+                    biofidSearchState.getOrderBy());
         }
 
         // Execute the Named Entity search, which automatically executes metadata as well
@@ -103,8 +103,8 @@ public class BiofidSearch {
                     biofidSearchState.getSearchTokens(),
                     SearchLayer.NAMED_ENTITIES,
                     countAll,
-                    SearchOrder.ASC,
-                    OrderByColumn.TITLE);
+                    biofidSearchState.getOrder(),
+                    biofidSearchState.getOrderBy());
         }
         return null;
     }
