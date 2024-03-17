@@ -1,3 +1,0 @@
-{
-  "defaultSearch": "SELECT ?scientificName ?authorship ?taxonRank ?taxonomicStatus ?kingdom\nWHERE {\n\t?subject rdf:type ?type ;\n  \tdwc:scientificName ?scientificName ;\n    dwc:scientificNameAuthorship ?authorship ;\n    dwc:taxonRank ?taxonRank ;\n    dwc:kingdom ?kingdom ;\n    dwc:taxonomicStatus ?taxonomicStatus .\n  \n  FILTER(CONTAINS(str(?scientificName), \"para\"))\n} LIMIT 100"
-}

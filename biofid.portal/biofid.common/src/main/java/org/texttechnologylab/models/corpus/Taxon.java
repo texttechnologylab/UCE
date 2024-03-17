@@ -1,18 +1,31 @@
 package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.gbif.GbifOccurrence;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.List;
 
 @Entity
 @Table(name="taxon")
 public class Taxon extends UIMAAnnotation {
 
-    @Column(name = "\"valuee\"")
+    @Column(name = "\"valuee\"", columnDefinition = "TEXT")
     private String value;
-    private String coveredText;
+
+    @Column(columnDefinition = "TEXT")
+    private String identifier;
+
+    @Column(name = "gbiftaxonid")
+    /**
+     * The taxon id of this entity which can also be used on gbif. like: https://www.gbif.org/species/6093134
+     */
+    private long gbifTaxonId;
+
+    @OneToMany(mappedBy = "gbifTaxonId", cascade = CascadeType.ALL)
+    private List<GbifOccurrence> gbifOccurrences;
+
+    private String primaryBiofidOntologyIdentifier;
 
     public Taxon(){
         super(-1, -1);
@@ -22,11 +35,35 @@ public class Taxon extends UIMAAnnotation {
         super(begin, end);
     }
 
-    public String getCoveredText() {
-        return coveredText;
+    public String getPrimaryBiofidOntologyIdentifier() {
+        return primaryBiofidOntologyIdentifier;
     }
-    public void setCoveredText(String coveredText) {
-        this.coveredText = coveredText;
+
+    public void setPrimaryBiofidOntologyIdentifier(String primaryBiofidOntologyIdentifier) {
+        this.primaryBiofidOntologyIdentifier = primaryBiofidOntologyIdentifier;
+    }
+
+    public long getGbifTaxonId() {
+        return gbifTaxonId;
+    }
+
+    public void setGbifTaxonId(long gbifTaxonId) {
+        this.gbifTaxonId = gbifTaxonId;
+    }
+
+    public List<GbifOccurrence> getGbifOccurrences() {
+        return gbifOccurrences;
+    }
+
+    public void setGbifOccurrences(List<GbifOccurrence> gbifOccurrences) {
+        this.gbifOccurrences = gbifOccurrences;
+    }
+
+    public String getIdentifier() {
+        return identifier;
+    }
+    public void setIdentifier(String identifier) {
+        this.identifier = identifier;
     }
 
     public void setValue(String value) {

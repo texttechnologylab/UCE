@@ -1,17 +1,13 @@
 package org.texttechnologylab.services;
 
-import org.hibernate.Hibernate;
-import org.hibernate.Session;
-import org.hibernate.SessionFactory;
-import org.hibernate.Transaction;
+import org.hibernate.*;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.test.test;
-import org.texttechnologylab.models.utils.CustomTuple;
 
-import java.lang.annotation.Annotation;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -20,6 +16,7 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class DatabaseService {
@@ -32,6 +29,66 @@ public class DatabaseService {
 
     public DatabaseService() {
         sessionFactory = HibernateConf.buildSessionFactory();
+    }
+
+    /**
+     * Gets all corpora from the database
+     *
+     * @return
+     */
+    public List<Corpus> getAllCorpora() {
+        return executeOperationSafely((session) -> {
+            var criteriaQuery = session.getCriteriaBuilder().createQuery(Corpus.class);
+            criteriaQuery.from(Corpus.class);
+            return session.createQuery(criteriaQuery).getResultList();
+        });
+    }
+
+    /**
+     * Gets the data required for the world globus to render correctly.
+     * @param documentId
+     * @return
+     */
+    public List<org.bson.Document> getGlobeDataForDocument(long documentId) {
+        return executeOperationSafely((session) -> {
+
+            var taxonCommand = "SELECT DISTINCT t " +
+                    "FROM Document d " +
+                    "JOIN d.taxons t " +
+                    "JOIN GbifOccurrence go ON go.gbifTaxonId = t.gbifTaxonId " +
+                    "WHERE d.id = :documentId AND t.gbifTaxonId != 0 AND go.longitude <> -1000.0 AND go.latitude <> -1000.0";
+            var query = session.createQuery(taxonCommand, Taxon.class);
+            query.setParameter("documentId", documentId);
+            var taxons = query.getResultList();
+            // These are the unique taxon ids from the given corpus
+            var taxonIds = taxons.stream().map(Taxon::getGbifTaxonId).collect(Collectors.toSet());
+
+            // Now fetch all unique occurrences of these taxonids
+            var occurrenceCommand = "SELECT DISTINCT gbif FROM GbifOccurrence gbif WHERE gbif.gbifTaxonId IN :taxonIds";
+            var query2 = session.createQuery(occurrenceCommand, GbifOccurrence.class);
+            query2.setParameter("taxonIds", taxonIds);
+            var occurrences = query2.getResultList();
+
+            var documents = new ArrayList<org.bson.Document>();
+            for(var occurrence:occurrences){
+                if(occurrence.getLatitude() == -1000) continue;;
+
+                var doc = new org.bson.Document();
+                doc.append("longitude", occurrence.getLongitude());
+                doc.append("latitude", occurrence.getLatitude());
+                var taxon = taxons.stream().filter(t -> t.getGbifTaxonId() == occurrence.getGbifTaxonId()).findFirst().get();
+                doc.append("name", taxon.getCoveredText());
+                doc.append("value", taxon.getValue());
+                doc.append("country", occurrence.getCountry());
+                doc.append("region", occurrence.getRegion());
+                doc.append("image", occurrence.getImageUrl());
+                doc.append("taxonId", Long.toString(occurrence.getGbifTaxonId()));
+
+                documents.add(doc);
+            }
+
+            return documents;
+        });
     }
 
     /**
@@ -98,19 +155,21 @@ public class DatabaseService {
                                                    SearchLayer layer,
                                                    boolean countAll,
                                                    SearchOrder order,
-                                                   OrderByColumn orderedByColumn) {
+                                                   OrderByColumn orderedByColumn,
+                                                   long corpusId) {
 
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
             DocumentSearchResult search = null;
-            try (var storedProcedure = connection.prepareCall("{call biofid_search_layer_" + layer.name().toLowerCase() + "(?, ?, ?, ?, ?, ?, ?)}")) {
-                storedProcedure.setArray(1, connection.createArrayOf("text", searchTokens.toArray()));
-                storedProcedure.setString(2, String.join("|", searchTokens).trim());
-                storedProcedure.setInt(3, take);
-                storedProcedure.setInt(4, skip);
-                storedProcedure.setBoolean(5, countAll);
-                storedProcedure.setString(6, order.name());
-                storedProcedure.setString(7, orderedByColumn.name().toLowerCase());
+            try (var storedProcedure = connection.prepareCall("{call biofid_search_layer_" + layer.name().toLowerCase() + "(?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                storedProcedure.setInt(1, (int) corpusId);
+                storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.toArray()));
+                storedProcedure.setString(3, String.join("|", searchTokens).trim());
+                storedProcedure.setInt(4, take);
+                storedProcedure.setInt(5, skip);
+                storedProcedure.setBoolean(6, countAll);
+                storedProcedure.setString(7, order.name());
+                storedProcedure.setString(8, orderedByColumn.name().toLowerCase());
 
                 var result = storedProcedure.executeQuery();
                 while (result.next()) {
@@ -163,8 +222,25 @@ public class DatabaseService {
      * @return
      */
     public Document getDocumentById(long id) {
+        return executeOperationSafely((session) -> session.get(Document.class, id));
+    }
+
+    /**
+     * Returns true if one instance of a Gbif occurrence exists in the database
+     *
+     * @return
+     */
+    public boolean checkIfGbifOccurrencesExist(long gbifTaxonId) {
         return executeOperationSafely((session) -> {
-            return session.get(Document.class, id);
+            var builder = session.getCriteriaBuilder();
+            var criteriaQuery = builder.createQuery(Long.class);
+            var root = criteriaQuery.from(GbifOccurrence.class);
+            criteriaQuery.select(builder.count(root));
+            // Add predicate to check for taxonId
+            criteriaQuery.where(builder.equal(root.get("gbifTaxonId"), gbifTaxonId));
+            // Execute query
+            var count = session.createQuery(criteriaQuery).getSingleResult();
+            return count > 0;
         });
     }
 
@@ -195,7 +271,20 @@ public class DatabaseService {
     }
 
     /**
+     * Stores a corpus in the database.
+     *
+     * @param corpus
+     */
+    public void saveCorpus(Corpus corpus) {
+        executeOperationSafely((session) -> {
+            session.save(corpus);
+            return null; // No return value needed for this write operation
+        });
+    }
+
+    /**
      * Parses the annotation occurrences that our search query outputs. This is so scuffed because hibernate freaking sucks, it's so nested.
+     *
      * @param resultSet
      * @return
      * @throws SQLException

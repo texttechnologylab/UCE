@@ -13,12 +13,14 @@ import org.apache.uima.util.CasIOUtils;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.gbif.GbifOccurrence;
 
 import java.io.File;
 
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 /*
@@ -32,10 +34,12 @@ public class UIMAService {
     );
     private final GoetheUniversityService goetheUniversityService;
     private final DatabaseService db;
+    private final GbifService gbifService;
 
-    public UIMAService(GoetheUniversityService goetheUniversityService, DatabaseService db) {
+    public UIMAService(GoetheUniversityService goetheUniversityService, DatabaseService db, GbifService gbifService) {
         this.goetheUniversityService = goetheUniversityService;
         this.db = db;
+        this.gbifService = gbifService;
     }
 
     /**
@@ -44,11 +48,15 @@ public class UIMAService {
      * @param foldername
      * @return
      */
-    public void XMIFolderDocumentsToDb(String foldername) {
+    public void storeCorpusFromFolder(String foldername, String corpusName, String corpusAuthor) {
+        var corpus = new Corpus();
+        corpus.setName(corpusName);
+        corpus.setAuthor(corpusAuthor);
+        db.saveCorpus(corpus);
+
         for (var file : Objects.requireNonNull(new File(foldername).listFiles())) {
-            var doc = XMIToDocument(file.getPath());
-            if (doc != null)
-            {
+            var doc = XMIToDocument(file.getPath(), corpus.getId());
+            if (doc != null) {
                 db.saveDocument(doc);
                 System.out.println("Stored document with document id " + doc.getDocumentId());
             }
@@ -61,15 +69,15 @@ public class UIMAService {
      * @param filename
      * @return
      */
-    public Document XMIToDocument(String filename) {
+    public Document XMIToDocument(String filename, long corpusId) {
         try {
             var jCas = JCasFactory.createJCas();
             // Read in the contents of a single xmi cas
             var file = new FileInputStream(filename);
             CasIOUtils.load(file, jCas.getCas());
 
-            return XMIToDocument(jCas);
-        } catch (IOException | UIMAException ex) {
+            return XMIToDocument(jCas, corpusId);
+        } catch (Exception ex) {
             // TODO: Log!
             return null;
         }
@@ -81,7 +89,7 @@ public class UIMAService {
      * @param jCas
      * @return
      */
-    public Document XMIToDocument(JCas jCas) {
+    public Document XMIToDocument(JCas jCas, long corpusId) {
 
         // Read in the contents of a single xmi cas
         var unique = new HashSet<String>();
@@ -97,7 +105,10 @@ public class UIMAService {
                 // If the metadata block is missing, something is off. In that case, return null
                 return null;
             }
-            var document = new Document(metadata.getLanguage(), metadata.getDocumentTitle(), metadata.getDocumentId());
+            var document = new Document(metadata.getLanguage(),
+                    metadata.getDocumentTitle(),
+                    metadata.getDocumentId(),
+                    corpusId);
 
             // Set the full text
             document.setFullText(jCas.getDocumentText());
@@ -106,16 +117,19 @@ public class UIMAService {
             document.setMetadataTitleInfo(goetheUniversityService.scrapeDocumentTitleInfo(document.getDocumentId()));
 
             // Set the cleaned full text. That is the sum of all tokens except of all anomalies
-            var cleanedText = new StringJoiner(" ");
-            JCasUtil.select(jCas, Token.class).forEach(t -> {
-                // We dont want any tokens with suspicous chars here.
-                if(t instanceof OCRToken ocr && ocr.getSuspiciousChars() > 0){
-                    return;
-                }
-                var coveredAnomalies = JCasUtil.selectCovered(Anomaly.class, t).size();
-                if(coveredAnomalies == 0) cleanedText.add(t.getCoveredText());
-            });
-            document.setFullTextCleaned(cleanedText.toString());
+            // TODO: For now, we skip this. This doesn't relly improve anything and is very costly.
+            if (false) {
+                var cleanedText = new StringJoiner(" ");
+                JCasUtil.select(jCas, Token.class).forEach(t -> {
+                    // We dont want any tokens with suspicous chars here.
+                    if (t instanceof OCRToken ocr && ocr.getSuspiciousChars() > 0) {
+                        return;
+                    }
+                    var coveredAnomalies = JCasUtil.selectCovered(Anomaly.class, t).size();
+                    if (coveredAnomalies == 0) cleanedText.add(t.getCoveredText());
+                });
+                document.setFullTextCleaned(cleanedText.toString());
+            }
 
             // Set the sentences
             document.setSentences(JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence.class)
@@ -126,12 +140,17 @@ public class UIMAService {
             // Set the named entities
             var nes = new ArrayList<org.texttechnologylab.models.corpus.NamedEntity>();
             JCasUtil.select(jCas, NamedEntity.class).forEach(ne -> {
-                var xd = ne.getValue();
                 // We don't want all NE types
-                if (ne == null || ne.getValue() == null || !WANTED_NE_TYPES.contains(ne.getValue())) return;
+                if (ne == null || ne.getValue() == null) return;
+                // We have different names for the types... sometimes they are full name, sometimes just the first three letters.
+                var neType = "";
+                for(var type:WANTED_NE_TYPES){
+                    if(type.equals(ne.getValue()) || ne.getValue().equals(type.substring(0, 3))) neType = type;
+                }
+                if(neType.equals("")) return;
 
                 var namedEntity = new org.texttechnologylab.models.corpus.NamedEntity(ne.getBegin(), ne.getEnd());
-                namedEntity.setType(ne.getValue());
+                namedEntity.setType(neType);
                 namedEntity.setCoveredText(ne.getCoveredText());
                 nes.add(namedEntity);
             });
@@ -153,10 +172,40 @@ public class UIMAService {
                 var taxon = new Taxon(t.getBegin(), t.getEnd());
                 taxon.setValue(t.getValue());
                 taxon.setCoveredText(t.getCoveredText());
+                taxon.setIdentifier(t.getIdentifier());
+                // We need to handle taxons specifically, depending if they have annotated identifiers.
+                if(!taxon.getIdentifier().isEmpty()){
+
+                    // The recognized taxons should be split by a |
+                    var occurrences = new ArrayList<GbifOccurrence>();
+                    var splited = taxon.getIdentifier().split("\\|");
+
+                    for(var potentialBiofidId: splited){
+                        // The biofid urls are like: https://www.biofid.de/bio-ontologies/gbif/10428508
+                        // We need the last number in that string, have a lookup into our sparsql database and from there fetch the
+                        // correct TaxonId
+                        var taxonId = gbifService.biofidIdUrlToGbifTaxonId(potentialBiofidId);
+                        if(taxonId == -1) continue;
+                        taxon.setGbifTaxonId(taxonId);
+
+                        // Now check if we already have stored occurences for that taxon - we don't need to do that again then.
+                        // We need to check in the current loop and in the database.
+                        if(taxons.stream().anyMatch(ta -> ta.getGbifTaxonId() == taxonId)) break;
+                        if(db.checkIfGbifOccurrencesExist(taxonId)) break;
+
+                        // Otherwise, fetch new occurrences.
+                        var potentialOccurrences = gbifService.scrapeGbifOccurrence(taxonId);
+                        if(potentialOccurrences != null && !potentialOccurrences.isEmpty()){
+                            occurrences.addAll(potentialOccurrences);
+                            taxon.setPrimaryBiofidOntologyIdentifier(potentialBiofidId);
+                            break;
+                        }
+                    }
+                    taxon.setGbifOccurrences(occurrences);
+                }
                 taxons.add(taxon);
             });
             document.setTaxons(taxons);
-
             // Wikipedia/Wikidata?
             var wikiDatas = new ArrayList<org.texttechnologylab.models.corpus.WikipediaLink>();
             JCasUtil.select(jCas, org.hucompute.textimager.uima.type.wikipedia.WikipediaLink.class).forEach(w -> {

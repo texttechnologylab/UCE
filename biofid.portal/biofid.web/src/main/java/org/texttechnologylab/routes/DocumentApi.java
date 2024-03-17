@@ -1,7 +1,7 @@
 package org.texttechnologylab.routes;
 
 import freemarker.template.Configuration;
-import org.hibernate.dialect.Database;
+import org.bson.Document;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.services.DatabaseService;
 import org.texttechnologylab.services.UIMAService;
@@ -9,10 +9,7 @@ import spark.ModelAndView;
 import spark.Route;
 import spark.template.freemarker.FreeMarkerEngine;
 
-import javax.xml.crypto.Data;
 import java.util.HashMap;
-import java.util.Random;
-import java.util.UUID;
 
 public class DocumentApi {
 
@@ -26,6 +23,23 @@ public class DocumentApi {
         this.db = serviceContext.getBean(DatabaseService.class);
         this.freemakerConfig = freemakerConfig;
     }
+
+    public Route getCorpusWorldView = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        try {
+            var document = db.getDocumentById(1);
+            var data = db.getGlobeDataForDocument(1);
+            var dataDoc = new Document();
+            dataDoc.append("occurrences", data);
+
+            model.put("document", document);
+            model.put("data", dataDoc.toJson());
+        } catch (Exception ex) {
+            // TODO: Logging
+            model.put("data", "");
+        }
+        return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/globe.ftl"));
+    });
 
     public Route getSingleDocumentReadView = ((request, response) -> {
 

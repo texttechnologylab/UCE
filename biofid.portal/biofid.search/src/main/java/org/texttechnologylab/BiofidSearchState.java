@@ -25,7 +25,8 @@ public class BiofidSearchState {
     private List<String> searchTokens;
     private List<SearchLayer> searchLayers;
     private Integer currentPage = 1;
-    private Integer take = 15;
+    private Integer take = 10;
+    private long corpusId;
     private Integer totalHits;
     private SearchOrder order = SearchOrder.ASC;
     private OrderByColumn orderBy = OrderByColumn.TITLE;
@@ -40,6 +41,14 @@ public class BiofidSearchState {
 
     public BiofidSearchState(){
         this.searchId = UUID.randomUUID();
+    }
+
+    public long getCorpusId() {
+        return corpusId;
+    }
+
+    public void setCorpusId(long corpusId) {
+        this.corpusId = corpusId;
     }
 
     public SearchOrder getOrder() {

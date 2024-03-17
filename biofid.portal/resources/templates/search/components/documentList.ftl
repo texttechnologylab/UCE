@@ -13,7 +13,7 @@
                             <div class="document-header">
                                 <div class="w-100">
                                     <h6 class="open-document mb-0 title"
-                                        data-id="${document.getId()}">${document.getDocumentTitle()} </h6>
+                                        data-id="${document.getId()?string?replace('.', '')}">${document.getDocumentTitle()} </h6>
                                     <label class="text-secondary small-font">(${document.getMetadataTitleInfo().getPublished()}
                                         )</label>
                                 </div>
@@ -75,37 +75,37 @@
                                     <div class="search-hits col-2">
                                         <#list foundLocations as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundPersons as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundOrgas as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundMisc as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundTaxons as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundTimes as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">${annotation.getCoveredText()}</span>
+                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                 </div>

@@ -7,6 +7,7 @@ import javax.persistence.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Entity
@@ -15,12 +16,11 @@ import java.util.stream.Collectors;
 The documents should be scanned and extracted via OCR. This is a base class for that.
  */
 public class Document extends ModelBase {
-
     private String language;
     @Column(columnDefinition = "TEXT")
     private String documentTitle;
     private String documentId;
-
+    private long corpusId;
     @Column(columnDefinition = "TEXT")
     private String fullText;
 
@@ -59,10 +59,19 @@ public class Document extends ModelBase {
 
     }
 
-    public Document(String language, String documentTitle, String documentId) {
+    public Document(String language, String documentTitle, String documentId, long corpusId) {
         this.language = language;
         this.documentTitle = documentTitle;
         this.documentId = documentId;
+        this.corpusId = corpusId;
+    }
+
+    public long getCorpusId() {
+        return corpusId;
+    }
+
+    public void setCorpusId(long corpusId) {
+        this.corpusId = corpusId;
     }
 
     public String getFullTextCleaned() {
@@ -128,10 +137,10 @@ public class Document extends ModelBase {
     }
 
     public String getFullTextSnippet(int take) {
-        if (fullTextCleaned == null || fullTextCleaned.isEmpty()) {
+        if (fullText == null || fullText.isEmpty()) {
             return "";
         }
-        String[] words = fullTextCleaned.trim().split("\\s+");
+        String[] words = fullText.trim().split("\\s+");
         // Take the first 30 words
         StringBuilder result = new StringBuilder();
         int count = 0;
@@ -159,7 +168,7 @@ public class Document extends ModelBase {
     }
 
     public void setFullText(String fullText) {
-        this.fullText = fullText;
+        this.fullText = fullText.replaceAll("<", "");
     }
 
     public void setPages(List<Page> pages) {

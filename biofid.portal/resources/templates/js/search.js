@@ -6,13 +6,19 @@ function startNewSearch(searchInput) {
         return;
     }
     console.log('New Search with input: ' + searchInput);
+    $('.view[data-id="search"] .loader-container').first().fadeIn(150);
+    // Get the selected corpus
+    const selectElement = document.getElementById("corpus-select");
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const corpusId = selectedOption.getAttribute("data-id");
 
     // Start a new search TODO: Outsource this into new prototype maybe
     $.ajax({
         url: "/api/search/default",
         type: "POST",
         data: JSON.stringify({
-            searchInput: searchInput
+            searchInput: searchInput,
+            corpusId: corpusId
         }),
         contentType: "application/json",
         //dataType: "json",
@@ -23,6 +29,8 @@ function startNewSearch(searchInput) {
             console.error(xhr.responseText);
             $('.view .search-result-container').html(xhr.responseText);
         }
+    }).always(function(){
+        $('.view[data-id="search"] .loader-container').first().fadeOut(150);
     });
 }
 
@@ -48,6 +56,8 @@ $('body').on('click', '.search-result-container .next-page-btn', function () {
 
 async function handleSwitchingOfPage(page) {
     const searchId = $('.search-state').data('id');
+    $('.search-result-container .loader-container').first().fadeIn(150);
+
     $.ajax({
         url: "/api/search/active/page?searchId=" + searchId + "&page=" + page,
         type: "GET",
@@ -61,6 +71,8 @@ async function handleSwitchingOfPage(page) {
             console.error(xhr.responseText);
             $('.view .search-result-container .document-list-include').html(xhr.responseText);
         }
+    }).always(function(){
+        $('.search-result-container .loader-container').first().fadeOut(150);
     });
 }
 
@@ -88,6 +100,7 @@ $('body').on('click', '.sort-container .sort-btn', function(){
     const orderBy = $(this).data('orderby');
     const curOrder = $(this).data('curorder');
     const searchId = $('.search-state').data('id');
+    $('.search-result-container .loader-container').first().fadeIn(150);
 
     $.ajax({
         url: "/api/search/active/sort?searchId=" + searchId + "&order=" + curOrder + "&orderBy=" + orderBy,
@@ -100,6 +113,8 @@ $('body').on('click', '.sort-container .sort-btn', function(){
             console.error(xhr.responseText);
             $('.view .search-result-container .document-list-include').html(xhr.responseText);
         }
+    }).always(function (){
+        $('.search-result-container .loader-container').first().fadeOut(150);
     });
 
     // Highlight the correct button

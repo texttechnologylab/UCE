@@ -3,7 +3,6 @@ package org.texttechnologylab;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.models.search.SearchLayer;
-import org.texttechnologylab.sparql.JenaSparqlFactory;
 
 /**
  * Hello world!
@@ -31,7 +30,7 @@ public class App {
             var xd = "";
         }
 
-        JenaSparqlFactory.initialize();
+        /*JenaSparqlFactory.initialize();
 
         var command = "PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>\n" +
                 "PREFIX dwc: <http://rs.tdwg.org/dwc/terms/>\n" +
@@ -40,6 +39,6 @@ public class App {
                 "  <https://www.biofid.de/bio-ontologies/gbif/11389112> ?predicate ?object .\n" +
                 "}\n" +
                 "LIMIT 100";
-        var result = JenaSparqlFactory.executeCommand(command);
+        var result = JenaSparqlFactory.executeCommand(command);*/
     }
 }

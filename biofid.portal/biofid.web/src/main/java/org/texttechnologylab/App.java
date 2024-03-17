@@ -7,6 +7,7 @@ import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.routes.DocumentApi;
 import org.texttechnologylab.routes.SearchApi;
+import org.texttechnologylab.services.DatabaseService;
 import spark.ExceptionHandler;
 import spark.ModelAndView;
 import spark.template.freemarker.FreeMarkerEngine;
@@ -48,6 +49,7 @@ public class App {
         get("/", (request, response) -> {
             var model = new HashMap<String, Object>();
             model.put("title", "BioFID Portal");
+            model.put("corpora", context.getBean(DatabaseService.class).getAllCorpora());
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");
@@ -55,6 +57,9 @@ public class App {
 
         // A document reader view
         get("/documentReader", documentApi.getSingleDocumentReadView);
+
+        // A corpus World View
+        get("/globe", documentApi.getCorpusWorldView);
 
         // Define default exception handler. This shows an error view then in the body.
         ExceptionHandler<Exception> defaultExceptionHandler = (exception, request, response) -> {

@@ -40,7 +40,7 @@ $('body').on('click', '.view .search-btn', function (event) {
 /**
  * Triggers whenever an open-document element is clicked. This causes to load a new full read vioew of a doc
  */
-$('body').on('click', '.view .open-document', function (){
+$('body').on('click', '.view .open-document', function () {
     var id = $(this).data('id');
     openNewDocumentReadView(id);
 })
@@ -49,16 +49,21 @@ $('body').on('click', '.view .open-document', function (){
  * Opens a new Document reader view
  * @param modelId
  */
-function openNewDocumentReadView(id){
-    if(id === undefined || id === ''){
+function openNewDocumentReadView(id) {
+    if (id === undefined || id === '') {
         return;
     }
     console.log('New Document Reader View for: ' + id);
     window.open("/documentReader?id=" + id, '_blank');
 }
 
+function activatePopovers() {
+    $('[data-toggle="popover"]').popover();
+}
+
 $(document).ready(function () {
     console.log('Webpage loaded!');
+    activatePopovers();
     // TODO: Just testing
     startNewSearch('1885');
 })

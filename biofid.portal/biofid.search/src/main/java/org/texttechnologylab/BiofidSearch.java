@@ -6,7 +6,6 @@ import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.models.search.SearchOrder;
 import org.texttechnologylab.services.DatabaseService;
-import org.texttechnologylab.sparql.JenaSparqlFactory;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
@@ -31,16 +30,14 @@ public class BiofidSearch {
      */
     public BiofidSearch(ApplicationContext serviceContext,
                         String searchPhrase,
+                        long corpusId,
                         SearchLayer[] searchLayers) throws URISyntaxException, IOException {
 
         this.biofidSearchState = new BiofidSearchState();
         this.biofidSearchState.setSearchLayers(Arrays.stream(searchLayers).toList());
-        // In case we want taxon search, we need to init the sparql database
-        if(Arrays.stream(searchLayers).anyMatch(l -> l == SearchLayer.TAXON)){
-            JenaSparqlFactory.initialize();
-        }
         initServices(serviceContext);
 
+        this.biofidSearchState.setCorpusId(corpusId);
         this.biofidSearchState.setSearchPhrase(searchPhrase);
         this.biofidSearchState.setSearchTokens(cleanSearchPhrase(searchPhrase));
     }
@@ -93,7 +90,8 @@ public class BiofidSearch {
                     SearchLayer.METADATA,
                     countAll,
                     biofidSearchState.getOrder(),
-                    biofidSearchState.getOrderBy());
+                    biofidSearchState.getOrderBy(),
+                    biofidSearchState.getCorpusId());
         }
 
         // Execute the Named Entity search, which automatically executes metadata as well
@@ -104,7 +102,8 @@ public class BiofidSearch {
                     SearchLayer.NAMED_ENTITIES,
                     countAll,
                     biofidSearchState.getOrder(),
-                    biofidSearchState.getOrderBy());
+                    biofidSearchState.getOrderBy(),
+                    biofidSearchState.getCorpusId());
         }
         return null;
     }

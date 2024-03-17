@@ -11,10 +11,7 @@ public class ModelBase {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private long id;
 
-    private Date created;
-
     public ModelBase() {
-        created = new Date();
     }
 
     public long getId() {
@@ -23,13 +20,5 @@ public class ModelBase {
 
     public void setId(long id) {
         this.id = id;
-    }
-
-    public void setCreated(Date created) {
-        this.created = created;
-    }
-
-    public Date getCreated() {
-        return created;
     }
 }

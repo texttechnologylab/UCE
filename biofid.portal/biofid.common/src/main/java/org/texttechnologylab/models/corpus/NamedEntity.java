@@ -12,7 +12,6 @@ public class NamedEntity extends UIMAAnnotation {
 
     @Column(name = "\"typee\"")
     private String type;
-    private String coveredText;
 
     public NamedEntity(){
         super(-1, -1);
@@ -27,12 +26,5 @@ public class NamedEntity extends UIMAAnnotation {
     }
     public void setType(String type) {
         this.type = type;
-    }
-
-    public String getCoveredText() {
-        return coveredText;
-    }
-    public void setCoveredText(String coveredText) {
-        this.coveredText = coveredText;
     }
 }

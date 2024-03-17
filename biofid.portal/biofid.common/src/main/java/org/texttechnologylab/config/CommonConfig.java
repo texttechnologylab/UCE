@@ -31,4 +31,7 @@ public class CommonConfig {
         return getProperty("university.collection.base.url");
     }
     public String getPostgresqlProperty(String prop) {return getProperty("postgresql." + prop);}
+    public String getGbifOccurrencesSearchUrl(){
+        return getProperty("gbif.occurrences.search.url");
+    }
 }

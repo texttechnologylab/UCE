@@ -4,9 +4,7 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Import;
-import org.texttechnologylab.services.DatabaseService;
-import org.texttechnologylab.services.GoetheUniversityService;
-import org.texttechnologylab.services.UIMAService;
+import org.texttechnologylab.services.*;
 
 @Configuration
 public class SpringConfig {
@@ -18,12 +16,20 @@ public class SpringConfig {
 
     @Bean
     public UIMAService uimaService(){
-        return new UIMAService(goetheUniversityService(), databaseService());
+        return new UIMAService(goetheUniversityService(), databaseService(), gbifService());
     }
 
     @Bean
     public GoetheUniversityService goetheUniversityService(){
         return new GoetheUniversityService();
     }
+
+    @Bean
+    public GbifService gbifService(){
+        return new GbifService(jenaSparqlService());
+    }
+
+    @Bean
+    public JenaSparqlService jenaSparqlService() {return new JenaSparqlService();}
 
 }

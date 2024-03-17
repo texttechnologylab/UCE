@@ -49,14 +49,29 @@
         <div class="view" data-id="search">
 
             <div class="flexed align-items-stretch search-header container p-0">
-                <input type="text" class="search-input form-control large-font" placeholder="Suche..."/>
+                <div class="flexed align-items-center h-100">
+                    <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover" data-toggle="popover" data-placement="top"
+                       data-content="Öffnen der Korpus Übersicht">
+                        <i class="fas fa-globe xlarge-font mr-3 ml-3 text-dark"></i>
+                    </a>
+                    <select class="form-control" id="corpus-select" aria-label="Default select example">
+                        <#list corpora as corpus>
+                            <option data-id="${corpus.getId()}">${corpus.getName()}</option>
+                        </#list>
+                    </select>
+                </div>
+
+                <input type="text" class="search-input form-control large-font w-100" placeholder="Suche..."/>
                 <button class="btn btn-primary search-btn">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
 
-            <div class="search-result-container container-fluid">
+            <div class="position-relative">
+                <#include "*/search/components/loader.ftl">
+                <div class="search-result-container container-fluid">
 
+                </div>
             </div>
 
         </div>
@@ -70,6 +85,11 @@
         </div>
     </div>
 
+    <div class="display-none corpus-inspector-container">
+        <div class="container-fluid">
+        </div>
+    </div>
+
 </div>
 </body>
 
@@ -79,9 +99,7 @@
     </div>
 </footer>
 
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-        crossorigin="anonymous"></script>
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script
         src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"
         integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
@@ -90,7 +108,6 @@
         src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
         integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
         crossorigin="anonymous"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
     <#include "js/site.js">

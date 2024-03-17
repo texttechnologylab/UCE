@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.test.test;
 
 import java.util.HashMap;
@@ -29,12 +30,14 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(NamedEntity.class);
         metadataSources.addAnnotatedClass(Paragraph.class);
         metadataSources.addAnnotatedClass(Sentence.class);
+        metadataSources.addAnnotatedClass(GbifOccurrence.class);
         metadataSources.addAnnotatedClass(Taxon.class);
         metadataSources.addAnnotatedClass(Time.class);
         metadataSources.addAnnotatedClass(WikiDataHyponym.class);
         metadataSources.addAnnotatedClass(WikipediaLink.class);
         metadataSources.addAnnotatedClass(Page.class);
         metadataSources.addAnnotatedClass(Document.class);
+        metadataSources.addAnnotatedClass(Corpus.class);
 
         var metadata = metadataSources.buildMetadata();
 

@@ -1,5 +1,8 @@
 CREATE OR REPLACE FUNCTION biofid_search_layer_named_entities(
-    IN input1 text[], 
+
+	IN corpusid bigint,
+	
+	IN input1 text[], 
     IN input2 text,
     IN take_count integer,
     IN offset_count integer,
@@ -28,35 +31,35 @@ BEGIN
     WITH documents_query AS (
         SELECT DISTINCT d.id
         FROM document d
-        WHERE d.documenttitle ~* input2 OR d.language ~* input2
+        WHERE d.corpusid = corpusid and (d.documenttitle ~* input2 OR d.language ~* input2)
         
         UNION
         
         SELECT DISTINCT d.id
         FROM document d
         JOIN metadatatitleinfo me ON d.id = me.id
-        WHERE me.title ~* input2 OR me.published ~* input2
+        WHERE d.corpusid = corpusid and (me.title ~* input2 OR me.published ~* input2)
         
         UNION
         
         SELECT DISTINCT d.id
         FROM document d 
         JOIN namedentity ne ON d.id = ne.document_id 
-        WHERE ne.coveredtext ~* input2
+        WHERE d.corpusid = corpusid and ne.coveredtext ~* input2
         
         UNION
         
         SELECT DISTINCT d.id
         FROM document d 
         JOIN time t ON d.id = t.document_id
-        WHERE t.coveredtext ~* input2
+        WHERE d.corpusid = corpusid and t.coveredtext ~* input2
         
         UNION
         
         SELECT DISTINCT d.id
         FROM document d
         JOIN taxon ta ON d.id = ta.document_id
-        WHERE ta.coveredtext ~* input2
+        WHERE d.corpusid = corpusid and ta.coveredtext ~* input2
     ),
     -- Count all found documents
     counted_documents AS (

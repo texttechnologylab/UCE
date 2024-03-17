@@ -89,8 +89,9 @@ public class SearchApi {
         var gson = new Gson();
         Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
         var searchInput = requestBody.get("searchInput").toString();
+        var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
 
-        var biofidSearch = new BiofidSearch(context, searchInput, new SearchLayer[]{
+        var biofidSearch = new BiofidSearch(context, searchInput, corpusId, new SearchLayer[]{
                 SearchLayer.METADATA,
                 SearchLayer.NAMED_ENTITIES
         });
