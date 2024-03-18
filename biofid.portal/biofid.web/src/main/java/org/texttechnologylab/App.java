@@ -33,6 +33,7 @@ public class App {
         // Set the folder for our template files of freemaker
         try {
             configuration.setDirectoryForTemplateLoading(new File("resources/templates/"));
+            staticFiles.location("/public");
         } catch (IOException e) {
             e.printStackTrace();
         }

@@ -4,10 +4,7 @@ import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 
 import javax.persistence.*;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 import java.util.stream.Collectors;
 
 @Entity
@@ -140,11 +137,11 @@ public class Document extends ModelBase {
         if (fullText == null || fullText.isEmpty()) {
             return "";
         }
-        String[] words = fullText.trim().split("\\s+");
+        var words = Arrays.stream(fullText.trim().split("\\s+")).toList();
         // Take the first 30 words
         StringBuilder result = new StringBuilder();
         int count = 0;
-        for (String word : words) {
+        for (String word : words.stream().skip(words.size() / 3).toList()) { // We skip the entry as its the table of content
             result.append(word).append(" ");
             count++;
             if (count == take) {
@@ -192,7 +189,7 @@ public class Document extends ModelBase {
 
     public String getDocumentTitle() {
         var title = metadataTitleInfo.getTitle() == null ? documentTitle : metadataTitleInfo.getTitle();
-        return title == null ? "(-)" : title;
+        return title == null ? "(Unbekannt)" : title;
     }
 
     public void setDocumentTitle(String documentTitle) {

@@ -59,7 +59,7 @@ public class MetadataTitleInfo extends ModelBase {
     }
 
     public String getPublished() {
-        return published == null ? "-" : published;
+        return published == null ? "(Unbekannt)" : published;
     }
 
     public void setPublished(String published) {

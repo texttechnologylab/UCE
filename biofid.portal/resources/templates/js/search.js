@@ -24,6 +24,7 @@ function startNewSearch(searchInput) {
         //dataType: "json",
         success: function (response) {
             $('.view .search-result-container').html(response);
+            activatePopovers();
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);

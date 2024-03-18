@@ -15,7 +15,7 @@ public class App {
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
         var uimaService = context.getBean(UIMAService.class);
         // Decomment if you want to import test documents
-        //uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10", "2020_02_10", "TTLab");
-        uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\bhl\\2023_01_25", "BHL", "TTLab");
+        uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10", "2020_02_10", "TTLab");
+        //uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\bhl\\2023_01_25", "BHL", "TTLab");
     }
 }

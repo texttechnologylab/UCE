@@ -40,10 +40,31 @@ $('body').on('click', '.view .search-btn', function (event) {
 /**
  * Triggers whenever an open-document element is clicked. This causes to load a new full read vioew of a doc
  */
-$('body').on('click', '.view .open-document', function () {
+$('body').on('click', '.open-document', function () {
     var id = $(this).data('id');
     openNewDocumentReadView(id);
 })
+
+/**
+ * Triggers whenever an open-globe element is clicked. This causes to load a new full read vioew of a doc
+ */
+$('body').on('click', '.open-globe', function () {
+    const id = $(this).data('id');
+    const type = $(this).data('type');
+    openNewGlobeView(type, id);
+})
+
+/**
+ * Opens a new globe view
+ * @param modelId
+ */
+function openNewGlobeView(type, id) {
+    if (id === undefined || id === '') {
+        return;
+    }
+    console.log('New Globe View for: ' + id);
+    window.open("/globe?id=" + id + "&type=" + type, '_blank');
+}
 
 /**
  * Opens a new Document reader view
@@ -65,5 +86,5 @@ $(document).ready(function () {
     console.log('Webpage loaded!');
     activatePopovers();
     // TODO: Just testing
-    startNewSearch('1885');
+    //startNewSearch('1885');
 })

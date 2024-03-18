@@ -1,5 +1,6 @@
 package org.texttechnologylab.routes;
 
+import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.bson.Document;
 import org.springframework.context.ApplicationContext;
@@ -27,17 +28,22 @@ public class DocumentApi {
     public Route getCorpusWorldView = ((request, response) -> {
         var model = new HashMap<String, Object>();
         try {
-            var document = db.getDocumentById(1);
-            var data = db.getGlobeDataForDocument(1);
-            var dataDoc = new Document();
-            dataDoc.append("occurrences", data);
+            var type = request.queryParams("type");
+            var id = Long.parseLong(request.queryParams("id"));
+
+            var document = db.getDocumentById(id);
+            var data = db.getGlobeDataForDocument(id);
+            var gson = new Gson();
+            var dataJson = gson.toJson(data);
 
             model.put("document", document);
-            model.put("data", dataDoc.toJson());
+            model.put("data", data);
+            model.put("jsonData", dataJson);
         } catch (Exception ex) {
             // TODO: Logging
             model.put("data", "");
         }
+
         return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/globe.ftl"));
     });
 
@@ -45,7 +51,7 @@ public class DocumentApi {
 
         var id = request.queryParams("id");
 
-        var doc = db.getCompleteDocumentById(Long.parseLong(id));
+        var doc = db.getCompleteDocumentById(Long.parseLong(id), 10);
 
         var model = new HashMap<String, Object>();
         model.put("document", doc);

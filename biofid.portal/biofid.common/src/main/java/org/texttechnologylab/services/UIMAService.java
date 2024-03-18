@@ -174,7 +174,7 @@ public class UIMAService {
                 taxon.setCoveredText(t.getCoveredText());
                 taxon.setIdentifier(t.getIdentifier());
                 // We need to handle taxons specifically, depending if they have annotated identifiers.
-                if(!taxon.getIdentifier().isEmpty()){
+                if(taxon.getIdentifier() != null && !taxon.getIdentifier().isEmpty()){
 
                     // The recognized taxons should be split by a |
                     var occurrences = new ArrayList<GbifOccurrence>();

@@ -12,10 +12,18 @@
 
                             <div class="document-header">
                                 <div class="w-100">
-                                    <h6 class="open-document mb-0 title"
-                                        data-id="${document.getId()?string?replace('.', '')}">${document.getDocumentTitle()} </h6>
-                                    <label class="text-secondary small-font">(${document.getMetadataTitleInfo().getPublished()}
-                                        )</label>
+                                    <div class="flexed align-items-center">
+                                        <div class="flexed align-items-center">
+                                            <a class="title-btn open-globe" data-type="document" data-trigger="hover" data-toggle="popover" data-placement="top"
+                                               data-content="3D-Taxonverteilung öffnen" data-id="${document.getId()?string?replace('.', '')}">
+                                                <i class="m-0 fas fa-globe-europe"></i></a>
+                                            <a class="title-btn open-document" data-trigger="hover" data-toggle="popover" data-placement="top"
+                                               data-content="Dokument-Reader öffnen" data-id="${document.getId()?string?replace('.', '')}">
+                                                <i class="m-0 fas fa-book-open"></i></a>
+                                        </div>
+                                        <h6 class="mb-0 title">${document.getDocumentTitle()}</h6>
+                                    </div>
+                                    <label class="text-secondary small-font">${document.getMetadataTitleInfo().getPublished()}</label>
                                 </div>
 
                                 <div class="flexed align-items-center">

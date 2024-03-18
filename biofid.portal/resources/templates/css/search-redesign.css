@@ -181,6 +181,25 @@
     transition: 0.15s;
 }
 
+.search-result-container .document-card .title-btn{
+    margin-right: 8px;
+    border-radius: 50%;
+    border:lightgray 1px solid;
+    color: var(--secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    transition: 0.15s;
+}
+
+.search-result-container .document-card .title-btn:hover{
+    transition: 0.15s;
+    cursor: pointer;
+    background-color: lightgray;
+}
+
 .document-card .document-header{
     display: flex;
     align-items: center;
@@ -191,13 +210,6 @@
     font-weight: bold;
     font-size: 16px;
     color:var(--secondary);
-}
-
-.document-card .document-header .title:hover{
-    text-decoration: underline;
-    text-decoration-thickness: 2px;
-    text-decoration-color: var(--secondary);
-    cursor: pointer;
 }
 
 .document-card .annotation-hit-container-expander{

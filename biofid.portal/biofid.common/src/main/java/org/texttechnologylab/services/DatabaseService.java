@@ -5,6 +5,7 @@ import org.springframework.stereotype.Service;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
+import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.test.test;
 
@@ -49,7 +50,7 @@ public class DatabaseService {
      * @param documentId
      * @return
      */
-    public List<org.bson.Document> getGlobeDataForDocument(long documentId) {
+    public List<GlobeTaxon> getGlobeDataForDocument(long documentId) {
         return executeOperationSafely((session) -> {
 
             var taxonCommand = "SELECT DISTINCT t " +
@@ -69,21 +70,21 @@ public class DatabaseService {
             query2.setParameter("taxonIds", taxonIds);
             var occurrences = query2.getResultList();
 
-            var documents = new ArrayList<org.bson.Document>();
+            var documents = new ArrayList<GlobeTaxon>();
             for(var occurrence:occurrences){
                 if(occurrence.getLatitude() == -1000) continue;;
 
-                var doc = new org.bson.Document();
-                doc.append("longitude", occurrence.getLongitude());
-                doc.append("latitude", occurrence.getLatitude());
+                var doc = new GlobeTaxon();
                 var taxon = taxons.stream().filter(t -> t.getGbifTaxonId() == occurrence.getGbifTaxonId()).findFirst().get();
-                doc.append("name", taxon.getCoveredText());
-                doc.append("value", taxon.getValue());
-                doc.append("country", occurrence.getCountry());
-                doc.append("region", occurrence.getRegion());
-                doc.append("image", occurrence.getImageUrl());
-                doc.append("taxonId", Long.toString(occurrence.getGbifTaxonId()));
 
+                doc.setLongitude(occurrence.getLongitude());
+                doc.setLatitude(occurrence.getLatitude());
+                doc.setName(taxon.getCoveredText());
+                doc.setValue(taxon.getValue());
+                doc.setCountry(occurrence.getCountry());
+                doc.setRegion(occurrence.getRegion());
+                doc.setImage(occurrence.getImageUrl());
+                doc.setTaxonId(Long.toString(occurrence.getGbifTaxonId()));
                 documents.add(doc);
             }
 
@@ -103,7 +104,7 @@ public class DatabaseService {
             criteriaQuery.from(Document.class);
             var docs = session.createQuery(criteriaQuery).getResultList();
             for (var doc : docs) {
-                initializeCompleteDocument(doc);
+                initializeCompleteDocument(doc, 9999);
             }
 
             return docs;
@@ -250,11 +251,11 @@ public class DatabaseService {
      * @param id
      * @return
      */
-    public Document getCompleteDocumentById(long id) {
+    public Document getCompleteDocumentById(long id, int pageLimit) {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
 
-            return initializeCompleteDocument(doc);
+            return initializeCompleteDocument(doc, pageLimit);
         });
     }
 
@@ -310,9 +311,9 @@ public class DatabaseService {
      * @param doc
      * @return
      */
-    private Document initializeCompleteDocument(Document doc) {
+    private Document initializeCompleteDocument(Document doc, int pageLimit) {
         Hibernate.initialize(doc.getPages());
-        for (var page : doc.getPages()) {
+        for (var page : doc.getPages().stream().limit(pageLimit).toList()) {
             Hibernate.initialize(page.getBlocks());
             Hibernate.initialize(page.getParagraphs());
             Hibernate.initialize(page.getLines());

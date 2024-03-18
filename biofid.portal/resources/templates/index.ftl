@@ -13,7 +13,6 @@
     <style>
         <#include "css/site.css">
         <#include "css/search-redesign.css">
-        <#include "css/bg-anim.css">
     </style>
     <title>${title}</title>
 </head>
@@ -23,11 +22,6 @@
 <div class="site-container">
 
     <nav class="p-3 position-relative">
-
-        <link href='https://fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css'>
-        <div id='stars'></div>
-        <div id='stars2'></div>
-        <div id='stars3'></div>
 
         <div class="container-fluid flexed align-items-center justify-content-around">
             <img class="mb-0 logo" src="https://biofid.de/static/images/logo_fid_biodiversity.png">
@@ -70,7 +64,7 @@
             <div class="position-relative">
                 <#include "*/search/components/loader.ftl">
                 <div class="search-result-container container-fluid">
-
+                    <h6 class="w-100 text-center mt-5 text">Starten Sie eine Suche</h6>
                 </div>
             </div>
 
