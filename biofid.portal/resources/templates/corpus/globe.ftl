@@ -55,12 +55,12 @@
 
         <div class="content p-3">
             <div class="flexed align-items-center mb-3">
-                <input class="form-control" type="text" placeholder="Suchen..."/>
+                <input class="form-control search-occurrence-input" type="text" placeholder="Suchen..."/>
             </div>
 
             <div class="row m-0 p-0">
                 <#list data as occurrence>
-                    <div class="col-lg-4 m-0 p-2 search-occurrence">
+                    <div class="col-lg-6 m-0 p-2 search-occurrence" data-id="${occurrence.getValue()?split("|")?first}">
                         <div class="flexed align-items-center">
                             <a class="show-on-globe-btn mr-2"
                                data-lat="${occurrence.getLatitude()?replace(",", ".")}" data-long="${occurrence.getLongitude()?replace(",", ".")}">
@@ -131,6 +131,23 @@
     $('.inspector-container').hide();
 
     <#noparse>
+
+    /**
+     * Handle the small search function
+     */
+    $('body').on('keydown', '.search-occurrence-input', function(event){
+        const id = event.key || event.which || event.keyCode || 0;
+        if (id !== 'Enter') return;
+
+        const val = $(this).val().toLowerCase().trim();
+        $('.search-occurrence').each(function(){
+           if($(this).data('id').toLowerCase().trim().includes(val)){
+               $(this).show();
+           } else{
+               $(this).hide();
+           }
+        });
+    })
 
     /**
      * Handles the click onto an occurrence card
@@ -214,13 +231,13 @@
      * Handles the moving to the globe pos of a occurrence in the search view
      */
     $('body').on('click', '.show-on-globe-btn', function(){
-        moveToGlobePos($(this).data('lat'), $(this).data('long'));
+        moveToGlobePos($(this).data('lat'), $(this).data('long'), 0.15);
     })
 
-    function moveToGlobePos(lat, long) {
+    function moveToGlobePos(lat, long, altitude) {
         console.log(lat);
         console.log(long);
-        myGlobe.pointOfView({lat: lat, lng: long, altitude: 1}, 750);
+        myGlobe.pointOfView({lat: lat, lng: long, altitude: altitude}, 750);
     }
 
     const weightColor = d3.scaleLinear()
@@ -233,14 +250,14 @@
         .backgroundColor('rgba(255,255,255,0)')
         .hexBinPointLat(d => d.latitude)
         .hexBinPointLng(d => d.longitude)
-        .hexBinPointWeight(d => 5)
+        .hexBinPointWeight(d => 3)
         .hexAltitude(({sumWeight}) => sumWeight * 0.0025)
         .hexTopColor(d => weightColor(d.sumWeight))
         .hexSideColor(d => weightColor(d.sumWeight))
         .hexLabel(d => getTooplTipHtml(d))
         .onHexClick(d => {
             // Move the camera
-            moveToGlobePos(d.points[0].latitude, d.points[0].longitude);
+            moveToGlobePos(d.points[0].latitude, d.points[0].longitude, 0.4);
             openInspector(d);
         })
         .enablePointerInteraction(true)

@@ -56,18 +56,24 @@
 
                     <div class="document-content">
 
-                        <#list document.getPages(999, 0) as page>
+                        <#list document.getPages(10, 0) as page>
                             <div class="page" data-id="${page.getPageNumber() + 1}">
                                 <div class="blurrer display-none" data-toggled="false"></div>
                                 <div>
-                                    <#list page.getParagraphs() as paragraph>
-                                        <p class="text paragraph" style="
-                                                text-align: ${paragraph.getAlign()};
-                                                font-weight: ${paragraph.getFontWeight()};
-                                                text-decoration: ${paragraph.getUnderlined()};">
-                                            ${paragraph.buildHTMLString(document.getAllAnnotations())}
+                                    <#if page.getParagraphs()?size == 0>
+                                        <p class="text paragraph">
+                                            ${page.buildHTMLString(document.getAllAnnotations(), document.getFullText())}
                                         </p>
-                                    </#list>
+                                    <#else>
+                                        <#list page.getParagraphs() as paragraph>
+                                            <p class="text paragraph" style="
+                                                    text-align: ${paragraph.getAlign()};
+                                                    font-weight: ${paragraph.getFontWeight()};
+                                                    text-decoration: ${paragraph.getUnderlined()};">
+                                                ${paragraph.buildHTMLString(document.getAllAnnotations())}
+                                            </p>
+                                        </#list>
+                                    </#if>
                                 </div>
                                 <p class="text-center text-dark mb-0">
                                     — ${page.getPageNumber() + 1} —

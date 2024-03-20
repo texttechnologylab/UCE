@@ -30,7 +30,7 @@
                                     <p class="mb-0 text mr-3"> ${document.getLanguage()?upper_case}</p>
                                     <div class="mb-0 flexed align-items-center text">
                                         <i class="fas fa-file-alt"></i> <label
-                                                class="mb-0 ml-2">${document.getPages(10000, 0)?size}</label>
+                                                class="mb-0 ml-2">${document.getPages()?size}</label>
                                     </div>
                                 </div>
                             </div>

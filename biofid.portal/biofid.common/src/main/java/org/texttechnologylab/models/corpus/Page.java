@@ -3,7 +3,9 @@ package org.texttechnologylab.models.corpus;
 import org.texttechnologylab.models.UIMAAnnotation;
 
 import javax.persistence.*;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name="page")
@@ -60,5 +62,69 @@ public class Page extends UIMAAnnotation {
 
     public int getPageNumber() {
         return pageNumber;
+    }
+
+    /**
+     * TODO: This and Paragraph.buildHtmLstring() needs to be redone and adjusted to new settings. As of now it sucks.
+     * @param annotations
+     * @param coveredText
+     * @return
+     */
+    public String buildHTMLString(List<UIMAAnnotation> annotations, String coveredText){
+        coveredText = coveredText.substring(getBegin(), getEnd());
+
+        var offset = getBegin();
+        // Here we store each annotation with its begin index
+        var beginToAnnotations = new HashMap<Integer, List<UIMAAnnotation>>();
+        for(var annotation: annotations.stream().filter(a -> a.getBegin() >= getBegin() && a.getEnd() <= getEnd()).toList()){
+            if(annotation.getBegin() == annotation.getEnd()) continue;
+            beginToAnnotations.put(
+                    annotation.getBegin() - offset,
+                    Stream.concat(
+                            beginToAnnotations.getOrDefault(annotation.getBegin(), new ArrayList<>()).stream(),
+                            Stream.of(annotation)).collect(Collectors.toList()));
+        }
+        // In here we store all possible ends
+        var ends = new ArrayList<Map.Entry<Integer, String>>();
+
+        var finalText = new StringBuilder();
+
+        // We go through each character and add the html build
+        for(var i = 0; i < coveredText.length(); i++){
+            var c = coveredText.charAt(i);
+
+            // Get all annotations that start at this index
+            var annos = beginToAnnotations.getOrDefault(i, new ArrayList<>());
+            for(var a: annos){
+
+                var html = "";
+
+                if(a instanceof NamedEntity ne){
+                    html = String.format("<span class='annotation custom-context-menu ne-%1$s' title='%2$s'>", ne.getType(), ne.getCoveredText());
+                    ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</span>"));
+                } else if (a instanceof Time time) {
+                    html = String.format("<span class='annotation custom-context-menu time' title='%1$s'>", time.getCoveredText());
+                    ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</span>"));
+                } else if(a instanceof WikipediaLink wikipediaLink){
+                    html = String.format("<span class='annotation custom-context-menu wiki' title='%2$s'>", wikipediaLink.getCoveredText());
+                    ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</span>"));
+                } else if(a instanceof Taxon taxon){
+                    html = String.format("<a class='annotation custom-context-menu taxon' href='%1$s' target='_blank' title='%2$s'>", taxon.getValue(), taxon.getCoveredText());
+                    ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</a><i class='mr-1 fas fa-external-link-alt'></i>"));
+                }
+                finalText.append(html);
+            }
+
+            // Append the original text as well.
+            finalText.append(c);
+
+            // Are there any end spans we need to close?
+            for(var end: ends){
+                if(end.getKey() == i){
+                    finalText.append(end.getValue());
+                }
+            }
+        }
+        return finalText.toString();
     }
 }

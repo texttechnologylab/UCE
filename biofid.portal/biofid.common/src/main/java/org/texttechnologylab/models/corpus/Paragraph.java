@@ -79,12 +79,11 @@ public class Paragraph extends UIMAAnnotation {
         return Objects.equals(getAlign().toLowerCase(), "center") ? "underline" : "inherit";
     }
 
-    /**
+    /**TODO: This and Page.buildHtmLstring() needs to be redone and adjusted to new settings. As of now it sucks.
      * Gets an HTML string of this blocks text to simply add to the UI
      * @return
      */
     public String buildHTMLString(List<UIMAAnnotation> annotations){
-
         var offset = getBegin();
         // Here we store each annotation with its begin index
         var beginToAnnotations = new HashMap<Integer, List<UIMAAnnotation>>();
@@ -138,49 +137,5 @@ public class Paragraph extends UIMAAnnotation {
             }
         }
         return finalText.toString();
-
-
-
-
-
-
-
-
-        /*
-        var text = new StringBuffer(coveredText);
-        var offset = getBegin();
-        var addedLength = 0;
-        annotations = annotations.stream().sorted(Comparator.comparingInt(UIMAAnnotation::getBegin)).collect(Collectors.toList());
-
-        for (var annotation: annotations.stream().filter(a -> a.getBegin() >= getBegin() && a.getEnd() <= getEnd()).toList()){
-            var begin = (annotation.getBegin() - offset) + addedLength;
-            var end = (annotation.getEnd() - offset) + addedLength;
-
-            // This means the NE is most likely corrupt, as a 40 character NE is highly unlikely
-            if(end - begin > 50) continue;;
-
-            var insertText = "";
-            var cssClass = "";
-
-            if(annotation instanceof NamedEntity ne){
-                insertText = ne.getCoveredText();
-                cssClass = "ne-" + ne.getType();
-            } else if (annotation instanceof Time time) {
-                insertText = time.getCoveredText();
-                cssClass = "time";
-            } else if(annotation instanceof WikipediaLink wikipediaLink){
-                insertText = wikipediaLink.getCoveredText();
-                cssClass = "wiki";
-            }
-
-            var startInsert = String.format("<span class='annotation %1$s'>", cssClass);
-            var endInsert = "</span>";
-            var insert = startInsert + insertText + endInsert;
-
-            text = text.replace(begin, end, insert);
-            addedLength += startInsert.length() + endInsert.length();
-        }
-
-        return text.toString();*/
     }
 }

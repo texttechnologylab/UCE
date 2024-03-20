@@ -178,12 +178,18 @@ public class UIMAService {
 
                     // The recognized taxons should be split by a |
                     var occurrences = new ArrayList<GbifOccurrence>();
-                    var splited = taxon.getIdentifier().split("\\|");
+                    var splited = new ArrayList<String>();
+                    // Sometimes they are delimitered by |, sometimes by space - who knows in this dump? :)
+                    for(var split:taxon.getIdentifier().split("\\|")){
+                        splited.addAll(Arrays.asList(split.split(" ")));
+                    }
 
                     for(var potentialBiofidId: splited){
                         // The biofid urls are like: https://www.biofid.de/bio-ontologies/gbif/10428508
                         // We need the last number in that string, have a lookup into our sparsql database and from there fetch the
                         // correct TaxonId
+                        if(potentialBiofidId.isEmpty()) continue;
+
                         var taxonId = gbifService.biofidIdUrlToGbifTaxonId(potentialBiofidId);
                         if(taxonId == -1) continue;
                         taxon.setGbifTaxonId(taxonId);
