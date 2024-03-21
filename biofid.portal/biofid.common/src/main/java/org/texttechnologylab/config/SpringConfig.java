@@ -16,7 +16,7 @@ public class SpringConfig {
 
     @Bean
     public UIMAService uimaService(){
-        return new UIMAService(goetheUniversityService(), databaseService(), gbifService());
+        return new UIMAService(goetheUniversityService(), databaseService(), gbifService(), ragService());
     }
 
     @Bean
@@ -31,5 +31,8 @@ public class SpringConfig {
 
     @Bean
     public JenaSparqlService jenaSparqlService() {return new JenaSparqlService();}
+
+    @Bean
+    public RAGService ragService() {return new RAGService(databaseService());}
 
 }

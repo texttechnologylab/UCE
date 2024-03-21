@@ -34,4 +34,7 @@ public class CommonConfig {
     public String getGbifOccurrencesSearchUrl(){
         return getProperty("gbif.occurrences.search.url");
     }
+    public String getRAGWebserverBaseUrl(){
+        return getProperty("rag.webserver.base.url");
+    }
 }

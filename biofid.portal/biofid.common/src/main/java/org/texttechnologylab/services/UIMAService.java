@@ -15,6 +15,7 @@ import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 
+import javax.print.Doc;
 import java.io.File;
 
 import java.io.FileInputStream;
@@ -35,10 +36,15 @@ public class UIMAService {
     private final GoetheUniversityService goetheUniversityService;
     private final DatabaseService db;
     private final GbifService gbifService;
+    private final RAGService ragService;
 
-    public UIMAService(GoetheUniversityService goetheUniversityService, DatabaseService db, GbifService gbifService) {
+    public UIMAService(GoetheUniversityService goetheUniversityService,
+                       DatabaseService db,
+                       GbifService gbifService,
+                       RAGService ragService) {
         this.goetheUniversityService = goetheUniversityService;
         this.db = db;
+        this.ragService = ragService;
         this.gbifService = gbifService;
     }
 
@@ -58,6 +64,7 @@ public class UIMAService {
             var doc = XMIToDocument(file.getPath(), corpus.getId());
             if (doc != null) {
                 db.saveDocument(doc);
+                postProccessDocuments(doc);
                 System.out.println("Stored document with document id " + doc.getDocumentId());
             }
         }
@@ -245,6 +252,19 @@ public class UIMAService {
             return document;
         } catch (Exception ex) {
             return null;
+        }
+    }
+
+    /**
+     * Here we apply any post processing of a document that isn't DUUI and needs the document to be stored once like
+     * the rag vector embeddings
+     */
+    private void postProccessDocuments(Document document){
+        // Build the document embeddings for vector search and RAG
+        var documentEmbeddings = ragService.getCompleteEmbeddingsFromDocument(document);
+        // Store them
+        for(var docEmbedding:documentEmbeddings){
+            ragService.saveDocumentEmbedding(docEmbedding);
         }
     }
 
