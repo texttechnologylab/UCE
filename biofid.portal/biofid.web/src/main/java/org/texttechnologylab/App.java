@@ -6,6 +6,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.routes.DocumentApi;
+import org.texttechnologylab.routes.RAGApi;
 import org.texttechnologylab.routes.SearchApi;
 import org.texttechnologylab.services.DatabaseService;
 import spark.ExceptionHandler;
@@ -45,6 +46,7 @@ public class App {
 
         var searchApi = new SearchApi(context, configuration);
         var documentApi = new DocumentApi(context, configuration);
+        var ragApi = new RAGApi(context, configuration);
 
         // Landing page
         get("/", (request, response) -> {
@@ -82,6 +84,11 @@ public class App {
             });
 
             path("/document", () -> {
+            });
+
+            path("/rag", () -> {
+                get("/new", ragApi.getNewRAGChat);
+                post("/postUserMessage", ragApi.postUserMessage);
             });
         });
     }

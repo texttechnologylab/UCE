@@ -4,23 +4,27 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
+import java.security.KeyPair;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Optional;
+import java.util.*;
 
 import com.google.gson.Gson;
 import com.pgvector.PGvector;
+import org.apache.logging.log4j.core.util.KeyValuePair;
 import org.joda.time.DateTime;
 import org.jsoup.Jsoup;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.corpus.Page;
+import org.texttechnologylab.models.dto.RAGCompleteDto;
 import org.texttechnologylab.models.dto.RAGEmbedDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.rag.DocumentEmbedding;
+import org.texttechnologylab.models.rag.RAGChatMessage;
+
+import javax.print.Doc;
 
 /**
  * Service class for RAG: Retrieval Augmented Generation
@@ -42,6 +46,60 @@ public class RAGService {
     }
 
     /**
+     * Queries our RAG webserver with a list of prefaced prompts to get the new message from our llm
+     * @return
+     */
+    public String postNewRAGPrompt(List<RAGChatMessage> chatHistory){
+        try {
+            var httpClient = HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_2)
+                    .build();
+
+            var url = config.getRAGWebserverBaseUrl() + "rag/complete";
+
+            // Prepare workload
+            var gson = new Gson();
+            var params = new HashMap<String, Object>();
+
+            params.put("model", config.getRAGModel());
+            params.put("apiKey", "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"); // TODO: REMOVE THIS API KEY
+
+            // Add the chat history
+            var promptMessages = new ArrayList<HashMap<String, String>>();
+            for(var chat:chatHistory.stream().sorted(Comparator.comparing(RAGChatMessage::getCreated)).toList()){
+                var promptMessage = new HashMap<String, String>();
+                promptMessage.put("role", chat.getRole().name().toString().toLowerCase());
+                promptMessage.put("content", chat.getPrompt());
+                promptMessages.add(promptMessage);
+            }
+            params.put("promptMessages", promptMessages);
+            var jsonData = gson.toJson(params);
+
+            // Create request
+            var request = HttpRequest.newBuilder()
+                    .uri(new URI(url))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonData))
+                    .build();
+            // Send request and get response
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            var statusCode = response.statusCode();
+            if(statusCode != 200) return null;
+            var responseBody = response.body();
+            var ragCompleteDto = gson.fromJson(responseBody, RAGCompleteDto.class);
+
+            if(ragCompleteDto.getStatus() != 200){
+                // TODO: Log this here?
+                return null;
+            }
+            return ragCompleteDto.getMessage();
+        } catch (Exception ex) {
+            // TODO: Logging!
+            return null;
+        }
+    }
+
+    /**
      * Gets the closest document embeddings from a given text controlled by the range variable
      * @param text
      * @param range
@@ -54,13 +112,20 @@ public class RAGService {
             statement.setObject(1, new PGvector(getEmbeddingForText(text)));
             statement.setInt(2, range);
             var resultSet = statement.executeQuery();
+            var embeddings = new ArrayList<DocumentEmbedding>();
             while(resultSet.next()){
-                var coveredText = resultSet.getString("coveredtext");
-                // TODO: Build the models here and finish this method.
+                var embedding = new DocumentEmbedding(resultSet.getInt("beginn"), resultSet.getInt("endd"));
+                embedding.setCoveredText(resultSet.getString("coveredtext"));
+                embedding.setEmbedding(((PGvector)resultSet.getObject("embedding")).toArray());
+                embedding.setDocument_id(resultSet.getLong("document_id"));
+                embedding.setId(resultSet.getLong("id"));
+
+                embeddings.add(embedding);
             }
+            return embeddings;
         } catch (Exception ex){
-            var xd = "";
             // TODO Log
+            var xd = "";
         }
         return null;
     }

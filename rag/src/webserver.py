@@ -28,6 +28,7 @@ def rag_complete():
     }
     try:
         data = request.get_json()
+        print(data)
         messages = data['promptMessages']
         api_key = data['apiKey']
         result['message'] = get_instruct_model().complete(messages, api_key)

@@ -37,4 +37,7 @@ public class CommonConfig {
     public String getRAGWebserverBaseUrl(){
         return getProperty("rag.webserver.base.url");
     }
+    public String getRAGModel(){
+        return getProperty("rag.model");
+    }
 }
