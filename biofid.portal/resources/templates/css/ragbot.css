@@ -1,3 +1,31 @@
+.open-chat-window{
+    position: fixed;
+    right:36px;
+    bottom: 36px;
+    border-radius: 50%;
+    width: 65px;
+    height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border:lightgray 1px solid;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+    cursor: pointer;
+    z-index: 999;
+    transition: 0.15s;
+}
+
+.open-chat-window:hover i{
+    color:white !important;
+}
+
+.open-chat-window:hover{
+    background-color: var(--prime);
+    color:white !important;
+    transition: 0.15s;
+}
+
 .chat-window-container{
     position: fixed;
     z-index: 9999;
@@ -52,32 +80,35 @@
     position: relative;
 }
 
-.chat-window-container .ccontent .message[data-type="system"]{
+.chat-window-container .ccontent .message[data-type="system"],
+.chat-window-container .ccontent .message[data-type="assistant"]{
     float: left;
 }
 
-.chat-window-container .ccontent .message[data-type="system"]::after{
+.chat-window-container .ccontent .message[data-type="system"]::after,
+.chat-window-container .ccontent .message[data-type="assistant"]::after {
     position: absolute;
-    right:-40px;
+    right: -40px;
     width: 40px;
     height: calc(100% + 2px);
     max-height: 50px;
-    border-right:lightgray 1px solid;
-    border-top:lightgray 1px solid;
+    border-right: lightgray 1px solid;
+    border-top: lightgray 1px solid;
     border-radius: 0% 50% 50% 0%;
-    border-bottom:lightgray 1px solid;
+    border-bottom: lightgray 1px solid;
     background-color: white;
-    color:var(--secondary);
+    color: var(--secondary);
     padding-right: 6px;
     font-family: "Font Awesome 5 Free";
     content: "\f544";
     font-weight: 900;
-    top:-1px;
+    top: -1px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
+.chat-window-container .ccontent .message[data-type="assistant"]::before,
 .chat-window-container .ccontent .message[data-type="system"]::before{
     position: absolute;
     left:-26px;

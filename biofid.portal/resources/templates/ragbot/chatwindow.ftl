@@ -2,11 +2,16 @@
     <#include "*/css/ragbot.css"/>
 </style>
 
-<div class="chat-window-container">
+<a class="open-chat-window" data-trigger="hover" data-toggle="popover" data-placement="top"
+   data-content="Mit Ragbot chatten" onclick="$('.chat-window-container').fadeIn(150)">
+    <i class="m-0 fas fa-robot xlarge-font color-prime"></i>
+</a>
+
+<div class="chat-window-container display-none">
     <div class="cheader w-100 flexed align-items-center justify-content-between p-3">
         <h5 class="m-0 color-secondary"><i class="fas fa-robot mr-1"></i></h5>
         <h5 class="m-0 text">Chat</h5>
-        <a class="btn">
+        <a class="btn" onclick="$('.chat-window-container').fadeOut(150)">
             <i class="fas fa-long-arrow-alt-right m-0 color-prime"></i>
         </a>
     </div>

@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.config.CommonConfig;
+import org.texttechnologylab.models.rag.DocumentEmbedding;
 import org.texttechnologylab.models.rag.RAGChatMessage;
 import org.texttechnologylab.models.rag.RAGChatState;
 import org.texttechnologylab.models.rag.Roles;
@@ -53,7 +54,9 @@ public class RAGApi {
             userRagMessage.setMessage(userMessage);
 
             // Now fetch some context through embeddings
-            var nearestDocumentEmbeddings = ragService.getClosestDocumentEmbeddings(userMessage, 1);
+            List<DocumentEmbedding> nearestDocumentEmbeddings = new ArrayList<>();
+            if(chatState.getMessages().size() < 2)
+                nearestDocumentEmbeddings = ragService.getClosestDocumentEmbeddings(userMessage, 3);
             var prompt = "Context: " + String.join("\n", nearestDocumentEmbeddings.stream().map(e -> e.getCoveredText()).toList())
                     + "\nInstruktion:" + userMessage;
             userRagMessage.setPrompt(prompt);
@@ -61,10 +64,12 @@ public class RAGApi {
             // Add the message to the current chat
             chatState.addMessage(userRagMessage);
 
+            // TODO: Continue here and fix the problem of the context. Also, add documents, found occurrences and such maybe.
+
             // Now let's ask our rag llm
             var answer = ragService.postNewRAGPrompt(chatState.getMessages());
             var systemResponseMessage = new RAGChatMessage();
-            systemResponseMessage.setRole(Roles.SYSTEM);
+            systemResponseMessage.setRole(Roles.ASSISTANT);
             systemResponseMessage.setPrompt(answer);
             systemResponseMessage.setMessage(answer);
             systemResponseMessage.setContextDocument_Ids(nearestDocumentEmbeddings.stream().map(e -> e.getDocument_id()).toList());
@@ -100,11 +105,12 @@ public class RAGApi {
             startMessage.setMessage("Hallo! Ich bin dein virtueller Assistent rund um das Suchportal. " +
                     "Wenn du eine Frage zu einem bestimmten Thema hast, oder du über die Suche nicht die " +
                     "Dokumente findest, die du dir erhofft hattest, dann frag mich gerne.");
-            startMessage.setPrompt("Du bist ein Bibliothekar in einer Online-Suchplattform für Bücher und Texte aller Art. " +
+            startMessage.setPrompt("Du bist ein Assistent in einer Online-Suchplattform für Bücher und Texte aller Art. " +
                     "Menschen instruieren dich und suchen verschiedenste Dinge über diese Bücher und Artikel, und du hilfst ihnen. " +
                     "Es werden dir Kontexte gegeben, die Auszüge aus Büchern und Artikel der Plattform darstellen. " +
                     "Nutze diese Kontexte um zu antworten, aber erwähne nicht, dass du sie hast - der Mensch sieht sie nicht!" +
-                    "Wenn du die Antwort nicht weisst, dann sag das einfach. Halte die Antwort kurz und sei höflich!");
+                    "Wenn du die Antwort nicht weisst, dann sag das einfach. Halte die Antwort kurz und sei höflich! " +
+                    "Nutze auch HTML styling für die Antworten!");
             ragState.addMessage(startMessage);
 
             // TODO: Someday it's probably best to cache this in a mongodb or something.

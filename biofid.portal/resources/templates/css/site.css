@@ -23,7 +23,7 @@ footer {
 }
 
 nav {
-    border-bottom: var(--prime) 2px solid;
+    border-bottom: var(--prime) 1px solid;
     background-color: rgb(244, 244, 247);
     box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
