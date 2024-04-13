@@ -53,7 +53,8 @@ public class RAGApi {
             userRagMessage.setRole(Roles.USER);
             userRagMessage.setMessage(userMessage);
 
-            // Now fetch some context through embeddings
+            // Now fetch some context through embeddings.
+            // When do we actually fetch more context? Good paper here: https://arxiv.org/html/2401.06800v1
             List<DocumentEmbedding> nearestDocumentEmbeddings = new ArrayList<>();
             if(chatState.getMessages().size() < 2)
                 nearestDocumentEmbeddings = ragService.getClosestDocumentEmbeddings(userMessage, 3);

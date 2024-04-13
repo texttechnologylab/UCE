@@ -40,4 +40,6 @@ build/
 
 ### Python ###
 /rag/env
+/rag/src/cBERT/data
+/rag/src/cBERT/models
 __pycache__

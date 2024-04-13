@@ -179,7 +179,7 @@ public class RAGService {
             var gson = new Gson();
             var params = new HashMap<String, Object>();
             params.put("text", text);
-            var jsonData = gson.toJson(params); // Example JSON data
+            var jsonData = gson.toJson(params);
 
             // Create request
             var request = HttpRequest.newBuilder()
