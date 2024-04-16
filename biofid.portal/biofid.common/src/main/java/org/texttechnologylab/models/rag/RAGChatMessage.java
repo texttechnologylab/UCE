@@ -1,13 +1,16 @@
 package org.texttechnologylab.models.rag;
 
 import org.joda.time.DateTime;
+import org.texttechnologylab.models.corpus.Document;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class RAGChatMessage {
     private Roles role;
     private String message;
     private DateTime created;
+    private ArrayList<Document> contextDocuments;
 
     /**
      * This is the prompt we send to our rag webserver. It differs from
@@ -18,6 +21,15 @@ public class RAGChatMessage {
 
     public RAGChatMessage(){
         this.created = DateTime.now();
+        this.contextDocuments = new ArrayList<>();
+    }
+
+    public ArrayList<Document> getContextDocuments() {
+        return contextDocuments;
+    }
+
+    public void setContextDocuments(ArrayList<Document> contextDocuments) {
+        this.contextDocuments = contextDocuments;
     }
 
     public DateTime getCreated() {

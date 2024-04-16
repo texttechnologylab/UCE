@@ -23,8 +23,8 @@
     <div class="cfooter p-3">
         <div class="w-100">
             <div class="flexed align-items-center">
-                <input class="form-control w-100 rounded-0 border-right-0 chat-user-input" type="text"/>
-                <button class="btn btn-primary rounded-0 send-message-btn">
+                <textarea class="form-control border-right-0 w-100 rounded-0 chat-user-input" placeholder="Chat..."></textarea>
+                <button class="btn btn-primary send-message-btn">
                     <i class="fas fa-comment-alt"></i>
                 </button>
             </div>

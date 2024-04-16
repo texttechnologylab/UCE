@@ -30,19 +30,17 @@
 
 <div class="site-container">
 
-    <nav class="p-3 position-relative">
+    <nav class="position-relative">
 
         <div class="container-fluid flexed align-items-center justify-content-around">
             <img class="mb-0 logo" src="https://biofid.de/static/images/logo_fid_biodiversity.png">
 
-            <div class="flexed align-items-center">
+            <div class="flexed align-items-center nav-container">
                 <div class="flexed align-items-center nav-buttons">
                     <a class="btn text" data-id="team">Team</a>
                     <a class="btn text selected-nav-btn" data-id="search">Suche</a>
                     <a class="btn text" data-id="contact">Kontakt</a>
                 </div>
-                <a class="mr-2 text">DE</a>
-                <a class="text">GB</a>
             </div>
         </div>
     </nav>

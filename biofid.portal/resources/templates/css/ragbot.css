@@ -31,7 +31,7 @@
     z-index: 9999;
     right: 0;
     bottom: 0;
-    width: 30vw;
+    width: 35vw;
     min-width: 400px;
     height: 100vh;
     background-color: ghostwhite;
@@ -40,7 +40,8 @@
 
 .chat-window-container .cheader{
     border-bottom: 1px lightgray solid;
-    height: 75px;
+    height: 90px;
+    background-color: rgba(245, 245, 247, 1);
 }
 
 .chat-window-container .cheader a{
@@ -55,9 +56,8 @@
 }
 
 .chat-window-container .ccontent{
-    height: calc(100% - 175px);
+    height: calc(100% - 235px);
     overflow-y: auto;
-    background-color: rgba(245, 245, 247, 1);
     border-bottom: 1px lightgray solid;
     overflow-x: hidden;
     padding-top: 36px;
@@ -155,10 +155,38 @@
     justify-content: center;
 }
 
+.chat-window-container .ccontent .message .cdocuments-list{
+    margin-bottom: 12px;
+}
+
+.chat-window-container .ccontent .message .cdocuments-list .cdocument-card{
+    padding: 8px;
+    border:lightgray 1px solid;
+    border-radius: 3px;
+    transition: 0.15s;
+}
+
+.chat-window-container .ccontent .message .cdocuments-list .cdocument-card:hover{
+    transition: 0.15s;
+    transform: scale(1.01, 1.01);
+    background-color: white;
+}
+
 .chat-window-container .cfooter{
-    height: 100px;
+    height: 150px;
     display: flex;
+    background-color: rgba(245, 245, 247, 1);
     align-items: center;
     width: 100%;
+}
+
+.chat-window-container .cfooter .chat-user-input{
+    resize: none;
+    height: 100px;
+}
+
+.chat-window-container .cfooter .send-message-btn{
+    height: 100px;
+    border-radius: 0;
 }
 

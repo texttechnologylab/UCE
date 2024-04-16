@@ -23,41 +23,48 @@ footer {
 }
 
 nav {
-    border-bottom: var(--prime) 1px solid;
+    border-bottom: lightgray 1px solid;
     background-color: rgb(244, 244, 247);
-    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
 
 nav .logo {
     height: 60px;
 }
 
+nav .nav-buttons{
+    border-right:1px lightgray solid;
+    border-left:1px lightgray solid;
+    padding: 18px;
+    margin-left: 12px;
+}
+
 nav .nav-buttons a {
     margin: 6px;
-    border-radius: 0;
     cursor: pointer;
+    font-size: large;
 }
 
 nav .nav-buttons a:hover {
     color: black !important;
     background-color: ghostwhite;
-    border-bottom: 2px solid var(--prime);
 }
 
 nav .selected-nav-btn {
     position: relative;
-    border-bottom: var(--prime) 2px solid;
-    color: black !important;
+    background-color: ghostwhite;
+    border: lightgray 1px solid;
+    border-radius: 16px;
+    color: var(--prime) !important;
     transition: 0.25s;
 }
 
 nav .selected-nav-btn::before {
     position: absolute;
-    bottom: -30px;
-    width: 2px;
+    bottom: -26px;
+    width: 1px;
     left: calc(50% - 1px);
-    background-color: var(--prime);
-    height: 30px;
+    background-color: lightgray;
+    height: 26px;
     content: '';
 }
 

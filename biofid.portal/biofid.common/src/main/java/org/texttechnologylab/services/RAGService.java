@@ -46,6 +46,49 @@ public class RAGService {
     }
 
     /**
+     * Queries our RAG webserver which decides whether we should fetch new context or not.
+     * @return
+     */
+    public Integer postRAGContextNeeded(String userInput){
+        try {
+            var httpClient = HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_2)
+                    .build();
+
+            var url = config.getRAGWebserverBaseUrl() + "rag/context";
+
+            // Prepare workload
+            var gson = new Gson();
+            var params = new HashMap<String, Object>();
+
+            params.put("userInput", userInput);
+            var jsonData = gson.toJson(params);
+
+            // Create request
+            var request = HttpRequest.newBuilder()
+                    .uri(new URI(url))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonData))
+                    .build();
+            // Send request and get response
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            var statusCode = response.statusCode();
+            if(statusCode != 200) return null;
+            var responseBody = response.body();
+            var ragCompleteDto = gson.fromJson(responseBody, RAGCompleteDto.class);
+
+            if(ragCompleteDto.getStatus() != 200){
+                // TODO: Log this here?
+                return null;
+            }
+            return Integer.parseInt(ragCompleteDto.getMessage());
+        } catch (Exception ex) {
+            // TODO: Logging!
+            return null;
+        }
+    }
+
+    /**
      * Queries our RAG webserver with a list of prefaced prompts to get the new message from our llm
      * @return
      */
@@ -155,7 +198,8 @@ public class RAGService {
      * @param document
      */
     public List<DocumentEmbedding> getCompleteEmbeddingsFromDocument(Document document){
-        var emptyEmbeddings = getEmptyEmbeddingsFromText(document.getFullText(), 1200);
+        // We also make an embedding from the title
+        var emptyEmbeddings = getEmptyEmbeddingsFromText(document.getDocumentTitle() + " " +  document.getFullText(), 1200);
         for(var empty:emptyEmbeddings){
             var embeddings = getEmbeddingForText(empty.getCoveredText());
             empty.setEmbedding(embeddings);

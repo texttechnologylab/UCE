@@ -1,3 +1,4 @@
+from cBERT.cBERT import CCCBERT
 from flask import Flask, g, render_template, request, jsonify, current_app
 
 from embedder import Embedder
@@ -16,8 +17,24 @@ def embed():
         result['status'] = 200
         result['message'] = get_embedding_model().embed(text)
     except Exception as ex:
-        result['message'] = "There was an exception caught while trying to embed: " + ex
+        result['message'] = "There was an exception caught while trying to embed: " + str(ex)
         print("Exception while trying to get embedding: ")
+        print(ex)
+    return jsonify(result)
+
+@app.route('/rag/context', methods=['POST'])
+def context():
+    result = {
+        "status": 400
+    }
+    try:
+        data = request.get_json()
+        user_input = data['userInput']
+        result['status'] = 200
+        result['message'] = get_CCCBERT_model().predict_context_needed(user_input)
+    except Exception as ex:
+        result['message'] = "There was an exception caught while using CCC-BERT for context: " + str(ex)
+        print("Exception while trying to get CCC-BERT contect decision: ")
         print(ex)
     return jsonify(result)
 
@@ -50,6 +67,12 @@ def get_instruct_model():
     if 'instruct_model' not in current_app.config:
         current_app.config['instruct_model'] = InstructLLM('ChatGPT')
     return current_app.config['instruct_model']
+
+def get_CCCBERT_model():
+    '''Gets the CCC-BERT model to check whether we need context or not'''
+    if 'ccc_bert' not in current_app.config:
+        current_app.config['ccc_bert'] = CCCBERT('./cBERT/models/cBERT_35k.pth')
+    return current_app.config['ccc_bert']
 
 if __name__ == '__main__':
     app.run(debug=True, port=5678)

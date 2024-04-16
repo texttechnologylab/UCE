@@ -2,6 +2,7 @@ package org.texttechnologylab.models.rag;
 
 import org.apache.uima.cas.text.Language;
 import org.joda.time.DateTime;
+import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.utils.SupportedLanguages;
 
 import java.util.ArrayList;
