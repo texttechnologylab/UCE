@@ -101,7 +101,7 @@ public class DatabaseService {
             criteriaQuery.from(Document.class);
             var docs = session.createQuery(criteriaQuery).getResultList();
             for (var doc : docs) {
-                initializeCompleteDocument(doc, 9999);
+                initializeCompleteDocument(doc, 0, 9999);
             }
 
             return docs;
@@ -248,11 +248,11 @@ public class DatabaseService {
      * @param id
      * @return
      */
-    public Document getCompleteDocumentById(long id, int pageLimit) {
+    public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
 
-            return initializeCompleteDocument(doc, pageLimit);
+            return initializeCompleteDocument(doc, skipPages, pageLimit);
         });
     }
 
@@ -308,13 +308,24 @@ public class DatabaseService {
      * @param doc
      * @return
      */
-    private Document initializeCompleteDocument(Document doc, int pageLimit) {
+    private Document initializeCompleteDocument(Document doc, int skipPages, int pageLimit) {
         Hibernate.initialize(doc.getPages());
-        for (var page : doc.getPages().stream().limit(pageLimit).toList()) {
+
+        // The documents are too large to fetch all pages and all annotations at once, it would take to long.
+        // So we initialize only through a window.
+        var begin = 99999999;
+        var end = 0;
+        for (var page : doc.getPages().stream().skip(skipPages).limit(pageLimit).toList()) {
             Hibernate.initialize(page.getBlocks());
             Hibernate.initialize(page.getParagraphs());
             Hibernate.initialize(page.getLines());
+
+            if(page.getBegin() <= begin) begin = page.getBegin();
+            if(page.getEnd() >= end) end = page.getEnd();
         }
+        int finalBegin = begin;
+        int finalEnd = end;
+
         Hibernate.initialize(doc.getSentences());
         Hibernate.initialize(doc.getNamedEntities());
         Hibernate.initialize(doc.getTaxons());
@@ -323,6 +334,7 @@ public class DatabaseService {
         for (var link : doc.getWikipediaLinks()) {
             Hibernate.initialize(link.getWikiDataHyponyms());
         }
+
         return doc;
     }
 

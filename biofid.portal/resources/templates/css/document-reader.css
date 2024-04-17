@@ -33,6 +33,18 @@
 body {
 }
 
+.pages-loader-popup{
+    position: fixed;
+    left:12px;
+    bottom: 12px;
+    width: 200px;
+    height: 75px;
+    background-color: white;
+    border:lightgray 1px solid;
+    z-index: 99;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+
 .site-container {
     padding-top: 3rem;
     padding-bottom: 3rem;

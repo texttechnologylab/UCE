@@ -51,11 +51,27 @@ public class DocumentApi {
 
         var id = request.queryParams("id");
 
-        var doc = db.getCompleteDocumentById(Long.parseLong(id), 10);
-
+        var doc = db.getCompleteDocumentById(Long.parseLong(id), 0, 10);
+        System.out.println("Loaded document from database with id " + id);
         var model = new HashMap<String, Object>();
         model.put("document", doc);
 
         return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "reader/documentReaderView.ftl"));
+    });
+
+    public Route getPagesListView = ((request, response) -> {
+
+        var id = request.queryParams("id");
+        var skip = Integer.parseInt(request.queryParams("skip"));
+
+        var doc = db.getCompleteDocumentById(Long.parseLong(id), skip, 10);
+
+        var model = new HashMap<String, Object>();
+        var annotations = doc.getAllAnnotations(skip, 10);
+        model.put("documentAnnotations", annotations);
+        model.put("documentText", doc.getFullText());
+        model.put("documentPages", doc.getPages(10, skip));
+
+        return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "reader/components/pagesList.ftl"));
     });
 }

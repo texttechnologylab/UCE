@@ -155,12 +155,15 @@ public class Document extends ModelBase {
      * Gets all objects of type UIMAAnnotation of this document
      * @return
      */
-    public List<UIMAAnnotation> getAllAnnotations(){
+    public List<UIMAAnnotation> getAllAnnotations(int pagesSkip, int pagesTake){
+        var pagesBegin = getPages().stream().skip(pagesSkip).limit(1).findFirst().get().getBegin();
+        var pagesEnd = getPages().stream().skip(pagesSkip + pagesTake).limit(1).findFirst().get().getEnd();
+
         var annotations = new ArrayList<UIMAAnnotation>();
-        annotations.addAll(namedEntities);
-        annotations.addAll(times);
-        annotations.addAll(wikipediaLinks);
-        annotations.addAll(taxons);
+        annotations.addAll(namedEntities.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        annotations.addAll(times.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        annotations.addAll(wikipediaLinks.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        annotations.addAll(taxons.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         return annotations;
     }
 
@@ -179,7 +182,7 @@ public class Document extends ModelBase {
         return pages.stream()
                 .sorted(Comparator.comparingInt(Page::getPageNumber))
                 .skip(skip)
-                .limit(skip + take)
+                .limit(take)
                 .collect(Collectors.toList());
     }
 

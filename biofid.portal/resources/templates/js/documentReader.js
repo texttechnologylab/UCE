@@ -102,6 +102,9 @@ $('body').on('mouseleave', '.reader-container .annotation', function(){
 
 $(document).ready(function () {
     checkScroll();
+
+    // we want to continously lazy load new pages
+    lazyLoadPages();
 })
 
 /**
@@ -112,3 +115,33 @@ document.addEventListener("mousemove", function(event) {
     dot.style.left = event.clientX -9 + "px";
     dot.style.top = event.clientY - 9 + "px";
 });
+
+/**
+ * Handle the lazy loading of more pages
+ */
+async function lazyLoadPages(){
+    const $readerContainer = $('.reader-container');
+    const id = $readerContainer.data('id');
+    const pagesCount = $readerContainer.data('pagescount');
+
+    for(let i = 10; i <= pagesCount; i += 10){
+        $('.site-container .loaded-pages-count').html(i);
+
+        await $.ajax({
+            url: "/api/document/reader/pagesList?id=" + id + "&skip=" + i,
+            type: "GET",
+            success: function (response) {
+                // Render the new pages
+                $('.reader-container .document-content').append(response);
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+                $('.reader-container .document-content').append(xhr.responseText);
+            }
+        }).always(function(){
+            $('.site-container .loaded-pages-count').html(i);
+        });
+    }
+
+    $('.reader-container .loaded-pages-count').fadeOut(250);
+}

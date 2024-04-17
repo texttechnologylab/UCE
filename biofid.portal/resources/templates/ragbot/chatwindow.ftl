@@ -20,13 +20,18 @@
         <button class="start-new-chat-btn text-center btn btn-primary rounded-0 w-100">Neuen Chat starten</button>
     </div>
 
-    <div class="cfooter p-3">
-        <div class="w-100">
+    <div class="cfooter position-relative">
+        <div class="w-100 p-3">
             <div class="flexed align-items-center">
-                <textarea class="form-control border-right-0 w-100 rounded-0 chat-user-input" placeholder="Chat..."></textarea>
+                <textarea disabled class="form-control border-right-0 w-100 rounded-0 chat-user-input" placeholder="Chat..."></textarea>
                 <button class="btn btn-primary send-message-btn">
                     <i class="fas fa-comment-alt"></i>
                 </button>
+            </div>
+        </div>
+        <div class="cloader">
+            <div class="w-100 flexed align-items-center justify-content-center h-100">
+                <p class="text">Lädt <i class="color-prime fas fa-comment-dots"></i></p>
             </div>
         </div>
     </div>

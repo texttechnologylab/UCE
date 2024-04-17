@@ -28,6 +28,14 @@
 
 <div class="site-container">
 
+    <div class="pages-loader-popup">
+        <div class="flexed align-items-center justify-content-center h-100 w-100">
+            <p class="mb-0 text">
+                <i class="rotate fas fa-circle-notch mr-1"></i> Lade Seiten <span
+                        class="color-prime loaded-pages-count">0</span>/${document.getPages()?size}</p>
+        </div>
+    </div>
+
     <div class="dot" id="custom-cursor"></div>
 
     <ul class='custom-menu'>
@@ -40,7 +48,9 @@
         <div class="flexed m-0 p-0">
 
             <div class="w-100">
-                <div class="reader-container container">
+                <div class="position-relative reader-container container"
+                     data-id="${document.getId()?string?replace('.', '')}"
+                     data-pagescount="${document.getPages()?size}">
 
                     <div class="header text-center flexed align-items-center justify-content-around">
                         <a class="open-metadata-url-btn m-0" href="${document.getMetadataTitleInfo().getScrapedUrl()}"
@@ -55,31 +65,10 @@
                     </div>
 
                     <div class="document-content">
-
-                        <#list document.getPages(10, 0) as page>
-                            <div class="page" data-id="${page.getPageNumber() + 1}">
-                                <div class="blurrer display-none" data-toggled="false"></div>
-                                <div>
-                                    <#if page.getParagraphs()?size == 0>
-                                        <p class="text paragraph">
-                                            ${page.buildHTMLString(document.getAllAnnotations(), document.getFullText())}
-                                        </p>
-                                    <#else>
-                                        <#list page.getParagraphs() as paragraph>
-                                            <p class="text paragraph" style="
-                                                    text-align: ${paragraph.getAlign()};
-                                                    font-weight: ${paragraph.getFontWeight()};
-                                                    text-decoration: ${paragraph.getUnderlined()};">
-                                                ${paragraph.buildHTMLString(document.getAllAnnotations())}
-                                            </p>
-                                        </#list>
-                                    </#if>
-                                </div>
-                                <p class="text-center text-dark mb-0">
-                                    — ${page.getPageNumber() + 1} —
-                                </p>
-                            </div>
-                        </#list>
+                        <#assign documentPages = document.getPages(10, 0)>
+                        <#assign documentText = document.getFullText()>
+                        <#assign documentAnnotations = document.getAllAnnotations(0, 10)>
+                        <#include '*/reader/components/pagesList.ftl' />
                     </div>
 
                 </div>

@@ -70,8 +70,10 @@
 
             <div class="position-relative">
                 <#include "*/search/components/loader.ftl">
-                <div class="search-result-container container-fluid">
+                <div class="search-result-container container-fluid position-relative">
+
                     <h6 class="w-100 text-center mt-5 text">Starten Sie eine Suche</h6>
+
                 </div>
             </div>
 

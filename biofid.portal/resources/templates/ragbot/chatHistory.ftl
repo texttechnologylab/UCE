@@ -28,3 +28,4 @@
         <p class="raw mb-0">${message.getMessage()}</p>
     </div>
 </#list>
+
