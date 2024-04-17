@@ -93,13 +93,11 @@ public class SearchApi {
 
         var biofidSearch = new BiofidSearch(context, searchInput, corpusId, new SearchLayer[]{
                 SearchLayer.METADATA,
-                SearchLayer.NAMED_ENTITIES
+                SearchLayer.NAMED_ENTITIES,
+                SearchLayer.EMBEDDINGS
         });
         var searchState = biofidSearch.initSearch();
 
-        //if (searchInput.equals("TEST")) {
-        //    docs = this.db.searchForDocuments(0, 15);
-        //}
         model.put("searchState", searchState);
         activeSearches.put(searchState.getSearchId().toString(), searchState);
 

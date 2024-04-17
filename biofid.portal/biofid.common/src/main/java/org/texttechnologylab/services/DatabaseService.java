@@ -220,7 +220,11 @@ public class DatabaseService {
      * @return
      */
     public Document getDocumentById(long id) {
-        return executeOperationSafely((session) -> session.get(Document.class, id));
+        return executeOperationSafely((session) -> {
+            var doc = session.get(Document.class, id);
+            Hibernate.initialize(doc.getPages());
+            return doc;
+        });
     }
 
     /**
@@ -313,18 +317,11 @@ public class DatabaseService {
 
         // The documents are too large to fetch all pages and all annotations at once, it would take to long.
         // So we initialize only through a window.
-        var begin = 99999999;
-        var end = 0;
         for (var page : doc.getPages().stream().skip(skipPages).limit(pageLimit).toList()) {
             Hibernate.initialize(page.getBlocks());
             Hibernate.initialize(page.getParagraphs());
             Hibernate.initialize(page.getLines());
-
-            if(page.getBegin() <= begin) begin = page.getBegin();
-            if(page.getEnd() >= end) end = page.getEnd();
         }
-        int finalBegin = begin;
-        int finalEnd = end;
 
         Hibernate.initialize(doc.getSentences());
         Hibernate.initialize(doc.getNamedEntities());

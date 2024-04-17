@@ -1,5 +1,6 @@
 :root {
     --prime: #5c7a17;
+    --prime-raw: 92, 122, 23;
     --secondary: darkgreen;
     --dark: rgba(38,38,38,1);
 }
@@ -7,6 +8,10 @@
 .site-container {
     background-color: rgb(245, 245, 247);
     min-height: 100vh !important;
+}
+
+.bg-default{
+    background-color: rgb(245, 245, 247) !important;
 }
 
 footer {

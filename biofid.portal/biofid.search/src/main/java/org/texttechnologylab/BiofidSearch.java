@@ -1,16 +1,15 @@
 package org.texttechnologylab;
 
 import org.springframework.context.ApplicationContext;
-import org.texttechnologylab.models.search.DocumentSearchResult;
-import org.texttechnologylab.models.search.OrderByColumn;
-import org.texttechnologylab.models.search.SearchLayer;
-import org.texttechnologylab.models.search.SearchOrder;
+import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.services.DatabaseService;
+import org.texttechnologylab.services.RAGService;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -21,6 +20,7 @@ public class BiofidSearch {
     private final BiofidSearchState biofidSearchState;
     private List<String> stopwords;
     private DatabaseService db;
+    private RAGService ragService;
 
     /**
      * Creates a new instance of the BiofidSearch, throws exceptions if components couldn't be inited.
@@ -59,6 +59,26 @@ public class BiofidSearch {
         biofidSearchState.setFoundNamedEntities(documentSearchResult.getFoundNamedEntities());
         biofidSearchState.setFoundTaxons(documentSearchResult.getFoundTaxons());
         biofidSearchState.setFoundTimes(documentSearchResult.getFoundTimes());
+
+        // Execute embedding search if desired.
+        // This search is lose coupled from the rest and only done once in the initiation.
+        if(biofidSearchState.getSearchLayers().contains(SearchLayer.EMBEDDINGS)){
+            var closestDocumentsEmbeddings = ragService.getClosestDocumentEmbeddings(
+                    this.biofidSearchState.getSearchPhrase(),
+                    20);
+
+            var foundDocumentEmbeddings = new ArrayList<DocumentEmbeddingSearchResult>();
+            for(var embedding:closestDocumentsEmbeddings){
+                var document = db.getDocumentById(embedding.getDocument_id());
+                var documentEmbedding = new DocumentEmbeddingSearchResult();
+                documentEmbedding.setDocument(document);
+                documentEmbedding.setDocumentEmbedding(embedding);
+
+                foundDocumentEmbeddings.add(documentEmbedding);
+            }
+            biofidSearchState.setFoundDocumentEmbeddings(foundDocumentEmbeddings);
+        }
+
         return biofidSearchState;
     }
 
@@ -81,6 +101,7 @@ public class BiofidSearch {
      * @return
      */
     private DocumentSearchResult executeSearchOnDatabases(boolean countAll){
+
         // Execute the metadata search. This layer is contained in the other layers, but there are some instances where
         // we ONLY want to use the metadata search, so handle that specific case here.
         if(biofidSearchState.getSearchLayers().stream().count() == 1 && biofidSearchState.getSearchLayers().contains(SearchLayer.METADATA)){
@@ -105,6 +126,7 @@ public class BiofidSearch {
                     biofidSearchState.getOrderBy(),
                     biofidSearchState.getCorpusId());
         }
+
         return null;
     }
 
@@ -134,6 +156,7 @@ public class BiofidSearch {
 
     private void initServices(ApplicationContext serviceContext) throws URISyntaxException, IOException {
         this.db = serviceContext.getBean(DatabaseService.class);
+        this.ragService = serviceContext.getBean(RAGService.class);
         // TODO: Add more language support in the future
         this.stopwords = loadStopwords("de-DE");
     }

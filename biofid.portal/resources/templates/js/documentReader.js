@@ -126,22 +126,25 @@ async function lazyLoadPages(){
 
     for(let i = 10; i <= pagesCount; i += 10){
         $('.site-container .loaded-pages-count').html(i);
-
-        await $.ajax({
-            url: "/api/document/reader/pagesList?id=" + id + "&skip=" + i,
-            type: "GET",
-            success: function (response) {
-                // Render the new pages
-                $('.reader-container .document-content').append(response);
-            },
-            error: function (xhr, status, error) {
-                console.error(xhr.responseText);
-                $('.reader-container .document-content').append(xhr.responseText);
-            }
-        }).always(function(){
+        if(i >= pagesCount)
             $('.site-container .loaded-pages-count').html(i);
-        });
+        else{
+            await $.ajax({
+                url: "/api/document/reader/pagesList?id=" + id + "&skip=" + i,
+                type: "GET",
+                success: function (response) {
+                    // Render the new pages
+                    $('.reader-container .document-content').append(response);
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                    $('.reader-container .document-content').append(xhr.responseText);
+                }
+            }).always(function(){
+                $('.site-container .loaded-pages-count').html(i);
+            });
+        }
     }
 
-    $('.reader-container .loaded-pages-count').fadeOut(250);
+    $('.site-container .pages-loader-popup').fadeOut(250);
 }

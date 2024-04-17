@@ -24,7 +24,15 @@
 
         <div class="col-md-6">
             <div class="flexed align-items-center justify-content-between sort-container pl-3 pr-3 pt-2 pb-2 mb-3">
-                <h6 class="m-0">Sortierung</h6>
+                <div class="flexed align-items-center">
+                    <a class="btn switch-search-layer-result-btn text hoverable selected" data-layer="METADATA">
+                        <i class="fas fa-search mr-1"></i> Meta</a>
+                    <#if searchState.getFoundDocumentEmbeddings()?exists>
+                        <a class="btn switch-search-layer-result-btn text hoverable" data-layer="EMBEDDING">
+                            <i class="fab fa-searchengin mr-1"></i> Embedding</a>
+                    </#if>
+                </div>
+
                 <div class="flexed">
                     <div class="flexed align-items-center w-100">
                         <p class="mb-0 mr-1">Published</p>
@@ -44,9 +52,31 @@
 
             <div>
                 <#include "*/search/components/loader.ftl" >
-                <div class="document-list-include">
+                <div class="document-list-include list" data-layer="METADATA">
                     <#include "*/search/components/documentList.ftl" >
                 </div>
+                <#if searchState.getFoundDocumentEmbeddings()?exists>
+                    <div class="embedding-document-list-include list display-none" data-layer="EMBEDDING">
+                        <#list searchState.getFoundDocumentEmbeddings() as documentEmbedding>
+                            <#assign document = documentEmbedding.getDocument()>
+                            <#assign embedding = documentEmbedding.getDocumentEmbedding()>
+
+                            <div class="document-card">
+                                <div class="content">
+                                    <#include '*/search/components/documentCardContent.ftl' >
+                                </div>
+                                <div class="mt-3">
+                                    <p class="m-0 text-center w-100">
+                                        <i class="color-secondary fas fa-vector-square"></i> Embedding
+                                    </p>
+                                    <p class="embedding-text text mt-2">
+                                        ${embedding.getCoveredText()}
+                                    </p>
+                                </div>
+                            </div>
+                        </#list>
+                    </div>
+                </#if>
             </div>
         </div>
 

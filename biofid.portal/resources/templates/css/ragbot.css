@@ -168,7 +168,7 @@
 
 .chat-window-container .ccontent .message .cdocuments-list .cdocument-card:hover{
     transition: 0.15s;
-    transform: scale(1.01, 1.01);
+    border-color:gray !important;
     background-color: white;
 }
 

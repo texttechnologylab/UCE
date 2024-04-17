@@ -2,10 +2,8 @@ package org.texttechnologylab;
 
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.corpus.Page;
-import org.texttechnologylab.models.search.AnnotationSearchResult;
-import org.texttechnologylab.models.search.OrderByColumn;
-import org.texttechnologylab.models.search.SearchLayer;
-import org.texttechnologylab.models.search.SearchOrder;
+import org.texttechnologylab.models.rag.DocumentEmbedding;
+import org.texttechnologylab.models.search.*;
 
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -35,12 +33,25 @@ public class BiofidSearchState {
     private ArrayList<AnnotationSearchResult> foundTaxons;
 
     /**
+     * This is only filled when the search layer contains embeddings
+     */
+    private ArrayList<DocumentEmbeddingSearchResult> foundDocumentEmbeddings;
+
+    /**
      * These are the current, paginated list of documents
      */
     private List<Document> currentDocuments;
 
     public BiofidSearchState(){
         this.searchId = UUID.randomUUID();
+    }
+
+    public ArrayList<DocumentEmbeddingSearchResult> getFoundDocumentEmbeddings() {
+        return foundDocumentEmbeddings;
+    }
+
+    public void setFoundDocumentEmbeddings(ArrayList<DocumentEmbeddingSearchResult> foundDocumentEmbeddings) {
+        this.foundDocumentEmbeddings = foundDocumentEmbeddings;
     }
 
     public long getCorpusId() {

@@ -164,6 +164,22 @@
     color: white;
 }
 
+.sort-container .switch-search-layer-result-btn{
+    border-bottom: 2px lightgray solid;
+    margin-right: 12px;
+    border-radius: 0;
+}
+
+.sort-container .switch-search-layer-result-btn:hover{
+    color:black !important;
+    border-bottom-color: gray !important;
+}
+
+.sort-container .switch-search-layer-result-btn.selected{
+    border-bottom-color: var(--secondary);
+    color:black !important;
+}
+
 .document-card{
     max-width: 900px;
     width: 100%;
@@ -179,6 +195,15 @@
 .document-card:hover{
     border:1px gray solid;
     transition: 0.15s;
+}
+
+.document-card .embedding-text{
+    font-size: small;
+    font-style: italic;
+    margin-bottom: 0;
+    padding: 12px;
+    background-color: rgba(255,215,0, 0.42);
+    border-radius: 6px;
 }
 
 .search-result-container .document-card .title-btn{

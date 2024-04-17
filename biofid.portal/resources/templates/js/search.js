@@ -132,3 +132,20 @@ $('body').on('click', '.sort-container .sort-btn', function(){
     })
     $(this).addClass('active-sort-btn');
 })
+
+/**
+ * Handles the switching of the search layers
+ */
+$('body').on('click', '.sort-container .switch-search-layer-result-btn', function() {
+    const layer = $(this).data('layer');
+    $(`.search-result-container .list`).each(function(){
+        $(this).hide();
+    })
+    $('.sort-container .switch-search-layer-result-btn').each(function(){
+        $(this).removeClass('selected');
+    })
+
+    // Highlight and show the correct search layer
+    $(`.sort-container .switch-search-layer-result-btn[data-layer=` + layer + ']').addClass('selected');
+    $(`.search-result-container .list[data-layer=` + layer + ']').show();
+})

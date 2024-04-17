@@ -157,7 +157,7 @@ public class Document extends ModelBase {
      */
     public List<UIMAAnnotation> getAllAnnotations(int pagesSkip, int pagesTake){
         var pagesBegin = getPages().stream().skip(pagesSkip).limit(1).findFirst().get().getBegin();
-        var pagesEnd = getPages().stream().skip(pagesSkip + pagesTake).limit(1).findFirst().get().getEnd();
+        var pagesEnd = getPages().stream().skip(Math.min(pagesSkip + pagesTake, getPages().size() - 1)).limit(1).findFirst().get().getEnd();
 
         var annotations = new ArrayList<UIMAAnnotation>();
         annotations.addAll(namedEntities.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
