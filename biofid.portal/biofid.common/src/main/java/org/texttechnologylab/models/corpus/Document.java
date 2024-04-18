@@ -2,6 +2,7 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.rag.DocumentEmbedding;
 
 import javax.persistence.*;
 import java.util.*;

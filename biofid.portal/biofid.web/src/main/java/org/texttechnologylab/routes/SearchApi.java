@@ -5,6 +5,7 @@ import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.BiofidSearch;
 import org.texttechnologylab.BiofidSearchState;
+import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.models.search.SearchOrder;
@@ -53,7 +54,7 @@ public class SearchApi {
         var model = new HashMap<String, Object>();
         model.put("searchState", activeSearchState);
 
-        return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/components/documentList.ftl"));
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/components/documentList.ftl"));
     });
 
     public Route activeSearchPage = ((request, response) -> {
@@ -101,7 +102,7 @@ public class SearchApi {
         model.put("searchState", searchState);
         activeSearches.put(searchState.getSearchId().toString(), searchState);
 
-        return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
     });
 
 }

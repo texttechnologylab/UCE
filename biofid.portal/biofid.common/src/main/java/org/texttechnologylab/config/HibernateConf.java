@@ -8,6 +8,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
+import org.texttechnologylab.models.rag.DocumentEmbedding;
 import org.texttechnologylab.models.test.test;
 
 import java.util.HashMap;

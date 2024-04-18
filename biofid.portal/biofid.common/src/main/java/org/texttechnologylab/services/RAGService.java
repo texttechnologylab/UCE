@@ -199,7 +199,7 @@ public class RAGService {
      */
     public List<DocumentEmbedding> getCompleteEmbeddingsFromDocument(Document document){
         // We also make an embedding from the title
-        var emptyEmbeddings = getEmptyEmbeddingsFromText(document.getDocumentTitle() + " " +  document.getFullText(), 1200);
+        var emptyEmbeddings = getEmptyEmbeddingsFromText(document.getDocumentTitle() + " " +  document.getFullText(), 900);
         for(var empty:emptyEmbeddings){
             var embeddings = getEmbeddingForText(empty.getCoveredText());
             empty.setEmbedding(embeddings);

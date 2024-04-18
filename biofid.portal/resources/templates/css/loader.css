@@ -9,10 +9,9 @@
 }
 
 .loader-container h1 {
-    color: var(--secondary);
+    color: rgba(0, 0, 0, 0.5);
     text-align: center;
     font-size: 17px;
-    font-weight: bold;
     position: relative;
 }
 
@@ -68,9 +67,7 @@
     animation: pageTurn 1.2s cubic-bezier(0, .39, 1, .68) 1.2s infinite;
 }
 
-
 /* Page turn */
-
 @-webkit-keyframes pageTurn {
     0% {
         -webkit-transform: rotateY( 0deg);

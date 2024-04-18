@@ -1,0 +1,23 @@
+{
+  "Template": {
+    "de-DE": "Template", "en-EN": "Template"
+  },
+  "team": {
+    "de-DE": "Team", "en-EN": "Team"
+  },
+  "search": {
+    "de-DE": "Suche", "en-EN": "Search"
+  },
+  "contact": {
+    "de-DE": "Kontakt", "en-EN": "Contact"
+  },
+  "openCorpus": {
+    "de-DE": "Öffnen der Korpus-Übersicht", "en-EN": "Open the corpus viewer"
+  },
+  "searchPlaceholder": {
+    "de-DE": "Suche...", "en-EN": "Search...."
+  },
+  "searchStart": {
+    "de-DE": "Starten Sie eine Suche", "en-EN": "Start a new search"
+  }
+}

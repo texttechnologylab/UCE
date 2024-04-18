@@ -3,6 +3,7 @@ package org.texttechnologylab.routes;
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.rag.DocumentEmbedding;
@@ -96,7 +97,7 @@ public class RAGApi {
             model.put("data", "");
         }
 
-        return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
     });
 
     /**
@@ -142,7 +143,7 @@ public class RAGApi {
             model.put("data", "");
         }
 
-        return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
     });
 
 }

@@ -11,13 +11,33 @@ import java.util.List;
 public class Corpus extends ModelBase {
     private String name;
     private String author;
+    private String language;
     private DateTime created;
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name="corpusid")
     private List<Document> documents;
 
+    @Column(columnDefinition = "TEXT")
+    private String corpusJsonConfig;
+
     public Corpus(){
         this.created = DateTime.now();
+    }
+
+    public String getLanguage() {
+        return language;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    public String getCorpusJsonConfig() {
+        return corpusJsonConfig;
+    }
+
+    public void setCorpusJsonConfig(String corpusJsonConfig) {
+        this.corpusJsonConfig = corpusJsonConfig;
     }
 
     public DateTime getCreated() {

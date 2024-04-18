@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="${languageResource.getDefaultLanguage()}">
 <head>
     <link rel="stylesheet"
           href="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/css/bootstrap.min.css"
@@ -37,10 +37,14 @@
 
             <div class="flexed align-items-center nav-container">
                 <div class="flexed align-items-center nav-buttons">
-                    <a class="btn text" data-id="team">Team</a>
-                    <a class="btn text selected-nav-btn" data-id="search">Suche</a>
-                    <a class="btn text" data-id="contact">Kontakt</a>
+                    <a class="btn text" data-id="team">${languageResource.get("team")}</a>
+                    <a class="btn text selected-nav-btn" data-id="search">${languageResource.get("search")}</a>
+                    <a class="btn text" data-id="contact">${languageResource.get("contact")}</a>
                 </div>
+                <select class="form-control bg-light rounded-0 color-prime border-right-0 large-font switch-language-select">
+                    <option data-lang="de-DE">Deutsch</option>
+                    <option data-lang="en-EN">Englisch</option>
+                </select>
             </div>
         </div>
     </nav>
@@ -52,7 +56,7 @@
             <div class="flexed align-items-stretch search-header container p-0">
                 <div class="flexed align-items-center h-100">
                     <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover" data-toggle="popover" data-placement="top"
-                       data-content="Öffnen der Korpus Übersicht">
+                       data-content="${languageResource.get("openCorpus")}">
                         <i class="fas fa-globe xlarge-font mr-3 ml-3 text-dark"></i>
                     </a>
                     <select class="form-control" id="corpus-select" aria-label="Default select example">
@@ -62,7 +66,7 @@
                     </select>
                 </div>
 
-                <input type="text" class="search-input form-control large-font w-100" placeholder="Suche..."/>
+                <input type="text" class="search-input form-control large-font w-100" placeholder="${languageResource.get("searchPlaceholder")}"/>
                 <button class="btn btn-primary search-btn">
                     <i class="fas fa-search"></i>
                 </button>
@@ -72,7 +76,7 @@
                 <#include "*/search/components/loader.ftl">
                 <div class="search-result-container container-fluid position-relative">
 
-                    <h6 class="w-100 text-center mt-5 text">Starten Sie eine Suche</h6>
+                    <h6 class="w-100 text-center mt-5 text">${languageResource.get("searchStart")}</h6>
 
                 </div>
             </div>
@@ -80,11 +84,11 @@
         </div>
 
         <div class="view display-none" data-id="team">
-            Team
+            ${languageResource.get("team")}
         </div>
 
         <div class="view display-none" data-id="contact">
-            Kontakt
+            ${languageResource.get("contact")}
         </div>
     </div>
 
@@ -105,6 +109,7 @@
 
 <script>
     <#include "js/site.js">
+    <#include "js/language.js">
     <#include "js/search.js">
 </script>
 

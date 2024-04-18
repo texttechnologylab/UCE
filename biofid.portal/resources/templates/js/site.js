@@ -85,6 +85,4 @@ function activatePopovers() {
 $(document).ready(function () {
     console.log('Webpage loaded!');
     activatePopovers();
-    // TODO: Just testing
-    //startNewSearch('1885');
 })

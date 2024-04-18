@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.bson.Document;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.services.DatabaseService;
 import org.texttechnologylab.services.UIMAService;
 import spark.ModelAndView;
@@ -44,7 +45,7 @@ public class DocumentApi {
             model.put("data", "");
         }
 
-        return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/globe.ftl"));
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/globe.ftl"));
     });
 
     public Route getSingleDocumentReadView = ((request, response) -> {
@@ -56,7 +57,7 @@ public class DocumentApi {
         var model = new HashMap<String, Object>();
         model.put("document", doc);
 
-        return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "reader/documentReaderView.ftl"));
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "reader/documentReaderView.ftl"));
     });
 
     public Route getPagesListView = ((request, response) -> {
@@ -72,6 +73,6 @@ public class DocumentApi {
         model.put("documentText", doc.getFullText());
         model.put("documentPages", doc.getPages(10, skip));
 
-        return new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "reader/components/pagesList.ftl"));
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "reader/components/pagesList.ftl"));
     });
 }

@@ -36,9 +36,12 @@ nav .logo {
     height: 60px;
 }
 
-nav .nav-buttons{
+nav .nav-container{
     border-right:1px lightgray solid;
     border-left:1px lightgray solid;
+}
+
+nav .nav-buttons{
     padding: 18px;
     margin-left: 12px;
 }
