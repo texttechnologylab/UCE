@@ -17,7 +17,7 @@
     </div>
 
     <div class="ccontent">
-        <button class="start-new-chat-btn text-center btn btn-primary rounded-0 w-100">Neuen Chat starten</button>
+        <button class="start-new-chat-btn text-center btn btn-primary rounded-0 w-100">${languageResource.get("startNewChat")}</button>
     </div>
 
     <div class="cfooter position-relative">
@@ -31,7 +31,7 @@
         </div>
         <div class="cloader">
             <div class="w-100 flexed align-items-center justify-content-center h-100">
-                <p class="text">Lädt <i class="color-prime fas fa-comment-dots"></i></p>
+                <p class="text">${languageResource.get("loading")} <i class="color-prime fas fa-comment-dots"></i></p>
             </div>
         </div>
     </div>

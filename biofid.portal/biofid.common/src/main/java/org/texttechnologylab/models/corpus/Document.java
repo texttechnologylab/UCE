@@ -9,7 +9,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 @Entity
-@Table(name="document")
+@Table(name = "document")
 /*
 The documents should be scanned and extracted via OCR. This is a base class for that.
  */
@@ -26,35 +26,35 @@ public class Document extends ModelBase {
     private String fullTextCleaned;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name="document_Id")
+    @JoinColumn(name = "document_Id")
     private List<Page> pages;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name="document_Id")
+    @JoinColumn(name = "document_Id")
     private List<Sentence> sentences;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name="document_Id")
+    @JoinColumn(name = "document_Id")
     private List<NamedEntity> namedEntities;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name="document_Id")
+    @JoinColumn(name = "document_Id")
     private List<Time> times;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name="document_Id")
+    @JoinColumn(name = "document_Id")
     private List<Taxon> taxons;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name="document_Id")
+    @JoinColumn(name = "document_Id")
     private List<WikipediaLink> wikipediaLinks;
 
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_id")
     private MetadataTitleInfo metadataTitleInfo;
 
-    public Document(){
-
+    public Document() {
+        metadataTitleInfo = new MetadataTitleInfo();
     }
 
     public Document(String language, String documentTitle, String documentId, long corpusId) {
@@ -154,9 +154,10 @@ public class Document extends ModelBase {
 
     /**
      * Gets all objects of type UIMAAnnotation of this document
+     *
      * @return
      */
-    public List<UIMAAnnotation> getAllAnnotations(int pagesSkip, int pagesTake){
+    public List<UIMAAnnotation> getAllAnnotations(int pagesSkip, int pagesTake) {
         var pagesBegin = getPages().stream().skip(pagesSkip).limit(1).findFirst().get().getBegin();
         var pagesEnd = getPages().stream().skip(Math.min(pagesSkip + pagesTake, getPages().size() - 1)).limit(1).findFirst().get().getEnd();
 
@@ -176,9 +177,10 @@ public class Document extends ModelBase {
         this.pages = pages;
     }
 
-    public List<Page> getPages(){
+    public List<Page> getPages() {
         return pages;
     }
+
     public List<Page> getPages(int take, int skip) {
         return pages.stream()
                 .sorted(Comparator.comparingInt(Page::getPageNumber))

@@ -5,6 +5,7 @@ import spark.ModelAndView;
 import spark.Request;
 import spark.TemplateEngine;
 
+import java.util.HashMap;
 import java.util.Map;
 
 public class CustomFreeMarkerEngine extends TemplateEngine {
@@ -18,6 +19,10 @@ public class CustomFreeMarkerEngine extends TemplateEngine {
     @Override
     public String render(ModelAndView modelAndView) {
         Map<String, Object> model = (Map)(modelAndView.getModel());
+
+        if(model == null){
+            model = new HashMap<>();
+        }
 
         // Add the LanguageResources object to the model if available in the request
         var languageResources = RequestContextHolder.getLanguageResources();

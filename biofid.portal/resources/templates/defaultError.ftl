@@ -5,10 +5,6 @@
     <title>Title</title>
 </head>
 <body>
-
-    <p>
-        Ein unerwarteter Fehler ist aufgetreten.
-    </p>
-
+    <p class="text-danger">${languageResource.get("unexpectedError")}</p>
 </body>
 </html>

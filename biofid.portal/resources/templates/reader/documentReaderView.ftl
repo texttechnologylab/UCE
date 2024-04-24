@@ -31,7 +31,7 @@
     <div class="pages-loader-popup">
         <div class="flexed align-items-center justify-content-center h-100 w-100">
             <p class="mb-0 text">
-                <i class="rotate fas fa-circle-notch mr-1"></i> Lade Seiten <span
+                <i class="rotate fas fa-circle-notch mr-1"></i> ${languageResource.get("loadingPages")} <span
                         class="color-prime loaded-pages-count">0</span>/${document.getPages()?size}</p>
         </div>
     </div>
@@ -39,9 +39,9 @@
     <div class="dot" id="custom-cursor"></div>
 
     <ul class='custom-menu'>
-        <li data-action="open-more"><i class="fab fa-readme mr-2"></i> Mehr dazu</li>
-        <li data-action="search"><i class="fas fa-search mr-2"></i> Suchen</li>
-        <li data-action="highlight" data-target=""><i class="fas fa-highlighter mr-2"></i> Hervorheben</li>
+        <li data-action="open-more"><i class="fab fa-readme mr-2"></i> ${languageResource.get("more")}</li>
+        <li data-action="search"><i class="fas fa-search mr-2"></i> ${languageResource.get("search")}</li>
+        <li data-action="highlight" data-target=""><i class="fas fa-highlighter mr-2"></i> ${languageResource.get("highlight")}</li>
     </ul>
 
     <div class="container-fluid">
@@ -53,10 +53,13 @@
                      data-pagescount="${document.getPages()?size}">
 
                     <div class="header text-center flexed align-items-center justify-content-around">
-                        <a class="open-metadata-url-btn m-0" href="${document.getMetadataTitleInfo().getScrapedUrl()}"
-                           target="_blank">
-                            <i class="color-prime m-0 large-font fas fa-university"></i>
-                        </a>
+
+                        <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
+                            <a class="open-metadata-url-btn m-0"
+                               href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank">
+                                <i class="color-prime m-0 large-font fas fa-university"></i>
+                            </a>
+                        </#if>
                         <div>
                             <h5>${document.getDocumentTitle()}</h5>
                             <p class="text mb-0">${document.getMetadataTitleInfo().getPublished()}</p>
@@ -83,16 +86,18 @@
                         <h5 class="text-center">Navigator</h5>
                     </div>
 
-                    <div class="group-box">
-                        <p class="title">Original Dokument</p>
-                        <a href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank"
-                           class="title-image mb-3">
-                            <img src="${document.getMetadataTitleInfo().getTitleImageUrl()}"/>
-                        </a>
-                    </div>
+                    <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
+                        <div class="group-box">
+                            <p class="title">${languageResource.get("ogDocument")}</p>
+                            <a href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank"
+                               class="title-image mb-3">
+                                <img src="${document.getMetadataTitleInfo().getTitleImageUrl()}"/>
+                            </a>
+                        </div>
+                    </#if>
 
                     <div class="group-box">
-                        <p class="title">Einstellungen</p>
+                        <p class="title">${languageResource.get("settings")}</p>
                         <div class="flexed align-items-center">
                             <i class="fas fa-text-height mr-2"></i>
                             <input min="10" max="21" class="font-size-range w-100 hoverable" value="16" type="range"/>
@@ -100,7 +105,7 @@
                     </div>
 
                     <div class="group-box">
-                        <p class="title">Seite <span class="current-page">1</span></p>
+                        <p class="title">${languageResource.get("page")} <span class="current-page">1</span></p>
                         <a class="btn open-metadata-url-page-btn" target="_blank"
                            data-href="${document.getMetadataTitleInfo().getPageViewStartUrl()}"
                            href="${document.getMetadataTitleInfo().getPageViewStartUrl()}">
@@ -109,9 +114,9 @@
                     </div>
 
                     <div class="buttons group-box">
-                        <p class="title">Funktionen</p>
+                        <p class="title">${languageResource.get("functions")}</p>
                         <button class="btn toggle-focus-btn">
-                            <i class="fas fa-satellite-dish mr-2"></i> Toggle Fokus
+                            <i class="fas fa-satellite-dish mr-2"></i> Toggle Focus
                         </button>
                         <a href="${document.getMetadataTitleInfo().getPdfUrl()}" class="btn">
                             <i class="fas fa-file-pdf mr-2"></i> Download PDF

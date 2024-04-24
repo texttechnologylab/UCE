@@ -9,6 +9,6 @@
             <figure class="page"></figure>
             <figure class="page"></figure>
         </div>
-        <h1><i class="fas fa-cog"></i> Suche</h1>
+        <h1><i class="fas fa-cog"></i> ${languageResource.get("searchPlaceholder")?replace("...", "")}</h1>
     </div>
 </div>

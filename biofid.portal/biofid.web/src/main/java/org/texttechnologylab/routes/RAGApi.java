@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
+import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.rag.DocumentEmbedding;
@@ -106,25 +107,18 @@ public class RAGApi {
     public Route getNewRAGChat = ((request, response) -> {
         var model = new HashMap<String, Object>();
         try {
+            // We need to know the language here
+            var languageResources = LanguageResources.fromRequest(request);
+
             var ragState = new RAGChatState();
             ragState.setModel(commonConfig.getRAGModel());
             ragState.setChatId(UUID.randomUUID());
-            // TODO: Add support for more languages
-            ragState.setLanguage(SupportedLanguages.GERMAN);
+            ragState.setLanguage(languageResources.getSupportedLanguage());
 
             var startMessage = new RAGChatMessage();
             startMessage.setRole(Roles.SYSTEM);
-            // TODO: Add support for more languages
-            startMessage.setMessage("Hallo! Ich bin dein virtueller Assistent rund um das Suchportal. " +
-                    "Wenn du eine Frage zu einem bestimmten Thema hast, oder du über die Suche nicht die " +
-                    "Dokumente findest, die du dir erhofft hattest, dann frag mich gerne.");
-            startMessage.setPrompt("Du bist ein Bibliothekar in einer Online-Suchplattform für Bücher und Texte aller Art. " +
-                    "Menschen instruieren dich und suchen verschiedenste Dinge über diese Bücher und Artikel, und du hilfst ihnen. " +
-                    "Es werden dir oft Kontexte gegeben, die Auszüge aus Büchern und Artikel der Plattform darstellen und zur Nutzeranfrage passen. " +
-                    "Nutze diese Kontexte um zu antworten indem du dich wie ein Bibliothekar verhälst, der den Kontext wie Bücher und Dokumente sieht und aus diesen vorliest und erklärt. " +
-                    "Sollte ein Kontext vorhanden sein, dann werden diese dem User im Chatfenster auch angezeigt. " +
-                    "Wenn du die Antwort nicht weisst, dann sag, dass dazu Informationen in deiner Sammlung fehlen. Du kannst außerdem nur Fragen beantworten und nichts selbst unternehmen! " +
-                    "Halte die Antwort kurz und sei höflich! ");
+            startMessage.setMessage(languageResources.get("ragBotGreetingMessage"));
+            startMessage.setPrompt(languageResources.get("ragBotGreetingPrompt"));
 
             // TODO: JUST TESTING
             /*List<Integer> ids = new ArrayList<Integer>();

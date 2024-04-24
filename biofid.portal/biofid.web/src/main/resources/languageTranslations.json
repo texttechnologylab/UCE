@@ -1,23 +1,122 @@
 {
   "Template": {
-    "de-DE": "Template", "en-EN": "Template"
+    "de-DE": "Template",
+    "en-EN": "Template"
   },
   "team": {
-    "de-DE": "Team", "en-EN": "Team"
+    "de-DE": "Team",
+    "en-EN": "Team"
   },
   "search": {
-    "de-DE": "Suche", "en-EN": "Search"
+    "de-DE": "Suche",
+    "en-EN": "Search"
   },
   "contact": {
-    "de-DE": "Kontakt", "en-EN": "Contact"
+    "de-DE": "Kontakt",
+    "en-EN": "Contact"
+  },
+  "unexpectedError": {
+    "de-DE": "Ein unerwarteter Fehler ist aufgetreten.",
+    "en-EN": "An unexpected error occured."
   },
   "openCorpus": {
-    "de-DE": "Öffnen der Korpus-Übersicht", "en-EN": "Open the corpus viewer"
+    "de-DE": "Öffnen der Korpus-Übersicht",
+    "en-EN": "Open the corpus viewer"
   },
   "searchPlaceholder": {
-    "de-DE": "Suche...", "en-EN": "Search...."
+    "de-DE": "Suche...",
+    "en-EN": "Search...."
   },
   "searchStart": {
-    "de-DE": "Starten Sie eine Suche", "en-EN": "Start a new search"
+    "de-DE": "Starten Sie eine Suche",
+    "en-EN": "Start a new search"
+  },
+  "searchResults": {
+    "de-DE": "Suchergebnisse",
+    "en-EN": "Search results"
+  },
+  "taxonomy": {
+    "de-DE": "Taxonomie",
+    "en-EN": "Taxonomy"
+  },
+  "title": {
+    "de-DE": "Titel",
+    "en-EN": "Title"
+  },
+  "locations": {
+    "de-DE": "Orte",
+    "en-EN": "Locations"
+  },
+  "people": {
+    "de-DE": "Personen",
+    "en-EN": "People"
+  },
+  "organisations": {
+    "de-DE": "Organisationen",
+    "en-EN": "Organisations"
+  },
+  "misc": {
+    "de-DE": "Sonstiges",
+    "en-EN": "Misc"
+  },
+  "times": {
+    "de-DE": "Zeiten",
+    "en-EN": "Times"
+  },
+  "openTaxonomyDist": {
+    "de-DE": "3D-Taxonverteilung öffnen",
+    "en-EN": "Open 3D-Taxonomy Distribution"
+  },
+  "openDocumentReader": {
+    "de-DE": "Dokument-Reader öffnen",
+    "en-EN": "Open Document-Reader"
+  },
+  "loading": {
+    "de-DE": "Lädt",
+    "en-EN": "Loading"
+  },
+  "loadingPages": {
+    "de-DE": "Lade Seiten",
+    "en-EN": "Loading pages"
+  },
+  "more": {
+    "de-DE": "Mehr dazu",
+    "en-EN": "More"
+  },
+  "highlight": {
+    "de-DE": "Hervorheben",
+    "en-EN": "Highlight"
+  },
+  "ogDocument": {
+    "de-DE": "Original Dokument",
+    "en-EN": "Original Document"
+  },
+  "settings": {
+    "de-DE": "Einstellungen",
+    "en-EN": "Settings"
+  },
+  "page": {
+    "de-DE": "Seite",
+    "en-EN": "Page"
+  },
+  "functions": {
+    "de-DE": "Funktionen",
+    "en-EN": "Functions"
+  },
+  "ragBotSearch": {
+    "de-DE": "Ich durchsuche folgende Dokumente aus unserer Sammlung, die Ihrer Anfrage am Ähnlichsten sind...",
+    "en-EN": "I'm looking through the following documents from our repository which may fit your query..."
+  },
+  "startNewChat": {
+    "de-DE": "Neuen Chat starten",
+    "en-EN": "Start a new chat"
+  },
+  "ragBotGreetingMessage": {
+    "de-DE": "Hallo! Ich bin dein virtueller Assistent rund um das Suchportal. Wenn du eine Frage zu einem bestimmten Thema hast, oder du über die Suche nicht die Dokumente findest, die du dir erhofft hattest, dann frag mich gerne.",
+    "en-EN": "Hello, I'm your virtual assistant for the search portal. If you have a question about a specific topic, or if you can't find the documents you were hoping for via the search, then feel free to ask me."
+  },
+  "ragBotGreetingPrompt": {
+    "de-DE": "Du bist ein Bibliothekar in einer Online-Suchplattform für Bücher und Texte aller Art. Menschen instruieren dich und suchen verschiedenste Dinge über diese Bücher und Artikel, und du hilfst ihnen. Es werden dir oft Kontexte gegeben, die Auszüge aus Büchern und Artikel der Plattform darstellen und zur Nutzeranfrage passen. Nutze diese Kontexte um zu antworten indem du dich wie ein Bibliothekar verhälst, der den Kontext wie Bücher und Dokumente sieht und aus diesen vorliest und erklärt. Sollte ein Kontext vorhanden sein, dann werden diese dem User im Chatfenster auch angezeigt. Wenn du die Antwort nicht weisst, dann sag, dass dazu Informationen in deiner Sammlung fehlen. Du kannst außerdem nur Fragen beantworten und nichts selbst unternehmen! Halte die Antwort kurz und sei höflich!",
+    "en-EN": "You are a librarian in an online search platform for books and texts of all kinds. People instruct you and search for various things about these books and articles, and you help them. You are often given contexts that are excerpts from books and articles on the platform that match the user's query. Use these contexts to answer by acting like a librarian who sees the context such as books and documents and reads and explains from them. If a context is available, it will also be displayed to the user in the chat window. If you don't know the answer, say that there is no information in your collection. You can only answer questions and not do anything yourself! Keep your answer short and be polite!"
   }
 }

@@ -56,17 +56,7 @@ public class App {
 
         before((request, response) -> {
             // Check if the request contains a language parameter
-            var language = request.cookie("language");
-            var languageResources = new LanguageResources("de-DE"); // German is standard
-            if (language != null && !language.equals("undefined")) {
-                var langCode = language;
-                // Sometimes the language is sent through a weird string with much more text. We just want the lang code then.
-                if(language.length() > 6){
-                    langCode = language.split(";")[0].split(",")[1];
-                }
-                // Set the language in the session through a language object
-                languageResources = new LanguageResources(langCode);
-            }
+            var languageResources = LanguageResources.fromRequest(request);
             response.header("Content-Language", languageResources.getDefaultLanguage());
             RequestContextHolder.setLanguageResources(languageResources);
         });

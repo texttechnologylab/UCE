@@ -4,8 +4,7 @@
 
         <#if message.getContextDocuments()?size gt 0>
             <p class="mb-1 text-center">
-                Ich durchsuche folgende Dokumente aus unserer Sammlung,
-                die Ihrere Anfrage am Ähnlichsten sind...
+                ${languageResource.get("ragBotSearch")}
             </p>
             <div class="cdocuments-list row mr-0 mt-0 ml-0">
                 <#list message.getContextDocuments() as document>

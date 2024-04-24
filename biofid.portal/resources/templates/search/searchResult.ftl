@@ -3,7 +3,7 @@
     <div class="header">
         <div class="flexed w-100 align-items-center justify-content-center">
             <button class="btn selected-btn">
-                Suchergebnisse <span class="hits">${searchState.getTotalHits()}</span>
+                ${languageResource.get("searchResults")} <span class="hits">${searchState.getTotalHits()}</span>
             </button>
         </div>
     </div>
@@ -14,7 +14,7 @@
             <div class="side-bar-container">
                 <div class="side-bar">
                     <div class="content pb-0">
-                        <h6 class="text-center underlined mb-4">Taxonomie</h6>
+                        <h6 class="text-center underlined mb-4">${languageResource.get("taxonomy")}</h6>
                         <#include "*/search/components/taxonomyTree.ftl">
                     </div>
                 </div>
@@ -41,7 +41,7 @@
                         </a>
                     </div>
                     <div class="ml-2 flexed align-items-center w-100 justify-content-between">
-                        <p class="mb-0 mr-1">Titel</p>
+                        <p class="mb-0 mr-1">${languageResource.get("title")}</p>
                         <a class="btn m-0 rounded-a small-font sort-btn active-sort-btn" data-orderby="title"
                            data-curorder="ASC">
                             <i class="fas fa-sort-amount-up"></i>
@@ -85,7 +85,7 @@
                 <div class="side-bar">
                     <div class="content">
 
-                        <h6 class="text-center underlined">Eigennamen</h6>
+                        <h6 class="text-center underlined">Named-Entities</h6>
 
                         <#include "*/search/components/annotations.ftl" >
 
