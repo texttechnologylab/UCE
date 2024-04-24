@@ -8,7 +8,7 @@
 </a>
 
 <div class="chat-window-container display-none">
-    <div class="cheader w-100 flexed align-items-center justify-content-between p-3">
+    <div class="cheader w-100 flexed align-items-center justify-content-between p-4">
         <h5 class="m-0 color-secondary"><i class="fas fa-robot mr-1"></i></h5>
         <h5 class="m-0 text">Chat</h5>
         <a class="btn" onclick="$('.chat-window-container').fadeOut(150)">

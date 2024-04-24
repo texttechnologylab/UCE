@@ -30,6 +30,19 @@ public class DatabaseService {
     }
 
     /**
+     * Gets a single corpus by its id.
+     *
+     * @param id
+     * @return
+     */
+    public Corpus getCorpusById(long id) {
+        return executeOperationSafely((session) -> {
+            var corpus = session.get(Corpus.class, id);
+            return corpus;
+        });
+    }
+
+    /**
      * Gets all corpora from the database
      *
      * @return

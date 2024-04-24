@@ -77,6 +77,9 @@ public class App {
         // A corpus World View
         get("/globe", documentApi.getCorpusWorldView);
 
+        // Gets a corpus inspector view
+        get("/corpus", documentApi.getCorpusInspectorView);
+
         // Define default exception handler. This shows an error view then in the body.
         ExceptionHandler<Exception> defaultExceptionHandler = (exception, request, response) -> {
             response.status(500);

@@ -1,0 +1,50 @@
+
+.corpus-inspector-include{
+    width: 50vw;
+    position: fixed;
+    border-right:lightgray 1px solid;
+    z-index: 99;
+    height: 100vh;
+    top:0;
+    min-width: 400px;
+    left:0;
+    background-color: white;
+}
+
+.corpus-inspector-include .cheader{
+    border-bottom: 1px lightgray solid;
+    height: 90px;
+    background-color: rgba(245, 245, 247, 1);
+}
+
+.corpus-inspector-include .cheader a{
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border:lightgray 1px solid;
+    height: 40px;
+    width: 40px;
+    cursor: pointer;
+}
+
+.corpus-inspector-include .ccontent{
+    padding-left: 18px;
+    padding-right: 18px;
+    padding-bottom: 36px;
+    padding-top: 18px;
+}
+
+.corpus-inspector-include .ccontent .entry{
+    margin-bottom: 16px;
+    margin-top: 16px;
+}
+
+.corpus-inspector-include .ccontent .entry label{
+    border-left:1px lightgray solid;
+    border-right:1px lightgray solid;
+    font-style: italic;
+    border-top:1px lightgray solid;
+    padding-bottom: 4px;
+    padding-top: 4px;
+}

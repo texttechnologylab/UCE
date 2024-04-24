@@ -5,6 +5,7 @@ import freemarker.template.Configuration;
 import org.bson.Document;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
+import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.services.DatabaseService;
 import org.texttechnologylab.services.UIMAService;
 import spark.ModelAndView;
@@ -25,6 +26,25 @@ public class DocumentApi {
         this.db = serviceContext.getBean(DatabaseService.class);
         this.freemakerConfig = freemakerConfig;
     }
+
+    public Route getCorpusInspectorView = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        try {
+            var corpusId = Long.parseLong(request.queryParams("id"));
+
+            var corpus = db.getCorpusById(corpusId);
+            var corpusConfig = CorpusConfig.fromJson(corpus.getCorpusJsonConfig());
+
+            model.put("corpus", corpus);
+            model.put("corpusConfig", corpusConfig);
+
+        } catch (Exception ex) {
+            // TODO: Logging
+            model.put("data", "");
+        }
+
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/corpusInspector.ftl"));
+    });
 
     public Route getCorpusWorldView = ((request, response) -> {
         var model = new HashMap<String, Object>();

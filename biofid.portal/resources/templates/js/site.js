@@ -38,6 +38,30 @@ $('body').on('click', '.view .search-btn', function (event) {
 })
 
 /**
+ * Triggers whenever an open-corpus insecptor button is clicked.
+ */
+$('body').on('click', '.open-corpus-inspector-btn', function () {
+    // Get the selected corpus
+    const selectElement = document.getElementById("corpus-select");
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const corpusId = selectedOption.getAttribute("data-id");
+    $('.corpus-inspector-include').show(150);
+
+    $.ajax({
+        url: "/corpus?id=" + corpusId,
+        type: "GET",
+        success: function (response) {
+            // Render the new documents
+            $('.corpus-inspector-include').html(response);
+        },
+        error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+            $('.corpus-inspector-include').html(xhr.responseText);
+        }
+    });
+})
+
+/**
  * Triggers whenever an open-document element is clicked. This causes to load a new full read vioew of a doc
  */
 $('body').on('click', '.open-document', function () {

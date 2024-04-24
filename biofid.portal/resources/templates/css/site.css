@@ -92,6 +92,10 @@ nav .selected-nav-btn::before {
     text-decoration: underline;
 }
 
+.wrapped{
+    flex-wrap: wrap;
+}
+
 .large-font {
     font-size: large;
 }

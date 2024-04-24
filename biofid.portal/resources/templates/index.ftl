@@ -92,11 +92,8 @@
         </div>
     </div>
 
-    <div class="display-none corpus-inspector-container">
-        <div class="container-fluid">
-        </div>
+    <div class="corpus-inspector-include display-none">
     </div>
-
     <#include "*/ragbot/chatwindow.ftl"/>
 </div>
 </body>
