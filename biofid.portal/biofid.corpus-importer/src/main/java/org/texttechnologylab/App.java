@@ -16,7 +16,7 @@ public class App {
         var uimaService = context.getBean(UIMAService.class);
         // Decomment if you want to import test documents
         //uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
-        //uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\zobodat");
-        uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\bhl\\2023_01_25");
+        uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\zobodat");
+        //uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\bhl\\2023_01_25");
     }
 }

@@ -8,6 +8,15 @@
         </div>
     </div>
 
+    <div id="found-annotations-modal">
+        <div class="mcontent">
+            <div class="mheader">
+                <h5 class="mb-0 text"><i class="color-prime fas fa-x-ray mr-2"></i>Locations</h5>
+                <a class="btn"><i class="color-prime fas fa-times"></i></a>
+            </div>
+        </div>
+    </div>
+
     <div class="row mb-0 mr-0 ml-0 pb-5">
 
         <div class="col-md-3 position-relative">

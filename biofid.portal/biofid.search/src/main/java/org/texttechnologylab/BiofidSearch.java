@@ -2,7 +2,7 @@ package org.texttechnologylab;
 
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.models.search.*;
-import org.texttechnologylab.services.DatabaseService;
+import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
 
 import java.io.IOException;
@@ -19,7 +19,7 @@ import java.util.List;
 public class BiofidSearch {
     private final BiofidSearchState biofidSearchState;
     private List<String> stopwords;
-    private DatabaseService db;
+    private PostgresqlDataInterface_Impl db;
     private RAGService ragService;
 
     /**
@@ -155,7 +155,7 @@ public class BiofidSearch {
     }
 
     private void initServices(ApplicationContext serviceContext) throws URISyntaxException, IOException {
-        this.db = serviceContext.getBean(DatabaseService.class);
+        this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.ragService = serviceContext.getBean(RAGService.class);
         // TODO: Add more language support in the future
         this.stopwords = loadStopwords("de-DE");

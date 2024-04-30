@@ -11,12 +11,10 @@ import org.texttechnologylab.models.rag.DocumentEmbedding;
 import org.texttechnologylab.models.rag.RAGChatMessage;
 import org.texttechnologylab.models.rag.RAGChatState;
 import org.texttechnologylab.models.rag.Roles;
-import org.texttechnologylab.services.DatabaseService;
+import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
-import org.texttechnologylab.utils.SupportedLanguages;
 import spark.ModelAndView;
 import spark.Route;
-import spark.template.freemarker.FreeMarkerEngine;
 
 import javax.management.openmbean.InvalidKeyException;
 import java.util.*;
@@ -25,14 +23,14 @@ public class RAGApi {
 
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
     private RAGService ragService;
-    private DatabaseService db;
+    private PostgresqlDataInterface_Impl db;
     private CommonConfig commonConfig = new CommonConfig();
     private Map<UUID, RAGChatState> activeRagChatStates = new HashMap<>();
 
     public RAGApi(ApplicationContext serviceContext,
                   Configuration freemakerConfig) {
         this.freemakerConfig = freemakerConfig;
-        this.db = serviceContext.getBean(DatabaseService.class);
+        this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.ragService = serviceContext.getBean(RAGService.class);
     }
 

@@ -4,7 +4,6 @@ import java.net.URI;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
-import java.security.KeyPair;
 import java.sql.Connection;
 import java.sql.DriverManager;
 import java.sql.SQLException;
@@ -12,32 +11,25 @@ import java.util.*;
 
 import com.google.gson.Gson;
 import com.pgvector.PGvector;
-import org.apache.logging.log4j.core.util.KeyValuePair;
-import org.joda.time.DateTime;
-import org.jsoup.Jsoup;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.models.corpus.Document;
-import org.texttechnologylab.models.corpus.Page;
 import org.texttechnologylab.models.dto.RAGCompleteDto;
 import org.texttechnologylab.models.dto.RAGEmbedDto;
-import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.rag.DocumentEmbedding;
 import org.texttechnologylab.models.rag.RAGChatMessage;
-
-import javax.print.Doc;
 
 /**
  * Service class for RAG: Retrieval Augmented Generation
  */
 public class RAGService {
-    private DatabaseService databaseService = null;
+    private PostgresqlDataInterface_Impl postgresqlDataInterfaceImpl = null;
     private Connection vectorDbConnection = null;
     private CommonConfig config;
 
-    public RAGService(DatabaseService databaseService){
+    public RAGService(PostgresqlDataInterface_Impl postgresqlDataInterfaceImpl){
         try{
             this.config = new CommonConfig();
-            this.databaseService = databaseService;
+            this.postgresqlDataInterfaceImpl = postgresqlDataInterfaceImpl;
             this.vectorDbConnection = setupVectorDbConnection();
         } catch (Exception ex){
             // TODO: Logging

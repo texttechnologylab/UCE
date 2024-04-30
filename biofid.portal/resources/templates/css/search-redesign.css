@@ -314,3 +314,50 @@
     background-color: var(--prime);
     color:white !important;
 }
+
+#found-annotations-modal{
+    position: fixed;
+    left:0;
+    top:0;
+    width: 100vw;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 100vh;
+    margin: 0;
+    z-index: 100;
+    background-color: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(2px);
+}
+
+#found-annotations-modal .mcontent{
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+    width: 51vw;
+    margin-top:-1px;
+    margin-left:-16px;
+    background-color: ghostwhite;
+    min-width: 300px;
+    height: 80vh;
+    min-height: 400px;
+}
+
+#found-annotations-modal .mheader{
+    display: flex;
+    justify-content: space-between;
+    padding: 24px 32px;
+    align-items: center;
+    border-bottom: 1px lightgray solid;
+    background-color: rgba(245, 245, 247, 1);
+}
+
+#found-annotations-modal .mheader .btn{
+    width: 40px;
+    height: 40px;
+    border-radius: 50% !important;
+    border: 1px lightgray solid !important;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+}

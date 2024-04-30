@@ -1,7 +1,6 @@
 package org.texttechnologylab;
 
 import freemarker.template.Configuration;
-import freemarker.template.TemplateModelException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.SpringConfig;
@@ -9,10 +8,9 @@ import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.routes.DocumentApi;
 import org.texttechnologylab.routes.RAGApi;
 import org.texttechnologylab.routes.SearchApi;
-import org.texttechnologylab.services.DatabaseService;
+import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import spark.ExceptionHandler;
 import spark.ModelAndView;
-import spark.template.freemarker.FreeMarkerEngine;
 
 import java.io.File;
 import java.io.IOException;
@@ -65,7 +63,7 @@ public class App {
         get("/", (request, response) -> {
             var model = new HashMap<String, Object>();
             model.put("title", "BioFID Portal");
-            model.put("corpora", context.getBean(DatabaseService.class).getAllCorpora());
+            model.put("corpora", context.getBean(PostgresqlDataInterface_Impl.class).getAllCorpora());
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");

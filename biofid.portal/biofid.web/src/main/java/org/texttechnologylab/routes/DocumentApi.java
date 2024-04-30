@@ -2,28 +2,26 @@ package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
-import org.bson.Document;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.config.CorpusConfig;
-import org.texttechnologylab.services.DatabaseService;
+import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.UIMAService;
 import spark.ModelAndView;
 import spark.Route;
-import spark.template.freemarker.FreeMarkerEngine;
 
 import java.util.HashMap;
 
 public class DocumentApi {
 
     private UIMAService uimaService = null;
-    private DatabaseService db = null;
+    private PostgresqlDataInterface_Impl db = null;
 
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
 
     public DocumentApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
         this.uimaService = serviceContext.getBean(UIMAService.class);
-        this.db = serviceContext.getBean(DatabaseService.class);
+        this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.freemakerConfig = freemakerConfig;
     }
 
@@ -34,9 +32,11 @@ public class DocumentApi {
 
             var corpus = db.getCorpusById(corpusId);
             var corpusConfig = CorpusConfig.fromJson(corpus.getCorpusJsonConfig());
+            var documentsCount = db.countDocumentsInCorpus(corpusId);
 
             model.put("corpus", corpus);
             model.put("corpusConfig", corpusConfig);
+            model.put("documentsCount", documentsCount);
 
         } catch (Exception ex) {
             // TODO: Logging

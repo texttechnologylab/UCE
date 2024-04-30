@@ -1,6 +1,8 @@
 package org.texttechnologylab.services;
 
 import org.hibernate.*;
+import org.hibernate.criterion.Projections;
+import org.hibernate.criterion.Restrictions;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.models.corpus.*;
@@ -17,7 +19,7 @@ import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Service
-public class DatabaseService {
+public class PostgresqlDataInterface_Impl implements DataInterface {
 
     private final SessionFactory sessionFactory;
 
@@ -25,16 +27,19 @@ public class DatabaseService {
         return sessionFactory.openSession();
     }
 
-    public DatabaseService() {
+    public PostgresqlDataInterface_Impl() {
         sessionFactory = HibernateConf.buildSessionFactory();
     }
 
-    /**
-     * Gets a single corpus by its id.
-     *
-     * @param id
-     * @return
-     */
+    public int countDocumentsInCorpus(long id){
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(Document.class);
+            criteria.add(Restrictions.eq("corpusId", id));
+            criteria.setProjection(Projections.rowCount());
+            return Math.toIntExact((Long) criteria.uniqueResult());
+        });
+    }
+
     public Corpus getCorpusById(long id) {
         return executeOperationSafely((session) -> {
             var corpus = session.get(Corpus.class, id);
@@ -42,11 +47,6 @@ public class DatabaseService {
         });
     }
 
-    /**
-     * Gets all corpora from the database
-     *
-     * @return
-     */
     public List<Corpus> getAllCorpora() {
         return executeOperationSafely((session) -> {
             var criteriaQuery = session.getCriteriaBuilder().createQuery(Corpus.class);
@@ -55,11 +55,6 @@ public class DatabaseService {
         });
     }
 
-    /**
-     * Gets the data required for the world globus to render correctly.
-     * @param documentId
-     * @return
-     */
     public List<GlobeTaxon> getGlobeDataForDocument(long documentId) {
         return executeOperationSafely((session) -> {
 
@@ -102,12 +97,6 @@ public class DatabaseService {
         });
     }
 
-    /**
-     * Gets all complete documents in the database
-     * CAUTION: Do you _really_ want this? It's extremely heavy.
-     *
-     * @return
-     */
     public List<Document> getAllCompleteDocuments() {
         return executeOperationSafely((session) -> {
             var criteriaQuery = session.getCriteriaBuilder().createQuery(Document.class);
@@ -121,11 +110,7 @@ public class DatabaseService {
         });
     }
 
-    /**
-     * Returns a list of documents by a list of ids
-     *
-     * @return
-     */
+
     public List<Document> getManyDocumentsByIds(List<Integer> documentIds) {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
@@ -151,15 +136,6 @@ public class DatabaseService {
         });
     }
 
-    /**
-     * Searches for documents with a variety of criterias. It's the main db search of the biofid portal
-     * The function calls a variety of stored procedures in the database.
-     *
-     * @param skip
-     * @param take
-     * @param searchTokens
-     * @return
-     */
     public DocumentSearchResult searchForDocuments(int skip,
                                                    int take,
                                                    List<String> searchTokens,
@@ -202,11 +178,6 @@ public class DatabaseService {
         }));
     }
 
-    /**
-     * Generic operation that fetches documents given the paramters
-     *
-     * @return
-     */
     public List<Document> searchForDocuments(int skip,
                                              int take) {
         return executeOperationSafely((session) -> {
@@ -226,12 +197,6 @@ public class DatabaseService {
         });
     }
 
-    /**
-     * Gets a single document without any lists.
-     *
-     * @param id
-     * @return
-     */
     public Document getDocumentById(long id) {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
@@ -240,11 +205,6 @@ public class DatabaseService {
         });
     }
 
-    /**
-     * Returns true if one instance of a Gbif occurrence exists in the database
-     *
-     * @return
-     */
     public boolean checkIfGbifOccurrencesExist(long gbifTaxonId) {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
@@ -259,12 +219,6 @@ public class DatabaseService {
         });
     }
 
-    /**
-     * Gets a complete document, alongside its lists, from the database.
-     *
-     * @param id
-     * @return
-     */
     public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
@@ -273,11 +227,6 @@ public class DatabaseService {
         });
     }
 
-    /**
-     * Stores the complete document with all its lists in the database.
-     *
-     * @param document
-     */
     public void saveDocument(Document document) {
         executeOperationSafely((session) -> {
             session.save(document);
@@ -285,11 +234,6 @@ public class DatabaseService {
         });
     }
 
-    /**
-     * Stores a corpus in the database.
-     *
-     * @param corpus
-     */
     public void saveCorpus(Corpus corpus) {
         executeOperationSafely((session) -> {
             session.save(corpus);

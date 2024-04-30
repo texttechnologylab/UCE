@@ -7,7 +7,9 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.Anomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import org.apache.uima.UIMAException;
+import de.tudarmstadt.ukp.dkpro.core.api.semantics.type.SemanticPredicate;
+import org.texttechnologylab.annotation.semaf.semafsr.SrLink;
+import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
@@ -19,14 +21,12 @@ import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 
-import javax.print.Doc;
 import java.io.File;
 
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 /*
@@ -39,12 +39,12 @@ public class UIMAService {
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
     private final GoetheUniversityService goetheUniversityService;
-    private final DatabaseService db;
+    private final PostgresqlDataInterface_Impl db;
     private final GbifService gbifService;
     private final RAGService ragService;
 
     public UIMAService(GoetheUniversityService goetheUniversityService,
-                       DatabaseService db,
+                       PostgresqlDataInterface_Impl db,
                        GbifService gbifService,
                        RAGService ragService) {
         this.goetheUniversityService = goetheUniversityService;
@@ -78,7 +78,7 @@ public class UIMAService {
                     "The corpus folder did not contain a properly formatted corpusConfig.json", CorpusConfig.class.toString(), "");
         }
 
-        db.saveCorpus(corpus);
+        //db.saveCorpus(corpus);
 
         for (var file : Objects.requireNonNull(
                 new File(foldername)
@@ -126,7 +126,12 @@ public class UIMAService {
         JCasUtil.select(jCas, Annotation.class).stream().forEach(a -> {
             unique.add(a.getType().getName());
         });
-        //unique.forEach(a -> System.out.println(a));
+        unique.forEach(a -> System.out.println(a));
+
+        // JUST TESTING
+        JCasUtil.select(jCas, SemanticPredicate.class).stream().forEach(a -> {
+            var xd = "";
+        });
 
         try {
             // Corpus config so we now what do look for

@@ -9,7 +9,7 @@ import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.models.search.SearchOrder;
-import org.texttechnologylab.services.DatabaseService;
+import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.UIMAService;
 import spark.ModelAndView;
 import spark.Route;
@@ -22,7 +22,7 @@ public class SearchApi {
 
     private ApplicationContext context = null;
     private UIMAService uimaService = null;
-    private DatabaseService db = null;
+    private PostgresqlDataInterface_Impl db = null;
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
 
     // TODO: outsource this to a db or something.
@@ -32,7 +32,7 @@ public class SearchApi {
         this.freemakerConfig = freemakerConfig;
         this.context = serviceContext;
         this.uimaService = serviceContext.getBean(UIMAService.class);
-        this.db = serviceContext.getBean(DatabaseService.class);
+        this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.activeSearches = new HashMap<String, BiofidSearchState>();
     }
 
@@ -74,10 +74,10 @@ public class SearchApi {
 
         // We return mutliple views:
         // the document view itself
-        var documentsListView = new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/components/documentList.ftl"));
+        var documentsListView = new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/components/documentList.ftl"));
         result.put("documentsList", documentsListView);
         // The navigation changed
-        var navigationView = new FreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/components/navigation.ftl"));
+        var navigationView = new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/components/navigation.ftl"));
         result.put("navigationView", navigationView);
         var gson = new Gson();
 

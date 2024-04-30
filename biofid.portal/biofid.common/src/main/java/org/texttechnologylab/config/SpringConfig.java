@@ -1,17 +1,15 @@
 package org.texttechnologylab.config;
 
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
-import org.springframework.context.annotation.Import;
 import org.texttechnologylab.services.*;
 
 @Configuration
 public class SpringConfig {
 
     @Bean
-    public DatabaseService databaseService(){
-        return new DatabaseService();
+    public PostgresqlDataInterface_Impl databaseService(){
+        return new PostgresqlDataInterface_Impl();
     }
 
     @Bean
