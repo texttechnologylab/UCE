@@ -97,7 +97,7 @@ public class BiofidSearchState {
     public List<AnnotationSearchResult> getAnnotationsByTypeAndDocumentId(String annotationType, Integer documentId, String neType){
         List<AnnotationSearchResult> currentAnnotations = new ArrayList<>();
         switch (annotationType){
-            case "NamedEntities": currentAnnotations = getNamedEntitiesByType(neType); break;
+            case "NamedEntities": currentAnnotations = getNamedEntitiesByType(neType, 0, 9999999); break;
             case "Taxons": currentAnnotations = foundTaxons; break;
             case "Times": currentAnnotations = foundTimes; break;
         }
@@ -106,8 +106,8 @@ public class BiofidSearchState {
         return currentAnnotations;
     }
 
-    public List<AnnotationSearchResult> getNamedEntitiesByType(String type){
-        return  foundNamedEntities.stream().filter(ne -> ne.getInfo().equals(type)).toList();
+    public List<AnnotationSearchResult> getNamedEntitiesByType(String type, int skip, int take){
+        return  foundNamedEntities.stream().filter(ne -> ne.getInfo().equals(type)).skip(skip).limit(take).toList();
     }
 
     public ArrayList<AnnotationSearchResult> getFoundNamedEntities() {
@@ -115,23 +115,24 @@ public class BiofidSearchState {
     }
 
     public void setFoundNamedEntities(ArrayList<AnnotationSearchResult> foundNamedEntities) {
-        this.foundNamedEntities = foundNamedEntities;
+        // We have so much wrong annotations like . or a - dont show those which are shorter than 2 characters.
+        this.foundNamedEntities = new ArrayList<>(foundNamedEntities.stream().filter(e -> e.getCoveredText().length() > 2).sorted(Comparator.comparingInt(AnnotationSearchResult::getOccurrences).reversed()).toList());
     }
 
-    public ArrayList<AnnotationSearchResult> getFoundTimes() {
-        return foundTimes;
+    public ArrayList<AnnotationSearchResult> getFoundTimes(int skip, int take) {
+        return new ArrayList<>(foundTimes.stream().skip(skip).limit(take).toList());
     }
 
     public void setFoundTimes(ArrayList<AnnotationSearchResult> foundTimes) {
-        this.foundTimes = foundTimes;
+        this.foundTimes = new ArrayList<>(foundTimes.stream().filter(e -> e.getCoveredText().length() > 2).sorted(Comparator.comparingInt(AnnotationSearchResult::getOccurrences).reversed()).toList());
     }
 
-    public ArrayList<AnnotationSearchResult> getFoundTaxons() {
-        return foundTaxons;
+    public ArrayList<AnnotationSearchResult> getFoundTaxons(int skip, int take) {
+        return new ArrayList<>(foundTaxons.stream().skip(skip).limit(take).toList());
     }
 
     public void setFoundTaxons(ArrayList<AnnotationSearchResult> foundTaxons) {
-        this.foundTaxons = foundTaxons;
+        this.foundTaxons = new ArrayList<>(foundTaxons.stream().filter(e -> e.getCoveredText().length() > 2).sorted(Comparator.comparingInt(AnnotationSearchResult::getOccurrences).reversed()).toList());
     }
 
     public void setCurrentDocuments(List<Document> currentDocuments) {

@@ -8,14 +8,7 @@
         </div>
     </div>
 
-    <div id="found-annotations-modal">
-        <div class="mcontent">
-            <div class="mheader">
-                <h5 class="mb-0 text"><i class="color-prime fas fa-x-ray mr-2"></i>Locations</h5>
-                <a class="btn"><i class="color-prime fas fa-times"></i></a>
-            </div>
-        </div>
-    </div>
+    <#include "*/search/components/foundAnnotationsModal/foundAnnotationsModal.ftl" >
 
     <div class="row mb-0 mr-0 ml-0 pb-5">
 
@@ -29,7 +22,6 @@
                 </div>
             </div>
         </div>
-
 
         <div class="col-md-6">
             <div class="flexed align-items-center justify-content-between sort-container pl-3 pr-3 pt-2 pb-2 mb-3">
@@ -96,7 +88,9 @@
 
                         <h6 class="text-center underlined">Named-Entities</h6>
 
-                        <#include "*/search/components/annotations.ftl" >
+                        <div class="annotations">
+                            <#include "*/search/components/annotations.ftl" >
+                        </div>
 
                         <hr/>
 

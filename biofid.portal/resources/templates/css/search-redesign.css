@@ -335,18 +335,19 @@
     width: 51vw;
     margin-top:-1px;
     margin-left:-16px;
-    background-color: ghostwhite;
+    background-color: rgba(245, 245, 247, 1);
     min-width: 300px;
     height: 80vh;
     min-height: 400px;
+    position: relative;
 }
 
 #found-annotations-modal .mheader{
     display: flex;
     justify-content: space-between;
     padding: 24px 32px;
+    height: 90px;
     align-items: center;
-    border-bottom: 1px lightgray solid;
     background-color: rgba(245, 245, 247, 1);
 }
 
@@ -360,4 +361,44 @@
     align-items: center;
     justify-content: center;
     text-align: center;
+}
+
+#found-annotations-modal .mtabs{
+    height: 40px;
+    background-color: rgba(245, 245, 247, 1);
+    display: flex;
+    align-items: center;
+    justify-content: space-around;
+}
+
+#found-annotations-modal .mtabs btn{
+    width: 100%;
+    height: 100%;
+    color:gray;
+    display: flex;
+    background-color: white;
+    align-items: center;
+    justify-content: center;
+    border-bottom:lightgray 1px solid;
+    border-top:lightgray 1px solid;
+    cursor: pointer;
+}
+
+#found-annotations-modal .mtabs .selected-tab{
+    color:var(--prime);
+    font-weight: bold;
+    background-color: transparent;
+    border-bottom: 0px !important;
+    border-top: 0px !important;
+    border-left: 1px solid lightgray;
+    border-right: 1px solid lightgray;
+}
+
+#found-annotations-modal .mcontent .mannotation-list{
+    overflow-y: auto;
+    position: absolute;
+    height: calc(80vh - 90px - 50px);
+    min-height: calc(400px - 90px - 50px);
+    width: 100%;
+    padding: 16px;
 }

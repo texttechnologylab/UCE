@@ -8,6 +8,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.semantics.type.SemanticPredicate;
+import org.apache.uima.jcas.cas.AnnotationBase;
 import org.texttechnologylab.annotation.semaf.semafsr.SrLink;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import org.apache.uima.fit.factory.JCasFactory;
@@ -123,13 +124,13 @@ public class UIMAService {
 
         // Read in the contents of a single xmi cas to see what's inside
         var unique = new HashSet<String>();
-        JCasUtil.select(jCas, Annotation.class).stream().forEach(a -> {
+        JCasUtil.select(jCas, AnnotationBase.class).stream().forEach(a -> {
             unique.add(a.getType().getName());
         });
         unique.forEach(a -> System.out.println(a));
 
         // JUST TESTING
-        JCasUtil.select(jCas, SemanticPredicate.class).stream().forEach(a -> {
+        JCasUtil.select(jCas, SrLink.class).stream().forEach(a -> {
             var xd = "";
         });
 
