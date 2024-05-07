@@ -96,6 +96,10 @@ nav .selected-nav-btn::before {
     flex-wrap: wrap;
 }
 
+.no-pointer-events{
+    pointer-events: none;
+}
+
 .large-font {
     font-size: large;
 }
@@ -194,4 +198,24 @@ nav .selected-nav-btn::before {
         -webkit-transform: rotate(360deg);
         transform:rotate(360deg);
     }
+}
+
+.ne-MISC {
+    color: rgba(125, 125, 125, 1);
+}
+
+.ne-PERSON {
+    color: rgba(237, 187, 36, 1);
+}
+
+.ne-ORGANIZATION {
+    color: rgba(158, 43, 154, 1);
+}
+
+.ne-LOCATION {
+    color: rgba(37, 133, 30);
+}
+
+.ne-taxons{
+    color:dodgerblue;
 }

@@ -157,7 +157,6 @@ $('body').on('click', '#found-annotations-modal .mtabs btn', function(){
     const id = $(this).data('id');
 
     $('#found-annotations-modal .views .mview').each(function(){
-        console.log($(this).data('id'));
         if($(this).data('id') === id){
             $(this).show(100);
         } else{
@@ -177,6 +176,6 @@ $('body').on('click', '#found-annotations-modal .mtabs btn', function(){
 /**
  * Handles the opening of the annotations modal
  */
-$('body').on('click', '.side-bar .annotations .entry', function() {
+$('body').on('click', '.side-bar .open-annotations-modal-btn', function() {
     $('#found-annotations-modal').fadeIn(150);
 })

@@ -129,22 +129,6 @@ body {
     color:black !important;
 }
 
-.document-content .ne-MISC {
-    color: rgba(125, 125, 125, 1);
-}
-
-.document-content .ne-PERSON {
-    color: rgba(237, 187, 36, 1);
-}
-
-.document-content .ne-ORGANIZATION {
-    color: rgba(158, 43, 154, 1);
-}
-
-.document-content .ne-LOCATION {
-    color: rgba(37, 133, 30);
-}
-
 .document-content .time {
     color: var(--dark);
     text-decoration-color: transparent;

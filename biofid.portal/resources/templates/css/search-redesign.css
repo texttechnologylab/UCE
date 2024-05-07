@@ -88,6 +88,23 @@
     box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
 }
 
+.side-bar-container .side-bar .open-annotations-modal-btn{
+    width: 100%;
+    color: var(--secondary);
+    border:lightgray 1px solid;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: 0.15s;
+    margin-bottom: 12px;
+}
+
+.side-bar-container .side-bar .open-annotations-modal-btn:hover{
+    background-color: lightgray;
+    cursor: pointer;
+    transition: 0.15s;
+}
+
 .side-bar-container .side-bar .content .entry{
     padding: 3px 6px;
     border-radius: 6px;
@@ -96,7 +113,6 @@
 .side-bar-container .side-bar .content .entry:hover{
     background-color: rgba(125,125,125,0.15);
     color:black;
-    cursor: pointer;
 }
 
 .side-bar-container .side-bar .taxonomy-tree{
@@ -374,7 +390,6 @@
 #found-annotations-modal .mtabs btn{
     width: 100%;
     height: 100%;
-    color:gray;
     display: flex;
     background-color: white;
     align-items: center;
@@ -385,7 +400,6 @@
 }
 
 #found-annotations-modal .mtabs .selected-tab{
-    color:var(--prime);
     font-weight: bold;
     background-color: transparent;
     border-bottom: 0px !important;
@@ -396,9 +410,76 @@
 
 #found-annotations-modal .mcontent .mannotation-list{
     overflow-y: auto;
-    position: absolute;
-    height: calc(80vh - 90px - 50px);
-    min-height: calc(400px - 90px - 50px);
+    height: calc(80vh - 90px - 50px - 75px);
+    min-height: calc(400px - 90px - 50px - 75px);
     width: 100%;
     padding: 16px;
+}
+
+#found-annotations-modal .mcontent .mannotation-list .title{
+    color:rgba(10, 10, 10, 0.75);
+    pointer-events: none;
+}
+
+#found-annotations-modal .mfooter{
+    height: 85px;
+    background-color: white;
+    border-top:lightgray 1px solid;
+    width: 100%;
+    padding: 16px;
+}
+
+#found-annotations-modal .mannotation-list .draggable{
+    cursor: grab;
+}
+
+#found-annotations-modal .drop-container .draggable{
+    width: auto !important;
+    margin-right: 8px;
+    padding-left: 8px !important;
+    padding-right: 8px !important;
+    padding-bottom: 4px !important;
+    padding-top: 4px !important;
+}
+
+#found-annotations-modal .drop-container .draggable .count,
+#found-annotations-modal .drop-container .draggable .fa-grip-vertical {
+    display: none;
+}
+
+#found-annotations-modal .drop-container .draggable .remove-btn{
+    cursor: pointer;
+}
+
+#found-annotations-modal .mfooter .drop-container{
+    border: lightgray 1px solid;
+    border-right:0;
+    display: flex;
+    transition: 0.15s;
+    align-items: center;
+    overflow-y: hidden;
+    overflow-x: auto;
+    justify-content: flex-start;
+    padding: 12px;
+}
+
+#found-annotations-modal .mfooter .drop-container.highlighted{
+    box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
+    border-color:gray !important;
+    opacity: 0.5;
+    transition: 0.15s;
+    transform: scale(1.01, 1.01);
+    backdrop-filter: blur(4px);
+}
+
+#found-annotations-modal .mfooter .submit-btn{
+    height: 100%;
+    padding: 12px;
+    background-color: transparent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border:lightgray 1px solid;
+    border-left: 0;
+    color: var(--prime);
 }

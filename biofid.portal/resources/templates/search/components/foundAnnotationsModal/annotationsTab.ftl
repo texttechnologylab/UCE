@@ -11,12 +11,16 @@
         </#if>
         <#list mannotations as annotation>
             <div class="col-lg-4 m-0 p-1">
-                <div class="flexed align-items-center justify-content-between border rounded p-2">
+                <div class="draggable flexed align-items-center justify-content-between border rounded p-2 dcontainer" style="background-color: white"
+                     draggable="true" data-id="-">
                     <div class="flexed">
-                        <label class="m-0 text-dark">${annotation.getCoveredText()}</label>
-                        <label class="ml-1 m-0 text small-font">(${annotation.getOccurrences()})</label>
+                        <label class="m-0 title">${annotation.getCoveredText()}</label>
+                        <label class="ml-1 m-0 text small-font count">(${annotation.getOccurrences()})</label>
                     </div>
-                    <input type="checkbox" checked/>
+                    <div class="h-100">
+                        <i class="text fas fa-grip-vertical h-100"></i>
+                    </div>
+                    <!--<input type="checkbox" checked/>-->
                 </div>
             </div>
         </#list>

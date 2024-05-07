@@ -86,7 +86,9 @@
                 <div class="side-bar">
                     <div class="content">
 
-                        <h6 class="text-center underlined">Named-Entities</h6>
+                        <button class="btn open-annotations-modal-btn text-center">
+                            <i class="fas fa-bezier-curve mr-2"></i>Annotations-Combiner
+                        </button>
 
                         <div class="annotations">
                             <#include "*/search/components/annotations.ftl" >
