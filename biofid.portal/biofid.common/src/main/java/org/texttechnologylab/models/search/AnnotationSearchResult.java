@@ -13,6 +13,8 @@ public class AnnotationSearchResult {
         this.info = info;
     }
 
+    public AnnotationSearchResult(){}
+
     public String getCoveredText() {
         return coveredText;
     }

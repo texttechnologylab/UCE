@@ -1,5 +1,6 @@
 package org.texttechnologylab.services;
 
+import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.globe.GlobeTaxon;
@@ -8,6 +9,12 @@ import org.texttechnologylab.models.search.*;
 import java.util.List;
 
 public interface DataInterface {
+
+    /**
+     * Fetches annotations (NE, Taxon, Time,...) of a given corpus.
+     * @return
+     */
+    public List<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take);
 
     /**
      * Counts all documents within a given corpus

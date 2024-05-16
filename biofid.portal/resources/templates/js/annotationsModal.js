@@ -24,14 +24,18 @@ $('body').on('drop','#found-annotations-modal .drop-container' , function(event)
     if($currentDraggingObject === undefined) return;
     const uuid = generateUUID();
     let $dropItem = $currentDraggingObject.clone();
-    // Hide the item in the list. We use that to show it later again.
-    $currentDraggingObject.hide();
-    $currentDraggingObject.attr('data-id', uuid);
+
+    // If the item is being dragged from a drop-container, we delete the old one.
+    // This means the user drags it from one field to another
+    if($currentDraggingObject.parent('.drop-container').length)
+        $currentDraggingObject.remove();
+    else
+        $currentDraggingObject.attr('data-id', uuid);
 
     // Change the drag item container a bit. We want e.g. a delete btn now
     $dropItem.find('i').removeClass('fa-grip-vertical');
     $dropItem.find('i').addClass('fa-trash-alt small-font ml-1 remove-btn');
-    $dropItem.attr('draggable', false);
+    //$dropItem.attr('draggable', false);
 
     // Also check which kind of ne we have here and hence apply coloring
     const type = $('#found-annotations-modal .mtabs .selected-tab').data('id');
@@ -41,12 +45,17 @@ $('body').on('drop','#found-annotations-modal .drop-container' , function(event)
     $dropItem.attr('data-id', uuid);
 
     $(this).append($dropItem);
+    handleDragDropEnded();
 });
 
 $('body').on('dragend', '#found-annotations-modal .draggable', function(event) {
+    handleDragDropEnded();
+});
+
+function handleDragDropEnded(){
     console.log('Dragging ended');
     $('#found-annotations-modal .drop-container').removeClass('highlighted');
-});
+}
 
 /**
  * Handle the removing of a dropped annotation
@@ -54,8 +63,8 @@ $('body').on('dragend', '#found-annotations-modal .draggable', function(event) {
 $('body').on('click', '#found-annotations-modal .drop-container .remove-btn', function(event) {
     const $container = $(this).closest('.draggable');
     const id = $container.attr('data-id');
-    // Show the item in the list again
-    $('#found-annotations-modal .mannotation-list .draggable[data-id="{ID}"]'.replace('{ID}', id)).show();
+    // Show the item in the list again, UPDATE: Don't do that anymore.
+    //$('#found-annotations-modal .mannotation-list .draggable[data-id="{ID}"]'.replace('{ID}', id)).show();
     // Delete this from the drop container
     $container.remove();
 });
@@ -65,7 +74,6 @@ $('body').on('click', '#found-annotations-modal .drop-container .remove-btn', fu
  */
 $('body').on('click', '#found-annotations-modal .mfooter .submit-btn', function(){
     const $container = $('#found-annotations-modal .mfooter .bricks-container');
-    $('.view[data-id="search"] .loader-container').first().fadeIn(150);
 
     // Fetch the data required for the request.
     const arg0 = $container.find('.drop-container[data-id="arg0"] .draggable')
@@ -78,33 +86,20 @@ $('body').on('click', '#found-annotations-modal .mfooter .submit-btn', function(
         .map((index, element) => $(element).find('.title').html())
         .get();
     const verb = $('#found-annotations-modal .mfooter .verb-input').val();
-    const selectElement = document.getElementById("corpus-select");
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const corpusId = selectedOption.getAttribute("data-id");
 
-    $.ajax({
-        url: "/api/search/semanticRole",
-        type: "POST",
-        data: JSON.stringify({
-            verb: verb,
-            arg0: arg0,
-            arg1: arg1,
-            argm: argm,
-            corpusId: corpusId
-        }),
-        contentType: "application/json",
-        //dataType: "json",
-        success: function (response) {
-            $('.view .search-result-container').html(response);
-            activatePopovers();
-        },
-        error: function (xhr, status, error) {
-            console.error(xhr.responseText);
-            $('.view .search-result-container').html(xhr.responseText);
-        }
-    }).always(function(){
-        $('.view[data-id="search"] .loader-container').first().fadeOut(150);
-        $('#found-annotations-modal').fadeOut(50);
-    });
+    // We enter the built query into the searchbar in correct form
+    let query = "SR::";
+    if(arg0.length > 0)
+        query += "0=" + arg0.join(",") + ";";
+    if(arg1.length > 0)
+        query += "1=" + arg1.join(",") + ";";
+    // query += "2=" + arg0.join(",") + ";";
+    if(argm.length > 0)
+        query += "m=" + argm.join(",") + ";";
+    if(verb !== "")
+        query += "v=" + verb + ";";
 
+    console.log(query);
+    $('.search-input').val(query);
+    $('#found-annotations-modal').fadeOut(100);
 });

@@ -8,8 +8,6 @@
         </div>
     </div>
 
-    <#include "*/search/components/foundAnnotationsModal/foundAnnotationsModal.ftl" >
-
     <div class="row mb-0 mr-0 ml-0 pb-5">
 
         <div class="col-md-3 position-relative">
@@ -85,10 +83,6 @@
             <div class="side-bar-container">
                 <div class="side-bar">
                     <div class="content">
-
-                        <button class="btn open-annotations-modal-btn text-center">
-                            <i class="fas fa-bezier-curve mr-2"></i>Annotations-Combiner
-                        </button>
 
                         <div class="annotations">
                             <#include "*/search/components/annotations.ftl" >

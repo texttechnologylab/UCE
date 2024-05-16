@@ -23,6 +23,10 @@
     "de-DE": "Öffnen der Korpus-Übersicht",
     "en-EN": "Open the corpus viewer"
   },
+  "openSrBuilder": {
+    "de-DE": "Öffnen des Semantic-Role Query Builders",
+    "en-EN": "Open the Semantic-Role Query Builder"
+  },
   "searchPlaceholder": {
     "de-DE": "Suche...",
     "en-EN": "Search...."

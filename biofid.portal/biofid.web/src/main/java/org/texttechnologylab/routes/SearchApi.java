@@ -38,7 +38,7 @@ public class SearchApi {
         var searchId = request.queryParams("searchId");
         var order = request.queryParams("order").toUpperCase();
         var orderBy = request.queryParams("orderBy").toUpperCase();
-        if(!activeSearches.containsKey(searchId)){
+        if (!activeSearches.containsKey(searchId)) {
             // TODO: Log here and return something? Dont know what yet
         }
 
@@ -60,7 +60,7 @@ public class SearchApi {
         var result = new HashMap<>();
         var searchId = request.queryParams("searchId");
         var page = Integer.parseInt(request.queryParams("page"));
-        if(!activeSearches.containsKey(searchId)){
+        if (!activeSearches.containsKey(searchId)) {
             // TODO: Log here and return something? Dont know what yet
         }
         // Get the next pages.
@@ -92,15 +92,22 @@ public class SearchApi {
         var searchInput = requestBody.get("searchInput").toString();
         var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
 
-        var biofidSearch = new Search_DefaultImpl(context, searchInput, corpusId, new SearchLayer[]{
-                SearchLayer.METADATA,
-                SearchLayer.NAMED_ENTITIES,
-                SearchLayer.EMBEDDINGS
-        });
-        var searchState = biofidSearch.initSearch();
+        // We have our own query language for SemanticRole Searches. Check if this is one of those.
+        SearchState searchState = null;
+        if (searchInput.startsWith("SR::")) {
+            var semanticRoleSearch = new Search_SemanticRoleImpl(context, corpusId, searchInput);
+            searchState = semanticRoleSearch.initSearch();
+        } else {
+            var biofidSearch = new Search_DefaultImpl(context, searchInput, corpusId, new SearchLayer[]{
+                    SearchLayer.METADATA,
+                    SearchLayer.NAMED_ENTITIES,
+                    SearchLayer.EMBEDDINGS
+            });
+            searchState = biofidSearch.initSearch();
+        }
 
-        model.put("searchState", searchState);
         activeSearches.put(searchState.getSearchId().toString(), searchState);
+        model.put("searchState", searchState);
 
         return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
     });
@@ -111,9 +118,9 @@ public class SearchApi {
         Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
 
         var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
-        var arg0 = (ArrayList<String>)requestBody.get("arg0");
-        var arg1 = (ArrayList<String>)requestBody.get("arg1");
-        var argm = (ArrayList<String>)requestBody.get("argm");
+        var arg0 = (ArrayList<String>) requestBody.get("arg0");
+        var arg1 = (ArrayList<String>) requestBody.get("arg1");
+        var argm = (ArrayList<String>) requestBody.get("argm");
         var verb = requestBody.get("verb").toString();
 
         var semanticRoleSearch = new Search_SemanticRoleImpl(context, corpusId, arg0, arg1, argm, verb);
@@ -123,6 +130,21 @@ public class SearchApi {
         activeSearches.put(searchState.getSearchId().toString(), searchState);
 
         return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
+    });
+
+    public Route getSemanticRoleBuilderView = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        var corpusId = Long.parseLong(request.queryParams("corpusId"));
+
+        var annotations = db.getAnnotationsOfCorpus(corpusId, 0, 250);
+        model.put("time", annotations.stream().filter(a -> a.getInfo().equals("time")).toList());
+        model.put("taxon", annotations.stream().filter(a -> a.getInfo().equals("taxon")).toList());
+        model.put("organization", annotations.stream().filter(a -> a.getInfo().equals("ORGANIZATION")).toList());
+        model.put("location", annotations.stream().filter(a -> a.getInfo().equals("LOCATION")).toList());
+        model.put("person", annotations.stream().filter(a -> a.getInfo().equals("PERSON")).toList());
+        model.put("misc", annotations.stream().filter(a -> a.getInfo().equals("MISC")).toList());
+
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/components/foundAnnotationsModal/foundAnnotationsModal.ftl"));
     });
 
 }

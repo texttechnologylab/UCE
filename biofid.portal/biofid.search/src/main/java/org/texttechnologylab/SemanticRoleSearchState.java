@@ -6,13 +6,22 @@ import java.util.ArrayList;
 
 public class SemanticRoleSearchState extends SearchState{
 
-    private ArrayList<String> arg0;
-    private ArrayList<String> arg1;
-    private ArrayList<String> argm;
-    private String verb;
+    private ArrayList<String> arg0 = new ArrayList<>();
+    private ArrayList<String> arg1 = new ArrayList<>();
+    private ArrayList<String> arg2 = new ArrayList<>();
+    private ArrayList<String> argm = new ArrayList<>();
+    private String verb = "";
 
     public SemanticRoleSearchState(SearchType searchType) {
         super(searchType);
+    }
+
+    public ArrayList<String> getArg2() {
+        return arg2;
+    }
+
+    public void setArg2(ArrayList<String> arg2) {
+        this.arg2 = arg2;
     }
 
     public ArrayList<String> getArg0() {

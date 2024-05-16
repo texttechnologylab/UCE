@@ -5,6 +5,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.config.HibernateConf;
+import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
@@ -29,6 +30,29 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public PostgresqlDataInterface_Impl() {
         sessionFactory = HibernateConf.buildSessionFactory();
+    }
+
+    public ArrayList<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+
+            DocumentSearchResult search = null;
+            try (var storedProcedure = connection.prepareCall("{call get_corpus_annotations" + "(?, ?, ?)}")) {
+                storedProcedure.setInt(1, (int) corpusId);
+                storedProcedure.setInt(2, take);
+                storedProcedure.setInt(3, skip);
+
+                var result = storedProcedure.executeQuery();
+                var annotations = new ArrayList<AnnotationSearchResult>();
+                while (result.next()) {
+                    var annotationSearchResult = new AnnotationSearchResult();
+                    annotationSearchResult.setCoveredText(result.getString("annotation_text"));
+                    annotationSearchResult.setOccurrences(result.getInt("annotation_count"));
+                    annotationSearchResult.setInfo(result.getString("annotation_type"));
+                    annotations.add(annotationSearchResult);
+                }
+                return annotations;
+            }
+        }));
     }
 
     public int countDocumentsInCorpus(long id){

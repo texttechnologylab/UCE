@@ -49,6 +49,9 @@
         </div>
     </nav>
 
+    <div class="sr-query-builder-include">
+    </div>
+
     <div class="mt-5 main-content-container">
 
         <div class="view" data-id="search">
@@ -57,18 +60,23 @@
                 <div class="flexed align-items-center h-100">
                     <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover" data-toggle="popover" data-placement="top"
                        data-content="${languageResource.get("openCorpus")}">
-                        <i class="fas fa-globe xlarge-font mr-3 ml-3 text-dark"></i>
+                        <i class="fas fa-globe xlarge-font mr-2 ml-2 text-dark"></i>
                     </a>
                     <select class="form-control" id="corpus-select" aria-label="Default select example">
                         <#list corpora as corpus>
                             <option data-id="${corpus.getId()}">${corpus.getName()}</option>
                         </#list>
                     </select>
+                    <button class="btn open-sr-builder-btn" data-trigger="hover" data-toggle="popover" data-placement="top"
+                            data-content="${languageResource.get("openSrBuilder")}">
+                        <i class="fas fa-project-diagram mr-1 ml-1"></i>
+                    </button>
                 </div>
 
                 <input type="text" class="search-input form-control large-font w-100" placeholder="${languageResource.get("searchPlaceholder")}"/>
+
                 <button class="btn btn-primary search-btn">
-                    <i class="fas fa-search"></i>
+                    <i class="fas fa-search ml-1 mr-1"></i>
                 </button>
             </div>
 

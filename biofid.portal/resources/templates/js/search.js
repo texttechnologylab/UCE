@@ -36,6 +36,35 @@ function startNewSearch(searchInput) {
 }
 
 /**
+ * Handles the opening of the sr builder
+ */
+$('body').on('click', '.open-sr-builder-btn', function(){
+    // Get the selected corpus
+    const selectElement = document.getElementById("corpus-select");
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const corpusId = selectedOption.getAttribute("data-id");
+    // Show Loading
+    $(this).find('i').removeClass('fa-project-diagram').addClass('rotate fa-spinner');
+
+    $.ajax({
+        url: "api/search/semanticRole/builder?corpusId=" + corpusId,
+        type: "GET",
+        //dataType: "json",
+        success: function (response) {
+            console.log(response);
+            $('.sr-query-builder-include').html(response);
+            activatePopovers();
+        },
+        error: function (xhr, status, error) {
+            alert("Error opening the SR builder.")
+            console.error(xhr.responseText);
+        }
+    }).always(function(){
+        $('.open-sr-builder-btn').find('i').addClass('fa-project-diagram').removeClass('rotate fa-spinner');
+    });
+})
+
+/**
  * Handles the loading of the next pages
  */
 $('body').on('click', '.search-result-container .page-btn', function () {
@@ -171,11 +200,4 @@ $('body').on('click', '#found-annotations-modal .mtabs btn', function(){
             $(this).removeClass('selected-tab');
         }
     })
-})
-
-/**
- * Handles the opening of the annotations modal
- */
-$('body').on('click', '.side-bar .open-annotations-modal-btn', function() {
-    $('#found-annotations-modal').fadeIn(150);
 })

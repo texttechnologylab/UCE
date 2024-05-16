@@ -31,21 +31,21 @@ DECLARE
     taxons_temp text[][][][];
 BEGIN
 	CREATE TEMPORARY TABLE documents_query AS (
-		SELECT 
+		SELECT DISTINCT 
 			d.id
 		FROM document d
 		JOIN srlink sr ON d.id = sr.document_id
 		WHERE d.corpusid = corpusid_val 
-			AND sr.figurecoveredtext = verb or verb = ''
+			AND LOWER(sr.figurecoveredtext) = verb or verb = ''
 		GROUP BY d.id, sr.figurebegin
 		-- So, this is a nice query. If a relationtype with its coveredtext matches our query, we add one
 		-- and later, if the arg0 inputs is not empty, we count one up and then check if the count is equal.
 		HAVING 
 			COUNT(DISTINCT 
 				CASE 
-					WHEN (sr.relationtype = 'ARG0' AND sr.groundcoveredtext = ANY(arg0)) THEN sr.relationtype
-					WHEN (sr.relationtype = 'ARG1' AND sr.groundcoveredtext = ANY(arg1)) THEN sr.relationtype
-					WHEN (sr.relationtype = 'ARGM' AND sr.groundcoveredtext = ANY(argm)) THEN sr.relationtype
+					WHEN (sr.relationtype = 'ARG0' AND LOWER(sr.groundcoveredtext) = ANY(arg0)) THEN sr.relationtype
+					WHEN (sr.relationtype = 'ARG1' AND LOWER(sr.groundcoveredtext) = ANY(arg1)) THEN sr.relationtype
+					WHEN ((sr.relationtype = 'ARGM' OR sr.relationtype = 'ARGM-LOC') AND LOWER(sr.groundcoveredtext) = ANY(argm)) THEN sr.relationtype
 					ELSE NULL
 				END
 			) = 

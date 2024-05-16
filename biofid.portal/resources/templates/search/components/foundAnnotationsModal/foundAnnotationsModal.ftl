@@ -2,10 +2,10 @@
     <#include "*/js/annotationsModal.js">
 </script>
 
-<div id="found-annotations-modal" style="display: none">
+<div id="found-annotations-modal">
     <div class="mcontent">
         <div class="mheader">
-            <h5 class="mb-0 text"><i class="color-prime fas fa-x-ray mr-2"></i>Annotations</h5>
+            <h5 class="mb-0 text"><i class="color-prime fas fa-x-ray mr-2"></i>Semantic-Role Query Builder</h5>
             <a class="btn" onclick="$('#found-annotations-modal').fadeOut(150)"><i
                         class="color-prime fas fa-times"></i></a>
         </div>
@@ -77,7 +77,7 @@
                     </div>
                 </div>
                 <button class="submit-btn">
-                    <i class="fas fa-search"></i>
+                    <i class="fas fa-check"></i>
                 </button>
             </div>
 

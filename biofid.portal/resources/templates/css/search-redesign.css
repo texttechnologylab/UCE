@@ -7,6 +7,7 @@
 
 #corpus-select{
     width: auto;
+    max-width: 200px;
     border-radius: 0;
     border-right:0;
     height: 41px;
@@ -17,6 +18,15 @@
 
 .open-corpus-inspector-btn{
     cursor: pointer;
+}
+
+.open-sr-builder-btn{
+    border-radius: 0;
+    color:rgba(0, 0, 0, 0.75);
+    background-color: lightgray;
+    border-top:lightgray 1px solid;
+    border-bottom: lightgray 1px solid;
+    height: 41px;
 }
 
 .search-header{
@@ -348,7 +358,8 @@
 
 #found-annotations-modal .mcontent{
     box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
-    width: 51vw;
+    width: 90vw;
+    max-width: 1350px;
     margin-top:-1px;
     margin-left:-16px;
     background-color: rgba(245, 245, 247, 1);

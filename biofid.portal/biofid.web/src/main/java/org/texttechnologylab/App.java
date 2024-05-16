@@ -96,6 +96,7 @@ public class App {
                 post("/semanticRole", searchApi.semanticRoleSearch);
                 get("/active/page", searchApi.activeSearchPage);
                 get("/active/sort", searchApi.activeSearchSort);
+                get("/semanticRole/builder", searchApi.getSemanticRoleBuilderView);
             });
 
             path("/document", () -> {
