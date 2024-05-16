@@ -93,6 +93,7 @@ public class App {
 
             path("/search", () -> {
                 post("/default", searchApi.search);
+                post("/semanticRole", searchApi.semanticRoleSearch);
                 get("/active/page", searchApi.activeSearchPage);
                 get("/active/sort", searchApi.activeSearchSort);
             });

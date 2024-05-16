@@ -5,8 +5,6 @@ import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
 
-import java.sql.ResultSet;
-import java.util.ArrayList;
 import java.util.List;
 
 public interface DataInterface {
@@ -48,18 +46,34 @@ public interface DataInterface {
     public List<Document> getManyDocumentsByIds(List<Integer> documentIds);
 
     /**
+     * Does a semantic role label search and returns document hits
+     */
+    public DocumentSearchResult semanticRoleSearchForDocuments(
+            int skip,
+            int take,
+            List<String> arg0,
+            List<String> arg1,
+            List<String> argm,
+            String verb,
+            boolean countAll,
+            SearchOrder order,
+            OrderByColumn orderedByColumn,
+            long corpusId
+    );
+
+    /**
      * Returns a list of documents by a list of ids
      *
      * @return
      */
-    public DocumentSearchResult searchForDocuments(int skip,
-                                                   int take,
-                                                   List<String> searchTokens,
-                                                   SearchLayer layer,
-                                                   boolean countAll,
-                                                   SearchOrder order,
-                                                   OrderByColumn orderedByColumn,
-                                                   long corpusId);
+    public DocumentSearchResult defaultSearchForDocuments(int skip,
+                                                          int take,
+                                                          List<String> searchTokens,
+                                                          SearchLayer layer,
+                                                          boolean countAll,
+                                                          SearchOrder order,
+                                                          OrderByColumn orderedByColumn,
+                                                          long corpusId);
     /**
      * Searches for documents with a variety of criterias. It's the main db search of the biofid portal
      * The function calls a variety of stored procedures in the database.
@@ -68,8 +82,8 @@ public interface DataInterface {
      * @param take
      * @return
      */
-    public List<Document> searchForDocuments(int skip,
-                                             int take);
+    public List<Document> defaultSearchForDocuments(int skip,
+                                                    int take);
     /**
      * Generic operation that fetches documents given the paramters
      *

@@ -136,14 +136,51 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public DocumentSearchResult searchForDocuments(int skip,
-                                                   int take,
-                                                   List<String> searchTokens,
-                                                   SearchLayer layer,
-                                                   boolean countAll,
-                                                   SearchOrder order,
-                                                   OrderByColumn orderedByColumn,
-                                                   long corpusId) {
+    @Override
+    public DocumentSearchResult semanticRoleSearchForDocuments(int skip, int take, List<String> arg0, List<String> arg1, List<String> argm, String verb, boolean countAll, SearchOrder order, OrderByColumn orderedByColumn, long corpusId) {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+
+            DocumentSearchResult search = null;
+            try (var storedProcedure = connection.prepareCall("{call biofid_semantic_role_search" + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                storedProcedure.setInt(1, (int) corpusId);
+                storedProcedure.setArray(2, connection.createArrayOf("text", arg0.toArray()));
+                storedProcedure.setArray(3, connection.createArrayOf("text", arg1.toArray()));
+                storedProcedure.setArray(4, connection.createArrayOf("text", argm.toArray()));
+                storedProcedure.setString(5, verb);
+                storedProcedure.setInt(6, take);
+                storedProcedure.setInt(7, skip);
+                storedProcedure.setBoolean(8, countAll);
+                storedProcedure.setString(9, order.name());
+                storedProcedure.setString(10, orderedByColumn.name().toLowerCase());
+
+                var result = storedProcedure.executeQuery();
+                while (result.next()) {
+                    var documentCount = result.getInt("total_count_out");
+                    var documentIds = new ArrayList<Integer>();
+                    var documentIdsResult = result.getArray("document_ids");
+                    if (documentIdsResult != null) {
+                        var ids = (Integer[]) documentIdsResult.getArray();
+                        documentIds.addAll(Arrays.asList(ids));
+                    }
+                    search = new DocumentSearchResult(documentCount, documentIds);
+                    // Also parse the found entities and all outputs the query returns.
+                    search.setFoundNamedEntities(parseAnnotationOccurrences(result.getArray("named_entities_found").getResultSet()));
+                    search.setFoundTaxons(parseAnnotationOccurrences(result.getArray("taxons_found").getResultSet()));
+                    search.setFoundTimes(parseAnnotationOccurrences(result.getArray("time_found").getResultSet()));
+                }
+                return search;
+            }
+        }));
+    }
+
+    public DocumentSearchResult defaultSearchForDocuments(int skip,
+                                                          int take,
+                                                          List<String> searchTokens,
+                                                          SearchLayer layer,
+                                                          boolean countAll,
+                                                          SearchOrder order,
+                                                          OrderByColumn orderedByColumn,
+                                                          long corpusId) {
 
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
@@ -178,8 +215,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
-    public List<Document> searchForDocuments(int skip,
-                                             int take) {
+    public List<Document> defaultSearchForDocuments(int skip,
+                                                    int take) {
         return executeOperationSafely((session) -> {
             var criteriaQuery = session.getCriteriaBuilder().createQuery(Document.class);
             var docRoot = criteriaQuery.from(Document.class);

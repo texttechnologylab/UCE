@@ -2,7 +2,7 @@
     <#include "*/js/annotationsModal.js">
 </script>
 
-<div id="found-annotations-modal">
+<div id="found-annotations-modal" style="display: none">
     <div class="mcontent">
         <div class="mheader">
             <h5 class="mb-0 text"><i class="color-prime fas fa-x-ray mr-2"></i>Annotations</h5>
@@ -45,15 +45,42 @@
         </div>
 
         <div class="mfooter">
-            <div class="w-100 flexed align-items-center h-100">
-                <p class="mb-0 mr-3"><i class="fas fa-bezier-curve"></i></p>
-                <div class="w-100 h-100 drop-container">
 
+            <div class="flexed w-100 mt-2">
+                <div class="w-100">
+                    <div class="w-100 flexed align-items-center justify-content-center">
+                        <span class="w-100 position-relative verb-input-before"></span>
+                        <input placeholder="Verb..." class="form-control w-100 verb-input" type="text"/>
+                        <span class="w-100 position-relative verb-input-before"></span>
+                    </div>
+
+                    <div class="w-100 flexed align-items-center">
+
+                        <div class="row m-0 p-0 bricks-container">
+
+                            <div class="col-md-4 pl-2 pr-2">
+                                <div data-id="arg0" class=" w-100 drop-container">
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 pl-2 pr-2">
+                                <div data-id="arg1" class=" w-100 drop-container">
+                                </div>
+                            </div>
+
+                            <div class="col-md-4 pl-2 pr-2">
+                                <div data-id="argm" class=" w-100 drop-container">
+                                </div>
+                            </div>
+
+                        </div>
+                    </div>
                 </div>
                 <button class="submit-btn">
                     <i class="fas fa-search"></i>
                 </button>
             </div>
+
         </div>
     </div>
 </div>

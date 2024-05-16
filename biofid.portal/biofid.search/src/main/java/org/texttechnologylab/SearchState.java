@@ -1,8 +1,6 @@
 package org.texttechnologylab;
 
 import org.texttechnologylab.models.corpus.Document;
-import org.texttechnologylab.models.corpus.Page;
-import org.texttechnologylab.models.rag.DocumentEmbedding;
 import org.texttechnologylab.models.search.*;
 
 import java.util.ArrayList;
@@ -13,7 +11,7 @@ import java.util.UUID;
 /**
  * A class that holds all states of a biofid search. We can use this class to serialize the search. It shouldn't hold any services.
  */
-public class BiofidSearchState {
+public class SearchState {
     private UUID searchId;
 
     /**
@@ -22,6 +20,7 @@ public class BiofidSearchState {
     private String searchPhrase;
     private List<String> searchTokens;
     private List<SearchLayer> searchLayers;
+    private SearchType searchType;
     private Integer currentPage = 1;
     private Integer take = 10;
     private long corpusId;
@@ -42,8 +41,25 @@ public class BiofidSearchState {
      */
     private List<Document> currentDocuments;
 
-    public BiofidSearchState(){
+    public SearchState(SearchType searchType){
+        this.searchType = searchType;
         this.searchId = UUID.randomUUID();
+    }
+
+    public SearchType getSearchType() {
+        return searchType;
+    }
+
+    public void setSearchType(SearchType searchType) {
+        this.searchType = searchType;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundTimes() {
+        return foundTimes;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundTaxons() {
+        return foundTaxons;
     }
 
     public ArrayList<DocumentEmbeddingSearchResult> getFoundDocumentEmbeddings() {

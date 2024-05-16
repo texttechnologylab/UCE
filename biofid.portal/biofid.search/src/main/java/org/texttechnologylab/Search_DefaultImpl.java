@@ -16,8 +16,8 @@ import java.util.List;
 /**
  * Class that encapsulates all search layers within the biofid class
  */
-public class BiofidSearch {
-    private final BiofidSearchState biofidSearchState;
+public class Search_DefaultImpl implements Search {
+    private SearchState biofidSearchState;
     private List<String> stopwords;
     private PostgresqlDataInterface_Impl db;
     private RAGService ragService;
@@ -28,12 +28,12 @@ public class BiofidSearch {
      * @throws URISyntaxException
      * @throws IOException
      */
-    public BiofidSearch(ApplicationContext serviceContext,
-                        String searchPhrase,
-                        long corpusId,
-                        SearchLayer[] searchLayers) throws URISyntaxException, IOException {
+    public Search_DefaultImpl(ApplicationContext serviceContext,
+                              String searchPhrase,
+                              long corpusId,
+                              SearchLayer[] searchLayers) throws URISyntaxException, IOException {
 
-        this.biofidSearchState = new BiofidSearchState();
+        this.biofidSearchState = new SearchState(SearchType.DEFAULT);
         this.biofidSearchState.setSearchLayers(Arrays.stream(searchLayers).toList());
         initServices(serviceContext);
 
@@ -42,16 +42,22 @@ public class BiofidSearch {
         this.biofidSearchState.setSearchTokens(cleanSearchPhrase(searchPhrase));
     }
 
-    public BiofidSearch(ApplicationContext serviceContext, BiofidSearchState biofidSearchState) throws URISyntaxException, IOException {
+    public Search_DefaultImpl(){}
+
+    public void fromSearchState(ApplicationContext serviceContext, SearchState biofidSearchState) throws URISyntaxException, IOException {
         initServices(serviceContext);
-        this.biofidSearchState = biofidSearchState;
+        setSearchState(biofidSearchState);
+    }
+
+    public void setSearchState(SearchState searchState){
+        this.biofidSearchState = searchState;
     }
 
     /**
      * Starts a new search with the Search instance and returns the first results of the search
      * @return
      */
-    public BiofidSearchState initSearch(){
+    public SearchState initSearch(){
         DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
         if(documentSearchResult == null) throw new NullPointerException("Document Init Search returned null - not empty.");
         biofidSearchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
@@ -86,7 +92,7 @@ public class BiofidSearch {
      * Returns the next X documents from the paginated search. Determine the page offset in the variable.
      * @return
      */
-    public BiofidSearchState getSearchHitsForPage(int page){
+    public SearchState getSearchHitsForPage(int page){
         // Adjust the current page and execute the search again
         this.biofidSearchState.setCurrentPage(page);
         var documentSearchResult = executeSearchOnDatabases(false);
@@ -105,7 +111,7 @@ public class BiofidSearch {
         // Execute the metadata search. This layer is contained in the other layers, but there are some instances where
         // we ONLY want to use the metadata search, so handle that specific case here.
         if(biofidSearchState.getSearchLayers().stream().count() == 1 && biofidSearchState.getSearchLayers().contains(SearchLayer.METADATA)){
-            return db.searchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
+            return db.defaultSearchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
                     biofidSearchState.getTake(),
                     biofidSearchState.getSearchTokens(),
                     SearchLayer.METADATA,
@@ -117,7 +123,7 @@ public class BiofidSearch {
 
         // Execute the Named Entity search, which automatically executes metadata as well
         if(biofidSearchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES)){
-            return db.searchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
+            return db.defaultSearchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
                     biofidSearchState.getTake(),
                     biofidSearchState.getSearchTokens(),
                     SearchLayer.NAMED_ENTITIES,

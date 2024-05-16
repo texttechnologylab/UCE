@@ -59,3 +59,52 @@ $('body').on('click', '#found-annotations-modal .drop-container .remove-btn', fu
     // Delete this from the drop container
     $container.remove();
 });
+
+/**
+ * Handles the submission of the semantic role search
+ */
+$('body').on('click', '#found-annotations-modal .mfooter .submit-btn', function(){
+    const $container = $('#found-annotations-modal .mfooter .bricks-container');
+    $('.view[data-id="search"] .loader-container').first().fadeIn(150);
+
+    // Fetch the data required for the request.
+    const arg0 = $container.find('.drop-container[data-id="arg0"] .draggable')
+        .map((index, element) => $(element).find('.title').html())
+        .get();
+    const arg1 = $container.find('.drop-container[data-id="arg1"] .draggable')
+        .map((index, element) => $(element).find('.title').html())
+        .get();
+    const argm = $container.find('.drop-container[data-id="argm"] .draggable')
+        .map((index, element) => $(element).find('.title').html())
+        .get();
+    const verb = $('#found-annotations-modal .mfooter .verb-input').val();
+    const selectElement = document.getElementById("corpus-select");
+    const selectedOption = selectElement.options[selectElement.selectedIndex];
+    const corpusId = selectedOption.getAttribute("data-id");
+
+    $.ajax({
+        url: "/api/search/semanticRole",
+        type: "POST",
+        data: JSON.stringify({
+            verb: verb,
+            arg0: arg0,
+            arg1: arg1,
+            argm: argm,
+            corpusId: corpusId
+        }),
+        contentType: "application/json",
+        //dataType: "json",
+        success: function (response) {
+            $('.view .search-result-container').html(response);
+            activatePopovers();
+        },
+        error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+            $('.view .search-result-container').html(xhr.responseText);
+        }
+    }).always(function(){
+        $('.view[data-id="search"] .loader-container').first().fadeOut(150);
+        $('#found-annotations-modal').fadeOut(50);
+    });
+
+});

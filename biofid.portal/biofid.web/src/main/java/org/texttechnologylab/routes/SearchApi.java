@@ -3,9 +3,7 @@ package org.texttechnologylab.routes;
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
-import org.texttechnologylab.BiofidSearch;
-import org.texttechnologylab.BiofidSearchState;
-import org.texttechnologylab.CustomFreeMarkerEngine;
+import org.texttechnologylab.*;
 import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.models.search.SearchOrder;
@@ -13,8 +11,8 @@ import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.UIMAService;
 import spark.ModelAndView;
 import spark.Route;
-import spark.template.freemarker.FreeMarkerEngine;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -26,14 +24,14 @@ public class SearchApi {
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
 
     // TODO: outsource this to a db or something.
-    private HashMap<String, BiofidSearchState> activeSearches;
+    private HashMap<String, SearchState> activeSearches;
 
     public SearchApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
         this.freemakerConfig = freemakerConfig;
         this.context = serviceContext;
         this.uimaService = serviceContext.getBean(UIMAService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
-        this.activeSearches = new HashMap<String, BiofidSearchState>();
+        this.activeSearches = new HashMap<String, SearchState>();
     }
 
     public Route activeSearchSort = ((request, response) -> {
@@ -48,7 +46,8 @@ public class SearchApi {
         var activeSearchState = activeSearches.get(searchId);
         activeSearchState.setOrder(SearchOrder.valueOf(order));
         activeSearchState.setOrderBy(OrderByColumn.valueOf(orderBy));
-        var biofidSearch = new BiofidSearch(this.context, activeSearchState);
+        var biofidSearch = new Search_DefaultImpl();
+        biofidSearch.fromSearchState(this.context, activeSearchState);
         activeSearchState = biofidSearch.getSearchHitsForPage(activeSearchState.getCurrentPage());
 
         var model = new HashMap<String, Object>();
@@ -66,7 +65,8 @@ public class SearchApi {
         }
         // Get the next pages.
         var activeSearchState = activeSearches.get(searchId);
-        var biofidSearch = new BiofidSearch(this.context, activeSearchState);
+        var biofidSearch = new Search_DefaultImpl();
+        biofidSearch.fromSearchState(this.context, activeSearchState);
         activeSearchState = biofidSearch.getSearchHitsForPage(page);
 
         var model = new HashMap<String, Object>();
@@ -92,12 +92,32 @@ public class SearchApi {
         var searchInput = requestBody.get("searchInput").toString();
         var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
 
-        var biofidSearch = new BiofidSearch(context, searchInput, corpusId, new SearchLayer[]{
+        var biofidSearch = new Search_DefaultImpl(context, searchInput, corpusId, new SearchLayer[]{
                 SearchLayer.METADATA,
                 SearchLayer.NAMED_ENTITIES,
                 SearchLayer.EMBEDDINGS
         });
         var searchState = biofidSearch.initSearch();
+
+        model.put("searchState", searchState);
+        activeSearches.put(searchState.getSearchId().toString(), searchState);
+
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
+    });
+
+    public Route semanticRoleSearch = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        var gson = new Gson();
+        Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
+
+        var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
+        var arg0 = (ArrayList<String>)requestBody.get("arg0");
+        var arg1 = (ArrayList<String>)requestBody.get("arg1");
+        var argm = (ArrayList<String>)requestBody.get("argm");
+        var verb = requestBody.get("verb").toString();
+
+        var semanticRoleSearch = new Search_SemanticRoleImpl(context, corpusId, arg0, arg1, argm, verb);
+        var searchState = semanticRoleSearch.initSearch();
 
         model.put("searchState", searchState);
         activeSearches.put(searchState.getSearchId().toString(), searchState);

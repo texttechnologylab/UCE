@@ -8,6 +8,7 @@
     "OCRBlock": false,
     "OCRLine": false,
 
+    "srLink": true,
     "namedEntity": true,
     "sentence": false,
     "taxon": {

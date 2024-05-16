@@ -9,6 +9,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import de.tudarmstadt.ukp.dkpro.core.api.semantics.type.SemanticPredicate;
 import org.apache.uima.jcas.cas.AnnotationBase;
+import org.texttechnologylab.annotation.semaf.isobase.Entity;
 import org.texttechnologylab.annotation.semaf.semafsr.SrLink;
 import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import org.apache.uima.fit.factory.JCasFactory;
@@ -79,7 +80,7 @@ public class UIMAService {
                     "The corpus folder did not contain a properly formatted corpusConfig.json", CorpusConfig.class.toString(), "");
         }
 
-        //db.saveCorpus(corpus);
+        db.saveCorpus(corpus);
 
         for (var file : Objects.requireNonNull(
                 new File(foldername)
@@ -127,12 +128,7 @@ public class UIMAService {
         JCasUtil.select(jCas, AnnotationBase.class).stream().forEach(a -> {
             unique.add(a.getType().getName());
         });
-        unique.forEach(a -> System.out.println(a));
-
-        // JUST TESTING
-        JCasUtil.select(jCas, SrLink.class).stream().forEach(a -> {
-            var xd = "";
-        });
+        unique.forEach(System.out::println);
 
         try {
             // Corpus config so we now what do look for
@@ -199,6 +195,28 @@ public class UIMAService {
                     nes.add(namedEntity);
                 });
                 document.setNamedEntities(nes);
+            }
+
+            // Set the semantic role labels
+            if(corpusConfig.getAnnotations().isSrLink()){
+                var srLinks = new ArrayList<org.texttechnologylab.models.corpus.SrLink>();
+                JCasUtil.select(jCas, SrLink.class).stream().forEach(a -> {
+                    var srLink = new org.texttechnologylab.models.corpus.SrLink();
+                    var figure = a.getFigure();
+                    var ground = a.getGround();
+                    srLink.setRelationType(a.getRel_type());
+
+                    srLink.setFigureBegin(figure.getBegin());
+                    srLink.setFigureEnd(figure.getEnd());
+                    srLink.setFigureCoveredText(figure.getCoveredText());
+
+                    srLink.setGroundBegin(ground.getBegin());
+                    srLink.setGroundEnd(ground.getEnd());
+                    srLink.setGroundCoveredText(ground.getCoveredText());
+
+                    srLinks.add(srLink);
+                });
+                document.setSrLinks(srLinks);
             }
 
             // Set the times

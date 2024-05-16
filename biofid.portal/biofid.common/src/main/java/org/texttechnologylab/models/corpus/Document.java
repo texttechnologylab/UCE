@@ -39,6 +39,10 @@ public class Document extends ModelBase {
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
+    private List<SrLink> srLinks;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
     private List<Time> times;
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -62,6 +66,22 @@ public class Document extends ModelBase {
         this.documentTitle = documentTitle;
         this.documentId = documentId;
         this.corpusId = corpusId;
+    }
+
+    public void setLanguage(String language) {
+        this.language = language;
+    }
+
+    public void setDocumentId(String documentId) {
+        this.documentId = documentId;
+    }
+
+    public List<SrLink> getSrLinks() {
+        return srLinks;
+    }
+
+    public void setSrLinks(List<SrLink> srLinks) {
+        this.srLinks = srLinks;
     }
 
     public long getCorpusId() {

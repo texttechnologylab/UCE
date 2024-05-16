@@ -6,10 +6,19 @@ public class CorpusAnnotationConfig{
     private boolean OCRBlock;
     private boolean OCRLine;
     private TaxonConfig taxon;
+    private boolean srLink;
     private boolean namedEntity;
     private boolean sentence;
     private boolean time;
     private boolean wikipediaLink;
+
+    public boolean isSrLink() {
+        return srLink;
+    }
+
+    public void setSrLink(boolean srLink) {
+        this.srLink = srLink;
+    }
 
     public boolean isOCRPage() {
         return OCRPage;
