@@ -2,6 +2,7 @@ package org.texttechnologylab.models.corpus;
 
 import org.joda.time.DateTime;
 import org.texttechnologylab.models.ModelBase;
+import org.texttechnologylab.models.viewModels.CorpusViewModel;
 
 import javax.persistence.*;
 import java.util.List;
@@ -22,6 +23,10 @@ public class Corpus extends ModelBase {
 
     public Corpus(){
         this.created = DateTime.now();
+    }
+
+    public CorpusViewModel getViewModel(){
+        return new CorpusViewModel(this, corpusJsonConfig);
     }
 
     public String getLanguage() {

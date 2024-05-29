@@ -141,6 +141,7 @@ public class Search_SemanticRoleImpl implements Search{
                 searchState.getTake(),
                 searchState.getArg0(),
                 searchState.getArg1(),
+                searchState.getArg2(),
                 searchState.getArgm(),
                 searchState.getVerb(),
                 countAll,

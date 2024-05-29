@@ -47,6 +47,19 @@ $('body').on('click', '.view .search-btn', function (event) {
 })
 
 /**
+ * Fires whenever a new corpus is selected
+ */
+$('body').on('change', '#corpus-select', function(){
+    const selectedOption = $(this).get(0).options[$(this).get(0).selectedIndex];
+    const hasSr = selectedOption.getAttribute("data-hassr");
+    if(hasSr === 'true'){
+        $('.open-sr-builder-btn').show(50);
+    } else{
+        $('.open-sr-builder-btn').hide(50);
+    }
+})
+
+/**
  * Triggers whenever an open-corpus insecptor button is clicked.
  */
 $('body').on('click', '.open-corpus-inspector-btn', function () {
@@ -118,4 +131,5 @@ function activatePopovers() {
 $(document).ready(function () {
     console.log('Webpage loaded!');
     activatePopovers();
+    $('#corpus-select').change();
 })

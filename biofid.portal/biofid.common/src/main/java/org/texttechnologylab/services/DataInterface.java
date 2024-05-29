@@ -45,8 +45,7 @@ public interface DataInterface {
     public List<GlobeTaxon> getGlobeDataForDocument(long documentId);
 
     /**
-     * Gets all complete documents in the database
-     * CAUTION: Do you _really_ want this? It's extremely heavy.
+     * Gets many documents by their ids
      *
      * @return
      */
@@ -60,6 +59,7 @@ public interface DataInterface {
             int take,
             List<String> arg0,
             List<String> arg1,
+            List<String> arg2,
             List<String> argm,
             String verb,
             boolean countAll,
@@ -69,8 +69,11 @@ public interface DataInterface {
     );
 
     /**
-     * Returns a list of documents by a list of ids
+     * Searches for documents with a variety of criterias. It's the main db search of the biofid portal
+     * The function calls a variety of stored procedures in the database.
      *
+     * @param skip
+     * @param take
      * @return
      */
     public DocumentSearchResult defaultSearchForDocuments(int skip,
@@ -81,16 +84,7 @@ public interface DataInterface {
                                                           SearchOrder order,
                                                           OrderByColumn orderedByColumn,
                                                           long corpusId);
-    /**
-     * Searches for documents with a variety of criterias. It's the main db search of the biofid portal
-     * The function calls a variety of stored procedures in the database.
-     *
-     * @param skip
-     * @param take
-     * @return
-     */
-    public List<Document> defaultSearchForDocuments(int skip,
-                                                    int take);
+
     /**
      * Generic operation that fetches documents given the paramters
      *

@@ -161,21 +161,22 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     @Override
-    public DocumentSearchResult semanticRoleSearchForDocuments(int skip, int take, List<String> arg0, List<String> arg1, List<String> argm, String verb, boolean countAll, SearchOrder order, OrderByColumn orderedByColumn, long corpusId) {
+    public DocumentSearchResult semanticRoleSearchForDocuments(int skip, int take, List<String> arg0, List<String> arg1, List<String> arg2, List<String> argm, String verb, boolean countAll, SearchOrder order, OrderByColumn orderedByColumn, long corpusId) {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
             DocumentSearchResult search = null;
-            try (var storedProcedure = connection.prepareCall("{call biofid_semantic_role_search" + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            try (var storedProcedure = connection.prepareCall("{call biofid_semantic_role_search" + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
                 storedProcedure.setInt(1, (int) corpusId);
                 storedProcedure.setArray(2, connection.createArrayOf("text", arg0.toArray()));
                 storedProcedure.setArray(3, connection.createArrayOf("text", arg1.toArray()));
-                storedProcedure.setArray(4, connection.createArrayOf("text", argm.toArray()));
-                storedProcedure.setString(5, verb);
-                storedProcedure.setInt(6, take);
-                storedProcedure.setInt(7, skip);
-                storedProcedure.setBoolean(8, countAll);
-                storedProcedure.setString(9, order.name());
-                storedProcedure.setString(10, orderedByColumn.name().toLowerCase());
+                storedProcedure.setArray(4, connection.createArrayOf("text", arg2.toArray()));
+                storedProcedure.setArray(5, connection.createArrayOf("text", argm.toArray()));
+                storedProcedure.setString(6, verb);
+                storedProcedure.setInt(7, take);
+                storedProcedure.setInt(8, skip);
+                storedProcedure.setBoolean(9, countAll);
+                storedProcedure.setString(10, order.name());
+                storedProcedure.setString(11, orderedByColumn.name().toLowerCase());
 
                 var result = storedProcedure.executeQuery();
                 while (result.next()) {

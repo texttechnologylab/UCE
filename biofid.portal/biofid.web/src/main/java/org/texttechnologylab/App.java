@@ -63,7 +63,10 @@ public class App {
         get("/", (request, response) -> {
             var model = new HashMap<String, Object>();
             model.put("title", "BioFID Portal");
-            model.put("corpora", context.getBean(PostgresqlDataInterface_Impl.class).getAllCorpora());
+            model.put("corpora", context.getBean(PostgresqlDataInterface_Impl.class)
+                    .getAllCorpora()
+                    .stream().map(c -> c.getViewModel())
+                    .toList());
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");

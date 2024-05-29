@@ -4,6 +4,7 @@ CREATE OR REPLACE FUNCTION biofid_semantic_role_search(
 	
 	IN arg0 text[], 
 	IN arg1 text[], 
+	IN arg2 text[], 
 	IN argm text[], 
 	IN verb text,
 	
@@ -45,6 +46,7 @@ BEGIN
 				CASE 
 					WHEN (sr.relationtype = 'ARG0' AND LOWER(sr.groundcoveredtext) = ANY(arg0)) THEN sr.relationtype
 					WHEN (sr.relationtype = 'ARG1' AND LOWER(sr.groundcoveredtext) = ANY(arg1)) THEN sr.relationtype
+					WHEN (sr.relationtype = 'ARG2' AND LOWER(sr.groundcoveredtext) = ANY(arg2)) THEN sr.relationtype
 					WHEN ((sr.relationtype = 'ARGM' OR sr.relationtype = 'ARGM-LOC') AND LOWER(sr.groundcoveredtext) = ANY(argm)) THEN sr.relationtype
 					ELSE NULL
 				END
@@ -52,6 +54,7 @@ BEGIN
 			(
 				CASE WHEN cardinality(arg0) > 0 THEN 1 ELSE 0 END +
 				CASE WHEN cardinality(arg1) > 0 THEN 1 ELSE 0 END +
+				CASE WHEN cardinality(arg2) > 0 THEN 1 ELSE 0 END +
 				CASE WHEN cardinality(argm) > 0 THEN 1 ELSE 0 END
 			)
 	);

@@ -63,8 +63,8 @@
                         <i class="fas fa-globe xlarge-font mr-2 ml-2 text-dark"></i>
                     </a>
                     <select class="form-control" id="corpus-select" aria-label="Default select example">
-                        <#list corpora as corpus>
-                            <option data-id="${corpus.getId()}">${corpus.getName()}</option>
+                        <#list corpora as corpusVm>
+                            <option data-id="${corpusVm.getCorpus().getId()}" data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
                         </#list>
                     </select>
                     <button class="btn open-sr-builder-btn" data-trigger="hover" data-toggle="popover" data-placement="top"

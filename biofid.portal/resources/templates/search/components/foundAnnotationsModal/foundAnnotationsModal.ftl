@@ -17,12 +17,21 @@
             <btn class="ne-taxons" data-id="taxons">${languageResource.get("taxonomy")}</btn>
             <btn data-id="times">${languageResource.get("times")}</btn>
         </div>
-        <div class="views drag-container">
+        <div class="views drag-container position-relative">
+            <div class="w-100 flexed align-items-center">
+                <input type="text" data-expanded="false" class="form-control search-annotation-input" placeholder="${languageResource.get("searchPlaceholder")}"/>
+                <button class="btn search-annotation-btn">
+                    <i class="fas fa-search color-prime"></i>
+                </button>
+            </div>
+
+            <div class="search-backdrop"></div>
+
             <div data-id="LOCATION" class="mview">
                 <#assign type="LOCATION">
                 <#include "*/search/components/foundAnnotationsModal/annotationsTab.ftl" >
             </div>
-            <div class="display-none mview" data-id="PERSON" >
+            <div class="display-none mview" data-id="PERSON">
                 <#assign type = "PERSON">
                 <#include "*/search/components/foundAnnotationsModal/annotationsTab.ftl" >
             </div>
@@ -58,17 +67,22 @@
 
                         <div class="row m-0 p-0 bricks-container">
 
-                            <div class="col-md-4 pl-2 pr-2">
+                            <div class="col-sm-3 pl-2 pr-2">
                                 <div data-id="arg0" class=" w-100 drop-container">
                                 </div>
                             </div>
 
-                            <div class="col-md-4 pl-2 pr-2">
+                            <div class="col-sm-3 pl-2 pr-2">
                                 <div data-id="arg1" class=" w-100 drop-container">
                                 </div>
                             </div>
 
-                            <div class="col-md-4 pl-2 pr-2">
+                            <div class="col-sm-3 pl-2 pr-2">
+                                <div data-id="arg2" class=" w-100 drop-container">
+                                </div>
+                            </div>
+
+                            <div class="col-sm-3 pl-2 pr-2">
                                 <div data-id="argm" class=" w-100 drop-container">
                                 </div>
                             </div>

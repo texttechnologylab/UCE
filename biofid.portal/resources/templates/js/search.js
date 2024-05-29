@@ -179,25 +179,3 @@ $('body').on('click', '.sort-container .switch-search-layer-result-btn', functio
     $(`.search-result-container .list[data-layer=` + layer + ']').show();
 })
 
-/**
- * Handles the navigating in the annotations modal
- */
-$('body').on('click', '#found-annotations-modal .mtabs btn', function(){
-    const id = $(this).data('id');
-
-    $('#found-annotations-modal .views .mview').each(function(){
-        if($(this).data('id') === id){
-            $(this).show(100);
-        } else{
-            $(this).hide();
-        }
-    })
-
-    $('#found-annotations-modal .mtabs btn').each(function(){
-        if($(this).data('id') === id){
-            $(this).addClass('selected-tab');
-        } else{
-            $(this).removeClass('selected-tab');
-        }
-    })
-})
