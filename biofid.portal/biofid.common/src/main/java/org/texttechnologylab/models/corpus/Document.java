@@ -39,6 +39,10 @@ public class Document extends ModelBase {
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
+    private List<Lemma> lemmas;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
     private List<SrLink> srLinks;
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -66,6 +70,14 @@ public class Document extends ModelBase {
         this.documentTitle = documentTitle;
         this.documentId = documentId;
         this.corpusId = corpusId;
+    }
+
+    public List<Lemma> getLemmas() {
+        return lemmas;
+    }
+
+    public void setLemmas(List<Lemma> lemmas) {
+        this.lemmas = lemmas;
     }
 
     public void setLanguage(String language) {
@@ -223,6 +235,6 @@ public class Document extends ModelBase {
     }
 
     public String getLanguage() {
-        return language;
+        return language == null ? "-" : language;
     }
 }

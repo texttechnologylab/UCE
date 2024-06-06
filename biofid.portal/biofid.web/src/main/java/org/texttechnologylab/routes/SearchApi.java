@@ -14,6 +14,7 @@ import spark.Route;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class SearchApi {
@@ -98,11 +99,15 @@ public class SearchApi {
             var semanticRoleSearch = new Search_SemanticRoleImpl(context, corpusId, searchInput);
             searchState = semanticRoleSearch.initSearch();
         } else {
-            var biofidSearch = new Search_DefaultImpl(context, searchInput, corpusId, new SearchLayer[]{
-                    SearchLayer.METADATA,
-                    SearchLayer.NAMED_ENTITIES,
-                    SearchLayer.EMBEDDINGS
-            });
+            var corpusVm = db.getCorpusById(corpusId).getViewModel();
+            // Define the search layers dependent on the corpus
+            var searchLayers = new ArrayList<SearchLayer>();
+            searchLayers.add(SearchLayer.METADATA);
+            searchLayers.add(SearchLayer.NAMED_ENTITIES);
+            if (corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()) {
+                searchLayers.add(SearchLayer.EMBEDDINGS);
+            }
+            var biofidSearch = new Search_DefaultImpl(context, searchInput, corpusId, searchLayers);
             searchState = biofidSearch.initSearch();
         }
 

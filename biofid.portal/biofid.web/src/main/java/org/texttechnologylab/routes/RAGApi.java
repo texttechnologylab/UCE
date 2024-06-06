@@ -35,6 +35,21 @@ public class RAGApi {
     }
 
     /**
+     * Returns a fully rendered Tsne plot for the given corpus
+     */
+    public Route getTsnePlot = ((request, response) -> {
+        // var model = new HashMap<String, Object>();
+        try {
+            var corpusId = Long.parseLong(request.queryParams("corpusId"));
+            var plotAsHtml = ragService.getCorpusTsnePlot(corpusId);
+            return plotAsHtml == null ? "" : plotAsHtml;
+        } catch (Exception ex) {
+            // TODO: Logging
+            return "";
+        }
+    });
+
+    /**
      * Receives a user message and handles and returns a new RAGChatState
      */
     public Route postUserMessage = ((request, response) -> {

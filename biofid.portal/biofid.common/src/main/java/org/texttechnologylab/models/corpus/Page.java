@@ -71,7 +71,8 @@ public class Page extends UIMAAnnotation {
      * @return
      */
     public String buildHTMLString(List<UIMAAnnotation> annotations, String coveredText){
-        coveredText = coveredText.substring(getBegin(), getEnd());
+        var length = coveredText.length();
+        coveredText = coveredText.substring(getBegin(), Math.min(getEnd(), length));
 
         var offset = getBegin();
         // Here we store each annotation with its begin index

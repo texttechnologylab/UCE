@@ -12,6 +12,7 @@
             crossorigin="anonymous"></script>
     <style>
         <#include "css/site.css">
+        <#include "css/simple-loader.css">
         <#include "css/search-redesign.css">
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
@@ -23,6 +24,7 @@
             src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
     <title>${title}</title>
 </head>
 
@@ -33,7 +35,7 @@
     <nav class="position-relative">
 
         <div class="container-fluid flexed align-items-center justify-content-around">
-            <img class="mb-0 logo" src="https://biofid.de/static/images/logo_fid_biodiversity.png">
+            <img class="mb-0 logo" src="/img/logo.png">
 
             <div class="flexed align-items-center nav-container">
                 <div class="flexed align-items-center nav-buttons">
@@ -64,7 +66,9 @@
                     </a>
                     <select class="form-control" id="corpus-select" aria-label="Default select example">
                         <#list corpora as corpusVm>
-                            <option data-id="${corpusVm.getCorpus().getId()}" data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
+                            <option data-id="${corpusVm.getCorpus().getId()}"
+                                    data-hasbiofid="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()?c}"
+                                    data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
                         </#list>
                     </select>
                     <button class="btn open-sr-builder-btn" data-trigger="hover" data-toggle="popover" data-placement="top"

@@ -1,16 +1,25 @@
 package org.texttechnologylab.config.corpusConfig;
 
-public class CorpusAnnotationConfig{
+public class CorpusAnnotationConfig {
     private boolean OCRPage;
     private boolean OCRParagraph;
     private boolean OCRBlock;
     private boolean OCRLine;
     private TaxonConfig taxon;
     private boolean srLink;
+    private boolean lemma;
     private boolean namedEntity;
     private boolean sentence;
     private boolean time;
     private boolean wikipediaLink;
+
+    public boolean isLemma() {
+        return lemma;
+    }
+
+    public void setLemma(boolean lemma) {
+        this.lemma = lemma;
+    }
 
     public boolean isSrLink() {
         return srLink;

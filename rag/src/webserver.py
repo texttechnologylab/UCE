@@ -1,10 +1,39 @@
+import plotly.express as px
+import plotly.io as pio
+
 from cBERT.cBERT import CCCBERT
 from flask import Flask, g, render_template, request, jsonify, current_app
 
 from embedder import Embedder
+from dimension_reducer import Reducer
 from llm import InstructLLM
 
 app = Flask(__name__)
+
+@app.route('/plot-tsne', methods=['POST'])
+def plot_tsne():
+    result = {
+        "status": 400
+    }
+    try:
+        data = request.get_json()
+        embeddings = data['embeddings']
+        labels = data.get('labels', [])
+
+        reducer_tsne = Reducer(r_function_name="TSNE", n_compt=2)
+        reduced_embeddings = reducer_tsne.reduce(embeddings)
+
+        # color=labels
+        fig = px.scatter(x=reduced_embeddings[:, 0], y=reduced_embeddings[:, 1], title='')
+        plot_html = pio.to_html(fig, full_html=False)
+
+        result['status'] = 200
+        result['plot'] = plot_html
+    except Exception as ex:
+        result['message'] = "There was an exception caught while generating t-SNE plot: " + str(ex)
+        print("Exception while generating t-SNE plot: ")
+        print(ex)
+    return jsonify(result)
 
 @app.route('/embed', methods=['POST'])
 def embed():

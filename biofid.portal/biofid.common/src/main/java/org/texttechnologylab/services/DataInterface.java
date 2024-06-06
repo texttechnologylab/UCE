@@ -1,6 +1,5 @@
 package org.texttechnologylab.services;
 
-import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.globe.GlobeTaxon;
@@ -29,6 +28,13 @@ public interface DataInterface {
      * @return
      */
     public Corpus getCorpusById(long id);
+
+    /**
+     * Gets all documents that belong to the given corpus
+     * @param corpusId
+     * @return
+     */
+    public List<Document> getDocumentsByCorpusId(long corpusId);
 
     /**
      * Gets all corpora from the database

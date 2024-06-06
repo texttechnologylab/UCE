@@ -10,6 +10,7 @@
 
     "srLink": true,
     "namedEntity": true,
+    "lemma": true,
     "sentence": false,
     "taxon": {
       "annotated": true,

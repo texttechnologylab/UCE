@@ -25,6 +25,7 @@ function startNewSearch(searchInput) {
         success: function (response) {
             $('.view .search-result-container').html(response);
             activatePopovers();
+            reloadCorpusComponents();
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);

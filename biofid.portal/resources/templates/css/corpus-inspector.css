@@ -1,6 +1,6 @@
 
 .corpus-inspector-include{
-    width: 50vw;
+    width: 100vw;
     position: fixed;
     border-right:lightgray 1px solid;
     z-index: 99;
@@ -49,4 +49,21 @@
     border-top:1px lightgray solid;
     padding-bottom: 4px;
     padding-top: 4px;
+}
+
+.corpus-inspector-include .corpus-tsne-plot{
+    height: 100vh !important;
+}
+
+.corpus-inspector-include .corpus-tsne-plot .plot-container{
+    height: 100vh !important;
+}
+
+.corpus-inspector-include .corpus-tsne-plot .error-msg{
+    position: absolute;
+    left:50%;
+    top:50%;
+    transform: translate(-50%, -50%);
+    color: darkred;
+    text-align: center;
 }

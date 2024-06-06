@@ -6,6 +6,7 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
+import org.texttechnologylab.services.RAGService;
 import org.texttechnologylab.services.UIMAService;
 import spark.ModelAndView;
 import spark.Route;
@@ -15,12 +16,14 @@ import java.util.HashMap;
 public class DocumentApi {
 
     private UIMAService uimaService = null;
+    private RAGService ragService = null;
     private PostgresqlDataInterface_Impl db = null;
 
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
 
     public DocumentApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
         this.uimaService = serviceContext.getBean(UIMAService.class);
+        this.ragService = serviceContext.getBean(RAGService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.freemakerConfig = freemakerConfig;
     }

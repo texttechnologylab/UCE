@@ -13,10 +13,12 @@
         <div class="col-md-3 position-relative">
             <div class="side-bar-container">
                 <div class="side-bar">
-                    <div class="content pb-0">
+
+                    <div class="content pb-0 taxonomy-tree-include">
                         <h6 class="text-center underlined mb-4">${languageResource.get("taxonomy")}</h6>
                         <#include "*/search/components/taxonomyTree.ftl">
                     </div>
+
                 </div>
             </div>
         </div>

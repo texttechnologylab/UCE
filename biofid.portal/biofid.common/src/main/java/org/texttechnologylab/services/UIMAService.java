@@ -105,6 +105,7 @@ public class UIMAService {
         try {
             var jCas = JCasFactory.createJCas();
             // Read in the contents of a single xmi cas
+            //var file = new GZIPInputStream(new FileInputStream(filename));
             var file = new FileInputStream(filename);
             CasIOUtils.load(file, jCas.getCas());
 
@@ -195,6 +196,18 @@ public class UIMAService {
                     nes.add(namedEntity);
                 });
                 document.setNamedEntities(nes);
+            }
+
+            // Set the lemmas
+            if (corpusConfig.getAnnotations().isLemma()) {
+                var lemmas = new ArrayList<org.texttechnologylab.models.corpus.Lemma>();
+                JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma.class).forEach(l -> {
+                    var lemma = new org.texttechnologylab.models.corpus.Lemma(l.getBegin(), l.getEnd());
+                    lemma.setCoveredText(l.getCoveredText());
+                    lemma.setValue(l.getValue());
+                    lemmas.add(lemma);
+                });
+                document.setLemmas(lemmas);
             }
 
             // Set the semantic role labels

@@ -64,6 +64,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<Document> getDocumentsByCorpusId(long corpusId) {
+        return executeOperationSafely((session) -> {
+            Criteria criteria = session.createCriteria(Document.class);
+            criteria.add(Restrictions.eq("corpusId", corpusId));
+            return criteria.list();
+        });
+    }
+
     public Corpus getCorpusById(long id) {
         return executeOperationSafely((session) -> {
             var corpus = session.get(Corpus.class, id);
@@ -133,7 +141,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return docs;
         });
     }
-
 
     public List<Document> getManyDocumentsByIds(List<Integer> documentIds) {
         return executeOperationSafely((session) -> {

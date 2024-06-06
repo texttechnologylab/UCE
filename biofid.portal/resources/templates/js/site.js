@@ -47,16 +47,18 @@ $('body').on('click', '.view .search-btn', function (event) {
 })
 
 /**
- * Fires whenever a new corpus is selected
+ * Fires whenever a new corpus is selected. We update some UI components then
  */
 $('body').on('change', '#corpus-select', function(){
     const selectedOption = $(this).get(0).options[$(this).get(0).selectedIndex];
     const hasSr = selectedOption.getAttribute("data-hassr");
-    if(hasSr === 'true'){
-        $('.open-sr-builder-btn').show(50);
-    } else{
-        $('.open-sr-builder-btn').hide(50);
-    }
+    const hasBiofidOnthology = selectedOption.getAttribute("data-hasbiofid");
+
+    if(hasSr === 'true') $('.open-sr-builder-btn').show(50);
+    else $('.open-sr-builder-btn').hide(50);
+
+    if(hasBiofidOnthology === 'true') $('.taxonomy-tree-include').show();
+    else $('.taxonomy-tree-include').hide();
 })
 
 /**
@@ -73,8 +75,35 @@ $('body').on('click', '.open-corpus-inspector-btn', function () {
         url: "/corpus?id=" + corpusId,
         type: "GET",
         success: function (response) {
-            // Render the new documents
+            // Render the corpus view
             $('.corpus-inspector-include').html(response);
+
+            // After that, we load in the corpus plot
+            $.ajax({
+                url: "/api/rag/plotTsne?corpusId=" + corpusId,
+                type: "GET",
+                success: function (response) {
+                    // If the response is empty, then either no embeddings exist or something
+                    // went wrong
+                    if(response === ""){
+                        $('.corpus-inspector-include .corpus-tsne-plot .error-msg').show();
+                        $('.corpus-inspector-include .simple-loader').fadeOut(150);
+                        return;
+                    }
+                    $('.corpus-inspector-include .corpus-tsne-plot').html(response);
+                    // Bit buggy: The plot doesnt go full height, no matter what
+                    // So I adjust it in script here.
+                    const plotName = $('.corpus-inspector-include .corpus-tsne-plot .plotly-graph-div').attr("id");
+                    Plotly.Plots.resize(plotName);
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                    $('.corpus-inspector-include .corpus-tsne-plot').html(xhr.responseText);
+                },
+                always: function (){
+                    $('.corpus-inspector-include .simple-loader').fadeOut(150);
+                }
+            });
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);
@@ -128,8 +157,15 @@ function activatePopovers() {
     $('[data-toggle="popover"]').popover();
 }
 
+/**
+ * We have some UI components that need to be refreshed when the corpus is loaded.
+ */
+function reloadCorpusComponents(){
+    $('#corpus-select').change();
+}
+
 $(document).ready(function () {
     console.log('Webpage loaded!');
     activatePopovers();
-    $('#corpus-select').change();
+    reloadCorpusComponents();
 })

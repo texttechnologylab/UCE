@@ -5,6 +5,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
+import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.routes.DocumentApi;
 import org.texttechnologylab.routes.RAGApi;
 import org.texttechnologylab.routes.SearchApi;
@@ -65,7 +66,7 @@ public class App {
             model.put("title", "BioFID Portal");
             model.put("corpora", context.getBean(PostgresqlDataInterface_Impl.class)
                     .getAllCorpora()
-                    .stream().map(c -> c.getViewModel())
+                    .stream().map(Corpus::getViewModel)
                     .toList());
 
             // The vm files are located under the resources directory
@@ -109,6 +110,7 @@ public class App {
             path("/rag", () -> {
                 get("/new", ragApi.getNewRAGChat);
                 post("/postUserMessage", ragApi.postUserMessage);
+                get("/plotTsne", ragApi.getTsnePlot);
             });
         });
     }

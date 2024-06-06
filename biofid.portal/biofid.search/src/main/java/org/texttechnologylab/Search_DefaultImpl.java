@@ -31,10 +31,10 @@ public class Search_DefaultImpl implements Search {
     public Search_DefaultImpl(ApplicationContext serviceContext,
                               String searchPhrase,
                               long corpusId,
-                              SearchLayer[] searchLayers) throws URISyntaxException, IOException {
+                              ArrayList<SearchLayer> searchLayers) throws URISyntaxException, IOException {
 
         this.biofidSearchState = new SearchState(SearchType.DEFAULT);
-        this.biofidSearchState.setSearchLayers(Arrays.stream(searchLayers).toList());
+        this.biofidSearchState.setSearchLayers(searchLayers);
         initServices(serviceContext);
 
         this.biofidSearchState.setCorpusId(corpusId);
