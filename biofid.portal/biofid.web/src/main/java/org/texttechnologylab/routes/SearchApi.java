@@ -103,7 +103,8 @@ public class SearchApi {
             // Define the search layers dependent on the corpus
             var searchLayers = new ArrayList<SearchLayer>();
             searchLayers.add(SearchLayer.METADATA);
-            searchLayers.add(SearchLayer.NAMED_ENTITIES);
+            // TODO: Make NE search optional in UI!
+            //searchLayers.add(SearchLayer.NAMED_ENTITIES);
             if (corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()) {
                 searchLayers.add(SearchLayer.EMBEDDINGS);
             }

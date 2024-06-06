@@ -1,4 +1,6 @@
 CREATE OR REPLACE FUNCTION biofid_search_layer_metadata(
+	IN corpus_id bigint,
+	
     IN input1 text[], 
     IN input2 text,
     IN take_count integer,
@@ -28,14 +30,21 @@ BEGIN
     WITH documents_query AS (
         SELECT DISTINCT d.id
         FROM document d
-        WHERE d.documenttitle = ANY(input1) OR d.language = ANY(input1)
+        WHERE d.corpusid = corpus_id and (d.documenttitle = ANY(input1) OR d.language = ANY(input1))
         
         UNION
         
         SELECT DISTINCT d.id
         FROM document d
         JOIN metadatatitleinfo me ON d.id = me.id
-        WHERE me.title ~* input2 OR me.published ~* input2
+        WHERE d.corpusid = corpus_id and (me.title ~* input2 OR me.published ~* input2)
+		
+		UNION
+        
+        SELECT DISTINCT d.id
+        FROM document d
+        JOIN lemma l ON d.id = l.document_id
+        WHERE d.corpusid = corpus_id and (l.value ~* input2 OR l.coveredtext ~* input2)
     ),
     -- Count all found documents
     counted_documents AS (

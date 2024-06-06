@@ -247,25 +247,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
-    public List<Document> defaultSearchForDocuments(int skip,
-                                                    int take) {
-        return executeOperationSafely((session) -> {
-            var criteriaQuery = session.getCriteriaBuilder().createQuery(Document.class);
-            var docRoot = criteriaQuery.from(Document.class);
-
-            var query = session.createQuery(criteriaQuery);
-            query.setFirstResult(skip);
-            query.setMaxResults(take);
-
-            var docs = query.getResultList();
-            // In the search view, for now we show the amount of pages so init them
-            for (var doc : docs) {
-                Hibernate.initialize(doc.getPages());
-            }
-            return docs;
-        });
-    }
-
     public Document getDocumentById(long id) {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);

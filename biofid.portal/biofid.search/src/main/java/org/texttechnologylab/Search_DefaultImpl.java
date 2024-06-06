@@ -110,7 +110,7 @@ public class Search_DefaultImpl implements Search {
 
         // Execute the metadata search. This layer is contained in the other layers, but there are some instances where
         // we ONLY want to use the metadata search, so handle that specific case here.
-        if(biofidSearchState.getSearchLayers().stream().count() == 1 && biofidSearchState.getSearchLayers().contains(SearchLayer.METADATA)){
+        if(!biofidSearchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES) && biofidSearchState.getSearchLayers().contains(SearchLayer.METADATA)){
             return db.defaultSearchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
                     biofidSearchState.getTake(),
                     biofidSearchState.getSearchTokens(),
