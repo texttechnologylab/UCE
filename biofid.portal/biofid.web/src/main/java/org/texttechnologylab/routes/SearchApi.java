@@ -1,9 +1,11 @@
 package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
+import org.texttechnologylab.models.dto.SearchLayerDto;
 import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.models.search.SearchOrder;
@@ -92,6 +94,8 @@ public class SearchApi {
         Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
         var searchInput = requestBody.get("searchInput").toString();
         var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
+        // Parse the list of search layers into a list of search layer DTOs.
+        var searchLayerDtos = (ArrayList<SearchLayerDto>) gson.fromJson(gson.toJson(requestBody.get("searchLayer")), new TypeToken<List<SearchLayerDto>>() { }.getType());
 
         // We have our own query language for SemanticRole Searches. Check if this is one of those.
         SearchState searchState = null;
@@ -100,14 +104,11 @@ public class SearchApi {
             searchState = semanticRoleSearch.initSearch();
         } else {
             var corpusVm = db.getCorpusById(corpusId).getViewModel();
-            // Define the search layers dependent on the corpus
-            var searchLayers = new ArrayList<SearchLayer>();
-            searchLayers.add(SearchLayer.METADATA);
-            // TODO: Make NE search optional in UI!
-            //searchLayers.add(SearchLayer.NAMED_ENTITIES);
-            if (corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()) {
-                searchLayers.add(SearchLayer.EMBEDDINGS);
-            }
+            // Define the search layers from the sent layers
+            var searchLayers = searchLayerDtos
+                    .stream()
+                    .filter(SearchLayerDto::isChecked)
+                    .map(dto -> SearchLayer.valueOf(dto.getName())).toList();
             var biofidSearch = new Search_DefaultImpl(context, searchInput, corpusId, searchLayers);
             searchState = biofidSearch.initSearch();
         }

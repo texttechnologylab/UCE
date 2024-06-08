@@ -1,5 +1,6 @@
 :root {
     --prime: #5c7a17;
+    --gold: rgba(255,165,0, 1);
     --prime-raw: 92, 122, 23;
     --secondary: darkgreen;
     --dark: rgba(38,38,38,1);
@@ -8,6 +9,10 @@
 .site-container {
     background-color: rgb(245, 245, 247);
     min-height: 100vh !important;
+}
+
+.color-gold{
+    color: var(--gold);
 }
 
 .bg-default{

@@ -31,7 +31,7 @@ public class Search_DefaultImpl implements Search {
     public Search_DefaultImpl(ApplicationContext serviceContext,
                               String searchPhrase,
                               long corpusId,
-                              ArrayList<SearchLayer> searchLayers) throws URISyntaxException, IOException {
+                              List<SearchLayer> searchLayers) throws URISyntaxException, IOException {
 
         this.biofidSearchState = new SearchState(SearchType.DEFAULT);
         this.biofidSearchState.setSearchLayers(searchLayers);

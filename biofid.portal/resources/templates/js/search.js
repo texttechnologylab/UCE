@@ -6,11 +6,22 @@ function startNewSearch(searchInput) {
         return;
     }
     console.log('New Search with input: ' + searchInput);
+    $('.search-menu-div').hide();
     $('.view[data-id="search"] .loader-container').first().fadeIn(150);
     // Get the selected corpus
     const selectElement = document.getElementById("corpus-select");
     const selectedOption = selectElement.options[selectElement.selectedIndex];
     const corpusId = selectedOption.getAttribute("data-id");
+
+    // Get the selected search layers
+    let layers = [];
+    $('.search-menu-div .search-settings-div .option').each(function(){
+        const $checkbox = $(this).find('input[type="checkbox"]');
+        layers.push({
+            "name": $checkbox.data("id"),
+            "checked": $checkbox.is(':checked')
+        })
+    })
 
     // Start a new search TODO: Outsource this into new prototype maybe
     $.ajax({
@@ -18,7 +29,8 @@ function startNewSearch(searchInput) {
         type: "POST",
         data: JSON.stringify({
             searchInput: searchInput,
-            corpusId: corpusId
+            corpusId: corpusId,
+            searchLayer: layers
         }),
         contentType: "application/json",
         //dataType: "json",
@@ -26,6 +38,8 @@ function startNewSearch(searchInput) {
             $('.view .search-result-container').html(response);
             activatePopovers();
             reloadCorpusComponents();
+            // Store the search in the local browser for a history.
+            addSearchToHistory(searchInput);
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);
@@ -35,6 +49,84 @@ function startNewSearch(searchInput) {
         $('.view[data-id="search"] .loader-container').first().fadeOut(150);
     });
 }
+
+/**
+ * Adds a new search to the history in the local browser
+ */
+function addSearchToHistory(searchTerm){
+    let history = getSearchHistory();
+
+    history.push({
+        'searchTerm': searchTerm,
+        'corpusId': selectedCorpus,
+        'date': new Date().toLocaleDateString()
+    });
+    localStorage.setItem('searchHistory', JSON.stringify(history));
+    updateSearchHistoryUI();
+}
+
+/**
+ * Gets the search history from the local storage
+ * @returns {*[]}
+ */
+function getSearchHistory(){
+    let historyJson = localStorage.getItem('searchHistory');
+    let history = [];
+    if(historyJson !== null){
+        history = JSON.parse(historyJson);
+    }
+    return history;
+}
+
+/**
+ * Returns the searchHistory object filtered for the corpus
+ * @param corpusId
+ */
+function getSearchHistoryOfCorpus(corpusId){
+    return getSearchHistory() .filter(h => h.corpusId === corpusId).reverse();
+}
+
+/**
+ * Gets the current search history, filters it and places it in the UI
+ */
+function updateSearchHistoryUI(){
+    const history = getSearchHistoryOfCorpus(selectedCorpus);
+    const $historyDiv = $('.search-menu-div .search-history-div');
+    $historyDiv.html('');
+    history.forEach((item) => {
+        // TODO: Adjust the fa-search according to the searchLayer.
+        let html = `
+            <#noparse>
+            <div class="search-history-entry">
+                <p class="text"><i class="fas fa-search mr-1"></i> <span class="content">${item.searchTerm}</span></p>
+            </div>
+            </#noparse>
+        `;
+        $historyDiv.append(html);
+    });
+}
+
+/**
+ * Handles the inserting of a search item into the searchbar
+ */
+$('body').on('click', '.search-history-div .search-history-entry', function(){
+    $('.search-input').val($(this).find('.content').html());
+})
+
+/**
+ * Handles the opening of the search dropdown menu below the searchbar
+ */
+$('body').on('focus', '.search-input', function(){
+    updateSearchHistoryUI();
+    $('.search-menu-div').show();
+})
+
+/**
+ * Removes the search menu when clicking anywhere but the search menu
+ */
+$('body').on('click', '.search-menu-div .backdrop', function(){
+    $('.search-menu-div').hide();
+})
 
 /**
  * Handles the opening of the sr builder

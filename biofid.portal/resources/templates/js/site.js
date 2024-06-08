@@ -1,3 +1,4 @@
+var selectedCorpus = -1;
 
 function generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
@@ -53,12 +54,15 @@ $('body').on('change', '#corpus-select', function(){
     const selectedOption = $(this).get(0).options[$(this).get(0).selectedIndex];
     const hasSr = selectedOption.getAttribute("data-hassr");
     const hasBiofidOnthology = selectedOption.getAttribute("data-hasbiofid");
+    selectedCorpus = parseInt(selectedOption.getAttribute("data-id"));
 
     if(hasSr === 'true') $('.open-sr-builder-btn').show(50);
     else $('.open-sr-builder-btn').hide(50);
 
     if(hasBiofidOnthology === 'true') $('.taxonomy-tree-include').show();
     else $('.taxonomy-tree-include').hide();
+
+    updateSearchHistoryUI();
 })
 
 /**

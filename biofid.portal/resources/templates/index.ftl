@@ -59,7 +59,7 @@
         <div class="view" data-id="search">
 
             <div class="flexed align-items-stretch search-header container p-0">
-                <div class="flexed align-items-center h-100">
+                <div class="flexed align-items-center h-100 position-relative" style="z-index: 2">
                     <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover" data-toggle="popover" data-placement="top"
                        data-content="${languageResource.get("openCorpus")}">
                         <i class="fas fa-globe xlarge-font mr-2 ml-2 text-dark"></i>
@@ -77,7 +77,33 @@
                     </button>
                 </div>
 
-                <input type="text" class="search-input form-control large-font w-100" placeholder="${languageResource.get("searchPlaceholder")}"/>
+                <!-- Search bar and menu -->
+                <div class="w-100 position-relative">
+                    <input type="text" class="search-input form-control large-font w-100" placeholder="${languageResource.get("searchPlaceholder")}"/>
+                    <div class="search-menu-div">
+                        <div class="backdrop"></div>
+
+                        <div style="z-index: 2; position:relative;">
+                            <div class="search-history-div">
+                            </div>
+                            <div class="search-settings-div flexed align-items-center justify-content-around">
+                                <!-- The data-ids are corresponding to the SearchLayer enum. Change them with care!! -->
+                                <div class="option">
+                                    <label class="mb-0 color-prime small-font"><i class="fas fa-search mr-1"></i> Meta</label>
+                                    <input type="checkbox" data-id="METADATA"/>
+                                </div>
+                                <div class="option">
+                                    <label class="mb-0 w-100 color-secondary small-font"><i class="fas fa-search-plus mr-1"></i> Named-Entity</label>
+                                    <input type="checkbox" checked data-id="NAMED_ENTITIES"/>
+                                </div>
+                                <div class="option">
+                                    <label class="mb-0 w-100 color-gold small-font"><i class="fab fa-searchengin mr-1"></i> Embedding</label>
+                                    <input type="checkbox" checked data-id="EMBEDDINGS"/>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
 
                 <button class="btn btn-primary search-btn">
                     <i class="fas fa-search ml-1 mr-1"></i>
@@ -115,6 +141,7 @@
         <h5 class="text-center m-0">Footer</h5>
     </div>
 </footer>
+
 
 <script>
     <#include "js/site.js">

@@ -39,12 +39,84 @@
 }
 
 .search-input {
+    z-index: 2;
+    position: relative;
     border-radius: 0;
     background-color: ghostwhite;
     border-color:lightgray;
 }
 
+.search-menu-div{
+    position: absolute;
+    top:40px;
+    border:lightgray 1px solid;
+    width: 100%;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    overflow-y: hidden;
+    left:0;
+    display: none;
+    padding: 12px;
+    background-color: ghostwhite;
+}
+
+.search-menu-div .backdrop{
+    position: fixed;
+    left:0;
+    top:0;
+    width: 100vw;
+    height:100vh;
+    background-color: transparent;
+    z-index: 1;
+}
+
+.search-history-div {
+    overflow-y: auto;
+    border-bottom: lightgray 1px solid;
+    max-height: 300px;
+}
+
+.search-history-div div{
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.search-history-div .search-history-entry{
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+}
+
+.search-history-div .search-history-entry p{
+    transition: 0.15s;
+    margin-bottom: 0;
+}
+
+.search-history-div .search-history-entry p:hover{
+    cursor: pointer;
+    transition: 0.15s;
+    color:var(--dark) !important;
+}
+
+.search-settings-div {
+    margin-top: 12px;
+}
+
+.search-settings-div .option{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px;
+    margin-left: 6px;
+    margin-right: 6px;
+    width: 100%;
+    border: lightgray 1px solid;
+    border-radius: 6px;
+}
+
 .search-btn {
+    position: relative;
+    z-index: 2;
     border-radius: 0;
 }
 
@@ -56,7 +128,7 @@
 }
 
 .header {
-    position: sticky;
+    position: static;
     z-index: 10;
     top: 1px;
     right:0;
