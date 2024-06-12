@@ -71,7 +71,6 @@
 
 .search-history-div {
     overflow-y: auto;
-    border-bottom: lightgray 1px solid;
     max-height: 300px;
 }
 

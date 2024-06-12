@@ -1,8 +1,15 @@
 import plotly.express as px
 import plotly.io as pio
+import gc
+import numpy as np
+import torch
 
 from cBERT.cBERT import CCCBERT
 from flask import Flask, g, render_template, request, jsonify, current_app
+from sklearn.cluster import KMeans
+from scipy.spatial.distance import euclidean
+from scipy.sparse.csgraph import minimum_spanning_tree
+from scipy.sparse import csr_matrix
 
 from embedder import Embedder
 from dimension_reducer import Reducer
@@ -18,13 +25,75 @@ def plot_tsne():
     try:
         data = request.get_json()
         embeddings = data['embeddings']
-        labels = data.get('labels', [])
+        # labels = data.get('labels', [])
 
         reducer_tsne = Reducer(r_function_name="TSNE", n_compt=2)
+
+        # Find optimal number of clusters
+        max_k = 10 
+        sse, silhouette_scores = reducer_tsne.find_optimal_clusters(embeddings, max_k)
+        optimal_k = np.argmax(silhouette_scores) + 2  # since range starts at 2
+
+        # Perform K-means clustering with optimal number of clusters
+        kmeans = KMeans(n_clusters=optimal_k, random_state=0).fit(embeddings)
+        labels = kmeans.labels_
+
+        # Reduce the labels
         reduced_embeddings = reducer_tsne.reduce(embeddings)
 
         # color=labels
-        fig = px.scatter(x=reduced_embeddings[:, 0], y=reduced_embeddings[:, 1], title='')
+        fig = px.scatter(x=reduced_embeddings[:, 0], y=reduced_embeddings[:, 1], color=labels, title='')
+
+        # Calculate the centroids of the clusters so we can add lines later
+        centroids = np.array([reduced_embeddings[labels == label].mean(axis=0) for label in np.unique(labels)])
+
+        # Add rectangles to highlight clusters
+        unique_labels = np.unique(labels)
+        colors = px.colors.qualitative.Plotly
+        
+        for label in unique_labels:
+            cluster_points = reduced_embeddings[labels == label]
+            x_min, y_min = cluster_points.min(axis=0)
+            x_max, y_max = cluster_points.max(axis=0)
+            color = colors[label % len(colors)]
+            fig.add_shape(
+                type="rect",
+                x0=x_min, y0=y_min, x1=x_max, y1=y_max,
+                line=dict(color=color),
+                fillcolor="rgba(0,0,0,0)",  # transparent fill color
+                opacity=0.6
+            )
+
+        # We want to connect the clusters with their distances, for that we calculate the minimum spanning tree (Algo1 paid of guys)
+        dist_matrix = np.array([[euclidean(centroid1, centroid2) for centroid2 in centroids] for centroid1 in centroids])
+        csr_matrix_dist = csr_matrix(dist_matrix)
+
+        # Compute the MST
+        mst = minimum_spanning_tree(csr_matrix_dist)
+        mst = mst.toarray().astype(float)
+
+        # Draw MST lines and label with distances
+        for i in range(len(centroids)):
+            for j in range(i+1, len(centroids)):
+                if mst[i, j] != 0:
+                    centroid1 = centroids[i]
+                    centroid2 = centroids[j]
+                    distance = mst[i, j]
+                    fig.add_shape(
+                        type="line",
+                        x0=centroid1[0], y0=centroid1[1], x1=centroid2[0], y1=centroid2[1],
+                        line=dict(color="gray", width=1, dash="dash")
+                    )
+                    mid_x = (centroid1[0] + centroid2[0]) / 2
+                    mid_y = (centroid1[1] + centroid2[1]) / 2
+                    fig.add_annotation(
+                        x=mid_x, y=mid_y,
+                        text=f"{distance:.2f}",
+                        showarrow=False,
+                        font=dict(color="Black", size=12, family="Arial")
+                    )
+
+        fig.update_coloraxes(showscale=False)
         plot_html = pio.to_html(fig, full_html=False)
 
         result['status'] = 200
@@ -34,6 +103,7 @@ def plot_tsne():
         print("Exception while generating t-SNE plot: ")
         print(ex)
     return jsonify(result)
+
 
 @app.route('/embed', methods=['POST'])
 def embed():

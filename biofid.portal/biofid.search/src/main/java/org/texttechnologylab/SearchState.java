@@ -36,6 +36,8 @@ public class SearchState {
      */
     private ArrayList<DocumentEmbeddingSearchResult> foundDocumentEmbeddings;
 
+    private String primarySearchLayer;
+
     /**
      * These are the current, paginated list of documents
      */
@@ -189,6 +191,17 @@ public class SearchState {
 
     public void setSearchLayers(List<SearchLayer> searchLayers) {
         this.searchLayers = searchLayers;
+        if(searchLayers.contains(SearchLayer.METADATA)) primarySearchLayer = "Meta";
+        else primarySearchLayer = "Named-Entities";
+    }
+
+    /**
+     * TODO: This needs rework. Hardcoded names and the whole search layers are awkward. They have ben redesigned
+     * too many times now.
+     * @return
+     */
+    public String getPrimarySearchLayer(){
+        return this.primarySearchLayer == null ? "Semantic Roles" : this.primarySearchLayer;
     }
 
     public Integer getCurrentPage() {

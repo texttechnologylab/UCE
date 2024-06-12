@@ -22,12 +22,28 @@ public interface DataInterface {
     public int countDocumentsInCorpus(long id);
 
     /**
+     * Returns true if the document with the given documentId exists in
+     * the given corpus
+     * @param corpusId
+     * @param documentId
+     * @return
+     */
+    public boolean documentExists(long corpusId, String documentId);
+
+    /**
      * Gets a single corpus by its id.
      *
      * @param id
      * @return
      */
     public Corpus getCorpusById(long id);
+
+    /**
+     * Returns a corpus by name. As they aren't unique, it returns the first match.
+     * @param name
+     * @return
+     */
+    public Corpus getCorpusByName(String name);
 
     /**
      * Gets all documents that belong to the given corpus

@@ -64,6 +64,21 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public boolean documentExists(long corpusId, String documentId) {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(Long.class);
+            var root = criteriaQuery.from(Document.class);
+
+            var corpusIdPredicate = criteriaBuilder.equal(root.get("corpusId"), corpusId);
+            var documentIdPredicate = criteriaBuilder.equal(root.get("documentId"), documentId);
+            criteriaQuery.select(criteriaBuilder.count(root)).where(criteriaBuilder.and(corpusIdPredicate, documentIdPredicate));
+
+            Long count = session.createQuery(criteriaQuery).getSingleResult();
+            return count > 0;
+        });
+    }
+
     public List<Document> getDocumentsByCorpusId(long corpusId) {
         return executeOperationSafely((session) -> {
             Criteria criteria = session.createCriteria(Document.class);
@@ -76,6 +91,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var corpus = session.get(Corpus.class, id);
             return corpus;
+        });
+    }
+
+    public Corpus getCorpusByName(String name) {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+           var criteriaQuery = criteriaBuilder.createQuery(Corpus.class);
+            var root = criteriaQuery.from(Corpus.class);
+            criteriaQuery.select(root).where(criteriaBuilder.equal(root.get("name"), name));
+            var query = session.createQuery(criteriaQuery);
+            return query.uniqueResult();
         });
     }
 

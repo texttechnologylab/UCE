@@ -60,7 +60,8 @@
 
             <div class="flexed align-items-stretch search-header container p-0">
                 <div class="flexed align-items-center h-100 position-relative" style="z-index: 2">
-                    <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover" data-toggle="popover" data-placement="top"
+                    <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover"
+                       data-toggle="popover" data-placement="top"
                        data-content="${languageResource.get("openCorpus")}">
                         <i class="fas fa-globe xlarge-font mr-2 ml-2 text-dark"></i>
                     </a>
@@ -71,7 +72,8 @@
                                     data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
                         </#list>
                     </select>
-                    <button class="btn open-sr-builder-btn" data-trigger="hover" data-toggle="popover" data-placement="top"
+                    <button class="btn open-sr-builder-btn" data-trigger="hover" data-toggle="popover"
+                            data-placement="top"
                             data-content="${languageResource.get("openSrBuilder")}">
                         <i class="fas fa-project-diagram mr-1 ml-1"></i>
                     </button>
@@ -79,7 +81,8 @@
 
                 <!-- Search bar and menu -->
                 <div class="w-100 position-relative">
-                    <input type="text" class="search-input form-control large-font w-100" placeholder="${languageResource.get("searchPlaceholder")}"/>
+                    <input type="text" class="search-input form-control large-font w-100"
+                           placeholder="${languageResource.get("searchPlaceholder")}"/>
                     <div class="search-menu-div">
                         <div class="backdrop"></div>
 
@@ -88,16 +91,22 @@
                             </div>
                             <div class="search-settings-div flexed align-items-center justify-content-around">
                                 <!-- The data-ids are corresponding to the SearchLayer enum. Change them with care!! -->
-                                <div class="option">
-                                    <label class="mb-0 color-prime small-font"><i class="fas fa-search mr-1"></i> Meta</label>
-                                    <input type="checkbox" data-id="METADATA"/>
+                                <i class="text w-auto fab fa-searchengin mr-2 large-font"></i>
+                                <div class="option" data-type="radio">
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" name="searchLayerRadioOptions"
+                                               id="inlineRadio1" value="METADATA">
+                                        <label class="form-check-label color-prime small-font"
+                                               for="inlineRadio1">Meta</label>
+                                    </div>
+                                    <div class="form-check form-check-inline">
+                                        <input class="form-check-input" type="radio" checked name="searchLayerRadioOptions"
+                                               id="inlineRadio2" value="NAMED_ENTITIES">
+                                        <label class="form-check-label color-secondary small-font" for="inlineRadio2">Named-Entities</label>
+                                    </div>
                                 </div>
                                 <div class="option">
-                                    <label class="mb-0 w-100 color-secondary small-font"><i class="fas fa-search-plus mr-1"></i> Named-Entity</label>
-                                    <input type="checkbox" checked data-id="NAMED_ENTITIES"/>
-                                </div>
-                                <div class="option">
-                                    <label class="mb-0 w-100 color-gold small-font"><i class="fab fa-searchengin mr-1"></i> Embedding</label>
+                                    <label class="mb-0 w-100 color-gold small-font">Embedding</label>
                                     <input type="checkbox" checked data-id="EMBEDDINGS"/>
                                 </div>
                             </div>

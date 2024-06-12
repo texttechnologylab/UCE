@@ -9,12 +9,21 @@ public class CorpusConfig {
     private String author;
     private String language;
     private CorpusAnnotationConfig annotations;
+    private boolean addToExistingCorpus;
     private OtherConfig other;
 
     public static CorpusConfig fromJson(String corpusConfigJson){
         var gson = new Gson();
         var config = gson.fromJson(corpusConfigJson, CorpusConfig.class);
         return config;
+    }
+
+    public boolean isAddToExistingCorpus() {
+        return addToExistingCorpus;
+    }
+
+    public void setAddToExistingCorpus(boolean addToExistingCorpus) {
+        this.addToExistingCorpus = addToExistingCorpus;
     }
 
     public String getLanguage() {

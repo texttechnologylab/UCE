@@ -14,14 +14,8 @@ function startNewSearch(searchInput) {
     const corpusId = selectedOption.getAttribute("data-id");
 
     // Get the selected search layers
-    let layers = [];
-    $('.search-menu-div .search-settings-div .option').each(function(){
-        const $checkbox = $(this).find('input[type="checkbox"]');
-        layers.push({
-            "name": $checkbox.data("id"),
-            "checked": $checkbox.is(':checked')
-        })
-    })
+    const metaOrNeLayer = $('.search-menu-div .search-settings-div input[name="searchLayerRadioOptions"]:checked').val();
+    const embeddings = $('.search-menu-div .search-settings-div .option input[data-id="EMBEDDINGS"]').is(':checked');
 
     // Start a new search TODO: Outsource this into new prototype maybe
     $.ajax({
@@ -30,7 +24,8 @@ function startNewSearch(searchInput) {
         data: JSON.stringify({
             searchInput: searchInput,
             corpusId: corpusId,
-            searchLayer: layers
+            metaOrNeLayer: metaOrNeLayer,
+            useEmbeddings: embeddings
         }),
         contentType: "application/json",
         //dataType: "json",
@@ -55,7 +50,9 @@ function startNewSearch(searchInput) {
  */
 function addSearchToHistory(searchTerm){
     let history = getSearchHistory();
-
+    // If the latest entry in the search history is the same search as now, we
+    // dont need to add it. It clouds the history.
+    if(history.length > 0 && history[0].searchTerm === searchTerm) return;
     history.push({
         'searchTerm': searchTerm,
         'corpusId': selectedCorpus,

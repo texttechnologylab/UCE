@@ -2,6 +2,8 @@
   "name": "[corpus_name]",
   "author": "[author/owner of the corpus]",
   "language": "[de-DE, en-EN, ...]",
+  "addToExistingCorpus": false,
+
   "annotations": {
     "OCRPage": true,
     "OCRParagraph": true,

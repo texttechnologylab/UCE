@@ -75,12 +75,20 @@ public class UIMAService {
             corpus.setAuthor(corpusConfig.getAuthor());
             corpus.setCorpusJsonConfig(gson.toJson(corpusConfig));
 
+            // Let's check if we already have a corpus with that name and
+            // if we want to add to that in the config.
+            if (corpusConfig.isAddToExistingCorpus()) {
+                var existingCorpus = db.getCorpusByName(corpusConfig.getName());
+                if (existingCorpus != null) { // If we have the corpus, use that. Else store the new corpus.
+                    corpus = existingCorpus;
+                } else {
+                    db.saveCorpus(corpus);
+                }
+            }
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
             throw new MissingResourceException(
                     "The corpus folder did not contain a properly formatted corpusConfig.json", CorpusConfig.class.toString(), "");
         }
-
-        db.saveCorpus(corpus);
 
         for (var file : Objects.requireNonNull(
                 new File(foldername)
@@ -88,7 +96,7 @@ public class UIMAService {
             var doc = XMIToDocument(file.getPath(), corpus);
             if (doc != null) {
                 db.saveDocument(doc);
-                if(corpusConfig.getOther().isEnableEmbeddings())
+                if (corpusConfig.getOther().isEnableEmbeddings())
                     postProccessDocuments(doc);
                 System.out.println("Stored document with document id " + doc.getDocumentId());
             }
@@ -111,7 +119,9 @@ public class UIMAService {
 
             return XMIToDocument(jCas, corpus);
         } catch (Exception ex) {
-            // TODO: Log!
+            // TODO: Log properly here.
+            System.err.println("Error while reading a xmi file to a cas:");
+            ex.printStackTrace();
             return null;
         }
     }
@@ -146,6 +156,15 @@ public class UIMAService {
                     metadata.getDocumentTitle(),
                     metadata.getDocumentId(),
                     corpus.getId());
+
+            // Before we parse and add that document, lets check if a document with that id and in that
+            // corpus already exists. If we created a new corpus, this will always be null.
+            var exists = db.documentExists(corpus.getId(), document.getDocumentId());
+            if(exists){
+                System.out.println("Document with id " + document.getDocumentId()
+                        + " already exists in the corpus " + corpus.getId() + ". Skipping it.");
+                return null;
+            }
 
             // Set the full text
             document.setFullText(jCas.getDocumentText());
@@ -211,7 +230,7 @@ public class UIMAService {
             }
 
             // Set the semantic role labels
-            if(corpusConfig.getAnnotations().isSrLink()){
+            if (corpusConfig.getAnnotations().isSrLink()) {
                 var srLinks = new ArrayList<org.texttechnologylab.models.corpus.SrLink>();
                 JCasUtil.select(jCas, SrLink.class).stream().forEach(a -> {
                     var srLink = new org.texttechnologylab.models.corpus.SrLink();
@@ -349,6 +368,9 @@ public class UIMAService {
 
             return document;
         } catch (Exception ex) {
+            // TODO: Log properly here.
+            System.err.println("Error while importing corpus:");
+            ex.printStackTrace();
             return null;
         }
     }

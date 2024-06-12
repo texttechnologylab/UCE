@@ -2,6 +2,8 @@ from typing import Any
 import numpy as np
 from sklearn.decomposition import PCA
 from sklearn.manifold import TSNE
+from sklearn.cluster import KMeans
+from sklearn.metrics import silhouette_score
 from sklearn.preprocessing import StandardScaler
 from pacmap import PaCMAP
 from trimap import TRIMAP
@@ -47,6 +49,24 @@ class Reducer:
         if scaling:
             x_embeddings = StandardScaler().fit_transform(x_embeddings)
         return x_embeddings
+    
+    def find_optimal_clusters(self, data, max_k):
+        '''
+        I use the reducer to plot a TSNE plot. I want clusters in that and to determine the amount of clusters, I use the silhoutte score.
+        https://scikit-learn.org/stable/modules/generated/sklearn.metrics.silhouette_score.html
+        '''
+
+        iters = range(2, max_k + 1, 1)
+        sse = []
+        silhouette_scores = []
+
+        for k in iters:
+            kmeans = KMeans(n_clusters=k, random_state=0).fit(data)
+            sse.append(kmeans.inertia_)
+            score = silhouette_score(data, kmeans.labels_)
+            silhouette_scores.append(score)
+        
+        return sse, silhouette_scores
     
 def test():
     # Sample high-dimensional word embeddings (e.g., 5 words with 500-dimensional embeddings)

@@ -94,8 +94,8 @@ public class SearchApi {
         Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
         var searchInput = requestBody.get("searchInput").toString();
         var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
-        // Parse the list of search layers into a list of search layer DTOs.
-        var searchLayerDtos = (ArrayList<SearchLayerDto>) gson.fromJson(gson.toJson(requestBody.get("searchLayer")), new TypeToken<List<SearchLayerDto>>() { }.getType());
+        var metaOrNeLayer = requestBody.get("metaOrNeLayer").toString();
+        var useEmbeddings = Boolean.parseBoolean(requestBody.get("useEmbeddings").toString());
 
         // We have our own query language for SemanticRole Searches. Check if this is one of those.
         SearchState searchState = null;
@@ -105,10 +105,13 @@ public class SearchApi {
         } else {
             var corpusVm = db.getCorpusById(corpusId).getViewModel();
             // Define the search layers from the sent layers
-            var searchLayers = searchLayerDtos
-                    .stream()
-                    .filter(SearchLayerDto::isChecked)
-                    .map(dto -> SearchLayer.valueOf(dto.getName())).toList();
+            var searchLayers = new ArrayList<SearchLayer>();
+
+            if(metaOrNeLayer.equals("METADATA")) searchLayers.add(SearchLayer.METADATA);
+            else searchLayers.add(SearchLayer.NAMED_ENTITIES);
+
+            if(useEmbeddings) searchLayers.add(SearchLayer.EMBEDDINGS);
+
             var biofidSearch = new Search_DefaultImpl(context, searchInput, corpusId, searchLayers);
             searchState = biofidSearch.initSearch();
         }
