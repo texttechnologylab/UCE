@@ -15,9 +15,9 @@ class Embedder:
         docs = [query]
         with torch.no_grad():
             embeddings = self.model.encode(docs)
+            # Move embeddings to specified device
         # Embedding is of dimensionality 1024
-        #similarities = cos_sim(embeddings[0], embeddings[1:])
-        return embeddings[0]
+        return embeddings[0].tolist()
 
 if __name__ == "__main__":
     # You can specify the device here, e.g., torch.device('cuda') for GPU or torch.device('cpu') for CPU
