@@ -11,12 +11,12 @@ import com.google.gson.Gson;
 import com.pgvector.PGvector;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.models.corpus.Document;
-import org.texttechnologylab.models.dto.PlotTsneDto;
-import org.texttechnologylab.models.dto.RAGCompleteDto;
-import org.texttechnologylab.models.dto.RAGEmbedDto;
+import org.texttechnologylab.models.corpus.PageTopicDistribution;
+import org.texttechnologylab.models.corpus.TopicDistribution;
+import org.texttechnologylab.models.dto.*;
+import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.DocumentEmbedding;
 import org.texttechnologylab.models.rag.RAGChatMessage;
-import org.texttechnologylab.utils.EmbeddingUtils;
 
 /**
  * Service class for RAG: Retrieval Augmented Generation
@@ -37,6 +37,62 @@ public class RAGService {
         }
     }
 
+    public <T extends TopicDistribution> T getTextTopicDistribution(Class<T> clazz, String text) {
+        try {
+            var httpClient = HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_2)
+                    .build();
+
+            var url = config.getRAGWebserverBaseUrl() + "topic-modelling";
+
+            // Prepare workload
+            var gson = new Gson();
+            var params = new HashMap<String, Object>();
+            params.put("text", text);
+            var jsonData = gson.toJson(params);
+
+            // Create request
+            var request = HttpRequest.newBuilder()
+                    .uri(new URI(url))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonData))
+                    .build();
+
+            // Send request and get response
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            var statusCode = response.statusCode();
+            if (statusCode != 200) return null;
+            var responseBody = response.body();
+            var result = gson.fromJson(responseBody, TopicModellingDto.class);
+            if (result.getStatus() != 200) {
+                // TODO: Log this here?
+                return null;
+            }
+            // Map the dto to our datastructure
+            T topicDistribution = clazz.getDeclaredConstructor().newInstance();
+
+            // This looks shit yikes. Happens.
+            if(result.getRakeKeywords().size() > 2){
+                topicDistribution.setRakeTopicOne(result.getRakeKeywords().get(0));
+                topicDistribution.setRakeTopicTwo(result.getRakeKeywords().get(1));
+                topicDistribution.setRakeTopicThree(result.getRakeKeywords().get(2));
+            }
+            if(result.getYakeKeywords().size() > 4){
+                topicDistribution.setYakeTopicOne(result.getYakeKeywords().get(0));
+                topicDistribution.setYakeTopicTwo(result.getYakeKeywords().get(1));
+                topicDistribution.setYakeTopicThree(result.getYakeKeywords().get(2));
+                topicDistribution.setYakeTopicFour(result.getYakeKeywords().get(3));
+                topicDistribution.setYakeTopicFive(result.getYakeKeywords().get(4));
+            }
+
+            return topicDistribution;
+        } catch (Exception ex) {
+            // TODO: Logging!
+            return null;
+        }
+    }
+
+
     /**
      * Given the corpusId, returns a fully renderd tsne plot from our python webserver as a string
      *
@@ -49,7 +105,7 @@ public class RAGService {
                     .version(HttpClient.Version.HTTP_2)
                     .build();
 
-            var url = config.getRAGWebserverBaseUrl() + "plot-tsne";
+            var url = config.getRAGWebserverBaseUrl() + "plot/tsne";
 
             // Prepare workload
             var gson = new Gson();
@@ -61,15 +117,22 @@ public class RAGService {
             var labels = new ArrayList<String>();
             var embeddings = new ArrayList<float[]>();
             for (var document : corpusDocuments) {
-                // TODO: probably best to average the embeddings of each document paragraph to one embedding
-                // Update: yes, let's go with it. We mean pool the multiple embeddings of a document if needed
-                var pooledEmbedding = EmbeddingUtils.meanPooling(getDocumentEmbeddingsOfDocument(document.getId())
+                if(document.getDocumentTopicDistribution() == null) continue;
+                /* Probably best to average the embeddings of each document paragraph to one embedding
+                 > Update: yes, let's go with it. We mean pool the multiple embeddings of a document if needed
+                var pooledEmbedding = EmbeddingUtils.meanPooling(getDocumentChunkEmbeddingsOfDocument(document.getId())
                         .stream()
-                        .map(DocumentEmbedding::getEmbedding)
+                        .map(DocumentChunkEmbedding::getEmbedding)
                         .toList());
                 if(pooledEmbedding == null) continue;
-                embeddings.add(pooledEmbedding);
-                labels.add(document.getDocumentTitle());
+                embeddings.add(pooledEmbedding);*/
+                // > Update2: We now already have a single embedding representation of a doc
+                var documentEmbedding = getDocumentEmbeddingOfDocument(document.getId());
+                if(documentEmbedding == null) continue;
+                embeddings.add(documentEmbedding.getTsne2d());
+
+                // The labels are the topics of that document
+                labels.add(document.getDocumentTopicDistribution().getRakeTopicOne());
             }
             params.put("labels", labels);
             params.put("embeddings", embeddings);
@@ -201,20 +264,47 @@ public class RAGService {
     }
 
     /**
-     * Gets the closest document embeddings from a given text controlled by the range variable
+     * Gets all embedding chunks of a document
      * @return
      */
-    public ArrayList<DocumentEmbedding> getDocumentEmbeddingsOfDocument(long documentId) {
+    public ArrayList<DocumentChunkEmbedding> getDocumentChunkEmbeddingsOfDocument(long documentId) {
+        try {
+            var query = "SELECT * FROM documentchunkembeddings WHERE document_id = ?";
+            var statement = vectorDbConnection.prepareStatement(query);
+            statement.setLong(1, documentId);
+            var resultSet = statement.executeQuery();
+            return buildDocumentChunkEmbeddingsFromResultSet(resultSet);
+        } catch (Exception ex) {
+            // TODO Log
+        }
+        return new ArrayList<>();
+    }
+
+    /**
+     * Gets the one embedding of a document. Can return NULL.
+     * @return
+     */
+    public DocumentEmbedding getDocumentEmbeddingOfDocument(long documentId) {
         try {
             var query = "SELECT * FROM documentembeddings WHERE document_id = ?";
             var statement = vectorDbConnection.prepareStatement(query);
             statement.setLong(1, documentId);
             var resultSet = statement.executeQuery();
-            return buildDocumentEmbeddingsFromResultSet(resultSet);
+            // We return the first found docucment embedding as there should be only one.
+            while (resultSet.next()) {
+                var embedding = new DocumentEmbedding();
+                embedding.setEmbedding(((PGvector) resultSet.getObject("embedding")).toArray());
+                embedding.setTsne3d(((PGvector) resultSet.getObject("tsne3d")).toArray());
+                embedding.setTsne2d(((PGvector) resultSet.getObject("tsne2d")).toArray());
+                embedding.setDocument_id(resultSet.getLong("document_id"));
+                embedding.setId(resultSet.getLong("id"));
+
+                return embedding;
+            }
         } catch (Exception ex) {
             // TODO Log
         }
-        return new ArrayList<>();
+        return null;
     }
 
     /**
@@ -224,26 +314,29 @@ public class RAGService {
      * @param range
      * @return
      */
-    public List<DocumentEmbedding> getClosestDocumentEmbeddings(String text, int range) {
+    public List<DocumentChunkEmbedding> getClosestDocumentChunkEmbeddings(String text, int range) {
         try {
-            var query = "SELECT * FROM documentembeddings ORDER BY embedding <-> ? LIMIT ?";
+            var query = "SELECT * FROM documentchunkembeddings ORDER BY embedding <-> ? LIMIT ?";
             var statement = vectorDbConnection.prepareStatement(query);
             statement.setObject(1, new PGvector(getEmbeddingForText(text)));
             statement.setInt(2, range);
             var resultSet = statement.executeQuery();
-            return buildDocumentEmbeddingsFromResultSet(resultSet);
+            return buildDocumentChunkEmbeddingsFromResultSet(resultSet);
         } catch (Exception ex) {
             // TODO Log
+            System.err.println("Error trying to get document chunks: " + ex.getMessage());
         }
         return null;
     }
 
-    private ArrayList<DocumentEmbedding> buildDocumentEmbeddingsFromResultSet(ResultSet resultSet) throws SQLException {
-        var embeddings = new ArrayList<DocumentEmbedding>();
+    private ArrayList<DocumentChunkEmbedding> buildDocumentChunkEmbeddingsFromResultSet(ResultSet resultSet) throws SQLException {
+        var embeddings = new ArrayList<DocumentChunkEmbedding>();
         while (resultSet.next()) {
-            var embedding = new DocumentEmbedding(resultSet.getInt("beginn"), resultSet.getInt("endd"));
+            var embedding = new DocumentChunkEmbedding(resultSet.getInt("beginn"), resultSet.getInt("endd"));
             embedding.setCoveredText(resultSet.getString("coveredtext"));
             embedding.setEmbedding(((PGvector) resultSet.getObject("embedding")).toArray());
+            embedding.setTsne3D(resultSet.getObject("tsne3d") != null ? ((PGvector) resultSet.getObject("tsne3d")).toArray() : null);
+            embedding.setTsne2D(resultSet.getObject("tsne2d") != null ? ((PGvector) resultSet.getObject("tsne2d")).toArray() : null);
             embedding.setDocument_id(resultSet.getLong("document_id"));
             embedding.setId(resultSet.getLong("id"));
 
@@ -253,17 +346,40 @@ public class RAGService {
     }
 
     /**
-     * Stores a signle document embedding
+     * Stores a signle document embedding.
      */
     public void saveDocumentEmbedding(DocumentEmbedding documentEmbedding) {
         try {
-            var query = "INSERT INTO documentembeddings (document_id, embedding, coveredtext, beginn, endd) VALUES (?, ?, ?, ?, ?)";
+            var query = "INSERT INTO documentembeddings (document_id, embedding, tsne2D, tsne3D) VALUES (?, ?, ?, ?)";
             var insertStatement = vectorDbConnection.prepareStatement(query);
             insertStatement.setLong(1, documentEmbedding.getDocument_id());
             insertStatement.setObject(2, new PGvector(documentEmbedding.getEmbedding()));
-            insertStatement.setString(3, documentEmbedding.getCoveredText());
-            insertStatement.setInt(4, documentEmbedding.getBegin());
-            insertStatement.setInt(5, documentEmbedding.getEnd());
+            insertStatement.setObject(3, new PGvector(documentEmbedding.getTsne2d()));
+            insertStatement.setObject(4, new PGvector(documentEmbedding.getTsne3d()));
+            insertStatement.executeUpdate();
+        } catch (Exception ex) {
+            ex.printStackTrace();
+            // TODO: Logging
+        }
+    }
+
+    /**
+     * Stores a signle document chunk embedding. Since hibernate doesn't work with pgVector extension
+     * the document embeddings need to be fetched manually.
+     */
+    public void saveDocumentChunkEmbedding(DocumentChunkEmbedding documentChunkEmbedding) {
+        try {
+            var query = "INSERT INTO documentchunkembeddings " +
+                    "(document_id, embedding, coveredtext, beginn, endd, tsne2D, tsne3D) " +
+                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
+            var insertStatement = vectorDbConnection.prepareStatement(query);
+            insertStatement.setLong(1, documentChunkEmbedding.getDocument_id());
+            insertStatement.setObject(2, new PGvector(documentChunkEmbedding.getEmbedding()));
+            insertStatement.setString(3, documentChunkEmbedding.getCoveredText());
+            insertStatement.setInt(4, documentChunkEmbedding.getBegin());
+            insertStatement.setInt(5, documentChunkEmbedding.getEnd());
+            insertStatement.setObject(6, new PGvector(documentChunkEmbedding.getTsne2D()));
+            insertStatement.setObject(7, new PGvector(documentChunkEmbedding.getTsne3D()));
 
             insertStatement.executeUpdate();
         } catch (Exception ex) {
@@ -273,19 +389,72 @@ public class RAGService {
     }
 
     /**
-     * Gets the complete and embedded lists of DocumentEmbeddings for a single document
+     * Gets a single DocumentEmbedding for a whole document.
+     * @param document
+     * @return
+     */
+    public DocumentEmbedding getCompleteEmbeddingFromDocument(Document document){
+        var documentEmbedding = new DocumentEmbedding();
+        documentEmbedding.setDocument_id(document.getId());
+        documentEmbedding.setEmbedding(getEmbeddingForText(document.getFullText()));
+        return documentEmbedding;
+    }
+
+    /**
+     * Gets the complete and embedded lists of DocumentChunkEmbeddings for a single document
      *
      * @param document
      */
-    public List<DocumentEmbedding> getCompleteEmbeddingsFromDocument(Document document) {
+    public List<DocumentChunkEmbedding> getCompleteEmbeddingChunksFromDocument(Document document) {
         // We also make an embedding from the title
-        var emptyEmbeddings = getEmptyEmbeddingsFromText(document.getDocumentTitle() + " " + document.getFullText(), 900);
+        var emptyEmbeddings = getEmptyEmbeddingChunksFromText(document.getDocumentTitle() + " " + document.getFullText(), 900);
         for (var empty : emptyEmbeddings) {
             var embeddings = getEmbeddingForText(empty.getCoveredText());
             empty.setEmbedding(embeddings);
             empty.setDocument_id(document.getId());
         }
         return emptyEmbeddings;
+    }
+
+    /**
+     * A function that reduces the vector embeddings into 2D and 3D embeddings through tsne on our webserver.
+     */
+    public EmbeddingReduceDto getEmbeddingDimensionReductions(List<float[]> embeddings) {
+        try {
+            var httpClient = HttpClient.newBuilder()
+                    .version(HttpClient.Version.HTTP_2)
+                    .build();
+
+            var url = config.getRAGWebserverBaseUrl() + "embed/reduce";
+
+            // Prepare workload
+            var gson = new Gson();
+            var params = new HashMap<String, Object>();
+            params.put("embeddings", embeddings);
+            var jsonData = gson.toJson(params);
+
+            // Create request
+            var request = HttpRequest.newBuilder()
+                    .uri(new URI(url))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonData))
+                    .build();
+            // Send request and get response
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            var statusCode = response.statusCode();
+            if (statusCode != 200) return null;
+            var responseBody = response.body();
+            var reductionDto = gson.fromJson(responseBody, EmbeddingReduceDto.class);
+
+            if (reductionDto.getStatus() != 200) {
+                // TODO: Log this here?
+                return null;
+            }
+            return reductionDto;
+        } catch (Exception ex) {
+            // TODO: Logging!
+            return null;
+        }
     }
 
     /**
@@ -330,25 +499,25 @@ public class RAGService {
     }
 
     /**
-     * Gets a list of empty DocumetnEmbeddings with proper text splitting
+     * Gets a list of empty DocumentChunkEmbeddings with proper text splitting
      *
      * @param text
      * @param chunkSize Good size would be 1.200 for example
      * @return
      */
-    public List<DocumentEmbedding> getEmptyEmbeddingsFromText(String text, int chunkSize) {
+    public List<DocumentChunkEmbedding> getEmptyEmbeddingChunksFromText(String text, int chunkSize) {
         // Calculate the number of chunks needed
         // We want a cleaned single text without linebreaks or whatnot.
         text = text.replaceAll("\\s+", " ");
         int numChunks = (int) Math.ceil((double) text.length() / chunkSize);
-        var emptyEmbeddings = new ArrayList<DocumentEmbedding>();
+        var emptyEmbeddings = new ArrayList<DocumentChunkEmbedding>();
 
         // Split the input text into chunks
         for (int i = 0; i < numChunks; i++) {
             int start = i * chunkSize;
             int end = Math.min(start + chunkSize, text.length());
             var chunk = text.substring(start, end);
-            var emptyEmbedding = new DocumentEmbedding(start, end);
+            var emptyEmbedding = new DocumentChunkEmbedding(start, end);
             emptyEmbedding.setCoveredText(chunk);
             emptyEmbeddings.add(emptyEmbedding);
         }

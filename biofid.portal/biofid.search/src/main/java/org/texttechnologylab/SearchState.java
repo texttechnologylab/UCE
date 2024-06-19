@@ -34,7 +34,7 @@ public class SearchState {
     /**
      * This is only filled when the search layer contains embeddings
      */
-    private ArrayList<DocumentEmbeddingSearchResult> foundDocumentEmbeddings;
+    private ArrayList<DocumentChunkEmbeddingSearchResult> foundDocumentChunkEmbeddings;
 
     private String primarySearchLayer;
 
@@ -64,12 +64,12 @@ public class SearchState {
         return foundTaxons;
     }
 
-    public ArrayList<DocumentEmbeddingSearchResult> getFoundDocumentEmbeddings() {
-        return foundDocumentEmbeddings;
+    public ArrayList<DocumentChunkEmbeddingSearchResult> getFoundDocumentChunkEmbeddings() {
+        return foundDocumentChunkEmbeddings;
     }
 
-    public void setFoundDocumentEmbeddings(ArrayList<DocumentEmbeddingSearchResult> foundDocumentEmbeddings) {
-        this.foundDocumentEmbeddings = foundDocumentEmbeddings;
+    public void setFoundDocumentChunkEmbeddings(ArrayList<DocumentChunkEmbeddingSearchResult> foundDocumentChunkEmbeddings) {
+        this.foundDocumentChunkEmbeddings = foundDocumentChunkEmbeddings;
     }
 
     public long getCorpusId() {

@@ -7,21 +7,21 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.Anomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import de.tudarmstadt.ukp.dkpro.core.api.semantics.type.SemanticPredicate;
 import org.apache.uima.jcas.cas.AnnotationBase;
-import org.texttechnologylab.annotation.semaf.isobase.Entity;
+import org.apache.uima.util.CasLoadMode;
+import org.joda.time.DateTime;
 import org.texttechnologylab.annotation.semaf.semafsr.SrLink;
-import de.tudarmstadt.ukp.dkpro.core.api.syntax.type.dependency.Dependency;
 import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
-import org.apache.uima.jcas.tcas.Annotation;
 import org.apache.uima.util.CasIOUtils;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
+import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
+import org.texttechnologylab.utils.EmbeddingUtils;
 
 import java.io.File;
 
@@ -90,17 +90,35 @@ public class UIMAService {
                     "The corpus folder did not contain a properly formatted corpusConfig.json", CorpusConfig.class.toString(), "");
         }
 
+        var counter = 0;
         for (var file : Objects.requireNonNull(
                 new File(foldername)
                         .listFiles((dir, name) -> name.toLowerCase().endsWith(".xmi")))) {
             var doc = XMIToDocument(file.getPath(), corpus);
             if (doc != null) {
-                db.saveDocument(doc);
-                if (corpusConfig.getOther().isEnableEmbeddings())
-                    postProccessDocuments(doc);
-                System.out.println("Stored document with document id " + doc.getDocumentId());
+                try{
+                    db.saveDocument(doc);
+                    System.out.println("Stored document with document id " + doc.getDocumentId());
+                    System.out.println("Finished with the UIMA annotations - postprocessing the doc now.");
+                    postProccessDocument(doc, corpusConfig);
+                    System.out.println("Finished postprocessing.");
+                    // TODO: Remove this:
+                    // postProccessCorpus(corpus, corpusConfig);
+
+                    // We occasionally postprocess the corpus while we still import to keep it up to date
+                    if(counter % 500 == 0 && counter != 0){
+                        postProccessCorpus(corpus, corpusConfig);
+                    }
+                } catch (Exception ex){
+                    System.err.println("Error storing a finished document. Skipping it and going to the next.");
+                    ex.printStackTrace();
+                }
             }
+            counter++;
         }
+
+        // At the end, postprocess the corpus
+        postProccessCorpus(corpus, corpusConfig);
     }
 
     /**
@@ -115,7 +133,9 @@ public class UIMAService {
             // Read in the contents of a single xmi cas
             //var file = new GZIPInputStream(new FileInputStream(filename));
             var file = new FileInputStream(filename);
-            CasIOUtils.load(file, jCas.getCas());
+            // https://uima.apache.org/d/uimaj-current/api/org/apache/uima/util/CasIOUtils.html
+            // tsiInputStream: Optional stream for typesystem - only used if not null. (which it currently is)
+            CasIOUtils.load(file, null, jCas.getCas(), CasLoadMode.LENIENT);
 
             return XMIToDocument(jCas, corpus);
         } catch (Exception ex) {
@@ -354,7 +374,7 @@ public class UIMAService {
                 // We want pages as our pagination of the document reader relies on it to handle larger documents.
                 // In this case: we chunk the whole text into pages
                 var fullText = document.getFullText();
-                var pageSize = 3000;
+                var pageSize = 6000;
                 var pageNumber = 1;
                 var pages = new ArrayList<Page>();
 
@@ -376,15 +396,78 @@ public class UIMAService {
     }
 
     /**
+     * Apply any postprocessing once the corpus is finished calculating. This will be called even
+     * when the corpus import didnt finish due to an error. We still postprocess what we have.
+     * @param corpus
+     */
+    private void postProccessCorpus(Corpus corpus, CorpusConfig corpusConfig){
+        // Calculate the tsne plot if embeddings are enabled
+        if(corpusConfig.getOther().isEnableEmbeddings()){
+            var corpusTsnePlot = new CorpusTsnePlot();
+            corpusTsnePlot.setPlotHtml(ragService.getCorpusTsnePlot(corpus.getId()));
+            corpusTsnePlot.setCorpus(corpus);
+            corpusTsnePlot.setCreated(DateTime.now().toDate());
+
+            corpus.setCorpusTsnePlot(corpusTsnePlot);
+            db.saveOrUpdateCorpusTsnePlot(corpusTsnePlot, corpus);
+        }
+    }
+
+    /**
      * Here we apply any post processing of a document that isn't DUUI and needs the document to be stored once like
      * the rag vector embeddings
      */
-    private void postProccessDocuments(Document document) {
-        // Build the document embeddings for vector search and RAG
-        var documentEmbeddings = ragService.getCompleteEmbeddingsFromDocument(document);
-        // Store them
-        for (var docEmbedding : documentEmbeddings) {
-            ragService.saveDocumentEmbedding(docEmbedding);
+    private void postProccessDocument(Document document, CorpusConfig corpusConfig) {
+        // Calculate embeddings if they are activated
+        if (corpusConfig.getOther().isEnableEmbeddings()) {
+            // Build the chunks, which are the most crucial embeddings
+            var documentChunkEmbeddings = ragService.getCompleteEmbeddingChunksFromDocument(document);
+            // Build a single document embeddings for the whole text
+            var documentEmbedding = ragService.getCompleteEmbeddingFromDocument(document);
+
+            // Now, from these chunks - generate a 2D and 3D tsne reduction embedding and store it
+            // with the single document embedding
+            var reducedEmbeddingDto = ragService.getEmbeddingDimensionReductions(
+                    documentChunkEmbeddings.stream().map(DocumentChunkEmbedding::getEmbedding).toList());
+            // Store the tsne reduction in each chunk - this is basically now a 2D and 3D coordinate
+            for(var i = 0; i < reducedEmbeddingDto.getTsne2D().length; i++){
+                documentChunkEmbeddings.get(i).setTsne2D(reducedEmbeddingDto.getTsne2D()[i]);
+                documentChunkEmbeddings.get(i).setTsne3D(reducedEmbeddingDto.getTsne3D()[i]);
+            }
+            // And mean pool the tsne chunk embeddings for the whole document
+            documentEmbedding.setTsne2d(EmbeddingUtils.meanPooling(Arrays.stream(reducedEmbeddingDto.getTsne2D()).toList()));
+            documentEmbedding.setTsne3d(EmbeddingUtils.meanPooling(Arrays.stream(reducedEmbeddingDto.getTsne3D()).toList()));
+
+            // Store the single document embedding
+            ragService.saveDocumentEmbedding(documentEmbedding);
+
+            // Store the chunks
+            for (var docEmbedding : documentChunkEmbeddings) {
+                ragService.saveDocumentChunkEmbedding(docEmbedding);
+            }
+        }
+
+        if(corpusConfig.getOther().isIncludeTopicDistribution()){
+            // Calculate the page topic distribution if activated
+            var pageTopics = "";
+            for(var page: document.getPages()){
+                var topicDistribution = ragService.getTextTopicDistribution(PageTopicDistribution.class, page.getCoveredText(document.getFullText()));
+                topicDistribution.setBegin(page.getBegin());
+                topicDistribution.setEnd(page.getEnd());
+                topicDistribution.setPage(page);
+                pageTopics += topicDistribution.toString();
+                page.setPageTopicDistribution(topicDistribution);
+                // Store it in the db
+                db.savePageTopicDistribution(page);
+            }
+
+            // And the document topic dist. We do that by combining the topics of the pages - not the whole text.
+            var documentTopicDistribution = ragService.getTextTopicDistribution(
+                    DocumentTopicDistribution.class, document.getFullText());
+            documentTopicDistribution.setDocument(document);
+            document.setDocumentTopicDistribution(documentTopicDistribution);
+            // Store it
+            db.saveDocumentTopicDistribution(document);
         }
     }
 

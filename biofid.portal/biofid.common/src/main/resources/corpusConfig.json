@@ -26,6 +26,7 @@
     "//comment": "[Is this corpus also available on https://sammlungen.ub.uni-frankfurt.de/? Either true or false]",
     "availableOnFrankfurtUniversityCollection": false,
 
+    "includeTopicDistribution": true,
     "enableEmbeddings": true,
     "enableRAGBot": true
   }

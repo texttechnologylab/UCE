@@ -12,6 +12,7 @@ import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.test.test;
 
+import javax.persistence.criteria.Join;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -55,7 +56,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
-    public int countDocumentsInCorpus(long id){
+    public int countDocumentsInCorpus(long id) {
         return executeOperationSafely((session) -> {
             var criteria = session.createCriteria(Document.class);
             criteria.add(Restrictions.eq("corpusId", id));
@@ -79,6 +80,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public CorpusTsnePlot getCorpusTsnePlotByCorpusId(long corpusId) {
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var query = cb.createQuery(CorpusTsnePlot.class);
+            var root = query.from(CorpusTsnePlot.class);
+            query.select(root).where(cb.equal(root.get("corpusId"), corpusId));
+            var typedQuery = session.createQuery(query);
+            return typedQuery.getSingleResult();
+        });
+    }
+
     public List<Document> getDocumentsByCorpusId(long corpusId) {
         return executeOperationSafely((session) -> {
             Criteria criteria = session.createCriteria(Document.class);
@@ -97,7 +109,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     public Corpus getCorpusByName(String name) {
         return executeOperationSafely((session) -> {
             var criteriaBuilder = session.getCriteriaBuilder();
-           var criteriaQuery = criteriaBuilder.createQuery(Corpus.class);
+            var criteriaQuery = criteriaBuilder.createQuery(Corpus.class);
             var root = criteriaQuery.from(Corpus.class);
             criteriaQuery.select(root).where(criteriaBuilder.equal(root.get("name"), name));
             var query = session.createQuery(criteriaQuery);
@@ -134,8 +146,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             var occurrences = query2.getResultList();
 
             var documents = new ArrayList<GlobeTaxon>();
-            for(var occurrence:occurrences){
-                if(occurrence.getLatitude() == -1000) continue;;
+            for (var occurrence : occurrences) {
+                if (occurrence.getLatitude() == -1000) continue;
+                ;
 
                 var doc = new GlobeTaxon();
                 var taxon = taxons.stream().filter(t -> t.getGbifTaxonId() == occurrence.getGbifTaxonId()).findFirst().get();
@@ -303,17 +316,50 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public void saveOrUpdateCorpusTsnePlot(CorpusTsnePlot corpusTsnePlot, Corpus corpus) {
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(corpus);
+            // Save or update the corpus tsne plot
+            if(corpus.getCorpusTsnePlot() != null){
+                session.saveOrUpdate(corpus.getCorpusTsnePlot());
+            }
+            return null;
+        });
+    }
+
     public void saveDocument(Document document) {
         executeOperationSafely((session) -> {
             session.save(document);
-            return null; // No return value needed for this write operation
+            return null;
         });
     }
 
     public void saveCorpus(Corpus corpus) {
         executeOperationSafely((session) -> {
             session.save(corpus);
-            return null; // No return value needed for this write operation
+            return null;
+        });
+    }
+
+    public void savePageTopicDistribution(Page page) {
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(page);
+            // Save or update the page's PageTopicDistribution
+            if (page.getPageTopicDistribution() != null) {
+                session.saveOrUpdate(page.getPageTopicDistribution());
+            }
+            return null;
+        });
+    }
+
+    public void saveDocumentTopicDistribution(Document document) {
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(document);
+            // Save or update the page's PageTopicDistribution
+            if (document.getDocumentTopicDistribution() != null) {
+                session.saveOrUpdate(document.getDocumentTopicDistribution());
+            }
+            return null;
         });
     }
 

@@ -4,6 +4,10 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.services.UIMAService;
 
+import java.util.logging.ConsoleHandler;
+import java.util.logging.Level;
+import java.util.logging.Logger;
+
 import static org.texttechnologylab.utilities.uima.jcas.SanitizingJCasFactory.createJCas;
 
 /**

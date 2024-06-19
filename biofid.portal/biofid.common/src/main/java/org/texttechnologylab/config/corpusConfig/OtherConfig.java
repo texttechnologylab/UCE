@@ -2,8 +2,17 @@ package org.texttechnologylab.config.corpusConfig;
 
 public class OtherConfig{
     private boolean availableOnFrankfurtUniversityCollection;
+    private boolean includeTopicDistribution;
     private boolean enableEmbeddings;
     private boolean enableRAGBot;
+
+    public boolean isIncludeTopicDistribution() {
+        return includeTopicDistribution;
+    }
+
+    public void setIncludeTopicDistribution(boolean includeTopicDistribution) {
+        this.includeTopicDistribution = includeTopicDistribution;
+    }
 
     public boolean isAvailableOnFrankfurtUniversityCollection() {
         return availableOnFrankfurtUniversityCollection;

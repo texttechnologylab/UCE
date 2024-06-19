@@ -26,6 +26,9 @@ public class Page extends UIMAAnnotation {
     @JoinColumn(name="page_Id")
     private List<Line> lines;
 
+    @OneToOne(mappedBy = "page", cascade = CascadeType.ALL, orphanRemoval = true)
+    private PageTopicDistribution pageTopicDistribution;
+
     public Page(int begin, int end, int pageNumber, String pageId){
         super(begin, end);
         this.pageNumber = pageNumber;
@@ -33,6 +36,22 @@ public class Page extends UIMAAnnotation {
     }
     public Page(){
         super(-1, -1);
+    }
+
+    public void setPageNumber(int pageNumber) {
+        this.pageNumber = pageNumber;
+    }
+
+    public void setPageId(String pageId) {
+        this.pageId = pageId;
+    }
+
+    public PageTopicDistribution getPageTopicDistribution() {
+        return pageTopicDistribution;
+    }
+
+    public void setPageTopicDistribution(PageTopicDistribution pageTopicDistributions) {
+        this.pageTopicDistribution = pageTopicDistributions;
     }
 
     public List<Line> getLines() {
@@ -64,6 +83,11 @@ public class Page extends UIMAAnnotation {
         return pageNumber;
     }
 
+    public String getCoveredText(String fullDocumentText){
+        var length = fullDocumentText.length();
+        return fullDocumentText.substring(getBegin(), Math.min(getEnd(), length));
+    }
+
     /**
      * TODO: This and Paragraph.buildHtmLstring() needs to be redone and adjusted to new settings. As of now it sucks.
      * @param annotations
@@ -71,8 +95,7 @@ public class Page extends UIMAAnnotation {
      * @return
      */
     public String buildHTMLString(List<UIMAAnnotation> annotations, String coveredText){
-        var length = coveredText.length();
-        coveredText = coveredText.substring(getBegin(), Math.min(getEnd(), length));
+        coveredText = getCoveredText(coveredText);
 
         var offset = getBegin();
         // Here we store each annotation with its begin index

@@ -122,8 +122,9 @@
             <div class="position-relative">
                 <#include "*/search/components/loader.ftl">
                 <div class="search-result-container container-fluid position-relative">
+                    <!--<h6 class="w-100 text-center mt-5 text">${languageResource.get("searchStart")}</h6>-->
 
-                    <h6 class="w-100 text-center mt-5 text">${languageResource.get("searchStart")}</h6>
+                    <#include "*/landing-page.ftl" />
 
                 </div>
             </div>

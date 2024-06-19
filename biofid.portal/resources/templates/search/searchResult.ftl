@@ -28,7 +28,7 @@
                 <div class="flexed align-items-center">
                     <a class="btn switch-search-layer-result-btn text hoverable selected" data-layer="${searchState.getPrimarySearchLayer()}">
                         <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}</a>
-                    <#if searchState.getFoundDocumentEmbeddings()?exists>
+                    <#if searchState.getFoundDocumentChunkEmbeddings()?exists>
                         <a class="btn switch-search-layer-result-btn text hoverable" data-layer="EMBEDDING">
                             <i class="fab fa-searchengin mr-1"></i> Embedding</a>
                     </#if>
@@ -56,11 +56,11 @@
                 <div class="document-list-include list" data-layer="${searchState.getPrimarySearchLayer()}">
                     <#include "*/search/components/documentList.ftl" >
                 </div>
-                <#if searchState.getFoundDocumentEmbeddings()?exists>
+                <#if searchState.getFoundDocumentChunkEmbeddings()?exists>
                     <div class="embedding-document-list-include list display-none" data-layer="EMBEDDING">
-                        <#list searchState.getFoundDocumentEmbeddings() as documentEmbedding>
-                            <#assign document = documentEmbedding.getDocument()>
-                            <#assign embedding = documentEmbedding.getDocumentEmbedding()>
+                        <#list searchState.getFoundDocumentChunkEmbeddings() as documentChunkEmbedding>
+                            <#assign document = documentChunkEmbedding.getDocument()>
+                            <#assign embedding = documentChunkEmbedding.getDocumentChunkEmbedding()>
 
                             <div class="document-card">
                                 <div class="content">

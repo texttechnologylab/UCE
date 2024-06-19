@@ -1,28 +1,32 @@
 package org.texttechnologylab.models.rag;
 
-import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 
-public class DocumentEmbedding extends ModelBase {
+public class DocumentChunkEmbedding extends UIMAAnnotation {
+
     private float[] embedding;
-    private float[] tsne2d;
-    private float[] tsne3d;
     private long document_id;
+    private float[] tsne2D;
+    private float[] tsne3D;
 
-    public float[] getTsne2d() {
-        return tsne2d;
+    public float[] getTsne2D() {
+        return tsne2D;
     }
 
-    public void setTsne2d(float[] tsne2d) {
-        this.tsne2d = tsne2d;
+    public void setTsne2D(float[] tsne2D) {
+        this.tsne2D = tsne2D;
     }
 
-    public float[] getTsne3d() {
-        return tsne3d;
+    public float[] getTsne3D() {
+        return tsne3D;
     }
 
-    public void setTsne3d(float[] tsne3d) {
-        this.tsne3d = tsne3d;
+    public void setTsne3D(float[] tsne3D) {
+        this.tsne3D = tsne3D;
+    }
+
+    public DocumentChunkEmbedding(int begin, int end) {
+        super(begin, end);
     }
 
     public float[] getEmbedding() {
@@ -40,5 +44,4 @@ public class DocumentEmbedding extends ModelBase {
     public void setDocument_id(long document_id) {
         this.document_id = document_id;
     }
-
 }

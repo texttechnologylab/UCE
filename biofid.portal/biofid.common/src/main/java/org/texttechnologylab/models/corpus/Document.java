@@ -2,7 +2,6 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
-import org.texttechnologylab.models.rag.DocumentEmbedding;
 
 import javax.persistence.*;
 import java.util.*;
@@ -61,6 +60,9 @@ public class Document extends ModelBase {
     @JoinColumn(name = "document_id")
     private MetadataTitleInfo metadataTitleInfo;
 
+    @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private DocumentTopicDistribution documentTopicDistribution;
+
     public Document() {
         metadataTitleInfo = new MetadataTitleInfo();
     }
@@ -70,6 +72,14 @@ public class Document extends ModelBase {
         this.documentTitle = documentTitle;
         this.documentId = documentId;
         this.corpusId = corpusId;
+    }
+
+    public DocumentTopicDistribution getDocumentTopicDistribution() {
+        return documentTopicDistribution;
+    }
+
+    public void setDocumentTopicDistribution(DocumentTopicDistribution documentTopicDistribution) {
+        this.documentTopicDistribution = documentTopicDistribution;
     }
 
     public List<Lemma> getLemmas() {

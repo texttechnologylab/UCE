@@ -69,20 +69,20 @@ public class Search_DefaultImpl implements Search {
         // Execute embedding search if desired.
         // This search is lose coupled from the rest and only done once in the initiation.
         if(biofidSearchState.getSearchLayers().contains(SearchLayer.EMBEDDINGS)){
-            var closestDocumentsEmbeddings = ragService.getClosestDocumentEmbeddings(
+            var closestDocumentsEmbeddings = ragService.getClosestDocumentChunkEmbeddings(
                     this.biofidSearchState.getSearchPhrase(),
                     20);
 
-            var foundDocumentEmbeddings = new ArrayList<DocumentEmbeddingSearchResult>();
+            var foundDocumentChunkEmbeddings = new ArrayList<DocumentChunkEmbeddingSearchResult>();
             for(var embedding:closestDocumentsEmbeddings){
                 var document = db.getDocumentById(embedding.getDocument_id());
-                var documentEmbedding = new DocumentEmbeddingSearchResult();
-                documentEmbedding.setDocument(document);
-                documentEmbedding.setDocumentEmbedding(embedding);
+                var documentChunkEmbedding = new DocumentChunkEmbeddingSearchResult();
+                documentChunkEmbedding.setDocument(document);
+                documentChunkEmbedding.setDocumentChunkEmbedding(embedding);
 
-                foundDocumentEmbeddings.add(documentEmbedding);
+                foundDocumentChunkEmbeddings.add(documentChunkEmbedding);
             }
-            biofidSearchState.setFoundDocumentEmbeddings(foundDocumentEmbeddings);
+            biofidSearchState.setFoundDocumentChunkEmbeddings(foundDocumentChunkEmbeddings);
         }
 
         return biofidSearchState;

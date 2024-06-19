@@ -1,7 +1,9 @@
 package org.texttechnologylab.services;
 
 import org.texttechnologylab.models.corpus.Corpus;
+import org.texttechnologylab.models.corpus.CorpusTsnePlot;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.corpus.Page;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
 
@@ -39,6 +41,18 @@ public interface DataInterface {
     public Corpus getCorpusById(long id);
 
     /**
+     * Stores a page topic distribution by a page.
+     * @param page
+     */
+    public void savePageTopicDistribution(Page page);
+
+    /**
+     * Stores a document topic distributions by a document.
+     * @param document
+     */
+    public void saveDocumentTopicDistribution(Document document);
+
+    /**
      * Returns a corpus by name. As they aren't unique, it returns the first match.
      * @param name
      * @return
@@ -51,6 +65,13 @@ public interface DataInterface {
      * @return
      */
     public List<Document> getDocumentsByCorpusId(long corpusId);
+
+    /**
+     * Returns a corpus tsne plot by the given corpusId
+     * @param corpusId
+     * @return
+     */
+    public CorpusTsnePlot getCorpusTsnePlotByCorpusId(long corpusId);
 
     /**
      * Gets all corpora from the database
@@ -130,6 +151,12 @@ public interface DataInterface {
      * @param document
      */
     public void saveDocument(Document document);
+
+    /**
+     * Stores an corpus tsne plot instance
+     * @param corpusTsnePlot
+     */
+    public void saveOrUpdateCorpusTsnePlot(CorpusTsnePlot corpusTsnePlot, Corpus corpus);
 
     /**
      * Stores a corpus in the database.

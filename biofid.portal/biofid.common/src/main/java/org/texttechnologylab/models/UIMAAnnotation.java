@@ -10,7 +10,6 @@ public class UIMAAnnotation extends ModelBase{
     private int begin;
     @Column(name = "\"endd\"")
     private int end;
-
     @Column(columnDefinition = "TEXT")
     private String coveredText;
 

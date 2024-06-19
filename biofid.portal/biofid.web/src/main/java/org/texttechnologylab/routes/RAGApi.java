@@ -7,7 +7,7 @@ import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.models.corpus.Document;
-import org.texttechnologylab.models.rag.DocumentEmbedding;
+import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.RAGChatMessage;
 import org.texttechnologylab.models.rag.RAGChatState;
 import org.texttechnologylab.models.rag.Roles;
@@ -41,6 +41,7 @@ public class RAGApi {
         // var model = new HashMap<String, Object>();
         try {
             var corpusId = Long.parseLong(request.queryParams("corpusId"));
+            //var plotAsHtml = db.getCorpusTsnePlotByCorpusId(corpusId).getPlotHtml();
             var plotAsHtml = ragService.getCorpusTsnePlot(corpusId);
             return plotAsHtml == null ? "" : plotAsHtml;
         } catch (Exception ex) {
@@ -77,13 +78,13 @@ public class RAGApi {
             // context_not_needed. So: we ask our webserver: should we fetch context? if yes, do so, if not - then don't.
             // See also: https://www.kaggle.com/models/kevinbnisch/ccc-bert
             var contextNeeded = ragService.postRAGContextNeeded(userMessage);
-            List<DocumentEmbedding> nearestDocumentEmbeddings = new ArrayList<>();
+            List<DocumentChunkEmbedding> nearestDocumentChunkEmbeddings = new ArrayList<>();
             List<Document> foundDocuments = new ArrayList<Document>();
             if (contextNeeded == 1) {
-                nearestDocumentEmbeddings = ragService.getClosestDocumentEmbeddings(userMessage, 3);
+                nearestDocumentChunkEmbeddings = ragService.getClosestDocumentChunkEmbeddings(userMessage, 3);
                 // foreach fetched document embedding, we also fetch the actual documents so the chat can show them
-                foundDocuments = db.getManyDocumentsByIds(nearestDocumentEmbeddings.stream().map(d -> Math.toIntExact(d.getDocument_id())).toList());
-                prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", String.join("\n", nearestDocumentEmbeddings.stream().map(e -> e.getCoveredText()).toList()));
+                foundDocuments = db.getManyDocumentsByIds(nearestDocumentChunkEmbeddings.stream().map(d -> Math.toIntExact(d.getDocument_id())).toList());
+                prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", String.join("\n", nearestDocumentChunkEmbeddings.stream().map(e -> e.getCoveredText()).toList()));
             }
             userRagMessage.setPrompt(prompt);
 
@@ -98,7 +99,7 @@ public class RAGApi {
             systemResponseMessage.setRole(Roles.ASSISTANT);
             systemResponseMessage.setPrompt(answer);
             systemResponseMessage.setMessage(answer);
-            systemResponseMessage.setContextDocument_Ids(nearestDocumentEmbeddings.stream().map(e -> e.getDocument_id()).toList());
+            systemResponseMessage.setContextDocument_Ids(nearestDocumentChunkEmbeddings.stream().map(e -> e.getDocument_id()).toList());
             systemResponseMessage.setContextDocuments(new ArrayList<>(foundDocuments));
 
             // Add the system response as well

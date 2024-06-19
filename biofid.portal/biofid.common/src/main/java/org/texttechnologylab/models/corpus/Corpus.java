@@ -18,6 +18,9 @@ public class Corpus extends ModelBase {
     @JoinColumn(name="corpusid")
     private List<Document> documents;
 
+    @OneToOne(mappedBy = "corpus", cascade = CascadeType.ALL, orphanRemoval = true)
+    private CorpusTsnePlot corpusTsnePlot;
+
     @Column(columnDefinition = "TEXT")
     private String corpusJsonConfig;
 
@@ -27,6 +30,14 @@ public class Corpus extends ModelBase {
 
     public CorpusViewModel getViewModel(){
         return new CorpusViewModel(this, corpusJsonConfig);
+    }
+
+    public CorpusTsnePlot getCorpusTsnePlot() {
+        return corpusTsnePlot;
+    }
+
+    public void setCorpusTsnePlot(CorpusTsnePlot corpusTsnePlot) {
+        this.corpusTsnePlot = corpusTsnePlot;
     }
 
     public String getLanguage() {

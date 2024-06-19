@@ -8,7 +8,6 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
-import org.texttechnologylab.models.rag.DocumentEmbedding;
 import org.texttechnologylab.models.test.test;
 
 import java.util.HashMap;
@@ -30,6 +29,8 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Line.class);
         metadataSources.addAnnotatedClass(SrLink.class);
         metadataSources.addAnnotatedClass(Lemma.class);
+        metadataSources.addAnnotatedClass(PageTopicDistribution.class);
+        metadataSources.addAnnotatedClass(DocumentTopicDistribution.class);
         metadataSources.addAnnotatedClass(NamedEntity.class);
         metadataSources.addAnnotatedClass(Paragraph.class);
         metadataSources.addAnnotatedClass(Sentence.class);
@@ -41,6 +42,7 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Page.class);
         metadataSources.addAnnotatedClass(Document.class);
         metadataSources.addAnnotatedClass(Corpus.class);
+        metadataSources.addAnnotatedClass(CorpusTsnePlot.class);
 
         var metadata = metadataSources.buildMetadata();
 
