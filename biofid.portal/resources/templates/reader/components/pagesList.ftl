@@ -3,7 +3,7 @@
         <div class="page" data-id="${page.getPageNumber() + 1}">
             <div class="blurrer display-none" data-toggled="false"></div>
             <div>
-                <#if page.getParagraphs()?size == 0>
+                <#if (page.getParagraphs())?? && page.getParagraphs()?size == 0>
                     <p class="text paragraph">
                         ${page.buildHTMLString(documentAnnotations, documentText)}
                     </p>

@@ -16,6 +16,7 @@ function startNewSearch(searchInput) {
     // Get the selected search layers
     const metaOrNeLayer = $('.search-menu-div .search-settings-div input[name="searchLayerRadioOptions"]:checked').val();
     const embeddings = $('.search-menu-div .search-settings-div .option input[data-id="EMBEDDINGS"]').is(':checked');
+    const kwic = $('.search-menu-div .search-settings-div .option input[data-id="KWIC"]').is(':checked');
 
     // Start a new search TODO: Outsource this into new prototype maybe
     $.ajax({
@@ -25,7 +26,8 @@ function startNewSearch(searchInput) {
             searchInput: searchInput,
             corpusId: corpusId,
             metaOrNeLayer: metaOrNeLayer,
-            useEmbeddings: embeddings
+            useEmbeddings: embeddings,
+            kwic: kwic
         }),
         contentType: "application/json",
         //dataType: "json",
@@ -52,7 +54,7 @@ function addSearchToHistory(searchTerm){
     let history = getSearchHistory();
     // If the latest entry in the search history is the same search as now, we
     // dont need to add it. It clouds the history.
-    if(history.length > 0 && history[0].searchTerm === searchTerm) return;
+    if(history.length > 0 && history[history.length - 1].searchTerm === searchTerm) return;
     history.push({
         'searchTerm': searchTerm,
         'corpusId': selectedCorpus,
@@ -186,6 +188,7 @@ async function handleSwitchingOfPage(page) {
             // Render the new documents
             $('.view .search-result-container .document-list-include').html(response.documentsList);
             $('.view .search-result-container .navigation-include').html(response.navigationView);
+            $('.view .search-result-container .keyword-in-context-include').html(response.keywordInContextView);
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);
@@ -269,3 +272,49 @@ $('body').on('click', '.sort-container .switch-search-layer-result-btn', functio
     $(`.search-result-container .list[data-layer=` + layer + ']').show();
 })
 
+let currentFocusedDocumentId = -1;
+/**
+ * Track the currently focused search card
+ */
+$(window).on('scroll', function() {
+    const $container = $('.search-row');
+    const $cards = $container.find('.document-card');
+    const containerCenter = $(window).scrollTop() + $(window).height() / 2;
+
+    let $closestCard = null;
+    let closestDistance = Infinity;
+
+    $cards.each(function() {
+        const $card = $(this);
+        $card.removeClass('focused-document-card');
+        const cardCenter = $card.offset().top + $card.outerHeight() / 2;
+        const distance = Math.abs(containerCenter - cardCenter);
+
+        if (distance < closestDistance) {
+            closestDistance = distance;
+            $closestCard = $card;
+        }
+    });
+    if($closestCard === undefined || $closestCard == null) return;
+    $closestCard.addClass('focused-document-card');
+
+    const documentId = $closestCard.data('id');
+    if(documentId === currentFocusedDocumentId) return;
+
+    // If the keyword in context window exists, then highlight the
+    // corresponding items there.
+    $contextContainer = $('.keyword-context-card .context-table-container');
+    if($contextContainer != null){
+        $contextContainer.find('.context-row-container').each(function(){
+           const contextDocId = $(this).find('.open-document').data('id');
+           if(contextDocId === documentId){
+               $(this).addClass('focused-keyword-context');
+               $contextContainer.prepend($(this));
+           } else{
+               $(this).removeClass('focused-keyword-context');
+           }
+        });
+    }
+
+    currentFocusedDocumentId = documentId;
+});

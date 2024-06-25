@@ -84,6 +84,8 @@ public class App {
 
         // Define default exception handler. This shows an error view then in the body.
         ExceptionHandler<Exception> defaultExceptionHandler = (exception, request, response) -> {
+            System.err.println("Unknown error handled in API:");
+            exception.printStackTrace();
             response.status(500);
             response.body(new CustomFreeMarkerEngine(configuration).render(new ModelAndView(null, "defaultError.ftl")));
         };

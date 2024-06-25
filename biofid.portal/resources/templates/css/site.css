@@ -149,6 +149,7 @@ nav .selected-nav-btn::before {
 }
 
 .main-content-container {
+    padding-bottom: 175px;
 }
 
 .view {

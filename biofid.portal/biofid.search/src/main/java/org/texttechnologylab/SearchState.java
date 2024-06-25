@@ -1,5 +1,6 @@
 package org.texttechnologylab;
 
+import org.texttechnologylab.features.KeywordInContextState;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.search.*;
 
@@ -30,6 +31,7 @@ public class SearchState {
     private ArrayList<AnnotationSearchResult> foundNamedEntities;
     private ArrayList<AnnotationSearchResult> foundTimes;
     private ArrayList<AnnotationSearchResult> foundTaxons;
+    private KeywordInContextState keywordInContextState;
 
     /**
      * This is only filled when the search layer contains embeddings
@@ -46,6 +48,18 @@ public class SearchState {
     public SearchState(SearchType searchType){
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
+    }
+
+    public KeywordInContextState getKeywordInContextState() {
+        return keywordInContextState;
+    }
+
+    public void setKeywordInContextState(KeywordInContextState keywordInContextState) {
+        this.keywordInContextState = keywordInContextState;
+    }
+
+    public void setPrimarySearchLayer(String primarySearchLayer) {
+        this.primarySearchLayer = primarySearchLayer;
     }
 
     public SearchType getSearchType() {
@@ -155,6 +169,11 @@ public class SearchState {
 
     public void setCurrentDocuments(List<Document> currentDocuments) {
         this.currentDocuments = currentDocuments;
+        if(searchLayers != null && searchLayers.contains(SearchLayer.KEYWORDINCONTEXT)){
+            // Whenever we set new current documents, recalculate the context state
+            if(keywordInContextState == null)keywordInContextState = new KeywordInContextState();
+            keywordInContextState.recalculate(this.currentDocuments, this.searchTokens);
+        }
     }
 
     public List<Document> getCurrentDocuments() {

@@ -4,7 +4,8 @@ public enum SearchLayer{
     METADATA,
     NAMED_ENTITIES,
     TAXON,
-    EMBEDDINGS
+    EMBEDDINGS,
+    KEYWORDINCONTEXT
 }
 
 

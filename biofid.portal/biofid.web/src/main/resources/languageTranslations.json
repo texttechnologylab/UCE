@@ -146,5 +146,9 @@
   "corpusTsnePlotMissing": {
     "de-DE": "Die Korpus-Überblick konnte nicht geladen werden, da keine oder nicht genügend annotierte embeddings vorhanden sind.",
     "en-EN": "The corpus overview could not be loaded because there are no or not enough annotated embeddings available."
+  },
+  "noKWIC": {
+    "de-DE": "Die Suche wurde ohne das Keyword-on-context feature gestartet.",
+    "en-EN": "Search has been started without the Keyword-in-context feature."
   }
 }

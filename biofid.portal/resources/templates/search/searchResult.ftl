@@ -10,20 +10,22 @@
 
     <div class="row mb-0 mr-0 ml-0 pb-5">
 
-        <div class="col-md-3 position-relative">
+        <div class="col-md-3 position-relative search-row" data-type="left">
             <div class="side-bar-container">
                 <div class="side-bar">
 
-                    <div class="content pb-0 taxonomy-tree-include">
-                        <h6 class="text-center underlined mb-4">${languageResource.get("taxonomy")}</h6>
-                        <#include "*/search/components/taxonomyTree.ftl">
+                    <div class="content">
+                        <#assign contextState = searchState.getKeywordInContextState()!"">
+                        <div class="keyword-in-context-include">
+                            <#include "*/search/components/keywordInContext.ftl">
+                        </div>
                     </div>
 
                 </div>
             </div>
         </div>
 
-        <div class="col-md-6">
+        <div class="col-md-6 search-row" data-type="mid">
             <div class="flexed align-items-center justify-content-between sort-container pl-3 pr-3 pt-2 pb-2 mb-3">
                 <div class="flexed align-items-center">
                     <a class="btn switch-search-layer-result-btn text hoverable selected" data-layer="${searchState.getPrimarySearchLayer()}">
@@ -81,7 +83,7 @@
             </div>
         </div>
 
-        <div class="col-md-3 position-relative">
+        <div class="col-md-3 search-row position-relative" data-type="right">
             <div class="side-bar-container">
                 <div class="side-bar">
                     <div class="content">
@@ -98,8 +100,15 @@
                             <#include "*/search/components/navigation.ftl">
                         </div>
 
+                        <div class="pb-0 taxonomy-tree-include">
+                            <hr class="mt-3 mb-3"/>
+                            <h6 class="text-center underlined mb-4">${languageResource.get("taxonomy")}</h6>
+                            <#include "*/search/components/taxonomyTree.ftl">
+                        </div>
+
                     </div>
                 </div>
+
             </div>
         </div>
     </div>

@@ -67,6 +67,13 @@ public interface DataInterface {
     public List<Document> getDocumentsByCorpusId(long corpusId);
 
     /**
+     * Gets all documents of a corpus which arent psotprocessed yet.
+     * @param corpusId
+     * @return
+     */
+    public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId);
+
+    /**
      * Returns a corpus tsne plot by the given corpusId
      * @param corpusId
      * @return
@@ -151,6 +158,11 @@ public interface DataInterface {
      * @param document
      */
     public void saveDocument(Document document);
+
+    /**
+     * Updates a document
+     */
+    public void updateDocument(Document document);
 
     /**
      * Stores an corpus tsne plot instance

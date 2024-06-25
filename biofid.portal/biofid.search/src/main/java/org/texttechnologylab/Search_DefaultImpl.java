@@ -108,9 +108,7 @@ public class Search_DefaultImpl implements Search {
      */
     private DocumentSearchResult executeSearchOnDatabases(boolean countAll){
 
-        // Execute the metadata search. This layer is contained in the other layers, but there are some instances where
-        // we ONLY want to use the metadata search, so handle that specific case here.
-        if(!biofidSearchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES) && biofidSearchState.getSearchLayers().contains(SearchLayer.METADATA)){
+        if(biofidSearchState.getSearchLayers().contains(SearchLayer.METADATA)){
             return db.defaultSearchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
                     biofidSearchState.getTake(),
                     biofidSearchState.getSearchTokens(),
@@ -152,7 +150,8 @@ public class Search_DefaultImpl implements Search {
      */
     private List<String> cleanSearchPhrase(String search) {
 
-        search = search.trim().toLowerCase();
+        // search = search.trim().toLowerCase();
+        search = search.trim();
         var splited = Arrays.stream(search.split(" ")).toList();
         // Remove all stopwords
         splited = splited.stream().filter(s -> !stopwords.contains(s)).toList();

@@ -22,6 +22,7 @@ import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.utils.EmbeddingUtils;
+import org.texttechnologylab.utils.ListUtils;
 
 import java.io.File;
 
@@ -29,6 +30,7 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 @Service
 /*
@@ -102,11 +104,9 @@ public class UIMAService {
                     System.out.println("Finished with the UIMA annotations - postprocessing the doc now.");
                     postProccessDocument(doc, corpusConfig);
                     System.out.println("Finished postprocessing.");
-                    // TODO: Remove this:
-                    // postProccessCorpus(corpus, corpusConfig);
 
                     // We occasionally postprocess the corpus while we still import to keep it up to date
-                    if(counter % 500 == 0 && counter != 0){
+                    if(counter % 1 == 0 && counter != 0){
                         postProccessCorpus(corpus, corpusConfig);
                     }
                 } catch (Exception ex){
@@ -401,9 +401,70 @@ public class UIMAService {
      * @param corpus
      */
     private void postProccessCorpus(Corpus corpus, CorpusConfig corpusConfig){
-        // Calculate the tsne plot if embeddings are enabled
+        System.out.println("Postprocessing the Corpus " + corpus.getName());
+        // Calculate the tsne reductions of the whole corpus and finally the tsne plot
         if(corpusConfig.getOther().isEnableEmbeddings()){
-            var corpusTsnePlot = new CorpusTsnePlot();
+            System.out.println("Embeddings...");
+
+            // The corpus can be gigantic and we cant pass hundreds of thousand of embeddings into
+            // a rest API and perform reductions on them. Instead, we sample them if we need.
+            var corpusDocuments = db.getNonePostprocessedDocumentsByCorpusId(corpus.getId());
+            Collections.shuffle(corpusDocuments); // We want random samples of size CHUNKSIZE
+            var chunked = ListUtils.partitionList(corpusDocuments, 1000);
+
+            for(var documents:chunked){
+                // Get the complete list of document chunk embeddings of all documents
+                var docChunkEmbeddings = documents.stream()
+                        .flatMap(d -> ragService.getDocumentChunkEmbeddingsOfDocument(d.getId()).stream())
+                        .toList();
+
+                // Now, from these chunks - generate a 2D and 3D tsne reduction embedding and store it
+                // with the single document embedding
+                var reducedEmbeddingDto = ragService.getEmbeddingDimensionReductions(
+                        docChunkEmbeddings.stream().map(DocumentChunkEmbedding::getEmbedding).toList());
+
+                if(reducedEmbeddingDto.getTsne2D() == null) continue;
+                // Store the tsne reduction in each chunk - this is basically now a 2D and 3D coordinate
+                for(var i = 0; i < reducedEmbeddingDto.getTsne2D().length; i++){
+                    docChunkEmbeddings.get(i).setTsne2D(reducedEmbeddingDto.getTsne2D()[i]);
+                    docChunkEmbeddings.get(i).setTsne3D(reducedEmbeddingDto.getTsne3D()[i]);
+                }
+                // Update the changes (Could be a bulk Update... let's see :-)
+                docChunkEmbeddings.forEach(ragService::updateDocumentChunkEmbedding);
+
+                // And calculate a reduced embedding for the whole document as well!
+                for(var document:documents){
+                    var documentEmbedding = ragService.getDocumentEmbeddingOfDocument(document.getId());
+                    if(documentEmbedding == null) continue;
+                    var chunkEmbeddingsOfDocument = docChunkEmbeddings
+                            .stream()
+                            .filter(e -> e.getDocument_id() == document.getId())
+                            .toList();
+
+                    // And mean pool the tsne chunk embeddings for the whole document
+                    documentEmbedding.setTsne2d(EmbeddingUtils.meanPooling(chunkEmbeddingsOfDocument
+                                    .stream()
+                                    .map(DocumentChunkEmbedding::getTsne2D)
+                                    .toList()));
+                    documentEmbedding.setTsne3d(EmbeddingUtils.meanPooling(chunkEmbeddingsOfDocument
+                                    .stream()
+                                    .map(DocumentChunkEmbedding::getTsne3D)
+                                    .toList()));
+                    // Mark it as fully post processed
+                    document.setPostProcessed(true);
+                    db.updateDocument(document);
+
+                    // Update the document embedding
+                    ragService.updateDocumentEmbedding(documentEmbedding);
+                }
+            }
+
+            System.out.println("Corpus TSNE Plot...");
+
+            // Now that we have the reduced coordiantes, lets plot a tsne plot of the corpus and cache it!
+            // If we have an existing plot, then update that
+            var corpusTsnePlot = corpus.getCorpusTsnePlot();
+            if(corpusTsnePlot == null) corpusTsnePlot = new CorpusTsnePlot();
             corpusTsnePlot.setPlotHtml(ragService.getCorpusTsnePlot(corpus.getId()));
             corpusTsnePlot.setCorpus(corpus);
             corpusTsnePlot.setCreated(DateTime.now().toDate());
@@ -424,19 +485,6 @@ public class UIMAService {
             var documentChunkEmbeddings = ragService.getCompleteEmbeddingChunksFromDocument(document);
             // Build a single document embeddings for the whole text
             var documentEmbedding = ragService.getCompleteEmbeddingFromDocument(document);
-
-            // Now, from these chunks - generate a 2D and 3D tsne reduction embedding and store it
-            // with the single document embedding
-            var reducedEmbeddingDto = ragService.getEmbeddingDimensionReductions(
-                    documentChunkEmbeddings.stream().map(DocumentChunkEmbedding::getEmbedding).toList());
-            // Store the tsne reduction in each chunk - this is basically now a 2D and 3D coordinate
-            for(var i = 0; i < reducedEmbeddingDto.getTsne2D().length; i++){
-                documentChunkEmbeddings.get(i).setTsne2D(reducedEmbeddingDto.getTsne2D()[i]);
-                documentChunkEmbeddings.get(i).setTsne3D(reducedEmbeddingDto.getTsne3D()[i]);
-            }
-            // And mean pool the tsne chunk embeddings for the whole document
-            documentEmbedding.setTsne2d(EmbeddingUtils.meanPooling(Arrays.stream(reducedEmbeddingDto.getTsne2D()).toList()));
-            documentEmbedding.setTsne3d(EmbeddingUtils.meanPooling(Arrays.stream(reducedEmbeddingDto.getTsne3D()).toList()));
 
             // Store the single document embedding
             ragService.saveDocumentEmbedding(documentEmbedding);
@@ -461,7 +509,7 @@ public class UIMAService {
                 db.savePageTopicDistribution(page);
             }
 
-            // And the document topic dist. We do that by combining the topics of the pages - not the whole text.
+            // And the document topic dist.
             var documentTopicDistribution = ragService.getTextTopicDistribution(
                     DocumentTopicDistribution.class, document.getFullText());
             documentTopicDistribution.setDocument(document);

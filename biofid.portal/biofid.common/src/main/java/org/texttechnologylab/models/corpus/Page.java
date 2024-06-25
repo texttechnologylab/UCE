@@ -3,6 +3,7 @@ package org.texttechnologylab.models.corpus;
 import org.texttechnologylab.models.UIMAAnnotation;
 
 import javax.persistence.*;
+import javax.transaction.Transactional;
 import java.util.*;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -62,7 +63,14 @@ public class Page extends UIMAAnnotation {
     }
 
     public List<Paragraph> getParagraphs() {
-        return paragraphs;
+        try{
+            return paragraphs;
+        } catch (Exception ex){
+            // I have no idea why, but sometimes, the lazy load of empty paragraphs throws an error.
+            // There is nothing wrong with the document or page - it just throws an error here.
+            System.err.println("Opened a document with unloadable lazy paragraphs.");
+            return new ArrayList<>();
+        }
     }
     public void setParagraphs(List<Paragraph> paragraphs) {
         this.paragraphs = paragraphs;

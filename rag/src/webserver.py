@@ -29,7 +29,6 @@ def plot_tsne():
     try:
         data = request.get_json()
         reduced_embeddings = np.array(data['embeddings'])
-        print(reduced_embeddings)
         labels = data.get('labels', [])
         labels = list(map(lambda l: "unknown" if l is None else l, labels))
 
@@ -86,6 +85,7 @@ def plot_tsne():
                     )
 
         fig.update_coloraxes(showscale=False)
+        fig.update_layout(showlegend=False)
         plot_html = pio.to_html(fig, full_html=False)
 
         result['status'] = 200

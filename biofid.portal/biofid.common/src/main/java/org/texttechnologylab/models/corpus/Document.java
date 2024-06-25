@@ -20,7 +20,8 @@ public class Document extends ModelBase {
     private long corpusId;
     @Column(columnDefinition = "TEXT")
     private String fullText;
-
+    @Column
+    private boolean postProcessed;
     @Column(columnDefinition = "TEXT")
     private String fullTextCleaned;
 
@@ -72,6 +73,14 @@ public class Document extends ModelBase {
         this.documentTitle = documentTitle;
         this.documentId = documentId;
         this.corpusId = corpusId;
+    }
+
+    public boolean isPostProcessed() {
+        return postProcessed;
+    }
+
+    public void setPostProcessed(boolean postProcessed) {
+        this.postProcessed = postProcessed;
     }
 
     public DocumentTopicDistribution getDocumentTopicDistribution() {
@@ -220,7 +229,9 @@ public class Document extends ModelBase {
     }
 
     public List<Page> getPages() {
-        return pages;
+        return pages.stream()
+                .sorted(Comparator.comparingInt(Page::getPageNumber))
+                .toList();
     }
 
     public List<Page> getPages(int take, int skip) {

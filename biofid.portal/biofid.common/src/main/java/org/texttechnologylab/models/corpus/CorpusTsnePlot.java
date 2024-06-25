@@ -2,15 +2,14 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.ModelBase;
 
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
 import java.util.Date;
 
 @Entity
 @Table(name = "corpustsneplot")
 public class CorpusTsnePlot extends ModelBase {
+
+    @Column(columnDefinition = "TEXT")
     private String plotHtml;
     private Date created;
 

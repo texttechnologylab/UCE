@@ -83,6 +83,11 @@ public class SearchApi {
         var navigationView = new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/components/navigation.ftl"));
         result.put("navigationView", navigationView);
         var gson = new Gson();
+        // And the keyword in context changed
+        var keywordContext = new HashMap<String, Object>();
+        keywordContext.put("contextState", activeSearchState.getKeywordInContextState());
+        var keywordView = new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(keywordContext, "search/components/keywordInContext.ftl"));
+        result.put("keywordInContextView", keywordView);
 
         response.type("application/json");
         return gson.toJson(result);
@@ -96,6 +101,7 @@ public class SearchApi {
         var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
         var metaOrNeLayer = requestBody.get("metaOrNeLayer").toString();
         var useEmbeddings = Boolean.parseBoolean(requestBody.get("useEmbeddings").toString());
+        var includeKeywordInContext = Boolean.parseBoolean(requestBody.get("kwic").toString());
 
         // We have our own query language for SemanticRole Searches. Check if this is one of those.
         SearchState searchState = null;
@@ -103,7 +109,6 @@ public class SearchApi {
             var semanticRoleSearch = new Search_SemanticRoleImpl(context, corpusId, searchInput);
             searchState = semanticRoleSearch.initSearch();
         } else {
-            var corpusVm = db.getCorpusById(corpusId).getViewModel();
             // Define the search layers from the sent layers
             var searchLayers = new ArrayList<SearchLayer>();
 
@@ -111,6 +116,7 @@ public class SearchApi {
             else searchLayers.add(SearchLayer.NAMED_ENTITIES);
 
             if(useEmbeddings) searchLayers.add(SearchLayer.EMBEDDINGS);
+            if(includeKeywordInContext) searchLayers.add(SearchLayer.KEYWORDINCONTEXT);
 
             var biofidSearch = new Search_DefaultImpl(context, searchInput, corpusId, searchLayers);
             searchState = biofidSearch.initSearch();

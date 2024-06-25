@@ -41,8 +41,8 @@ public class RAGApi {
         // var model = new HashMap<String, Object>();
         try {
             var corpusId = Long.parseLong(request.queryParams("corpusId"));
-            //var plotAsHtml = db.getCorpusTsnePlotByCorpusId(corpusId).getPlotHtml();
-            var plotAsHtml = ragService.getCorpusTsnePlot(corpusId);
+            var plotAsHtml = db.getCorpusTsnePlotByCorpusId(corpusId).getPlotHtml();
+            //var plotAsHtml = ragService.getCorpusTsnePlot(corpusId);
             return plotAsHtml == null ? "" : plotAsHtml;
         } catch (Exception ex) {
             // TODO: Logging

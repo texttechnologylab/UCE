@@ -85,7 +85,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             var cb = session.getCriteriaBuilder();
             var query = cb.createQuery(CorpusTsnePlot.class);
             var root = query.from(CorpusTsnePlot.class);
-            query.select(root).where(cb.equal(root.get("corpusId"), corpusId));
+            query.select(root).where(cb.equal(root.get("corpus").get("id"), corpusId));
             var typedQuery = session.createQuery(query);
             return typedQuery.getSingleResult();
         });
@@ -95,6 +95,15 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             Criteria criteria = session.createCriteria(Document.class);
             criteria.add(Restrictions.eq("corpusId", corpusId));
+            return criteria.list();
+        });
+    }
+
+    public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId) {
+        return executeOperationSafely((session) -> {
+            Criteria criteria = session.createCriteria(Document.class);
+            criteria.add(Restrictions.eq("corpusId", corpusId));
+            criteria.add(Restrictions.eq("postProcessed", false));
             return criteria.list();
         });
     }
@@ -148,7 +157,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             var documents = new ArrayList<GlobeTaxon>();
             for (var occurrence : occurrences) {
                 if (occurrence.getLatitude() == -1000) continue;
-                ;
 
                 var doc = new GlobeTaxon();
                 var taxon = taxons.stream().filter(t -> t.getGbifTaxonId() == occurrence.getGbifTaxonId()).findFirst().get();
@@ -334,6 +342,13 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public void updateDocument(Document document) {
+        executeOperationSafely((session) -> {
+            session.update(document);
+            return null;
+        });
+    }
+
     public void saveCorpus(Corpus corpus) {
         executeOperationSafely((session) -> {
             session.save(corpus);
@@ -396,7 +411,12 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
         // The documents are too large to fetch all pages and all annotations at once, it would take to long.
         // So we initialize only through a window.
-        for (var page : doc.getPages().stream().skip(skipPages).limit(pageLimit).toList()) {
+        for (var page : doc.getPages()
+                .stream()
+                .sorted(Comparator.comparing(Page::getPageNumber))
+                .skip(skipPages)
+                .limit(pageLimit)
+                .toList()) {
             Hibernate.initialize(page.getBlocks());
             Hibernate.initialize(page.getParagraphs());
             Hibernate.initialize(page.getLines());

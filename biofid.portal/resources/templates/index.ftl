@@ -28,7 +28,7 @@
     <title>${title}</title>
 </head>
 
-<body>
+<body class="main-body">
 
 <div class="site-container">
 
@@ -109,6 +109,12 @@
                                     <label class="mb-0 w-100 color-gold small-font">Embedding</label>
                                     <input type="checkbox" checked data-id="EMBEDDINGS"/>
                                 </div>
+                                <div class="option" data-trigger="hover"
+                                     data-toggle="popover" data-placement="top" data-html="true"
+                                     data-content="<b>K</b>ey<b>w</b>ord <b>I</b>n <b>C</b>ontext">
+                                    <label class="mb-0 w-100 color-dark small-font">KWIC</label>
+                                    <input type="checkbox" checked data-id="KWIC"/>
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -152,11 +158,11 @@
     </div>
 </footer>
 
-
 <script>
     <#include "js/site.js">
     <#include "js/language.js">
     <#include "js/search.js">
+    <#include "js/keywordInContext.js">
 </script>
 
 </html>

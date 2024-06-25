@@ -132,7 +132,7 @@ public class RAGService {
                 embeddings.add(documentEmbedding.getTsne2d());
 
                 // The labels are the topics of that document
-                labels.add(document.getDocumentTopicDistribution().getRakeTopicOne());
+                labels.add(document.getDocumentTopicDistribution().getYakeTopicOne());
             }
             params.put("labels", labels);
             params.put("embeddings", embeddings);
@@ -294,14 +294,16 @@ public class RAGService {
             while (resultSet.next()) {
                 var embedding = new DocumentEmbedding();
                 embedding.setEmbedding(((PGvector) resultSet.getObject("embedding")).toArray());
-                embedding.setTsne3d(((PGvector) resultSet.getObject("tsne3d")).toArray());
-                embedding.setTsne2d(((PGvector) resultSet.getObject("tsne2d")).toArray());
+                embedding.setTsne3d(resultSet.getObject("tsne3d") != null ? ((PGvector) resultSet.getObject("tsne3d")).toArray() : null);
+                embedding.setTsne2d(resultSet.getObject("tsne2d") != null ? ((PGvector) resultSet.getObject("tsne2d")).toArray() : null);
                 embedding.setDocument_id(resultSet.getLong("document_id"));
                 embedding.setId(resultSet.getLong("id"));
 
                 return embedding;
             }
         } catch (Exception ex) {
+            System.err.println("Error getting a document embedding: " + documentId + " " + ex.getMessage());
+            ex.printStackTrace();
             // TODO Log
         }
         return null;
@@ -346,42 +348,80 @@ public class RAGService {
     }
 
     /**
-     * Stores a signle document embedding.
+     * Saves a document embedding.
      */
     public void saveDocumentEmbedding(DocumentEmbedding documentEmbedding) {
-        try {
-            var query = "INSERT INTO documentembeddings (document_id, embedding, tsne2D, tsne3D) VALUES (?, ?, ?, ?)";
-            var insertStatement = vectorDbConnection.prepareStatement(query);
-            insertStatement.setLong(1, documentEmbedding.getDocument_id());
-            insertStatement.setObject(2, new PGvector(documentEmbedding.getEmbedding()));
-            insertStatement.setObject(3, new PGvector(documentEmbedding.getTsne2d()));
-            insertStatement.setObject(4, new PGvector(documentEmbedding.getTsne3d()));
-            insertStatement.executeUpdate();
-        } catch (Exception ex) {
-            ex.printStackTrace();
-            // TODO: Logging
-        }
+        String query = "INSERT INTO documentembeddings (document_id, embedding, tsne2d, tsne3d) VALUES (?, ?, ?, ?)";
+        executeUpdate(query,
+                documentEmbedding.getDocument_id(),
+                new PGvector(documentEmbedding.getEmbedding()),
+                new PGvector(documentEmbedding.getTsne2d()),
+                new PGvector(documentEmbedding.getTsne3d()));
     }
 
     /**
-     * Stores a signle document chunk embedding. Since hibernate doesn't work with pgVector extension
-     * the document embeddings need to be fetched manually.
+     * Updates a document embedding.
+     */
+    public void updateDocumentEmbedding(DocumentEmbedding documentEmbedding) {
+        String query = "UPDATE documentembeddings SET embedding = ?, tsne2d = ?, tsne3d = ? WHERE document_id = ?";
+        executeUpdate(query,
+                new PGvector(documentEmbedding.getEmbedding()),
+                new PGvector(documentEmbedding.getTsne2d()),
+                new PGvector(documentEmbedding.getTsne3d()),
+                documentEmbedding.getDocument_id());
+    }
+
+    /**
+     * Saves a document chunk embedding.
      */
     public void saveDocumentChunkEmbedding(DocumentChunkEmbedding documentChunkEmbedding) {
-        try {
-            var query = "INSERT INTO documentchunkembeddings " +
-                    "(document_id, embedding, coveredtext, beginn, endd, tsne2D, tsne3D) " +
-                    "VALUES (?, ?, ?, ?, ?, ?, ?)";
-            var insertStatement = vectorDbConnection.prepareStatement(query);
-            insertStatement.setLong(1, documentChunkEmbedding.getDocument_id());
-            insertStatement.setObject(2, new PGvector(documentChunkEmbedding.getEmbedding()));
-            insertStatement.setString(3, documentChunkEmbedding.getCoveredText());
-            insertStatement.setInt(4, documentChunkEmbedding.getBegin());
-            insertStatement.setInt(5, documentChunkEmbedding.getEnd());
-            insertStatement.setObject(6, new PGvector(documentChunkEmbedding.getTsne2D()));
-            insertStatement.setObject(7, new PGvector(documentChunkEmbedding.getTsne3D()));
+        String query = "INSERT INTO documentchunkembeddings (document_id, embedding, coveredtext, beginn, endd, tsne2d, tsne3d) VALUES (?, ?, ?, ?, ?, ?, ?)";
+        executeUpdate(query,
+                documentChunkEmbedding.getDocument_id(),
+                new PGvector(documentChunkEmbedding.getEmbedding()),
+                documentChunkEmbedding.getCoveredText(),
+                documentChunkEmbedding.getBegin(),
+                documentChunkEmbedding.getEnd(),
+                new PGvector(documentChunkEmbedding.getTsne2D()),
+                new PGvector(documentChunkEmbedding.getTsne3D()));
+    }
 
-            insertStatement.executeUpdate();
+    /**
+     * Updates a document chunk embedding.
+     */
+    public void updateDocumentChunkEmbedding(DocumentChunkEmbedding documentChunkEmbedding) {
+        String query = "UPDATE documentchunkembeddings SET embedding = ?, coveredtext = ?, beginn = ?, endd = ?, tsne2d = ?, tsne3d = ? WHERE document_id = ?";
+        executeUpdate(query,
+                new PGvector(documentChunkEmbedding.getEmbedding()),
+                documentChunkEmbedding.getCoveredText(),
+                documentChunkEmbedding.getBegin(),
+                documentChunkEmbedding.getEnd(),
+                new PGvector(documentChunkEmbedding.getTsne2D()),
+                new PGvector(documentChunkEmbedding.getTsne3D()),
+                documentChunkEmbedding.getDocument_id());
+    }
+
+    /**
+     * Executes an update on the RAG database
+     * @param query
+     * @param params
+     */
+    private void executeUpdate(String query, Object... params) {
+        try {
+            var statement = vectorDbConnection.prepareStatement(query);
+            for (int i = 0; i < params.length; i++) {
+                if (params[i] instanceof PGvector) {
+                    statement.setObject(i + 1, params[i]);
+                } else if (params[i] instanceof String) {
+                    statement.setString(i + 1, (String) params[i]);
+                } else if (params[i] instanceof Integer) {
+                    statement.setInt(i + 1, (Integer) params[i]);
+                } else if (params[i] instanceof Long) {
+                    statement.setLong(i + 1, (Long) params[i]);
+                }
+                // Add other types as needed
+            }
+            statement.executeUpdate();
         } catch (Exception ex) {
             ex.printStackTrace();
             // TODO: Logging
