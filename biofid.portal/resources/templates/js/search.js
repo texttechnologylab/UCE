@@ -1,3 +1,6 @@
+
+let currentCorpusUniverseHandler = undefined;
+
 /**
  * Starts a new search with the given input
  */
@@ -31,12 +34,17 @@ function startNewSearch(searchInput) {
         }),
         contentType: "application/json",
         //dataType: "json",
-        success: function (response) {
+        success: async function (response) {
             $('.view .search-result-container').html(response);
             activatePopovers();
             reloadCorpusComponents();
             // Store the search in the local browser for a history.
             addSearchToHistory(searchInput);
+            // Load the corpus universe from search
+            const searchId = $('.search-state').data('id');
+            currentCorpusUniverseHandler = getNewCorpusUniverseHandler;
+            await currentCorpusUniverseHandler.createEmptyUniverse('search-universe-container');
+            await currentCorpusUniverseHandler.fromSearch(searchId);
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);
@@ -301,17 +309,26 @@ $(window).on('scroll', function() {
     const documentId = $closestCard.data('id');
     if(documentId === currentFocusedDocumentId) return;
 
+    // If we have a corpus universe view, then switch the focus there as well
+    if(currentCorpusUniverseHandler !== undefined) currentCorpusUniverseHandler.focusDocumentNode(documentId);
+
     // If the keyword in context window exists, then highlight the
     // corresponding items there.
-    $contextContainer = $('.keyword-context-card .context-table-container');
+    $contextContainer = $('.keyword-context-card');
+    const isExpanded = $contextContainer.data('expanded');
+    console.log(isExpanded);
+    if(isExpanded) return;
+
     if($contextContainer != null){
         $contextContainer.find('.context-row-container').each(function(){
            const contextDocId = $(this).find('.open-document').data('id');
            if(contextDocId === documentId){
-               $(this).addClass('focused-keyword-context');
-               $contextContainer.prepend($(this));
+               $(this).show();
+               //$(this).addClass('focused-keyword-context');
+               //$contextContainer.prepend($(this));
            } else{
-               $(this).removeClass('focused-keyword-context');
+               $(this).hide();
+               //$(this).removeClass('focused-keyword-context');
            }
         });
     }

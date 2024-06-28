@@ -6,6 +6,7 @@ import org.springframework.context.annotation.AnnotationConfigApplicationContext
 import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.corpus.Corpus;
+import org.texttechnologylab.routes.CorpusUniverseApi;
 import org.texttechnologylab.routes.DocumentApi;
 import org.texttechnologylab.routes.RAGApi;
 import org.texttechnologylab.routes.SearchApi;
@@ -34,12 +35,12 @@ public class App {
 
         // Load in and test the language translation objects to handle multiple languages
         var languageResource = new LanguageResources("de-DE");
-        var test = languageResource.get("Template");
 
         // Set the folder for our template files of freemaker
         try {
             configuration.setDirectoryForTemplateLoading(new File("resources/templates/"));
-            staticFiles.location("/public");
+            // We use the extrenalLocation method so that the files in the public folder are hot reloaded
+            staticFiles.externalLocation("biofid.web/src/main/resources/public");
         } catch (IOException e) {
             e.printStackTrace();
         }
@@ -52,6 +53,7 @@ public class App {
         var searchApi = new SearchApi(context, configuration);
         var documentApi = new DocumentApi(context, configuration);
         var ragApi = new RAGApi(context, configuration);
+        var corpusUniverseApi = new CorpusUniverseApi(context, configuration);
 
         before((request, response) -> {
             // Check if the request contains a language parameter
@@ -103,6 +105,12 @@ public class App {
                 get("/active/page", searchApi.activeSearchPage);
                 get("/active/sort", searchApi.activeSearchSort);
                 get("/semanticRole/builder", searchApi.getSemanticRoleBuilderView);
+            });
+
+            path("/corpusUniverse", () -> {
+                // Gets a corpus universe view
+                get("/new", corpusUniverseApi.getCorpusUniverseView);
+                post("/fromSearch", corpusUniverseApi.fromSearch);
             });
 
             path("/document", () -> {

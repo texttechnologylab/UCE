@@ -106,6 +106,11 @@
                             <#include "*/search/components/taxonomyTree.ftl">
                         </div>
 
+                        <div id="search-corpus-universe-include">
+                            <div id="search-universe-container" class="corpus-universe-container">
+                            </div>
+                        </div>
+
                     </div>
                 </div>
 

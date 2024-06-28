@@ -14,6 +14,7 @@
         <#include "css/site.css">
         <#include "css/simple-loader.css">
         <#include "css/search-redesign.css">
+        <#include "*/css/corpus-universe.css">
     </style>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script
@@ -25,10 +26,25 @@
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+
+    <!-- For corpus universe three.js -->
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://unpkg.com/three@v0.161.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@v0.161.0/examples/jsm/"
+          }
+        }
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.4.0/gsap.min.js"></script>
+    <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
+    <!--<script src="https://unpkg.com/@tweenjs/tween.js@^20.0.0/dist/tween.umd.js"></script>-->
+    <!-- For corpus universe three.js -->
+
     <title>${title}</title>
 </head>
 
-<body class="main-body">
+<body>
 
 <div class="site-container">
 
@@ -54,7 +70,7 @@
     <div class="sr-query-builder-include">
     </div>
 
-    <div class="mt-5 main-content-container">
+    <div class="mt-5 corpusUniverse-content-container">
 
         <div class="view" data-id="search">
 
@@ -94,26 +110,26 @@
                                 <i class="text w-auto fab fa-searchengin mr-2 large-font"></i>
                                 <div class="option" data-type="radio">
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="searchLayerRadioOptions"
+                                        <input class="form-check-input" type="radio" checked name="searchLayerRadioOptions"
                                                id="inlineRadio1" value="METADATA">
                                         <label class="form-check-label color-prime small-font"
                                                for="inlineRadio1">Meta</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" checked name="searchLayerRadioOptions"
+                                        <input class="form-check-input" type="radio" name="searchLayerRadioOptions"
                                                id="inlineRadio2" value="NAMED_ENTITIES">
                                         <label class="form-check-label color-secondary small-font" for="inlineRadio2">Named-Entities</label>
                                     </div>
                                 </div>
                                 <div class="option">
                                     <label class="mb-0 w-100 color-gold small-font">Embedding</label>
-                                    <input type="checkbox" checked data-id="EMBEDDINGS"/>
+                                    <input type="checkbox" data-id="EMBEDDINGS"/>
                                 </div>
                                 <div class="option" data-trigger="hover"
                                      data-toggle="popover" data-placement="top" data-html="true"
                                      data-content="<b>K</b>ey<b>w</b>ord <b>I</b>n <b>C</b>ontext">
                                     <label class="mb-0 w-100 color-dark small-font">KWIC</label>
-                                    <input type="checkbox" checked data-id="KWIC"/>
+                                    <input type="checkbox" data-id="KWIC"/>
                                 </div>
                             </div>
                         </div>
@@ -157,6 +173,10 @@
         <h5 class="text-center m-0">Footer</h5>
     </div>
 </footer>
+
+<script type="module">
+    <#include "js/corpusUniverse.js">
+</script>
 
 <script>
     <#include "js/site.js">

@@ -1,52 +1,51 @@
 package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
-import com.google.gson.reflect.TypeToken;
 import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
-import org.texttechnologylab.models.dto.SearchLayerDto;
 import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.models.search.SearchOrder;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
+import org.texttechnologylab.services.RAGService;
 import org.texttechnologylab.services.UIMAService;
 import spark.ModelAndView;
 import spark.Route;
 
 import java.util.ArrayList;
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 
 public class SearchApi {
 
     private ApplicationContext context = null;
     private UIMAService uimaService = null;
+    private RAGService ragService = null;
     private PostgresqlDataInterface_Impl db = null;
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
 
     // TODO: outsource this to a db or something.
-    private HashMap<String, SearchState> activeSearches;
+    public static HashMap<String, SearchState> ActiveSearches = new HashMap<String, SearchState>();
 
     public SearchApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
         this.freemakerConfig = freemakerConfig;
         this.context = serviceContext;
         this.uimaService = serviceContext.getBean(UIMAService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
-        this.activeSearches = new HashMap<String, SearchState>();
+        this.ragService = serviceContext.getBean(RAGService.class);
     }
 
     public Route activeSearchSort = ((request, response) -> {
         var searchId = request.queryParams("searchId");
         var order = request.queryParams("order").toUpperCase();
         var orderBy = request.queryParams("orderBy").toUpperCase();
-        if (!activeSearches.containsKey(searchId)) {
+        if (!ActiveSearches.containsKey(searchId)) {
             // TODO: Log here and return something? Dont know what yet
         }
 
         // Sort the current search state.
-        var activeSearchState = activeSearches.get(searchId);
+        var activeSearchState = ActiveSearches.get(searchId);
         activeSearchState.setOrder(SearchOrder.valueOf(order));
         activeSearchState.setOrderBy(OrderByColumn.valueOf(orderBy));
         var biofidSearch = new Search_DefaultImpl();
@@ -63,11 +62,11 @@ public class SearchApi {
         var result = new HashMap<>();
         var searchId = request.queryParams("searchId");
         var page = Integer.parseInt(request.queryParams("page"));
-        if (!activeSearches.containsKey(searchId)) {
+        if (!ActiveSearches.containsKey(searchId)) {
             // TODO: Log here and return something? Dont know what yet
         }
         // Get the next pages.
-        var activeSearchState = activeSearches.get(searchId);
+        var activeSearchState = ActiveSearches.get(searchId);
         var biofidSearch = new Search_DefaultImpl();
         biofidSearch.fromSearchState(this.context, activeSearchState);
         activeSearchState = biofidSearch.getSearchHitsForPage(page);
@@ -122,7 +121,7 @@ public class SearchApi {
             searchState = biofidSearch.initSearch();
         }
 
-        activeSearches.put(searchState.getSearchId().toString(), searchState);
+        ActiveSearches.put(searchState.getSearchId().toString(), searchState);
         model.put("searchState", searchState);
 
         return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
@@ -143,7 +142,7 @@ public class SearchApi {
         var searchState = semanticRoleSearch.initSearch();
 
         model.put("searchState", searchState);
-        activeSearches.put(searchState.getSearchId().toString(), searchState);
+        ActiveSearches.put(searchState.getSearchId().toString(), searchState);
 
         return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
     });

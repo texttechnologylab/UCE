@@ -1,4 +1,4 @@
-<div class="keyword-context-card" data-expanded="true">
+<div class="keyword-context-card" data-expanded="false">
     <div class="flexed align-items-center justify-content-between">
         <h6 class="mb-0 text-center"><i class="fas fa-bezier-curve mr-1"></i> Keyword-in-Context</h6>
         <button class="btn expand-keyword-context-btn">

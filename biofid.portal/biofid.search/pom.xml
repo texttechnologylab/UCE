@@ -35,7 +35,7 @@
 
         <dependency>
             <groupId>org.apache.jena</groupId>
-            <artifactId>jena-fuseki-main</artifactId>
+            <artifactId>jena-fuseki-corpusUniverse</artifactId>
             <version>4.9.0</version>
         </dependency>
 

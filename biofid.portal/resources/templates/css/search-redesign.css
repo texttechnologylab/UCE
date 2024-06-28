@@ -199,6 +199,12 @@
     color: black;
 }
 
+#search-corpus-universe-include{
+    height: 50vh;
+    width: 100%;
+    position: relative;
+}
+
 .side-bar-container .side-bar .taxonomy-tree {
     width: 100%;
 }
@@ -315,9 +321,10 @@
 
 .focused-document-card{
     margin-bottom: 4rem;
+    position: relative;
     border:gray 1px solid;
-    transform: scale(1.01);
-    transition: transform 0.3s ease;
+    transform: scale(1.008);
+    transition: transform 0.5s ease;
     box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
 }
 
