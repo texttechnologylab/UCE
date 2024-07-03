@@ -264,6 +264,98 @@ public class RAGService {
     }
 
     /**
+     * Gets the closest document embeddings from a given text controlled by the range variable
+     *
+     * @param range
+     * @return
+     */
+    public List<DocumentEmbedding> getClosest3dDocumentEmbeddingsOfCorpus(float[] tsne3d, int range) {
+        try {
+            var query = "SELECT * FROM documentembeddings ORDER BY tsne3d <-> ? LIMIT ?";
+            var statement = vectorDbConnection.prepareStatement(query);
+            statement.setObject(1, new PGvector(tsne3d));
+            statement.setInt(2, range);
+            var resultSet = statement.executeQuery();
+            return buildDocumentEmbeddingsFromResultSet(resultSet);
+        } catch (Exception ex) {
+            // TODO Log
+            System.err.println("Error trying to get document embeddings: " + ex.getMessage());
+        }
+        return null;
+    }
+
+    /**
+     * Gets the one embedding of a document. Can return NULL.
+     * @return
+     */
+    public DocumentEmbedding getDocumentEmbeddingOfDocument(long documentId) {
+        try {
+            var query = "SELECT * FROM documentembeddings WHERE document_id = ?";
+            var statement = vectorDbConnection.prepareStatement(query);
+            statement.setLong(1, documentId);
+            var resultSet = statement.executeQuery();
+            // We return the first found docucment embedding as there should be only one.
+            var embeddings = buildDocumentEmbeddingsFromResultSet(resultSet);
+            if(!embeddings.isEmpty()) return embeddings.stream().findFirst().get();
+        } catch (Exception ex) {
+            System.err.println("Error getting a document embedding: " + documentId + " " + ex.getMessage());
+            ex.printStackTrace();
+            // TODO Log
+        }
+        return null;
+    }
+
+    /**
+     * Given a list of docment, returns the list of DocumentEmbeddings from that.
+     * @param documentIds
+     * @return
+     */
+    public List<DocumentEmbedding> getManyDocumentEmbeddingsOfDocuments(List<Long> documentIds) {
+        List<DocumentEmbedding> embeddings = new ArrayList<>();
+        if (documentIds == null || documentIds.isEmpty()) {
+            return embeddings;
+        }
+
+        // Construct the query with an IN clause using placeholders
+        // SQL injection isn't really a threat case here, but still, use the "?" syntax to ensure proper injection
+        StringBuilder queryBuilder = new StringBuilder("SELECT * FROM documentembeddings WHERE document_id IN (");
+        String placeholders = String.join(",", documentIds.stream().map(id -> "?").toArray(String[]::new));
+        queryBuilder.append(placeholders).append(")");
+
+        try {
+            var query = queryBuilder.toString();
+            var statement = vectorDbConnection.prepareStatement(query);
+
+            // Set the document IDs in the prepared statement
+            for (int i = 0; i < documentIds.size(); i++) {
+                statement.setLong(i + 1, documentIds.get(i));
+            }
+
+            var resultSet = statement.executeQuery();
+            embeddings = buildDocumentEmbeddingsFromResultSet(resultSet);
+        } catch (Exception ex) {
+            System.err.println("Error getting document embeddings: " + ex.getMessage());
+            ex.printStackTrace();
+            // TODO Log
+        }
+        return embeddings;
+    }
+
+    private ArrayList<DocumentEmbedding> buildDocumentEmbeddingsFromResultSet(ResultSet resultSet) throws SQLException {
+        var embeddings = new ArrayList<DocumentEmbedding>();
+        while (resultSet.next()) {
+            var embedding = new DocumentEmbedding();
+            embedding.setEmbedding(((PGvector) resultSet.getObject("embedding")).toArray());
+            embedding.setTsne3d(resultSet.getObject("tsne3d") != null ? ((PGvector) resultSet.getObject("tsne3d")).toArray() : null);
+            embedding.setTsne2d(resultSet.getObject("tsne2d") != null ? ((PGvector) resultSet.getObject("tsne2d")).toArray() : null);
+            embedding.setDocument_id(resultSet.getLong("document_id"));
+            embedding.setId(resultSet.getLong("id"));
+            embeddings.add(embedding);
+        }
+        return embeddings;
+    }
+
+    /**
      * Gets all embedding chunks of a document
      * @return
      */
@@ -278,35 +370,6 @@ public class RAGService {
             // TODO Log
         }
         return new ArrayList<>();
-    }
-
-    /**
-     * Gets the one embedding of a document. Can return NULL.
-     * @return
-     */
-    public DocumentEmbedding getDocumentEmbeddingOfDocument(long documentId) {
-        try {
-            var query = "SELECT * FROM documentembeddings WHERE document_id = ?";
-            var statement = vectorDbConnection.prepareStatement(query);
-            statement.setLong(1, documentId);
-            var resultSet = statement.executeQuery();
-            // We return the first found docucment embedding as there should be only one.
-            while (resultSet.next()) {
-                var embedding = new DocumentEmbedding();
-                embedding.setEmbedding(((PGvector) resultSet.getObject("embedding")).toArray());
-                embedding.setTsne3d(resultSet.getObject("tsne3d") != null ? ((PGvector) resultSet.getObject("tsne3d")).toArray() : null);
-                embedding.setTsne2d(resultSet.getObject("tsne2d") != null ? ((PGvector) resultSet.getObject("tsne2d")).toArray() : null);
-                embedding.setDocument_id(resultSet.getLong("document_id"));
-                embedding.setId(resultSet.getLong("id"));
-
-                return embedding;
-            }
-        } catch (Exception ex) {
-            System.err.println("Error getting a document embedding: " + documentId + " " + ex.getMessage());
-            ex.printStackTrace();
-            // TODO Log
-        }
-        return null;
     }
 
     /**

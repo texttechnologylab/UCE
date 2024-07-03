@@ -111,6 +111,7 @@ public class App {
                 // Gets a corpus universe view
                 get("/new", corpusUniverseApi.getCorpusUniverseView);
                 post("/fromSearch", corpusUniverseApi.fromSearch);
+                post("/fromCorpus", corpusUniverseApi.fromCorpus);
             });
 
             path("/document", () -> {

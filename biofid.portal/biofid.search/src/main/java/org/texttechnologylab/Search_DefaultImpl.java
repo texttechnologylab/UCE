@@ -49,6 +49,7 @@ public class Search_DefaultImpl implements Search {
         setSearchState(biofidSearchState);
     }
 
+    public SearchState getSearchState(){return this.biofidSearchState;}
     public void setSearchState(SearchState searchState){
         this.biofidSearchState = searchState;
     }

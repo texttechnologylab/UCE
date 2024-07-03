@@ -7,14 +7,6 @@ import {
 } from 'https://cdn.skypack.dev/three@0.132.2';
 
 function createMaterial() {
-  // create a texture loader.
-  const textureLoader = new TextureLoader();
-
-  // load a texture
-  const texture = textureLoader.load(
-    'static/img/assets/textures/uv-test-bw.png',
-  );
-
   // create a "standard" material using
   // the texture we just loaded as a color map
   const material = new MeshStandardMaterial({

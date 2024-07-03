@@ -1,11 +1,13 @@
 import {createDefaultNodeSphere, createSphere} from "./../sphere.js";
+import { Vector3 } from 'three';
 
 class Node{
 
-    constructor(documentId, tsne2d, tsne3d, primaryTopic) {
+    constructor(documentId, tsne2d, tsne3d, primaryTopic, documentLength) {
         this.documentId = documentId;
         this.tsne2d = tsne2d;
         this.tsne3d = tsne3d;
+        this.documentLength = documentLength;
         this.primaryTopic = primaryTopic;
         this.id = generateUUID();
         this.objectMesh = undefined;
@@ -13,8 +15,10 @@ class Node{
 
     getId(){return this.id;}
     getTsne3d(){return this.tsne3d;}
+    getTsne3dAsVec(){return new Vector3(this.tsne3d[0], this.tsne3d[1], this.tsne3d[2]);}
     getDocumentId(){return this.documentId;}
     getObjectMesh() {return this.objectMesh;}
+    setNewDefaultColor(color){this.objectMesh.userData.defaultColor = color;}
     hasSamePosition(pos){
         return this.tsne3d[0] === pos[0]
             && this.tsne3d[1] === pos[1]
@@ -25,14 +29,14 @@ class Node{
      * Places this node onto the screen.
      */
     async draw(font, scene, loop, camera){
-        const sphereMesh = createDefaultNodeSphere();
+        const sphereMesh = createDefaultNodeSphere(this.documentLength);
         sphereMesh.position.set(
             this.tsne3d[0],
             this.tsne3d[1],
             this.tsne3d[2]);
         sphereMesh.material.color.set('gray');
         sphereMesh.material.opacity = 1;
-        sphereMesh.renderOrder = 2;
+        sphereMesh.renderOrder = 3;
 
         sphereMesh.userData.primaryTopic = this.primaryTopic;
         sphereMesh.userData.documentId = this.documentId;

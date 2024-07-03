@@ -8,13 +8,6 @@ function generateUUID() {
     });
 }
 
-function addNoise(array, noiseLevel) {
-    return array.map(number => {
-        const noise = (Math.random() * 2 - 1) * noiseLevel;
-        return number + noise;
-    });
-}
-
 /**
  * Handles the clicking onto a navbar button
  */

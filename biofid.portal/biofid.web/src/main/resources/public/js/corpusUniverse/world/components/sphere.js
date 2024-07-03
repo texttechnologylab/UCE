@@ -19,15 +19,15 @@ function createSphere(radius, widthSegments, heightSegments) {
     const sphere = new Mesh(geometry, material);
 
     // Create an outline sphere
-    const outlineGeometry = new SphereGeometry(radius * 1.1, widthSegments, heightSegments);
+    const outlineGeometry = new SphereGeometry(radius * 1.05, widthSegments, heightSegments);
     const outlineMaterial = new MeshBasicMaterial({
-        color: 'rgba(125, 125, 125, 0.8)',
+        color: 'rgba(30, 30, 30)',
         // wireframe: true,
         side: BackSide,
     });
     const outline = new Mesh(outlineGeometry, outlineMaterial);
     outline.userData.noHover = true;
-    //sphere.add(outline);
+    sphere.add(outline);
 
     sphere.tick = (delta) => {
     };
@@ -35,8 +35,10 @@ function createSphere(radius, widthSegments, heightSegments) {
     return sphere;
 }
 
-function createDefaultNodeSphere() {
-    return createSphere(0.3, 32, 16);
+function createDefaultNodeSphere(textLength) {
+    // TODO: Adjust this with maybe the amount of named entities??
+    const complexity = Math.min(Math.max(textLength / 5000, 3), 40); // Ensure it's between 5 and 40
+    return createSphere(0.3, complexity, complexity);
 }
 
 export { createSphere, createDefaultNodeSphere };

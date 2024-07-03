@@ -106,7 +106,7 @@ public class UIMAService {
                     System.out.println("Finished postprocessing.");
 
                     // We occasionally postprocess the corpus while we still import to keep it up to date
-                    if(counter % 1 == 0 && counter != 0){
+                    if(counter % 50 == 0 && counter != 0){
                         postProccessCorpus(corpus, corpusConfig);
                     }
                 } catch (Exception ex){

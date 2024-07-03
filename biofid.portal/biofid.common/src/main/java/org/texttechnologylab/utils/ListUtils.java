@@ -5,6 +5,19 @@ import java.util.List;
 
 public class ListUtils {
 
+    public static float[] convertStringArrayToFloatArray(String[] stringArray) {
+        float[] floatArray = new float[stringArray.length];
+        for (int i = 0; i < stringArray.length; i++) {
+            try {
+                floatArray[i] = Float.parseFloat(stringArray[i]);
+            } catch (NumberFormatException e) {
+                System.err.println("Error parsing string to float: " + stringArray[i]);
+                floatArray[i] = 0.0f; // or any default value you prefer
+            }
+        }
+        return floatArray;
+    }
+
     /**
      * Partitions a list into sublists of a specified size.
      *

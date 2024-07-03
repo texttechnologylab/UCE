@@ -33,6 +33,57 @@ var CorpusUniverseHandler = (function () {
     }
 
     /**
+     * Opens a new, full-screen, seperated view for the universe
+     */
+    CorpusUniverseHandler.prototype.openUniverseInNewTab = function(corpusId){
+        const currentCenter = this.world.getCurrentCenter();
+        let url = window.location.origin;
+        url += "/api/corpusUniverse/new?corpusId=" + corpusId;
+        url += "&currentCenter=" + currentCenter.x + ';'
+            + currentCenter.y + ';'
+            + currentCenter.z;
+        window.open(url, '_blank');
+    }
+
+    /**
+     * Renders a corpus in an empty universe
+     * @param corpusId
+     * @returns {Promise<void>}
+     */
+    CorpusUniverseHandler.prototype.fromCorpus = async function(corpusId, currentCenter) {
+        console.log('New universe from corpus with id ' + corpusId + ' with center ' + currentCenter);
+
+        let networkDto = undefined;
+        // Wrap AJAX call in a Promise to use await properly
+        let result = await new Promise((resolve, reject) => {
+            $.ajax({
+                url: "/api/corpusUniverse/fromCorpus",
+                type: "POST",
+                data: JSON.stringify({
+                    corpusId: corpusId,
+                    level: 'DOCUMENTS',
+                    currentCenter: currentCenter
+                }),
+                dataType: "json",
+                success: function (response) {
+                    networkDto = response;
+                    resolve(response);
+                },
+                error: function (xhr, status, error) {
+                    console.error(xhr.responseText);
+                    reject(error);
+                }
+            });
+        });
+
+        if(!result || networkDto === undefined) return;
+
+        console.log(networkDto);
+        this.world.setNetworkFromDto(networkDto);
+        this.world.redrawNetwork();
+    }
+
+    /**
      * Fills the universe with information by a search state
      * @param corpusId
      * @param range
@@ -64,6 +115,8 @@ var CorpusUniverseHandler = (function () {
         if(!result || networkDto === undefined) return;
 
         console.log(networkDto);
+        // If its from a search, then the universe should be reduced
+        this.world.setIsReducedView(true);
         this.world.setNetworkFromDto(networkDto);
         this.world.redrawNetwork();
     }

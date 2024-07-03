@@ -73,6 +73,14 @@ function addSearchToHistory(searchTerm){
 }
 
 /**
+ * Handles the opening of the current corpus universe
+ */
+$('body').on('click', '.open-corpus-universe-btn', function(){
+    if(currentCorpusUniverseHandler === undefined) return;
+    currentCorpusUniverseHandler.openUniverseInNewTab(selectedCorpus, )
+})
+
+/**
  * Gets the search history from the local storage
  * @returns {*[]}
  */

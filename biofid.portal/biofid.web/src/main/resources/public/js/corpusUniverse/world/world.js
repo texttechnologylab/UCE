@@ -13,6 +13,7 @@ import { Loop } from './systems/Loop.js';
 import { Raycaster, Vector2, Vector3 } from 'three';
 import { createRaycaster, getIntersectedObjects } from './systems/raycaster.js';
 import {Network} from "./components/Models/Network.js";
+import {calculateCenter} from "./systems/mathUtils.js";
 
 let camera;
 let renderer;
@@ -31,6 +32,8 @@ class World {
         this.network = undefined;
         this.loading = true;
         this.font = undefined;
+        this.isReducedView = false;
+        this.currentCenter = new Vector3();
 
         camera = createCamera();
         renderer = createRenderer();
@@ -74,11 +77,14 @@ class World {
         let newNetwork = new Network(networkDto.level);
         newNetwork.setNodesFromDto(networkDto.nodes);
 
+        this.currentCenter = calculateCenter(newNetwork.getNodes().map(n => n.getTsne3dAsVec()));
         this.network = newNetwork;
         this.loading = false;
     }
 
     getUniverseId(){ return this.universeId; }
+    getCurrentCenter(){return this.currentCenter;}
+    setIsReducedView(isReducedView){this.isReducedView = isReducedView;}
 
     /**
      * Function that takes the current network in the world and redraws it completly
@@ -126,10 +132,10 @@ class World {
             return;
         }
 
-        $('html, body').css('cursor', 'pointer');
         const hoveredObject = intersects[0].object;
         if(hoveredObject.userData.noHover === true) return;
 
+        $('html, body').css('cursor', 'pointer');
         // Handle the different object types
         // Nodes
         if(hoveredObject.geometry.type === 'SphereGeometry'){

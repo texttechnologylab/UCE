@@ -1,5 +1,5 @@
 import { Clock } from "https://cdn.skypack.dev/three@0.132.2";
-import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js';
+// import { TWEEN } from 'https://unpkg.com/three@0.139.0/examples/jsm/libs/tween.module.min.js';
 
 const clock = new Clock();
 

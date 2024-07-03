@@ -5,6 +5,15 @@ public class CorpusUniverseNode {
     private float[] tsne2d;
     private float[] tsne3d;
     private String primaryTopic;
+    private int documentLength;
+
+    public int getDocumentLength() {
+        return documentLength;
+    }
+
+    public void setDocumentLength(int documentLength) {
+        this.documentLength = documentLength;
+    }
 
     public long getDocumentId() {
         return documentId;

@@ -26,6 +26,8 @@
     <title>Corpus Universe</title>
 </head>
 
+<div id="inputs-parameters" data-corpusid="${corpusId}" data-currentcenter="${currentCenter}"></div>
+
 <div id="universe-container" class="corpus-universe-container">
 </div>
 
@@ -57,4 +59,29 @@
 <script type="module">
     <#include "*/js/corpusUniverse.js">
 </script>
+
+<script>
+
+    let currentCorpusUniverseHandler = undefined;
+    /**
+     * Init the universe
+     */
+    $(document).ready(async function(){
+        currentCorpusUniverseHandler = getNewCorpusUniverseHandler;
+
+        const params = $('#inputs-parameters');
+        const corpusId = params.data('corpusid');
+        const currentCenterAsString = params.data('currentcenter');
+        if(corpusId === undefined || corpusId === '') {
+            console.error('Cant build universe as the corpus id was invalid.');
+            return;
+        }
+        const currentCenter = currentCenterAsString.split(';');
+
+        await currentCorpusUniverseHandler.createEmptyUniverse('universe-container');
+        await currentCorpusUniverseHandler.fromCorpus(corpusId, currentCenter);
+    });
+
+</script>
+
 </html>
