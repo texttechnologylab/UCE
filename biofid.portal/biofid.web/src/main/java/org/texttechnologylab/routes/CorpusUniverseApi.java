@@ -67,7 +67,22 @@ public class CorpusUniverseApi {
 
         switch (level){
             case DOCUMENTS:
-                var docEmbeddings = ragService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 100);
+                var docEmbeddings = ragService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 1000);
+                var documents = db.getManyDocumentsByIds(
+                        docEmbeddings.stream().map(de -> (int)de.getDocument_id()).toList());
+
+                // Foreach found embedding, we create a node
+                for(var docEmbedding:docEmbeddings){
+                    var doc = documents.stream().filter(d -> d.getId() == docEmbedding.getDocument_id()).findFirst();
+                    if(doc.isEmpty() || docEmbedding.getTsne3d() == null) continue;
+                    var node = new CorpusUniverseNode();
+                    node.setDocumentId(doc.get().getId());
+                    if(doc.get().getDocumentTopicDistribution() != null) node.setPrimaryTopic(doc.get().getDocumentTopicDistribution().getYakeTopicOne());
+                    node.setTsne2d(docEmbedding.getTsne2d());
+                    node.setTsne3d(docEmbedding.getTsne3d());
+                    node.setDocumentLength(doc.get().getFullText().length());
+                    nodes.add(node);
+                }
         };
 
         result.put("nodes", nodes);
@@ -75,7 +90,6 @@ public class CorpusUniverseApi {
 
         return gson.toJson(result);
     });
-
 
     public Route fromSearch = ((request, response) -> {
         var result = new HashMap<>();
@@ -98,7 +112,7 @@ public class CorpusUniverseApi {
                         biofidSearch.getSearchState().getCurrentDocuments().stream().map(d -> d.getId()).toList());
                 for(var doc: biofidSearch.getSearchState().getCurrentDocuments()){
                     var docEmbedding = docEmbeddings.stream().filter(e -> e.getDocument_id() == doc.getId()).findFirst();
-                    if(docEmbedding.isEmpty()) continue;
+                    if(docEmbedding.isEmpty() || docEmbedding.get().getTsne3d() == null) continue;
                     var node = new CorpusUniverseNode();
                     node.setDocumentId(doc.getId());
                     if(doc.getDocumentTopicDistribution() != null) node.setPrimaryTopic(doc.getDocumentTopicDistribution().getYakeTopicOne());

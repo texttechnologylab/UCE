@@ -4,7 +4,7 @@ import { Raycaster, Vector2, Vector3 } from 'three';
 
 function createCamera() {
   const camera = new PerspectiveCamera(
-    35, // fov = Field Of View
+    35, // 35 fov = Field Of View
     1, // aspect ratio (dummy value)
     0.1, // near clipping plane
     1000, // far clipping plane (distance)
@@ -51,7 +51,6 @@ function tweenCameraToPos(camera, controls, targetPos, duration, zoom, xOffset =
         }
     });
 }
-
 
 function focusPoint(camera, controls, position3d){
     const nodeX = position3d[0];

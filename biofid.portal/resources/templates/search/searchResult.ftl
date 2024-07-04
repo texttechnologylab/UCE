@@ -19,6 +19,13 @@
                         <div class="keyword-in-context-include">
                             <#include "*/search/components/keywordInContext.ftl">
                         </div>
+
+                        <div class="pb-0 taxonomy-tree-include">
+                            <hr class="mt-3 mb-3"/>
+                            <h6 class="text-center underlined mb-4">${languageResource.get("taxonomy")}</h6>
+                            <#include "*/search/components/taxonomyTree.ftl">
+                        </div>
+
                     </div>
 
                 </div>
@@ -98,12 +105,6 @@
 
                         <div class="navigation-include">
                             <#include "*/search/components/navigation.ftl">
-                        </div>
-
-                        <div class="pb-0 taxonomy-tree-include">
-                            <hr class="mt-3 mb-3"/>
-                            <h6 class="text-center underlined mb-4">${languageResource.get("taxonomy")}</h6>
-                            <#include "*/search/components/taxonomyTree.ftl">
                         </div>
 
                         <div id="search-corpus-universe-include">

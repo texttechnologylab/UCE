@@ -763,7 +763,7 @@
 .keyword-context-card .context-table-container {
     overflow-x: hidden;
     overflow-y: auto;
-    max-height: calc(75vh - 150px);
+    /*max-height: calc(75vh - 150px);*/
     margin-top: 16px;
 }
 

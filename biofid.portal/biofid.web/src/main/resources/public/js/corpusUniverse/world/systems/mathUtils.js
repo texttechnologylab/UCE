@@ -108,5 +108,4 @@ function addNoise(array, noiseLevel) {
     });
 }
 
-
 export {euclideanDistance, dbscan, calculateClusterCenter, addNoise, calculateCenter };
