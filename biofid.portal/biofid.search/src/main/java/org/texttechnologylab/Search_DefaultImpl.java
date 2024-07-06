@@ -5,7 +5,10 @@ import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
@@ -24,6 +27,7 @@ public class Search_DefaultImpl implements Search {
 
     /**
      * Creates a new instance of the BiofidSearch, throws exceptions if components couldn't be inited.
+     *
      * @param searchPhrase
      * @throws URISyntaxException
      * @throws IOException
@@ -42,25 +46,31 @@ public class Search_DefaultImpl implements Search {
         this.biofidSearchState.setSearchTokens(cleanSearchPhrase(searchPhrase));
     }
 
-    public Search_DefaultImpl(){}
+    public Search_DefaultImpl() {
+    }
 
     public void fromSearchState(ApplicationContext serviceContext, SearchState biofidSearchState) throws URISyntaxException, IOException {
         initServices(serviceContext);
         setSearchState(biofidSearchState);
     }
 
-    public SearchState getSearchState(){return this.biofidSearchState;}
-    public void setSearchState(SearchState searchState){
+    public SearchState getSearchState() {
+        return this.biofidSearchState;
+    }
+
+    public void setSearchState(SearchState searchState) {
         this.biofidSearchState = searchState;
     }
 
     /**
      * Starts a new search with the Search instance and returns the first results of the search
+     *
      * @return
      */
-    public SearchState initSearch(){
+    public SearchState initSearch() {
         DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
-        if(documentSearchResult == null) throw new NullPointerException("Document Init Search returned null - not empty.");
+        if (documentSearchResult == null)
+            throw new NullPointerException("Document Init Search returned null - not empty.");
         biofidSearchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
         biofidSearchState.setTotalHits(documentSearchResult.getDocumentCount());
         biofidSearchState.setFoundNamedEntities(documentSearchResult.getFoundNamedEntities());
@@ -69,13 +79,13 @@ public class Search_DefaultImpl implements Search {
 
         // Execute embedding search if desired.
         // This search is lose coupled from the rest and only done once in the initiation.
-        if(biofidSearchState.getSearchLayers().contains(SearchLayer.EMBEDDINGS)){
+        if (biofidSearchState.getSearchLayers().contains(SearchLayer.EMBEDDINGS)) {
             var closestDocumentsEmbeddings = ragService.getClosestDocumentChunkEmbeddings(
                     this.biofidSearchState.getSearchPhrase(),
                     20);
 
             var foundDocumentChunkEmbeddings = new ArrayList<DocumentChunkEmbeddingSearchResult>();
-            for(var embedding:closestDocumentsEmbeddings){
+            for (var embedding : closestDocumentsEmbeddings) {
                 var document = db.getDocumentById(embedding.getDocument_id());
                 var documentChunkEmbedding = new DocumentChunkEmbeddingSearchResult();
                 documentChunkEmbedding.setDocument(document);
@@ -91,25 +101,27 @@ public class Search_DefaultImpl implements Search {
 
     /**
      * Returns the next X documents from the paginated search. Determine the page offset in the variable.
+     *
      * @return
      */
-    public SearchState getSearchHitsForPage(int page){
+    public SearchState getSearchHitsForPage(int page) {
         // Adjust the current page and execute the search again
         this.biofidSearchState.setCurrentPage(page);
         var documentSearchResult = executeSearchOnDatabases(false);
-        if(documentSearchResult == null) throw new NullPointerException("Document Search returned null - not empty.");
+        if (documentSearchResult == null) throw new NullPointerException("Document Search returned null - not empty.");
         biofidSearchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
         return biofidSearchState;
     }
 
     /**
      * Executes a search request on the databases and returns a result object
+     *
      * @param countAll determines whether we also count all search hits or just using pagination
      * @return
      */
-    private DocumentSearchResult executeSearchOnDatabases(boolean countAll){
+    private DocumentSearchResult executeSearchOnDatabases(boolean countAll) {
 
-        if(biofidSearchState.getSearchLayers().contains(SearchLayer.METADATA)){
+        if (biofidSearchState.getSearchLayers().contains(SearchLayer.METADATA)) {
             return db.defaultSearchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
                     biofidSearchState.getTake(),
                     biofidSearchState.getSearchTokens(),
@@ -121,7 +133,7 @@ public class Search_DefaultImpl implements Search {
         }
 
         // Execute the Named Entity search, which automatically executes metadata as well
-        if(biofidSearchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES)){
+        if (biofidSearchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES)) {
             return db.defaultSearchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
                     biofidSearchState.getTake(),
                     biofidSearchState.getSearchTokens(),
@@ -140,8 +152,18 @@ public class Search_DefaultImpl implements Search {
      *
      * @param languageCode de-DE for german
      */
-    private List<String> loadStopwords(String languageCode) throws URISyntaxException, IOException {
-        return Files.readAllLines(Paths.get(getClass().getClassLoader().getResource("stopwords_" + languageCode + ".txt").toURI()));
+    private List<String> loadStopwords(String languageCode) throws IOException {
+        List<String> stopwords = new ArrayList<>();
+        try (var inputStream = getClass().getClassLoader().getResourceAsStream("stopwords_" + languageCode + ".txt");
+             var reader = new BufferedReader(new InputStreamReader(inputStream))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                stopwords.add(line);
+            }
+        } catch (NullPointerException e) {
+            throw new RuntimeException("stopwords_" + languageCode + ".txt not found in the classpath");
+        }
+        return stopwords;
     }
 
     /**

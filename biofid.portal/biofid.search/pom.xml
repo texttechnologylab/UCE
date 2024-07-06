@@ -15,6 +15,9 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <javaVersion>21</javaVersion>
+        <maven.compiler.source>${java.version}</maven.compiler.source>
+        <maven.compiler.target>${java.version}</maven.compiler.target>
     </properties>
 
     <dependencies>
@@ -33,11 +36,11 @@
             <type>pom</type>
         </dependency>
 
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-fuseki-corpusUniverse</artifactId>
             <version>4.9.0</version>
-        </dependency>
+        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/org.apache.jena/jena-arq -->
         <dependency>

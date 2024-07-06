@@ -309,4 +309,5 @@ def get_topic_model():
     return current_app.config['topic_model']
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5678)
+    print("Rag service initialized!")
+    app.run(debug=True, port=5678, host="0.0.0.0")

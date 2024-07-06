@@ -40,4 +40,10 @@ public class CommonConfig {
     public String getRAGModel(){
         return getProperty("rag.model");
     }
+    public String getTemplatesLocation(){
+        return getProperty("templates.location");
+    }
+    public String getPublicLocation(){
+        return getProperty("external.public.location");
+    }
 }

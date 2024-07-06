@@ -6,10 +6,14 @@ import org.bson.Document;
 import org.texttechnologylab.utils.SupportedLanguages;
 import spark.Request;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.util.stream.Collectors;
 
 public final class LanguageResources {
 
@@ -30,7 +34,11 @@ public final class LanguageResources {
                 supportedLanguage = SupportedLanguages.GERMAN;
                 break;
         }
-        var jsonData = Files.readString(Paths.get(LanguageResources.class.getClassLoader().getResource("languageTranslations.json").toURI()));
+        var inputStream = getClass().getClassLoader().getResourceAsStream("languageTranslations.json");
+        String jsonData;
+        try (var reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
+            jsonData = reader.lines().collect(Collectors.joining(System.lineSeparator()));
+        }
         var gson = new Gson();
         languageTranslations = gson.fromJson(jsonData, Document.class);
     }

@@ -596,6 +596,7 @@ public class RAGService {
             }
             return ragEmbedDto.getMessage();
         } catch (Exception ex) {
+            ex.printStackTrace();
             // TODO: Logging!
             return null;
         }

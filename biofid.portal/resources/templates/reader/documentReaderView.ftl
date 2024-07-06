@@ -49,7 +49,7 @@
 
             <div class="w-100">
                 <div class="position-relative reader-container container"
-                     data-id="${document.getId()?string?replace('.', '')}"
+                     data-id="${document.getId()?string?replace('.', '')?replace(',', '')}"
                      data-pagescount="${document.getPages()?size}">
 
                     <div class="header text-center flexed align-items-center justify-content-around">

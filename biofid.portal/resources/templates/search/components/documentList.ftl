@@ -1,7 +1,7 @@
 <div>
     <#list searchState.getCurrentDocuments() as document>
         <div class="flexed justify-content-center">
-            <div class="document-card" data-id="${document.getId()?string?replace('.', '')}">
+            <div class="document-card" data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                 <div>
                     <div class="flexed align-items-stretch h-100">
 

@@ -29,7 +29,7 @@
             <div class="flexed align-items-center justify-content-between">
                 <h5 class="text-dark"><i class="fas fa-globe-europe mr-1"></i> Taxonverteilung
                     von ${document.getDocumentTitle()}</h5>
-                <a class="btn open-document" data-id="${document.getId()?string?replace('.', '')}">
+                <a class="btn open-document" data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                     <i class="color-secondary fas fa-book-open m-0"></i>
                 </a>
             </div>

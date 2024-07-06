@@ -3,6 +3,7 @@ package org.texttechnologylab;
 import freemarker.template.Configuration;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
+import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.corpus.Corpus;
@@ -30,17 +31,20 @@ public class App {
     private static final Configuration configuration = Configuration.getDefaultConfiguration();
 
     public static void main(String[] args) throws URISyntaxException, IOException {
+        System.out.println("Starting web service...");
+
         // Application context for services
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
-
         // Load in and test the language translation objects to handle multiple languages
         var languageResource = new LanguageResources("de-DE");
+        var commonConfig = new CommonConfig();
 
         // Set the folder for our template files of freemaker
         try {
-            configuration.setDirectoryForTemplateLoading(new File("resources/templates/"));
+            configuration.setDirectoryForTemplateLoading(new File(commonConfig.getTemplatesLocation()));
+
             // We use the extrenalLocation method so that the files in the public folder are hot reloaded
-            staticFiles.externalLocation("biofid.web/src/main/resources/public");
+            staticFiles.externalLocation(commonConfig.getPublicLocation());
         } catch (IOException e) {
             e.printStackTrace();
         }

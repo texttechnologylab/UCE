@@ -10,7 +10,7 @@
                 <#list message.getContextDocuments() as document>
                     <div class="col-md-12 p-2 m-0">
                         <div class="cdocument-card hoverable open-document"
-                             data-id="${document.getId()?string?replace('.', '')}">
+                             data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                             <p class="mb-1 small-font color-secondary"><i
                                         class="m-0 fas fa-book-open mr-1 color-secondary"></i> ${document.getDocumentTitle()}
                             </p>

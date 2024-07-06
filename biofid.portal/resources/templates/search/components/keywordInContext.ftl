@@ -26,7 +26,7 @@
                                 </div>
                             </div>
                             <button class="btn ml-2 pl-2 pr-2 pt-1 pb-1 open-document text"
-                                    data-id="${keywordsRows.getDocument_id()?string?replace('.', '')}">
+                                    data-id="${keywordsRows.getDocument_id()?string?replace('.', '')?replace(',', '')}">
                                 <i class="fas fa-external-link-alt"></i>
                             </button>
                         </div>
