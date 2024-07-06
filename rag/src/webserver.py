@@ -47,13 +47,13 @@ def plot_tsne():
             x_min, y_min = cluster_points.min(axis=0)
             x_max, y_max = cluster_points.max(axis=0)
             color = "blue"
-            fig.add_shape(
-                type="rect",
-                x0=x_min, y0=y_min, x1=x_max, y1=y_max,
-                line=dict(color=color),
-                fillcolor="rgba(0,0,0,0)",  # transparent fill color
-                opacity=0.6
-            )
+            #fig.add_shape(
+            #    type="rect",
+            #    x0=x_min, y0=y_min, x1=x_max, y1=y_max,
+            #    line=dict(color=color),
+            #    fillcolor="rgba(0,0,0,0)",  # transparent fill color
+            #    opacity=0.6
+            #)
 
         # Compute the minimum spanning tree (MST) for clusters
         dist_matrix = np.array([[euclidean(centroid1, centroid2) for centroid2 in centroids] for centroid1 in centroids])
@@ -77,12 +77,12 @@ def plot_tsne():
                     )
                     mid_x = (centroid1[0] + centroid2[0]) / 2
                     mid_y = (centroid1[1] + centroid2[1]) / 2
-                    fig.add_annotation(
-                        x=mid_x, y=mid_y,
-                        text=f"{distance:.2f}",
-                        showarrow=False,
-                        font=dict(color="Black", size=12, family="Arial")
-                    )
+                    #fig.add_annotation(
+                    #    x=mid_x, y=mid_y,
+                    #    text=f"{distance:.2f}",
+                    #    showarrow=False,
+                    #    font=dict(color="Black", size=12, family="Arial")
+                    #)
 
         fig.update_coloraxes(showscale=False)
         fig.update_layout(showlegend=False)
