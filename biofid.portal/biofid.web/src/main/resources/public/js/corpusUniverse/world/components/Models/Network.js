@@ -24,7 +24,7 @@ class Network {
         this.nodes = [];
         this.isReducedView = false;
         this.level = level;
-        this.clusterEpsilon = 6; // TODO: Maybe spread the tsne3d coordinates more
+        this.clusterEpsilon = 4.5; // TODO: Maybe spread the tsne3d coordinates more
         this.clusterMinPoints = 2;
         this.nodePosScaling = 3.2;
 

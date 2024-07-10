@@ -31,4 +31,4 @@ services:
       - pgdata:/var/lib/biofid-postgresql-db/data 
 
 volumes:
-  pgdata:  # Define a named volume for PostgreSQL data persistence
+  pgdata:
