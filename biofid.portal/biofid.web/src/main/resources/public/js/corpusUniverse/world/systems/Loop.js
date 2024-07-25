@@ -9,6 +9,13 @@ class Loop {
         this.scene = scene;
         this.renderer = renderer;
         this.updatables = [];
+        this.minimapRenderer = undefined;
+        this.minimapCamera = undefined;
+    }
+
+    addMinimap(minimapRenderer, minimapCamera){
+        this.minimapRenderer = minimapRenderer;
+        this.minimapCamera = minimapCamera;
     }
 
     start() {
@@ -19,8 +26,7 @@ class Loop {
             // render a frame
             this.renderer.render(this.scene, this.camera);
 
-            // Update tween
-            //TWEEN.update();
+            if(this.minimapRenderer !== undefined) this.minimapRenderer.render(this.scene, this.minimapCamera);
         });
     }
 

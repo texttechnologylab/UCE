@@ -14,7 +14,6 @@ import org.texttechnologylab.utils.ListUtils;
 import spark.ModelAndView;
 import spark.Route;
 
-import java.sql.Array;
 import java.util.*;
 
 import static org.texttechnologylab.routes.SearchApi.ActiveSearches;
@@ -34,6 +33,22 @@ public class CorpusUniverseApi {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.freemakerConfig = freemakerConfig;
     }
+
+    public Route getNodeInspectorContentView = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        //var corpusId = Long.parseLong(request.queryParams("corpusId"));
+        var documentId = Long.parseLong(request.queryParams("documentId"));
+
+        try {
+            var document = db.getDocumentById(documentId);
+            model.put("document", document);
+        } catch (Exception ex) {
+            // TODO: Logging
+            model.put("data", "");
+        }
+
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "universe/nodeInspectorContent.ftl"));
+    });
 
     public Route getCorpusUniverseView = ((request, response) -> {
         var model = new HashMap<String, Object>();
@@ -67,7 +82,7 @@ public class CorpusUniverseApi {
 
         switch (level){
             case DOCUMENTS:
-                var docEmbeddings = ragService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 1000);
+                var docEmbeddings = ragService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 100);
                 var documents = db.getManyDocumentsByIds(
                         docEmbeddings.stream().map(de -> (int)de.getDocument_id()).toList());
 
@@ -80,6 +95,7 @@ public class CorpusUniverseApi {
                     if(doc.get().getDocumentTopicDistribution() != null) node.setPrimaryTopic(doc.get().getDocumentTopicDistribution().getYakeTopicOne());
                     node.setTsne2d(docEmbedding.getTsne2d());
                     node.setTsne3d(docEmbedding.getTsne3d());
+                    node.setTitle(doc.get().getDocumentTitle());
                     node.setDocumentLength(doc.get().getFullText().length());
                     nodes.add(node);
                 }
@@ -118,6 +134,7 @@ public class CorpusUniverseApi {
                     if(doc.getDocumentTopicDistribution() != null) node.setPrimaryTopic(doc.getDocumentTopicDistribution().getYakeTopicOne());
                     node.setTsne2d(docEmbedding.get().getTsne2d());
                     node.setTsne3d(docEmbedding.get().getTsne3d());
+                    node.setTitle(doc.getDocumentTitle());
                     node.setDocumentLength(doc.getFullText().length());
                     nodes.add(node);
                 }

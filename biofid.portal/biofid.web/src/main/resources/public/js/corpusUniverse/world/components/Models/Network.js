@@ -18,13 +18,15 @@ import {createCube} from "./../cube.js";
 import {createSphere} from "./../sphere.js";
 
 import {ConvexGeometry} from 'three/addons/geometries/ConvexGeometry.js';
+import {Planet} from "./Planet.js";
 
 class Network {
     constructor(level) {
         this.nodes = [];
+        this.planets = [];
         this.isReducedView = false;
         this.level = level;
-        this.clusterEpsilon = 4.5; // TODO: Maybe spread the tsne3d coordinates more
+        this.clusterEpsilon = 4.5;
         this.clusterMinPoints = 2;
         this.nodePosScaling = 3.2;
 
@@ -38,8 +40,27 @@ class Network {
         return this.nodes;
     }
 
+    /**
+     * the neighbors are the other nodes in the planet, if this node belongs to a planet.
+     * @param node
+     */
+    getNeighborsOfNode(node){
+        const planet = this.planets.find(p => p.getId() === node.getPlanetId());
+        if(planet !== undefined) return planet.getNodes().filter(n => n.getId() !== node.getId());
+        return [];
+    }
+
+    getPlanetOfNode(node){
+        if(node.getPlanetId() === undefined) return null;
+        return this.planets.find(p => p.getId() === node.getPlanetId());
+    }
+
     getNodeByDocumentId(documentId) {
         return this.nodes.find(n => n.getDocumentId().toString() === documentId.toString());
+    }
+
+    getNodeById(id){
+        return this.nodes.find(n => n.getId().toString() === id.toString());
     }
 
     setIsReducedView(isReduced) {
@@ -61,7 +82,7 @@ class Network {
                 n.tsne3d = n.tsne3d.map(i => i * this.nodePosScaling);
             }
 
-            this.nodes.push(new Node(n.documentId, n.tsne2d, n.tsne3d, n.primaryTopic, n.documentLength))
+            this.nodes.push(new Node(n.documentId, n.tsne2d, n.tsne3d, n.primaryTopic, n.documentLength, n.title))
         });
     }
 
@@ -79,104 +100,95 @@ class Network {
         for (const n of this.nodes) {
             await n.draw(font, scene, loop, camera);
         }
+
         // After we drew the nodes, cluster them.
-        this.addDbscanClustering();
+        console.log('Clustering...');
+        this.planets = this.calculatePlanets();
+
+        // After clustering, we apply force push
+        console.log('Applying Force Direction...');
+        this.applyDirectionForce(this.nodes);
+
+        // Draw the planets. Always call this after applying any force.
+        this.planets.forEach(planet => planet.drawPlanet(this.scene, this.loop));
+
+        console.log('Drew the network.');
     }
 
     /**
-     * Clusters the currently given nodes and draws those clusters as well.
+     * A classical force directed push which is known by force direct graphs e.g.
+     * https://observablehq.com/@d3/force-directed-graph-component
+     * @param nodes
+     * @param iterations
+     * @param repulsionForce
+     * @param attractionForce
      */
-    addDbscanClustering() {
+    applyDirectionForce(nodes,
+                        iterations = 50,
+                        repulsionForce = 150,
+                        attractionForce = 0.00035) {
+
+        for (let i = 0; i < iterations; i++) {
+            // Calculate repulsive forces
+            nodes.forEach((nodeA, indexA) => {
+                nodes.forEach((nodeB, indexB) => {
+                    if (nodeA === undefined || nodeB === undefined) return;
+                    if (indexA !== indexB) {
+                        let dx = nodeA.getTsne3d()[0] - nodeB.getTsne3d()[0];
+                        let dy = nodeA.getTsne3d()[1] - nodeB.getTsne3d()[1];
+                        let dz = nodeA.getTsne3d()[2] - nodeB.getTsne3d()[2];
+                        let distance = Math.sqrt(dx * dx + dy * dy + dz * dz);
+                        if (distance < 1) distance = 1; // Avoid division by zero
+
+                        let force = repulsionForce / (distance * distance);
+                        let new3dPos = []
+                        new3dPos[0] = nodeA.getTsne3d()[0] + (dx / distance) * force;
+                        new3dPos[1] = nodeA.getTsne3d()[1] + (dy / distance) * force;
+                        new3dPos[2] = nodeA.getTsne3d()[2] + (dz / distance) * force;
+                        nodeA.set3dPosition(new3dPos);
+                    }
+                });
+            });
+
+            // Calculate attractive forces
+            nodes.forEach(nodeA => {
+                this.getNeighborsOfNode(nodeA).forEach(nodeB => {
+                    let dx = nodeA.getTsne3d()[0] - nodeB.getTsne3d()[0];
+                    let dy = nodeA.getTsne3d()[1] - nodeB.getTsne3d()[1];
+                    let dz = nodeA.getTsne3d()[2] - nodeB.getTsne3d()[2];
+                    let distance = Math.min(999, Math.sqrt(dx * dx + dy * dy + dz * dz));
+
+                    let force = (distance * distance) * attractionForce;
+                    let newPosA = [];
+                    newPosA[0] = nodeA.getTsne3d()[0] - (dx / distance) * force;
+                    newPosA[1] = nodeA.getTsne3d()[1] - (dy / distance) * force;
+                    newPosA[2] = nodeA.getTsne3d()[2] - (dz / distance) * force;
+                    nodeA.set3dPosition(newPosA);
+
+                    let newPosB = [];
+                    newPosB[0] = nodeB.getTsne3d()[0] + (dx / distance) * force;
+                    newPosB[1] = nodeB.getTsne3d()[1] + (dy / distance) * force;
+                    newPosB[2] = nodeB.getTsne3d()[2] + (dz / distance) * force;
+                    nodeB.set3dPosition(newPosB)
+                });
+            });
+        }
+    }
+
+    /**
+     * Calculates planets by performing DB clusters and returns them.
+     */
+    calculatePlanets() {
         if (this.scene === undefined) return;
 
         const points = this.nodes.map(n => n.getTsne3dAsVec());
         const {clusters, noise} = dbscan(points, this.clusterEpsilon, this.clusterMinPoints);
 
-        // After we've calculated the clusters, make them unique in the universe with colors and edges.
-        clusters.forEach((cluster, index) => {
-            const color = new Color(Math.random(), Math.random(), Math.random());
-            const center = calculateClusterCenter(cluster);
-
-            // Spawn a sphere in the center of the cluster?...
-            const sphere = createSphere(0.3, 30, 30);
-            sphere.material.color.set(new Color(0, 0, 0));
-            sphere.position.set(new Vector3(center.x, center.y, center.z));
-            this.loop.updatables.push(sphere);
-            this.scene.add(sphere);
-
-            let hasConvexMesh = false;
-
-            // Create the convex hull mesh for each cluster
-            const clusterPoints = cluster.map(point => new Vector3(point.x, point.y, point.z)).filter(p => p !== undefined);
-
-            // Remove duplicates
-            const uniqueClusterPoints = clusterPoints.filter((point, index, self) =>
-                    index === self.findIndex((t) => (
-                        t.x === point.x && t.y === point.y && t.z === point.z
-                    ))
-            );
-
-            if (uniqueClusterPoints.length >= 4) { // Convex hull requires at least 3 points
-                try {
-                    // Create the default cluster mesh
-                    const convexGeometry = new ConvexGeometry(uniqueClusterPoints);
-                    const meshMaterial = new MeshBasicMaterial(
-                        {color: color, opacity: 0.4, transparent: true, side: DoubleSide});
-                    const convexMesh = new Mesh(convexGeometry, meshMaterial);
-                    convexMesh.userData.center = center;
-
-                    // Create a second convex hull mesh with scaled-down vertices towards the center
-                    const smallerVertices = uniqueClusterPoints.map(v => {
-                        const direction = new Vector3().copy(v).sub(center).normalize(); // Direction towards the center
-                        const scaledVertex = new Vector3().copy(v).sub(direction.multiplyScalar(0.01)); // Scale down by 1% towards the center
-                        return scaledVertex;
-                    }); // Scale down by 0.99
-                    const insideConvexGeometry = new ConvexGeometry(smallerVertices);
-                    const insideMaterial = new MeshBasicMaterial(
-                        {color: color, opacity: 1.0, transparent: true, side: BackSide});
-                    const insideConvexMesh = new Mesh(insideConvexGeometry, insideMaterial);
-                    insideConvexMesh.userData.noClick = true;
-                    convexMesh.add(insideConvexMesh);
-
-                    // Optional: Create edges for better visualization of the convex hull
-                    const edges = new EdgesGeometry(convexGeometry);
-                    const edgesMaterial = new LineBasicMaterial({color: color, opacity: 0.5, transparent: true});
-                    const lineSegments = new LineSegments(edges, edgesMaterial);
-                    lineSegments.userData.defaultColor = color;
-                    lineSegments.userData.defaultOpacity = 0.5;
-
-                    convexMesh.add(lineSegments);
-
-                    // Add the convex to scene
-                    this.scene.add(convexMesh);
-                    hasConvexMesh = true;
-                } catch (error) {
-                    console.error(error);
-                    console.warn("Couldnt build convex mesh for cluster.");
-                }
-            }
-
-            cluster.forEach(point => {
-                const node = this.nodes.find(n => n.hasSamePosition([point.x, point.y, point.z]));
-                if (node) {
-                    if(!hasConvexMesh){
-                        // Add the edges to the center of the cluster.
-                        // TODO: These edges are very costly. Maybe do it differently?
-                        const edge = createEdge(new Vector3(center.x, center.y, center.z), new Vector3(point.x, point.y, point.z));
-                        edge.userData.noHover = true;
-                        edge.material.color.set(color);
-                        edge.material.opacity = 0.2;
-                        this.loop.updatables.push(edge);
-                        this.scene.add(edge);
-                    }
-
-                    node.getObjectMesh().material.color.set(color);
-                    node.setNewDefaultColor(color);
-                }
-            })
-        });
+        // Foreach cluster, we return a planet.
+        return clusters.map(cluster => new Planet(
+            cluster,
+            cluster.map(point => this.nodes.find(n => n.hasSamePosition([point.x, point.y, point.z])))));
     }
-
 }
 
 export {Network};

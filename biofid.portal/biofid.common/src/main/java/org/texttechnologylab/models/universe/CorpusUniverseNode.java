@@ -5,7 +5,16 @@ public class CorpusUniverseNode {
     private float[] tsne2d;
     private float[] tsne3d;
     private String primaryTopic;
+    private String title;
     private int documentLength;
+
+    public String getTitle() {
+        return title;
+    }
+
+    public void setTitle(String title) {
+        this.title = title;
+    }
 
     public int getDocumentLength() {
         return documentLength;

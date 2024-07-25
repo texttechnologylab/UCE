@@ -85,6 +85,10 @@ function calculateClusterCenter(cluster) {
     return calculateCenter(cluster);
 }
 
+function calculatePlanetCenter(planet){
+    return calculateCenter(planet.getNodes().map(node => node.getTsne3dAsVec()));
+}
+
 function calculateCenter(points){
     const center = { x: 0, y: 0, z: 0 };
 
@@ -108,4 +112,4 @@ function addNoise(array, noiseLevel) {
     });
 }
 
-export {euclideanDistance, dbscan, calculateClusterCenter, addNoise, calculateCenter };
+export {euclideanDistance, dbscan, calculateClusterCenter, calculatePlanetCenter, addNoise, calculateCenter };

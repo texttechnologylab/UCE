@@ -12,10 +12,8 @@ import javax.persistence.*;
  */
 public class MetadataTitleInfo extends ModelBase {
     private String scrapedUrl;
-
     @Column(columnDefinition = "TEXT")
     private String title;
-
     @Column(columnDefinition = "TEXT")
     private String published;
     private String pdfUrl;

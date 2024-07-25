@@ -31,6 +31,60 @@
 <div id="universe-container" class="corpus-universe-container">
 </div>
 
+<!-- UI overlay -->
+<div class="corpus-universe-container-ui">
+    <div class="position-relative w-100 h-100">
+
+        <div class="coordinates">
+            <i class="fas fa-map-marker-alt mr-1"></i>
+            <span class="x">0</span>,
+            <span class="y">0</span>,
+            <span class="z">0</span>
+        </div>
+
+        <!-- inspector -->
+        <div class="inspector-window">
+
+            <div class="header bg-light">
+                <div class="flexed align-items-center justify-content-between p-4">
+                    <div>
+                        <h5 class="title mb-1 mr-2 text-dark">Musterplanet oder Node</h5>
+                        <p class="mb-0 small-font text-secondary"><span><i class="fas fa-thumbtack mr-1"></i>-170.44, -87.54, -24,57</span> <i class="fas fa-globe ml-1"></i> Planet</p>
+                    </div>
+                    <button class="btn close-btn" onclick="$('.inspector-window').fadeOut(50);">
+                        <i class="m-0 fas fa-long-arrow-alt-right"></i>
+                    </button>
+                </div>
+            </div>
+
+            <hr class="mt-0 mb-0"/>
+
+            <!-- The content changes according to the selected object -->
+            <div class="content">
+
+            </div>
+        </div>
+
+    </div>
+</div>
+
+<!-- We take this html, clone it, fill it and then use it as content within js -->
+<div class="inspector-window-node-content display-none" data-type="template">
+
+    <div data-type="planet-association" class="content-group flexed align-items-center justify-content-between">
+        <p class="mb-0">Belongs to planet:</p>
+        <a>Fauna USA</a>
+    </div>
+
+    <!-- document data, which we fetch from the backend -->
+    <div data-type="document-data" class="content-group">
+        <i class="fas fa-spinner rotate mt-2 mb-2 text-center w-100"></i>
+    </div>
+
+</div>
+
+
+
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script
         src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"
