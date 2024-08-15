@@ -1,6 +1,8 @@
 package org.texttechnologylab;
 
 import freemarker.template.Configuration;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.CommonConfig;
@@ -30,14 +32,22 @@ public class App {
     // Freemaker configuration
     private static final Configuration configuration = Configuration.getDefaultConfiguration();
 
+    private static final Logger logger = LogManager.getLogger();
+
     public static void main(String[] args) throws URISyntaxException, IOException {
-        System.out.println("Starting web service...");
+        logger.info("Starting the UCE web service...");
 
         // Application context for services
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        logger.info("Loaded application context and services.");
+
         // Load in and test the language translation objects to handle multiple languages
+        logger.info("Testing the language resources:");
         var languageResource = new LanguageResources("de-DE");
+        logger.info(languageResource.get("search"));
+
         var commonConfig = new CommonConfig();
+        logger.info("Loaded the common config.");
 
         // Set the folder for our template files of freemaker
         try {
@@ -45,11 +55,15 @@ public class App {
 
             // We use the extrenalLocation method so that the files in the public folder are hot reloaded
             staticFiles.externalLocation(commonConfig.getPublicLocation());
-        } catch (IOException e) {
-            e.printStackTrace();
+            logger.info("Setup FreeMarker templates and public folders.");
+        } catch (Exception e) {
+            logger.error("Error setting up FreeMarker, the application will hence shutdown.", e);
+            return;
         }
 
+        logger.info("Initializing all the spark routes...");
         initSparkRoutes(context);
+        logger.info("Routes initialized - UCE web service has started!");
     }
 
     private static void initSparkRoutes(ApplicationContext context) {
@@ -90,8 +104,7 @@ public class App {
 
         // Define default exception handler. This shows an error view then in the body.
         ExceptionHandler<Exception> defaultExceptionHandler = (exception, request, response) -> {
-            System.err.println("Unknown error handled in API:");
-            exception.printStackTrace();
+            logger.error("Unknown error handled in API - returning default error view.", exception);
             response.status(500);
             response.body(new CustomFreeMarkerEngine(configuration).render(new ModelAndView(null, "defaultError.ftl")));
         };
@@ -101,7 +114,9 @@ public class App {
 
             exception(Exception.class, defaultExceptionHandler);
 
-            before("/*", (q, a) -> System.out.println("Received API call."));
+            before("/*", (req, res) -> {
+                logger.info("Received API call: IP={}, Method={}, URI={}", req.ip(), req.requestMethod(), req.uri());
+            });
 
             path("/search", () -> {
                 post("/default", searchApi.search);

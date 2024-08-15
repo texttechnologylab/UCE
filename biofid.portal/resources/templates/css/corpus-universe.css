@@ -95,7 +95,10 @@
 .corpus-universe-container-ui .inspector-window .inspector-window-node-content .text-snippet{
     border-radius: 6px;
     background-color: rgba(125, 125, 125, 0.15);
-    padding: 8px 12px;
+    padding-top: 8px;
+    padding-bottom: 8px;
+    padding-left: 12px;
+    padding-right: 12px;
     font-size: small;
     font-style: italic;
     text-align: justify;

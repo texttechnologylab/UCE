@@ -22,6 +22,15 @@ class UI {
 
     async openNodeInspector(node, planet){
         const $inspectorWindow = $('.inspector-window');
+
+        // Set the header information
+        $inspectorWindow.find('.header .title').html(node.getPrimaryTopic());
+        $inspectorWindow.find('.header .type').html('Node');
+        $inspectorWindow.find('.header .position').html(`
+            ${Number(node.getTsne3d()[0]).toFixed(2)}, 
+            ${Number(node.getTsne3d()[1]).toFixed(2)}, 
+            ${Number(node.getTsne3d()[2]).toFixed(2)} 
+        `);
         $inspectorWindow.show();
 
         // First, clone the template and put it into the inspector
@@ -32,9 +41,9 @@ class UI {
 
         // Now fill the content template instance
         if(planet === null){
-            $inspectorWindow.find('.content-group[data-type="planet-association"]').hide();
+            $inspectorWindow.find('.content-include[data-type="planet-association"]').hide();
         } else{
-            $inspectorWindow.find('.content-group[data-type="planet-association"] a').html(planet.getName());
+            $inspectorWindow.find('.content-include[data-type="planet-association"] a').html(planet.getName());
         }
 
         let content = undefined;
@@ -57,7 +66,7 @@ class UI {
         if(!result || content === undefined) return;
 
         // Add the fetched inspector content view.
-        $inspectorWindow.find('.content-group[data-type="document-data"]').html(content);
+        $inspectorWindow.find('.content-include[data-type="document-data"]').html(content);
     }
 
     updateCoordinates() {

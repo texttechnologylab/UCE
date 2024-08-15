@@ -3,6 +3,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Logging ###
+biofid.portal/logs/
+
 ### IntelliJ IDEA ###
 .idea
 .idea/modules.xml

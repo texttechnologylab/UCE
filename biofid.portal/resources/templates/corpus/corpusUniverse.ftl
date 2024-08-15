@@ -48,8 +48,10 @@
             <div class="header bg-light">
                 <div class="flexed align-items-center justify-content-between p-4">
                     <div>
-                        <h5 class="title mb-1 mr-2 text-dark">Musterplanet oder Node</h5>
-                        <p class="mb-0 small-font text-secondary"><span><i class="fas fa-thumbtack mr-1"></i>-170.44, -87.54, -24,57</span> <i class="fas fa-globe ml-1"></i> Planet</p>
+                        <h5 class="title mb-1 mr-2 text-dark"></h5>
+                        <p class="mb-0 small-font text-secondary">
+                            <i class="fas fa-thumbtack mr-1"></i><span class="position">-170.44, -87.54, -24,57</span>
+                            <i class="fas fa-globe ml-1"></i> <span class="type"></span></p>
                     </div>
                     <button class="btn close-btn" onclick="$('.inspector-window').fadeOut(50);">
                         <i class="m-0 fas fa-long-arrow-alt-right"></i>
@@ -77,7 +79,7 @@
     </div>
 
     <!-- document data, which we fetch from the backend -->
-    <div data-type="document-data" class="content-group">
+    <div data-type="document-data" class="content-include">
         <i class="fas fa-spinner rotate mt-2 mb-2 text-center w-100"></i>
     </div>
 

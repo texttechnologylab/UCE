@@ -2,6 +2,8 @@ package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.config.CorpusConfig;
@@ -18,7 +20,7 @@ public class DocumentApi {
     private UIMAService uimaService = null;
     private RAGService ragService = null;
     private PostgresqlDataInterface_Impl db = null;
-
+    private static final Logger logger = LogManager.getLogger();
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
 
     public DocumentApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
