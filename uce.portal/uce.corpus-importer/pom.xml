@@ -10,7 +10,7 @@
     <artifactId>corpus-importer</artifactId>
     <packaging>jar</packaging>
 
-    <name>biofid.corpus-importer</name>
+    <name>uce.corpus-importer</name>
     <url>http://maven.apache.org</url>
 
     <properties>

@@ -118,15 +118,15 @@ public class CorpusUniverseApi {
             // TODO: Log here and return something? Dont know what yet
         }
         var activeSearchState = ActiveSearches.get(searchId);
-        var biofidSearch = new Search_DefaultImpl();
-        biofidSearch.fromSearchState(this.context, activeSearchState);
+        var search = new Search_DefaultImpl();
+        search.fromSearchState(this.context, activeSearchState);
         var nodes = new ArrayList<CorpusUniverseNode>();
 
         switch (level){
             case DOCUMENTS:
                 var docEmbeddings = ragService.getManyDocumentEmbeddingsOfDocuments(
-                        biofidSearch.getSearchState().getCurrentDocuments().stream().map(d -> d.getId()).toList());
-                for(var doc: biofidSearch.getSearchState().getCurrentDocuments()){
+                        search.getSearchState().getCurrentDocuments().stream().map(d -> d.getId()).toList());
+                for(var doc: search.getSearchState().getCurrentDocuments()){
                     var docEmbedding = docEmbeddings.stream().filter(e -> e.getDocument_id() == doc.getId()).findFirst();
                     if(docEmbedding.isEmpty() || docEmbedding.get().getTsne3d() == null) continue;
                     var node = new CorpusUniverseNode();

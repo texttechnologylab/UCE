@@ -7,11 +7,8 @@ import org.texttechnologylab.services.RAGService;
 
 import java.io.BufferedReader;
 import java.io.IOException;
-import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -20,13 +17,13 @@ import java.util.List;
  * Class that encapsulates all search layers within the biofid class
  */
 public class Search_DefaultImpl implements Search {
-    private SearchState biofidSearchState;
+    private SearchState searchState;
     private List<String> stopwords;
     private PostgresqlDataInterface_Impl db;
     private RAGService ragService;
 
     /**
-     * Creates a new instance of the BiofidSearch, throws exceptions if components couldn't be inited.
+     * Creates a new instance of the Search_DefaultImpl, throws exceptions if components couldn't be inited.
      *
      * @param searchPhrase
      * @throws URISyntaxException
@@ -37,29 +34,29 @@ public class Search_DefaultImpl implements Search {
                               long corpusId,
                               List<SearchLayer> searchLayers) throws URISyntaxException, IOException {
 
-        this.biofidSearchState = new SearchState(SearchType.DEFAULT);
-        this.biofidSearchState.setSearchLayers(searchLayers);
+        this.searchState = new SearchState(SearchType.DEFAULT);
+        this.searchState.setSearchLayers(searchLayers);
         initServices(serviceContext);
 
-        this.biofidSearchState.setCorpusId(corpusId);
-        this.biofidSearchState.setSearchPhrase(searchPhrase);
-        this.biofidSearchState.setSearchTokens(cleanSearchPhrase(searchPhrase));
+        this.searchState.setCorpusId(corpusId);
+        this.searchState.setSearchPhrase(searchPhrase);
+        this.searchState.setSearchTokens(cleanSearchPhrase(searchPhrase));
     }
 
     public Search_DefaultImpl() {
     }
 
-    public void fromSearchState(ApplicationContext serviceContext, SearchState biofidSearchState) throws URISyntaxException, IOException {
+    public void fromSearchState(ApplicationContext serviceContext, SearchState searchState) throws URISyntaxException, IOException {
         initServices(serviceContext);
-        setSearchState(biofidSearchState);
+        setSearchState(searchState);
     }
 
     public SearchState getSearchState() {
-        return this.biofidSearchState;
+        return this.searchState;
     }
 
     public void setSearchState(SearchState searchState) {
-        this.biofidSearchState = searchState;
+        this.searchState = searchState;
     }
 
     /**
@@ -71,17 +68,17 @@ public class Search_DefaultImpl implements Search {
         DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
         if (documentSearchResult == null)
             throw new NullPointerException("Document Init Search returned null - not empty.");
-        biofidSearchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
-        biofidSearchState.setTotalHits(documentSearchResult.getDocumentCount());
-        biofidSearchState.setFoundNamedEntities(documentSearchResult.getFoundNamedEntities());
-        biofidSearchState.setFoundTaxons(documentSearchResult.getFoundTaxons());
-        biofidSearchState.setFoundTimes(documentSearchResult.getFoundTimes());
+        searchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
+        searchState.setTotalHits(documentSearchResult.getDocumentCount());
+        searchState.setFoundNamedEntities(documentSearchResult.getFoundNamedEntities());
+        searchState.setFoundTaxons(documentSearchResult.getFoundTaxons());
+        searchState.setFoundTimes(documentSearchResult.getFoundTimes());
 
         // Execute embedding search if desired.
         // This search is lose coupled from the rest and only done once in the initiation.
-        if (biofidSearchState.getSearchLayers().contains(SearchLayer.EMBEDDINGS)) {
+        if (searchState.getSearchLayers().contains(SearchLayer.EMBEDDINGS)) {
             var closestDocumentsEmbeddings = ragService.getClosestDocumentChunkEmbeddings(
-                    this.biofidSearchState.getSearchPhrase(),
+                    this.searchState.getSearchPhrase(),
                     20);
 
             var foundDocumentChunkEmbeddings = new ArrayList<DocumentChunkEmbeddingSearchResult>();
@@ -93,10 +90,10 @@ public class Search_DefaultImpl implements Search {
 
                 foundDocumentChunkEmbeddings.add(documentChunkEmbedding);
             }
-            biofidSearchState.setFoundDocumentChunkEmbeddings(foundDocumentChunkEmbeddings);
+            searchState.setFoundDocumentChunkEmbeddings(foundDocumentChunkEmbeddings);
         }
 
-        return biofidSearchState;
+        return searchState;
     }
 
     /**
@@ -106,11 +103,11 @@ public class Search_DefaultImpl implements Search {
      */
     public SearchState getSearchHitsForPage(int page) {
         // Adjust the current page and execute the search again
-        this.biofidSearchState.setCurrentPage(page);
+        this.searchState.setCurrentPage(page);
         var documentSearchResult = executeSearchOnDatabases(false);
         if (documentSearchResult == null) throw new NullPointerException("Document Search returned null - not empty.");
-        biofidSearchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
-        return biofidSearchState;
+        searchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
+        return searchState;
     }
 
     /**
@@ -121,27 +118,27 @@ public class Search_DefaultImpl implements Search {
      */
     private DocumentSearchResult executeSearchOnDatabases(boolean countAll) {
 
-        if (biofidSearchState.getSearchLayers().contains(SearchLayer.METADATA)) {
-            return db.defaultSearchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
-                    biofidSearchState.getTake(),
-                    biofidSearchState.getSearchTokens(),
+        if (searchState.getSearchLayers().contains(SearchLayer.METADATA)) {
+            return db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
+                    searchState.getTake(),
+                    searchState.getSearchTokens(),
                     SearchLayer.METADATA,
                     countAll,
-                    biofidSearchState.getOrder(),
-                    biofidSearchState.getOrderBy(),
-                    biofidSearchState.getCorpusId());
+                    searchState.getOrder(),
+                    searchState.getOrderBy(),
+                    searchState.getCorpusId());
         }
 
         // Execute the Named Entity search, which automatically executes metadata as well
-        if (biofidSearchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES)) {
-            return db.defaultSearchForDocuments((biofidSearchState.getCurrentPage() - 1) * biofidSearchState.getTake(),
-                    biofidSearchState.getTake(),
-                    biofidSearchState.getSearchTokens(),
+        if (searchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES)) {
+            return db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
+                    searchState.getTake(),
+                    searchState.getSearchTokens(),
                     SearchLayer.NAMED_ENTITIES,
                     countAll,
-                    biofidSearchState.getOrder(),
-                    biofidSearchState.getOrderBy(),
-                    biofidSearchState.getCorpusId());
+                    searchState.getOrder(),
+                    searchState.getOrderBy(),
+                    searchState.getCorpusId());
         }
 
         return null;
@@ -188,7 +185,6 @@ public class Search_DefaultImpl implements Search {
         // TODO: Add more language support in the future
         this.stopwords = loadStopwords("de-DE");
     }
-
 
 }
 

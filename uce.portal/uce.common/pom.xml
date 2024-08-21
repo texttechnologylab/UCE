@@ -10,7 +10,7 @@
     <artifactId>common</artifactId>
     <packaging>jar</packaging>
 
-    <name>biofid.common</name>
+    <name>uce.common</name>
     <url>http://maven.apache.org</url>
 
     <properties>

@@ -48,9 +48,9 @@ public class SearchApi {
         var activeSearchState = ActiveSearches.get(searchId);
         activeSearchState.setOrder(SearchOrder.valueOf(order));
         activeSearchState.setOrderBy(OrderByColumn.valueOf(orderBy));
-        var biofidSearch = new Search_DefaultImpl();
-        biofidSearch.fromSearchState(this.context, activeSearchState);
-        activeSearchState = biofidSearch.getSearchHitsForPage(activeSearchState.getCurrentPage());
+        var search = new Search_DefaultImpl();
+        search.fromSearchState(this.context, activeSearchState);
+        activeSearchState = search.getSearchHitsForPage(activeSearchState.getCurrentPage());
 
         var model = new HashMap<String, Object>();
         model.put("searchState", activeSearchState);
@@ -67,9 +67,9 @@ public class SearchApi {
         }
         // Get the next pages.
         var activeSearchState = ActiveSearches.get(searchId);
-        var biofidSearch = new Search_DefaultImpl();
-        biofidSearch.fromSearchState(this.context, activeSearchState);
-        activeSearchState = biofidSearch.getSearchHitsForPage(page);
+        var search = new Search_DefaultImpl();
+        search.fromSearchState(this.context, activeSearchState);
+        activeSearchState = search.getSearchHitsForPage(page);
 
         var model = new HashMap<String, Object>();
         model.put("searchState", activeSearchState);
@@ -117,8 +117,8 @@ public class SearchApi {
             if(useEmbeddings) searchLayers.add(SearchLayer.EMBEDDINGS);
             if(includeKeywordInContext) searchLayers.add(SearchLayer.KEYWORDINCONTEXT);
 
-            var biofidSearch = new Search_DefaultImpl(context, searchInput, corpusId, searchLayers);
-            searchState = biofidSearch.initSearch();
+            var search = new Search_DefaultImpl(context, searchInput, corpusId, searchLayers);
+            searchState = search.initSearch();
         }
 
         ActiveSearches.put(searchState.getSearchId().toString(), searchState);

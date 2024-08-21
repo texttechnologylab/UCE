@@ -10,7 +10,7 @@
     <artifactId>search</artifactId>
     <packaging>jar</packaging>
 
-    <name>biofid.search</name>
+    <name>uce.search</name>
     <url>http://maven.apache.org</url>
 
     <properties>

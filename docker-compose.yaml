@@ -13,7 +13,7 @@ services:
   biofid-web:
     build:
       context: .
-      dockerfile: ./biofid.portal/biofid.web/Dockerfile
+      dockerfile: ./uce.portal/uce.web/Dockerfile
     ports:
       - "8008:4567"
     depends_on:
