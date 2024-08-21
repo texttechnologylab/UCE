@@ -1,0 +1,213 @@
+* {
+    font-family: Georgia;
+}
+
+.dot {
+    position: fixed;
+    width: 18px;
+    height: 18px;
+    background: white;
+    mix-blend-mode: difference;
+    border-radius: 50%;
+    pointer-events: none;
+    transition: transform 0.35s;
+    z-index: 999;
+}
+.expanded-cursor{
+    transition: transform 0.25s;
+    transform: scale(300, 300);
+}
+@keyframes cursorAnim {
+    0% {
+        transform: scale(1);
+    }
+    100% {
+        transform: scale(.7);
+    }
+}
+
+.no-cursor{
+    cursor: none;
+}
+
+body {
+}
+
+.pages-loader-popup{
+    position: fixed;
+    left:12px;
+    bottom: 12px;
+    width: 225px;
+    height: 75px;
+    background-color: white;
+    border:lightgray 1px solid;
+    z-index: 99;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+
+.site-container {
+    padding-top: 3rem;
+    padding-bottom: 3rem;
+}
+
+.reader-container {
+    padding: 0 !important;
+    background-color: ghostwhite;
+    border: lightgray 1px solid;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+}
+
+.reader-container .header {
+    position: sticky;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 50px;
+    padding: 2.5rem;
+    border-bottom: lightgray 1px solid;
+    z-index: 4;
+    top: 0;
+    background-color: ghostwhite;
+}
+
+.open-metadata-url-btn {
+    border: Lightgray 1px solid;
+    height: 50px;
+    width: 50px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.document-content {
+    padding: 2rem 4.5rem;
+}
+
+.document-content p {
+    text-align: justify;
+    line-height: 25px;
+    z-index: 1;
+}
+
+.document-content .page i,.fa-external-link{
+    font-size: small;
+}
+
+.document-content .page {
+    min-height: 100vh;
+    position: relative;
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+    border-bottom: lightgray solid 1px;
+}
+
+.document-content .page .blurrer {
+    position: absolute;
+    width: 110%;
+    left: -5%;
+    top: 0;
+    height: 100%;
+    opacity: 1;
+    backdrop-filter: blur(4px);
+    z-index: 2;
+}
+
+.document-content .annotation {
+    z-index: 3;
+    transition: 0.15s;
+    position: relative;
+}
+
+.document-content .annotation:hover{
+    transition: 0.15s;
+    background-color: var(--dark);
+    color:white
+}
+
+.document-content .annotation.highlighted{
+    font-weight: bold;
+    background-color: rgba(235, 226, 52, 1);
+    font-size: large;
+    color:black !important;
+}
+
+.document-content .time {
+    color: var(--dark);
+    text-decoration-color: transparent;
+}
+
+.document-content .wiki {
+    color: red;
+}
+
+.document-content .taxon {
+    text-decoration-thickness: 1px;
+    opacity: 0.75;
+    text-decoration-line: underline;
+}
+
+.document-content i, .fa-search {
+    color: var(--dark);
+}
+
+.side-bar {
+    width: 500px;
+    transition: 0.5s;
+    background-color: ghostwhite;
+    border-left: lightgray 1px solid;
+    border-top: lightgray 1px solid;
+    border-right: lightgray 1px solid;
+    position: sticky;
+    right: 0;
+    top: -1px;
+    overflow-y: auto;
+    box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+    height: 100vh;
+}
+
+.side-bar .title-image{
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.side-bar .title-image img{
+    object-fit: contain;
+    max-height: 200px;
+    width: 100%;
+}
+
+.side-bar .expander {
+    position: absolute;
+    left: -50px;
+    cursor: pointer;
+    top: 200px;
+    z-index: 5;
+    width: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 50px;
+    background-color: ghostwhite;
+    border: lightgray 1px solid;
+    border-right: none !important;
+    border-radius: 50% 0% 0% 50%;
+    transition: all 0.25s;
+}
+
+.side-bar .expander:hover {
+    border-color: gray;
+    transition: all 0.25s;
+}
+
+.side-bar .header {
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+}
+
+.side-bar .side-bar-content {
+    padding: 1.5rem;
+}
+
+.side-bar .side-bar-content .group-box .toggled-btn{
+    background-color: var(--prime);
+    color:white;
+}

@@ -1,0 +1,178 @@
+* {
+    font-family: Georgia;
+}
+
+.site-container{
+    overflow-x: hidden;
+}
+
+.nav{
+    background-color: transparent;
+    border-bottom: 1px lightgray solid;
+}
+
+.open-document{
+    border:lightgray 1px solid;
+    border-radius: 50%;
+    background-color: white;
+    cursor: pointer;
+    width: 45px;
+    height:45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.tooltip-container{
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    background-color: white;
+    border:lightgray 1px solid;
+    width: 250px;
+}
+
+.tooltip-container .title{
+    background-color: lightgray;
+    color:var(--secondary);
+}
+
+.inspector-container{
+    right:0;
+    top:0;
+    position: fixed;
+    background-color: rgba(255,255,255,0.8);
+    backdrop-filter: blur(7px);
+    border-left:lightgray 1px solid;
+    width: 40vw;
+    height:100%;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    overflow-y: auto;
+}
+
+.inspector-container .header{
+    border-bottom: 1px lightgray solid;
+}
+
+.inspector-container #map{
+    height: 45vh;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    margin-bottom: 30px;
+    border:lightgray 1px solid;
+}
+
+.inspector-container .header .close-btn{
+    border:lightgray 1px solid;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 45px;
+    height:45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.inspector-container .content .occurrences{
+    display: flex;
+    height: 300px;
+    width: 100%;
+    position: relative;
+    white-space: nowrap; /* Prevent items from wrapping */
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.inspector-container .content .occurrence-card{
+    margin-right:26px;
+    margin-bottom: 12px;
+    background-color: rgb(245, 245, 247);
+    border: lightgray solid 1px;
+    position: relative;
+    flex: 0 0 75%; /* Set a fixed width for each item */
+}
+
+.inspector-container .content .occurrence-card p,h6{
+    text-wrap: wrap;
+}
+
+.inspector-container .content .occurrence-card .thumbnail{
+    max-height: 100%; /* Set maximum height for the image to fill the item container */
+    width: auto; /* Maintain aspect ratio */
+    object-fit: cover;
+}
+
+.inspector-container .occurrence-card .mark-on-map-btn{
+    font-size: small;
+    cursor: pointer;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    border:lightgray 1px solid;
+    display: flex;
+    align-items: center;
+    text-align: center;
+    justify-content: center;
+}
+
+.leaflet-control-attribution {
+    display: none;
+}
+
+.open-search-btn{
+    position: absolute;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    top:3rem;
+    left: 3rem;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    border:lightgray 1px solid;
+    background-color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+}
+
+.taxon-list-container{
+    left:0;
+    top:0;
+    position: fixed;
+    background-color: rgba(255,255,255,0.8);
+    backdrop-filter: blur(7px);
+    border-left:lightgray 1px solid;
+    width: 30vw;
+    min-width: 500px;
+    height:100%;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+    overflow-y: auto;
+}
+
+.taxon-list-container .header{
+    border-bottom: 1px lightgray solid;
+}
+
+.taxon-list-container .header .close-btn{
+    border:lightgray 1px solid;
+    border-radius: 50%;
+    cursor: pointer;
+    width: 45px;
+    height:45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.taxon-list-container .search-occurrence{
+
+}
+
+.taxon-list-container .show-on-globe-btn{
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    align-items: center;
+    justify-content: center;
+    display: flex;
+    font-size: small;
+    border:lightgray 1px solid;
+    cursor: pointer;
+}

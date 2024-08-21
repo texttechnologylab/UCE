@@ -1,0 +1,59 @@
+2024-08-21 07:31:15.828 [main] INFO  org.texttechnologylab.App - Starting the UCE web service...
+2024-08-21 07:31:16.244 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 5.6.15.Final
+2024-08-21 07:31:16.570 [main] INFO  org.hibernate.annotations.common.Version - HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2024-08-21 07:31:16.718 [main] WARN  org.hibernate.orm.connections.pooling - HHH10001002: Using Hibernate built-in connection pool (not for production use!)
+2024-08-21 07:31:16.719 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001005: using driver [null] at URL [jdbc:postgresql://localhost:8002/biofid]
+2024-08-21 07:31:16.719 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001001: Connection properties: {password=****, user=postgres}
+2024-08-21 07:31:16.719 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001003: Autocommit mode: false
+2024-08-21 07:31:16.722 [main] INFO  org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl - HHH000115: Hibernate connection pool size: 20 (min=1)
+2024-08-21 07:31:16.942 [main] INFO  org.hibernate.dialect.Dialect - HHH000400: Using dialect: org.hibernate.dialect.PostgreSQL10Dialect
+2024-08-21 07:31:17.581 [main] INFO  org.hibernate.tuple.PojoInstantiator - HHH000182: No default (no-argument) constructor for class: org.texttechnologylab.models.corpus.Lemma (class must be instantiated by Interceptor)
+2024-08-21 07:31:17.934 [main] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@38022758] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+2024-08-21 07:31:18.337 [main] INFO  org.texttechnologylab.App - Loaded application context and services.
+2024-08-21 07:31:18.338 [main] INFO  org.texttechnologylab.App - Testing the language resources:
+2024-08-21 07:31:18.412 [main] INFO  org.texttechnologylab.App - Suche
+2024-08-21 07:31:18.413 [main] INFO  org.texttechnologylab.App - Loaded the common config.
+2024-08-21 07:31:18.442 [main] INFO  org.texttechnologylab.App - Setup FreeMarker templates and public folders.
+2024-08-21 07:31:18.442 [main] INFO  org.texttechnologylab.App - Initializing all the spark routes...
+2024-08-21 07:31:18.508 [main] INFO  org.texttechnologylab.App - Routes initialized - UCE web service has started!
+2024-08-21 07:31:28.587 [qtp1139095342-35] INFO  org.texttechnologylab.App - Received API call: IP=[0:0:0:0:0:0:0:1], Method=POST, URI=/api/search/default
+2024-08-21 07:33:16.195 [main] INFO  org.texttechnologylab.App - Starting the UCE web service...
+2024-08-21 07:33:16.512 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 5.6.15.Final
+2024-08-21 07:33:16.726 [main] INFO  org.hibernate.annotations.common.Version - HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2024-08-21 07:33:16.858 [main] WARN  org.hibernate.orm.connections.pooling - HHH10001002: Using Hibernate built-in connection pool (not for production use!)
+2024-08-21 07:33:16.858 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001005: using driver [null] at URL [jdbc:postgresql://localhost:8002/biofid]
+2024-08-21 07:33:16.859 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001001: Connection properties: {password=****, user=postgres}
+2024-08-21 07:33:16.859 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001003: Autocommit mode: false
+2024-08-21 07:33:16.862 [main] INFO  org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl - HHH000115: Hibernate connection pool size: 20 (min=1)
+2024-08-21 07:33:17.064 [main] INFO  org.hibernate.dialect.Dialect - HHH000400: Using dialect: org.hibernate.dialect.PostgreSQL10Dialect
+2024-08-21 07:33:17.669 [main] INFO  org.hibernate.tuple.PojoInstantiator - HHH000182: No default (no-argument) constructor for class: org.texttechnologylab.models.corpus.Lemma (class must be instantiated by Interceptor)
+2024-08-21 07:33:17.958 [main] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@17c53dfb] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+2024-08-21 07:33:18.287 [main] INFO  org.texttechnologylab.App - Loaded application context and services.
+2024-08-21 07:33:18.288 [main] INFO  org.texttechnologylab.App - Testing the language resources:
+2024-08-21 07:33:18.338 [main] INFO  org.texttechnologylab.App - Suche
+2024-08-21 07:33:18.339 [main] INFO  org.texttechnologylab.App - Loaded the common config.
+2024-08-21 07:33:18.367 [main] INFO  org.texttechnologylab.App - Setup FreeMarker templates and public folders.
+2024-08-21 07:33:18.367 [main] INFO  org.texttechnologylab.App - Initializing all the spark routes...
+2024-08-21 07:33:18.406 [main] INFO  org.texttechnologylab.App - Routes initialized - UCE web service has started!
+2024-08-21 07:33:19.684 [qtp131232986-42] INFO  org.texttechnologylab.App - Received API call: IP=[0:0:0:0:0:0:0:1], Method=POST, URI=/api/search/default
+2024-08-21 07:38:22.549 [main] INFO  org.texttechnologylab.App - Starting the UCE web service...
+2024-08-21 07:38:22.853 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 5.6.15.Final
+2024-08-21 07:38:23.043 [main] INFO  org.hibernate.annotations.common.Version - HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2024-08-21 07:38:23.212 [main] WARN  org.hibernate.orm.connections.pooling - HHH10001002: Using Hibernate built-in connection pool (not for production use!)
+2024-08-21 07:38:23.212 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001005: using driver [null] at URL [jdbc:postgresql://localhost:8002/biofid]
+2024-08-21 07:38:23.213 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001001: Connection properties: {password=****, user=postgres}
+2024-08-21 07:38:23.213 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001003: Autocommit mode: false
+2024-08-21 07:38:23.217 [main] INFO  org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl - HHH000115: Hibernate connection pool size: 20 (min=1)
+2024-08-21 07:38:23.408 [main] INFO  org.hibernate.dialect.Dialect - HHH000400: Using dialect: org.hibernate.dialect.PostgreSQL10Dialect
+2024-08-21 07:38:24.006 [main] INFO  org.hibernate.tuple.PojoInstantiator - HHH000182: No default (no-argument) constructor for class: org.texttechnologylab.models.corpus.Lemma (class must be instantiated by Interceptor)
+2024-08-21 07:38:24.282 [main] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@2b6262bc] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+2024-08-21 07:38:24.579 [main] INFO  org.texttechnologylab.App - Loaded application context and services.
+2024-08-21 07:38:24.579 [main] INFO  org.texttechnologylab.App - Testing the language resources:
+2024-08-21 07:38:24.624 [main] INFO  org.texttechnologylab.App - Suche
+2024-08-21 07:38:24.625 [main] INFO  org.texttechnologylab.App - Loaded the common config.
+2024-08-21 07:38:24.646 [main] INFO  org.texttechnologylab.App - Setup FreeMarker templates and public folders.
+2024-08-21 07:38:24.646 [main] INFO  org.texttechnologylab.App - Initializing all the spark routes...
+2024-08-21 07:38:24.661 [main] INFO  org.texttechnologylab.App - Routes initialized - UCE web service has started!
+2024-08-21 07:38:26.904 [qtp1188774973-42] INFO  org.texttechnologylab.App - Received API call: IP=[0:0:0:0:0:0:0:1], Method=POST, URI=/api/search/default
+2024-08-21 07:38:38.951 [qtp1188774973-41] INFO  org.texttechnologylab.App - Received API call: IP=[0:0:0:0:0:0:0:1], Method=GET, URI=/api/document/reader/pagesList
+2024-08-21 07:38:41.019 [qtp1188774973-42] INFO  org.texttechnologylab.App - Received API call: IP=[0:0:0:0:0:0:0:1], Method=GET, URI=/api/document/reader/pagesList
