@@ -8,6 +8,10 @@ import spark.TemplateEngine;
 import java.util.HashMap;
 import java.util.Map;
 
+/**
+ * A custom freemarker engine that allows us to inject additional logic - we use it e.g. to
+ * inject the language resource object to every template.
+ */
 public class CustomFreeMarkerEngine extends TemplateEngine {
 
     private final freemarker.template.Configuration configuration;

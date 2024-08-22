@@ -201,6 +201,12 @@ async function handleSwitchingOfPage(page) {
         type: "GET",
         dataType: "json",
         success: function (response) {
+            if(response.status === 500){
+                // Something went wrong, in this case, showcase an error.
+                // TODO: Replace this ALERT with a more appropriate error popup
+                alert("There was a problem fetching the right page on the server, operation cancelled.");
+                return;
+            }
             // Render the new documents
             $('.view .search-result-container .document-list-include').html(response.documentsList);
             $('.view .search-result-container .navigation-include').html(response.navigationView);

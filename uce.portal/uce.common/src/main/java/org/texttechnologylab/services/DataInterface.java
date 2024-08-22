@@ -1,5 +1,6 @@
 package org.texttechnologylab.services;
 
+import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.CorpusTsnePlot;
 import org.texttechnologylab.models.corpus.Document;
@@ -15,13 +16,13 @@ public interface DataInterface {
      * Fetches annotations (NE, Taxon, Time,...) of a given corpus.
      * @return
      */
-    public List<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take);
+    public List<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) throws DatabaseOperationException;
 
     /**
      * Counts all documents within a given corpus
      * @return
      */
-    public int countDocumentsInCorpus(long id);
+    public int countDocumentsInCorpus(long id) throws DatabaseOperationException;
 
     /**
      * Returns true if the document with the given documentId exists in
@@ -30,7 +31,7 @@ public interface DataInterface {
      * @param documentId
      * @return
      */
-    public boolean documentExists(long corpusId, String documentId);
+    public boolean documentExists(long corpusId, String documentId) throws DatabaseOperationException;
 
     /**
      * Gets a single corpus by its id.
@@ -38,68 +39,68 @@ public interface DataInterface {
      * @param id
      * @return
      */
-    public Corpus getCorpusById(long id);
+    public Corpus getCorpusById(long id) throws DatabaseOperationException;
 
     /**
      * Stores a page topic distribution by a page.
      * @param page
      */
-    public void savePageTopicDistribution(Page page);
+    public void savePageTopicDistribution(Page page) throws DatabaseOperationException;
 
     /**
      * Stores a document topic distributions by a document.
      * @param document
      */
-    public void saveDocumentTopicDistribution(Document document);
+    public void saveDocumentTopicDistribution(Document document) throws DatabaseOperationException;
 
     /**
      * Returns a corpus by name. As they aren't unique, it returns the first match.
      * @param name
      * @return
      */
-    public Corpus getCorpusByName(String name);
+    public Corpus getCorpusByName(String name) throws DatabaseOperationException;
 
     /**
      * Gets all documents that belong to the given corpus
      * @param corpusId
      * @return
      */
-    public List<Document> getDocumentsByCorpusId(long corpusId);
+    public List<Document> getDocumentsByCorpusId(long corpusId) throws DatabaseOperationException;
 
     /**
      * Gets all documents of a corpus which arent psotprocessed yet.
      * @param corpusId
      * @return
      */
-    public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId);
+    public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId) throws DatabaseOperationException;
 
     /**
      * Returns a corpus tsne plot by the given corpusId
      * @param corpusId
      * @return
      */
-    public CorpusTsnePlot getCorpusTsnePlotByCorpusId(long corpusId);
+    public CorpusTsnePlot getCorpusTsnePlotByCorpusId(long corpusId) throws DatabaseOperationException;
 
     /**
      * Gets all corpora from the database
      *
      * @return
      */
-    public List<Corpus> getAllCorpora();
+    public List<Corpus> getAllCorpora() throws DatabaseOperationException;
 
     /**
      * Gets the data required for the world globus to render correctly.
      * @param documentId
      * @return
      */
-    public List<GlobeTaxon> getGlobeDataForDocument(long documentId);
+    public List<GlobeTaxon> getGlobeDataForDocument(long documentId) throws DatabaseOperationException;
 
     /**
      * Gets many documents by their ids
      *
      * @return
      */
-    public List<Document> getManyDocumentsByIds(List<Integer> documentIds);
+    public List<Document> getManyDocumentsByIds(List<Integer> documentIds) throws DatabaseOperationException;
 
     /**
      * Does a semantic role label search and returns document hits
@@ -116,7 +117,7 @@ public interface DataInterface {
             SearchOrder order,
             OrderByColumn orderedByColumn,
             long corpusId
-    );
+    ) throws DatabaseOperationException;
 
     /**
      * Searches for documents with a variety of criterias. It's the main db search of the biofid portal
@@ -133,16 +134,16 @@ public interface DataInterface {
                                                           boolean countAll,
                                                           SearchOrder order,
                                                           OrderByColumn orderedByColumn,
-                                                          long corpusId);
+                                                          long corpusId) throws DatabaseOperationException;
 
     /**
      * Generic operation that fetches documents given the paramters
      *
      * @return
      */
-    public Document getDocumentById(long id);
+    public Document getDocumentById(long id) throws DatabaseOperationException;
 
-    public boolean checkIfGbifOccurrencesExist(long gbifTaxonId);
+    public boolean checkIfGbifOccurrencesExist(long gbifTaxonId) throws DatabaseOperationException;
 
     /**
      * Gets a complete document, alongside its lists, from the database.
@@ -150,30 +151,30 @@ public interface DataInterface {
      * @param id
      * @return
      */
-    public Document getCompleteDocumentById(long id, int skipPages, int pageLimit);
+    public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) throws DatabaseOperationException;
 
     /**
      * Stores the complete document with all its lists in the database.
      *
      * @param document
      */
-    public void saveDocument(Document document);
+    public void saveDocument(Document document) throws DatabaseOperationException;
 
     /**
      * Updates a document
      */
-    public void updateDocument(Document document);
+    public void updateDocument(Document document) throws DatabaseOperationException;
 
     /**
      * Stores an corpus tsne plot instance
      * @param corpusTsnePlot
      */
-    public void saveOrUpdateCorpusTsnePlot(CorpusTsnePlot corpusTsnePlot, Corpus corpus);
+    public void saveOrUpdateCorpusTsnePlot(CorpusTsnePlot corpusTsnePlot, Corpus corpus) throws DatabaseOperationException;
 
     /**
      * Stores a corpus in the database.
      *
      * @param corpus
      */
-    public void saveCorpus(Corpus corpus);
+    public void saveCorpus(Corpus corpus) throws DatabaseOperationException;
 }

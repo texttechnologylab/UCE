@@ -5,6 +5,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.config.HibernateConf;
+import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
@@ -33,7 +34,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         sessionFactory = HibernateConf.buildSessionFactory();
     }
 
-    public ArrayList<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) {
+    public ArrayList<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
             DocumentSearchResult search = null;
@@ -56,7 +57,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
-    public int countDocumentsInCorpus(long id) {
+    public int countDocumentsInCorpus(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteria = session.createCriteria(Document.class);
             criteria.add(Restrictions.eq("corpusId", id));
@@ -65,7 +66,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public boolean documentExists(long corpusId, String documentId) {
+    public boolean documentExists(long corpusId, String documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteriaBuilder = session.getCriteriaBuilder();
             var criteriaQuery = criteriaBuilder.createQuery(Long.class);
@@ -80,7 +81,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public CorpusTsnePlot getCorpusTsnePlotByCorpusId(long corpusId) {
+    public CorpusTsnePlot getCorpusTsnePlotByCorpusId(long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var cb = session.getCriteriaBuilder();
             var query = cb.createQuery(CorpusTsnePlot.class);
@@ -91,7 +92,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Document> getDocumentsByCorpusId(long corpusId) {
+    public List<Document> getDocumentsByCorpusId(long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             Criteria criteria = session.createCriteria(Document.class);
             criteria.add(Restrictions.eq("corpusId", corpusId));
@@ -99,7 +100,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId) {
+    public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             Criteria criteria = session.createCriteria(Document.class);
             criteria.add(Restrictions.eq("corpusId", corpusId));
@@ -108,14 +109,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public Corpus getCorpusById(long id) {
+    public Corpus getCorpusById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var corpus = session.get(Corpus.class, id);
             return corpus;
         });
     }
 
-    public Corpus getCorpusByName(String name) {
+    public Corpus getCorpusByName(String name) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteriaBuilder = session.getCriteriaBuilder();
             var criteriaQuery = criteriaBuilder.createQuery(Corpus.class);
@@ -126,7 +127,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Corpus> getAllCorpora() {
+    public List<Corpus> getAllCorpora() throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteriaQuery = session.getCriteriaBuilder().createQuery(Corpus.class);
             criteriaQuery.from(Corpus.class);
@@ -134,7 +135,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<GlobeTaxon> getGlobeDataForDocument(long documentId) {
+    public List<GlobeTaxon> getGlobeDataForDocument(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
 
             var taxonCommand = "SELECT DISTINCT t " +
@@ -176,7 +177,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Document> getAllCompleteDocuments() {
+    public List<Document> getAllCompleteDocuments() throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteriaQuery = session.getCriteriaBuilder().createQuery(Document.class);
             criteriaQuery.from(Document.class);
@@ -189,7 +190,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Document> getManyDocumentsByIds(List<Integer> documentIds) {
+    public List<Document> getManyDocumentsByIds(List<Integer> documentIds) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
             var query = builder.createQuery(Document.class);
@@ -215,7 +216,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     @Override
-    public DocumentSearchResult semanticRoleSearchForDocuments(int skip, int take, List<String> arg0, List<String> arg1, List<String> arg2, List<String> argm, String verb, boolean countAll, SearchOrder order, OrderByColumn orderedByColumn, long corpusId) {
+    public DocumentSearchResult semanticRoleSearchForDocuments(int skip,
+                                                               int take,
+                                                               List<String> arg0,
+                                                               List<String> arg1,
+                                                               List<String> arg2,
+                                                               List<String> argm,
+                                                               String verb,
+                                                               boolean countAll,
+                                                               SearchOrder order,
+                                                               OrderByColumn orderedByColumn,
+                                                               long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
             DocumentSearchResult search = null;
@@ -259,7 +270,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                           boolean countAll,
                                                           SearchOrder order,
                                                           OrderByColumn orderedByColumn,
-                                                          long corpusId) {
+                                                          long corpusId) throws DatabaseOperationException {
 
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
@@ -294,7 +305,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
-    public Document getDocumentById(long id) {
+    public Document getDocumentById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
             Hibernate.initialize(doc.getPages());
@@ -302,7 +313,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public boolean checkIfGbifOccurrencesExist(long gbifTaxonId) {
+    public boolean checkIfGbifOccurrencesExist(long gbifTaxonId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
             var criteriaQuery = builder.createQuery(Long.class);
@@ -316,7 +327,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) {
+    public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
 
@@ -324,39 +335,39 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public void saveOrUpdateCorpusTsnePlot(CorpusTsnePlot corpusTsnePlot, Corpus corpus) {
+    public void saveOrUpdateCorpusTsnePlot(CorpusTsnePlot corpusTsnePlot, Corpus corpus) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.saveOrUpdate(corpus);
             // Save or update the corpus tsne plot
-            if(corpus.getCorpusTsnePlot() != null){
+            if (corpus.getCorpusTsnePlot() != null) {
                 session.saveOrUpdate(corpus.getCorpusTsnePlot());
             }
             return null;
         });
     }
 
-    public void saveDocument(Document document) {
+    public void saveDocument(Document document) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.save(document);
             return null;
         });
     }
 
-    public void updateDocument(Document document) {
+    public void updateDocument(Document document) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.update(document);
             return null;
         });
     }
 
-    public void saveCorpus(Corpus corpus) {
+    public void saveCorpus(Corpus corpus) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.save(corpus);
             return null;
         });
     }
 
-    public void savePageTopicDistribution(Page page) {
+    public void savePageTopicDistribution(Page page) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.saveOrUpdate(page);
             // Save or update the page's PageTopicDistribution
@@ -367,7 +378,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public void saveDocumentTopicDistribution(Document document) {
+    public void saveDocumentTopicDistribution(Document document) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.saveOrUpdate(document);
             // Save or update the page's PageTopicDistribution
@@ -441,7 +452,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
      * @param <T>
      * @return
      */
-    private <T> T executeOperationSafely(Function<Session, T> operation) {
+    private <T> T executeOperationSafely(Function<Session, T> operation) throws DatabaseOperationException {
         Session session = null;
         Transaction transaction = null;
         try {
@@ -454,28 +465,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             if (transaction != null) {
                 transaction.rollback();
             }
-            throw new RuntimeException("Error executing operation", ex);
+            throw new DatabaseOperationException(
+                    "Error while executing database operation. All possible db transactions have been rolled back and state has been restored.",
+                    ex);
         } finally {
             if (session != null) {
                 session.close();
             }
         }
-    }
-
-    /**
-     * Test method, can be ignored.
-     *
-     * @param doc
-     */
-    public void test(Document doc) {
-        var currentSession = sessionFactory.openSession();
-        var tes = new test();
-        tes.setId(UUID.randomUUID());
-        tes.setName("Test");
-        var trans = currentSession.beginTransaction();
-        currentSession.save(tes);
-        trans.commit();
-        currentSession.close();
     }
 
 }

@@ -7,6 +7,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.SpringConfig;
+import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.routes.CorpusUniverseApi;
@@ -21,6 +22,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.HashMap;
+import java.util.UUID;
 
 import static spark.Spark.*;
 
@@ -29,12 +31,15 @@ import static spark.Spark.*;
  */
 public class App {
 
-    // Freemaker configuration
     private static final Configuration configuration = Configuration.getDefaultConfiguration();
-
     private static final Logger logger = LogManager.getLogger();
 
     public static void main(String[] args) throws URISyntaxException, IOException {
+
+        // Tell log4j the name of the log config xml
+        // This feels
+        //System.setProperty("log4j.configurationFile", "log4j2.xml");
+
         logger.info("Starting the UCE web service...");
 
         // Application context for services
@@ -53,7 +58,7 @@ public class App {
         try {
             configuration.setDirectoryForTemplateLoading(new File(commonConfig.getTemplatesLocation()));
 
-            // We use the extrenalLocation method so that the files in the public folder are hot reloaded
+            // We use the externalLocation method so that the files in the public folder are hot reloaded
             staticFiles.externalLocation(commonConfig.getPublicLocation());
             logger.info("Setup FreeMarker templates and public folders.");
         } catch (Exception e) {
@@ -61,8 +66,10 @@ public class App {
             return;
         }
 
+        // Start the routes.
         logger.info("Initializing all the spark routes...");
-        initSparkRoutes(context);
+        ExceptionUtils.tryCatchLog(() -> initSparkRoutes(context),
+                (ex) -> logger.error("There was a problem initializing the spark routes, web service will be shut down.", ex));
         logger.info("Routes initialized - UCE web service has started!");
     }
 
@@ -74,6 +81,11 @@ public class App {
         var corpusUniverseApi = new CorpusUniverseApi(context, configuration);
 
         before((request, response) -> {
+            // Setup and log all API calls with some information.
+            request.attribute("id", UUID.randomUUID().toString());
+            logger.info("Received API call: ID={}, IP={}, Method={}, URI={}",
+                    request.attribute("id"), request.ip(), request.requestMethod(), request.uri());
+
             // Check if the request contains a language parameter
             var languageResources = LanguageResources.fromRequest(request);
             response.header("Content-Language", languageResources.getDefaultLanguage());
@@ -97,7 +109,7 @@ public class App {
         get("/documentReader", documentApi.getSingleDocumentReadView);
 
         // A corpus World View
-        get("/globe", documentApi.getCorpusWorldView);
+        get("/globe", documentApi.get3dGlobe);
 
         // Gets a corpus inspector view
         get("/corpus", documentApi.getCorpusInspectorView);
@@ -115,7 +127,6 @@ public class App {
             exception(Exception.class, defaultExceptionHandler);
 
             before("/*", (req, res) -> {
-                logger.info("Received API call: IP={}, Method={}, URI={}", req.ip(), req.requestMethod(), req.uri());
             });
 
             path("/search", () -> {

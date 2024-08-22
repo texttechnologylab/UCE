@@ -1,9 +1,13 @@
 package org.texttechnologylab.utils;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+
 import java.util.ArrayList;
 import java.util.List;
 
 public class ListUtils {
+    private static final Logger logger = LogManager.getLogger();
 
     public static float[] convertStringArrayToFloatArray(String[] stringArray) {
         float[] floatArray = new float[stringArray.length];
@@ -11,8 +15,8 @@ public class ListUtils {
             try {
                 floatArray[i] = Float.parseFloat(stringArray[i]);
             } catch (NumberFormatException e) {
-                System.err.println("Error parsing string to float: " + stringArray[i]);
-                floatArray[i] = 0.0f; // or any default value you prefer
+                logger.error("Error parsing string to float: " + stringArray[i]);
+                floatArray[i] = 0.0f;
             }
         }
         return floatArray;

@@ -1,6 +1,9 @@
 package org.texttechnologylab;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
@@ -17,6 +20,7 @@ import java.util.List;
  * Class that encapsulates all search layers within the biofid class
  */
 public class Search_DefaultImpl implements Search {
+    private static final Logger logger = LogManager.getLogger();
     private SearchState searchState;
     private List<String> stopwords;
     private PostgresqlDataInterface_Impl db;
@@ -68,7 +72,12 @@ public class Search_DefaultImpl implements Search {
         DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
         if (documentSearchResult == null)
             throw new NullPointerException("Document Init Search returned null - not empty.");
-        searchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
+
+        var documents = ExceptionUtils.tryCatchLog(() -> db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()),
+                (ex) -> logger.error("Error getting many documents by a list of ids in the search init. " +
+                        "Search can't be created hence.", ex));
+        if (documents == null) return null;
+        searchState.setCurrentDocuments(documents);
         searchState.setTotalHits(documentSearchResult.getDocumentCount());
         searchState.setFoundNamedEntities(documentSearchResult.getFoundNamedEntities());
         searchState.setFoundTaxons(documentSearchResult.getFoundTaxons());
@@ -83,7 +92,9 @@ public class Search_DefaultImpl implements Search {
 
             var foundDocumentChunkEmbeddings = new ArrayList<DocumentChunkEmbeddingSearchResult>();
             for (var embedding : closestDocumentsEmbeddings) {
-                var document = db.getDocumentById(embedding.getDocument_id());
+                var document = ExceptionUtils.tryCatchLog(() -> db.getDocumentById(embedding.getDocument_id()),
+                        (ex) -> logger.error("Error fetching a document by its id for the search init with embeddings.", ex));
+                if (document == null) continue;
                 var documentChunkEmbedding = new DocumentChunkEmbeddingSearchResult();
                 documentChunkEmbedding.setDocument(document);
                 documentChunkEmbedding.setDocumentChunkEmbedding(embedding);
@@ -106,7 +117,11 @@ public class Search_DefaultImpl implements Search {
         this.searchState.setCurrentPage(page);
         var documentSearchResult = executeSearchOnDatabases(false);
         if (documentSearchResult == null) throw new NullPointerException("Document Search returned null - not empty.");
-        searchState.setCurrentDocuments(db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()));
+        var documents = ExceptionUtils.tryCatchLog(() -> db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()),
+                (ex) -> logger.error("Error getting many documents by a list of ids while getting hits for page " + page +
+                        " hence returning the last state.", ex));
+        if (documents == null) return searchState;
+        searchState.setCurrentDocuments(documents);
         return searchState;
     }
 
@@ -119,26 +134,30 @@ public class Search_DefaultImpl implements Search {
     private DocumentSearchResult executeSearchOnDatabases(boolean countAll) {
 
         if (searchState.getSearchLayers().contains(SearchLayer.METADATA)) {
-            return db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
-                    searchState.getTake(),
-                    searchState.getSearchTokens(),
-                    SearchLayer.METADATA,
-                    countAll,
-                    searchState.getOrder(),
-                    searchState.getOrderBy(),
-                    searchState.getCorpusId());
+            return ExceptionUtils.tryCatchLog(
+                    () -> db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
+                            searchState.getTake(),
+                            searchState.getSearchTokens(),
+                            SearchLayer.METADATA,
+                            countAll,
+                            searchState.getOrder(),
+                            searchState.getOrderBy(),
+                            searchState.getCorpusId()),
+                    (ex) -> logger.error("Error executing a search on the database with search layer METADATA. Search can't be executed.", ex));
         }
 
         // Execute the Named Entity search, which automatically executes metadata as well
         if (searchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES)) {
-            return db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
-                    searchState.getTake(),
-                    searchState.getSearchTokens(),
-                    SearchLayer.NAMED_ENTITIES,
-                    countAll,
-                    searchState.getOrder(),
-                    searchState.getOrderBy(),
-                    searchState.getCorpusId());
+            return ExceptionUtils.tryCatchLog(
+                    () -> db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
+                            searchState.getTake(),
+                            searchState.getSearchTokens(),
+                            SearchLayer.NAMED_ENTITIES,
+                            countAll,
+                            searchState.getOrder(),
+                            searchState.getOrderBy(),
+                            searchState.getCorpusId()),
+                    (ex) -> logger.error("Error executing a search on the database with search layer NAMED_ENTITIES. Search can't be executed.", ex));
         }
 
         return null;

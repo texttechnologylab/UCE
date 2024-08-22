@@ -1,0 +1,18 @@
+2024-08-21 13:24:03.240 [main] INFO  org.texttechnologylab.App - Starting the UCE web service...
+2024-08-21 13:24:03.559 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 5.6.15.Final
+2024-08-21 13:24:03.769 [main] INFO  org.hibernate.annotations.common.Version - HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2024-08-21 13:24:03.938 [main] WARN  org.hibernate.orm.connections.pooling - HHH10001002: Using Hibernate built-in connection pool (not for production use!)
+2024-08-21 13:24:03.938 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001005: using driver [null] at URL [jdbc:postgresql://localhost:8002/biofid]
+2024-08-21 13:24:03.938 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001001: Connection properties: {password=****, user=postgres}
+2024-08-21 13:24:03.938 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001003: Autocommit mode: false
+2024-08-21 13:24:03.942 [main] INFO  org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl - HHH000115: Hibernate connection pool size: 20 (min=1)
+2024-08-21 13:24:04.134 [main] INFO  org.hibernate.dialect.Dialect - HHH000400: Using dialect: org.hibernate.dialect.PostgreSQL10Dialect
+2024-08-21 13:24:04.714 [main] INFO  org.hibernate.tuple.PojoInstantiator - HHH000182: No default (no-argument) constructor for class: org.texttechnologylab.models.corpus.Lemma (class must be instantiated by Interceptor)
+2024-08-21 13:24:04.995 [main] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@17c53dfb] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+2024-08-21 13:24:05.325 [main] INFO  org.texttechnologylab.App - Loaded application context and services.
+2024-08-21 13:24:05.325 [main] INFO  org.texttechnologylab.App - Testing the language resources:
+2024-08-21 13:24:05.365 [main] INFO  org.texttechnologylab.App - Suche
+2024-08-21 13:24:05.366 [main] INFO  org.texttechnologylab.App - Loaded the common config.
+2024-08-21 13:24:05.387 [main] INFO  org.texttechnologylab.App - Setup FreeMarker templates and public folders.
+2024-08-21 13:24:05.387 [main] INFO  org.texttechnologylab.App - Initializing all the spark routes...
+2024-08-21 13:24:05.400 [main] INFO  org.texttechnologylab.App - Routes initialized - UCE web service has started!

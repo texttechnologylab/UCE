@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.config.CorpusConfig;
+import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
 import org.texttechnologylab.services.UIMAService;
@@ -21,7 +22,6 @@ public class DocumentApi {
     private PostgresqlDataInterface_Impl db = null;
     private static final Logger logger = LogManager.getLogger();
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
-
     public DocumentApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
         this.uimaService = serviceContext.getBean(UIMAService.class);
         this.ragService = serviceContext.getBean(RAGService.class);
@@ -31,9 +31,12 @@ public class DocumentApi {
 
     public Route getCorpusInspectorView = ((request, response) -> {
         var model = new HashMap<String, Object>();
-        try {
-            var corpusId = Long.parseLong(request.queryParams("id"));
 
+        var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
+                (ex) -> logger.error("Error: the url for the corpus inspector requires an 'id' query parameter that is the corpusId. ", ex));
+        if(corpusId == null) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+
+        try {
             var corpus = db.getCorpusById(corpusId);
             var corpusConfig = CorpusConfig.fromJson(corpus.getCorpusJsonConfig());
             var documentsCount = db.countDocumentsInCorpus(corpusId);
@@ -43,19 +46,23 @@ public class DocumentApi {
             model.put("documentsCount", documentsCount);
 
         } catch (Exception ex) {
-            // TODO: Logging
-            model.put("data", "");
+            logger.error("Error getting the corpus inspector view.", ex);
+            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
         return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/corpusInspector.ftl"));
     });
 
-    public Route getCorpusWorldView = ((request, response) -> {
+    public Route get3dGlobe = ((request, response) -> {
         var model = new HashMap<String, Object>();
-        try {
-            var type = request.queryParams("type");
-            var id = Long.parseLong(request.queryParams("id"));
 
+        var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
+                (ex) -> logger.error("Error: the url for the document 3d globe requires an 'id' query parameter that is the document id.", ex));
+        if(id == null) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+
+        try {
+            // Ive forgotten why I introduced this variable here?...
+            //var type = request.queryParams("type");
             var document = db.getDocumentById(id);
             var data = db.getGlobeDataForDocument(id);
             var gson = new Gson();
@@ -65,37 +72,52 @@ public class DocumentApi {
             model.put("data", data);
             model.put("jsonData", dataJson);
         } catch (Exception ex) {
-            // TODO: Logging
-            model.put("data", "");
+            logger.error("Error getting the 3D globe of a document, returning default error view.", ex);
+            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
         return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/globe.ftl"));
     });
 
     public Route getSingleDocumentReadView = ((request, response) -> {
-
-        var id = request.queryParams("id");
-
-        var doc = db.getCompleteDocumentById(Long.parseLong(id), 0, 10);
-        System.out.println("Loaded document from database with id " + id);
         var model = new HashMap<String, Object>();
-        model.put("document", doc);
+
+        var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
+                (ex) -> logger.error("Error: the url for the document reader requires an 'id' query parameter. " +
+                        "Document reader can't be built.", ex));
+        if(id == null) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+
+        try {
+            var doc = db.getCompleteDocumentById(Long.parseLong(id), 0, 10);
+            logger.info("Loaded document from database with id " + id);
+            model.put("document", doc);
+        } catch (Exception ex) {
+            logger.error("Error creating the document reader view for document with id: " + id, ex);
+            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
 
         return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "reader/documentReaderView.ftl"));
     });
 
     public Route getPagesListView = ((request, response) -> {
 
-        var id = request.queryParams("id");
-        var skip = Integer.parseInt(request.queryParams("skip"));
-
-        var doc = db.getCompleteDocumentById(Long.parseLong(id), skip, 10);
-
         var model = new HashMap<String, Object>();
-        var annotations = doc.getAllAnnotations(skip, 10);
-        model.put("documentAnnotations", annotations);
-        model.put("documentText", doc.getFullText());
-        model.put("documentPages", doc.getPages(10, skip));
+
+        var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
+                (ex) -> logger.error("Error: the url for the document pages list view requires an 'id' query parameter. ", ex));
+        if(id == null) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+
+        try{
+            var skip = Integer.parseInt(request.queryParams("skip"));
+            var doc = db.getCompleteDocumentById(Long.parseLong(id), skip, 10);
+            var annotations = doc.getAllAnnotations(skip, 10);
+            model.put("documentAnnotations", annotations);
+            model.put("documentText", doc.getFullText());
+            model.put("documentPages", doc.getPages(10, skip));
+        } catch (Exception ex){
+            logger.error("Error getting the pages list view - either the document couldn't be fetched (id=" + id + ") or its annotations.", ex);
+            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
 
         return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "reader/components/pagesList.ftl"));
     });

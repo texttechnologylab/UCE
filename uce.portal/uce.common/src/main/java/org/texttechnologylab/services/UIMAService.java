@@ -7,6 +7,8 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.Anomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.uima.jcas.cas.AnnotationBase;
 import org.apache.uima.util.CasLoadMode;
 import org.joda.time.DateTime;
@@ -18,6 +20,7 @@ import org.apache.uima.util.CasIOUtils;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
+import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
@@ -30,7 +33,6 @@ import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
-import java.util.stream.Collectors;
 
 @Service
 /*
@@ -38,7 +40,7 @@ TODO: Add logging!
 Holds logic for interacting with any UIMA associated data
  */
 public class UIMAService {
-
+    private static final Logger logger = LogManager.getLogger();
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
@@ -70,6 +72,7 @@ public class UIMAService {
 
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
         try (var reader = new FileReader(foldername + "\\corpusConfig.json")) {
+
             // Replace "path/to/your/file.json" with the actual path to your JSON file
             corpusConfig = gson.fromJson(reader, CorpusConfig.class);
             corpus.setName(corpusConfig.getName());
@@ -80,11 +83,16 @@ public class UIMAService {
             // Let's check if we already have a corpus with that name and
             // if we want to add to that in the config.
             if (corpusConfig.isAddToExistingCorpus()) {
-                var existingCorpus = db.getCorpusByName(corpusConfig.getName());
+                final var corpusConfig1 = corpusConfig; // This sucks so hard - why doesn't java just do this itself if needed?
+                var existingCorpus = ExceptionUtils.tryCatchLog(() -> db.getCorpusByName(corpusConfig1.getName()),
+                        (ex) -> logger.error("Error getting an existing corpus by name. The corpus config should probably be changed " +
+                                "to not add to existing corpus then.", ex));
                 if (existingCorpus != null) { // If we have the corpus, use that. Else store the new corpus.
                     corpus = existingCorpus;
                 } else {
-                    db.saveCorpus(corpus);
+                    final var corpus1 = corpus;
+                    ExceptionUtils.tryCatchLog(() -> db.saveCorpus(corpus1),
+                            (ex) -> logger.error("Error saving the corpus.", ex));
                 }
             }
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
@@ -98,7 +106,7 @@ public class UIMAService {
                         .listFiles((dir, name) -> name.toLowerCase().endsWith(".xmi")))) {
             var doc = XMIToDocument(file.getPath(), corpus);
             if (doc != null) {
-                try{
+                try {
                     db.saveDocument(doc);
                     System.out.println("Stored document with document id " + doc.getDocumentId());
                     System.out.println("Finished with the UIMA annotations - postprocessing the doc now.");
@@ -106,10 +114,10 @@ public class UIMAService {
                     System.out.println("Finished postprocessing.");
 
                     // We occasionally postprocess the corpus while we still import to keep it up to date
-                    if(counter % 500 == 0 && counter != 0){
+                    if (counter % 500 == 0 && counter != 0) {
                         postProccessCorpus(corpus, corpusConfig);
                     }
-                } catch (Exception ex){
+                } catch (Exception ex) {
                     System.err.println("Error storing a finished document. Skipping it and going to the next.");
                     ex.printStackTrace();
                 }
@@ -180,7 +188,7 @@ public class UIMAService {
             // Before we parse and add that document, lets check if a document with that id and in that
             // corpus already exists. If we created a new corpus, this will always be null.
             var exists = db.documentExists(corpus.getId(), document.getDocumentId());
-            if(exists){
+            if (exists) {
                 System.out.println("Document with id " + document.getDocumentId()
                         + " already exists in the corpus " + corpus.getId() + ". Skipping it.");
                 return null;
@@ -315,7 +323,9 @@ public class UIMAService {
                             // Now check if we already have stored occurences for that taxon - we don't need to do that again then.
                             // We need to check in the current loop and in the database.
                             if (taxons.stream().anyMatch(ta -> ta.getGbifTaxonId() == taxonId)) break;
-                            if (db.checkIfGbifOccurrencesExist(taxonId)) break;
+                            var is = ExceptionUtils.tryCatchLog(() -> db.checkIfGbifOccurrencesExist(taxonId),
+                                    (ex) -> logger.error("Error checking if taxon occurrence already exists.", ex));
+                            if (is == null || is) break;
 
                             // Otherwise, fetch new occurrences.
                             var potentialOccurrences = gbifService.scrapeGbifOccurrence(taxonId);
@@ -398,21 +408,25 @@ public class UIMAService {
     /**
      * Apply any postprocessing once the corpus is finished calculating. This will be called even
      * when the corpus import didnt finish due to an error. We still postprocess what we have.
+     *
      * @param corpus
      */
-    private void postProccessCorpus(Corpus corpus, CorpusConfig corpusConfig){
+    private void postProccessCorpus(Corpus corpus, CorpusConfig corpusConfig) {
         System.out.println("Postprocessing the Corpus " + corpus.getName());
         // Calculate the tsne reductions of the whole corpus and finally the tsne plot
-        if(corpusConfig.getOther().isEnableEmbeddings()){
+        if (corpusConfig.getOther().isEnableEmbeddings()) {
             System.out.println("Embeddings...");
 
             // The corpus can be gigantic and we cant pass hundreds of thousand of embeddings into
-            // a rest API and perform reductions on them. Instead, we sample them if we need.
-            var corpusDocuments = db.getNonePostprocessedDocumentsByCorpusId(corpus.getId());
+            // a rest API and perform reductions on them. Instead, we sample them.
+            var corpusDocuments = ExceptionUtils.tryCatchLog(() -> db.getNonePostprocessedDocumentsByCorpusId(corpus.getId()),
+                    (ex) -> logger.error("Error while fetching none postprocessed documents of corpus with id " + corpus.getId(), ex));
+            if(corpusDocuments == null) return;
+
             Collections.shuffle(corpusDocuments); // We want random samples of size CHUNKSIZE
             var chunked = ListUtils.partitionList(corpusDocuments, 1000);
 
-            for(var documents:chunked){
+            for (var documents : chunked) {
                 // Get the complete list of document chunk embeddings of all documents
                 var docChunkEmbeddings = documents.stream()
                         .flatMap(d -> ragService.getDocumentChunkEmbeddingsOfDocument(d.getId()).stream())
@@ -423,9 +437,9 @@ public class UIMAService {
                 var reducedEmbeddingDto = ragService.getEmbeddingDimensionReductions(
                         docChunkEmbeddings.stream().map(DocumentChunkEmbedding::getEmbedding).toList());
 
-                if(reducedEmbeddingDto.getTsne2D() == null) continue;
+                if (reducedEmbeddingDto.getTsne2D() == null) continue;
                 // Store the tsne reduction in each chunk - this is basically now a 2D and 3D coordinate
-                for(var i = 0; i < reducedEmbeddingDto.getTsne2D().length; i++){
+                for (var i = 0; i < reducedEmbeddingDto.getTsne2D().length; i++) {
                     docChunkEmbeddings.get(i).setTsne2D(reducedEmbeddingDto.getTsne2D()[i]);
                     docChunkEmbeddings.get(i).setTsne3D(reducedEmbeddingDto.getTsne3D()[i]);
                 }
@@ -433,9 +447,9 @@ public class UIMAService {
                 docChunkEmbeddings.forEach(ragService::updateDocumentChunkEmbedding);
 
                 // And calculate a reduced embedding for the whole document as well!
-                for(var document:documents){
+                for (var document : documents) {
                     var documentEmbedding = ragService.getDocumentEmbeddingOfDocument(document.getId());
-                    if(documentEmbedding == null) continue;
+                    if (documentEmbedding == null) continue;
                     var chunkEmbeddingsOfDocument = docChunkEmbeddings
                             .stream()
                             .filter(e -> e.getDocument_id() == document.getId())
@@ -443,16 +457,17 @@ public class UIMAService {
 
                     // And mean pool the tsne chunk embeddings for the whole document
                     documentEmbedding.setTsne2d(EmbeddingUtils.meanPooling(chunkEmbeddingsOfDocument
-                                    .stream()
-                                    .map(DocumentChunkEmbedding::getTsne2D)
-                                    .toList()));
+                            .stream()
+                            .map(DocumentChunkEmbedding::getTsne2D)
+                            .toList()));
                     documentEmbedding.setTsne3d(EmbeddingUtils.meanPooling(chunkEmbeddingsOfDocument
-                                    .stream()
-                                    .map(DocumentChunkEmbedding::getTsne3D)
-                                    .toList()));
+                            .stream()
+                            .map(DocumentChunkEmbedding::getTsne3D)
+                            .toList()));
                     // Mark it as fully post processed
                     document.setPostProcessed(true);
-                    db.updateDocument(document);
+                    ExceptionUtils.tryCatchLog(() -> db.updateDocument(document),
+                            (ex) -> logger.error("Error updating the document while post processing corpus. Postprocessing continues", ex));
 
                     // Update the document embedding
                     ragService.updateDocumentEmbedding(documentEmbedding);
@@ -464,13 +479,20 @@ public class UIMAService {
             // Now that we have the reduced coordiantes, lets plot a tsne plot of the corpus and cache it!
             // If we have an existing plot, then update that
             var corpusTsnePlot = corpus.getCorpusTsnePlot();
-            if(corpusTsnePlot == null) corpusTsnePlot = new CorpusTsnePlot();
+            if (corpusTsnePlot == null) {
+                corpusTsnePlot = new CorpusTsnePlot();
+            }
             corpusTsnePlot.setPlotHtml(ragService.getCorpusTsnePlot(corpus.getId()));
             corpusTsnePlot.setCorpus(corpus);
             corpusTsnePlot.setCreated(DateTime.now().toDate());
 
-            corpus.setCorpusTsnePlot(corpusTsnePlot);
-            db.saveOrUpdateCorpusTsnePlot(corpusTsnePlot, corpus);
+            // Assign to a final variable because of the weird java restriction of needing effectively
+            // final variables for lambda calls. What a shitshow.
+            final CorpusTsnePlot finalCorpusTsnePlot = corpusTsnePlot;
+            corpus.setCorpusTsnePlot(finalCorpusTsnePlot);
+
+            ExceptionUtils.tryCatchLog(() -> db.saveOrUpdateCorpusTsnePlot(finalCorpusTsnePlot, corpus),
+                    (ex) -> logger.error("Error saving or updating the corpus tsne plot.", ex));
         }
     }
 
@@ -495,10 +517,10 @@ public class UIMAService {
             }
         }
 
-        if(corpusConfig.getOther().isIncludeTopicDistribution()){
+        if (corpusConfig.getOther().isIncludeTopicDistribution()) {
             // Calculate the page topic distribution if activated
             var pageTopics = "";
-            for(var page: document.getPages()){
+            for (var page : document.getPages()) {
                 var topicDistribution = ragService.getTextTopicDistribution(PageTopicDistribution.class, page.getCoveredText(document.getFullText()));
                 topicDistribution.setBegin(page.getBegin());
                 topicDistribution.setEnd(page.getEnd());
@@ -506,7 +528,8 @@ public class UIMAService {
                 pageTopics += topicDistribution.toString();
                 page.setPageTopicDistribution(topicDistribution);
                 // Store it in the db
-                db.savePageTopicDistribution(page);
+                ExceptionUtils.tryCatchLog(() -> db.savePageTopicDistribution(page),
+                        (ex) -> logger.error("Error storing the page topic distribution - the postprocessing continues.", ex));
             }
 
             // And the document topic dist.
@@ -515,7 +538,8 @@ public class UIMAService {
             documentTopicDistribution.setDocument(document);
             document.setDocumentTopicDistribution(documentTopicDistribution);
             // Store it
-            db.saveDocumentTopicDistribution(document);
+            ExceptionUtils.tryCatchLog(() -> db.saveDocumentTopicDistribution(document),
+                    (ex) -> logger.error("Error storing the document topic distribution - the postprocessing continues.", ex));
         }
     }
 

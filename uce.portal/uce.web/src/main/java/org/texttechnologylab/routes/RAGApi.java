@@ -2,10 +2,13 @@ package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.config.CommonConfig;
+import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.RAGChatMessage;
@@ -20,7 +23,7 @@ import javax.management.openmbean.InvalidKeyException;
 import java.util.*;
 
 public class RAGApi {
-
+    private static final Logger logger = LogManager.getLogger();
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
     private RAGService ragService;
     private PostgresqlDataInterface_Impl db;
@@ -38,14 +41,17 @@ public class RAGApi {
      * Returns a fully rendered Tsne plot for the given corpus
      */
     public Route getTsnePlot = ((request, response) -> {
-        // var model = new HashMap<String, Object>();
+
+        var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("corpusId")),
+                (ex) -> logger.error("Error: the url for the tsne plot requires a 'corpusId' query parameter. ", ex));
+        if(corpusId == null) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+
         try {
-            var corpusId = Long.parseLong(request.queryParams("corpusId"));
             var plotAsHtml = db.getCorpusTsnePlotByCorpusId(corpusId).getPlotHtml();
             //var plotAsHtml = ragService.getCorpusTsnePlot(corpusId);
             return plotAsHtml == null ? "" : plotAsHtml;
         } catch (Exception ex) {
-            // TODO: Logging
+            logger.error("Error fetching the tsne plot of corpus: " + corpusId, ex);
             return "";
         }
     });
@@ -55,14 +61,20 @@ public class RAGApi {
      */
     public Route postUserMessage = ((request, response) -> {
         var model = new HashMap<String, Object>();
+        var gson = new Gson();
+        Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
+
         try {
-            var gson = new Gson();
-            Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
             var userMessage = requestBody.get("userMessage").toString();
             var stateId = UUID.fromString(requestBody.get("stateId").toString());
 
-            if (!activeRagChatStates.containsKey(stateId))
-                throw new InvalidKeyException("Chat state couldn't be found of key " + stateId.toString());
+            // TODO: This also needs some form of periodic cleanup. I could have used websockets, but at the time,
+            // noone really knew if this feature is even needed or applicable. Websocket introduced more complexity to client
+            // and server so we scraped it. For the future, it may be a good idea though.
+            if (!activeRagChatStates.containsKey(stateId)){
+                logger.error("Error fetching the active rag chat states - state not found for stateId: " + stateId);
+                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            }
             // Get the cached state.
             var chatState = activeRagChatStates.get(stateId);
 
@@ -84,14 +96,13 @@ public class RAGApi {
                 nearestDocumentChunkEmbeddings = ragService.getClosestDocumentChunkEmbeddings(userMessage, 3);
                 // foreach fetched document embedding, we also fetch the actual documents so the chat can show them
                 foundDocuments = db.getManyDocumentsByIds(nearestDocumentChunkEmbeddings.stream().map(d -> Math.toIntExact(d.getDocument_id())).toList());
-                prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", String.join("\n", nearestDocumentChunkEmbeddings.stream().map(e -> e.getCoveredText()).toList()));
+                prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]",
+                        String.join("\n", nearestDocumentChunkEmbeddings.stream().map(e -> e.getCoveredText()).toList()));
             }
             userRagMessage.setPrompt(prompt);
 
             // Add the message to the current chat
             chatState.addMessage(userRagMessage);
-
-            // TODO: Continue here and fix the problem of the context. Also, add documents, found occurrences and such maybe.
 
             // Now let's ask our rag llm
             var answer = ragService.postNewRAGPrompt(chatState.getMessages());
@@ -106,10 +117,9 @@ public class RAGApi {
             chatState.addMessage(systemResponseMessage);
 
             model.put("chatState", chatState);
-
         } catch (Exception ex) {
-            // TODO: Logging
-            model.put("data", "");
+            logger.error("Error getting the response of the ragbot; request body:\n " + request.body(), ex);
+            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
         return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
@@ -134,21 +144,14 @@ public class RAGApi {
             startMessage.setMessage(languageResources.get("ragBotGreetingMessage"));
             startMessage.setPrompt(languageResources.get("ragBotGreetingPrompt"));
 
-            // TODO: JUST TESTING
-            /*List<Integer> ids = new ArrayList<Integer>();
-            ids.add(1);
-            ids.add(2);
-            ids.add(3);
-            startMessage.setContextDocuments(new ArrayList<>(db.getManyDocumentsByIds(ids)));*/
-
             ragState.addMessage(startMessage);
 
-            // TODO: Someday it's probably best to cache this in a mongodb or something.
+            // TODO: Someday it's probably best to cache this in a mongodb or something. -> Yes, it is.
             activeRagChatStates.put(ragState.getChatId(), ragState);
             model.put("chatState", ragState);
         } catch (Exception ex) {
-            // TODO: Logging
-            model.put("data", "");
+            logger.error("Error creating a new RAGbot chat", ex);
+            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
         return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
