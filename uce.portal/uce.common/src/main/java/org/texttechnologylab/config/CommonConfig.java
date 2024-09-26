@@ -34,11 +34,16 @@ public class CommonConfig {
     public String getGbifOccurrencesSearchUrl(){
         return getProperty("gbif.occurrences.search.url");
     }
+    public String getSparqlHost(){ return getProperty("sparql.host"); }
+    public String getSparqlEndpoint(){ return getProperty("sparql.endpoint"); }
     public String getRAGWebserverBaseUrl(){
         return getProperty("rag.webserver.base.url");
     }
     public String getRAGModel(){
         return getProperty("rag.model");
+    }
+    public String getRagOpenAIApiKey(){
+        return getProperty("rag.openai.apiKey");
     }
     public String getTemplatesLocation(){
         return getProperty("templates.location");

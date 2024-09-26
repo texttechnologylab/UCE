@@ -30,7 +30,6 @@ import static spark.Spark.*;
  * Hello world!
  */
 public class App {
-
     private static final Configuration configuration = Configuration.getDefaultConfiguration();
     private static final Logger logger = LogManager.getLogger();
 

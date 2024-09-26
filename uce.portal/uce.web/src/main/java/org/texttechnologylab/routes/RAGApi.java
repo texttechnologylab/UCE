@@ -89,7 +89,11 @@ public class RAGApi {
             // Update: 16.04.2024: I've trained a BERT model that classifies user inputs into context_needed or
             // context_not_needed. So: we ask our webserver: should we fetch context? if yes, do so, if not - then don't.
             // See also: https://www.kaggle.com/models/kevinbnisch/ccc-bert
-            var contextNeeded = ragService.postRAGContextNeeded(userMessage);
+            var contextNeeded = ExceptionUtils.tryCatchLog(
+                    () -> ragService.postRAGContextNeeded(userMessage),
+                    (ex) -> logger.error("Error getting the ContextNeeded info from the rag service.", ex));
+            if(contextNeeded == null) contextNeeded = 1;
+
             List<DocumentChunkEmbedding> nearestDocumentChunkEmbeddings = new ArrayList<>();
             List<Document> foundDocuments = new ArrayList<Document>();
             if (contextNeeded == 1) {
@@ -105,12 +109,19 @@ public class RAGApi {
             chatState.addMessage(userRagMessage);
 
             // Now let's ask our rag llm
-            var answer = ragService.postNewRAGPrompt(chatState.getMessages());
+            String finalPrompt = prompt;
+            var answer = ExceptionUtils.tryCatchLog(
+                    () -> ragService.postNewRAGPrompt(chatState.getMessages()),
+                    (ex) -> logger.error("Error getting the next response from our LLM RAG service. The prompt: " + finalPrompt, ex));
+            if(answer == null) {
+                var languageResources = LanguageResources.fromRequest(request);
+                answer = languageResources.get("ragBotErrorMessage");
+            }
             var systemResponseMessage = new RAGChatMessage();
             systemResponseMessage.setRole(Roles.ASSISTANT);
             systemResponseMessage.setPrompt(answer);
             systemResponseMessage.setMessage(answer);
-            systemResponseMessage.setContextDocument_Ids(nearestDocumentChunkEmbeddings.stream().map(e -> e.getDocument_id()).toList());
+            systemResponseMessage.setContextDocument_Ids(nearestDocumentChunkEmbeddings.stream().map(DocumentChunkEmbedding::getDocument_id).toList());
             systemResponseMessage.setContextDocuments(new ArrayList<>(foundDocuments));
 
             // Add the system response as well
@@ -118,7 +129,7 @@ public class RAGApi {
 
             model.put("chatState", chatState);
         } catch (Exception ex) {
-            logger.error("Error getting the response of the ragbot; request body:\n " + request.body(), ex);
+            logger.error("Unknown Error getting the response of the ragbot; request body:\n " + request.body(), ex);
             return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 

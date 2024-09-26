@@ -86,10 +86,13 @@ public class Search_DefaultImpl implements Search {
         // Execute embedding search if desired.
         // This search is lose coupled from the rest and only done once in the initiation.
         if (searchState.getSearchLayers().contains(SearchLayer.EMBEDDINGS)) {
-            var closestDocumentsEmbeddings = ragService.getClosestDocumentChunkEmbeddings(
-                    this.searchState.getSearchPhrase(),
-                    20);
+            var closestDocumentsEmbeddings = ExceptionUtils.tryCatchLog(
+                    () -> ragService.getClosestDocumentChunkEmbeddings(
+                            this.searchState.getSearchPhrase(),
+                            20),
+                    (ex) -> logger.error("Error getting the closest document chunk embeddings of the searchphrase: " + this.searchState.getSearchPhrase(), ex));
 
+            if(closestDocumentsEmbeddings == null) return searchState;
             var foundDocumentChunkEmbeddings = new ArrayList<DocumentChunkEmbeddingSearchResult>();
             for (var embedding : closestDocumentsEmbeddings) {
                 var document = ExceptionUtils.tryCatchLog(() -> db.getDocumentById(embedding.getDocument_id()),

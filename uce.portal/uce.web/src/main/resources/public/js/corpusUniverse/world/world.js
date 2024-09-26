@@ -45,7 +45,9 @@ class World {
         scene = createScene();
         loop = new Loop(camera, scene, renderer);
         raycaster = createRaycaster();
-        ui = new UI(document.querySelector('.corpus-universe-container-ui'), camera);
+        // In the reduced view, we don't have a UI.
+        const uiElement = document.querySelector('.corpus-universe-container-ui');
+        if(uiElement)ui = new UI(uiElement, camera);
 
         // Add all events here
         renderer.domElement.addEventListener('mousedown', (event) => this.handleOnMouseClick(event));
@@ -239,7 +241,7 @@ function focusNode(nodeMesh, network) {
     tweenCameraToPos(camera, controls, nodePos, 1, 3);
     currentFocusedNode = nodeMesh;
     const node = network.getNodeById(nodeMesh.userData.id);
-    ui.openNodeInspector(node, network.getPlanetOfNode(node));
+    if(ui !== undefined) ui.openNodeInspector(node, network.getPlanetOfNode(node));
 }
 
 function focusCoordinate(pointVector) {

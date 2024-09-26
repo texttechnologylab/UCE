@@ -12,6 +12,8 @@ import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.test.test;
+import org.texttechnologylab.models.util.HealthStatus;
+import org.texttechnologylab.utils.SystemStatus;
 
 import javax.persistence.criteria.Join;
 import java.sql.Array;
@@ -24,14 +26,19 @@ import java.util.stream.Collectors;
 @Service
 public class PostgresqlDataInterface_Impl implements DataInterface {
 
-    private final SessionFactory sessionFactory;
+    private SessionFactory sessionFactory;
 
     private Session getCurrentSession() {
         return sessionFactory.openSession();
     }
 
     public PostgresqlDataInterface_Impl() {
-        sessionFactory = HibernateConf.buildSessionFactory();
+        try{
+            sessionFactory = HibernateConf.buildSessionFactory();
+            SystemStatus.PostgresqlDbStatus = new HealthStatus(true, "", null);
+        } catch (Exception ex){
+            SystemStatus.PostgresqlDbStatus = new HealthStatus(false, "Couldn't build the session factory.", ex);
+        }
     }
 
     public ArrayList<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) throws DatabaseOperationException {

@@ -61,7 +61,7 @@ public class DocumentApi {
         if(id == null) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         try {
-            // Ive forgotten why I introduced this variable here?...
+            // I've forgotten why I introduced this variable here?...
             //var type = request.queryParams("type");
             var document = db.getDocumentById(id);
             var data = db.getGlobeDataForDocument(id);

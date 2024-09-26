@@ -7,6 +7,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.Anomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import io.kubernetes.client.Exec;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.uima.jcas.cas.AnnotationBase;
@@ -24,8 +25,10 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
+import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.EmbeddingUtils;
 import org.texttechnologylab.utils.ListUtils;
+import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.File;
 
@@ -36,27 +39,31 @@ import java.util.*;
 
 @Service
 /*
-TODO: Add logging!
-Holds logic for interacting with any UIMA associated data
+Holds logic for interacting with any UIMA associated data. The UIMAService is the ONLY service that catches its own exceptions and adds logging!
  */
 public class UIMAService {
     private static final Logger logger = LogManager.getLogger();
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
-    private final GoetheUniversityService goetheUniversityService;
-    private final PostgresqlDataInterface_Impl db;
-    private final GbifService gbifService;
-    private final RAGService ragService;
+    private GoetheUniversityService goetheUniversityService;
+    private PostgresqlDataInterface_Impl db;
+    private GbifService gbifService;
+    private RAGService ragService;
 
     public UIMAService(GoetheUniversityService goetheUniversityService,
                        PostgresqlDataInterface_Impl db,
                        GbifService gbifService,
                        RAGService ragService) {
-        this.goetheUniversityService = goetheUniversityService;
-        this.db = db;
-        this.ragService = ragService;
-        this.gbifService = gbifService;
+        try {
+            this.goetheUniversityService = goetheUniversityService;
+            this.db = db;
+            this.ragService = ragService;
+            this.gbifService = gbifService;
+            SystemStatus.UIMAService = new HealthStatus(true, "", null);
+        } catch (Exception ex) {
+            SystemStatus.UIMAService = new HealthStatus(false, "Error initing the service", ex);
+        }
     }
 
     /**
@@ -199,11 +206,15 @@ public class UIMAService {
 
             // See if we can get any more informatiom from the goethe collections
             document.setMetadataTitleInfo(new MetadataTitleInfo());
-            if (corpusConfig.getOther().isAvailableOnFrankfurtUniversityCollection())
-                document.setMetadataTitleInfo(goetheUniversityService.scrapeDocumentTitleInfo(document.getDocumentId()));
+            if (corpusConfig.getOther().isAvailableOnFrankfurtUniversityCollection()) {
+                var metadataTitleInfo = ExceptionUtils.tryCatchLog(
+                        () -> goetheUniversityService.scrapeDocumentTitleInfo(document.getDocumentId()),
+                        (ex) -> logger.error("Error scraping the metadata info of the document with id: " + document.getDocumentId(), ex));
+                if (metadataTitleInfo != null) document.setMetadataTitleInfo(metadataTitleInfo);
+            }
 
             // Set the cleaned full text. That is the sum of all tokens except of all anomalies
-            // TODO: For now, we skip this. This doesn't relly improve anything and is very costly.
+            // For now, we skip this. This doesn't relly improve anything and is very costly.
             if (false) {
                 var cleanedText = new StringJoiner(" ");
                 JCasUtil.select(jCas, Token.class).forEach(t -> {
@@ -316,8 +327,10 @@ public class UIMAService {
                             // correct TaxonId
                             if (potentialBiofidId.isEmpty()) continue;
 
-                            var taxonId = gbifService.biofidIdUrlToGbifTaxonId(potentialBiofidId);
-                            if (taxonId == -1) continue;
+                            var taxonId = ExceptionUtils.tryCatchLog(
+                                    () -> gbifService.biofidIdUrlToGbifTaxonId(potentialBiofidId),
+                                    (ex) -> logger.error("Error getting the taxonId of a biofid annotation while importing.", ex));
+                            if (taxonId == null || taxonId == -1) continue;
                             taxon.setGbifTaxonId(taxonId);
 
                             // Now check if we already have stored occurences for that taxon - we don't need to do that again then.
@@ -328,7 +341,9 @@ public class UIMAService {
                             if (is == null || is) break;
 
                             // Otherwise, fetch new occurrences.
-                            var potentialOccurrences = gbifService.scrapeGbifOccurrence(taxonId);
+                            var potentialOccurrences = ExceptionUtils.tryCatchLog(
+                                    () -> gbifService.scrapeGbifOccurrence(taxonId),
+                                    (ex) -> logger.error("Error scraping the gbif occurrence of taxonId: " + taxonId, ex));
                             if (potentialOccurrences != null && !potentialOccurrences.isEmpty()) {
                                 occurrences.addAll(potentialOccurrences);
                                 taxon.setPrimaryBiofidOntologyIdentifier(potentialBiofidId);
@@ -421,7 +436,7 @@ public class UIMAService {
             // a rest API and perform reductions on them. Instead, we sample them.
             var corpusDocuments = ExceptionUtils.tryCatchLog(() -> db.getNonePostprocessedDocumentsByCorpusId(corpus.getId()),
                     (ex) -> logger.error("Error while fetching none postprocessed documents of corpus with id " + corpus.getId(), ex));
-            if(corpusDocuments == null) return;
+            if (corpusDocuments == null) return;
 
             Collections.shuffle(corpusDocuments); // We want random samples of size CHUNKSIZE
             var chunked = ListUtils.partitionList(corpusDocuments, 1000);
@@ -429,13 +444,18 @@ public class UIMAService {
             for (var documents : chunked) {
                 // Get the complete list of document chunk embeddings of all documents
                 var docChunkEmbeddings = documents.stream()
-                        .flatMap(d -> ragService.getDocumentChunkEmbeddingsOfDocument(d.getId()).stream())
+                        .flatMap(d -> ExceptionUtils.tryCatchLog(
+                                () -> ragService.getDocumentChunkEmbeddingsOfDocument(d.getId()).stream(),
+                                (ex) -> logger.error("Error getting the document chunk embeddings of document " + d.getId(), ex)))
+                        .filter(Objects::nonNull)
                         .toList();
 
                 // Now, from these chunks - generate a 2D and 3D tsne reduction embedding and store it
                 // with the single document embedding
-                var reducedEmbeddingDto = ragService.getEmbeddingDimensionReductions(
-                        docChunkEmbeddings.stream().map(DocumentChunkEmbedding::getEmbedding).toList());
+                var reducedEmbeddingDto = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getEmbeddingDimensionReductions(
+                                docChunkEmbeddings.stream().map(DocumentChunkEmbedding::getEmbedding).toList()),
+                        (ex) -> logger.error("Error getting embedding dimension reductions in post processing a corpus.", ex));
 
                 if (reducedEmbeddingDto.getTsne2D() == null) continue;
                 // Store the tsne reduction in each chunk - this is basically now a 2D and 3D coordinate
@@ -444,11 +464,15 @@ public class UIMAService {
                     docChunkEmbeddings.get(i).setTsne3D(reducedEmbeddingDto.getTsne3D()[i]);
                 }
                 // Update the changes (Could be a bulk Update... let's see :-)
-                docChunkEmbeddings.forEach(ragService::updateDocumentChunkEmbedding);
+                docChunkEmbeddings.forEach(de -> ExceptionUtils.tryCatchLog(
+                        () -> ragService.updateDocumentChunkEmbedding(de),
+                        (ex) -> logger.error("Error updating and saving a document chunk embedding.", ex)));
 
                 // And calculate a reduced embedding for the whole document as well!
                 for (var document : documents) {
-                    var documentEmbedding = ragService.getDocumentEmbeddingOfDocument(document.getId());
+                    var documentEmbedding = ExceptionUtils.tryCatchLog(
+                            () -> ragService.getDocumentEmbeddingOfDocument(document.getId()),
+                            (ex) -> logger.error("Error getting the document embeddings of document: " + document.getId(), ex));
                     if (documentEmbedding == null) continue;
                     var chunkEmbeddingsOfDocument = docChunkEmbeddings
                             .stream()
@@ -470,19 +494,25 @@ public class UIMAService {
                             (ex) -> logger.error("Error updating the document while post processing corpus. Postprocessing continues", ex));
 
                     // Update the document embedding
-                    ragService.updateDocumentEmbedding(documentEmbedding);
+                    ExceptionUtils.tryCatchLog(
+                            () -> ragService.updateDocumentEmbedding(documentEmbedding),
+                            (ex) -> logger.error("Error updating and saving a document embedding.", ex));
                 }
             }
 
             System.out.println("Corpus TSNE Plot...");
 
-            // Now that we have the reduced coordiantes, lets plot a tsne plot of the corpus and cache it!
+            // Now that we have the reduced coordinates, lets plot a tsne plot of the corpus and cache it!
             // If we have an existing plot, then update that
             var corpusTsnePlot = corpus.getCorpusTsnePlot();
             if (corpusTsnePlot == null) {
                 corpusTsnePlot = new CorpusTsnePlot();
             }
-            corpusTsnePlot.setPlotHtml(ragService.getCorpusTsnePlot(corpus.getId()));
+            var htmlPlot = ExceptionUtils.tryCatchLog(
+                    () -> ragService.getCorpusTsnePlot(corpus.getId()),
+                    (ex) -> logger.error("Error building the corpus tsne plot of corpus: " + corpus.getId(), ex));
+            if (htmlPlot == null) return;
+            corpusTsnePlot.setPlotHtml(htmlPlot);
             corpusTsnePlot.setCorpus(corpus);
             corpusTsnePlot.setCreated(DateTime.now().toDate());
 
@@ -504,28 +534,42 @@ public class UIMAService {
         // Calculate embeddings if they are activated
         if (corpusConfig.getOther().isEnableEmbeddings()) {
             // Build the chunks, which are the most crucial embeddings
-            var documentChunkEmbeddings = ragService.getCompleteEmbeddingChunksFromDocument(document);
+            var documentChunkEmbeddings = ExceptionUtils.tryCatchLog(
+                    () -> ragService.getCompleteEmbeddingChunksFromDocument(document),
+                    (ex) -> logger.error("Error getting the complete embedding chunks for document: " + document.getId(), ex));
+
             // Build a single document embeddings for the whole text
-            var documentEmbedding = ragService.getCompleteEmbeddingFromDocument(document);
+            var documentEmbedding = ExceptionUtils.tryCatchLog(
+                    () -> ragService.getCompleteEmbeddingFromDocument(document),
+                    (ex) -> logger.error("Error getting the complete embedding from a document.", ex));
 
             // Store the single document embedding
-            ragService.saveDocumentEmbedding(documentEmbedding);
+            if (documentEmbedding != null)
+                ExceptionUtils.tryCatchLog(
+                        () -> ragService.saveDocumentEmbedding(documentEmbedding),
+                        (ex) -> logger.error("Error saving a document embedding.", ex));
 
             // Store the chunks
-            for (var docEmbedding : documentChunkEmbeddings) {
-                ragService.saveDocumentChunkEmbedding(docEmbedding);
-            }
+            if (documentChunkEmbeddings != null)
+                for (var docEmbedding : documentChunkEmbeddings) {
+                    ExceptionUtils.tryCatchLog(
+                            () -> ragService.saveDocumentChunkEmbedding(docEmbedding),
+                            (ex) -> logger.error("Error saving a document chunk embeddings.", ex)
+                    );
+                }
         }
 
         if (corpusConfig.getOther().isIncludeTopicDistribution()) {
             // Calculate the page topic distribution if activated
-            var pageTopics = "";
             for (var page : document.getPages()) {
-                var topicDistribution = ragService.getTextTopicDistribution(PageTopicDistribution.class, page.getCoveredText(document.getFullText()));
+                var topicDistribution = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getTextTopicDistribution(PageTopicDistribution.class, page.getCoveredText(document.getFullText())),
+                        (ex) -> logger.error("Error getting the PageTopicDistribution - the postprocessing continues. Document id: " + document.getId(), ex));
+                if (topicDistribution == null) continue;
+
                 topicDistribution.setBegin(page.getBegin());
                 topicDistribution.setEnd(page.getEnd());
                 topicDistribution.setPage(page);
-                pageTopics += topicDistribution.toString();
                 page.setPageTopicDistribution(topicDistribution);
                 // Store it in the db
                 ExceptionUtils.tryCatchLog(() -> db.savePageTopicDistribution(page),
@@ -533,8 +577,9 @@ public class UIMAService {
             }
 
             // And the document topic dist.
-            var documentTopicDistribution = ragService.getTextTopicDistribution(
-                    DocumentTopicDistribution.class, document.getFullText());
+            var documentTopicDistribution = ExceptionUtils.tryCatchLog(
+                    () -> ragService.getTextTopicDistribution(DocumentTopicDistribution.class, document.getFullText()),
+                    (ex) -> logger.error("Error getting the DocumentTopicDistribution - the postprocessing continues. Document id: " + document.getId(), ex));
             documentTopicDistribution.setDocument(document);
             document.setDocumentTopicDistribution(documentTopicDistribution);
             // Store it
