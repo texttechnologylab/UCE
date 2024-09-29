@@ -30,26 +30,6 @@ public class GbifService {
     }
 
     /**
-     * Returns from e.g.: https://www.biofid.de/bio-ontologies/gbif/10428508 the taxon id that belongs to it.
-     * We have that stored in our sparql database. Returns -1 if nothing was found.
-     *
-     * @return
-     */
-    public long biofidIdUrlToGbifTaxonId(String potentialBiofidId) {
-        var command = "SELECT ?predicate ?object " +
-                "WHERE {" +
-                "  <{BIOFID_URL_ID}> <http://rs.tdwg.org/dwc/terms/taxonID> ?object ; " +
-                "  . " +
-                "}";
-        command = command.replace("{BIOFID_URL_ID}", potentialBiofidId.trim());
-        var result = jenaSparqlService.executeCommand(command);
-        if (result.isEmpty()) return -1;
-
-        var gbifTaxonUrl = result.getFirst().getResource("object").toString();
-        return Long.parseLong(Arrays.stream(gbifTaxonUrl.split("/")).toList().getLast());
-    }
-
-    /**
      * Screps potential occurrences from the official gbif database for a given biofidTaxonIdentifier
      *
      * @return

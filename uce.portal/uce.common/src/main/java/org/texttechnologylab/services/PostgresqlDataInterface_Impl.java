@@ -64,6 +64,26 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
+    public List<Taxon> getIdentifiableTaxonsByValues(List<String> tokens) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(Taxon.class);
+            var root = criteriaQuery.from(Taxon.class);
+
+            // Adding conditions: coveredText in values and identifier not null or empty and ignore lower and upper case
+            criteriaQuery.select(root).where(
+                    criteriaBuilder.and(
+                            criteriaBuilder.lower(root.get("coveredText")).in(tokens.stream().map(String::toLowerCase).toList()),
+                            criteriaBuilder.isNotNull(root.get("identifier")),
+                            criteriaBuilder.notEqual(root.get("identifier"), "")
+                    )
+            );
+
+            var query = session.createQuery(criteriaQuery);
+            return query.getResultList();
+        });
+    }
+
     public int countDocumentsInCorpus(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteria = session.createCriteria(Document.class);
@@ -122,6 +142,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return corpus;
         });
     }
+
 
     public Corpus getCorpusByName(String name) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {

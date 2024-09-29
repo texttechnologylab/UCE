@@ -50,15 +50,18 @@ public class UIMAService {
     private PostgresqlDataInterface_Impl db;
     private GbifService gbifService;
     private RAGService ragService;
+    private JenaSparqlService jenaSparqlService;
 
     public UIMAService(GoetheUniversityService goetheUniversityService,
                        PostgresqlDataInterface_Impl db,
                        GbifService gbifService,
-                       RAGService ragService) {
+                       RAGService ragService,
+                       JenaSparqlService jenaSparqlService) {
         try {
             this.goetheUniversityService = goetheUniversityService;
             this.db = db;
             this.ragService = ragService;
+            this.jenaSparqlService = jenaSparqlService;
             this.gbifService = gbifService;
             SystemStatus.UIMAService = new HealthStatus(true, "", null);
         } catch (Exception ex) {
@@ -328,7 +331,7 @@ public class UIMAService {
                             if (potentialBiofidId.isEmpty()) continue;
 
                             var taxonId = ExceptionUtils.tryCatchLog(
-                                    () -> gbifService.biofidIdUrlToGbifTaxonId(potentialBiofidId),
+                                    () -> jenaSparqlService.biofidIdUrlToGbifTaxonId(potentialBiofidId),
                                     (ex) -> logger.error("Error getting the taxonId of a biofid annotation while importing.", ex));
                             if (taxonId == null || taxonId == -1) continue;
                             taxon.setGbifTaxonId(taxonId);

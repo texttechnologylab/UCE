@@ -1,10 +1,7 @@
 package org.texttechnologylab.services;
 
 import org.texttechnologylab.exceptions.DatabaseOperationException;
-import org.texttechnologylab.models.corpus.Corpus;
-import org.texttechnologylab.models.corpus.CorpusTsnePlot;
-import org.texttechnologylab.models.corpus.Document;
-import org.texttechnologylab.models.corpus.Page;
+import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
 
@@ -17,6 +14,13 @@ public interface DataInterface {
      * @return
      */
     public List<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) throws DatabaseOperationException;
+
+    /**
+     * Returns all taxons (if any) that match the given string values AND their identifier column is not empty.
+     * @return
+     * @throws DatabaseOperationException
+     */
+    public List<Taxon> getIdentifiableTaxonsByValues(List<String> tokens) throws DatabaseOperationException;
 
     /**
      * Counts all documents within a given corpus

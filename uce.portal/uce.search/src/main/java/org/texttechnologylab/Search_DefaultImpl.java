@@ -5,8 +5,12 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.search.*;
+import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
+import org.texttechnologylab.utils.Stopwords;
+import org.texttechnologylab.utils.StringUtils;
+import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -25,6 +29,7 @@ public class Search_DefaultImpl implements Search {
     private List<String> stopwords;
     private PostgresqlDataInterface_Impl db;
     private RAGService ragService;
+    private JenaSparqlService jenaSparqlService;
 
     /**
      * Creates a new instance of the Search_DefaultImpl, throws exceptions if components couldn't be inited.
@@ -36,22 +41,24 @@ public class Search_DefaultImpl implements Search {
     public Search_DefaultImpl(ApplicationContext serviceContext,
                               String searchPhrase,
                               long corpusId,
+                              String languageCode,
                               List<SearchLayer> searchLayers) throws URISyntaxException, IOException {
-
         this.searchState = new SearchState(SearchType.DEFAULT);
         this.searchState.setSearchLayers(searchLayers);
-        initServices(serviceContext);
+        initServices(serviceContext, languageCode);
 
         this.searchState.setCorpusId(corpusId);
         this.searchState.setSearchPhrase(searchPhrase);
-        this.searchState.setSearchTokens(cleanSearchPhrase(searchPhrase));
+        this.searchState.setSearchTokens(enrichSearchTokens(cleanSearchPhrase(searchPhrase)));
     }
 
     public Search_DefaultImpl() {
     }
 
-    public void fromSearchState(ApplicationContext serviceContext, SearchState searchState) throws URISyntaxException, IOException {
-        initServices(serviceContext);
+    public void fromSearchState(ApplicationContext serviceContext,
+                                String languageCode,
+                                SearchState searchState) throws URISyntaxException, IOException {
+        initServices(serviceContext, languageCode);
         setSearchState(searchState);
     }
 
@@ -135,7 +142,6 @@ public class Search_DefaultImpl implements Search {
      * @return
      */
     private DocumentSearchResult executeSearchOnDatabases(boolean countAll) {
-
         if (searchState.getSearchLayers().contains(SearchLayer.METADATA)) {
             return ExceptionUtils.tryCatchLog(
                     () -> db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
@@ -167,11 +173,15 @@ public class Search_DefaultImpl implements Search {
     }
 
     /**
-     * Loads the appropriate stopwords from the resources
+     * Loads the appropriate stopwords from the resources. Loads them once and then caches them in RAM
      *
      * @param languageCode de-DE for german
      */
     private List<String> loadStopwords(String languageCode) throws IOException {
+        // See if we have them cached. Else, load them once.
+        var cachedStopwords = Stopwords.GetStopwords(languageCode);
+        if(cachedStopwords != null) return cachedStopwords;
+
         List<String> stopwords = new ArrayList<>();
         try (var inputStream = getClass().getClassLoader().getResourceAsStream("stopwords_" + languageCode + ".txt");
              var reader = new BufferedReader(new InputStreamReader(inputStream))) {
@@ -182,7 +192,41 @@ public class Search_DefaultImpl implements Search {
         } catch (NullPointerException e) {
             throw new RuntimeException("stopwords_" + languageCode + ".txt not found in the classpath");
         }
-        return stopwords;
+
+        // Cache them
+        logger.info("Cached the stopwords for language " + languageCode + " - will not fetch them anymore now.");
+        Stopwords.SetStopwords(languageCode, stopwords);
+        return Stopwords.GetStopwords(languageCode);
+    }
+
+    /**
+     * Possibly enriches search tokens with taxon ontologies. The function may produce more tokens in the end.
+     * @param tokens
+     * @return
+     */
+    private List<String> enrichSearchTokens(List<String> tokens){
+        var finalTokens = new ArrayList<>(tokens);
+
+        // Check for potential ontology alternative names. This can only work if our jena sparql db is running
+        if(SystemStatus.JenaSparqlStatus.isAlive()){
+            var potentialTaxons = ExceptionUtils.tryCatchLog(
+                    () -> db.getIdentifiableTaxonsByValues(tokens),
+                    (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
+            if(potentialTaxons == null || potentialTaxons.isEmpty()) return tokens;
+
+            var ids = new ArrayList<String>();
+            for(var taxon: potentialTaxons){
+                if(taxon.getIdentifier().contains("|")){
+                    ids.addAll(Arrays.stream(taxon.getIdentifier().split("|")).toList());
+                } else{
+                    ids.add(taxon.getIdentifier().trim());
+                }
+            }
+            var newTokens = jenaSparqlService.getAlternativeNamesOfTaxons(ids);
+            finalTokens.addAll(newTokens);
+        }
+
+        return finalTokens;
     }
 
     /**
@@ -191,21 +235,19 @@ public class Search_DefaultImpl implements Search {
      * @return
      */
     private List<String> cleanSearchPhrase(String search) {
-
-        // search = search.trim().toLowerCase();
         search = search.trim();
         var splited = Arrays.stream(search.split(" ")).toList();
         // Remove all stopwords
-        splited = splited.stream().filter(s -> !stopwords.contains(s)).toList();
-
+        splited = splited.stream().filter(s -> !stopwords.contains(s.toLowerCase())).toList();
+        splited = splited.stream().map(StringUtils::removeSpecialCharactersAtEdges).toList();
         return splited;
     }
 
-    private void initServices(ApplicationContext serviceContext) throws URISyntaxException, IOException {
+    private void initServices(ApplicationContext serviceContext, String languageCode) throws URISyntaxException, IOException {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.ragService = serviceContext.getBean(RAGService.class);
-        // TODO: Add more language support in the future
-        this.stopwords = loadStopwords("de-DE");
+        this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
+        this.stopwords = loadStopwords(languageCode);
     }
 
 }

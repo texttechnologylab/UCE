@@ -45,6 +45,7 @@ public class SearchApi {
         var model = new HashMap<String, Object>();
 
         try {
+            var languageResources = LanguageResources.fromRequest(request);
             var searchId = request.queryParams("searchId");
             var order = request.queryParams("order").toUpperCase();
             var orderBy = request.queryParams("orderBy").toUpperCase();
@@ -58,7 +59,7 @@ public class SearchApi {
             activeSearchState.setOrder(SearchOrder.valueOf(order));
             activeSearchState.setOrderBy(OrderByColumn.valueOf(orderBy));
             var search = new Search_DefaultImpl();
-            search.fromSearchState(this.context, activeSearchState);
+            search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
             activeSearchState = search.getSearchHitsForPage(activeSearchState.getCurrentPage());
 
             model.put("searchState", activeSearchState);
@@ -76,6 +77,7 @@ public class SearchApi {
         var gson = new Gson();
 
         try {
+            var languageResources = LanguageResources.fromRequest(request);
             var searchId = request.queryParams("searchId");
             var page = Integer.parseInt(request.queryParams("page"));
             if (!ActiveSearches.containsKey(searchId)) {
@@ -86,7 +88,7 @@ public class SearchApi {
             // Get the next pages.
             var activeSearchState = ActiveSearches.get(searchId);
             var search = new Search_DefaultImpl();
-            search.fromSearchState(this.context, activeSearchState);
+            search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
             activeSearchState = search.getSearchHitsForPage(page);
 
             var model = new HashMap<String, Object>();
@@ -120,6 +122,7 @@ public class SearchApi {
         Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
 
         try {
+            var languageResources = LanguageResources.fromRequest(request);
             var searchInput = requestBody.get("searchInput").toString();
             var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
             var metaOrNeLayer = requestBody.get("metaOrNeLayer").toString();
@@ -141,7 +144,7 @@ public class SearchApi {
                 if (useEmbeddings) searchLayers.add(SearchLayer.EMBEDDINGS);
                 if (includeKeywordInContext) searchLayers.add(SearchLayer.KEYWORDINCONTEXT);
 
-                var search = new Search_DefaultImpl(context, searchInput, corpusId, searchLayers);
+                var search = new Search_DefaultImpl(context, searchInput, corpusId, languageResources.getDefaultLanguage(), searchLayers);
                 searchState = search.initSearch();
             }
 

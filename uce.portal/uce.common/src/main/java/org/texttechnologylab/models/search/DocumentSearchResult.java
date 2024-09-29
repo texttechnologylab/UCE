@@ -1,7 +1,6 @@
 package org.texttechnologylab.models.search;
 
 import org.javatuples.Tuple;
-import org.texttechnologylab.models.utils.CustomTuple;
 
 import java.util.ArrayList;
 import java.util.List;

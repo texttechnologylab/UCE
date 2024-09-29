@@ -54,7 +54,7 @@ public class Search_SemanticRoleImpl implements Search {
     }
 
     @Override
-    public void fromSearchState(ApplicationContext serviceContext, SearchState searchState) throws URISyntaxException, IOException {
+    public void fromSearchState(ApplicationContext serviceContext, String languageCode, SearchState searchState) throws URISyntaxException, IOException {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.searchState = (SemanticRoleSearchState) searchState;
     }

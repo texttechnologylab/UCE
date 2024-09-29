@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
+import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.Search_DefaultImpl;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.Document;
@@ -141,6 +142,7 @@ public class CorpusUniverseApi {
         var result = new HashMap<>();
         result.put("status", 200);
         var gson = new Gson();
+        var languageResources = LanguageResources.fromRequest(request);
 
         var requestBody = gson.fromJson(request.body(), Map.class);
         var searchId = requestBody.get("searchId").toString();
@@ -155,7 +157,7 @@ public class CorpusUniverseApi {
 
         var activeSearchState = ActiveSearches.get(searchId);
         var search = new Search_DefaultImpl();
-        search.fromSearchState(this.context, activeSearchState);
+        search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
         var nodes = new ArrayList<CorpusUniverseNode>();
 
         switch (level) {

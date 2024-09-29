@@ -14,9 +14,7 @@ import com.google.gson.Gson;
 import com.pgvector.PGvector;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
-import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.Document;
-import org.texttechnologylab.models.corpus.PageTopicDistribution;
 import org.texttechnologylab.models.corpus.TopicDistribution;
 import org.texttechnologylab.models.dto.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
@@ -226,7 +224,7 @@ public class RAGService {
         var promptMessages = new ArrayList<HashMap<String, String>>();
         for (var chat : chatHistory.stream().sorted(Comparator.comparing(RAGChatMessage::getCreated)).toList()) {
             var promptMessage = new HashMap<String, String>();
-            promptMessage.put("role", chat.getRole().name().toString().toLowerCase());
+            promptMessage.put("role", chat.getRole().name().toLowerCase());
             promptMessage.put("content", chat.getPrompt());
             promptMessages.add(promptMessage);
         }
@@ -573,7 +571,7 @@ public class RAGService {
     }
 
     /**
-     * We are using postgresql vector extension, which won't work with hibernate. Hence we open a different connection
+     * We are using postgresql vector extension, which won't work with hibernate. Hence, we open a different connection
      * solely for the RAG service.
      */
     private Connection setupVectorDbConnection() throws ClassNotFoundException, SQLException {
@@ -582,7 +580,7 @@ public class RAGService {
                 config.getPostgresqlProperty("hibernate.connection.username"),
                 config.getPostgresqlProperty("hibernate.connection.password"));
 
-        // After we have the connection, we setup some vector extension requirements.
+        // After we have the connection, we set up some vector extension requirements.
         var setupStmt = connection.createStatement();
         setupStmt.executeUpdate("CREATE EXTENSION IF NOT EXISTS vector");
         PGvector.addVectorType(connection);
