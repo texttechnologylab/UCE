@@ -45,7 +45,7 @@ public class SearchState {
      */
     private List<Document> currentDocuments;
 
-    public SearchState(SearchType searchType){
+    public SearchState(SearchType searchType) {
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
     }
@@ -110,8 +110,8 @@ public class SearchState {
         this.orderBy = orderBy;
     }
 
-    public Integer getTotalPages(){
-        if(totalHits < take) return 1;
+    public Integer getTotalPages() {
+        if (totalHits < take) return 1;
         return (int) Math.ceil((double) totalHits / take);
     }
 
@@ -126,20 +126,26 @@ public class SearchState {
     /**
      * Returns the anootation type (NamedEntities, Taxons, Times etc.) of the given document
      */
-    public List<AnnotationSearchResult> getAnnotationsByTypeAndDocumentId(String annotationType, Integer documentId, String neType){
+    public List<AnnotationSearchResult> getAnnotationsByTypeAndDocumentId(String annotationType, Integer documentId, String neType) {
         List<AnnotationSearchResult> currentAnnotations = new ArrayList<>();
-        switch (annotationType){
-            case "NamedEntities": currentAnnotations = getNamedEntitiesByType(neType, 0, 9999999); break;
-            case "Taxons": currentAnnotations = foundTaxons; break;
-            case "Times": currentAnnotations = foundTimes; break;
+        switch (annotationType) {
+            case "NamedEntities":
+                currentAnnotations = getNamedEntitiesByType(neType, 0, 9999999);
+                break;
+            case "Taxons":
+                currentAnnotations = foundTaxons;
+                break;
+            case "Times":
+                currentAnnotations = foundTimes;
+                break;
         }
         currentAnnotations = currentAnnotations.stream().filter(a -> a.getDocumentId() == documentId).toList();
         currentAnnotations = currentAnnotations.stream().sorted(Comparator.comparingInt(AnnotationSearchResult::getOccurrences).reversed()).toList();
         return currentAnnotations;
     }
 
-    public List<AnnotationSearchResult> getNamedEntitiesByType(String type, int skip, int take){
-        return  foundNamedEntities.stream().filter(ne -> ne.getInfo().equals(type)).skip(skip).limit(take).toList();
+    public List<AnnotationSearchResult> getNamedEntitiesByType(String type, int skip, int take) {
+        return foundNamedEntities.stream().filter(ne -> ne.getInfo().equals(type)).skip(skip).limit(take).toList();
     }
 
     public ArrayList<AnnotationSearchResult> getFoundNamedEntities() {
@@ -169,9 +175,9 @@ public class SearchState {
 
     public void setCurrentDocuments(List<Document> currentDocuments) {
         this.currentDocuments = currentDocuments;
-        if(searchLayers != null && searchLayers.contains(SearchLayer.KEYWORDINCONTEXT)){
+        if (searchLayers != null && searchLayers.contains(SearchLayer.KEYWORDINCONTEXT)) {
             // Whenever we set new current documents, recalculate the context state
-            if(keywordInContextState == null)keywordInContextState = new KeywordInContextState();
+            if (keywordInContextState == null) keywordInContextState = new KeywordInContextState();
             keywordInContextState.recalculate(this.currentDocuments, this.searchTokens);
         }
     }
@@ -200,6 +206,11 @@ public class SearchState {
         return searchTokens;
     }
 
+    public String getSearchTokensAsString() {
+        if (this.searchTokens == null) return "";
+        return String.join(" ", this.searchTokens.stream().map(s -> "{" + s + "}").toList());
+    }
+
     public void setSearchTokens(List<String> searchTokens) {
         this.searchTokens = searchTokens;
     }
@@ -210,16 +221,17 @@ public class SearchState {
 
     public void setSearchLayers(List<SearchLayer> searchLayers) {
         this.searchLayers = searchLayers;
-        if(searchLayers.contains(SearchLayer.METADATA)) primarySearchLayer = "Meta";
+        if (searchLayers.contains(SearchLayer.METADATA)) primarySearchLayer = "Meta";
         else primarySearchLayer = "Named-Entities";
     }
 
     /**
      * TODO: This needs rework. Hardcoded names and the whole search layers are awkward. They have ben redesigned
      * too many times now.
+     *
      * @return
      */
-    public String getPrimarySearchLayer(){
+    public String getPrimarySearchLayer() {
         return this.primarySearchLayer == null ? "Semantic Roles" : this.primarySearchLayer;
     }
 

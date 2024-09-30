@@ -154,6 +154,12 @@
     height: 100%;
 }
 
+.matched-tokens-list{
+    border:lightgray 1px solid;
+    padding: 6px;
+    background-color: rgba(255, 215, 0, 0.25);
+}
+
 .side-bar-container .side-bar {
     position: sticky;
     top: 70px;
@@ -360,7 +366,9 @@
 }
 
 .document-card .annotation-hit-container-expander {
-    border: lightgray 1px solid;
+    border-left: lightgray 1px solid;
+    border-right: lightgray 1px solid;
+    border-top: lightgray 1px solid;
     cursor: pointer;
     border-radius: 0;
 }
@@ -375,9 +383,9 @@
     width: 100%;
     margin-top: -1px !important;
     overflow-y: auto;
-    border: Lightgray 1px solid;
-    border-bottom-left-radius: 6px;
-    border-bottom-right-radius: 6px;
+    border-left: Lightgray 1px solid;
+    border-top: Lightgray 1px solid;
+    border-right: Lightgray 1px solid;
     padding-left: 6px;
     overflow-x: hidden;
     max-height: 400px;

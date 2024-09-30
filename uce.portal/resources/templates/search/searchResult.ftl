@@ -35,7 +35,8 @@
         <div class="col-md-6 search-row" data-type="mid">
             <div class="flexed align-items-center justify-content-between sort-container pl-3 pr-3 pt-2 pb-2 mb-3">
                 <div class="flexed align-items-center">
-                    <a class="btn switch-search-layer-result-btn text hoverable selected" data-layer="${searchState.getPrimarySearchLayer()}">
+                    <a class="btn switch-search-layer-result-btn text hoverable selected"
+                       data-layer="${searchState.getPrimarySearchLayer()}">
                         <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}</a>
                     <#if searchState.getFoundDocumentChunkEmbeddings()?exists>
                         <a class="btn switch-search-layer-result-btn text hoverable" data-layer="EMBEDDING">
@@ -94,6 +95,18 @@
             <div class="side-bar-container">
                 <div class="side-bar">
                     <div class="content">
+
+                        <!-- the search tokens we finally took -->
+                        <div>
+                            <div class="ml-1 mb-1 enriched-search-tokens flexed align-items-center h-100">
+                                <i class="fas fa-binoculars" data-trigger="hover"
+                                   data-toggle="popover" data-placement="top"
+                                   data-content="${languageResource.get("finalSearchTokens")}"></i>
+                                <p class="mb-0 form-control rounded-0 mb-0 ml-2 mr-0 small-font text h-100 p-1">
+                                    ${searchState.getSearchTokensAsString()}
+                                </p>
+                            </div>
+                        </div>
 
                         <div class="annotations">
                             <#include "*/search/components/annotations.ftl" >

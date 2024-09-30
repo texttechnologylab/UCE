@@ -131,6 +131,14 @@
     "de-DE": "Korpus-Überblick",
     "en-EN": "Corpus Overview"
   },
+  "finalSearchTokens": {
+    "de-DE": "Die endgültigen Suchbegriffe der Eingabe (nach möglicher Anreicherung).",
+    "en-EN": "The final search tokens of the input (after possible enrichment)."
+  },
+  "noAnnotationsMatched": {
+    "de-DE": "Keine Annotationen gefunden.",
+    "en-EN": "No annotations matched."
+  },
   "source": {
     "de-DE": "Quelle",
     "en-EN": "Source"

@@ -34,6 +34,8 @@
                                 </a>
                             </div>
 
+                            <!-- TODO: this is VERY scuffed... we check here the search tokens which match the text. -->
+                            <#assign matchingTokens = []>
                             <#function getClassForAnnotation coveredText>
                                 <#assign class = "text"?string>
                                 <#assign coveredTextLowerCase = coveredText?lower_case>
@@ -41,6 +43,9 @@
                                     <#list searchState.getSearchTokens() as token>
                                         <#if coveredTextLowerCase?contains(token?lower_case)>
                                             <#assign class = "color-secondary font-weight-bold">
+                                            <#if !(matchingTokens?seq_contains(token))>
+                                                <#assign matchingTokens += [token]>
+                                            </#if>
                                             <#break>
                                         </#if>
                                     </#list>
@@ -53,40 +58,54 @@
                                     <div class="search-hits col-2">
                                         <#list foundLocations as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundPersons as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundOrgas as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundMisc as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundTaxons as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundTimes as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="test ${annotationClass}">- ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
                                         </#list>
                                     </div>
                                 </div>
+                            </div>
+
+                            <!-- Matched Tokens list -->
+                            <div class="matched-tokens-list">
+                                <#if matchingTokens?has_content>
+                                    <div class="flexed align-items-center h-100">
+                                        <i class="fas fa-binoculars color-secondary mr-2"></i>
+                                        <#list matchingTokens as token>
+                                            <span class="mr-1">{${token}}</span>
+                                        </#list>
+                                    </div>
+                                <#else>
+                                    <p class="text small-font mb-0">${languageResource.get("noAnnotationsMatched")}</p>
+                                </#if>
                             </div>
 
                         </div>
