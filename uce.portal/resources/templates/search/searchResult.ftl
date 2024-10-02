@@ -99,12 +99,18 @@
                         <!-- the search tokens we finally took -->
                         <div>
                             <div class="ml-1 mb-1 enriched-search-tokens flexed align-items-center h-100">
-                                <i class="fas fa-binoculars" data-trigger="hover"
+                                <i class="fas fa-binoculars mr-2" data-trigger="hover"
                                    data-toggle="popover" data-placement="top"
                                    data-content="${languageResource.get("finalSearchTokens")}"></i>
-                                <p class="mb-0 form-control rounded-0 mb-0 ml-2 mr-0 small-font text h-100 p-1">
-                                    ${searchState.getSearchTokensAsString()}
-                                </p>
+                                <div class="flexed wrapped mb-0 h-100">
+                                    <#if searchState.getSearchTokens()?has_content>
+                                        <#list searchState.getSearchTokens() as token>
+                                            <span class="mr-1 mb-1 small-font text-dark p-1 search-token">
+                                                ${token}
+                                            </span>
+                                        </#list>
+                                    </#if>
+                                </div>
                             </div>
                         </div>
 

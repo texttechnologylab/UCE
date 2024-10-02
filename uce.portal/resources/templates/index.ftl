@@ -85,6 +85,9 @@
                         <#list corpora as corpusVm>
                             <option data-id="${corpusVm.getCorpus().getId()}"
                                     data-hasbiofid="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()?c}"
+                                    data-hasembeddings="${corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()?c}"
+                                    data-hastopicdist="${corpusVm.getCorpusConfig().getOther().isAvailableOnFrankfurtUniversityCollection()?c}"
+                                    data-hasragbot="${corpusVm.getCorpusConfig().getOther().isEnableRAGBot()?c}"
                                     data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
                         </#list>
                     </select>
@@ -162,7 +165,10 @@
 
     <div class="corpus-inspector-include display-none">
     </div>
-    <#include "*/ragbot/chatwindow.ftl"/>
+
+    <div class="ragbot-chat-include">
+        <#include "*/ragbot/chatwindow.ftl"/>
+    </div>
 </div>
 </body>
 

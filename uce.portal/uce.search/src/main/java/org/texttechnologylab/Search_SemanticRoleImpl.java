@@ -5,6 +5,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.ApplicationContextAware;
+import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.search.DocumentSearchResult;
 import org.texttechnologylab.models.search.SearchLayer;
@@ -25,25 +26,24 @@ public class Search_SemanticRoleImpl implements Search {
     private PostgresqlDataInterface_Impl db;
     private SemanticRoleSearchState searchState;
 
-    public Search_SemanticRoleImpl(ApplicationContext serviceContext, long corpusId,
+    public Search_SemanticRoleImpl(ApplicationContext serviceContext,
+                                   long corpusId,
                                    String searchQuery) throws ParseException {
-        this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.searchState = new SemanticRoleSearchState(SearchType.SEMANTICROLE);
-        this.searchState.setCorpusId(corpusId);
+        setDefaultSearchStateParameters(serviceContext, corpusId);
 
         // We need to parse the search query into the argument lists and save it in the state.
         parseSearchQueryAndFillSearchState(searchQuery);
     }
 
-    public Search_SemanticRoleImpl(ApplicationContext serviceContext, long corpusId,
+    public Search_SemanticRoleImpl(ApplicationContext serviceContext,
+                                   long corpusId,
                                    ArrayList<String> arg0,
                                    ArrayList<String> arg1,
                                    ArrayList<String> argm,
                                    String verb) {
-        this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
-
         this.searchState = new SemanticRoleSearchState(SearchType.SEMANTICROLE);
-        this.searchState.setCorpusId(corpusId);
+        setDefaultSearchStateParameters(serviceContext, corpusId);
         this.searchState.setArg0(preprocess_args(arg0));
         this.searchState.setArg1(preprocess_args(arg1));
         this.searchState.setArgm(preprocess_args(argm));
@@ -96,6 +96,14 @@ public class Search_SemanticRoleImpl implements Search {
         if (documents == null) return searchState;
         searchState.setCurrentDocuments(documents);
         return searchState;
+    }
+
+    private void setDefaultSearchStateParameters(ApplicationContext serviceContext, long corpusId){
+        this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
+        this.searchState.setCorpusId(corpusId);
+        this.searchState.setCorpusConfig(ExceptionUtils.tryCatchLog(
+                () -> CorpusConfig.fromJson(db.getCorpusById(corpusId).getCorpusJsonConfig()),
+                (ex) -> logger.error("Error fetching the corpus and corpus config of corpus: " + corpusId, ex)));
     }
 
     /**

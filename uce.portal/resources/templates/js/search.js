@@ -184,8 +184,9 @@ $('body').on('click', '.search-result-container .page-btn', function () {
 })
 
 $('body').on('click', '.search-result-container .next-page-btn', function () {
-    let curPage = parseInt($('.search-result-container .pagination').data('cur'));
-    let max = parseInt($('.search-result-container .pagination').data('max'));
+    const $pagination = $('.search-result-container .pagination');
+    let curPage = parseInt($pagination.data('cur'));
+    let max = parseInt($pagination.data('max'));
     let newPage = curPage - 1;
     if($(this).data('direction') === "+") newPage += 2;
     if(newPage <= 0 || newPage > max) return;
@@ -329,11 +330,11 @@ $(window).on('scroll', function() {
     // If the keyword in context window exists, then highlight the
     // corresponding items there.
     $contextContainer = $('.keyword-context-card');
-    const isExpanded = $contextContainer.data('expanded');
-    console.log(isExpanded);
-    if(isExpanded) return;
 
     if($contextContainer != null){
+        const isExpanded = $contextContainer.data('expanded');
+        if(isExpanded) return;
+
         $contextContainer.find('.context-row-container').each(function(){
            const contextDocId = $(this).find('.open-document').data('id');
            if(contextDocId === documentId){

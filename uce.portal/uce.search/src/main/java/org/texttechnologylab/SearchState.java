@@ -1,5 +1,6 @@
 package org.texttechnologylab;
 
+import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.features.KeywordInContextState;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.search.*;
@@ -25,6 +26,7 @@ public class SearchState {
     private Integer currentPage = 1;
     private Integer take = 10;
     private long corpusId;
+    private CorpusConfig corpusConfig;
     private Integer totalHits;
     private SearchOrder order = SearchOrder.ASC;
     private OrderByColumn orderBy = OrderByColumn.TITLE;
@@ -49,6 +51,10 @@ public class SearchState {
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
     }
+
+    public CorpusConfig getCorpusConfig() { return corpusConfig;}
+
+    public void setCorpusConfig(CorpusConfig corpusConfig) { this.corpusConfig = corpusConfig; }
 
     public KeywordInContextState getKeywordInContextState() {
         return keywordInContextState;

@@ -11,7 +11,6 @@ import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
-import org.texttechnologylab.models.test.test;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
 
@@ -35,6 +34,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     public PostgresqlDataInterface_Impl() {
         try{
             sessionFactory = HibernateConf.buildSessionFactory();
+            var test = getCorpusById(1);
             SystemStatus.PostgresqlDbStatus = new HealthStatus(true, "", null);
         } catch (Exception ex){
             SystemStatus.PostgresqlDbStatus = new HealthStatus(false, "Couldn't build the session factory.", ex);
@@ -142,7 +142,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return corpus;
         });
     }
-
 
     public Corpus getCorpusByName(String name) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {

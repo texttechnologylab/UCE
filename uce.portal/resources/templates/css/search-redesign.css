@@ -443,6 +443,12 @@
     background-color: rgba(125, 125, 125, 0.15);
 }
 
+.enriched-search-tokens .search-token{
+    background-color: rgba(125, 125, 125, 0.1);
+    border-radius: 6px;
+
+}
+
 .rounded-a {
     margin-left: 3px;
     margin-right: 3px;

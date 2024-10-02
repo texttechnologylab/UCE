@@ -2,11 +2,17 @@
     <div class="w-100">
         <div class="flexed align-items-center">
             <div class="flexed align-items-center">
-                <a class="title-btn open-globe" data-type="document" data-trigger="hover" data-toggle="popover" data-placement="top"
-                   data-content="${languageResource.get("openTaxonomyDist")}" data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
-                    <i class="m-0 fas fa-globe-europe"></i></a>
+                <!-- We only show the 3d taxonomy dist if we have them annotated in the current corpus -->
+                <#if searchState.getCorpusConfig()?has_content && searchState.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()>
+                    <a class="title-btn open-globe" data-type="document" data-trigger="hover" data-toggle="popover"
+                       data-placement="top"
+                       data-content="${languageResource.get("openTaxonomyDist")}"
+                       data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
+                        <i class="m-0 fas fa-globe-europe"></i></a>
+                </#if>
                 <a class="title-btn open-document" data-trigger="hover" data-toggle="popover" data-placement="top"
-                   data-content="${languageResource.get("openDocumentReader")}" data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
+                   data-content="${languageResource.get("openDocumentReader")}"
+                   data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                     <i class="m-0 fas fa-book-open"></i></a>
             </div>
             <h6 class="mb-0 title">${document.getDocumentTitle()}</h6>

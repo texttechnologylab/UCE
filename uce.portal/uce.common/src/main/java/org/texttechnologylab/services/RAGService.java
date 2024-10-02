@@ -319,12 +319,13 @@ public class RAGService {
         var embeddings = new ArrayList<DocumentEmbedding>();
         while (resultSet.next()) {
             var embedding = new DocumentEmbedding();
-            embedding.setEmbedding(((PGvector) resultSet.getObject("embedding")).toArray());
+            embedding.setEmbedding(resultSet.getObject("embedding") != null ? ((PGvector) resultSet.getObject("embedding")).toArray() : null);
             embedding.setTsne3d(resultSet.getObject("tsne3d") != null ? ((PGvector) resultSet.getObject("tsne3d")).toArray() : null);
             embedding.setTsne2d(resultSet.getObject("tsne2d") != null ? ((PGvector) resultSet.getObject("tsne2d")).toArray() : null);
             embedding.setDocument_id(resultSet.getLong("document_id"));
             embedding.setId(resultSet.getLong("id"));
-            embeddings.add(embedding);
+
+            if(embedding.getEmbedding() != null) embeddings.add(embedding);
         }
         return embeddings;
     }

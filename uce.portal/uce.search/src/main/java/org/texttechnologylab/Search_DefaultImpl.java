@@ -3,6 +3,7 @@ package org.texttechnologylab;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.services.JenaSparqlService;
@@ -48,6 +49,9 @@ public class Search_DefaultImpl implements Search {
         initServices(serviceContext, languageCode);
 
         this.searchState.setCorpusId(corpusId);
+        this.searchState.setCorpusConfig(ExceptionUtils.tryCatchLog(
+                () -> CorpusConfig.fromJson(db.getCorpusById(corpusId).getCorpusJsonConfig()),
+                (ex) -> logger.error("Error fetching the corpus and corpus config of corpus: " + corpusId, ex)));
         this.searchState.setSearchPhrase(searchPhrase);
         this.searchState.setSearchTokens(enrichSearchTokens(cleanSearchPhrase(searchPhrase)));
     }

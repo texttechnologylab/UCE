@@ -54,6 +54,9 @@ $('body').on('change', '#corpus-select', function(){
     const selectedOption = $(this).get(0).options[$(this).get(0).selectedIndex];
     const hasSr = selectedOption.getAttribute("data-hassr");
     const hasBiofidOnthology = selectedOption.getAttribute("data-hasbiofid");
+    const hasEmbeddings = selectedOption.getAttribute("data-hasembeddings");
+    const hasRagBot = selectedOption.getAttribute("data-hasragbot");
+    const hasTopicDist = selectedOption.getAttribute("data-hastopicdist");
     selectedCorpus = parseInt(selectedOption.getAttribute("data-id"));
 
     if(hasSr === 'true') $('.open-sr-builder-btn').show(50);
@@ -62,11 +65,17 @@ $('body').on('change', '#corpus-select', function(){
     if(hasBiofidOnthology === 'true') $('.taxonomy-tree-include').show();
     else $('.taxonomy-tree-include').hide();
 
+    if(hasEmbeddings === 'true') $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').show();
+    else $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').hide();
+
+    if(hasRagBot === 'true') $('.ragbot-chat-include').show();
+    else $('.ragbot-chat-include').hide();
+
     updateSearchHistoryUI();
 })
 
 /**
- * Triggers whenever an open-corpus insecptor button is clicked.
+ * Triggers whenever an open-corpus inspector button is clicked.
  */
 $('body').on('click', '.open-corpus-inspector-btn', function () {
     // Get the selected corpus
@@ -117,7 +126,7 @@ $('body').on('click', '.open-corpus-inspector-btn', function () {
 })
 
 /**
- * Triggers whenever an open-document element is clicked. This causes to load a new full read vioew of a doc
+ * Triggers whenever an open-document element is clicked. This causes to load a new full read view of a doc
  */
 $('body').on('click', '.open-document', function () {
     var id = $(this).data('id');
@@ -125,7 +134,7 @@ $('body').on('click', '.open-document', function () {
 })
 
 /**
- * Triggers whenever an open-globe element is clicked. This causes to load a new full read vioew of a doc
+ * Triggers whenever an open-globe element is clicked. This causes to load a new full read view of a doc
  */
 $('body').on('click', '.open-globe', function () {
     const id = $(this).data('id');
