@@ -254,11 +254,16 @@ public class RAGService {
      * @param range
      * @return
      */
-    public List<DocumentEmbedding> getClosest3dDocumentEmbeddingsOfCorpus(float[] tsne3d, int range) throws SQLException {
-        var query = "SELECT * FROM documentembeddings ORDER BY tsne3d <-> ? LIMIT ?";
+    public List<DocumentEmbedding> getClosest3dDocumentEmbeddingsOfCorpus(float[] tsne3d, int range, long corpusId) throws SQLException {
+        var query = "SELECT * FROM documentembeddings e "
+                + "JOIN document d ON e.document_id = d.id "
+                + "WHERE d.corpusid = ? "
+                + "ORDER BY e.tsne3d <-> ? "
+                + "LIMIT ?";
         var statement = vectorDbConnection.prepareStatement(query);
-        statement.setObject(1, new PGvector(tsne3d));
-        statement.setInt(2, range);
+        statement.setObject(1, corpusId);
+        statement.setObject(2, new PGvector(tsne3d));
+        statement.setInt(3, range);
         var resultSet = statement.executeQuery();
         return buildDocumentEmbeddingsFromResultSet(resultSet);
     }
@@ -344,11 +349,32 @@ public class RAGService {
      * @param range
      * @return
      */
-    public List<DocumentChunkEmbedding> getClosestDocumentChunkEmbeddings(String text, int range) throws SQLException, IOException, URISyntaxException, InterruptedException {
-        var query = "SELECT * FROM documentchunkembeddings ORDER BY embedding <-> ? LIMIT ?";
+    public List<DocumentChunkEmbedding> getClosestDocumentChunkEmbeddings(String text, int range, long corpusId)
+            throws SQLException, IOException, URISyntaxException, InterruptedException {
+        // If the corpusid = -1, then we look at ANY document. Otherwise, only at those documentchunkembeddings from
+        // a document that is in the corpus.
+        var query = "";
+        if (corpusId == -1) {
+            query = "SELECT * FROM documentchunkembeddings e "
+                    + "ORDER BY e.embedding <-> ? "
+                    + "LIMIT ?";
+        } else {
+            // Filter by corpusid
+            query = "SELECT * FROM documentchunkembeddings e "
+                    + "JOIN document d ON e.document_id = d.id "
+                    + "WHERE d.corpusid = ? "
+                    + "ORDER BY e.embedding <-> ? "
+                    + "LIMIT ?";
+        }
         var statement = vectorDbConnection.prepareStatement(query);
-        statement.setObject(1, new PGvector(getEmbeddingForText(text)));
-        statement.setInt(2, range);
+        if (corpusId == -1) {
+            statement.setObject(1, new PGvector(getEmbeddingForText(text)));
+            statement.setInt(2, range);
+        } else {
+            statement.setLong(1, corpusId);
+            statement.setObject(2, new PGvector(getEmbeddingForText(text)));
+            statement.setInt(3, range);
+        }
         var resultSet = statement.executeQuery();
         return buildDocumentChunkEmbeddingsFromResultSet(resultSet);
     }
@@ -504,10 +530,7 @@ public class RAGService {
         var responseBody = response.body();
         var reductionDto = gson.fromJson(responseBody, EmbeddingReduceDto.class);
 
-        if (reductionDto.getStatus() != 200) {
-            // TODO: Log this here?
-            return null;
-        }
+        if (reductionDto.getStatus() != 200) return null;
         return reductionDto;
     }
 

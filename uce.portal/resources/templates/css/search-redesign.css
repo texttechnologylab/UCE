@@ -155,7 +155,8 @@
 }
 
 .matched-tokens-list{
-    padding: 6px;
+    padding-top: 12px;
+    padding-left: 6px;
     position: relative;
     border-top:lightgray 1px solid;
 }
@@ -169,6 +170,14 @@
     height: 9px;
     content: '';
     background-color: lightgray;
+}
+
+.matched-tokens-list .matched-token{
+    color:var(--dark);
+    border-radius: 6px;
+    padding-left: 6px;
+    padding-right: 6px;
+    background-color: rgba(125, 125, 125, 0.1);
 }
 
 .side-bar-container .side-bar {
@@ -280,6 +289,7 @@
 }
 
 .sort-container {
+    z-index: 2;
     border: 1px lightgray solid;
     position: sticky;
     top: 40px;

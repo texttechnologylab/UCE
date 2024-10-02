@@ -96,7 +96,8 @@ public class Search_DefaultImpl implements Search {
             var closestDocumentsEmbeddings = ExceptionUtils.tryCatchLog(
                     () -> ragService.getClosestDocumentChunkEmbeddings(
                             this.searchState.getSearchPhrase(),
-                            20),
+                            20,
+                            this.searchState.getCorpusId()),
                     (ex) -> logger.error("Error getting the closest document chunk embeddings of the searchphrase: " + this.searchState.getSearchPhrase(), ex));
 
             if(closestDocumentsEmbeddings == null) return searchState;

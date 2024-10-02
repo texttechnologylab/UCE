@@ -100,7 +100,7 @@
                                     <div class="flexed align-items-center h-100">
                                         <i class="fas fa-binoculars color-secondary mr-2"></i>
                                         <#list matchingTokens as token>
-                                            <span class="mr-1">{${token}}</span>
+                                            <span class="mr-1 matched-token">${token}</span>
                                         </#list>
                                     </div>
                                 <#else>

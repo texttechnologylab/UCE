@@ -208,7 +208,7 @@ public class SearchState {
 
     public String getSearchTokensAsString() {
         if (this.searchTokens == null) return "";
-        return String.join(" ", this.searchTokens.stream().map(s -> "{" + s + "}").toList());
+        return String.join(" ", this.searchTokens.stream().map(s -> "[" + s + "]").toList());
     }
 
     public void setSearchTokens(List<String> searchTokens) {

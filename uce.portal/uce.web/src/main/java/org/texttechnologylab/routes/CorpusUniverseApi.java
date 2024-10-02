@@ -83,7 +83,7 @@ public class CorpusUniverseApi {
         result.put("status", 200);
         var gson = new Gson();
         var requestBody = gson.fromJson(request.body(), Map.class);
-        var corpusId = requestBody.get("corpusId").toString();
+        var corpusId = (long)Float.parseFloat(requestBody.get("corpusId").toString());
 
         var possibleCenter = requestBody.get("currentCenter").toString()
                 .replace("[", "")
@@ -106,7 +106,7 @@ public class CorpusUniverseApi {
             case DOCUMENTS:
                 // First get the closest document embeddings to the current center
                 var docEmbeddings = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 100),
+                        () -> ragService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 100, corpusId),
                         (ex) -> logger.error("Error getting the closest 3d document embeddings.", ex));
                 if (docEmbeddings == null) {
                     result.replace("status", 500);
