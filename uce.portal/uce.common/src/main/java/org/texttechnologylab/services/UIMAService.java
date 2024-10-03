@@ -184,7 +184,7 @@ public class UIMAService {
         logger.info("\n ======== Importing a new CAS as a Document.");
         // Read in the contents of a single xmi cas to see what's inside
         var unique = new HashSet<String>();
-        JCasUtil.select(jCas, AnnotationBase.class).stream().forEach(a -> {
+        JCasUtil.select(jCas, AnnotationBase.class).forEach(a -> {
             unique.add(a.getType().getName());
         });
         unique.forEach(logger::info);

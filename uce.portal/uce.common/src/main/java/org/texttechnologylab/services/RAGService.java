@@ -12,6 +12,7 @@ import java.util.*;
 
 import com.google.gson.Gson;
 import com.pgvector.PGvector;
+import org.jsoup.HttpStatusException;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.Document;
@@ -73,14 +74,14 @@ public class RAGService {
         // Send request and get response
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         var statusCode = response.statusCode();
-        if (statusCode != 200) return null;
+        if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
+
         var responseBody = response.body();
         var result = gson.fromJson(responseBody, TopicModellingDto.class);
-        if (result.getStatus() != 200) {
-            // TODO: Log this here?
-            return null;
-        }
-        // Map the dto to our datastructure
+        if (result.getStatus() != 200) throw new HttpStatusException(
+                "Webservice replied with an internally wrong status code, something went wrong there: " + result.getStatus(), statusCode, url);
+
+        // Map the dto to our datastructures
         T topicDistribution = clazz.getDeclaredConstructor().newInstance();
 
         // This looks shit yikes. Happens.
@@ -155,11 +156,12 @@ public class RAGService {
         // Send request and get response
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         var statusCode = response.statusCode();
-        if (statusCode != 200) return null;
+        if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
+
         var responseBody = response.body();
         var plotTsneDto = gson.fromJson(responseBody, PlotTsneDto.class);
-
-        if (plotTsneDto.getStatus() != 200) return null;
+        if (plotTsneDto.getStatus() != 200) throw new HttpStatusException(
+                "Webservice replied with an internally wrong status code, something went wrong there: " + plotTsneDto.getStatus(), statusCode, url);
 
         return plotTsneDto.getPlot();
     }
@@ -192,11 +194,13 @@ public class RAGService {
         // Send request and get response
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         var statusCode = response.statusCode();
-        if (statusCode != 200) return null;
+        if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
+
         var responseBody = response.body();
         var ragCompleteDto = gson.fromJson(responseBody, RAGCompleteDto.class);
+        if (ragCompleteDto.getStatus() != 200) throw new HttpStatusException(
+                "Webservice replied with an internally wrong status code, something went wrong there: " + ragCompleteDto.getStatus(), statusCode, url);
 
-        if (ragCompleteDto.getStatus() != 200) return null;
         return Integer.parseInt(ragCompleteDto.getMessage());
     }
 
@@ -240,11 +244,13 @@ public class RAGService {
         // Send request and get response
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         var statusCode = response.statusCode();
-        if (statusCode != 200) return null;
+        if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
+
         var responseBody = response.body();
         var ragCompleteDto = gson.fromJson(responseBody, RAGCompleteDto.class);
+        if (ragCompleteDto.getStatus() != 200) throw new HttpStatusException(
+                "Webservice replied with an internally wrong status code, something went wrong there: " + ragCompleteDto.getStatus(), statusCode, url);
 
-        if (ragCompleteDto.getStatus() != 200) return null;
         return ragCompleteDto.getMessage();
     }
 
@@ -527,11 +533,13 @@ public class RAGService {
         // Send request and get response
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         var statusCode = response.statusCode();
-        if (statusCode != 200) return null;
+        if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
+
         var responseBody = response.body();
         var reductionDto = gson.fromJson(responseBody, EmbeddingReduceDto.class);
+        if (reductionDto.getStatus() != 200) throw new HttpStatusException(
+                "Webservice replied with an internally wrong status code, something went wrong there: " + reductionDto.getStatus(), statusCode, url);
 
-        if (reductionDto.getStatus() != 200) return null;
         return reductionDto;
     }
 
@@ -560,11 +568,13 @@ public class RAGService {
         // Send request and get response
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         var statusCode = response.statusCode();
-        if (statusCode != 200) return null;
+        if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
+
         var responseBody = response.body();
         var ragEmbedDto = gson.fromJson(responseBody, RAGEmbedDto.class);
+        if (ragEmbedDto.getStatus() != 200) throw new HttpStatusException(
+                "Webservice replied with an internally wrong status code, something went wrong there: " + ragEmbedDto.getStatus(), statusCode, url);
 
-        if (ragEmbedDto.getStatus() != 200) return null;
         return ragEmbedDto.getMessage();
     }
 

@@ -68,6 +68,7 @@ public class Page extends UIMAAnnotation {
         } catch (Exception ex){
             // I have no idea why, but sometimes, the lazy load of empty paragraphs throws an error.
             // There is nothing wrong with the document or page - it just throws an error here.
+            // It's not a problem if the paragraphs are empty! So we just catch the error and return empty...
             System.err.println("Opened a document with unloadable lazy paragraphs.");
             return new ArrayList<>();
         }
