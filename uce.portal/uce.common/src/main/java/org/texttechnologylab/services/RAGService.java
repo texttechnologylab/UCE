@@ -385,13 +385,13 @@ public class RAGService {
         while (resultSet.next()) {
             var embedding = new DocumentChunkEmbedding(resultSet.getInt("beginn"), resultSet.getInt("endd"));
             embedding.setCoveredText(resultSet.getString("coveredtext"));
-            embedding.setEmbedding(((PGvector) resultSet.getObject("embedding")).toArray());
+            embedding.setEmbedding(resultSet.getObject("embedding") != null ? ((PGvector) resultSet.getObject("embedding")).toArray() : null);
             embedding.setTsne3D(resultSet.getObject("tsne3d") != null ? ((PGvector) resultSet.getObject("tsne3d")).toArray() : null);
             embedding.setTsne2D(resultSet.getObject("tsne2d") != null ? ((PGvector) resultSet.getObject("tsne2d")).toArray() : null);
             embedding.setDocument_id(resultSet.getLong("document_id"));
             embedding.setId(resultSet.getLong("id"));
 
-            embeddings.add(embedding);
+            if(embedding.getEmbedding() != null) embeddings.add(embedding);
         }
         return embeddings;
     }

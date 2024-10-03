@@ -213,7 +213,8 @@ public class Search_DefaultImpl implements Search {
         var finalTokens = new ArrayList<>(tokens);
 
         // Check for potential ontology alternative names. This can only work if our jena sparql db is running
-        if(SystemStatus.JenaSparqlStatus.isAlive()){
+        // and we have taxonomy annotated.
+        if(SystemStatus.JenaSparqlStatus.isAlive() && this.searchState.getCorpusConfig() != null && this.searchState.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()){
             var potentialTaxons = ExceptionUtils.tryCatchLog(
                     () -> db.getIdentifiableTaxonsByValues(tokens),
                     (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));

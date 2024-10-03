@@ -111,32 +111,43 @@ public class UIMAService {
         }
 
         var counter = 0;
+        final var corpusConfigFinal = corpusConfig;
         for (var file : Objects.requireNonNull(
                 new File(foldername)
                         .listFiles((dir, name) -> name.toLowerCase().endsWith(".xmi")))) {
             var doc = XMIToDocument(file.getPath(), corpus);
             if (doc != null) {
-                try {
-                    db.saveDocument(doc);
-                    System.out.println("Stored document with document id " + doc.getDocumentId());
-                    System.out.println("Finished with the UIMA annotations - postprocessing the doc now.");
-                    postProccessDocument(doc, corpusConfig);
-                    System.out.println("Finished postprocessing.");
+                // Save it
+                ExceptionUtils.tryCatchLog(
+                        () -> db.saveDocument(doc),
+                        (ex) -> logger.error("Error saving a finished document with id " + doc.getId()));
+                logger.info("Stored document with document id " + doc.getDocumentId());
+                logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
 
-                    // We occasionally postprocess the corpus while we still import to keep it up to date
-                    if (counter % 500 == 0 && counter != 0) {
-                        postProccessCorpus(corpus, corpusConfig);
-                    }
-                } catch (Exception ex) {
-                    System.err.println("Error storing a finished document. Skipping it and going to the next.");
-                    ex.printStackTrace();
+                // Now eventually do postprocessing of the document
+                ExceptionUtils.tryCatchLog(
+                        () -> postProccessDocument(doc, corpusConfigFinal),
+                        (ex) -> logger.error("Error postprocessing a saved document with id " + doc.getId()));
+                logger.info("Finished postprocessing.");
+
+                // We occasionally postprocess the corpus while we still import to keep it up to date
+                if (counter % 500 == 0 && counter != 0) {
+                    final var finalCorpus = corpus;
+                    ExceptionUtils.tryCatchLog(
+                            () -> postProccessCorpus(finalCorpus, corpusConfigFinal),
+                            (ex) -> logger.error("Error postprocessing the current corpus with id " + finalCorpus.getId()));
                 }
             }
             counter++;
         }
 
         // At the end, postprocess the corpus
-        postProccessCorpus(corpus, corpusConfig);
+        final var finalCorpus = corpus;
+        ExceptionUtils.tryCatchLog(
+                () -> postProccessCorpus(finalCorpus, corpusConfigFinal),
+                (ex) -> logger.error("Error in the final postprocessing of the current corpus with id " + finalCorpus.getId()));
+
+        logger.info("\n\n=================================\n Done with the corpus import.");
     }
 
     /**
@@ -157,9 +168,7 @@ public class UIMAService {
 
             return XMIToDocument(jCas, corpus);
         } catch (Exception ex) {
-            // TODO: Log properly here.
-            System.err.println("Error while reading a xmi file to a cas:");
-            ex.printStackTrace();
+            logger.error("Error while reading an annotated xmi file to a cas and transforming it into a document:", ex);
             return null;
         }
     }
@@ -172,12 +181,13 @@ public class UIMAService {
      */
     public Document XMIToDocument(JCas jCas, Corpus corpus) {
 
+        logger.info("\n ======== Importing a new CAS as a Document.");
         // Read in the contents of a single xmi cas to see what's inside
         var unique = new HashSet<String>();
         JCasUtil.select(jCas, AnnotationBase.class).stream().forEach(a -> {
             unique.add(a.getType().getName());
         });
-        unique.forEach(System.out::println);
+        unique.forEach(logger::info);
 
         try {
             // Corpus config so we now what do look for
@@ -194,26 +204,29 @@ public class UIMAService {
                     metadata.getDocumentTitle(),
                     metadata.getDocumentId(),
                     corpus.getId());
+            logger.info("Setting Metadata done.");
 
             // Before we parse and add that document, lets check if a document with that id and in that
             // corpus already exists. If we created a new corpus, this will always be null.
             var exists = db.documentExists(corpus.getId(), document.getDocumentId());
             if (exists) {
-                System.out.println("Document with id " + document.getDocumentId()
+                logger.info("Document with id " + document.getDocumentId()
                         + " already exists in the corpus " + corpus.getId() + ". Skipping it.");
                 return null;
             }
 
             // Set the full text
             document.setFullText(jCas.getDocumentText());
+            logger.info("Setting full text done.");
 
-            // See if we can get any more informatiom from the goethe collections
+            // See if we can get any more information from the goethe collections
             document.setMetadataTitleInfo(new MetadataTitleInfo());
             if (corpusConfig.getOther().isAvailableOnFrankfurtUniversityCollection()) {
                 var metadataTitleInfo = ExceptionUtils.tryCatchLog(
                         () -> goetheUniversityService.scrapeDocumentTitleInfo(document.getDocumentId()),
                         (ex) -> logger.error("Error scraping the metadata info of the document with id: " + document.getDocumentId(), ex));
                 if (metadataTitleInfo != null) document.setMetadataTitleInfo(metadataTitleInfo);
+                logger.info("Setting potential metadata title info done.");
             }
 
             // Set the cleaned full text. That is the sum of all tokens except of all anomalies
@@ -232,11 +245,13 @@ public class UIMAService {
             }
 
             // Set the sentences
-            if (corpusConfig.getAnnotations().isSentence())
+            if (corpusConfig.getAnnotations().isSentence()) {
                 document.setSentences(JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence.class)
                         .stream()
                         .map(s -> new org.texttechnologylab.models.corpus.Sentence(s.getBegin(), s.getEnd()))
                         .toList());
+                logger.info("Setting sentences done.");
+            }
 
             // Set the named entities
             if (corpusConfig.getAnnotations().isNamedEntity()) {
@@ -249,7 +264,7 @@ public class UIMAService {
                     for (var type : WANTED_NE_TYPES) {
                         if (type.equals(ne.getValue()) || ne.getValue().equals(type.substring(0, 3))) neType = type;
                     }
-                    if (neType.equals("")) return;
+                    if (neType.isEmpty()) return;
 
                     var namedEntity = new org.texttechnologylab.models.corpus.NamedEntity(ne.getBegin(), ne.getEnd());
                     namedEntity.setType(neType);
@@ -257,6 +272,7 @@ public class UIMAService {
                     nes.add(namedEntity);
                 });
                 document.setNamedEntities(nes);
+                logger.info("Setting Named-Entities done.");
             }
 
             // Set the lemmas
@@ -269,6 +285,7 @@ public class UIMAService {
                     lemmas.add(lemma);
                 });
                 document.setLemmas(lemmas);
+                logger.info("Setting Lemmas done.");
             }
 
             // Set the semantic role labels
@@ -291,6 +308,7 @@ public class UIMAService {
                     srLinks.add(srLink);
                 });
                 document.setSrLinks(srLinks);
+                logger.info("Setting Semantic-Roles done.");
             }
 
             // Set the times
@@ -303,6 +321,7 @@ public class UIMAService {
                     times.add(time);
                 });
                 document.setTimes(times);
+                logger.info("Setting Times done.");
             }
 
             // Set the taxons
@@ -313,7 +332,7 @@ public class UIMAService {
                     taxon.setValue(t.getValue());
                     taxon.setCoveredText(t.getCoveredText());
                     taxon.setIdentifier(t.getIdentifier());
-                    // We need to handle taxons specifically, depending if they have annotated identifiers.
+                    // We need to handle taxons specifically, depending on whether they have annotated identifiers.
                     if (corpusConfig.getAnnotations().getTaxon().isBiofidOnthologyAnnotated() && taxon.getIdentifier() != null && !taxon.getIdentifier().isEmpty()) {
 
                         // The recognized taxons should be split by a |
@@ -326,7 +345,7 @@ public class UIMAService {
 
                         for (var potentialBiofidId : splited) {
                             // The biofid urls are like: https://www.biofid.de/bio-ontologies/gbif/10428508
-                            // We need the last number in that string, have a lookup into our sparsql database and from there fetch the
+                            // We need the last number in that string, have a lookup into our sparql database and from there fetch the
                             // correct TaxonId
                             if (potentialBiofidId.isEmpty()) continue;
 
@@ -358,6 +377,7 @@ public class UIMAService {
                     taxons.add(taxon);
                 });
                 document.setTaxons(taxons);
+                logger.info("Setting Taxons done.");
             }
 
             // Wikipedia/Wikidata?
@@ -376,6 +396,7 @@ public class UIMAService {
                     wikiDatas.add(data);
                 });
                 document.setWikipediaLinks(wikiDatas);
+                logger.info("Setting Wikipedia Links done.");
             }
 
             // Set the OCRpages
@@ -397,6 +418,7 @@ public class UIMAService {
                     pages.add(page);
                 });
                 document.setPages(pages);
+                logger.info("Setting OCRPages done.");
             } else {
                 // If the corpus isn't OCRPage annotated, we create our own pseudo pages.
                 // We want pages as our pagination of the document reader relies on it to handle larger documents.
@@ -412,28 +434,28 @@ public class UIMAService {
                     pages.add(page);
                 }
                 document.setPages(pages);
+                logger.info("Setting synthetic pages done.");
             }
 
             return document;
         } catch (Exception ex) {
-            // TODO: Log properly here.
-            System.err.println("Error while importing corpus:");
-            ex.printStackTrace();
+            logger.error("Unknown error while importing a CAS into a document. This shouldn't happen, as each operation has its own error handling.", ex);
             return null;
         }
     }
 
     /**
      * Apply any postprocessing once the corpus is finished calculating. This will be called even
-     * when the corpus import didnt finish due to an error. We still postprocess what we have.
+     * when the corpus import didn't finish due to an error. We still postprocess what we have.
      *
      * @param corpus
      */
     private void postProccessCorpus(Corpus corpus, CorpusConfig corpusConfig) {
-        System.out.println("Postprocessing the Corpus " + corpus.getName());
+        logger.info("Postprocessing the Corpus " + corpus.getName());
+
         // Calculate the tsne reductions of the whole corpus and finally the tsne plot
         if (corpusConfig.getOther().isEnableEmbeddings()) {
-            System.out.println("Embeddings...");
+            logger.info("Embeddings...");
 
             // The corpus can be gigantic and we cant pass hundreds of thousand of embeddings into
             // a rest API and perform reductions on them. Instead, we sample them.
@@ -503,7 +525,7 @@ public class UIMAService {
                 }
             }
 
-            System.out.println("Corpus TSNE Plot...");
+            logger.info("Corpus TSNE Plot...");
 
             // Now that we have the reduced coordinates, lets plot a tsne plot of the corpus and cache it!
             // If we have an existing plot, then update that
@@ -527,6 +549,7 @@ public class UIMAService {
             ExceptionUtils.tryCatchLog(() -> db.saveOrUpdateCorpusTsnePlot(finalCorpusTsnePlot, corpus),
                     (ex) -> logger.error("Error saving or updating the corpus tsne plot.", ex));
         }
+        logger.info("Done with the corpus postprocessing.");
     }
 
     /**
@@ -534,8 +557,11 @@ public class UIMAService {
      * the rag vector embeddings
      */
     private void postProccessDocument(Document document, CorpusConfig corpusConfig) {
+        logger.info("Postprocessing the document: " + document.getId());
+
         // Calculate embeddings if they are activated
         if (corpusConfig.getOther().isEnableEmbeddings()) {
+            logger.info("embeddings...");
             // Build the chunks, which are the most crucial embeddings
             var documentChunkEmbeddings = ExceptionUtils.tryCatchLog(
                     () -> ragService.getCompleteEmbeddingChunksFromDocument(document),
@@ -563,6 +589,8 @@ public class UIMAService {
         }
 
         if (corpusConfig.getOther().isIncludeTopicDistribution()) {
+            logger.info("topic distribution...");
+
             // Calculate the page topic distribution if activated
             for (var page : document.getPages()) {
                 var topicDistribution = ExceptionUtils.tryCatchLog(
@@ -582,12 +610,14 @@ public class UIMAService {
             // And the document topic dist.
             var documentTopicDistribution = ExceptionUtils.tryCatchLog(
                     () -> ragService.getTextTopicDistribution(DocumentTopicDistribution.class, document.getFullText()),
-                    (ex) -> logger.error("Error getting the DocumentTopicDistribution - the postprocessing continues. Document id: " + document.getId(), ex));
+                    (ex) -> logger.error("Error getting the DocumentTopicDistribution - the postprocessing ends now. Document id: " + document.getId(), ex));
+            if(documentTopicDistribution == null) return;
+
             documentTopicDistribution.setDocument(document);
             document.setDocumentTopicDistribution(documentTopicDistribution);
             // Store it
             ExceptionUtils.tryCatchLog(() -> db.saveDocumentTopicDistribution(document),
-                    (ex) -> logger.error("Error storing the document topic distribution - the postprocessing continues.", ex));
+                    (ex) -> logger.error("Error storing the document topic distribution - the postprocessing ends now.", ex));
         }
     }
 
