@@ -252,7 +252,7 @@ public class SearchState {
 
     public void setSearchLayers(List<SearchLayer> searchLayers) {
         this.searchLayers = searchLayers;
-        if (searchLayers.contains(SearchLayer.METADATA)) primarySearchLayer = "Meta";
+        if (searchLayers.contains(SearchLayer.FULLTEXT)) primarySearchLayer = "Fulltext";
         else primarySearchLayer = "Named-Entities";
     }
 

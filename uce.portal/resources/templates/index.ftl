@@ -113,13 +113,13 @@
                                 <i class="text w-auto fab fa-searchengin mr-2 large-font"></i>
                                 <div class="option" data-type="radio">
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" name="searchLayerRadioOptions"
-                                               id="inlineRadio1" value="METADATA">
+                                        <input class="form-check-input" type="radio" checked name="searchLayerRadioOptions"
+                                               id="inlineRadio1" value="FULLTEXT">
                                         <label class="form-check-label color-prime small-font"
-                                               for="inlineRadio1">Meta</label>
+                                               for="inlineRadio1">Fulltext</label>
                                     </div>
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" checked name="searchLayerRadioOptions"
+                                        <input class="form-check-input" type="radio" name="searchLayerRadioOptions"
                                                id="inlineRadio2" value="NAMED_ENTITIES">
                                         <label class="form-check-label color-secondary small-font" for="inlineRadio2">Named-Entities</label>
                                     </div>

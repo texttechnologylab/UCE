@@ -125,7 +125,7 @@ public class SearchApi {
             var languageResources = LanguageResources.fromRequest(request);
             var searchInput = requestBody.get("searchInput").toString();
             var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
-            var metaOrNeLayer = requestBody.get("metaOrNeLayer").toString();
+            var fulltextOrNeLayer = requestBody.get("fulltextOrNeLayer").toString();
             var useEmbeddings = Boolean.parseBoolean(requestBody.get("useEmbeddings").toString());
             var includeKeywordInContext = Boolean.parseBoolean(requestBody.get("kwic").toString());
 
@@ -138,7 +138,7 @@ public class SearchApi {
                 // Define the search layers from the sent layers
                 var searchLayers = new ArrayList<SearchLayer>();
 
-                if (metaOrNeLayer.equals("METADATA")) searchLayers.add(SearchLayer.METADATA);
+                if (fulltextOrNeLayer.equals("FULLTEXT")) searchLayers.add(SearchLayer.FULLTEXT);
                 else searchLayers.add(SearchLayer.NAMED_ENTITIES);
 
                 if (useEmbeddings) searchLayers.add(SearchLayer.EMBEDDINGS);

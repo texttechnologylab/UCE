@@ -12,3 +12,5 @@ CREATE INDEX IF NOT EXISTS idx_time_coveredtext_trgm ON time USING gin (coveredt
 CREATE INDEX IF NOT EXISTS idx_taxon_coveredtext_trgm ON taxon USING gin (coveredtext gin_trgm_ops);
 -- For the metadata lemma search, we use coveredtext and value of the column, which is why we add them both in the index as well.
 CREATE INDEX IF NOT EXISTS idx_lemma_coveredtext_trgm ON lemma USING gin ((value || ' ' || coveredtext) gin_trgm_ops); 
+-- For the fulltext search of the documents
+CREATE INDEX IF NOT EXISTS idx_document_fulltext_trgm ON document USING gin (fulltext gin_trgm_ops); 

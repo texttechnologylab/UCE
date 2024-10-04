@@ -149,12 +149,12 @@ public class Search_DefaultImpl implements Search {
      * @return
      */
     private DocumentSearchResult executeSearchOnDatabases(boolean countAll) {
-        if (searchState.getSearchLayers().contains(SearchLayer.METADATA)) {
+        if (searchState.getSearchLayers().contains(SearchLayer.FULLTEXT)) {
             return ExceptionUtils.tryCatchLog(
                     () -> db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
                             searchState.getTake(),
                             searchState.getSearchTokens(),
-                            SearchLayer.METADATA,
+                            SearchLayer.FULLTEXT,
                             countAll,
                             searchState.getOrder(),
                             searchState.getOrderBy(),
@@ -162,7 +162,7 @@ public class Search_DefaultImpl implements Search {
                     (ex) -> logger.error("Error executing a search on the database with search layer METADATA. Search can't be executed.", ex));
         }
 
-        // Execute the Named Entity search, which automatically executes metadata as well
+        // Execute the Named Entity search
         if (searchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES)) {
             return ExceptionUtils.tryCatchLog(
                     () -> db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),

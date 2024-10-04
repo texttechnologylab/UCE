@@ -17,7 +17,7 @@ function startNewSearch(searchInput) {
     const corpusId = selectedOption.getAttribute("data-id");
 
     // Get the selected search layers
-    const metaOrNeLayer = $('.search-menu-div .search-settings-div input[name="searchLayerRadioOptions"]:checked').val();
+    const fulltextOrNeLayer = $('.search-menu-div .search-settings-div input[name="searchLayerRadioOptions"]:checked').val();
     const embeddings = $('.search-menu-div .search-settings-div .option input[data-id="EMBEDDINGS"]').is(':checked');
     const kwic = $('.search-menu-div .search-settings-div .option input[data-id="KWIC"]').is(':checked');
 
@@ -28,7 +28,7 @@ function startNewSearch(searchInput) {
         data: JSON.stringify({
             searchInput: searchInput,
             corpusId: corpusId,
-            metaOrNeLayer: metaOrNeLayer,
+            fulltextOrNeLayer: fulltextOrNeLayer,
             useEmbeddings: embeddings,
             kwic: kwic
         }),
