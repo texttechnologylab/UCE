@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION biofid_semantic_role_search(
+CREATE OR REPLACE FUNCTION uce_semantic_role_search(
 
 	IN corpusid_val bigint,
 	

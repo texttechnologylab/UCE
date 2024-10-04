@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION biofid_search_layer_named_entities(
+CREATE OR REPLACE FUNCTION uce_search_layer_named_entities(
 
 	IN corpus_id bigint,
 	

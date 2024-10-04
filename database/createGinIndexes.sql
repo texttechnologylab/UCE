@@ -3,7 +3,7 @@ CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_title ON metadatatitleinfo (tit
 CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_published ON metadatatitleinfo (published);
 
 -- Enable the pg_trgm extension, if not already enabled
--- See also: https://www.postgresql.org/docs/9.1/textsearch-indexes.html
+-- For the following indexes, see also: https://www.postgresql.org/docs/9.1/textsearch-indexes.html
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 
 -- Create trigram indexes on the 'coveredtext' columns for the relevant tables

@@ -1,4 +1,4 @@
-CREATE OR REPLACE FUNCTION biofid_search_layer_metadata(
+CREATE OR REPLACE FUNCTION uce_search_layer_metadata(
 	IN corpus_id bigint,
 	
     IN input1 text[], 
