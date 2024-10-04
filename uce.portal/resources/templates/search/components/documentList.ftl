@@ -107,7 +107,6 @@
                                     <p class="text small-font mb-0">${languageResource.get("noAnnotationsMatched")}</p>
                                 </#if>
                             </div>
-
                         </div>
                     </div>
                 </div>

@@ -83,6 +83,10 @@
     "de-DE": "Lade Seiten",
     "en-EN": "Loading pages"
   },
+  "topicModellingInfo": {
+    "de-DE": "Diese Schlüsselwörter/Themen wurden automatisch aus der jetzigen Seite extrahiert und für die Übersicht zur Verfügung gestellt.",
+    "en-EN": "These keywords/topics were automatically extracted from the current page and made available for the overview."
+  },
   "more": {
     "de-DE": "Mehr dazu",
     "en-EN": "More"

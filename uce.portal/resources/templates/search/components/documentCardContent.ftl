@@ -17,15 +17,26 @@
             </div>
             <h6 class="mb-0 title">${document.getDocumentTitle()}</h6>
         </div>
-        <label class="text-secondary small-font">${document.getMetadataTitleInfo().getPublished()}</label>
     </div>
 
     <div class="flexed align-items-center">
         <p class="mb-0 text mr-3"> ${document.getLanguage()?upper_case}</p>
         <div class="mb-0 flexed align-items-center text">
-            <i class="fas fa-file-alt"></i> <label
+            <i class="fas fa-file-alt color-secondary"></i> <label
                     class="mb-0 ml-2">${document.getPages()?size}</label>
         </div>
+    </div>
+</div>
+
+<!-- topics -->
+<div class="flexed align-items-center justify-content-between w-100">
+    <label class="text-secondary small-font mr-2">${document.getMetadataTitleInfo().getPublished()}</label>
+    <div class="flexed align-items-center topic-list">
+        <#if document.getDocumentTopicDistribution()?has_content>
+            <label>#${document.getDocumentTopicDistribution().getYakeTopicOne()}</label>
+            <label>#${document.getDocumentTopicDistribution().getYakeTopicTwo()}</label>
+            <label>#${document.getDocumentTopicDistribution().getYakeTopicThree()}</label>
+        </#if>
     </div>
 </div>
 

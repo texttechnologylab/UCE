@@ -8,14 +8,14 @@
     <link
             href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
             rel="stylesheet">
-    <script src="https://kit.fontawesome.com/b0888ca2eb.js"
-            crossorigin="anonymous"></script>
     <style>
         <#include "css/site.css">
         <#include "css/simple-loader.css">
         <#include "css/search-redesign.css">
         <#include "*/css/corpus-universe.css">
     </style>
+    <script src="https://kit.fontawesome.com/b0888ca2eb.js"
+            crossorigin="anonymous"></script>
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script
             src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"

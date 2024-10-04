@@ -8,14 +8,23 @@
     <link
             href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
             rel="stylesheet">
-    <script src="https://kit.fontawesome.com/b0888ca2eb.js"
-            crossorigin="anonymous"></script>
     <style>
         <#include "../css/site.css">
         <#include "../css/document-reader.css">
         <#include "../css/custom-context-menu.css">
         <#include "../css/bg-anim.css">
     </style>
+    <script src="https://kit.fontawesome.com/b0888ca2eb.js"
+            crossorigin="anonymous"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script
+            src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"
+            integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
+            crossorigin="anonymous"></script>
+    <script
+            src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
+            integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
+            crossorigin="anonymous"></script>
     <title>${document.getDocumentTitle()}</title>
 </head>
 
@@ -60,7 +69,7 @@
                                 <i class="color-prime m-0 large-font fas fa-university"></i>
                             </a>
                         </#if>
-                        <div>
+                        <div class="ml-2 mr-2">
                             <h5>${document.getDocumentTitle()}</h5>
                             <p class="text mb-0">${document.getMetadataTitleInfo().getPublished()}</p>
                         </div>
@@ -129,23 +138,8 @@
         </div>
 
     </div>
-
-
 </div>
 </body>
-
-<script src="https://code.jquery.com/jquery-3.3.1.slim.min.js"
-        integrity="sha384-q8i/X+965DzO0rT7abK41JStQIAqVgRVzpbzo5smXKp4YfRvH+8abtTE1Pi6jizo"
-        crossorigin="anonymous"></script>
-<script
-        src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"
-        integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
-        crossorigin="anonymous"></script>
-<script
-        src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
-        integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
-        crossorigin="anonymous"></script>
-<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
 <script>
     <#include "../js/site.js">

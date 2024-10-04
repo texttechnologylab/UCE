@@ -1,5 +1,6 @@
 package org.texttechnologylab;
 
+import org.apache.http.annotation.Obsolete;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.features.KeywordInContextState;
 import org.texttechnologylab.models.corpus.Document;
@@ -47,9 +48,23 @@ public class SearchState {
      */
     private List<Document> currentDocuments;
 
+    /**
+     * This is currently not used.
+     */
+    @Obsolete
+    private List<Integer> currentDocumentHits;
+
     public SearchState(SearchType searchType) {
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
+    }
+
+    public List<Integer> getCurrentDocumentHits() {
+        return currentDocumentHits;
+    }
+
+    public void setCurrentDocumentHits(List<Integer> currentDocumentHits) {
+        this.currentDocumentHits = currentDocumentHits;
     }
 
     public CorpusConfig getCorpusConfig() { return corpusConfig;}
@@ -127,6 +142,16 @@ public class SearchState {
 
     public void setTotalHits(Integer totalHits) {
         this.totalHits = totalHits;
+    }
+
+    public int getSearchHitsOfDocument(int documentId){
+        try{
+            var documentIdx = currentDocuments.indexOf(currentDocuments.stream().filter(d -> d.getId() == documentId).findFirst().get());
+            return currentDocumentHits.get(documentIdx);
+        } catch (Exception ex){
+            // This exception should never happen!
+            return -1;
+        }
     }
 
     /**

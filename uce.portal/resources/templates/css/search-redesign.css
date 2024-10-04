@@ -346,6 +346,19 @@
     border-radius: 6px;
 }
 
+.document-card .topic-list label{
+    font-size: small;
+    color:rgba(0, 0, 0, 0.75);
+    text-align: center;
+    background-color: rgba(125, 125, 125, 0.15);
+    border-radius: 6px;
+    margin-left: 6px;
+    padding-left: 6px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-right: 6px;
+}
+
 .search-result-container .document-card .title-btn {
     margin-right: 8px;
     border-radius: 50%;

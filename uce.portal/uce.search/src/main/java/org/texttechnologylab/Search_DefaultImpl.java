@@ -89,6 +89,7 @@ public class Search_DefaultImpl implements Search {
                         "Search can't be created hence.", ex));
         if (documents == null) return null;
         searchState.setCurrentDocuments(documents);
+        searchState.setCurrentDocumentHits(documentSearchResult.getDocumentHits());
         searchState.setTotalHits(documentSearchResult.getDocumentCount());
         searchState.setFoundNamedEntities(documentSearchResult.getFoundNamedEntities());
         searchState.setFoundTaxons(documentSearchResult.getFoundTaxons());
@@ -137,6 +138,7 @@ public class Search_DefaultImpl implements Search {
                         " hence returning the last state.", ex));
         if (documents == null) return searchState;
         searchState.setCurrentDocuments(documents);
+        searchState.setCurrentDocumentHits(documentSearchResult.getDocumentHits());
         return searchState;
     }
 

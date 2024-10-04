@@ -257,7 +257,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
             DocumentSearchResult search = null;
-            try (var storedProcedure = connection.prepareCall("{call biofid_semantic_role_search" + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            try (var storedProcedure = connection.prepareCall("{call uce_semantic_role_search" + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
                 storedProcedure.setInt(1, (int) corpusId);
                 storedProcedure.setArray(2, connection.createArrayOf("text", arg0.toArray()));
                 storedProcedure.setArray(3, connection.createArrayOf("text", arg1.toArray()));
@@ -302,7 +302,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
             DocumentSearchResult search = null;
-            try (var storedProcedure = connection.prepareCall("{call biofid_search_layer_" + layer.name().toLowerCase() + "(?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() + "(?, ?, ?, ?, ?, ?, ?, ?)}")) {
                 storedProcedure.setInt(1, (int) corpusId);
                 storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.toArray()));
                 storedProcedure.setString(3, String.join("|", searchTokens).trim());
@@ -326,6 +326,18 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     search.setFoundNamedEntities(parseAnnotationOccurrences(result.getArray("named_entities_found").getResultSet()));
                     search.setFoundTaxons(parseAnnotationOccurrences(result.getArray("taxons_found").getResultSet()));
                     search.setFoundTimes(parseAnnotationOccurrences(result.getArray("time_found").getResultSet()));
+
+                    /* This was an attempt to count the hits of each document, but it took waaay too long.
+                    For now, this is not used!
+                    // Finally, parse how many matches/hits we have per document
+                    var matchCountsResults = result.getArray("match_counts").getResultSet();
+                    var documentHits = new ArrayList<Integer>();
+                    while(matchCountsResults.next()){
+                        var idx = matchCountsResults.getInt(1);
+                        var hits = matchCountsResults.getInt(2);
+                        documentHits.add(hits);
+                    }
+                    search.setDocumentHits(documentHits);*/
                 }
                 return search;
             }
@@ -458,8 +470,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             Hibernate.initialize(page.getBlocks());
             Hibernate.initialize(page.getParagraphs());
             Hibernate.initialize(page.getLines());
+            Hibernate.initialize(page.getPageTopicDistribution());
         }
 
+        Hibernate.initialize(doc.getDocumentTopicDistribution());
         Hibernate.initialize(doc.getSentences());
         Hibernate.initialize(doc.getNamedEntities());
         Hibernate.initialize(doc.getTaxons());

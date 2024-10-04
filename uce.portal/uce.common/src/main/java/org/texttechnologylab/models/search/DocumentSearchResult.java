@@ -9,6 +9,7 @@ public class DocumentSearchResult {
 
     private int documentCount;
     private ArrayList<Integer> documentIds;
+    private ArrayList<Integer> documentHits;
     private ArrayList<AnnotationSearchResult> foundNamedEntities;
     private ArrayList<AnnotationSearchResult> foundTimes;
     private ArrayList<AnnotationSearchResult> foundTaxons;
@@ -17,6 +18,22 @@ public class DocumentSearchResult {
                                 ArrayList<Integer> documentIds) {
         this.documentCount = documentCount;
         this.documentIds = documentIds;
+    }
+
+    public void setDocumentCount(int documentCount) {
+        this.documentCount = documentCount;
+    }
+
+    public void setDocumentIds(ArrayList<Integer> documentIds) {
+        this.documentIds = documentIds;
+    }
+
+    public ArrayList<Integer> getDocumentHits() {
+        return documentHits;
+    }
+
+    public void setDocumentHits(ArrayList<Integer> documentHits) {
+        this.documentHits = documentHits;
     }
 
     public void setFoundTimes(ArrayList<AnnotationSearchResult> foundTimes) {

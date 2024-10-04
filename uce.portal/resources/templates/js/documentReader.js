@@ -105,6 +105,9 @@ $(document).ready(function () {
 
     // we want to continously lazy load new pages
     lazyLoadPages();
+
+    // Enable popovers
+    activatePopovers();
 })
 
 /**
@@ -125,9 +128,10 @@ async function lazyLoadPages(){
     const pagesCount = $readerContainer.data('pagescount');
 
     for(let i = 10; i <= pagesCount; i += 10){
-        $('.site-container .loaded-pages-count').html(i);
+        const $loadedPagesCount = $('.site-container .loaded-pages-count');
+        $loadedPagesCount.html(i);
         if(i >= pagesCount)
-            $('.site-container .loaded-pages-count').html(i);
+            $loadedPagesCount.html(i);
         else{
             await $.ajax({
                 url: "/api/document/reader/pagesList?id=" + id + "&skip=" + i,
@@ -135,6 +139,7 @@ async function lazyLoadPages(){
                 success: function (response) {
                     // Render the new pages
                     $('.reader-container .document-content').append(response);
+                    activatePopovers();
                 },
                 error: function (xhr, status, error) {
                     console.error(xhr.responseText);
