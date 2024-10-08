@@ -363,13 +363,14 @@ public class RAGService {
         var query = "";
         if (corpusId == -1) {
             query = "SELECT * FROM documentchunkembeddings e "
+                    + "WHERE TRIM(COALESCE(e.coveredtext, '')) <> '' "  // Checks if coveredtext is not null and not empty
                     + "ORDER BY e.embedding <-> ? "
                     + "LIMIT ?";
         } else {
             // Filter by corpusid
             query = "SELECT * FROM documentchunkembeddings e "
                     + "JOIN document d ON e.document_id = d.id "
-                    + "WHERE d.corpusid = ? "
+                    + "WHERE d.corpusid = ? and TRIM(COALESCE(e.coveredtext, '')) <> '' "
                     + "ORDER BY e.embedding <-> ? "
                     + "LIMIT ?";
         }
@@ -459,8 +460,6 @@ public class RAGService {
     /**
      * Executes an update on the RAG database
      *
-     * @param query
-     * @param params
      */
     private void executeUpdate(String query, Object... params) throws SQLException {
         var statement = vectorDbConnection.prepareStatement(query);
@@ -494,8 +493,6 @@ public class RAGService {
 
     /**
      * Gets the complete and embedded lists of DocumentChunkEmbeddings for a single document
-     *
-     * @param document
      */
     public List<DocumentChunkEmbedding> getCompleteEmbeddingChunksFromDocument(Document document) throws IOException, URISyntaxException, InterruptedException {
         // We also make an embedding from the title
@@ -581,9 +578,7 @@ public class RAGService {
     /**
      * Gets a list of empty DocumentChunkEmbeddings with proper text splitting
      *
-     * @param text
      * @param chunkSize Good size would be 1.200 for example
-     * @return
      */
     public List<DocumentChunkEmbedding> getEmptyEmbeddingChunksFromText(String text, int chunkSize) {
         // Calculate the number of chunks needed
