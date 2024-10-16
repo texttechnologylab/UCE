@@ -11,6 +11,7 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.models.search.SearchOrder;
+import org.texttechnologylab.models.search.SearchType;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
 import org.texttechnologylab.services.UIMAService;
@@ -58,7 +59,8 @@ public class SearchApi {
             var activeSearchState = ActiveSearches.get(searchId);
             activeSearchState.setOrder(SearchOrder.valueOf(order));
             activeSearchState.setOrderBy(OrderByColumn.valueOf(orderBy));
-            var search = new Search_DefaultImpl();
+            Search search = new Search_DefaultImpl();
+            if(activeSearchState.getSearchType() == SearchType.SEMANTICROLE) search = new Search_SemanticRoleImpl();
             search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
             activeSearchState = search.getSearchHitsForPage(activeSearchState.getCurrentPage());
 
@@ -87,7 +89,8 @@ public class SearchApi {
 
             // Get the next pages.
             var activeSearchState = ActiveSearches.get(searchId);
-            var search = new Search_DefaultImpl();
+            Search search = new Search_DefaultImpl();
+            if(activeSearchState.getSearchType() == SearchType.SEMANTICROLE) search = new Search_SemanticRoleImpl();
             search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
             activeSearchState = search.getSearchHitsForPage(page);
 

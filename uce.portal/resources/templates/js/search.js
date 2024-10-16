@@ -41,10 +41,10 @@ function startNewSearch(searchInput) {
             // Store the search in the local browser for a history.
             addSearchToHistory(searchInput);
             // Load the corpus universe from search
-            const searchId = $('.search-state').data('id');
-            currentCorpusUniverseHandler = getNewCorpusUniverseHandler;
-            await currentCorpusUniverseHandler.createEmptyUniverse('search-universe-container');
-            await currentCorpusUniverseHandler.fromSearch(searchId);
+            //const searchId = $('.search-state').data('id');
+            //currentCorpusUniverseHandler = getNewCorpusUniverseHandler;
+            //await currentCorpusUniverseHandler.createEmptyUniverse('search-universe-container');
+            //await currentCorpusUniverseHandler.fromSearch(searchId);
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);

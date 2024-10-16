@@ -43,6 +43,7 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Document.class);
         metadataSources.addAnnotatedClass(Corpus.class);
         metadataSources.addAnnotatedClass(CorpusTsnePlot.class);
+        metadataSources.addAnnotatedClass(UCELog.class);
 
         var metadata = metadataSources.buildMetadata();
 

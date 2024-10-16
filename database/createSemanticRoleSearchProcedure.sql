@@ -37,17 +37,22 @@ BEGIN
 		FROM document d
 		JOIN srlink sr ON d.id = sr.document_id
 		WHERE d.corpusid = corpusid_val 
-			AND LOWER(sr.figurecoveredtext) = verb or verb = ''
+			AND (LOWER(sr.figurecoveredtext) = verb OR verb = '')
+			-- Pre-filter based on ARG0, ARG1, ARG2, or ARGM conditions in WHERE clause
+			AND (
+				((sr.relationtype = 'I-ARG0' OR sr.relationtype = 'B-C-ARG0') AND LOWER(sr.groundcoveredtext) = ANY(arg0)) OR
+				((sr.relationtype = 'I-ARG1' OR sr.relationtype = 'B-C-ARG1') AND LOWER(sr.groundcoveredtext) = ANY(arg1)) OR
+				((sr.relationtype = 'I-ARG2' OR sr.relationtype = 'B-C-ARG2') AND LOWER(sr.groundcoveredtext) = ANY(arg2)) OR
+				((sr.relationtype = 'I-ARGM-LOC' OR sr.relationtype = 'B-C-ARGM-LOC') AND LOWER(sr.groundcoveredtext) = ANY(argm))
+			)
 		GROUP BY d.id, sr.figurebegin
-		-- So, this is a nice query. If a relationtype with its coveredtext matches our query, we add one
-		-- and later, if the arg0 inputs is not empty, we count one up and then check if the count is equal.
 		HAVING 
 			COUNT(DISTINCT 
 				CASE 
-					WHEN (sr.relationtype = 'ARG0' AND LOWER(sr.groundcoveredtext) = ANY(arg0)) THEN sr.relationtype
-					WHEN (sr.relationtype = 'ARG1' AND LOWER(sr.groundcoveredtext) = ANY(arg1)) THEN sr.relationtype
-					WHEN (sr.relationtype = 'ARG2' AND LOWER(sr.groundcoveredtext) = ANY(arg2)) THEN sr.relationtype
-					WHEN ((sr.relationtype = 'ARGM' OR sr.relationtype = 'ARGM-LOC') AND LOWER(sr.groundcoveredtext) = ANY(argm)) THEN sr.relationtype
+					WHEN ((sr.relationtype = 'I-ARG0' OR sr.relationtype = 'B-C-ARG0') AND LOWER(sr.groundcoveredtext) = ANY(arg0)) THEN sr.relationtype
+					WHEN ((sr.relationtype = 'I-ARG1' OR sr.relationtype = 'B-C-ARG1') AND LOWER(sr.groundcoveredtext) = ANY(arg1)) THEN sr.relationtype
+					WHEN ((sr.relationtype = 'I-ARG2' OR sr.relationtype = 'B-C-ARG2') AND LOWER(sr.groundcoveredtext) = ANY(arg2)) THEN sr.relationtype
+					WHEN ((sr.relationtype = 'I-ARGM-LOC' OR sr.relationtype = 'B-C-ARGM-LOC') AND LOWER(sr.groundcoveredtext) = ANY(argm)) THEN sr.relationtype
 					ELSE NULL
 				END
 			) = 
@@ -58,7 +63,7 @@ BEGIN
 				CASE WHEN cardinality(argm) > 0 THEN 1 ELSE 0 END
 			)
 	);
-	
+
     -- Temporary table to count all found documents
     CREATE TEMPORARY TABLE counted_documents AS (
         SELECT COUNT(*) AS total_count FROM documents_query
@@ -78,17 +83,23 @@ BEGIN
 			ORDER BY 
 			  CASE 
 				WHEN order_by_column = 'title' THEN 
-				  CASE WHEN order_direction = 'ASC' THEN me.title ELSE NULL END
+				  CASE WHEN order_direction = 'ASC' THEN me.title::text ELSE NULL END
 				WHEN order_by_column = 'published' THEN 
-				  CASE WHEN order_direction = 'ASC' THEN me.published ELSE NULL END
+				  CASE 
+					WHEN order_direction = 'ASC' THEN TO_DATE(me.published, 'DD.MM.YYYY')::text -- Adjust the format as necessary
+					ELSE NULL 
+				  END
 				-- Add more cases for other valid columns
 				ELSE NULL
 			  END ASC,
 			  CASE 
 				WHEN order_by_column = 'title' THEN 
-				  CASE WHEN order_direction = 'DESC' THEN me.title ELSE NULL END
+				  CASE WHEN order_direction = 'DESC' THEN me.title::text ELSE NULL END
 				WHEN order_by_column = 'published' THEN 
-				  CASE WHEN order_direction = 'DESC' THEN me.published ELSE NULL END
+				  CASE 
+					WHEN order_direction = 'DESC' THEN TO_DATE(me.published, 'DD.MM.YYYY')::text -- Adjust the format as necessary
+					ELSE NULL 
+				  END
 				-- Add more cases for other valid columns
 				ELSE NULL
 			  END DESC

@@ -126,13 +126,13 @@
                             <#include "*/search/components/navigation.ftl">
                         </div>
 
-                        <div id="search-corpus-universe-include">
+                        <!--<div id="search-corpus-universe-include">
                             <a class="open-corpus-universe-btn">
                                 <i class="fas fa-external-link-alt"></i>
                             </a>
                             <div id="search-universe-container" class="corpus-universe-container bg-light">
                             </div>
-                        </div>
+                        </div> -->
 
                     </div>
                 </div>

@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.texttechnologylab</groupId>
-        <artifactId>portal</artifactId>
+        <artifactId>uce.portal</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>search</artifactId>
+    <artifactId>uce.search</artifactId>
     <packaging>jar</packaging>
 
     <name>uce.search</name>
@@ -48,9 +48,10 @@
             <artifactId>jena-arq</artifactId>
             <version>5.0.0-rc1</version>
         </dependency>
+
         <dependency>
             <groupId>org.texttechnologylab</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>uce.common</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>

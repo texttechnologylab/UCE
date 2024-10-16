@@ -1,8 +1,8 @@
 :root {
-    --prime: #5c7a17;
+    --prime: rgb(0, 101, 149);
     --gold: rgba(255,165,0, 1);
     --prime-raw: 92, 122, 23;
-    --secondary: darkgreen;
+    --secondary: rgba(38,38,38,1);
     --dark: rgba(38,38,38,1);
 }
 
@@ -38,7 +38,7 @@ nav {
 }
 
 nav .logo {
-    height: 60px;
+    height: 80px;
 }
 
 nav .nav-container{
@@ -225,3 +225,22 @@ nav .selected-nav-btn::before {
 .ne-taxons{
     color:dodgerblue;
 }
+
+/* For the 10/2024 UCE Evaluation! */
+.eval-code-container{
+    position: fixed;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(255, 255, 255, 0.85);
+    left:0;
+    top:0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9999;
+}
+
+
+
+
+/* Ende: For the 10/2024 UCE Evaluation! */

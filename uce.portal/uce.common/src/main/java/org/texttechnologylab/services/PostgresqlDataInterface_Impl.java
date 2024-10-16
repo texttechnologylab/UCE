@@ -399,6 +399,13 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public void saveUceLog(UCELog log) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(log);
+            return null;
+        });
+    }
+
     public void saveCorpus(Corpus corpus) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.save(corpus);

@@ -113,7 +113,8 @@
                                 <i class="text w-auto fab fa-searchengin mr-2 large-font"></i>
                                 <div class="option" data-type="radio">
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" checked name="searchLayerRadioOptions"
+                                        <input class="form-check-input" type="radio" checked
+                                               name="searchLayerRadioOptions"
                                                id="inlineRadio1" value="FULLTEXT">
                                         <label class="form-check-label color-prime small-font"
                                                for="inlineRadio1">Fulltext</label>
@@ -130,7 +131,7 @@
                                 </div>
                                 <div class="option" data-trigger="hover"
                                      data-toggle="popover" data-placement="top" data-html="true"
-                                     data-content="<b>K</b>ey<b>w</b>ord <b>I</b>n <b>C</b>ontext">
+                                     data-content="${languageResource.get("kwicWarning")}">
                                     <label class="mb-0 w-100 color-dark small-font">KWIC</label>
                                     <input type="checkbox" data-id="KWIC"/>
                                 </div>
@@ -169,6 +170,17 @@
     <div class="ragbot-chat-include">
         <#include "*/ragbot/chatwindow.ftl"/>
     </div>
+
+    <!-- Evaluation 10/2024 for UCE. Outside of the eval, this code is useless!! -->
+    <div class="eval-code-container">
+        <div>
+            <h5 class="text-center text" style="font-size: 5rem">Evaluations-Code</h5>
+            <div class="text-center mt-5">
+                <button class="btn btn-primary mr-3" style="font-size: 5rem">A</button>
+                <button class="btn btn-warning" style="font-size: 5rem">B</button>
+            </div>
+        </div>
+    </div>
 </div>
 </body>
 
@@ -177,10 +189,6 @@
         <h5 class="text-center m-0">Footer</h5>
     </div>
 </footer>
-
-<script type="module">
-    <#include "js/corpusUniverse.js">
-</script>
 
 <script>
     <#include "js/site.js">

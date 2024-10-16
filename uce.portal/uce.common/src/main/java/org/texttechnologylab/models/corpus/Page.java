@@ -12,6 +12,9 @@ import java.util.stream.Stream;
 @Table(name="page")
 public class Page extends UIMAAnnotation {
 
+    // List of common abbreviations to exclude from splitting
+    private static final String[] ABBREVIATIONS = { "Dr.", "Mr.", "Ms.", "Prof.", "Jr.", "Sr." };
+
     private int pageNumber;
     private String pageId;
 
@@ -158,6 +161,64 @@ public class Page extends UIMAAnnotation {
                 }
             }
         }
-        return finalText.toString();
+
+        var text = finalText.toString();
+        // At the end, we may postprocess the text into a more readable format. A page may otherwise be very compact.
+        text = addLineBreaks(cleanText(text), text.length());
+
+        return text;
+    }
+
+    // Method to clean unwanted patterns (like excessive dots)
+    private String cleanText(String text) {
+        // Remove sequences of four or more dots
+        text = text.replaceAll("(\\s*\\.\\s*){4,}", ""); // Remove any sequence of 4 or more dots (with or without spaces)
+
+        // You can add more cleaning rules here if needed
+        return text;
+    }
+
+    // Method to check if a segment ends with a common abbreviation
+    private boolean endsWithAbbreviation(String segment) {
+        for (String abbr : ABBREVIATIONS) {
+            if (segment.endsWith(abbr)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    // Method to add line breaks at sensible points with deterministic randomness
+    private String addLineBreaks(String text, long seed) {
+        Random rand = new Random(seed);
+
+        // Split the text, but avoid breaking after abbreviations and number-ending periods
+        String[] splitText = text.split("(?<!\\d)(?<=\\.|\\?|\\!)");
+        StringBuilder formattedText = new StringBuilder();
+
+        for (String segment : splitText) {
+            segment = segment.trim();
+
+            // Avoid line breaks after numbers followed by periods (e.g., "18.") or abbreviations (e.g., "Dr.")
+            if (!segment.matches(".*\\d+\\.$") && !endsWithAbbreviation(segment)) {
+                formattedText.append(segment);
+
+                // Add a line break randomly based on seeded randomness
+                if (rand.nextInt(3) == 0) {  // 1 in 3 chance to add a line break
+                    formattedText.append("<br/>");
+                    if(rand.nextInt(3) == 1){
+                        formattedText.append("<br/>");
+                    }
+                }
+            } else {
+                // Append without a break if it's an abbreviation or number-ending period
+                formattedText.append(segment);
+            }
+
+            // Add a space for readability
+            formattedText.append(" ");
+        }
+
+        return formattedText.toString();
     }
 }

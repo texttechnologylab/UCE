@@ -23,7 +23,7 @@ class ChatGPT:
     def complete(self, messages, api_key):
         client = OpenAI(api_key = api_key)
         response = client.chat.completions.create(
-            model='gpt-3.5-turbo',
+            model='gpt-4o', # gpt-3.5-turbo
             messages = messages
         )
         return response.choices[0].message.content

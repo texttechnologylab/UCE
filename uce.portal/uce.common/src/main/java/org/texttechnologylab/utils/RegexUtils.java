@@ -14,7 +14,7 @@ public class RegexUtils {
      * @param rightContextWords
      * @return
      */
-    public static List<String[]> extractOccurrences(String text, String searchTerm, int leftContextWords, int rightContextWords) {
+    public static List<String[]> extractOccurrences(String text, String searchTerm, int leftContextWords, int rightContextWords, int maxCount) {
         List<String[]> results = new ArrayList<>();
 
         // Constructing the regex pattern with case insensitivity and word boundaries
@@ -36,6 +36,9 @@ public class RegexUtils {
             rightContext = getFirstWords(rightContext, rightContextWords);
 
             results.add(new String[]{leftContext, searchTerm, rightContext});
+
+            // We want to match X count instances.
+            if(results.size() >= maxCount) break;
         }
 
         return results;

@@ -80,17 +80,23 @@ BEGIN
 			ORDER BY 
 			  CASE 
 				WHEN order_by_column = 'title' THEN 
-				  CASE WHEN order_direction = 'ASC' THEN me.title ELSE NULL END
+				  CASE WHEN order_direction = 'ASC' THEN me.title::text ELSE NULL END
 				WHEN order_by_column = 'published' THEN 
-				  CASE WHEN order_direction = 'ASC' THEN me.published ELSE NULL END
+				  CASE 
+					WHEN order_direction = 'ASC' THEN TO_DATE(me.published, 'DD.MM.YYYY')::text -- Adjust the format as necessary
+					ELSE NULL 
+				  END
 				-- Add more cases for other valid columns
 				ELSE NULL
 			  END ASC,
 			  CASE 
 				WHEN order_by_column = 'title' THEN 
-				  CASE WHEN order_direction = 'DESC' THEN me.title ELSE NULL END
+				  CASE WHEN order_direction = 'DESC' THEN me.title::text ELSE NULL END
 				WHEN order_by_column = 'published' THEN 
-				  CASE WHEN order_direction = 'DESC' THEN me.published ELSE NULL END
+				  CASE 
+					WHEN order_direction = 'DESC' THEN TO_DATE(me.published, 'DD.MM.YYYY')::text -- Adjust the format as necessary
+					ELSE NULL 
+				  END
 				-- Add more cases for other valid columns
 				ELSE NULL
 			  END DESC

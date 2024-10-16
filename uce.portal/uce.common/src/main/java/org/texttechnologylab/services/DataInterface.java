@@ -170,6 +170,13 @@ public interface DataInterface {
     public void updateDocument(Document document) throws DatabaseOperationException;
 
     /**
+     * Saves a UCELog to the database. In those, we log requests from the user and more.
+     * @param log
+     * @throws DatabaseOperationException
+     */
+    public void saveUceLog(UCELog log) throws DatabaseOperationException;
+
+    /**
      * Stores an corpus tsne plot instance
      * @param corpusTsnePlot
      */

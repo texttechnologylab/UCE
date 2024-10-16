@@ -2,6 +2,7 @@ package org.texttechnologylab;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.SpringConfig;
+import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.services.UIMAService;
 
 import java.util.logging.ConsoleHandler;
@@ -14,7 +15,7 @@ import static org.texttechnologylab.utilities.uima.jcas.SanitizingJCasFactory.cr
  * Entry of the corpus importer!
  */
 public class App {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws DatabaseOperationException {
         // Init DI
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
         var uimaService = context.getBean(UIMAService.class);
@@ -22,6 +23,6 @@ public class App {
         //uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
         //uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\zobodat");
         //uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\CORE\\srl_ht_tests\\_dataset");
-        uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\bhl\\2023_01_25");
+        uimaService.storeCorpusFromFolder("C:\\kevin\\projects\\uce\\test_data\\GerParCor__Bundestag__18_19");
     }
 }

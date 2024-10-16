@@ -97,7 +97,7 @@ public class RAGApi {
             List<DocumentChunkEmbedding> nearestDocumentChunkEmbeddings = new ArrayList<>();
             List<Document> foundDocuments = new ArrayList<Document>();
             if (contextNeeded == 1) {
-                nearestDocumentChunkEmbeddings = ragService.getClosestDocumentChunkEmbeddings(userMessage, 5, -1);
+                nearestDocumentChunkEmbeddings = ragService.getClosestDocumentChunkEmbeddings(userMessage, 3, -1);
                 // foreach fetched document embedding, we also fetch the actual documents so the chat can show them
                 foundDocuments = db.getManyDocumentsByIds(nearestDocumentChunkEmbeddings.stream().map(d -> Math.toIntExact(d.getDocument_id())).toList());
                 prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]",

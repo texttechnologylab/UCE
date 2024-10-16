@@ -182,3 +182,24 @@ $(document).ready(function () {
     activatePopovers();
     reloadCorpusComponents();
 })
+
+/**
+ * Only needed for the 10/2024 evaluation of UCE!
+ */
+$('body').on('click', '.eval-code-container button', function(){
+    const code = $(this).html();
+    console.log(code);
+    if(code === 'A'){
+        // Disable embedding for A
+        $('input[data-id="EMBEDDINGS"]').closest('.option').hide();
+        // And cahtbot
+        $('.ragbot-chat-include').hide();
+    } else{
+        // Disable SRL for A and NER search
+        $('input[value="NAMED_ENTITIES"]').closest('.form-check').hide();
+        $('.open-sr-builder-btn').hide();
+    }
+
+    $('.features[data-id="' + code + '"]').show();
+    $('.eval-code-container').fadeOut(100);
+})
