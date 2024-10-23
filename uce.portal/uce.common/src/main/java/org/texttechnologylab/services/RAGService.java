@@ -182,7 +182,7 @@ public class RAGService {
         var gson = new Gson();
         var params = new HashMap<String, Object>();
 
-        params.put("userInput", userInput);
+        params.put("userInput", userInput + "?"); // Its better to end each sentence with a ? for the webservice.
         var jsonData = gson.toJson(params);
 
         // Create request

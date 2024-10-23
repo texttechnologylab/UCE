@@ -13,6 +13,8 @@ import org.apache.logging.log4j.Logger;
 import org.apache.uima.jcas.cas.AnnotationBase;
 import org.apache.uima.util.CasLoadMode;
 import org.joda.time.DateTime;
+import org.springframework.dao.DataAccessException;
+import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.semaf.semafsr.SrLink;
 import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
@@ -21,6 +23,7 @@ import org.apache.uima.util.CasIOUtils;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
+import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
@@ -75,10 +78,13 @@ public class UIMAService {
      * @param foldername
      * @return
      */
-    public void storeCorpusFromFolder(String foldername) {
+    public void storeCorpusFromFolder(String foldername) throws DatabaseOperationException {
         var corpus = new Corpus();
         var gson = new Gson();
         CorpusConfig corpusConfig = null;
+
+        if (!SystemStatus.PostgresqlDbStatus.isAlive())
+            throw new DatabaseOperationException("Postgresql DB is not alive - cancelling import.");
 
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
         try (var reader = new FileReader(foldername + "\\corpusConfig.json")) {
@@ -129,14 +135,14 @@ public class UIMAService {
                         () -> postProccessDocument(doc, corpusConfigFinal),
                         (ex) -> logger.error("Error postprocessing a saved document with id " + doc.getId()));
                 logger.info("Finished postprocessing.");
+            }
 
-                // We occasionally postprocess the corpus while we still import to keep it up to date
-                if (counter % 500 == 0 && counter != 0) {
-                    final var finalCorpus = corpus;
-                    ExceptionUtils.tryCatchLog(
-                            () -> postProccessCorpus(finalCorpus, corpusConfigFinal),
-                            (ex) -> logger.error("Error postprocessing the current corpus with id " + finalCorpus.getId()));
-                }
+            // We occasionally postprocess the corpus while we still import to keep it up to date
+            if (counter % 100 == 0 && counter != 0) {
+                final var finalCorpus = corpus;
+                ExceptionUtils.tryCatchLog(
+                        () -> postProccessCorpus(finalCorpus, corpusConfigFinal),
+                        (ex) -> logger.error("Error postprocessing the current corpus with id " + finalCorpus.getId()));
             }
             counter++;
         }
@@ -220,14 +226,25 @@ public class UIMAService {
             logger.info("Setting full text done.");
 
             // See if we can get any more information from the goethe collections
-            document.setMetadataTitleInfo(new MetadataTitleInfo());
+            var metadataTitleInfo = new MetadataTitleInfo();
             if (corpusConfig.getOther().isAvailableOnFrankfurtUniversityCollection()) {
-                var metadataTitleInfo = ExceptionUtils.tryCatchLog(
+                metadataTitleInfo = ExceptionUtils.tryCatchLog(
                         () -> goetheUniversityService.scrapeDocumentTitleInfo(document.getDocumentId()),
                         (ex) -> logger.error("Error scraping the metadata info of the document with id: " + document.getDocumentId(), ex));
                 if (metadataTitleInfo != null) document.setMetadataTitleInfo(metadataTitleInfo);
                 logger.info("Setting potential metadata title info done.");
+            } else {
+                // There are possibly additional metadata hidden in the DocumentAnnotation type.
+                var documentAnnotation = JCasUtil.selectSingle(jCas, DocumentAnnotation.class);
+                try {
+                    metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
+                            + documentAnnotation.getDateMonth() + "."
+                            + documentAnnotation.getDateYear());
+                } catch (Exception ex) {
+                    logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
+                }
             }
+            document.setMetadataTitleInfo(metadataTitleInfo);
 
             // Set the cleaned full text. That is the sum of all tokens except of all anomalies
             // For now, we skip this. This doesn't relly improve anything and is very costly.
@@ -464,7 +481,7 @@ public class UIMAService {
             if (corpusDocuments == null) return;
 
             Collections.shuffle(corpusDocuments); // We want random samples of size CHUNKSIZE
-            var chunked = ListUtils.partitionList(corpusDocuments, 1000);
+            var chunked = ListUtils.partitionList(corpusDocuments, 100);
 
             for (var documents : chunked) {
                 // Get the complete list of document chunk embeddings of all documents
@@ -611,7 +628,7 @@ public class UIMAService {
             var documentTopicDistribution = ExceptionUtils.tryCatchLog(
                     () -> ragService.getTextTopicDistribution(DocumentTopicDistribution.class, document.getFullText()),
                     (ex) -> logger.error("Error getting the DocumentTopicDistribution - the postprocessing ends now. Document id: " + document.getId(), ex));
-            if(documentTopicDistribution == null) return;
+            if (documentTopicDistribution == null) return;
 
             documentTopicDistribution.setDocument(document);
             document.setDocumentTopicDistribution(documentTopicDistribution);

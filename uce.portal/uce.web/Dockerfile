@@ -24,4 +24,4 @@ WORKDIR /app/uce.portal/uce.web/
 # Command to run the application
 # The name webportal.jar is finalized in the pom.xml of the uce.web project.
 # Maybe: "-jar-with-dependencies" needs to be added behind webportal
-CMD ["java", "-jar", "./target/webportal.jar"]
+CMD ["java", "-jar", "./target/webportal-jar-with-dependencies.jar"]

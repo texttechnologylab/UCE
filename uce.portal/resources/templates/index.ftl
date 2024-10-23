@@ -113,7 +113,8 @@
                                 <i class="text w-auto fab fa-searchengin mr-2 large-font"></i>
                                 <div class="option" data-type="radio">
                                     <div class="form-check form-check-inline">
-                                        <input class="form-check-input" type="radio" checked name="searchLayerRadioOptions"
+                                        <input class="form-check-input" type="radio" checked
+                                               name="searchLayerRadioOptions"
                                                id="inlineRadio1" value="FULLTEXT">
                                         <label class="form-check-label color-prime small-font"
                                                for="inlineRadio1">Fulltext</label>
@@ -130,7 +131,7 @@
                                 </div>
                                 <div class="option" data-trigger="hover"
                                      data-toggle="popover" data-placement="top" data-html="true"
-                                     data-content="<b>K</b>ey<b>w</b>ord <b>I</b>n <b>C</b>ontext">
+                                     data-content="${languageResource.get("kwicWarning")}">
                                     <label class="mb-0 w-100 color-dark small-font">KWIC</label>
                                     <input type="checkbox" data-id="KWIC"/>
                                 </div>
@@ -169,6 +170,7 @@
     <div class="ragbot-chat-include">
         <#include "*/ragbot/chatwindow.ftl"/>
     </div>
+
 </div>
 </body>
 
@@ -177,10 +179,6 @@
         <h5 class="text-center m-0">Footer</h5>
     </div>
 </footer>
-
-<script type="module">
-    <#include "js/corpusUniverse.js">
-</script>
 
 <script>
     <#include "js/site.js">

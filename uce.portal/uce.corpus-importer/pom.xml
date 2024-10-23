@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.texttechnologylab</groupId>
-        <artifactId>portal</artifactId>
+        <artifactId>uce.portal</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>corpus-importer</artifactId>
+    <artifactId>uce.corpus-importer</artifactId>
     <packaging>jar</packaging>
 
     <name>uce.corpus-importer</name>
@@ -78,16 +78,10 @@
             <version>2.5.0</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.github.texttechnologylab</groupId>
-            <artifactId>DockerUnifiedUIMAInterface</artifactId>
-            <version>1.0</version>
-        </dependency>
-
-<!--        local projects-->
+        <!--        local projects-->
         <dependency>
             <groupId>org.texttechnologylab</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>uce.common</artifactId>
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
@@ -103,11 +97,30 @@
             </exclusions>
         </dependency>
 
+        <!-- The following two dependencies are tricky. One of those is working in the release for the
+        whole portal but not in debug. So for release, choose the bottom ones. Otherwise, top ones.
+        TODO: Fix this -->
         <dependency>
             <groupId>com.github.texttechnologylab</groupId>
             <artifactId>UIMATypeSystem</artifactId>
             <version>74a8489af5</version>
         </dependency>
+        <!--<dependency>
+            <groupId>com.github.texttechnologylab</groupId>
+            <artifactId>UIMATypeSystem</artifactId>
+            <version>3.0.1</version>
+        </dependency>-->
+
+        <dependency>
+            <groupId>com.github.texttechnologylab</groupId>
+            <artifactId>DockerUnifiedUIMAInterface</artifactId>
+            <version>1.0</version>
+        </dependency>
+        <!--<dependency>
+            <groupId>com.github.texttechnologylab</groupId>
+            <artifactId>DockerUnifiedUIMAInterface</artifactId>
+            <version>1.4.1</version>
+        </dependency>-->
 
     </dependencies>
 </project>

@@ -3,11 +3,11 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.texttechnologylab</groupId>
-        <artifactId>portal</artifactId>
+        <artifactId>uce.portal</artifactId>
         <version>1.0-SNAPSHOT</version>
     </parent>
 
-    <artifactId>web</artifactId>
+    <artifactId>uce.web</artifactId>
     <packaging>jar</packaging>
 
     <name>uce.web</name>
@@ -57,13 +57,13 @@
         </dependency>
         <dependency>
             <groupId>org.texttechnologylab</groupId>
-            <artifactId>common</artifactId>
+            <artifactId>uce.common</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
         <dependency>
             <groupId>org.texttechnologylab</groupId>
-            <artifactId>search</artifactId>
+            <artifactId>uce.search</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
@@ -90,14 +90,20 @@
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>2.4</version>
                 <configuration>
-                    <!--<descriptorRefs>
+                    <!-- Dont delete this even though IntelliJ is complaining. Its for the docker release -->
+                    <descriptorRefs>
                         <descriptorRef>jar-with-dependencies</descriptorRef>
-                    </descriptorRefs>-->
+                    </descriptorRefs>
                     <finalName>webportal</finalName>
                     <archive>
                         <manifest>
                             <mainClass>org.texttechnologylab.App</mainClass>
+                            <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
+                        <!-- We need this entry for the log4j releases -->
+                        <manifestEntries>
+                            <Multi-Release>true</Multi-Release>
+                        </manifestEntries>
                     </archive>
                 </configuration>
             </plugin>
@@ -107,9 +113,9 @@
                 <artifactId>maven-assembly-plugin</artifactId>
                 <executions>
                     <execution>
-                        <!--<goals>
+                        <goals>
                             <goal>attached</goal>
-                        </goals>-->
+                        </goals>
                         <phase>package</phase>
                         <configuration>
                             <finalName>webportal</finalName>
@@ -117,7 +123,12 @@
                                 <manifest>
                                     <mainClass>org.texttechnologylab.App</mainClass>
                                 </manifest>
+                                <!-- We need this entry for the log4j releases -->
+                                <manifestEntries>
+                                    <Multi-Release>true</Multi-Release>
+                                </manifestEntries>
                             </archive>
+                            <!-- Dont delete this even though IntelliJ is complaining. Its for the docker release -->
                             <descriptorRefs>
                                 <descriptorRef>jar-with-dependencies</descriptorRef>
                             </descriptorRefs>

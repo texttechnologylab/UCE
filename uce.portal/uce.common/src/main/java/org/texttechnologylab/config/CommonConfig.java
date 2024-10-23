@@ -45,6 +45,7 @@ public class CommonConfig {
     public String getRagOpenAIApiKey(){
         return getProperty("rag.openai.apiKey");
     }
+    public boolean getLogToDb(){ return Boolean.parseBoolean(getProperty("log.db")); }
     public String getTemplatesLocation(){
         return getProperty("templates.location");
     }

@@ -26,7 +26,7 @@ public class KeywordInContextState {
             var keywordContexts = new ArrayList<KeywordContext>();
             for(var document:currentDocuments){
                 var matches = RegexUtils.extractOccurrences(document.getFullText(),
-                        searchToken, 12, 12);
+                        searchToken, 12, 12, 7);
                 for(var context:matches){
                     var left = context[0];
                     var mid = context[1];

@@ -20,6 +20,7 @@ public class JenaSparqlService {
      */
     public JenaSparqlService() {
         try (RDFConnection testConn = buildConnection()) {
+            var test = biofidIdUrlToGbifTaxonId("");
             SystemStatus.JenaSparqlStatus = new HealthStatus(true, "", null);
         } catch (Exception ex) {
             SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Couldn't connect a test conn to the sparql server.", ex);
@@ -113,6 +114,10 @@ public class JenaSparqlService {
      * @return
      */
     private ArrayList<QuerySolution> executeCommand(String command) {
+        if(!SystemStatus.JenaSparqlStatus.isAlive()) {
+            return null;
+        }
+
         var querySolutions = new ArrayList<QuerySolution>();
 
         try (RDFConnection conn = buildConnection()) {

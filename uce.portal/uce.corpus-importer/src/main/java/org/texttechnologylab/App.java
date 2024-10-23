@@ -2,6 +2,7 @@ package org.texttechnologylab;
 
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.SpringConfig;
+import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.services.UIMAService;
 
 import java.util.logging.ConsoleHandler;
@@ -14,7 +15,7 @@ import static org.texttechnologylab.utilities.uima.jcas.SanitizingJCasFactory.cr
  * Entry of the corpus importer!
  */
 public class App {
-    public static void main(String[] args) {
+    public static void main(String[] args) throws DatabaseOperationException {
         // Init DI
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
         var uimaService = context.getBean(UIMAService.class);

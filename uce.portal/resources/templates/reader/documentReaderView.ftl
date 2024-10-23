@@ -49,8 +49,9 @@
 
     <ul class='custom-menu'>
         <li data-action="open-more"><i class="fab fa-readme mr-2"></i> ${languageResource.get("more")}</li>
-        <li data-action="search"><i class="fas fa-search mr-2"></i> ${languageResource.get("search")}</li>
-        <li data-action="highlight" data-target=""><i class="fas fa-highlighter mr-2"></i> ${languageResource.get("highlight")}</li>
+        <!--<li data-action="search"><i class="fas fa-search mr-2"></i> ${languageResource.get("search")}</li>-->
+        <li data-action="highlight" data-target=""><i
+                    class="fas fa-highlighter mr-2"></i> ${languageResource.get("highlight")}</li>
     </ul>
 
     <div class="container-fluid">
@@ -113,25 +114,28 @@
                         </div>
                     </div>
 
-                    <div class="group-box">
-                        <p class="title">${languageResource.get("page")} <span class="current-page">1</span></p>
-                        <a class="btn open-metadata-url-page-btn" target="_blank"
-                           data-href="${document.getMetadataTitleInfo().getPageViewStartUrl()}"
-                           href="${document.getMetadataTitleInfo().getPageViewStartUrl()}">
-                            <i class="mr-2 fas fa-university"></i> Original
-                        </a>
-                    </div>
+                    <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
+                        <div class="group-box">
+                            <p class="title">${languageResource.get("page")} <span class="current-page">1</span></p>
+                            <a class="btn open-metadata-url-page-btn" target="_blank"
+                               data-href="${document.getMetadataTitleInfo().getPageViewStartUrl()}"
+                               href="${document.getMetadataTitleInfo().getPageViewStartUrl()}">
+                                <i class="mr-2 fas fa-university"></i> Original
+                            </a>
+                        </div>
+                    </#if>
 
                     <div class="buttons group-box">
                         <p class="title">${languageResource.get("functions")}</p>
                         <button class="btn toggle-focus-btn">
                             <i class="fas fa-satellite-dish mr-2"></i> Toggle Focus
                         </button>
-                        <a href="${document.getMetadataTitleInfo().getPdfUrl()}" class="btn">
-                            <i class="fas fa-file-pdf mr-2"></i> Download PDF
-                        </a>
+                        <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
+                            <a href="${document.getMetadataTitleInfo().getPdfUrl()}" class="btn">
+                                <i class="fas fa-file-pdf mr-2"></i> Download PDF
+                            </a>
+                        </#if>
                     </div>
-
                 </div>
 
             </div>

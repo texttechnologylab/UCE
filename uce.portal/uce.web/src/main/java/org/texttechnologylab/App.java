@@ -10,11 +10,13 @@ import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.corpus.Corpus;
+import org.texttechnologylab.models.corpus.UCELog;
 import org.texttechnologylab.routes.CorpusUniverseApi;
 import org.texttechnologylab.routes.DocumentApi;
 import org.texttechnologylab.routes.RAGApi;
 import org.texttechnologylab.routes.SearchApi;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
+import org.texttechnologylab.utils.SystemStatus;
 import spark.ExceptionHandler;
 import spark.ModelAndView;
 
@@ -32,12 +34,9 @@ import static spark.Spark.*;
 public class App {
     private static final Configuration configuration = Configuration.getDefaultConfiguration();
     private static final Logger logger = LogManager.getLogger();
+    private static CommonConfig commonConfig = null;
 
-    public static void main(String[] args) throws URISyntaxException, IOException {
-
-        // Tell log4j the name of the log config xml
-        // This feels
-        //System.setProperty("log4j.configurationFile", "log4j2.xml");
+    public static void main(String[] args) throws IOException {
 
         logger.info("Starting the UCE web service...");
 
@@ -50,7 +49,7 @@ public class App {
         var languageResource = new LanguageResources("de-DE");
         logger.info(languageResource.get("search"));
 
-        var commonConfig = new CommonConfig();
+        commonConfig = new CommonConfig();
         logger.info("Loaded the common config.");
 
         // Set the folder for our template files of freemaker
@@ -82,8 +81,17 @@ public class App {
         before((request, response) -> {
             // Setup and log all API calls with some information.
             request.attribute("id", UUID.randomUUID().toString());
-            logger.info("Received API call: ID={}, IP={}, Method={}, URI={}",
-                    request.attribute("id"), request.ip(), request.requestMethod(), request.uri());
+            logger.info("Received API call: ID={}, IP={}, Method={}, URI={}, BODY={}",
+                    request.attribute("id"), request.ip(), request.requestMethod(), request.uri(), request.body());
+
+            // Should we log to db as well?
+            if(commonConfig.getLogToDb() && SystemStatus.PostgresqlDbStatus.isAlive()){
+                var uceLog = new UCELog(request.ip(), request.requestMethod(), request.uri(), request.body());
+                ExceptionUtils.tryCatchLog(
+                        () -> context.getBean(PostgresqlDataInterface_Impl.class).saveUceLog(uceLog),
+                        (ex) -> logger.error("Error storing a log to the database: ", ex));
+                logger.info("Last log was also logged to the db with id " + uceLog.getId());
+            }
 
             // Check if the request contains a language parameter
             var languageResources = LanguageResources.fromRequest(request);
@@ -94,7 +102,7 @@ public class App {
         // Landing page
         get("/", (request, response) -> {
             var model = new HashMap<String, Object>();
-            model.put("title", "BioFID Portal");
+            model.put("title", "Unified Corpus Explorer");
             model.put("corpora", context.getBean(PostgresqlDataInterface_Impl.class)
                     .getAllCorpora()
                     .stream().map(Corpus::getViewModel)
