@@ -1,0 +1,4 @@
+site_name: UCE
+site_url: https://texttechnologylab.github.io/UCE/
+theme:
+  name: material
