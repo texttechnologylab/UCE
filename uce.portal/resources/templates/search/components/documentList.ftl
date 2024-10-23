@@ -1,5 +1,6 @@
 <div>
     <#list searchState.getCurrentDocuments() as document>
+        <#assign documentIdx = document?index>
         <div class="flexed justify-content-center">
             <div class="document-card" data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                 <div>

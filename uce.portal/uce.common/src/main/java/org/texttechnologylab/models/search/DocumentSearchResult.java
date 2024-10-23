@@ -1,7 +1,8 @@
 package org.texttechnologylab.models.search;
 
 import java.util.ArrayList;
-import java.util.List;
+import java.util.HashMap;
+import java.util.Map;
 
 public class DocumentSearchResult {
 
@@ -11,11 +12,20 @@ public class DocumentSearchResult {
     private ArrayList<AnnotationSearchResult> foundNamedEntities;
     private ArrayList<AnnotationSearchResult> foundTimes;
     private ArrayList<AnnotationSearchResult> foundTaxons;
+    private HashMap<Integer, String> searchSnippets;
 
     public DocumentSearchResult(int documentCount,
                                 ArrayList<Integer> documentIds) {
         this.documentCount = documentCount;
         this.documentIds = documentIds;
+    }
+
+    public HashMap<Integer, String> getSearchSnippets() {
+        return searchSnippets;
+    }
+
+    public void setSearchSnippets(HashMap<Integer, String> searchSnippets) {
+        this.searchSnippets = searchSnippets;
     }
 
     public void setDocumentCount(int documentCount) {

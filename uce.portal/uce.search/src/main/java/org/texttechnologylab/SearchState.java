@@ -6,10 +6,7 @@ import org.texttechnologylab.features.KeywordInContextState;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.search.*;
 
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.List;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * A class that holds all states of a biofid search. We can use this class to serialize the search. It shouldn't hold any services.
@@ -53,10 +50,20 @@ public class SearchState {
      */
     @Obsolete
     private List<Integer> currentDocumentHits;
+    private HashMap<Integer, String> documentIdxToSnippet;
 
     public SearchState(SearchType searchType) {
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
+    }
+
+    public String getPossibleSnippetOfDocumentIdx(Integer idx){
+        if(this.documentIdxToSnippet != null && this.documentIdxToSnippet.containsKey(idx)) return this.documentIdxToSnippet.get(idx);
+        return null;
+    }
+
+    public void setDocumentIdxToSnippet(HashMap<Integer, String> map) {
+        this.documentIdxToSnippet = map;
     }
 
     public List<Integer> getCurrentDocumentHits() {
@@ -67,9 +74,13 @@ public class SearchState {
         this.currentDocumentHits = currentDocumentHits;
     }
 
-    public CorpusConfig getCorpusConfig() { return corpusConfig;}
+    public CorpusConfig getCorpusConfig() {
+        return corpusConfig;
+    }
 
-    public void setCorpusConfig(CorpusConfig corpusConfig) { this.corpusConfig = corpusConfig; }
+    public void setCorpusConfig(CorpusConfig corpusConfig) {
+        this.corpusConfig = corpusConfig;
+    }
 
     public KeywordInContextState getKeywordInContextState() {
         return keywordInContextState;
@@ -144,11 +155,11 @@ public class SearchState {
         this.totalHits = totalHits;
     }
 
-    public int getSearchHitsOfDocument(int documentId){
-        try{
+    public int getSearchHitsOfDocument(int documentId) {
+        try {
             var documentIdx = currentDocuments.indexOf(currentDocuments.stream().filter(d -> d.getId() == documentId).findFirst().get());
             return currentDocumentHits.get(documentIdx);
-        } catch (Exception ex){
+        } catch (Exception ex) {
             // This exception should never happen!
             return -1;
         }

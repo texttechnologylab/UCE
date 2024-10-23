@@ -338,6 +338,13 @@
     transition: 0.15s;
 }
 
+.document-card .highlighted-token{
+    color:black;
+    text-decoration: underline;
+    text-decoration-color: var(--secondary);
+    text-decoration-thickness: 3px;
+}
+
 .document-card .embedding-text {
     font-size: small;
     font-style: italic;

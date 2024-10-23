@@ -40,19 +40,19 @@ BEGIN
 			AND (LOWER(sr.figurecoveredtext) = verb OR verb = '')
 			-- Pre-filter based on ARG0, ARG1, ARG2, or ARGM conditions in WHERE clause
 			AND (
-				((sr.relationtype = 'I-ARG0' OR sr.relationtype = 'B-C-ARG0') AND LOWER(sr.groundcoveredtext) = ANY(arg0)) OR
-				((sr.relationtype = 'I-ARG1' OR sr.relationtype = 'B-C-ARG1') AND LOWER(sr.groundcoveredtext) = ANY(arg1)) OR
-				((sr.relationtype = 'I-ARG2' OR sr.relationtype = 'B-C-ARG2') AND LOWER(sr.groundcoveredtext) = ANY(arg2)) OR
-				((sr.relationtype = 'I-ARGM-LOC' OR sr.relationtype = 'B-C-ARGM-LOC') AND LOWER(sr.groundcoveredtext) = ANY(argm))
+				((sr.relationtype = 'ARG0' OR sr.relationtype = 'I-ARG0' OR sr.relationtype = 'B-C-ARG0') AND LOWER(sr.groundcoveredtext) = ANY(arg0)) OR
+				((sr.relationtype = 'ARG1' OR sr.relationtype = 'I-ARG1' OR sr.relationtype = 'B-C-ARG1') AND LOWER(sr.groundcoveredtext) = ANY(arg1)) OR
+				((sr.relationtype = 'ARG2' OR sr.relationtype = 'I-ARG2' OR sr.relationtype = 'B-C-ARG2') AND LOWER(sr.groundcoveredtext) = ANY(arg2)) OR
+				((sr.relationtype = 'ARGM' OR sr.relationtype = 'ARGM-LOC' OR sr.relationtype = 'B-C-ARGM-LOC') AND LOWER(sr.groundcoveredtext) = ANY(argm))
 			)
 		GROUP BY d.id, sr.figurebegin
 		HAVING 
 			COUNT(DISTINCT 
 				CASE 
-					WHEN ((sr.relationtype = 'I-ARG0' OR sr.relationtype = 'B-C-ARG0') AND LOWER(sr.groundcoveredtext) = ANY(arg0)) THEN sr.relationtype
-					WHEN ((sr.relationtype = 'I-ARG1' OR sr.relationtype = 'B-C-ARG1') AND LOWER(sr.groundcoveredtext) = ANY(arg1)) THEN sr.relationtype
-					WHEN ((sr.relationtype = 'I-ARG2' OR sr.relationtype = 'B-C-ARG2') AND LOWER(sr.groundcoveredtext) = ANY(arg2)) THEN sr.relationtype
-					WHEN ((sr.relationtype = 'I-ARGM-LOC' OR sr.relationtype = 'B-C-ARGM-LOC') AND LOWER(sr.groundcoveredtext) = ANY(argm)) THEN sr.relationtype
+					WHEN ((sr.relationtype = 'ARG0' OR sr.relationtype = 'I-ARG0' OR sr.relationtype = 'B-C-ARG0') AND LOWER(sr.groundcoveredtext) = ANY(arg0)) THEN sr.relationtype
+					WHEN ((sr.relationtype = 'ARG1' OR sr.relationtype = 'I-ARG1' OR sr.relationtype = 'B-C-ARG1') AND LOWER(sr.groundcoveredtext) = ANY(arg1)) THEN sr.relationtype
+					WHEN ((sr.relationtype = 'ARG2' OR sr.relationtype = 'I-ARG2' OR sr.relationtype = 'B-C-ARG2') AND LOWER(sr.groundcoveredtext) = ANY(arg2)) THEN sr.relationtype
+					WHEN ((sr.relationtype = 'ARGM' OR sr.relationtype = 'ARGM-LOC' OR sr.relationtype = 'I-ARGM-LOC' OR sr.relationtype = 'B-C-ARGM-LOC') AND LOWER(sr.groundcoveredtext) = ANY(argm)) THEN sr.relationtype
 					ELSE NULL
 				END
 			) = 

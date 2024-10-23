@@ -327,17 +327,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     search.setFoundTaxons(parseAnnotationOccurrences(result.getArray("taxons_found").getResultSet()));
                     search.setFoundTimes(parseAnnotationOccurrences(result.getArray("time_found").getResultSet()));
 
-                    /* This was an attempt to count the hits of each document, but it took waaay too long.
-                    For now, this is not used!
-                    // Finally, parse how many matches/hits we have per document
-                    var matchCountsResults = result.getArray("match_counts").getResultSet();
-                    var documentHits = new ArrayList<Integer>();
-                    while(matchCountsResults.next()){
-                        var idx = matchCountsResults.getInt(1);
-                        var hits = matchCountsResults.getInt(2);
-                        documentHits.add(hits);
+                    // Finally, parse the found snippets of the search
+                    // This is only done for the fulltext search
+                    if(layer == SearchLayer.FULLTEXT){
+                        var resultSet = result.getArray("snippets_found").getResultSet();
+                        var foundSnippets = new HashMap<Integer, String>();
+                        while (resultSet.next()) foundSnippets.put(resultSet.getInt(1) - 1, resultSet.getString(2));
+                        search.setSearchSnippets(foundSnippets);
                     }
-                    search.setDocumentHits(documentHits);*/
                 }
                 return search;
             }

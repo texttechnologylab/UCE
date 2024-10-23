@@ -42,6 +42,23 @@
 
 <div class="snippet-content flexed align-items-center justify-content-between h-100">
     <p class="mb-0 small-font text font-italic mr-2">
-        "${document.getFullTextSnippet(85)}..."
+        <#assign snippet = searchState.getPossibleSnippetOfDocumentIdx(documentIdx)!>
+        <#if !snippet?has_content>
+            <#assign snippet = document.getFullTextSnippet(85)!>
+        </#if>
+
+        <!-- Get the list of search tokens -->
+        <#assign searchTokens = searchState.getSearchTokens()!>
+
+        <!-- Initialize the highlighted snippet -->
+        <#assign highlightedSnippet = snippet>
+
+        <!-- Loop through each search token and highlight it -->
+        <#list searchTokens as searchToken>
+            <#assign highlightedSnippet = highlightedSnippet?replace(searchToken, "<span class='highlighted-token'>${searchToken}</span>", "i")>
+        </#list>
+
+        <!-- Render the highlighted snippet -->
+        ${highlightedSnippet}...
     </p>
 </div>
