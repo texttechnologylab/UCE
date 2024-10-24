@@ -1,5 +1,5 @@
 <div align="center">
-  <h1><b>U</b>nified <b>C</b>orpus <i>E</i>xplorer</h1>
+  <h1><b>U</b>nified <b>C</b>orpus <b>E</b>xplorer</h1>
   <img width="185px" src="https://github.com/user-attachments/assets/9540b1be-a85f-4f6d-b76a-d3b31c29e83a"/>
   <h3>Making UIMA-annotated corpora tangible, searchable and vivid.</h3>
   <hr/>
