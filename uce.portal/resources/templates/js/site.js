@@ -54,6 +54,7 @@ $('body').on('change', '#corpus-select', function(){
     const selectedOption = $(this).get(0).options[$(this).get(0).selectedIndex];
     const hasSr = selectedOption.getAttribute("data-hassr");
     const hasBiofidOnthology = selectedOption.getAttribute("data-hasbiofid");
+    const sparqlAlive = selectedOption.getAttribute("data-sparqlalive");
     const hasEmbeddings = selectedOption.getAttribute("data-hasembeddings");
     const hasRagBot = selectedOption.getAttribute("data-hasragbot");
     const hasTopicDist = selectedOption.getAttribute("data-hastopicdist");
@@ -62,7 +63,7 @@ $('body').on('change', '#corpus-select', function(){
     if(hasSr === 'true') $('.open-sr-builder-btn').show(50);
     else $('.open-sr-builder-btn').hide(50);
 
-    if(hasBiofidOnthology === 'true') $('.taxonomy-tree-include').show();
+    if(hasBiofidOnthology === 'true' && sparqlAlive === 'true') $('.taxonomy-tree-include').show();
     else $('.taxonomy-tree-include').hide();
 
     if(hasEmbeddings === 'true') $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').show();

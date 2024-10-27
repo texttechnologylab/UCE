@@ -106,7 +106,7 @@ public class Search_DefaultImpl implements Search {
                             this.searchState.getCorpusId()),
                     (ex) -> logger.error("Error getting the closest document chunk embeddings of the searchphrase: " + this.searchState.getSearchPhrase(), ex));
 
-            if(closestDocumentsEmbeddings == null) return searchState;
+            if (closestDocumentsEmbeddings == null) return searchState;
             var foundDocumentChunkEmbeddings = new ArrayList<DocumentChunkEmbeddingSearchResult>();
             for (var embedding : closestDocumentsEmbeddings) {
                 var document = ExceptionUtils.tryCatchLog(() -> db.getDocumentById(embedding.getDocument_id()),
@@ -189,7 +189,7 @@ public class Search_DefaultImpl implements Search {
     private List<String> loadStopwords(String languageCode) throws IOException {
         // See if we have them cached. Else, load them once.
         var cachedStopwords = Stopwords.GetStopwords(languageCode);
-        if(cachedStopwords != null) return cachedStopwords;
+        if (cachedStopwords != null) return cachedStopwords;
 
         List<String> stopwords = new ArrayList<>();
         try (var inputStream = getClass().getClassLoader().getResourceAsStream("stopwords_" + languageCode + ".txt");
@@ -210,30 +210,31 @@ public class Search_DefaultImpl implements Search {
 
     /**
      * Possibly enriches search tokens with taxon ontologies. The function may produce more tokens in the end.
+     *
      * @param tokens
      * @return
      */
-    private List<String> enrichSearchTokens(List<String> tokens){
+    private List<String> enrichSearchTokens(List<String> tokens) {
         var finalTokens = new ArrayList<>(tokens);
 
         // Check for potential ontology alternative names. This can only work if our jena sparql db is running
         // and we have taxonomy annotated.
-        if(SystemStatus.JenaSparqlStatus.isAlive() && this.searchState.getCorpusConfig() != null && this.searchState.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()){
+        if (SystemStatus.JenaSparqlStatus.isAlive() && this.searchState.getCorpusConfig() != null && this.searchState.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()) {
             var potentialTaxons = ExceptionUtils.tryCatchLog(
                     () -> db.getIdentifiableTaxonsByValues(tokens),
                     (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
-            if(potentialTaxons == null || potentialTaxons.isEmpty()) return tokens;
+            if (potentialTaxons == null || potentialTaxons.isEmpty()) return tokens;
 
             var ids = new ArrayList<String>();
-            for(var taxon: potentialTaxons){
-                if(taxon.getIdentifier().contains("|")){
+            for (var taxon : potentialTaxons) {
+                if (taxon.getIdentifier().contains("|")) {
                     ids.addAll(Arrays.stream(taxon.getIdentifier().split("|")).toList());
-                } else{
+                } else {
                     ids.add(taxon.getIdentifier().trim());
                 }
             }
             var newTokens = jenaSparqlService.getAlternativeNamesOfTaxons(ids);
-            finalTokens.addAll(newTokens);
+            if (newTokens != null) finalTokens.addAll(newTokens);
         }
 
         return finalTokens;

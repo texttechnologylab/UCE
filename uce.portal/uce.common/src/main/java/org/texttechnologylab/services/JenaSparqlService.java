@@ -1,5 +1,6 @@
 package org.texttechnologylab.services;
 
+import org.apache.jena.query.QueryExecution;
 import org.apache.jena.query.QuerySolution;
 import org.apache.jena.rdfconnection.RDFConnection;
 import org.apache.jena.rdfconnection.RDFConnectionRemote;
@@ -20,10 +21,13 @@ public class JenaSparqlService {
      */
     public JenaSparqlService() {
         try (RDFConnection testConn = buildConnection()) {
-            var test = biofidIdUrlToGbifTaxonId("");
-            SystemStatus.JenaSparqlStatus = new HealthStatus(true, "", null);
+            if (isServerResponsive(testConn)) {
+                SystemStatus.JenaSparqlStatus = new HealthStatus(true, "Connection successful.", null);
+            } else {
+                SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Server not reachable, ask failed.", null);
+            }
         } catch (Exception ex) {
-            SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Couldn't connect a test conn to the sparql server.", ex);
+            SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Couldn't connect to the SPARQL server - an error was even thrown.", ex);
         }
     }
 
@@ -125,5 +129,15 @@ public class JenaSparqlService {
         }
 
         return querySolutions;
+    }
+
+    private boolean isServerResponsive(RDFConnection conn) {
+        String testQuery = "ASK WHERE { ?s ?p ?o }";
+        try (var qExec = conn.query(testQuery)) {
+            return qExec.execAsk();
+        } catch (Exception e) {
+            SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Query failed, server might be down.", e);
+            return false;
+        }
     }
 }

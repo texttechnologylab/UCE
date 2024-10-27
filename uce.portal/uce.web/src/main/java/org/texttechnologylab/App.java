@@ -110,6 +110,8 @@ public class App {
                     .getAllCorpora()
                     .stream().map(Corpus::getViewModel)
                     .toList());
+            var sparqlStatus = SystemStatus.JenaSparqlStatus.isAlive();
+            model.put("isSparqlAlive", sparqlStatus);
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");
