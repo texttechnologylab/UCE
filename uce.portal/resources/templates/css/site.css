@@ -38,7 +38,7 @@ nav {
 }
 
 nav .logo {
-    height: 80px;
+    height: 60px;
 }
 
 nav .nav-container{
@@ -83,6 +83,17 @@ nav .selected-nav-btn::before {
 
 .position-relative{
     position: relative;
+}
+
+.bg-lightgray{
+    background-color: rgba(125, 125, 125, 0.15);
+}
+
+.clickable:hover{
+    cursor: pointer;
+    text-decoration: underline !important;
+    text-decoration-thickness: 2px !important;
+    text-decoration-color: var(--prime) !important;
 }
 
 .text {

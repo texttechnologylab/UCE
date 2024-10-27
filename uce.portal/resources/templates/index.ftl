@@ -51,7 +51,7 @@
     <nav class="position-relative">
 
         <div class="container-fluid flexed align-items-center justify-content-around">
-            <img class="mb-0 logo" src="/img/logo.png">
+            <img class="mb-0 logo" src="/img/logo-biofid.png">
 
             <div class="flexed align-items-center nav-container">
                 <div class="flexed align-items-center nav-buttons">
@@ -179,6 +179,10 @@
         <h5 class="text-center m-0">Footer</h5>
     </div>
 </footer>
+
+<script type="module">
+    <#include "js/corpusUniverse.js">
+</script>
 
 <script>
     <#include "js/site.js">

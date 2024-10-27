@@ -7,15 +7,19 @@
                     <a class="title-btn open-globe" data-type="document" data-trigger="hover" data-toggle="popover"
                        data-placement="top"
                        data-content="${languageResource.get("openTaxonomyDist")}"
+                       data-searchid="${searchState.getSearchId()}"
                        data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                         <i class="m-0 fas fa-globe-europe"></i></a>
                 </#if>
                 <a class="title-btn open-document" data-trigger="hover" data-toggle="popover" data-placement="top"
                    data-content="${languageResource.get("openDocumentReader")}"
+                   data-searchid="${searchState.getSearchId()}"
                    data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                     <i class="m-0 fas fa-book-open"></i></a>
             </div>
-            <h6 class="mb-0 title">${document.getDocumentTitle()}</h6>
+            <a class="open-document clickable" data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
+                <h6 class="mb-0 title">${document.getDocumentTitle()}</h6>
+            </a>
         </div>
     </div>
 

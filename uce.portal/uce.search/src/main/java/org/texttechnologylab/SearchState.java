@@ -1,6 +1,7 @@
 package org.texttechnologylab;
 
 import org.apache.http.annotation.Obsolete;
+import org.joda.time.DateTime;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.features.KeywordInContextState;
 import org.texttechnologylab.models.corpus.Document;
@@ -13,6 +14,8 @@ import java.util.*;
  */
 public class SearchState {
     private UUID searchId;
+    private DateTime created;
+    private boolean cleanupNextCycle;
 
     /**
      * The raw search phrase
@@ -55,11 +58,25 @@ public class SearchState {
     public SearchState(SearchType searchType) {
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
+        this.created = DateTime.now();
     }
 
-    public String getPossibleSnippetOfDocumentIdx(Integer idx){
-        if(this.documentIdxToSnippet != null && this.documentIdxToSnippet.containsKey(idx)) return this.documentIdxToSnippet.get(idx);
+    public boolean isCleanupNextCycle() {
+        return cleanupNextCycle;
+    }
+
+    public void setCleanupNextCycle(boolean cleanupNextCycle) {
+        this.cleanupNextCycle = cleanupNextCycle;
+    }
+
+    public String getPossibleSnippetOfDocumentIdx(Integer idx) {
+        if (this.documentIdxToSnippet != null && this.documentIdxToSnippet.containsKey(idx))
+            return this.documentIdxToSnippet.get(idx);
         return null;
+    }
+
+    public DateTime getCreated() {
+        return this.created;
     }
 
     public void setDocumentIdxToSnippet(HashMap<Integer, String> map) {

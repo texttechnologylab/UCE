@@ -52,6 +52,9 @@ public class App {
         commonConfig = new CommonConfig();
         logger.info("Loaded the common config.");
 
+        SessionManager.InitSessionManager(commonConfig.getSessionJobCleanupInterval());
+        logger.info("Initialized the Session Manager.");
+
         // Set the folder for our template files of freemaker
         try {
             configuration.setDirectoryForTemplateLoading(new File(commonConfig.getTemplatesLocation()));

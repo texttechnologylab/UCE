@@ -36,6 +36,7 @@ public class CommonConfig {
     }
     public String getSparqlHost(){ return getProperty("sparql.host"); }
     public String getSparqlEndpoint(){ return getProperty("sparql.endpoint"); }
+    public long getSessionJobCleanupInterval(){ return Long.parseLong(getProperty("session.cleanup.interval")); }
     public String getRAGWebserverBaseUrl(){
         return getProperty("rag.webserver.base.url");
     }

@@ -90,7 +90,7 @@ public class JenaSparqlService {
                 "}";
         command = command.replace("{BIOFID_URL_ID}", potentialBiofidId.trim());
         var result = executeCommand(command);
-        if (result.isEmpty()) return -1;
+        if (result == null || result.isEmpty()) return -1;
 
         var gbifTaxonUrl = result.getFirst().getResource("object").toString();
         return Long.parseLong(Arrays.stream(gbifTaxonUrl.split("/")).toList().getLast());

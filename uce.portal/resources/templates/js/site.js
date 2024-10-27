@@ -129,8 +129,10 @@ $('body').on('click', '.open-corpus-inspector-btn', function () {
  * Triggers whenever an open-document element is clicked. This causes to load a new full read view of a doc
  */
 $('body').on('click', '.open-document', function () {
-    var id = $(this).data('id');
-    openNewDocumentReadView(id);
+    const id = $(this).data('id');
+    // If this document is from a search, get it
+    const searchId = $(this).data('searchid');
+    openNewDocumentReadView(id, searchId);
 })
 
 /**
@@ -156,14 +158,13 @@ function openNewGlobeView(type, id) {
 
 /**
  * Opens a new Document reader view
- * @param modelId
  */
-function openNewDocumentReadView(id) {
+function openNewDocumentReadView(id, searchId) {
     if (id === undefined || id === '') {
         return;
     }
     console.log('New Document Reader View for: ' + id);
-    window.open("/documentReader?id=" + id, '_blank');
+    window.open("/documentReader?id=" + id + "&searchId=" + searchId, '_blank');
 }
 
 function activatePopovers() {

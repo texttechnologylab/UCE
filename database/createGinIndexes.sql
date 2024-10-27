@@ -21,8 +21,8 @@ CREATE INDEX IF NOT EXISTS idx_document_fulltext_trgm ON document USING gin (ful
 CREATE INDEX IF NOT EXISTS idx_srl_relationtype_trgm ON srlink USING gin (relationtype gin_trgm_ops); 
 
 -- Create indexes for SRL since we have so many
-CREATE INDEX idx_document_corpusid ON document(corpusid);
-CREATE INDEX idx_srlink_document_id ON srlink(document_id);
-CREATE INDEX idx_srlink_figurecoveredtext ON srlink(LOWER(figurecoveredtext));
-CREATE INDEX idx_srlink_groundcoveredtext ON srlink(LOWER(groundcoveredtext));
+CREATE INDEX IF NOT EXISTS idx_document_corpusid ON document(corpusid);
+CREATE INDEX IF NOT EXISTS idx_srlink_document_id ON srlink(document_id);
+CREATE INDEX IF NOT EXISTS idx_srlink_figurecoveredtext ON srlink(LOWER(figurecoveredtext));
+CREATE INDEX IF NOT EXISTS idx_srlink_groundcoveredtext ON srlink(LOWER(groundcoveredtext));
 

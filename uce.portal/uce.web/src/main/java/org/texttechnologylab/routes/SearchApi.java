@@ -30,10 +30,6 @@ public class SearchApi {
     private PostgresqlDataInterface_Impl db = null;
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
 
-    // TODO: outsource this to a db or something.
-    // TODO^2: This needs to be adressed! At some point, if we cache the search states in RAM, we will overflow eventually!
-    public static HashMap<String, SearchState> ActiveSearches = new HashMap<String, SearchState>();
-
     public SearchApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
         this.freemakerConfig = freemakerConfig;
         this.context = serviceContext;
@@ -50,13 +46,14 @@ public class SearchApi {
             var searchId = request.queryParams("searchId");
             var order = request.queryParams("order").toUpperCase();
             var orderBy = request.queryParams("orderBy").toUpperCase();
-            if (!ActiveSearches.containsKey(searchId)) {
+            if (!SessionManager.ActiveSearches.containsKey(searchId)) {
                 logger.error("Issue fetching an active search state from the cache, id couldn't be found: " + searchId);
-                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+                model.put("information", languageResources.get("searchStateNotFound"));
+                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
             // Sort the current search state.
-            var activeSearchState = ActiveSearches.get(searchId);
+            var activeSearchState = SessionManager.ActiveSearches.get(searchId);
             activeSearchState.setOrder(SearchOrder.valueOf(order));
             activeSearchState.setOrderBy(OrderByColumn.valueOf(orderBy));
             Search search = new Search_DefaultImpl();
@@ -82,13 +79,15 @@ public class SearchApi {
             var languageResources = LanguageResources.fromRequest(request);
             var searchId = request.queryParams("searchId");
             var page = Integer.parseInt(request.queryParams("page"));
-            if (!ActiveSearches.containsKey(searchId)) {
+            if (!SessionManager.ActiveSearches.containsKey(searchId)) {
                 logger.error("Issue fetching an active search state from the cache, id couldn't be found: " + searchId);
-                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+                var model = new HashMap<String, Object>();
+                model.put("information", languageResources.get("searchStateNotFound"));
+                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
             // Get the next pages.
-            var activeSearchState = ActiveSearches.get(searchId);
+            var activeSearchState = SessionManager.ActiveSearches.get(searchId);
             Search search = new Search_DefaultImpl();
             if(activeSearchState.getSearchType() == SearchType.SEMANTICROLE) search = new Search_SemanticRoleImpl();
             search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
@@ -151,7 +150,7 @@ public class SearchApi {
                 searchState = search.initSearch();
             }
 
-            ActiveSearches.put(searchState.getSearchId().toString(), searchState);
+            SessionManager.ActiveSearches.put(searchState.getSearchId().toString(), searchState);
             model.put("searchState", searchState);
 
             return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
@@ -182,7 +181,7 @@ public class SearchApi {
             var searchState = semanticRoleSearch.initSearch();
 
             model.put("searchState", searchState);
-            ActiveSearches.put(searchState.getSearchId().toString(), searchState);
+            SessionManager.ActiveSearches.put(searchState.getSearchId().toString(), searchState);
 
             return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
         } catch (Exception ex){

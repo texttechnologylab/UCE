@@ -1,4 +1,3 @@
-
 var currentFocusedPage = 0;
 
 /**
@@ -76,6 +75,7 @@ function handleFocusedPageChanged(){
 
     // We have to adjust the href of the metadata page
     const url = $('.open-metadata-url-page-btn').data('href');
+    if(url === undefined) return;
     const splited = url.split('/');
     const newId = parseInt(splited[splited.length - 1]) + currentFocusedPage - 1;
     let newUrl = "";
@@ -126,7 +126,7 @@ async function lazyLoadPages(){
     const $readerContainer = $('.reader-container');
     const id = $readerContainer.data('id');
     const pagesCount = $readerContainer.data('pagescount');
-
+    let counter = 0;
     for(let i = 10; i <= pagesCount; i += 10){
         const $loadedPagesCount = $('.site-container .loaded-pages-count');
         $loadedPagesCount.html(i);
@@ -140,6 +140,8 @@ async function lazyLoadPages(){
                     // Render the new pages
                     $('.reader-container .document-content').append(response);
                     activatePopovers();
+                    counter++;
+                    //highlightPotentialSearchTokensOfPage(['Die'], $('.reader-container .document-content .page[data-id="' + counter + '"] .page-content'));
                 },
                 error: function (xhr, status, error) {
                     console.error(xhr.responseText);
@@ -153,3 +155,4 @@ async function lazyLoadPages(){
 
     $('.site-container .pages-loader-popup').fadeOut(250);
 }
+

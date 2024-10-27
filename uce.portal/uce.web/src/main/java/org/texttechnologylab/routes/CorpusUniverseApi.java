@@ -9,6 +9,7 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.Search_DefaultImpl;
+import org.texttechnologylab.SessionManager;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.rag.DocumentEmbedding;
@@ -22,8 +23,6 @@ import spark.ModelAndView;
 import spark.Route;
 
 import java.util.*;
-
-import static org.texttechnologylab.routes.SearchApi.ActiveSearches;
 
 public class CorpusUniverseApi {
     private static final Logger logger = LogManager.getLogger();
@@ -149,13 +148,13 @@ public class CorpusUniverseApi {
         var level = ExceptionUtils.tryCatchLog(
                 () -> UniverseLayer.valueOf(requestBody.get("level").toString()),
                 (ex) -> logger.error("Couldn't determine the desired level of the corpus universe.", ex));
-        if (!ActiveSearches.containsKey(searchId)) {
+        if (!SessionManager.ActiveSearches.containsKey(searchId)) {
             logger.error("Error creating corpus universe from search.");
             result.replace("status", 500);
             return gson.toJson(result);
         }
 
-        var activeSearchState = ActiveSearches.get(searchId);
+        var activeSearchState = SessionManager.ActiveSearches.get(searchId);
         var search = new Search_DefaultImpl();
         search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
         var nodes = new ArrayList<CorpusUniverseNode>();

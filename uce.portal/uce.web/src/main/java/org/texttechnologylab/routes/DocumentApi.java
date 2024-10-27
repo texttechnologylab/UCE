@@ -6,8 +6,10 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
+import org.texttechnologylab.SessionManager;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.search.SearchType;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
 import org.texttechnologylab.services.UIMAService;
@@ -87,10 +89,23 @@ public class DocumentApi {
                         "Document reader can't be built.", ex));
         if(id == null) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
+        // Check if we have an searchId parameter. This is optional
+        var searchId = ExceptionUtils.tryCatchLog(() -> request.queryParams("searchId"),
+                (ex) -> logger.warn("Opening a document view but no searchId was provided. Currently, this shouldn't happen, but it didn't stop the procedure."));
+
         try {
             var doc = db.getCompleteDocumentById(Long.parseLong(id), 0, 10);
             logger.info("Loaded document from database with id " + id);
             model.put("document", doc);
+
+            // If this document was opened from an active search, we can highlight the search tokens in the text
+            // This is only optional and works fine even without the search tokens.
+            if(searchId != null && SessionManager.ActiveSearches.containsKey(searchId)){
+                var activeSearchState = SessionManager.ActiveSearches.get(searchId);
+                // For SRL Search, there are no search tokens really. We will handle that exclusively later.
+                if(activeSearchState.getSearchType() != SearchType.SEMANTICROLE)
+                    model.put("searchTokens", String.join("[TOKEN]", activeSearchState.getSearchTokens()));
+            }
         } catch (Exception ex) {
             logger.error("Error creating the document reader view for document with id: " + id, ex);
             return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
