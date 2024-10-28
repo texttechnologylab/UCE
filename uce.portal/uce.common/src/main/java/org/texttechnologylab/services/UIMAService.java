@@ -424,7 +424,7 @@ public class UIMAService {
                     // New page
                     var page = new Page(p.getBegin(), p.getEnd(), p.getPageNumber(), p.getPageId());
                     if (corpusConfig.getAnnotations().isOCRParagraph())
-                        page.setParagraphs(getCoveredParagraphs(p, jCas));
+                        page.setParagraphs(getCoveredParagraphs(p));
 
                     if (corpusConfig.getAnnotations().isOCRBlock())
                         page.setBlocks(getCoveredBlocks(p, jCas));
@@ -499,7 +499,7 @@ public class UIMAService {
                                 docChunkEmbeddings.stream().map(DocumentChunkEmbedding::getEmbedding).toList()),
                         (ex) -> logger.error("Error getting embedding dimension reductions in post processing a corpus.", ex));
 
-                if (reducedEmbeddingDto.getTsne2D() == null) continue;
+                if (reducedEmbeddingDto == null || reducedEmbeddingDto.getTsne2D() == null) continue;
                 // Store the tsne reduction in each chunk - this is basically now a 2D and 3D coordinate
                 for (var i = 0; i < reducedEmbeddingDto.getTsne2D().length; i++) {
                     docChunkEmbeddings.get(i).setTsne2D(reducedEmbeddingDto.getTsne2D()[i]);
@@ -685,10 +685,9 @@ public class UIMAService {
      * Gets all covered paragraphs from a OCR page in a cas
      *
      * @param page
-     * @param jCas
      * @return
      */
-    private List<Paragraph> getCoveredParagraphs(OCRPage page, JCas jCas) {
+    private List<Paragraph> getCoveredParagraphs(OCRPage page) {
         // Paragraphs
         var paragraphs = new ArrayList<Paragraph>();
         // Get all covered by this. This can probably be done in one go, but oh well

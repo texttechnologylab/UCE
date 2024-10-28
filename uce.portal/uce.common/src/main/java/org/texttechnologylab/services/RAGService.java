@@ -448,7 +448,7 @@ public class RAGService {
      * Updates a document chunk embedding.
      */
     public void updateDocumentChunkEmbedding(DocumentChunkEmbedding documentChunkEmbedding) throws SQLException {
-        String query = "UPDATE documentchunkembeddings SET embedding = ?, coveredtext = ?, beginn = ?, endd = ?, tsne2d = ?, tsne3d = ? WHERE document_id = ?";
+        String query = "UPDATE documentchunkembeddings SET embedding = ?, coveredtext = ?, beginn = ?, endd = ?, tsne2d = ?, tsne3d = ? WHERE id = ?";
         executeUpdate(query,
                 new PGvector(documentChunkEmbedding.getEmbedding()),
                 documentChunkEmbedding.getCoveredText(),
@@ -456,7 +456,7 @@ public class RAGService {
                 documentChunkEmbedding.getEnd(),
                 new PGvector(documentChunkEmbedding.getTsne2D()),
                 new PGvector(documentChunkEmbedding.getTsne3D()),
-                documentChunkEmbedding.getDocument_id());
+                documentChunkEmbedding.getId());
     }
 
     /**
