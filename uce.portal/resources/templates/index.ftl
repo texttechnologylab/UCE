@@ -51,7 +51,7 @@
     <nav class="position-relative">
 
         <div class="container-fluid flexed align-items-center justify-content-around">
-            <img class="mb-0 logo" src="/img/logo-biofid.png">
+            <img class="mb-0 logo" src="/img/logo.png">
 
             <div class="flexed align-items-center nav-container">
                 <div class="flexed align-items-center nav-buttons">

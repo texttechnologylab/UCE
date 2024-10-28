@@ -1,8 +1,8 @@
 :root {
-    --prime: #5c7a17;
+    --prime: #00618f;
     --gold: rgba(255,165,0, 1);
-    --prime-raw: 92, 122, 23;
-    --secondary: darkgreen;
+    --prime-raw: 0, 97, 143;
+    --secondary: rgb(57, 55, 50);
     --dark: rgba(38,38,38,1);
 }
 
@@ -38,7 +38,7 @@ nav {
 }
 
 nav .logo {
-    height: 60px;
+    height: 80px;
 }
 
 nav .nav-container{

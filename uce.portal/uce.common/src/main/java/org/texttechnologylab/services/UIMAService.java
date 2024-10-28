@@ -499,7 +499,7 @@ public class UIMAService {
                                 docChunkEmbeddings.stream().map(DocumentChunkEmbedding::getEmbedding).toList()),
                         (ex) -> logger.error("Error getting embedding dimension reductions in post processing a corpus.", ex));
 
-                if (reducedEmbeddingDto.getTsne2D() == null) continue;
+                if (reducedEmbeddingDto == null || reducedEmbeddingDto.getTsne2D() == null) continue;
                 // Store the tsne reduction in each chunk - this is basically now a 2D and 3D coordinate
                 for (var i = 0; i < reducedEmbeddingDto.getTsne2D().length; i++) {
                     docChunkEmbeddings.get(i).setTsne2D(reducedEmbeddingDto.getTsne2D()[i]);

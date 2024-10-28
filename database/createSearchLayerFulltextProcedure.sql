@@ -70,7 +70,12 @@ BEGIN
 				  CASE WHEN order_direction = 'ASC' THEN me.title::text ELSE NULL END
 				WHEN order_by_column = 'published' THEN 
 				  CASE 
-					WHEN order_direction = 'ASC' THEN TO_DATE(me.published, 'DD.MM.YYYY')::text -- Adjust the format as necessary
+					WHEN order_direction = 'ASC' THEN 
+					  CASE 
+						WHEN me.published ~ '^\d{2}\.\d{2}\.\d{4}$' THEN TO_DATE(me.published, 'DD.MM.YYYY')::text -- Full date format
+						WHEN me.published ~ '^\d{4}$' THEN TO_DATE(me.published || '-01-01', 'YYYY-MM-DD')::text -- Only a year, assume January 1st
+						ELSE NULL
+					  END
 					ELSE NULL 
 				  END
 				-- Add more cases for other valid columns
@@ -81,7 +86,12 @@ BEGIN
 				  CASE WHEN order_direction = 'DESC' THEN me.title::text ELSE NULL END
 				WHEN order_by_column = 'published' THEN 
 				  CASE 
-					WHEN order_direction = 'DESC' THEN TO_DATE(me.published, 'DD.MM.YYYY')::text -- Adjust the format as necessary
+					WHEN order_direction = 'DESC' THEN 
+					  CASE 
+						WHEN me.published ~ '^\d{2}\.\d{2}\.\d{4}$' THEN TO_DATE(me.published, 'DD.MM.YYYY')::text -- Full date format
+						WHEN me.published ~ '^\d{4}$' THEN TO_DATE(me.published || '-01-01', 'YYYY-MM-DD')::text -- Only a year, assume January 1st
+						ELSE NULL
+					  END
 					ELSE NULL 
 				  END
 				-- Add more cases for other valid columns
