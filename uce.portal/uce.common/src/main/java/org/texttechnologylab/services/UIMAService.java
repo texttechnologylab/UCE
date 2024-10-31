@@ -7,13 +7,12 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.Anomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import io.kubernetes.client.Exec;
+import org.apache.http.annotation.Obsolete;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.uima.jcas.cas.AnnotationBase;
 import org.apache.uima.util.CasLoadMode;
 import org.joda.time.DateTime;
-import org.springframework.dao.DataAccessException;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.semaf.semafsr.SrLink;
 import org.apache.uima.fit.factory.JCasFactory;
@@ -43,7 +42,7 @@ import java.util.*;
 @Service
 /*
 Holds logic for interacting with any UIMA associated data. The UIMAService is the ONLY service that catches its own exceptions and adds logging!
- */
+*/
 public class UIMAService {
     private static final Logger logger = LogManager.getLogger();
     private static final Set<String> WANTED_NE_TYPES = Set.of(
@@ -75,8 +74,6 @@ public class UIMAService {
     /**
      * Imports all UIMA xmi files in a folder
      *
-     * @param foldername
-     * @return
      */
     public void storeCorpusFromFolder(String foldername) throws DatabaseOperationException {
         var corpus = new Corpus();
@@ -89,7 +86,6 @@ public class UIMAService {
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
         try (var reader = new FileReader(foldername + "\\corpusConfig.json")) {
 
-            // Replace "path/to/your/file.json" with the actual path to your JSON file
             corpusConfig = gson.fromJson(reader, CorpusConfig.class);
             corpus.setName(corpusConfig.getName());
             corpus.setLanguage(corpusConfig.getLanguage());
@@ -159,8 +155,6 @@ public class UIMAService {
     /**
      * Converts an XMI to an OCRDocument by path
      *
-     * @param filename
-     * @return
      */
     public Document XMIToDocument(String filename, Corpus corpus) {
         try {
@@ -182,8 +176,6 @@ public class UIMAService {
     /**
      * Convert a UIMA jCas to an OCRDocument
      *
-     * @param jCas
-     * @return
      */
     public Document XMIToDocument(JCas jCas, Corpus corpus) {
 
@@ -196,7 +188,7 @@ public class UIMAService {
         unique.forEach(logger::info);
 
         try {
-            // Corpus config so we now what do look for
+            // Corpus config so we know what do look for
             var gson = new Gson();
             var corpusConfig = gson.fromJson(corpus.getCorpusJsonConfig(), CorpusConfig.class);
 
@@ -225,234 +217,17 @@ public class UIMAService {
             document.setFullText(jCas.getDocumentText());
             logger.info("Setting full text done.");
 
-            // See if we can get any more information from the goethe collections
-            var metadataTitleInfo = new MetadataTitleInfo();
-            if (corpusConfig.getOther().isAvailableOnFrankfurtUniversityCollection()) {
-                metadataTitleInfo = ExceptionUtils.tryCatchLog(
-                        () -> goetheUniversityService.scrapeDocumentTitleInfo(document.getDocumentId()),
-                        (ex) -> logger.error("Error scraping the metadata info of the document with id: " + document.getDocumentId(), ex));
-                if (metadataTitleInfo != null) document.setMetadataTitleInfo(metadataTitleInfo);
-                logger.info("Setting potential metadata title info done.");
-            } else {
-                // There are possibly additional metadata hidden in the DocumentAnnotation type.
-                var documentAnnotation = JCasUtil.selectSingle(jCas, DocumentAnnotation.class);
-                try {
-                    metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
-                            + documentAnnotation.getDateMonth() + "."
-                            + documentAnnotation.getDateYear());
-                } catch (Exception ex) {
-                    logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
-                }
-            }
-            document.setMetadataTitleInfo(metadataTitleInfo);
-
-            // Set the cleaned full text. That is the sum of all tokens except of all anomalies
+            setMetadataTitleInfo(document, jCas, corpusConfig);
             // For now, we skip this. This doesn't relly improve anything and is very costly.
-            if (false) {
-                var cleanedText = new StringJoiner(" ");
-                JCasUtil.select(jCas, Token.class).forEach(t -> {
-                    // We dont want any tokens with suspicous chars here.
-                    if (t instanceof OCRToken ocr && ocr.getSuspiciousChars() > 0) {
-                        return;
-                    }
-                    var coveredAnomalies = JCasUtil.selectCovered(Anomaly.class, t).size();
-                    if (coveredAnomalies == 0) cleanedText.add(t.getCoveredText());
-                });
-                document.setFullTextCleaned(cleanedText.toString());
-            }
-
-            // Set the sentences
-            if (corpusConfig.getAnnotations().isSentence()) {
-                document.setSentences(JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence.class)
-                        .stream()
-                        .map(s -> new org.texttechnologylab.models.corpus.Sentence(s.getBegin(), s.getEnd()))
-                        .toList());
-                logger.info("Setting sentences done.");
-            }
-
-            // Set the named entities
-            if (corpusConfig.getAnnotations().isNamedEntity()) {
-                var nes = new ArrayList<org.texttechnologylab.models.corpus.NamedEntity>();
-                JCasUtil.select(jCas, NamedEntity.class).forEach(ne -> {
-                    // We don't want all NE types
-                    if (ne == null || ne.getValue() == null) return;
-                    // We have different names for the types... sometimes they are full name, sometimes just the first three letters.
-                    var neType = "";
-                    for (var type : WANTED_NE_TYPES) {
-                        if (type.equals(ne.getValue()) || ne.getValue().equals(type.substring(0, 3))) neType = type;
-                    }
-                    if (neType.isEmpty()) return;
-
-                    var namedEntity = new org.texttechnologylab.models.corpus.NamedEntity(ne.getBegin(), ne.getEnd());
-                    namedEntity.setType(neType);
-                    namedEntity.setCoveredText(ne.getCoveredText());
-                    nes.add(namedEntity);
-                });
-                document.setNamedEntities(nes);
-                logger.info("Setting Named-Entities done.");
-            }
-
-            // Set the lemmas
-            if (corpusConfig.getAnnotations().isLemma()) {
-                var lemmas = new ArrayList<org.texttechnologylab.models.corpus.Lemma>();
-                JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma.class).forEach(l -> {
-                    var lemma = new org.texttechnologylab.models.corpus.Lemma(l.getBegin(), l.getEnd());
-                    lemma.setCoveredText(l.getCoveredText());
-                    lemma.setValue(l.getValue());
-                    lemmas.add(lemma);
-                });
-                document.setLemmas(lemmas);
-                logger.info("Setting Lemmas done.");
-            }
-
-            // Set the semantic role labels
-            if (corpusConfig.getAnnotations().isSrLink()) {
-                var srLinks = new ArrayList<org.texttechnologylab.models.corpus.SrLink>();
-                JCasUtil.select(jCas, SrLink.class).stream().forEach(a -> {
-                    var srLink = new org.texttechnologylab.models.corpus.SrLink();
-                    var figure = a.getFigure();
-                    var ground = a.getGround();
-                    srLink.setRelationType(a.getRel_type());
-
-                    srLink.setFigureBegin(figure.getBegin());
-                    srLink.setFigureEnd(figure.getEnd());
-                    srLink.setFigureCoveredText(figure.getCoveredText());
-
-                    srLink.setGroundBegin(ground.getBegin());
-                    srLink.setGroundEnd(ground.getEnd());
-                    srLink.setGroundCoveredText(ground.getCoveredText());
-
-                    srLinks.add(srLink);
-                });
-                document.setSrLinks(srLinks);
-                logger.info("Setting Semantic-Roles done.");
-            }
-
-            // Set the times
-            if (corpusConfig.getAnnotations().isTime()) {
-                var times = new ArrayList<Time>();
-                JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Time.class).forEach(t -> {
-                    var time = new Time(t.getBegin(), t.getEnd());
-                    time.setValue(t.getValue());
-                    time.setCoveredText(t.getCoveredText());
-                    times.add(time);
-                });
-                document.setTimes(times);
-                logger.info("Setting Times done.");
-            }
-
-            // Set the taxons
-            if (corpusConfig.getAnnotations().getTaxon().isAnnotated()) {
-                var taxons = new ArrayList<Taxon>();
-                JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Taxon.class).forEach(t -> {
-                    var taxon = new Taxon(t.getBegin(), t.getEnd());
-                    taxon.setValue(t.getValue());
-                    taxon.setCoveredText(t.getCoveredText());
-                    taxon.setIdentifier(t.getIdentifier());
-                    // We need to handle taxons specifically, depending on whether they have annotated identifiers.
-                    if (corpusConfig.getAnnotations().getTaxon().isBiofidOnthologyAnnotated() && taxon.getIdentifier() != null && !taxon.getIdentifier().isEmpty()) {
-
-                        // The recognized taxons should be split by a |
-                        var occurrences = new ArrayList<GbifOccurrence>();
-                        var splited = new ArrayList<String>();
-                        // Sometimes they are delimitered by |, sometimes by space - who knows in this dump? :)
-                        for (var split : taxon.getIdentifier().split("\\|")) {
-                            splited.addAll(Arrays.asList(split.split(" ")));
-                        }
-
-                        for (var potentialBiofidId : splited) {
-                            // The biofid urls are like: https://www.biofid.de/bio-ontologies/gbif/10428508
-                            // We need the last number in that string, have a lookup into our sparql database and from there fetch the
-                            // correct TaxonId
-                            if (potentialBiofidId.isEmpty()) continue;
-
-                            var taxonId = ExceptionUtils.tryCatchLog(
-                                    () -> jenaSparqlService.biofidIdUrlToGbifTaxonId(potentialBiofidId),
-                                    (ex) -> logger.error("Error getting the taxonId of a biofid annotation while importing.", ex));
-                            if (taxonId == null || taxonId == -1) continue;
-                            taxon.setGbifTaxonId(taxonId);
-
-                            // Now check if we already have stored occurences for that taxon - we don't need to do that again then.
-                            // We need to check in the current loop and in the database.
-                            if (taxons.stream().anyMatch(ta -> ta.getGbifTaxonId() == taxonId)) break;
-                            var is = ExceptionUtils.tryCatchLog(() -> db.checkIfGbifOccurrencesExist(taxonId),
-                                    (ex) -> logger.error("Error checking if taxon occurrence already exists.", ex));
-                            if (is == null || is) break;
-
-                            // Otherwise, fetch new occurrences.
-                            var potentialOccurrences = ExceptionUtils.tryCatchLog(
-                                    () -> gbifService.scrapeGbifOccurrence(taxonId),
-                                    (ex) -> logger.error("Error scraping the gbif occurrence of taxonId: " + taxonId, ex));
-                            if (potentialOccurrences != null && !potentialOccurrences.isEmpty()) {
-                                occurrences.addAll(potentialOccurrences);
-                                taxon.setPrimaryBiofidOntologyIdentifier(potentialBiofidId);
-                                break;
-                            }
-                        }
-                        taxon.setGbifOccurrences(occurrences);
-                    }
-                    taxons.add(taxon);
-                });
-                document.setTaxons(taxons);
-                logger.info("Setting Taxons done.");
-            }
-
-            // Wikipedia/Wikidata?
-            if (corpusConfig.getAnnotations().isWikipediaLink()) {
-                var wikiDatas = new ArrayList<org.texttechnologylab.models.corpus.WikipediaLink>();
-                JCasUtil.select(jCas, org.hucompute.textimager.uima.type.wikipedia.WikipediaLink.class).forEach(w -> {
-                    var data = new org.texttechnologylab.models.corpus.WikipediaLink(w.getBegin(), w.getEnd());
-                    data.setLinkType(w.getLinkType());
-                    data.setTarget(w.getTarget());
-                    data.setCoveredText(w.getCoveredText());
-                    data.setWikiData(w.getWikiData());
-                    data.setWikiDataHyponyms(
-                            Arrays.stream(w.getWikiDataHyponyms().toArray()).filter(wd -> !wd.isEmpty()).map(WikiDataHyponym::new).toList()
-                    );
-
-                    wikiDatas.add(data);
-                });
-                document.setWikipediaLinks(wikiDatas);
-                logger.info("Setting Wikipedia Links done.");
-            }
-
-            // Set the OCRpages
-            if (corpusConfig.getAnnotations().isOCRPage()) {
-                var pages = new ArrayList<Page>();
-                // We go through each page
-                JCasUtil.select(jCas, OCRPage.class).forEach(p -> {
-                    // New page
-                    var page = new Page(p.getBegin(), p.getEnd(), p.getPageNumber(), p.getPageId());
-                    if (corpusConfig.getAnnotations().isOCRParagraph())
-                        page.setParagraphs(getCoveredParagraphs(p));
-
-                    if (corpusConfig.getAnnotations().isOCRBlock())
-                        page.setBlocks(getCoveredBlocks(p, jCas));
-
-                    if (corpusConfig.getAnnotations().isOCRLine())
-                        page.setLines(getCoveredLines(p, jCas));
-
-                    pages.add(page);
-                });
-                document.setPages(pages);
-                logger.info("Setting OCRPages done.");
-            } else {
-                // If the corpus isn't OCRPage annotated, we create our own pseudo pages.
-                // We want pages as our pagination of the document reader relies on it to handle larger documents.
-                // In this case: we chunk the whole text into pages
-                var fullText = document.getFullText();
-                var pageSize = 6000;
-                var pageNumber = 1;
-                var pages = new ArrayList<Page>();
-
-                for (var i = 0; i < fullText.length(); i += pageSize) {
-                    var page = new Page(i, i + pageSize, pageNumber, "");
-                    pageNumber += 1;
-                    pages.add(page);
-                }
-                document.setPages(pages);
-                logger.info("Setting synthetic pages done.");
-            }
+            //setCleanedFullText(document, jCas);
+            if (corpusConfig.getAnnotations().isSentence()) setSentences(document, jCas);
+            if (corpusConfig.getAnnotations().isNamedEntity()) setNamedEntities(document, jCas);
+            if (corpusConfig.getAnnotations().isLemma()) setLemmata(document, jCas);
+            if (corpusConfig.getAnnotations().isSrLink()) setSemanticRoleLabels(document, jCas);
+            if (corpusConfig.getAnnotations().isTime()) setTimes(document, jCas);
+            if (corpusConfig.getAnnotations().getTaxon().isAnnotated()) setTaxonomy(document, jCas, corpusConfig);
+            if (corpusConfig.getAnnotations().isWikipediaLink()) setWikiLinks(document, jCas);
+            setPages(document, jCas, corpusConfig);
 
             return document;
         } catch (Exception ex) {
@@ -462,10 +237,272 @@ public class UIMAService {
     }
 
     /**
+     * Select and set possible metadata. Also adds Goethe Scraping if applicable
+     */
+    private void setMetadataTitleInfo(Document document, JCas jCas, CorpusConfig corpusConfig){
+        // See if we can get any more information from the goethe collections
+        var metadataTitleInfo = new MetadataTitleInfo();
+        if (corpusConfig.getOther().isAvailableOnFrankfurtUniversityCollection()) {
+            metadataTitleInfo = ExceptionUtils.tryCatchLog(
+                    () -> goetheUniversityService.scrapeDocumentTitleInfo(document.getDocumentId()),
+                    (ex) -> logger.error("Error scraping the metadata info of the document with id: " + document.getDocumentId(), ex));
+            if (metadataTitleInfo != null) document.setMetadataTitleInfo(metadataTitleInfo);
+            logger.info("Setting potential metadata title info done.");
+        } else {
+            // There are possibly additional metadata hidden in the DocumentAnnotation type.
+            var documentAnnotation = JCasUtil.selectSingle(jCas, DocumentAnnotation.class);
+            try {
+                metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
+                        + documentAnnotation.getDateMonth() + "."
+                        + documentAnnotation.getDateYear());
+            } catch (Exception ex) {
+                logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
+            }
+        }
+        document.setMetadataTitleInfo(metadataTitleInfo);
+    }
+
+    /**
+     * Selects and sets pages to a document.
+     */
+    private void setPages(Document document, JCas jCas, CorpusConfig corpusConfig){
+        // Set the OCRpages
+        if (corpusConfig.getAnnotations().isOCRPage()) {
+            var pages = new ArrayList<Page>();
+            // We go through each page
+            JCasUtil.select(jCas, OCRPage.class).forEach(p -> {
+                // New page
+                var page = new Page(p.getBegin(), p.getEnd(), p.getPageNumber(), p.getPageId());
+                if (corpusConfig.getAnnotations().isOCRParagraph())
+                    page.setParagraphs(getCoveredParagraphs(p));
+
+                if (corpusConfig.getAnnotations().isOCRBlock())
+                    page.setBlocks(getCoveredBlocks(p));
+
+                if (corpusConfig.getAnnotations().isOCRLine())
+                    page.setLines(getCoveredLines(p));
+
+                pages.add(page);
+            });
+            document.setPages(pages);
+            logger.info("Setting OCRPages done.");
+        } else {
+            // If the corpus isn't OCRPage annotated, we create our own pseudo pages.
+            // We want pages as our pagination of the document reader relies on it to handle larger documents.
+            // In this case: we chunk the whole text into pages
+            var fullText = document.getFullText();
+            var pageSize = 6000;
+            var pageNumber = 1;
+            var pages = new ArrayList<Page>();
+
+            for (var i = 0; i < fullText.length(); i += pageSize) {
+                var page = new Page(i, i + pageSize, pageNumber, "");
+                pageNumber += 1;
+                pages.add(page);
+            }
+            document.setPages(pages);
+            logger.info("Setting synthetic pages done.");
+        }
+    }
+
+    /**
+     * Selects and sets the WikiLinks to the document.
+     */
+    private void setWikiLinks(Document document, JCas jCas){
+        var wikiDatas = new ArrayList<org.texttechnologylab.models.corpus.WikipediaLink>();
+        JCasUtil.select(jCas, org.hucompute.textimager.uima.type.wikipedia.WikipediaLink.class).forEach(w -> {
+            var data = new org.texttechnologylab.models.corpus.WikipediaLink(w.getBegin(), w.getEnd());
+            data.setLinkType(w.getLinkType());
+            data.setTarget(w.getTarget());
+            data.setCoveredText(w.getCoveredText());
+            data.setWikiData(w.getWikiData());
+            data.setWikiDataHyponyms(
+                    Arrays.stream(w.getWikiDataHyponyms().toArray()).filter(wd -> !wd.isEmpty()).map(WikiDataHyponym::new).toList()
+            );
+
+            wikiDatas.add(data);
+        });
+        document.setWikipediaLinks(wikiDatas);
+        logger.info("Setting Wikipedia Links done.");
+    }
+
+    /**
+     * Selects taxnomies and tries to enrich specific biofid onthologies as well.
+     */
+    private void setTaxonomy(Document document, JCas jCas, CorpusConfig corpusConfig){
+        var taxons = new ArrayList<Taxon>();
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Taxon.class).forEach(t -> {
+            var taxon = new Taxon(t.getBegin(), t.getEnd());
+            taxon.setValue(t.getValue());
+            taxon.setCoveredText(t.getCoveredText());
+            taxon.setIdentifier(t.getIdentifier());
+            // We need to handle taxons specifically, depending on whether they have annotated identifiers.
+            if (corpusConfig.getAnnotations().getTaxon().isBiofidOnthologyAnnotated() && taxon.getIdentifier() != null && !taxon.getIdentifier().isEmpty()) {
+                // The recognized taxons should be split by a |
+                var occurrences = new ArrayList<GbifOccurrence>();
+                var splited = new ArrayList<String>();
+                // Sometimes they are delimitered by |, sometimes by space - who knows in this dump? :)
+                for (var split : taxon.getIdentifier().split("\\|")) {
+                    splited.addAll(Arrays.asList(split.split(" ")));
+                }
+
+                for (var potentialBiofidId : splited) {
+                    // The biofid urls are like: https://www.biofid.de/bio-ontologies/gbif/10428508
+                    // We need the last number in that string, have a lookup into our sparql database and from there fetch the
+                    // correct TaxonId
+                    if (potentialBiofidId.isEmpty()) continue;
+
+                    var taxonId = ExceptionUtils.tryCatchLog(
+                            () -> jenaSparqlService.biofidIdUrlToGbifTaxonId(potentialBiofidId),
+                            (ex) -> logger.error("Error getting the taxonId of a biofid annotation while importing.", ex));
+                    if (taxonId == null || taxonId == -1) continue;
+                    taxon.setGbifTaxonId(taxonId);
+
+                    // Now check if we already have stored occurences for that taxon - we don't need to do that again then.
+                    // We need to check in the current loop and in the database.
+                    if (taxons.stream().anyMatch(ta -> ta.getGbifTaxonId() == taxonId)) break;
+                    var is = ExceptionUtils.tryCatchLog(() -> db.checkIfGbifOccurrencesExist(taxonId),
+                            (ex) -> logger.error("Error checking if taxon occurrence already exists.", ex));
+                    if (is == null || is) break;
+
+                    // Otherwise, fetch new occurrences.
+                    var potentialOccurrences = ExceptionUtils.tryCatchLog(
+                            () -> gbifService.scrapeGbifOccurrence(taxonId),
+                            (ex) -> logger.error("Error scraping the gbif occurrence of taxonId: " + taxonId, ex));
+                    if (potentialOccurrences != null && !potentialOccurrences.isEmpty()) {
+                        occurrences.addAll(potentialOccurrences);
+                        taxon.setPrimaryBiofidOntologyIdentifier(potentialBiofidId);
+                        break;
+                    }
+                }
+                taxon.setGbifOccurrences(occurrences);
+            }
+            taxons.add(taxon);
+        });
+        document.setTaxons(taxons);
+        logger.info("Setting Taxons done.");
+    }
+
+    /**
+     * Selects and sets the times to the document.
+     */
+    private void setTimes(Document document, JCas jCas){
+        var times = new ArrayList<Time>();
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Time.class).forEach(t -> {
+            var time = new Time(t.getBegin(), t.getEnd());
+            time.setValue(t.getValue());
+            time.setCoveredText(t.getCoveredText());
+            times.add(time);
+        });
+        document.setTimes(times);
+        logger.info("Setting Times done.");
+    }
+
+    /**
+     * Selects and sets the SRL to the document
+     */
+    private void setSemanticRoleLabels(Document document, JCas jCas){
+        var srLinks = new ArrayList<org.texttechnologylab.models.corpus.SrLink>();
+        JCasUtil.select(jCas, SrLink.class).forEach(a -> {
+            var srLink = new org.texttechnologylab.models.corpus.SrLink();
+            var figure = a.getFigure();
+            var ground = a.getGround();
+            srLink.setRelationType(a.getRel_type());
+
+            srLink.setFigureBegin(figure.getBegin());
+            srLink.setFigureEnd(figure.getEnd());
+            srLink.setFigureCoveredText(figure.getCoveredText());
+
+            srLink.setGroundBegin(ground.getBegin());
+            srLink.setGroundEnd(ground.getEnd());
+            srLink.setGroundCoveredText(ground.getCoveredText());
+
+            srLinks.add(srLink);
+        });
+        document.setSrLinks(srLinks);
+        logger.info("Setting Semantic-Roles done.");
+    }
+
+    /**
+     * Selects and sets the lemmata to the document
+     *
+     */
+    private void setLemmata(Document document, JCas jCas) {
+        // Set the lemmas
+        var lemmas = new ArrayList<org.texttechnologylab.models.corpus.Lemma>();
+        JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma.class).forEach(l -> {
+            var lemma = new org.texttechnologylab.models.corpus.Lemma(l.getBegin(), l.getEnd());
+            lemma.setCoveredText(l.getCoveredText());
+            lemma.setValue(l.getValue());
+            lemmas.add(lemma);
+        });
+        document.setLemmas(lemmas);
+        logger.info("Setting Lemmas done.");
+    }
+
+    /**
+     * Select and set the Named-Entities to the document
+     *
+     */
+    private void setNamedEntities(Document document, JCas jCas) {
+        // Set the named entities
+        var nes = new ArrayList<org.texttechnologylab.models.corpus.NamedEntity>();
+        JCasUtil.select(jCas, NamedEntity.class).forEach(ne -> {
+            // We don't want all NE types
+            if (ne == null || ne.getValue() == null) return;
+            // We have different names for the types... sometimes they are full name, sometimes just the first three letters.
+            var neType = "";
+            for (var type : WANTED_NE_TYPES) {
+                if (type.equals(ne.getValue()) || ne.getValue().equals(type.substring(0, 3))) neType = type;
+            }
+            if (neType.isEmpty()) return;
+
+            var namedEntity = new org.texttechnologylab.models.corpus.NamedEntity(ne.getBegin(), ne.getEnd());
+            namedEntity.setType(neType);
+            namedEntity.setCoveredText(ne.getCoveredText());
+            nes.add(namedEntity);
+        });
+        document.setNamedEntities(nes);
+        logger.info("Setting Named-Entities done.");
+
+    }
+
+    /**
+     * Selects and sets the sentences to a document
+     *
+     */
+    private void setSentences(Document document, JCas jCas) {
+        // Set the sentences
+        document.setSentences(JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence.class)
+                .stream()
+                .map(s -> new org.texttechnologylab.models.corpus.Sentence(s.getBegin(), s.getEnd()))
+                .toList());
+        logger.info("Setting sentences done.");
+
+    }
+
+    /**
+     * Set the cleaned full text. That is the sum of all tokens except of all anomalies
+     *
+     */
+    @Obsolete
+    private void setCleanedFullText(Document document, JCas jCas) {
+        var cleanedText = new StringJoiner(" ");
+        JCasUtil.select(jCas, Token.class).forEach(t -> {
+            // We don't want any tokens with suspicous chars here.
+            if (t instanceof OCRToken ocr && ocr.getSuspiciousChars() > 0) {
+                return;
+            }
+            var coveredAnomalies = JCasUtil.selectCovered(Anomaly.class, t).size();
+            if (coveredAnomalies == 0) cleanedText.add(t.getCoveredText());
+        });
+        document.setFullTextCleaned(cleanedText.toString());
+    }
+
+    /**
      * Apply any postprocessing once the corpus is finished calculating. This will be called even
      * when the corpus import didn't finish due to an error. We still postprocess what we have.
      *
-     * @param corpus
      */
     private void postProccessCorpus(Corpus corpus, CorpusConfig corpusConfig) {
         logger.info("Postprocessing the Corpus " + corpus.getName());
@@ -641,11 +678,8 @@ public class UIMAService {
     /**
      * Gets all covered lines from a OCR page in a cas
      *
-     * @param page
-     * @param jCas
-     * @return
      */
-    private List<Line> getCoveredLines(OCRPage page, JCas jCas) {
+    private List<Line> getCoveredLines(OCRPage page) {
         // Paragraphs
         var lines = new ArrayList<Line>();
         // Get all covered by this. This can probably be done in one go, but oh well
@@ -665,11 +699,8 @@ public class UIMAService {
     /**
      * Gets all covered blocks from a OCR page in a cas
      *
-     * @param page
-     * @param jCas
-     * @return
      */
-    private List<Block> getCoveredBlocks(OCRPage page, JCas jCas) {
+    private List<Block> getCoveredBlocks(OCRPage page) {
         // Paragraphs
         var blocks = new ArrayList<Block>();
         // Get all covered by this. This can probably be done in one go, but oh well
@@ -684,8 +715,6 @@ public class UIMAService {
     /**
      * Gets all covered paragraphs from a OCR page in a cas
      *
-     * @param page
-     * @return
      */
     private List<Paragraph> getCoveredParagraphs(OCRPage page) {
         // Paragraphs
