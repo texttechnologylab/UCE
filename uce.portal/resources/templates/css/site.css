@@ -1,8 +1,8 @@
 :root {
-    --prime: #5c7a17;
+    /* Variables prime and secondary MUST ALWAYS be in line 3 and 4! */
+    --prime: #00618f;
+    --secondary: rgba(35, 35, 35, 1);
     --gold: rgba(255,165,0, 1);
-    --prime-raw: 92, 122, 23;
-    --secondary: darkgreen;
     --dark: rgba(38,38,38,1);
 }
 
@@ -38,7 +38,7 @@ nav {
 }
 
 nav .logo {
-    height: 60px;
+    height: 70px;
 }
 
 nav .nav-container{

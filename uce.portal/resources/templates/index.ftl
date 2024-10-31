@@ -51,7 +51,7 @@
     <nav class="position-relative">
 
         <div class="container-fluid flexed align-items-center justify-content-around">
-            <img class="mb-0 logo" src="/img/logo-biofid.png">
+            <img class="mb-0 logo" src="${logo}">
 
             <div class="flexed align-items-center nav-container">
                 <div class="flexed align-items-center nav-buttons">
@@ -70,9 +70,9 @@
     <div class="sr-query-builder-include">
     </div>
 
-    <div class="mt-5 corpusUniverse-content-container">
+    <div class="corpusUniverse-content-container">
 
-        <div class="view" data-id="search">
+        <div class="view pt-5" data-id="search">
 
             <div class="flexed align-items-stretch search-header container p-0">
                 <div class="flexed align-items-center h-100 position-relative" style="z-index: 2">

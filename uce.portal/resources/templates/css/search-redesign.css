@@ -1,7 +1,7 @@
 .search-result-container {
     margin-top: 50px;
     min-height: 100vh;
-    background-color: rgba(245, 245, 247, 0.9);
+    background-color: rgba(245, 245, 247, 0.6);
     border-top: lightgray 1px solid;
 }
 

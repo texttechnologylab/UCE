@@ -1,12 +1,19 @@
 package org.texttechnologylab;
 
+import com.google.gson.Gson;
 import freemarker.template.Configuration;
+import org.apache.commons.cli.DefaultParser;
+import org.apache.commons.cli.MissingOptionException;
+import org.apache.commons.cli.Options;
+import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.simpleframework.xml.transform.InvalidFormatException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.SpringConfig;
+import org.texttechnologylab.config.UceConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.corpus.Corpus;
@@ -16,13 +23,15 @@ import org.texttechnologylab.routes.DocumentApi;
 import org.texttechnologylab.routes.RAGApi;
 import org.texttechnologylab.routes.SearchApi;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
+import org.texttechnologylab.utils.ImageUtils;
 import org.texttechnologylab.utils.SystemStatus;
 import spark.ExceptionHandler;
 import spark.ModelAndView;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
 import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.UUID;
 
@@ -40,6 +49,26 @@ public class App {
 
         logger.info("Starting the UCE web service...");
 
+        logger.info("Parsing the UCE config...");
+        try {
+            parseCommandLine(args);
+            logger.info("UCE Config read and instantiated.");
+        } catch (MissingOptionException ex) {
+            logger.error("UCE couldn't parse the UceConfig in the CLI properly. " +
+                    "UCE will still start with a default config, but this is not a desirable state.", ex);
+        } catch (Exception ex){
+            logger.error("Couldn't parse the CLI arguments properly - app shutting down.", ex);
+            return;
+        }
+
+        commonConfig = new CommonConfig();
+        logger.info("Loaded the common config.");
+
+        logger.info("Adjusting UCE to the UceConfig...");
+        ExceptionUtils.tryCatchLog(
+                () -> implementUceConfigurations(commonConfig),
+                (ex) -> logger.error("Couldn't implement the UceConfig. Application continues running.", ex));
+
         // Application context for services
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
         logger.info("Loaded application context and services.");
@@ -48,9 +77,6 @@ public class App {
         logger.info("Testing the language resources:");
         var languageResource = new LanguageResources("de-DE");
         logger.info(languageResource.get("search"));
-
-        commonConfig = new CommonConfig();
-        logger.info("Loaded the common config.");
 
         SessionManager.InitSessionManager(commonConfig.getSessionJobCleanupInterval());
         logger.info("Initialized the Session Manager.");
@@ -74,6 +100,68 @@ public class App {
         logger.info("Routes initialized - UCE web service has started!");
     }
 
+    /**
+     * Implements the different parameters of the UceConfig such as thematic appearance and such.
+     */
+    private static void implementUceConfigurations(CommonConfig commonConfig) throws IOException, InvalidFormatException {
+        // First, set the corpora identities
+        // Colors
+        var siteCss = new File(commonConfig.getTemplatesLocation() + "css/site.css");
+        var lines = Files.readAllLines(siteCss.toPath());
+        lines.set(2, "    --prime: " + SystemStatus.UceConfig.getCorporate().getPrimaryColor() + ";");
+        lines.set(3, "    --secondary: " +  SystemStatus.UceConfig.getCorporate().getSecondaryColor() + ";");
+        Files.write(siteCss.toPath(), lines, StandardOpenOption.TRUNCATE_EXISTING);
+
+        // Logo
+        var logo = SystemStatus.UceConfig.getCorporate().getLogo();
+        // If the logo is a base64 string, we only need to remove the prefix
+        if(logo.startsWith("BASE64::")){
+            SystemStatus.UceConfig.getCorporate().setLogo(logo.replace("BASE64::", ""));
+        } else if (logo.startsWith("FILE::")){
+            // else we need to read in the file from the given path.
+            var path = logo.replace("FILE::", "");
+            var base64Logo = ImageUtils.EncodeImageToBase64(path);
+            SystemStatus.UceConfig.getCorporate().setLogo(base64Logo);
+        }
+    }
+
+    /**
+     * Parsing the CLI to various configs.
+     */
+    private static void parseCommandLine(String[] args) throws ParseException, FileNotFoundException {
+        var options = new Options();
+        options.addOption("cf", "configFile", true, "The filepath to the UceConfig.json file.");
+        options.addOption("cj", "configJson", true, "The json content of a UceConfig.json file.");
+
+        var parser = new DefaultParser();
+        var gson = new Gson();
+
+        var cmd = parser.parse(options, args);
+        var configFile = cmd.getOptionValue("configFile");
+        var configJson = cmd.getOptionValue("configJson");
+        if (configFile != null && configFile.isEmpty()) {
+            var reader = new FileReader(configFile);
+            SystemStatus.UceConfig = gson.fromJson(reader, UceConfig.class);
+        } else if (configJson != null && !configJson.isEmpty()) {
+            SystemStatus.UceConfig = gson.fromJson(configJson, UceConfig.class);
+        }
+
+        // If we haven't gotten a proper config, then we will use a default
+        if (SystemStatus.UceConfig == null) {
+            var inputStream = App.class.getClassLoader().getResourceAsStream("uceConfig.json");
+            if (inputStream != null) {
+                SystemStatus.UceConfig = gson.fromJson(new InputStreamReader(inputStream), UceConfig.class);
+            } else {
+                throw new RuntimeException("Default uceConfig.json not found in the classpath.");
+            }
+
+            // We still throw an exception here, stating that we had to default to the default config.
+            // UCE may run like this, but it's NOT a wanted state.
+            throw new MissingOptionException("UCE couldn't establish its UceConfiguration properly. " +
+                    "Either pass in a path to the config json file via -cf or the json content directly via -cj.");
+        }
+    }
+
     private static void initSparkRoutes(ApplicationContext context) {
 
         var searchApi = new SearchApi(context, configuration);
@@ -88,7 +176,7 @@ public class App {
                     request.attribute("id"), request.ip(), request.requestMethod(), request.uri(), request.body());
 
             // Should we log to db as well?
-            if(commonConfig.getLogToDb() && SystemStatus.PostgresqlDbStatus.isAlive()){
+            if (commonConfig.getLogToDb() && SystemStatus.PostgresqlDbStatus.isAlive()) {
                 var uceLog = new UCELog(request.ip(), request.requestMethod(), request.uri(), request.body());
                 ExceptionUtils.tryCatchLog(
                         () -> context.getBean(PostgresqlDataInterface_Impl.class).saveUceLog(uceLog),
@@ -105,13 +193,13 @@ public class App {
         // Landing page
         get("/", (request, response) -> {
             var model = new HashMap<String, Object>();
-            model.put("title", "Unified Corpus Explorer");
+            model.put("title", SystemStatus.UceConfig.getMeta().getName());
             model.put("corpora", context.getBean(PostgresqlDataInterface_Impl.class)
                     .getAllCorpora()
                     .stream().map(Corpus::getViewModel)
                     .toList());
-            var sparqlStatus = SystemStatus.JenaSparqlStatus.isAlive();
-            model.put("isSparqlAlive", sparqlStatus);
+            model.put("logo", SystemStatus.UceConfig.getCorporate().getLogo());
+            model.put("isSparqlAlive", SystemStatus.JenaSparqlStatus.isAlive());
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");
