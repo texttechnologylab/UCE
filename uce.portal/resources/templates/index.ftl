@@ -74,6 +74,21 @@
 
         <div class="view pt-5" data-id="search">
 
+            <div class="bg-anim">
+                <ul class="circles">
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                    <li></li>
+                </ul>
+            </div>
+
             <div class="flexed align-items-stretch search-header container p-0">
                 <div class="flexed align-items-center h-100 position-relative" style="z-index: 2">
                     <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover"
