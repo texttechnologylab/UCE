@@ -3,17 +3,17 @@
         <div class="flexed align-items-center">
             <div class="flexed align-items-center">
                 <!-- We only show the 3d taxonomy dist if we have them annotated in the current corpus -->
-                <#if searchState.getCorpusConfig()?has_content && searchState.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()>
-                    <a class="title-btn open-globe" data-type="document" data-trigger="hover" data-toggle="popover"
+                <#if corpusConfig?? && corpusConfig.getAnnotations().getTaxon().isBiofidOnthologyAnnotated()>
+                    <a class="title-btn open-globe color-prime" data-type="document" data-trigger="hover" data-toggle="popover"
                        data-placement="top"
                        data-content="${languageResource.get("openTaxonomyDist")}"
-                       data-searchid="${searchState.getSearchId()}"
+                       data-searchid="${searchId}"
                        data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                         <i class="m-0 fas fa-globe-europe"></i></a>
                 </#if>
-                <a class="title-btn open-document" data-trigger="hover" data-toggle="popover" data-placement="top"
+                <a class="title-btn open-document color-prime" data-trigger="hover" data-toggle="popover" data-placement="top"
                    data-content="${languageResource.get("openDocumentReader")}"
-                   data-searchid="${searchState.getSearchId()}"
+                   data-searchid="${searchId}"
                    data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                     <i class="m-0 fas fa-book-open"></i></a>
             </div>
@@ -26,7 +26,7 @@
     <div class="flexed align-items-center">
         <p class="mb-0 text mr-3"> ${document.getLanguage()?upper_case}</p>
         <div class="mb-0 flexed align-items-center text">
-            <i class="fas fa-file-alt color-secondary"></i> <label
+            <i class="fas fa-file-alt"></i> <label
                     class="mb-0 ml-2">${document.getPages()?size}</label>
         </div>
     </div>
@@ -45,24 +45,31 @@
 </div>
 
 <div class="snippet-content flexed align-items-center justify-content-between h-100">
-    <p class="mb-0 small-font text font-italic mr-2">
-        <#assign snippet = searchState.getPossibleSnippetOfDocumentIdx(documentIdx)!>
-        <#if !snippet?has_content>
-            <#assign snippet = document.getFullTextSnippet(85)!>
-        </#if>
+    <#if searchState??>
+        <p class="mb-0 small-font text font-italic mr-2">
+            <#assign snippet = searchState.getPossibleSnippetOfDocumentIdx(documentIdx)!>
+            <#if !snippet?has_content>
+                <#assign snippet = document.getFullTextSnippet(85)!>
+            </#if>
 
-        <!-- Get the list of search tokens -->
-        <#assign searchTokens = searchState.getSearchTokens()!>
+            <!-- Get the list of search tokens -->
+            <#assign searchTokens = searchState.getSearchTokens()!>
 
-        <!-- Initialize the highlighted snippet -->
-        <#assign highlightedSnippet = snippet>
+            <!-- Initialize the highlighted snippet -->
+            <#assign highlightedSnippet = snippet>
 
-        <!-- Loop through each search token and highlight it -->
-        <#list searchTokens as searchToken>
-            <#assign highlightedSnippet = highlightedSnippet?replace(searchToken, "<span class='highlighted-token'>${searchToken}</span>", "i")>
-        </#list>
+            <!-- Loop through each search token and highlight it -->
+            <#list searchTokens as searchToken>
+                <#assign highlightedSnippet = highlightedSnippet?replace(searchToken, "<span class='highlighted-token'>${searchToken}</span>", "i")>
+            </#list>
 
-        <!-- Render the highlighted snippet -->
-        ${highlightedSnippet}...
-    </p>
+            <!-- Render the highlighted snippet -->
+            ${highlightedSnippet}...
+        </p>
+    <#else>
+        <p class="mb-0 small-font text font-italic mr-2">
+            ${document.getFullTextSnippet(85)}...
+        </p>
+    </#if>
+
 </div>

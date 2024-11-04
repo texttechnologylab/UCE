@@ -2,6 +2,7 @@ package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
+import org.apache.http.annotation.Obsolete;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
@@ -37,8 +38,10 @@ public class RAGApi {
         this.ragService = serviceContext.getBean(RAGService.class);
     }
 
+    @Obsolete
     /**
-     * Returns a fully rendered Tsne plot for the given corpus
+     * Returns a fully rendered Tsne plot for the given corpus.
+     * Update: This was a short-handed implementation because we needed something fast. It is obsolete as off now.
      */
     public Route getTsnePlot = ((request, response) -> {
 

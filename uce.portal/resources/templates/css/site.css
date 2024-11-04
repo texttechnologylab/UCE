@@ -2,8 +2,8 @@
     /* Variables prime and secondary MUST ALWAYS be in line 3 and 4! */
     --prime: #00618f;
     --secondary: rgba(35, 35, 35, 1);
-    --gold: rgba(255,165,0, 1);
-    --dark: rgba(38,38,38,1);
+    --gold: rgba(255, 165, 0, 1);
+    --dark: rgba(38, 38, 38, 1);
 }
 
 .site-container {
@@ -11,11 +11,11 @@
     min-height: 100vh !important;
 }
 
-.color-gold{
+.color-gold {
     color: var(--gold);
 }
 
-.bg-default{
+.bg-default {
     background-color: rgb(245, 245, 247) !important;
 }
 
@@ -28,26 +28,27 @@ footer {
 * {
 }
 
-.hoverable{
+.hoverable {
     cursor: pointer;
 }
 
 nav {
+    border-bottom: lightgray 1px solid;
     background-color: rgb(247, 247, 247);
     z-index: 2;
     box-shadow: rgba(0, 0, 0, 0.1) -4px 9px 25px -6px;
 }
 
 nav .logo {
-    height: 70px;
+    height: 60px;
 }
 
-nav .nav-container{
-    border-right:1px lightgray solid;
-    border-left:1px lightgray solid;
+nav .nav-container {
+    border-right: 1px lightgray solid;
+    border-left: 1px lightgray solid;
 }
 
-nav .nav-buttons{
+nav .nav-buttons {
     padding: 18px;
     margin-left: 12px;
 }
@@ -67,12 +68,12 @@ nav .selected-nav-btn {
     position: relative;
     background-color: ghostwhite;
     border: lightgray 1px solid;
-    border-radius: 16px;
+    border-radius: 8px;
     color: var(--prime) !important;
     transition: 0.25s;
 }
 
-nav .selected-nav-btn::before {
+nav .selected-nav-btn.text::before {
     position: absolute;
     bottom: -26px;
     width: 1px;
@@ -82,15 +83,15 @@ nav .selected-nav-btn::before {
     content: '';
 }
 
-.position-relative{
+.position-relative {
     position: relative;
 }
 
-.bg-lightgray{
+.bg-lightgray {
     background-color: rgba(125, 125, 125, 0.15);
 }
 
-.clickable:hover{
+.clickable:hover {
     cursor: pointer;
     text-decoration: underline !important;
     text-decoration-thickness: 2px !important;
@@ -101,19 +102,23 @@ nav .selected-nav-btn::before {
     color: rgba(0, 0, 0, 0.5) !important;
 }
 
-.small-font{
+.small-font {
     font-size: small;
 }
 
-.underlined{
+.underlined {
     text-decoration: underline;
 }
 
-.wrapped{
+.wrapped {
     flex-wrap: wrap;
 }
 
-.no-pointer-events{
+.card-shadow{
+    box-shadow: rgba(0, 0, 0, 0.1) -2px 4px 12px -6px;
+}
+
+.no-pointer-events {
     pointer-events: none;
 }
 
@@ -121,20 +126,25 @@ nav .selected-nav-btn::before {
     font-size: large;
 }
 
-.xlarge-font{
+.xlarge-font {
     font-size: x-large;
 }
 
-.color-dark{
+.sticky{
+    position: sticky;
+    top:0;
+}
+
+.color-dark {
     color: var(--dark);
 }
 
 .color-prime {
-    color: var(--prime);
+    color: var(--prime) !important;
 }
 
 .color-secondary {
-    color: var(--secondary);
+    color: var(--secondary) !important;
 }
 
 .btn-primary {
@@ -161,7 +171,6 @@ nav .selected-nav-btn::before {
 }
 
 .main-content-container {
-    padding-bottom: 175px;
 }
 
 .view {
@@ -186,34 +195,40 @@ nav .selected-nav-btn::before {
     width: 100%;
     border: 1px solid lightgray;
     padding: 12px;
-    border-left:4px var(--secondary) solid;
+    border-left: 4px var(--secondary) solid;
     transition: 0.2s;
     margin-bottom: 12px;
     border-radius: 0px !important;
 }
 
-.group-box .btn:hover{
+.group-box .btn:hover {
     background-color: var(--prime);
-    color:white;
+    color: white;
     transition: 0.2s;
 }
 
-.rotate{
-    -webkit-animation:spin 4s linear infinite;
-    -moz-animation:spin 4s linear infinite;
-    animation:spin 4s linear infinite;
+.rotate {
+    -webkit-animation: spin 4s linear infinite;
+    -moz-animation: spin 4s linear infinite;
+    animation: spin 4s linear infinite;
 }
 
 @-moz-keyframes spin {
-    100% { -moz-transform: rotate(360deg); }
+    100% {
+        -moz-transform: rotate(360deg);
+    }
 }
+
 @-webkit-keyframes spin {
-    100% { -webkit-transform: rotate(360deg); }
+    100% {
+        -webkit-transform: rotate(360deg);
+    }
 }
+
 @keyframes spin {
     100% {
         -webkit-transform: rotate(360deg);
-        transform:rotate(360deg);
+        transform: rotate(360deg);
     }
 }
 
@@ -233,23 +248,23 @@ nav .selected-nav-btn::before {
     color: rgba(37, 133, 30);
 }
 
-.ne-taxons{
-    color:dodgerblue;
+.ne-taxons {
+    color: dodgerblue;
 }
 
 /* BG Anim */
-.bg-anim{
-    background: linear-gradient(90deg, rgba(125,125,125,0.20) 0%, rgba(125,125,125,0.15) 100%);
+.bg-anim {
+    background: linear-gradient(90deg, rgba(125, 125, 125, 0.20) 0%, rgba(125, 125, 125, 0.15) 100%);
     width: 100%;
     top: 0;
-    left:0;
+    left: 0;
     z-index: 0;
     pointer-events: none;
     position: absolute;
-    height:40vh;
+    height: 40vh;
 }
 
-.circles{
+.circles {
     position: absolute;
     top: 0;
     left: 0;
@@ -258,26 +273,26 @@ nav .selected-nav-btn::before {
     overflow: hidden;
 }
 
-.circles li{
+.circles li {
     position: absolute;
     display: block;
     list-style: none;
     width: 20px;
     height: 20px;
-    border:lightgrey 1px solid;
+    border: lightgrey 1px solid;
     background: var(--prime);
     animation: circle-anim 25s linear infinite;
     bottom: -150px;
 }
 
-.circles li:nth-child(1){
+.circles li:nth-child(1) {
     left: 25%;
     width: 80px;
     height: 80px;
     animation-delay: 0s;
 }
 
-.circles li:nth-child(2){
+.circles li:nth-child(2) {
     left: 10%;
     width: 20px;
     height: 20px;
@@ -285,14 +300,14 @@ nav .selected-nav-btn::before {
     animation-duration: 12s;
 }
 
-.circles li:nth-child(3){
+.circles li:nth-child(3) {
     left: 70%;
     width: 20px;
     height: 20px;
     animation-delay: 4s;
 }
 
-.circles li:nth-child(4){
+.circles li:nth-child(4) {
     left: 40%;
     width: 60px;
     height: 60px;
@@ -300,28 +315,28 @@ nav .selected-nav-btn::before {
     animation-duration: 18s;
 }
 
-.circles li:nth-child(5){
+.circles li:nth-child(5) {
     left: 65%;
     width: 20px;
     height: 20px;
     animation-delay: 0s;
 }
 
-.circles li:nth-child(6){
+.circles li:nth-child(6) {
     left: 75%;
     width: 110px;
     height: 110px;
     animation-delay: 3s;
 }
 
-.circles li:nth-child(7){
+.circles li:nth-child(7) {
     left: 35%;
     width: 150px;
     height: 150px;
     animation-delay: 7s;
 }
 
-.circles li:nth-child(8){
+.circles li:nth-child(8) {
     left: 50%;
     width: 25px;
     height: 25px;
@@ -329,7 +344,7 @@ nav .selected-nav-btn::before {
     animation-duration: 45s;
 }
 
-.circles li:nth-child(9){
+.circles li:nth-child(9) {
     left: 20%;
     width: 15px;
     height: 15px;
@@ -337,7 +352,7 @@ nav .selected-nav-btn::before {
     animation-duration: 35s;
 }
 
-.circles li:nth-child(10){
+.circles li:nth-child(10) {
     left: 85%;
     width: 150px;
     height: 150px;
@@ -346,16 +361,203 @@ nav .selected-nav-btn::before {
 }
 
 @keyframes circle-anim {
-    0%{
+    0% {
         transform: translateY(0) rotate(0deg);
         opacity: 1;
         border-radius: 0;
     }
 
-    100%{
+    100% {
         transform: translateY(-1000px) rotate(720deg);
         opacity: 0;
         border-radius: 50%;
     }
 }
+
 /* BG Anim */
+
+.corpora-list {
+    margin-top: 32px;
+}
+
+.corpora-list .corpus-card {
+    border: lightgray 1px solid;
+    box-shadow: rgba(0, 0, 0, 0.1) -2px 4px 12px -6px;
+    padding: 16px;
+}
+
+.corpora-list .corpus-card .open-corpus-inspector-btn {
+    border: 1px lightgray solid;
+    border-radius: 3px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 30px;
+    color:var(--secondary);
+    height: 30px;
+}
+
+.corpora-list .corpus-card .corpus-description{
+    margin-top: 12px;
+    padding: 6px;
+    background-color: rgba(125, 125, 125, 0.15);
+    border-radius: 3px;
+}
+
+.uce-description{
+    border:lightgrey 1px solid;
+    border-radius: 6px;
+    padding: 16px;
+    box-shadow: rgba(0, 0, 0, 0.1) -2px 4px 12px -6px;
+}
+
+/* Document cards */
+.document-card {
+    max-width: 900px;
+    width: 100%;
+    border: lightgray 1px solid;
+    background-color: ghostwhite;
+    padding: 16px;
+    border-radius: 6px;
+    margin-bottom: 16px;
+    transition: 0.15s;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+}
+
+.document-card:hover {
+    border: 1px gray solid;
+    transition: 0.15s;
+}
+
+.document-card .highlighted-token{
+    color:black;
+    text-decoration: underline;
+    text-decoration-color: var(--secondary);
+    text-decoration-thickness: 3px;
+}
+
+.document-card .embedding-text {
+    font-size: small;
+    font-style: italic;
+    margin-bottom: 0;
+    padding: 12px;
+    background-color: rgba(255, 215, 0, 0.42);
+    border-radius: 6px;
+}
+
+.document-card .topic-list label{
+    font-size: small;
+    color:rgba(0, 0, 0, 0.75);
+    text-align: center;
+    background-color: rgba(125, 125, 125, 0.15);
+    border-radius: 6px;
+    margin-left: 6px;
+    padding-left: 6px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    padding-right: 6px;
+}
+
+.document-card .title-btn {
+    margin-right: 8px;
+    border-radius: 50%;
+    border: lightgray 1px solid;
+    color: var(--secondary);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 40px;
+    height: 40px;
+    transition: 0.15s;
+}
+
+.document-card .title-btn:hover {
+    transition: 0.15s;
+    cursor: pointer;
+    background-color: lightgray;
+}
+
+.focused-document-card{
+    margin-bottom: 4rem;
+    position: relative;
+    border:gray 1px solid;
+    transform: scale(1.008);
+    transition: transform 0.5s ease;
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
+}
+
+.document-card .document-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.document-card .document-header .title {
+    font-weight: bold;
+    font-size: 16px;
+    color: var(--secondary);
+}
+
+.document-card .annotation-hit-container-expander {
+    border-left: lightgray 1px solid;
+    border-right: lightgray 1px solid;
+    border-top: lightgray 1px solid;
+    cursor: pointer;
+    border-radius: 0;
+}
+
+.document-card .annotation-hit-container-expander i {
+    color: var(--secondary);
+    margin: 0;
+    font-weight: bold;
+}
+
+.document-card .annotation-hit-container {
+    width: 100%;
+    margin-top: -1px !important;
+    overflow-y: auto;
+    border-left: Lightgray 1px solid;
+    border-top: Lightgray 1px solid;
+    border-right: Lightgray 1px solid;
+    padding-left: 6px;
+    overflow-x: hidden;
+    max-height: 400px;
+}
+
+.document-card .search-hits {
+    width: 100%;
+    margin-top: 8px;
+    padding: 0;
+}
+
+.document-card .search-hits span {
+    font-size: small;
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    word-break: break-word;
+    border-radius: 16px;
+    margin-right: 12px;
+}
+
+.document-card .search-hits span i {
+    display: none;
+}
+
+.document-card .content {
+    height: 100%;
+    width: 100%;
+}
+
+.document-card .snippet-content {
+    padding: 12px;
+    border-radius: 6px;
+    background-color: rgba(125, 125, 125, 0.15);
+}
+
+.enriched-search-tokens .search-token{
+    background-color: rgba(125, 125, 125, 0.1);
+    border-radius: 6px;
+
+}
+/* Document cards */

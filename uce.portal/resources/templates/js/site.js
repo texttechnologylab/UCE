@@ -11,20 +11,20 @@ function generateUUID() {
 /**
  * Handles the clicking onto a navbar button
  */
-$('body').on('click', 'nav .nav-buttons a', function () {
+$('body').on('click', 'nav .switch-view-btn', function () {
     // show the correct view
     var id = $(this).data('id');
     console.log(id);
     $('.main-content-container .view').each(function () {
         if ($(this).data('id') === id) {
-            $(this).show(150);
+            $(this).show(50);
         } else {
             $(this).hide();
         }
     })
 
     // Show the correct button
-    $('nav .nav-buttons a').each(function (b) {
+    $('nav .switch-view-btn').each(function (b) {
         $(this).removeClass('selected-nav-btn');
     });
     $(this).addClass('selected-nav-btn');
@@ -80,39 +80,32 @@ $('body').on('change', '#corpus-select', function(){
  */
 $('body').on('click', '.open-corpus-inspector-btn', function () {
     // Get the selected corpus
-    const selectElement = document.getElementById("corpus-select");
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const corpusId = selectedOption.getAttribute("data-id");
+    let corpusId = $(this).data('id');
+    if(corpusId === undefined){
+        const selectElement = document.getElementById("corpus-select");
+        const selectedOption = selectElement.options[selectElement.selectedIndex];
+        corpusId = selectedOption.getAttribute("data-id");
+    }
+
     $('.corpus-inspector-include').show(150);
 
     $.ajax({
-        url: "/corpus?id=" + corpusId,
+        url: "/api/corpus/inspector?id=" + corpusId,
         type: "GET",
         success: function (response) {
             // Render the corpus view
             $('.corpus-inspector-include').html(response);
 
-            // After that, we load in the corpus plot
+            // After that, we load documentsListView
             $.ajax({
-                url: "/api/rag/plotTsne?corpusId=" + corpusId,
+                url: "/api/corpus/documentsList?corpusId=" + corpusId + "&page=" + 1,
                 type: "GET",
                 success: function (response) {
-                    // If the response is empty, then either no embeddings exist or something
-                    // went wrong
-                    if(response === ""){
-                        $('.corpus-inspector-include .corpus-tsne-plot .error-msg').show();
-                        $('.corpus-inspector-include .simple-loader').fadeOut(150);
-                        return;
-                    }
-                    $('.corpus-inspector-include .corpus-tsne-plot').html(response);
-                    // Bit buggy: The plot doesnt go full height, no matter what
-                    // So I adjust it in script here.
-                    const plotName = $('.corpus-inspector-include .corpus-tsne-plot .plotly-graph-div').attr("id");
-                    Plotly.Plots.resize(plotName);
+                    $('.corpus-inspector-include .corpus-documents-list-include').html(response);
                 },
                 error: function (xhr, status, error) {
                     console.error(xhr.responseText);
-                    $('.corpus-inspector-include .corpus-tsne-plot').html(xhr.responseText);
+                    $('.corpus-inspector-include .corpus-documents-list-include').html(xhr.responseText);
                 },
                 always: function (){
                     $('.corpus-inspector-include .simple-loader').fadeOut(150);

@@ -4,10 +4,13 @@ import com.google.gson.Gson;
 import org.texttechnologylab.config.corpusConfig.CorpusAnnotationConfig;
 import org.texttechnologylab.config.corpusConfig.OtherConfig;
 
+import javax.persistence.Column;
+
 public class CorpusConfig {
     private String name;
     private String author;
     private String language;
+    private String description;
     private CorpusAnnotationConfig annotations;
     private boolean addToExistingCorpus;
     private OtherConfig other;
@@ -16,6 +19,14 @@ public class CorpusConfig {
         var gson = new Gson();
         var config = gson.fromJson(corpusConfigJson, CorpusConfig.class);
         return config;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+
+    public void setDescription(String description) {
+        this.description = description;
     }
 
     public boolean isAddToExistingCorpus() {

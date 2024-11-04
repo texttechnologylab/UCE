@@ -8,6 +8,8 @@
 
                         <div class="content">
 
+                            <#assign corpusConfig = searchState.getCorpusConfig()>
+                            <#assign searchId = searchState.getSearchId()>
                             <#include '*/search/components/documentCardContent.ftl' >
 
                             <#assign foundLocations = searchState.getAnnotationsByTypeAndDocumentId("NamedEntities", document.getId(), "LOCATION")>

@@ -69,7 +69,7 @@ public interface DataInterface {
      * @param corpusId
      * @return
      */
-    public List<Document> getDocumentsByCorpusId(long corpusId) throws DatabaseOperationException;
+    public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException;
 
     /**
      * Gets all documents of a corpus which arent psotprocessed yet.

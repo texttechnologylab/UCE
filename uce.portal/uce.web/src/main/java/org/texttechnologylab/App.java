@@ -198,7 +198,7 @@ public class App {
                     .getAllCorpora()
                     .stream().map(Corpus::getViewModel)
                     .toList());
-            model.put("logo", SystemStatus.UceConfig.getCorporate().getLogo());
+            model.put("system", SystemStatus.UceConfig);
             model.put("isSparqlAlive", SystemStatus.JenaSparqlStatus.isAlive());
 
             // The vm files are located under the resources directory
@@ -210,9 +210,6 @@ public class App {
 
         // A corpus World View
         get("/globe", documentApi.get3dGlobe);
-
-        // Gets a corpus inspector view
-        get("/corpus", documentApi.getCorpusInspectorView);
 
         // Define default exception handler. This shows an error view then in the body.
         ExceptionHandler<Exception> defaultExceptionHandler = (exception, request, response) -> {
@@ -227,6 +224,11 @@ public class App {
             exception(Exception.class, defaultExceptionHandler);
 
             before("/*", (req, res) -> {
+            });
+
+            path("/corpus", () -> {
+                get("/inspector", documentApi.getCorpusInspectorView);
+                get("/documentsList", documentApi.getDocumentListOfCorpus);
             });
 
             path("/search", () -> {

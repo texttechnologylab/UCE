@@ -200,11 +200,16 @@
         </div>
     </div>
 
-    <!-- corpus tsne plot -->
-    <div class="col-md-8 w-100 m-0 p-0 border-left position-relative" style="height: 100vh !important;">
-        <div class="corpus-tsne-plot h-100 w-100">
+    <!-- corpus documents -->
+    <div class="col-md-8 w-100 m-0 p-0 border-left position-relative">
+        <div class="documents-list-header card-shadow">
+            <div class="flexed w-100 justify-content-between pl-3 pr-3">
+                <h6 class="mb-0 mr-1">${languageResource.get("corpusDocuments")}</h6>
+                <p class="clickable color-prime mb-0 text small ml-1"><i class="fas fa-search mr-1"></i> ${languageResource.get("callForSearch")}</p>
+            </div>
+        </div>
+        <div class="corpus-documents-list-include h-100 w-100 position-relative pr-3">
             <div class="simple-loader"></div>
-            <div class="error-msg display-none">${languageResource.get("corpusTsnePlotMissing")}</div>
         </div>
     </div>
 

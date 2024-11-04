@@ -119,11 +119,15 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Document> getDocumentsByCorpusId(long corpusId) throws DatabaseOperationException {
+    public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             Criteria criteria = session.createCriteria(Document.class);
+            criteria.setFirstResult(skip);
+            criteria.setMaxResults(take);
             criteria.add(Restrictions.eq("corpusId", corpusId));
-            return criteria.list();
+            var documents = (List<Document>)criteria.list();
+            documents.forEach(d -> Hibernate.initialize(d.getPages()));
+            return documents;
         });
     }
 
@@ -225,7 +229,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             // HARDCODED_SQL
             query.select(root).where(root.get("id").in(documentIds));
-
             var q = session.createQuery(query);
             var docs = q.getResultList();
 

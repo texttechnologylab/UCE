@@ -51,13 +51,15 @@
     <nav class="position-relative">
 
         <div class="container-fluid flexed align-items-center justify-content-around">
-            <img class="mb-0 logo" src="${logo}">
+            <button class="btn switch-view-btn selected-nav-btn" data-id="landing">
+                <img class="mb-0 logo" src="${system.getCorporate().getLogo()}">
+            </button>
 
             <div class="flexed align-items-center nav-container">
                 <div class="flexed align-items-center nav-buttons">
-                    <a class="btn text" data-id="team">${languageResource.get("team")}</a>
-                    <a class="btn text selected-nav-btn" data-id="search">${languageResource.get("search")}</a>
-                    <a class="btn text" data-id="contact">${languageResource.get("contact")}</a>
+                    <a class="switch-view-btn btn text" data-id="search">${languageResource.get("search")}</a>
+                    <a class="switch-view-btn btn text" data-id="team">${languageResource.get("team")}</a>
+                    <a class="switch-view-btn btn text" data-id="contact">${languageResource.get("contact")}</a>
                 </div>
                 <select class="form-control bg-light rounded-0 color-prime border-right-0 large-font switch-language-select">
                     <option data-lang="de-DE">Deutsch</option>
@@ -70,10 +72,17 @@
     <div class="sr-query-builder-include">
     </div>
 
-    <div class="corpusUniverse-content-container">
+    <div class="corpusUniverse-content-container main-content-container">
 
-        <div class="view pt-5" data-id="search">
+        <!-- landing page -->
+        <div class="view" data-id="landing">
+            <#include "*/landing-page.ftl" />
+        </div>
 
+        <!-- searching -->
+        <div class="view pt-5 display-none" data-id="search">
+
+            <!-- A small bg animation - nothing more -->
             <div class="bg-anim">
                 <ul class="circles">
                     <li></li>
@@ -89,6 +98,7 @@
                 </ul>
             </div>
 
+            <!-- actual content -->
             <div class="flexed align-items-stretch search-header container p-0">
                 <div class="flexed align-items-center h-100 position-relative" style="z-index: 2">
                     <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover"
@@ -164,19 +174,23 @@
             <div class="position-relative">
                 <#include "*/search/components/loader.ftl">
                 <div class="search-result-container container-fluid position-relative">
-                    <#include "*/landing-page.ftl" />
-
                 </div>
             </div>
 
         </div>
 
+        <!-- team -->
         <div class="view display-none" data-id="team">
-            ${languageResource.get("team")}
+            <div class="container">
+                ${languageResource.get("team")}
+            </div>
         </div>
 
+        <!-- contact -->
         <div class="view display-none" data-id="contact">
-            ${languageResource.get("contact")}
+            <div class="container">
+                ${languageResource.get("contact")}
+            </div>
         </div>
     </div>
 

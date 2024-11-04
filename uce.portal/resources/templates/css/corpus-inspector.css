@@ -67,3 +67,10 @@
     color: darkred;
     text-align: center;
 }
+
+.corpus-inspector-include .documents-list-header{
+    position: sticky;
+    width: 100%;
+    border-bottom: lightgray 1px solid;
+    padding: 16px;
+}

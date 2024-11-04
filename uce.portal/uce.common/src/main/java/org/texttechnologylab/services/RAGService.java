@@ -121,7 +121,7 @@ public class RAGService {
 
         // Get all documents of this corpus, loop through them, get the embeddings and
         // then send a request to our webserver.
-        var corpusDocuments = postgresqlDataInterfaceImpl.getDocumentsByCorpusId(corpusId);
+        var corpusDocuments = postgresqlDataInterfaceImpl.getDocumentsByCorpusId(corpusId, 0, 9999999);
         var labels = new ArrayList<String>();
         var embeddings = new ArrayList<float[]>();
         for (var document : corpusDocuments) {

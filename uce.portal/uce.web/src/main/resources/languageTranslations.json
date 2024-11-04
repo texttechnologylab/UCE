@@ -23,6 +23,18 @@
     "de-DE": "Ihre aktive Suche wurde nicht gefunden. Diese werden nach einer Stunde automatisch gelöscht. Sollte dies der Fall sein, starten Sie bitte eine neue Suche.",
     "en-EN": " Your active search was not found. These are automatically deleted after one hour. If this is the case, please start a new one."
   },
+  "missingParameterError": {
+    "de-DE": "Der Request konnte nicht ausgeführt werden, da relevante Parameter fehlten oder nicht interpretiert werden konnten.",
+    "en-EN": "The request could not be executed because relevant parameters were missing or could not be interpreted."
+  },
+  "callForSearch": {
+    "de-DE": "Du willst suchen? Nutze das UCE-Portal!",
+    "en-EN": "You want to search? Use the UCE-Portal!"
+  },
+  "corpusDocuments": {
+    "de-DE": "Korpus Dokumente",
+    "en-EN": "Corpus Documents"
+  },
   "openCorpus": {
     "de-DE": "Öffnen der Korpus-Übersicht",
     "en-EN": "Open the corpus viewer"
@@ -118,6 +130,10 @@
   "functions": {
     "de-DE": "Funktionen",
     "en-EN": "Functions"
+  },
+  "noCorpusDescription": {
+    "de-DE": "Keine Korpus-Beschreibung vorhanden.",
+    "en-EN": "No corpus description provided."
   },
   "ragBotSearch": {
     "de-DE": "Ich durchsuche folgende Dokumente aus unserer Sammlung, die Ihrer Anfrage am Ähnlichsten sind...",

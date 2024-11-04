@@ -6,6 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
+import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.SessionManager;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
@@ -30,6 +31,33 @@ public class DocumentApi {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.freemakerConfig = freemakerConfig;
     }
+
+    public Route getDocumentListOfCorpus = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        var languageResources = LanguageResources.fromRequest(request);
+
+        var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("corpusId")),
+                (ex) -> logger.error("Error: couldn't determine the corpusId and hence can't return the document list. ", ex));
+        if(corpusId == null){
+            model.put("information", languageResources.get("missingParameterError"));
+            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+        var page = ExceptionUtils.tryCatchLog(() -> Integer.parseInt(request.queryParams("page")),
+                (ex) -> logger.error("Error: couldn't determine the page, defaulting to page 1 then. ", ex));
+        if(page == null) page = 1;
+
+        try {
+            var take = 30;
+            var documents = db.getDocumentsByCorpusId(corpusId, (page - 1) * take, take);
+
+            model.put("documents", documents);
+        } catch (Exception ex) {
+            logger.error("Error getting the documents list of a corpus.", ex);
+            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+
+        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/components/corpusDocumentsList.ftl"));
+    });
 
     public Route getCorpusInspectorView = ((request, response) -> {
         var model = new HashMap<String, Object>();

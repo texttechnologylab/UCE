@@ -12,7 +12,7 @@
     border:lightgray 1px solid;
     box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
     cursor: pointer;
-    z-index: 999;
+    z-index: 9;
     transition: 0.15s;
 }
 

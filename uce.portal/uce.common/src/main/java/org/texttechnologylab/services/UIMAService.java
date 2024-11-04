@@ -579,7 +579,9 @@ public class UIMAService {
                 }
             }
 
-            logger.info("Corpus TSNE Plot...");
+            // Update: we used to calculate a tsne plot here, but we replace this in the future. This didnt work well
+            // anyways.
+            /*logger.info("Corpus TSNE Plot...");
 
             // Now that we have the reduced coordinates, lets plot a tsne plot of the corpus and cache it!
             // If we have an existing plot, then update that
@@ -601,7 +603,7 @@ public class UIMAService {
             corpus.setCorpusTsnePlot(finalCorpusTsnePlot);
 
             ExceptionUtils.tryCatchLog(() -> db.saveOrUpdateCorpusTsnePlot(finalCorpusTsnePlot, corpus),
-                    (ex) -> logger.error("Error saving or updating the corpus tsne plot.", ex));
+                    (ex) -> logger.error("Error saving or updating the corpus tsne plot.", ex));*/
         }
         logger.info("Done with the corpus postprocessing.");
     }
