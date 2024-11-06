@@ -18,6 +18,7 @@
     </Appenders>
 
     <Loggers>
+        <Logger name="org.hibernate.orm.deprecation" level="ERROR" additivity="false" />
         <Root level="info">
             <AppenderRef ref="rolling" />
             <AppenderRef ref="console" />

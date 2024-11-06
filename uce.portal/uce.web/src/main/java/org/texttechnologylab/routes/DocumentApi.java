@@ -123,11 +123,10 @@ public class DocumentApi {
 
         // Check if we have an searchId parameter. This is optional
         var searchId = ExceptionUtils.tryCatchLog(() -> request.queryParams("searchId"),
-                (ex) -> logger.warn("Opening a document view but no searchId was provided. Currently, this shouldn't happen, but it didn't stop the procedure."));
+                (ex) -> logger.warn("Opening a document view but no searchId parameter was provided. Currently, this shouldn't happen, but it didn't stop the procedure."));
 
         try {
             var doc = db.getCompleteDocumentById(Long.parseLong(id), 0, 10);
-            logger.info("Loaded document from database with id " + id);
             model.put("document", doc);
 
             // If this document was opened from an active search, we can highlight the search tokens in the text
