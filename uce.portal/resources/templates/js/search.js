@@ -20,6 +20,7 @@ function startNewSearch(searchInput) {
     const fulltextOrNeLayer = $('.search-menu-div .search-settings-div input[name="searchLayerRadioOptions"]:checked').val();
     const embeddings = $('.search-menu-div .search-settings-div .option input[data-id="EMBEDDINGS"]').is(':checked');
     const kwic = $('.search-menu-div .search-settings-div .option input[data-id="KWIC"]').is(':checked');
+    const enrich = $('.search-menu-div .search-settings-div .option input[data-id="ENRICH"]').is(':checked');
 
     // Start a new search TODO: Outsource this into new prototype maybe
     $.ajax({
@@ -30,7 +31,8 @@ function startNewSearch(searchInput) {
             corpusId: corpusId,
             fulltextOrNeLayer: fulltextOrNeLayer,
             useEmbeddings: embeddings,
-            kwic: kwic
+            kwic: kwic,
+            enrich: enrich
         }),
         contentType: "application/json",
         //dataType: "json",

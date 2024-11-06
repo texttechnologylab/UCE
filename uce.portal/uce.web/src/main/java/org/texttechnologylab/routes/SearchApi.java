@@ -130,6 +130,7 @@ public class SearchApi {
             var fulltextOrNeLayer = requestBody.get("fulltextOrNeLayer").toString();
             var useEmbeddings = Boolean.parseBoolean(requestBody.get("useEmbeddings").toString());
             var includeKeywordInContext = Boolean.parseBoolean(requestBody.get("kwic").toString());
+            var enrichSearchTerm = Boolean.parseBoolean(requestBody.get("enrich").toString());
 
             // We have our own query language for SemanticRole Searches. Check if this is one of those.
             SearchState searchState = null;
@@ -146,7 +147,12 @@ public class SearchApi {
                 if (useEmbeddings) searchLayers.add(SearchLayer.EMBEDDINGS);
                 if (includeKeywordInContext) searchLayers.add(SearchLayer.KEYWORDINCONTEXT);
 
-                var search = new Search_DefaultImpl(context, searchInput, corpusId, languageResources.getDefaultLanguage(), searchLayers);
+                var search = new Search_DefaultImpl(context,
+                        searchInput,
+                        corpusId,
+                        languageResources.getDefaultLanguage(),
+                        searchLayers,
+                        enrichSearchTerm);
                 searchState = search.initSearch();
             }
 

@@ -205,7 +205,9 @@
         <div class="documents-list-header card-shadow">
             <div class="flexed w-100 justify-content-between pl-3 pr-3">
                 <h6 class="mb-0 mr-1">${languageResource.get("corpusDocuments")}</h6>
-                <p class="clickable color-prime mb-0 text small ml-1"><i class="fas fa-search mr-1"></i> ${languageResource.get("callForSearch")}</p>
+                <a class="clickable color-prime mb-0 text small ml-1" onclick="navigateToView('search')">
+                    <i class="fas fa-search mr-1"></i> ${languageResource.get("callForSearch")}
+                </a>
             </div>
         </div>
         <div class="corpus-documents-list-include h-100 w-100 position-relative pr-3">

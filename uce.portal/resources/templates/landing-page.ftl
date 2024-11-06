@@ -11,7 +11,7 @@
         <div class="content display-none">
             <hr class="mt-3 mb-3"/>
             <p class="font-italic small text mb-0">
-                "${system.getMeta().getDescription()}"
+                ${system.getMeta().getDescription()}
             </p>
         </div>
     </div>
@@ -47,6 +47,13 @@
                     </div>
                 </div>
             </#list>
+        </div>
+
+        <!-- clal to search -->
+        <div class="flexed align-items-center justify-content-center mt-3">
+            <a class="clickable text mb-0 text small ml-1" onclick="navigateToView('search')">
+                <i class="fas fa-search mr-1"></i> ${languageResource.get("callForSearch")}
+            </a>
         </div>
     </div>
 

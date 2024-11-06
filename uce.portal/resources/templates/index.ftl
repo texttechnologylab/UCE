@@ -57,9 +57,8 @@
 
             <div class="flexed align-items-center nav-container">
                 <div class="flexed align-items-center nav-buttons">
-                    <a class="switch-view-btn btn text" data-id="search">${languageResource.get("search")}</a>
+                    <a class="switch-view-btn btn text" data-id="search">Portal</a>
                     <a class="switch-view-btn btn text" data-id="team">${languageResource.get("team")}</a>
-                    <a class="switch-view-btn btn text" data-id="contact">${languageResource.get("contact")}</a>
                 </div>
                 <select class="form-control bg-light rounded-0 color-prime border-right-0 large-font switch-language-select">
                     <option data-lang="de-DE">Deutsch</option>
@@ -128,6 +127,7 @@
                 <div class="w-100 position-relative">
                     <input type="text" class="search-input form-control large-font w-100"
                            placeholder="${languageResource.get("searchPlaceholder")}"/>
+
                     <div class="search-menu-div">
                         <div class="backdrop"></div>
 
@@ -138,28 +138,42 @@
                                 <!-- The data-ids are corresponding to the SearchLayer enum. Change them with care!! -->
                                 <i class="text w-auto fab fa-searchengin mr-2 large-font"></i>
                                 <div class="option" data-type="radio">
-                                    <div class="form-check form-check-inline">
+                                    <div class="form-check form-check-inline" data-trigger="hover"
+                                         data-toggle="popover" data-placement="top" data-html="true"
+                                         data-content="${languageResource.get("fulltextSearch")}">
                                         <input class="form-check-input" type="radio" checked
                                                name="searchLayerRadioOptions"
                                                id="inlineRadio1" value="FULLTEXT">
                                         <label class="form-check-label color-prime small-font"
                                                for="inlineRadio1">Fulltext</label>
                                     </div>
-                                    <div class="form-check form-check-inline">
+                                    <div class="form-check form-check-inline" data-trigger="hover"
+                                         data-toggle="popover" data-placement="top" data-html="true"
+                                         data-content="${languageResource.get("nerSearch")}">
                                         <input class="form-check-input" type="radio" name="searchLayerRadioOptions"
                                                id="inlineRadio2" value="NAMED_ENTITIES">
-                                        <label class="form-check-label color-secondary small-font" for="inlineRadio2">Named-Entities</label>
+                                        <label class="form-check-label color-secondary small-font" for="inlineRadio2">NER</label>
                                     </div>
                                 </div>
-                                <div class="option">
+                                <div class="option" data-trigger="hover"
+                                     data-toggle="popover" data-placement="top" data-html="true"
+                                     data-content="${languageResource.get("embeddingSearch")}">
                                     <label class="mb-0 w-100 color-gold small-font">Embedding</label>
                                     <input type="checkbox" data-id="EMBEDDINGS"/>
                                 </div>
+
                                 <div class="option" data-trigger="hover"
                                      data-toggle="popover" data-placement="top" data-html="true"
                                      data-content="${languageResource.get("kwicWarning")}">
                                     <label class="mb-0 w-100 color-dark small-font">KWIC</label>
                                     <input type="checkbox" data-id="KWIC"/>
+                                </div>
+
+                                <div class="option w-auto" data-trigger="hover"
+                                     data-toggle="popover" data-placement="top" data-html="true"
+                                     data-content="${languageResource.get("enrichOption")}">
+                                    <label class="mb-0 w-100 small-font mr-3">Enrich</label>
+                                    <input type="checkbox" data-id="ENRICH"/>
                                 </div>
                             </div>
                         </div>
@@ -185,13 +199,6 @@
                 ${languageResource.get("team")}
             </div>
         </div>
-
-        <!-- contact -->
-        <div class="view display-none" data-id="contact">
-            <div class="container">
-                ${languageResource.get("contact")}
-            </div>
-        </div>
     </div>
 
     <div class="corpus-inspector-include display-none">
@@ -204,9 +211,42 @@
 </div>
 </body>
 
-<footer>
-    <div class="container p-3 text-light h-100 text-center flexed align-items-center justify-content-center">
-        <h5 class="text-center m-0">Footer</h5>
+<footer class="bg-lightgray">
+    <div class="container p-3 h-100 text-center flexed align-items-center justify-content-center">
+        <div class="row m-0 p-0 w-100 h-100">
+
+            <!-- contacts -->
+            <div class="col-md-4 color-secondary m-0">
+                <h6 class="text-left color-prime">${languageResource.get("contact")}</h6>
+                <div class="small-font text-left">
+                    <p class="mb-0">${system.getCorporate().getContact().getName()}</p>
+                    <a href="mailto:${system.getCorporate().getContact().getEmail()}">
+                        <i class="fas fa-envelope mr-1"></i> Mail
+                    </a>
+                    <br/>
+                    <a target="_blank" href="${system.getCorporate().getContact().getWebsite()}">
+                        <i class="fas fa-globe-europe mr-1"></i> Website
+                    </a>
+                    <p class="mb-0">${system.getCorporate().getContact().getAddress()}</p>
+                </div>
+            </div>
+
+            <div class="col-md-4 color-secondary w-100 m-0">
+            </div>
+
+            <!-- TTLab -->
+            <div class="col-md-4 color-secondary text-right m-0">
+                <a href="https://www.texttechnologylab.org/" target="_blank">
+                    <h6 class="color-prime">Text Technology Lab</h6>
+                </a>
+                <div class="small-font">
+                    <p class="mb-0">
+                        ${languageResource.get("ttlabFooter")}
+                    </p>
+                    <img class="w-100 mt-2" style="max-width: 150px" src="/img/ttlab-logo.png"/>
+                </div>
+            </div>
+        </div>
     </div>
 </footer>
 

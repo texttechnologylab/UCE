@@ -5,6 +5,14 @@
     border-top: lightgrey 1px solid;
 }
 
+.search-result-container .search-row{
+    z-index: 1;
+}
+
+.search-result-container .document-list-include{
+    min-height: 100vh;
+}
+
 #corpus-select {
     width: auto;
     max-width: 200px;

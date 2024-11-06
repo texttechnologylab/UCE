@@ -19,6 +19,10 @@
     "de-DE": "Ein unerwarteter Fehler ist aufgetreten.",
     "en-EN": "An unexpected error occured."
   },
+  "ttlabFooter": {
+    "de-DE": "Der <b>U</b>nified <b>C</b>orpus <b>E</b>xplorer wurde entwickelt vom Text Technology Lab.",
+    "en-EN": "The <b>U</b>nified <b>C</b>orpus <b>E</b>xplorer was developed by the Text Technology Lab."
+  },
   "searchStateNotFound": {
     "de-DE": "Ihre aktive Suche wurde nicht gefunden. Diese werden nach einer Stunde automatisch gelöscht. Sollte dies der Fall sein, starten Sie bitte eine neue Suche.",
     "en-EN": " Your active search was not found. These are automatically deleted after one hour. If this is the case, please start a new one."
@@ -106,6 +110,22 @@
   "kwicWarning": {
     "de-DE": "<b>K</b>ey<b>w</b>ord <b>I</b>n <b>C</b>ontext Ansicht inkludieren. Zeigt die Verwendung der Suchbegriffe in jedem Dokument, kann die Suche jedoch leicht bis stark verlangsamen.",
     "en-EN": "Include <b>K</b>ey<b>w</b>ord <b>I</b>n <b>C</b>ontext view. Shows the usage of the search terms within each document, but may slow down the search a little to strongly."
+  },
+  "nerSearch": {
+    "de-DE": "Named-Entity Suche. Betrachtet beim Durchsuchen nur extrahierte Eigennamen.",
+    "en-EN": "Named-Entity search. Only considers extracted proper names when searching."
+  },
+  "fulltextSearch": {
+    "de-DE": "Eine Volltextsuche, die alle Texte in allen Dokumente durchsucht.",
+    "en-EN": "A full-text search that searches all texts in all documents."
+  },
+  "embeddingSearch": {
+    "de-DE": "Durchsucht Texte in einem semantischen Vektorraum anhand eines gegebenen Suchbegriffs und verzichtet dabei auf die direkte Verwendung lexikalischer Einheiten des Volltextes.",
+    "en-EN": "Searches texts within a semantic vector space based on a given search term, without relying on the direct use of lexical units from the full text."
+  },
+  "enrichOption": {
+    "de-DE": "Filtert die Sucheingabe, löscht potenzielle Stoppwörter, sucht nach jedem Token einzeln und vergrößert das Suchfeld.",
+    "en-EN": "Filters the search input, deletes potential stopwords, searches for each token individually and increases the searching space."
   },
   "more": {
     "de-DE": "Mehr dazu",

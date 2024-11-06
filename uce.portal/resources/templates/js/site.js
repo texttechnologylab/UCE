@@ -13,8 +13,15 @@ function generateUUID() {
  */
 $('body').on('click', 'nav .switch-view-btn', function () {
     // show the correct view
-    var id = $(this).data('id');
-    console.log(id);
+    const id = $(this).data('id');
+    navigateToView(id);
+})
+
+function navigateToView(id){
+    // Close any potential modals:
+    $('.corpus-inspector-include').hide(150)
+
+    // Now adjust the main content
     $('.main-content-container .view').each(function () {
         if ($(this).data('id') === id) {
             $(this).show(50);
@@ -25,10 +32,13 @@ $('body').on('click', 'nav .switch-view-btn', function () {
 
     // Show the correct button
     $('nav .switch-view-btn').each(function (b) {
-        $(this).removeClass('selected-nav-btn');
+        if ($(this).data('id') === id) {
+            $(this).addClass('selected-nav-btn');
+        } else {
+            $(this).removeClass('selected-nav-btn');
+        }
     });
-    $(this).addClass('selected-nav-btn');
-})
+}
 
 /**
  * Start a search by pressing Enter

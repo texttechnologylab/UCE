@@ -43,7 +43,8 @@ public class Search_DefaultImpl implements Search {
                               String searchPhrase,
                               long corpusId,
                               String languageCode,
-                              List<SearchLayer> searchLayers) throws URISyntaxException, IOException {
+                              List<SearchLayer> searchLayers,
+                              boolean enrichSearchTerm) throws URISyntaxException, IOException {
         this.searchState = new SearchState(SearchType.DEFAULT);
         this.searchState.setSearchLayers(searchLayers);
         initServices(serviceContext, languageCode);
@@ -53,7 +54,14 @@ public class Search_DefaultImpl implements Search {
                 () -> CorpusConfig.fromJson(db.getCorpusById(corpusId).getCorpusJsonConfig()),
                 (ex) -> logger.error("Error fetching the corpus and corpus config of corpus: " + corpusId, ex)));
         this.searchState.setSearchPhrase(searchPhrase);
-        this.searchState.setSearchTokens(enrichSearchTokens(cleanSearchPhrase(searchPhrase)));
+
+        var cleanedSearchPhrase = cleanSearchPhrase(searchPhrase);
+        if(enrichSearchTerm) this.searchState.setSearchTokens(enrichSearchTokens(removeStopwords(cleanedSearchPhrase)));
+        else {
+            var searchTokens = new ArrayList<String>();
+            searchTokens.add(String.join(" ", cleanedSearchPhrase));
+            this.searchState.setSearchTokens(searchTokens);
+        }
     }
 
     public Search_DefaultImpl() {
@@ -248,10 +256,12 @@ public class Search_DefaultImpl implements Search {
     private List<String> cleanSearchPhrase(String search) {
         search = search.trim();
         var splited = Arrays.stream(search.split(" ")).toList();
-        // Remove all stopwords
-        splited = splited.stream().filter(s -> !stopwords.contains(s.toLowerCase())).toList();
         splited = splited.stream().map(StringUtils::removeSpecialCharactersAtEdges).toList();
         return splited;
+    }
+
+    private List<String> removeStopwords(List<String> searchTokens){
+        return searchTokens.stream().filter(s -> !stopwords.contains(s.toLowerCase())).toList();
     }
 
     private void initServices(ApplicationContext serviceContext, String languageCode) throws URISyntaxException, IOException {

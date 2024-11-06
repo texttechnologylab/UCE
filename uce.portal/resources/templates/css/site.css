@@ -21,8 +21,8 @@
 
 footer {
     min-height: 150px;
-    background-color: var(--prime);
     width: 100%;
+    border-top:lightgrey 1px solid;
 }
 
 * {

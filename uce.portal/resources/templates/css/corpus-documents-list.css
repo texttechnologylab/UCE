@@ -1,6 +1,14 @@
 
 .corpus-documents-list{
     overflow-y: auto;
-    max-height: 100vh;
+    max-height: calc(100vh - 50px);
     width: 100%;
+}
+
+.corpus-documents-list .load-more-documents-btn{
+    width: 100%;
+    max-width: 900px;
+    border:lightgrey 1px solid;
+    border-radius: 0;
+    margin-bottom: 32px;
 }

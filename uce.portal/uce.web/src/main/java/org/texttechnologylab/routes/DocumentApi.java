@@ -47,16 +47,20 @@ public class DocumentApi {
         if(page == null) page = 1;
 
         try {
-            var take = 30;
+            var take = 15;
             var documents = db.getDocumentsByCorpusId(corpusId, (page - 1) * take, take);
 
             model.put("documents", documents);
+            model.put("corpusId", corpusId);
         } catch (Exception ex) {
             logger.error("Error getting the documents list of a corpus.", ex);
             return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
-        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/components/corpusDocumentsList.ftl"));
+        // Depending on the page, we returns JUST a rendered list of documents or
+        // a view that contains the documents but also styles navigation and such
+        if(page == 1) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/components/corpusDocumentsList.ftl"));
+        else return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/components/documents.ftl"));
     });
 
     public Route getCorpusInspectorView = ((request, response) -> {

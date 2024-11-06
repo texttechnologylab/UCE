@@ -1,7 +1,7 @@
 package org.texttechnologylab.config.uceConfig;
 
 public class CorporateConfig {
-    private String contact;
+    private ContactConfig contact;
     private String website;
     private String logo;
     private String name;
@@ -10,11 +10,11 @@ public class CorporateConfig {
 
     public CorporateConfig(){}
 
-    public String getContact() {
+    public ContactConfig getContact() {
         return contact;
     }
 
-    public void setContact(String contact) {
+    public void setContact(ContactConfig contact) {
         this.contact = contact;
     }
 
