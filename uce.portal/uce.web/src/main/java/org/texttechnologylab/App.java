@@ -6,6 +6,7 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.MissingOptionException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
+import org.apache.jena.base.Sys;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.simpleframework.xml.transform.InvalidFormatException;
@@ -103,7 +104,7 @@ public class App {
     /**
      * Implements the different parameters of the UceConfig such as thematic appearance and such.
      */
-    private static void implementUceConfigurations(CommonConfig commonConfig) throws IOException, InvalidFormatException {
+    private static void implementUceConfigurations(CommonConfig commonConfig) throws Exception {
         // First, set the corpora identities
         // Colors
         var siteCss = new File(commonConfig.getTemplatesLocation() + "css/site.css");
@@ -113,16 +114,30 @@ public class App {
         Files.write(siteCss.toPath(), lines, StandardOpenOption.TRUNCATE_EXISTING);
 
         // Logo
-        var logo = SystemStatus.UceConfig.getCorporate().getLogo();
-        // If the logo is a base64 string, we only need to remove the prefix
-        if(logo.startsWith("BASE64::")){
-            SystemStatus.UceConfig.getCorporate().setLogo(logo.replace("BASE64::", ""));
-        } else if (logo.startsWith("FILE::")){
+        SystemStatus.UceConfig.getCorporate().setLogo(convertConfigImageString(SystemStatus.UceConfig.getCorporate().getLogo()));
+
+        // Team Members
+        for(var member: SystemStatus.UceConfig.getCorporate().getTeam().getMembers())
+            member.setImage(convertConfigImageString(member.getImage()));
+    }
+
+    /**
+     * Converts a img string in the config to a proper usable base64encoded image
+     * @param imgString
+     * @return
+     * @throws IOException
+     * @throws InvalidFormatException
+     */
+    private static String convertConfigImageString(String imgString) throws Exception {
+        if(imgString.startsWith("BASE64::")){
+            // If the logo is a base64 string, we only need to remove the prefix
+            return imgString.replace("BASE64::", "");
+        } else if (imgString.startsWith("FILE::")){
             // else we need to read in the file from the given path.
-            var path = logo.replace("FILE::", "");
-            var base64Logo = ImageUtils.EncodeImageToBase64(path);
-            SystemStatus.UceConfig.getCorporate().setLogo(base64Logo);
+            var path = imgString.replace("FILE::", "");
+            return ImageUtils.EncodeImageToBase64(path);
         }
+        return "";
     }
 
     /**

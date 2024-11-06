@@ -7,8 +7,17 @@ public class CorporateConfig {
     private String name;
     private String primaryColor;
     private String secondaryColor;
+    private TeamConfig team;
 
     public CorporateConfig(){}
+
+    public TeamConfig getTeam() {
+        return team;
+    }
+
+    public void setTeam(TeamConfig team) {
+        this.team = team;
+    }
 
     public ContactConfig getContact() {
         return contact;

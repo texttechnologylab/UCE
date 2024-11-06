@@ -178,6 +178,31 @@ nav .selected-nav-btn.text::before {
     width: 100%;
 }
 
+.team-member-card{
+    border-right:lightgrey 1px solid;
+    border-top:lightgrey 1px solid;
+    border-bottom:lightgrey 1px solid;
+    border-left:var(--prime) 6px solid;
+    border-radius: 0px 8px 8px 0px;
+    transition: 0.15s;
+}
+
+.team-member-card:hover{
+    background-color: ghostwhite;
+    border-color:gray !important;
+    transition: 0.15s;
+}
+
+.team-member-card img{
+    max-height: 200px;
+    width: 100%;
+    object-fit: contain;
+    border-radius: 6px 0px 0px 6px;
+    border-left:lightgray 1px solid;
+    border-top:lightgray 1px solid;
+    border-bottom:lightgray 1px solid;
+}
+
 .group-box {
     width: 100%;
     border: 1px solid lightgray;
