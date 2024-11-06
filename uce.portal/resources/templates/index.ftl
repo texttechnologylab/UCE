@@ -216,7 +216,7 @@
         <div class="row m-0 p-0 w-100 h-100">
 
             <!-- contacts -->
-            <div class="col-md-4 color-secondary m-0">
+            <div class="col-sm-3 color-secondary m-0">
                 <h6 class="text-left color-prime">${languageResource.get("contact")}</h6>
                 <div class="small-font text-left">
                     <p class="mb-0">${system.getCorporate().getContact().getName()}</p>
@@ -231,11 +231,12 @@
                 </div>
             </div>
 
-            <div class="col-md-4 color-secondary w-100 m-0">
+            <!-- add more footer here later -->
+            <div class="col-sm-6 color-secondary w-100 m-0">
             </div>
 
             <!-- TTLab -->
-            <div class="col-md-4 color-secondary text-right m-0">
+            <div class="col-md-3 color-secondary text-right m-0">
                 <a href="https://www.texttechnologylab.org/" target="_blank">
                     <h6 class="color-prime">Text Technology Lab</h6>
                 </a>

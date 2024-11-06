@@ -147,6 +147,10 @@
     "de-DE": "Seite",
     "en-EN": "Page"
   },
+  "corpora": {
+    "de-DE": "Korpora",
+    "en-EN": "Corpora"
+  },
   "functions": {
     "de-DE": "Funktionen",
     "en-EN": "Functions"

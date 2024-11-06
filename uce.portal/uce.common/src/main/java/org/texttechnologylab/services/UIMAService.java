@@ -122,6 +122,7 @@ public class UIMAService {
             var doc = XMIToDocument(file.getPath(), corpus);
             if (doc != null) {
                 // Save it
+                logger.info("Trying to store document with document id " + doc.getDocumentId() + "...");
                 ExceptionUtils.tryCatchLog(
                         () -> db.saveDocument(doc),
                         (ex) -> logger.error("Error saving a finished document with id " + doc.getId()));
@@ -231,6 +232,7 @@ public class UIMAService {
             if (corpusConfig.getAnnotations().isWikipediaLink()) setWikiLinks(document, jCas);
             setPages(document, jCas, corpusConfig);
 
+            logger.info("Finished extracting all the annotations.");
             return document;
         } catch (Exception ex) {
             logger.error("Unknown error while importing a CAS into a document. This shouldn't happen, as each operation has its own error handling.", ex);

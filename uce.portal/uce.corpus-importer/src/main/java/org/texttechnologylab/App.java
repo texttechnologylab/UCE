@@ -1,5 +1,6 @@
 package org.texttechnologylab;
 
+import org.apache.uima.fit.testing.util.DisableLogging;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
@@ -16,6 +17,9 @@ import static org.texttechnologylab.utilities.uima.jcas.SanitizingJCasFactory.cr
  */
 public class App {
     public static void main(String[] args) throws DatabaseOperationException {
+        // Disable the warning and other junk logs from the UIMA project.
+        DisableLogging.enableLogging(Level.SEVERE);
+
         // Init DI
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
         var uimaService = context.getBean(UIMAService.class);

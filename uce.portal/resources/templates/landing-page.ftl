@@ -4,7 +4,7 @@
     <div class="mt-5 uce-description">
         <div class="flexed align-items-center justify-content-between">
             <h6 class="color-prime mb-0">${system.getMeta().getName()}</h6>
-            <button class="btn" onclick="$(this).parent().next('.content').toggle()">
+            <button class="btn" onclick="$(this).parent().next('.content').toggle(100)">
                 <i class="fas fa-info-circle color-secondary large-font"></i>
             </button>
         </div>
@@ -17,7 +17,7 @@
     </div>
 
     <div class="corpora-list">
-        <h5 class="text-center color-prime font-weight-bold">Corpora</h5>
+        <h5 class="text-center color-prime font-weight-bold">${languageResource.get("corpora")}</h5>
         <div class="row m-0 p-0 ">
             <#list corpora as corpusVm>
                 <div class="col-md-6 m-0 p-3">
