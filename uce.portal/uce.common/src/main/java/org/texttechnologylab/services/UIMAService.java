@@ -4,6 +4,8 @@ import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
 import com.google.gson.JsonSyntaxException;
 import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.Anomaly;
+import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.morph.MorphologicalFeatures;
+import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
@@ -434,6 +436,36 @@ public class UIMAService {
             var lemma = new org.texttechnologylab.models.corpus.Lemma(l.getBegin(), l.getEnd());
             lemma.setCoveredText(l.getCoveredText());
             lemma.setValue(l.getValue());
+
+            var potentialPos = JCasUtil.selectCovered(POS.class, l).stream().findFirst();
+            if(potentialPos.isPresent()) {
+                var pos = potentialPos.get();
+                lemma.setPosValue(pos.getPosValue());
+                lemma.setCoarseValue(pos.getCoarseValue());
+            }
+
+            var potentialMorph = JCasUtil.selectCovered(MorphologicalFeatures.class, l).stream().findFirst();
+            if(potentialMorph.isPresent()){
+                var morph = potentialMorph.get();
+                lemma.setAnimacy(morph.getAnimacy());
+                lemma.setAspect(morph.getAspect());
+                lemma.setCasee(morph.getCase());
+                lemma.setDefiniteness(morph.getDefiniteness());
+                lemma.setDegree(morph.getDegree());
+                lemma.setGender(morph.getGender());
+                lemma.setMood(morph.getMood());
+                lemma.setNegative(morph.getNegative());
+                lemma.setNumber(morph.getNumber());
+                lemma.setNumberType(morph.getNumType());
+                lemma.setPerson(morph.getPerson());
+                lemma.setPossessive(morph.getPossessive());
+                lemma.setPronType(morph.getPronType());
+                lemma.setReflex(morph.getReflex());
+                lemma.setTense(morph.getTense());
+                lemma.setVerbForm(morph.getVerbForm());
+                lemma.setVoice(morph.getVoice());
+            }
+
             lemmas.add(lemma);
         });
         document.setLemmas(lemmas);

@@ -20,6 +20,8 @@ public class UIMAAnnotation extends ModelBase{
         this.coveredText = coveredText.replaceAll("<", "");
     }
 
+    public UIMAAnnotation(){}
+
     public UIMAAnnotation(int begin, int end){
         this.begin = begin;
         this.end = end;
