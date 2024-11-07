@@ -202,7 +202,7 @@
 
     <!-- corpus documents -->
     <div class="col-md-8 w-100 m-0 p-0 border-left position-relative">
-        <div class="documents-list-header card-shadow">
+        <div class="documents-list-header card-shadow bg-default">
             <div class="flexed w-100 justify-content-between pl-3 pr-3">
                 <h6 class="mb-0 mr-1">${languageResource.get("corpusDocuments")}</h6>
                 <a class="clickable color-prime mb-0 text small ml-1" onclick="navigateToView('search')">

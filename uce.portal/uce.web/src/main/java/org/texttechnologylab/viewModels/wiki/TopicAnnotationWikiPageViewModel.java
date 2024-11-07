@@ -4,12 +4,13 @@ import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.corpus.Page;
 import org.texttechnologylab.models.corpus.TopicDistribution;
+import org.texttechnologylab.models.viewModels.CorpusViewModel;
 import org.texttechnologylab.viewModels.ViewModelBase;
 
 public class TopicAnnotationWikiPageViewModel extends ViewModelBase {
     private TopicDistribution topicDistribution;
     private String type;
-    private Corpus corpus;
+    private CorpusViewModel corpus;
     /**
      * The Document this topic dist belongs to.
      */
@@ -22,11 +23,11 @@ public class TopicAnnotationWikiPageViewModel extends ViewModelBase {
 
     public TopicAnnotationWikiPageViewModel(){}
 
-    public Corpus getCorpus() {
+    public CorpusViewModel getCorpus() {
         return corpus;
     }
 
-    public void setCorpus(Corpus corpus) {
+    public void setCorpus(CorpusViewModel corpus) {
         this.corpus = corpus;
     }
 

@@ -201,10 +201,6 @@ nav .selected-nav-btn.text::before {
     max-height: 200px;
     width: 100%;
     object-fit: contain;
-    border-radius: 6px 0px 0px 6px;
-    border-left:lightgray 1px solid;
-    border-top:lightgray 1px solid;
-    border-bottom:lightgray 1px solid;
 }
 
 .open-wiki-page{

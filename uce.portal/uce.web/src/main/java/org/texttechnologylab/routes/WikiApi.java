@@ -13,6 +13,7 @@ import org.texttechnologylab.models.corpus.DocumentTopicDistribution;
 import org.texttechnologylab.models.corpus.PageTopicDistribution;
 import org.texttechnologylab.models.corpus.TopicDistribution;
 import org.texttechnologylab.models.search.SearchType;
+import org.texttechnologylab.models.viewModels.CorpusViewModel;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
 import org.texttechnologylab.services.UIMAService;
@@ -69,7 +70,7 @@ public class WikiApi {
                     viewModel.setPage(pageDist.getPage());
                     viewModel.setDocument(db.getDocumentById(pageDist.getPage().getDocumentId()));
                 }
-                viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()));
+                viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
 
                 model.put("vm", viewModel);
                 return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "/wiki/pages/topicAnnotationPage.ftl"));

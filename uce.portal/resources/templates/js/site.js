@@ -163,6 +163,7 @@ $('body').on('click', '.open-wiki-page', function () {
         type: "GET",
         success: function (response) {
             $('.wiki-page-modal .include').html(response);
+            activatePopovers();
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);
