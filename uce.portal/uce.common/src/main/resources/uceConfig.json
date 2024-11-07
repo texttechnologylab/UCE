@@ -6,7 +6,7 @@
   },
   "corporate": {
     "team": {
-      "description": "The team behind UCE is part of the Text Technology Lab of the Goethe-University, Frankfurt.",
+      "description": "The team behind UCE is part of the <a target='_blank' href='https://www.texttechnologylab.org/'>Text Technology Lab</a> of the Goethe-University, Frankfurt.",
       "members": [
         {
           "name": "Prof. Alexander Mehler",

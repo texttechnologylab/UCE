@@ -207,37 +207,39 @@
                 <hr class="mt-2 mb-4"/>
 
                 <div class="row m-0 p-0">
-                    <#list system.getCorporate().getTeam().getMembers() as member>
-                        <div class="col-md-6 p-3 m-0">
-                            <div class="team-member-card card-shadow">
-                                <div class="flexed align-items-center w-100">
-                                    <div class="p-3 w-100">
-                                        <div class="flexed align-items-baseline">
-                                            <h6 class="mb-0 color-prime mr-1">${member.getName()!""}</h6>
-                                            <label class="mb-0 small-font">(${member.getRole()!"-"})</label>
+                    <#if (system.getCorporate().getTeam())?? && (system.getCorporate().getTeam().getMembers())??>
+                        <#list system.getCorporate().getTeam().getMembers() as member>
+                            <div class="col-md-6 p-3 m-0">
+                                <div class="team-member-card card-shadow">
+                                    <div class="flexed align-items-center w-100">
+                                        <div class="p-3 w-100">
+                                            <div class="flexed align-items-baseline">
+                                                <h6 class="mb-0 color-prime mr-1">${member.getName()!"-"}</h6>
+                                                <label class="mb-0 small-font">(${member.getRole()!"-"})</label>
+                                            </div>
+                                            <label class="text small-font mb-0">${member.getDescription()!"-"}</label>
+                                            <hr class="mt-1 mb-2"/>
+                                            <!-- contact -->
+                                            <div class="small-font text-left">
+                                                <a href="mailto:${member.getContact().getEmail()!"-"}">
+                                                    <i class="fas fa-envelope mr-1"></i> Mail
+                                                </a>
+                                                <br/>
+                                                <a target="_blank" href="${member.getContact().getWebsite()!"-"}">
+                                                    <i class="fas fa-globe-europe mr-1"></i> Website
+                                                </a>
+                                                <p class="mb-0">${member.getContact().getAddress()!"-"}</p>
+                                            </div>
                                         </div>
-                                        <label class="text small-font mb-0">${member.getDescription()!""}</label>
-                                        <hr class="mt-1 mb-2"/>
-                                        <!-- contact -->
-                                        <div class="small-font text-left">
-                                            <a href="mailto:${member.getContact().getEmail()}">
-                                                <i class="fas fa-envelope mr-1"></i> Mail
-                                            </a>
-                                            <br/>
-                                            <a target="_blank" href="${member.getContact().getWebsite()}">
-                                                <i class="fas fa-globe-europe mr-1"></i> Website
-                                            </a>
-                                            <p class="mb-0">${member.getContact().getAddress()}</p>
+                                        <!-- img -->
+                                        <div class="flexed align-items-center justify-content-center text-center h-100">
+                                            <img src="${member.getImage()!""}"/>
                                         </div>
-                                    </div>
-                                    <!-- img -->
-                                    <div class="flexed align-items-center justify-content-center text-center h-100">
-                                        <img src="${member.getImage()}"/>
                                     </div>
                                 </div>
                             </div>
-                        </div>
-                    </#list>
+                        </#list>
+                    </#if>
                 </div>
 
             </div>

@@ -3,7 +3,7 @@
     <!-- uce corporate data -->
     <div class="mt-5 uce-description">
         <div class="flexed align-items-center justify-content-between">
-            <h6 class="color-prime mb-0">${system.getMeta().getName()}</h6>
+            <h6 class="color-prime mb-0">${system.getMeta().getName()!"-"}</h6>
             <button class="btn" onclick="$(this).parent().next('.content').toggle(100)">
                 <i class="fas fa-info-circle color-secondary large-font"></i>
             </button>
@@ -11,7 +11,7 @@
         <div class="content display-none">
             <hr class="mt-3 mb-3"/>
             <p class="font-italic small text mb-0">
-                ${system.getMeta().getDescription()}
+                ${system.getMeta().getDescription()!languageResource.get("noCorpusDescription")}
             </p>
         </div>
     </div>
@@ -25,7 +25,9 @@
                         <!-- header -->
                         <div class="flexed align-items-baseline justify-content-between">
                             <div>
-                                <h6 class="mb-0 color-prime">${corpusVm.getCorpus().getName()}</h6>
+                                <h6 class="open-corpus-inspector-btn border-0 w-100 mb-0 color-prime clickable" data-id="${corpusVm.getCorpus().getId()}">
+                                    ${corpusVm.getCorpus().getName()}
+                                </h6>
                                 <p class="text mb-0 small">${corpusVm.getCorpus().getAuthor()}</p>
                             </div>
                             <a class="btn open-corpus-inspector-btn" data-trigger="hover"
