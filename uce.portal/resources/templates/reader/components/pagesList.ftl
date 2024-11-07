@@ -9,10 +9,22 @@
                        data-content="${languageResource.get("topicModellingInfo")}"></i>
                     <#if (page.getPageTopicDistribution())?? && (page.getPageTopicDistribution().getYakeTopicOne())??>
                         <p class="text font-italic text-center mb-0">
-                            <span class="text-dark">#</span>${page.getPageTopicDistribution().getYakeTopicOne()}
-                            <span class="ml-2 text-dark">#</span>${page.getPageTopicDistribution().getYakeTopicTwo()}
-                            <span class="ml-2 text-dark">#</span>${page.getPageTopicDistribution().getYakeTopicThree()}
-                            <span class="ml-2 text-dark">#</span>${page.getPageTopicDistribution().getYakeTopicFour()}
+                            <span data-wid="${page.getPageTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}" data-wtype="P-TOPIC"
+                                  class="open-wiki-page">
+                                #${page.getPageTopicDistribution().getYakeTopicOne()}
+                            </span>
+                            <span data-wid="${page.getPageTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}" data-wtype="P-TOPIC"
+                                  class="ml-2 open-wiki-page">
+                                #${page.getPageTopicDistribution().getYakeTopicTwo()}
+                            </span>
+                            <span data-wid="${page.getPageTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}" data-wtype="P-TOPIC"
+                                  class="ml-2 open-wiki-page">
+                                #${page.getPageTopicDistribution().getYakeTopicThree()}
+                            </span>
+                            <span data-wid="${page.getPageTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}" data-wtype="P-TOPIC"
+                                  class="ml-2 open-wiki-page">
+                                #${page.getPageTopicDistribution().getYakeTopicFour()}
+                            </span>
                         </p>
                     </#if>
                     <div></div>

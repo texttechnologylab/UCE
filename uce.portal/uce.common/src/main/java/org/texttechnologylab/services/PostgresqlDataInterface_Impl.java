@@ -352,6 +352,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public <T extends TopicDistribution> T getTopicDistributionById(Class<T> clazz, long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var dist = session.get(clazz, id);
+            // Check if the retrieved object is an instance of DocumentTopicDistribution
+            if (dist instanceof DocumentTopicDistribution) {
+                Hibernate.initialize(((DocumentTopicDistribution) dist).getDocument().getPages());
+            }
+            return dist;
+        });
+    }
+
     public boolean checkIfGbifOccurrencesExist(long gbifTaxonId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();

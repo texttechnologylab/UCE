@@ -4,21 +4,23 @@
             <div class="flexed align-items-center">
                 <!-- We only show the 3d taxonomy dist if we have them annotated in the current corpus -->
                 <#if corpusConfig?? && corpusConfig.getAnnotations().getTaxon().isBiofidOnthologyAnnotated()>
-                    <a class="title-btn open-globe color-prime" data-type="document" data-trigger="hover" data-toggle="popover"
+                    <a class="title-btn open-globe color-prime" data-type="document" data-trigger="hover"
+                       data-toggle="popover"
                        data-placement="top"
                        data-content="${languageResource.get("openTaxonomyDist")}"
                        data-searchid="${searchId}"
                        data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                         <i class="m-0 fas fa-globe-europe"></i></a>
                 </#if>
-                <a class="title-btn open-document color-prime" data-trigger="hover" data-toggle="popover" data-placement="top"
+                <a class="title-btn open-document color-prime" data-trigger="hover" data-toggle="popover"
+                   data-placement="top"
                    data-content="${languageResource.get("openDocumentReader")}"
                    data-searchid="${searchId}"
                    data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                     <i class="m-0 fas fa-book-open"></i></a>
             </div>
             <a class="open-document clickable" data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
-                <h6 class="mb-0 title">${document.getDocumentTitle()}</h6>
+                <h6 class="title mb-0">${document.getDocumentTitle()}</h6>
             </a>
         </div>
     </div>
@@ -37,9 +39,18 @@
     <label class="text-secondary small-font mr-2">${document.getMetadataTitleInfo().getPublished()}</label>
     <div class="flexed align-items-center topic-list">
         <#if document.getDocumentTopicDistribution()?has_content>
-            <label>#${document.getDocumentTopicDistribution().getYakeTopicOne()}</label>
-            <label>#${document.getDocumentTopicDistribution().getYakeTopicTwo()}</label>
-            <label>#${document.getDocumentTopicDistribution().getYakeTopicThree()}</label>
+            <label data-wid="${document.getDocumentTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}"
+                   data-wtype="D-TOPIC" class="open-wiki-page">
+                #${document.getDocumentTopicDistribution().getYakeTopicOne()}
+            </label>
+            <label data-wid="${document.getDocumentTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}"
+                   data-wtype="D-TOPIC" class="open-wiki-page">
+                #${document.getDocumentTopicDistribution().getYakeTopicTwo()}
+            </label>
+            <label data-wid="${document.getDocumentTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}"
+                   data-wtype="D-TOPIC" class="open-wiki-page">
+                #${document.getDocumentTopicDistribution().getYakeTopicThree()}
+            </label>
         </#if>
     </div>
 </div>

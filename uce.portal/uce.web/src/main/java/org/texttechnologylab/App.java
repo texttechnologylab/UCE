@@ -19,10 +19,7 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.UCELog;
-import org.texttechnologylab.routes.CorpusUniverseApi;
-import org.texttechnologylab.routes.DocumentApi;
-import org.texttechnologylab.routes.RAGApi;
-import org.texttechnologylab.routes.SearchApi;
+import org.texttechnologylab.routes.*;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.ImageUtils;
 import org.texttechnologylab.utils.SystemStatus;
@@ -154,11 +151,13 @@ public class App {
         var cmd = parser.parse(options, args);
         var configFile = cmd.getOptionValue("configFile");
         var configJson = cmd.getOptionValue("configJson");
-        if (configFile != null && configFile.isEmpty()) {
+        if (configFile != null && !configFile.isEmpty()) {
             var reader = new FileReader(configFile);
             SystemStatus.UceConfig = gson.fromJson(reader, UceConfig.class);
+            logger.info("Read UCE Config from path: " + configFile);
         } else if (configJson != null && !configJson.isEmpty()) {
             SystemStatus.UceConfig = gson.fromJson(configJson, UceConfig.class);
+            logger.info("Parsed UCE Config from JSON.");
         }
 
         // If we haven't gotten a proper config, then we will use a default
@@ -183,6 +182,7 @@ public class App {
         var documentApi = new DocumentApi(context, configuration);
         var ragApi = new RAGApi(context, configuration);
         var corpusUniverseApi = new CorpusUniverseApi(context, configuration);
+        var wikiApi = new WikiApi(context, configuration);
 
         before((request, response) -> {
             // Setup and log all API calls with some information.
@@ -239,6 +239,10 @@ public class App {
             exception(Exception.class, defaultExceptionHandler);
 
             before("/*", (req, res) -> {
+            });
+
+            path("/wiki", () -> {
+                get("/annotationPage", wikiApi.getAnnotationPage);
             });
 
             path("/corpus", () -> {

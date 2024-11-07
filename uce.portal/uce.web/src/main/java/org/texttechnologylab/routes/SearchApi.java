@@ -25,17 +25,13 @@ import java.util.Map;
 public class SearchApi {
     private static final Logger logger = LogManager.getLogger();
     private ApplicationContext context = null;
-    private UIMAService uimaService = null;
-    private RAGService ragService = null;
     private PostgresqlDataInterface_Impl db = null;
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
 
     public SearchApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
         this.freemakerConfig = freemakerConfig;
         this.context = serviceContext;
-        this.uimaService = serviceContext.getBean(UIMAService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
-        this.ragService = serviceContext.getBean(RAGService.class);
     }
 
     public Route activeSearchSort = ((request, response) -> {

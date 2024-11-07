@@ -1,7 +1,7 @@
 var selectedCorpus = -1;
 
 function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0,
             v = c == 'x' ? r : (r & 0x3 | 0x8);
         return v.toString(16);
@@ -17,7 +17,7 @@ $('body').on('click', 'nav .switch-view-btn', function () {
     navigateToView(id);
 })
 
-function navigateToView(id){
+function navigateToView(id) {
     // Close any potential modals:
     $('.corpus-inspector-include').hide(150)
 
@@ -60,7 +60,7 @@ $('body').on('click', '.view .search-btn', function (event) {
 /**
  * Fires whenever a new corpus is selected. We update some UI components then
  */
-$('body').on('change', '#corpus-select', function(){
+$('body').on('change', '#corpus-select', function () {
     const selectedOption = $(this).get(0).options[$(this).get(0).selectedIndex];
     const hasSr = selectedOption.getAttribute("data-hassr");
     const hasBiofidOnthology = selectedOption.getAttribute("data-hasbiofid");
@@ -70,16 +70,16 @@ $('body').on('change', '#corpus-select', function(){
     const hasTopicDist = selectedOption.getAttribute("data-hastopicdist");
     selectedCorpus = parseInt(selectedOption.getAttribute("data-id"));
 
-    if(hasSr === 'true') $('.open-sr-builder-btn').show(50);
+    if (hasSr === 'true') $('.open-sr-builder-btn').show(50);
     else $('.open-sr-builder-btn').hide(50);
 
-    if(hasBiofidOnthology === 'true' && sparqlAlive === 'true') $('.taxonomy-tree-include').show();
+    if (hasBiofidOnthology === 'true' && sparqlAlive === 'true') $('.taxonomy-tree-include').show();
     else $('.taxonomy-tree-include').hide();
 
-    if(hasEmbeddings === 'true') $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').show();
+    if (hasEmbeddings === 'true') $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').show();
     else $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').hide();
 
-    if(hasRagBot === 'true') $('.ragbot-chat-include').show();
+    if (hasRagBot === 'true') $('.ragbot-chat-include').show();
     else $('.ragbot-chat-include').hide();
 
     updateSearchHistoryUI();
@@ -91,7 +91,7 @@ $('body').on('change', '#corpus-select', function(){
 $('body').on('click', '.open-corpus-inspector-btn', function () {
     // Get the selected corpus
     let corpusId = $(this).data('id');
-    if(corpusId === undefined){
+    if (corpusId === undefined) {
         const selectElement = document.getElementById("corpus-select");
         const selectedOption = selectElement.options[selectElement.selectedIndex];
         corpusId = selectedOption.getAttribute("data-id");
@@ -117,7 +117,7 @@ $('body').on('click', '.open-corpus-inspector-btn', function () {
                     console.error(xhr.responseText);
                     $('.corpus-inspector-include .corpus-documents-list-include').html(xhr.responseText);
                 },
-                always: function (){
+                always: function () {
                     $('.corpus-inspector-include .simple-loader').fadeOut(150);
                 }
             });
@@ -149,6 +149,31 @@ $('body').on('click', '.open-globe', function () {
 })
 
 /**
+ * Triggers whenever someone clicks onto an annotation that has a wiki page.
+ */
+$('body').on('click', '.open-wiki-page', function () {
+    const $el = $(this);
+    const id = $el.data('wid');
+    const type = $el.data('wtype');
+    // Show the modal
+    $('.wiki-page-modal').fadeIn(100);
+
+    $.ajax({
+        url: "/api/wiki/annotationPage?id=" + id + "&type=" + type,
+        type: "GET",
+        success: function (response) {
+            $('.wiki-page-modal .include').html(response);
+        },
+        error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+            // TODO: Make this alert prettier.
+            alert("There was an unknown error loading your page.")
+        }
+    });
+
+});
+
+/**
  * Opens a new globe view
  * @param modelId
  */
@@ -178,7 +203,7 @@ function activatePopovers() {
 /**
  * We have some UI components that need to be refreshed when the corpus is loaded.
  */
-function reloadCorpusComponents(){
+function reloadCorpusComponents() {
     $('#corpus-select').change();
 }
 

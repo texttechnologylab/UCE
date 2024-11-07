@@ -122,6 +122,10 @@ nav .selected-nav-btn.text::before {
     pointer-events: none;
 }
 
+.no-text-wrap{
+    white-space: nowrap;
+}
+
 .large-font {
     font-size: large;
 }
@@ -201,6 +205,18 @@ nav .selected-nav-btn.text::before {
     border-left:lightgray 1px solid;
     border-top:lightgray 1px solid;
     border-bottom:lightgray 1px solid;
+}
+
+.open-wiki-page{
+    cursor: pointer;
+    transition: 0.15s;
+}
+
+.open-wiki-page:hover{
+    transition: 0.15s;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-decoration-color: var(--secondary);
 }
 
 .group-box {
@@ -515,6 +531,7 @@ nav .selected-nav-btn.text::before {
     display: flex;
     align-items: center;
     justify-content: space-between;
+    margin-bottom: 6px;
 }
 
 .document-card .document-header .title {

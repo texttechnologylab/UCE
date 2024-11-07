@@ -1,0 +1,108 @@
+
+.wiki-page-modal{
+    display: none;
+}
+
+.wiki-page-modal .backdrop {
+    position: fixed;
+    z-index: 998;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background-color: rgba(0, 0, 0, 0.5);
+}
+
+.wiki-page-modal .content {
+    position: fixed;
+    z-index: 999;
+    border-radius: 6px;
+    top: 50%;
+    left: 50%;
+    display: flex;
+    flex-direction: column;
+    width: 80vw;
+    box-shadow: rgba(0, 0, 0, 0.1) -4px 8px 24px -6px;
+    max-width: 1000px;
+    min-width: 300px;
+    height: 90vh;
+    min-height: 400px;
+    transform: translate(-50%, -50%);
+    transition: 0.2s;
+}
+
+.wiki-page-modal .fullscreen{
+    width: 100vw !important;
+    max-width: 99999px !important;
+    height: 100vh !important;
+    border-radius: 0 !important;
+    transition: 0.2s;
+}
+
+.wiki-page-modal .content .w-header {
+    padding: 16px;
+    background-color: rgba(125, 125, 125, 0.15);
+    flex-shrink: 0;
+    border-bottom: lightgrey 1px solid;
+}
+
+.wiki-page-modal .content .include{
+    padding: 12px 24px;
+    height: 100%;
+    width: 100%;
+    flex-grow: 1;
+    overflow-y: auto;
+}
+
+.w-rounded-btn {
+    border: lightgrey 1px solid;
+    width: 35px;
+    height: 35px;
+    border-radius: 50%;
+    align-items: center;
+    display: flex;
+    justify-content: center;
+    background-color: ghostwhite;
+    color: gray !important;
+    transition: 0.15s;
+}
+
+.w-rounded-btn:hover {
+    color:var(--prime) !important;
+    cursor: pointer;
+    transition: 0.15s;
+    background-color: white !important;
+}
+
+.wiki-page{
+}
+
+.wiki-page *{
+    font-family: "Times New Roman", serif;
+}
+
+.wiki-page .keywords-container{
+    border:lightgrey 1px solid;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-bottom: 3px;
+    padding-top: 9px;
+    margin-right: -2px;
+    background-color: ghostwhite;
+    transition: 0.15s;
+    border-radius: 6px 0px 0px 6px;
+}
+
+.wiki-page .keywords-container:hover{
+    border-color: gray !important;
+    transition: 0.15s;
+}
+
+.wiki-page .breadcrumbs a{
+    background-color: rgba(125, 125, 125, 0.15);
+    padding: 3px 6px;
+    font-size: small;
+    border-radius: 3px;
+    cursor: pointer;
+    color:rgba(85, 85, 85, 1);
+}

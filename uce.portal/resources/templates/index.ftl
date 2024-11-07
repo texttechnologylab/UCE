@@ -9,10 +9,11 @@
             href="https://cdnjs.cloudflare.com/ajax/libs/animate.css/4.1.1/animate.min.css"
             rel="stylesheet">
     <style>
-        <#include "css/site.css">
-        <#include "css/simple-loader.css">
-        <#include "css/search-redesign.css">
+        <#include "*/css/site.css">
+        <#include "*/css/simple-loader.css">
+        <#include "*/css/search-redesign.css">
         <#include "*/css/corpus-universe.css">
+        <#include "*/css/wiki.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
@@ -200,17 +201,17 @@
                     ${languageResource.get("team")}
                 </h5>
 
-                <div>
-                    <p class="mb-0 text text-center font-italic">${system.getCorporate().getTeam().getDescription()}</p>
-                </div>
+                <p class="mb-0 text text-center font-italic">
+                    ${system.getCorporate().getTeam().getDescription()}
+                </p>
 
                 <hr class="mt-2 mb-4"/>
 
-                <div class="row m-0 p-0">
+                <div class="row d-flex align-items-stretch m-0 p-0">
                     <#if (system.getCorporate().getTeam())?? && (system.getCorporate().getTeam().getMembers())??>
                         <#list system.getCorporate().getTeam().getMembers() as member>
-                            <div class="col-md-6 p-3 m-0">
-                                <div class="team-member-card card-shadow">
+                            <div class="col-md-6 p-3 m-0 d-flex">
+                                <div class="team-member-card card-shadow w-100 h-100">
                                     <div class="flexed align-items-center w-100">
                                         <div class="p-3 w-100">
                                             <div class="flexed align-items-baseline">
@@ -242,9 +243,12 @@
                     </#if>
                 </div>
 
+
             </div>
         </div>
     </div>
+
+    <#include "*/wiki/components/wikiPageModal.ftl">
 
     <div class="corpus-inspector-include display-none">
     </div>

@@ -13,6 +13,7 @@
         <#include "../css/document-reader.css">
         <#include "../css/custom-context-menu.css">
         <#include "../css/bg-anim.css">
+        <#include "*/css/wiki.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
@@ -36,6 +37,8 @@
 <div id='stars3'></div>
 
 <div class="site-container">
+
+    <#include "*/wiki/components/wikiPageModal.ftl">
 
     <div class="pages-loader-popup">
         <div class="flexed align-items-center justify-content-center h-100 w-100">

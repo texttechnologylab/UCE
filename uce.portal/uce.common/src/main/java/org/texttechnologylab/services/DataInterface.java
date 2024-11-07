@@ -141,6 +141,16 @@ public interface DataInterface {
                                                           long corpusId) throws DatabaseOperationException;
 
     /**
+     * Gets a Topic Distribution determined by the T generic inheritance.
+     * @param clazz
+     * @param id
+     * @return
+     * @param <T>
+     * @throws DatabaseOperationException
+     */
+    public <T extends TopicDistribution> T getTopicDistributionById(Class<T> clazz, long id) throws DatabaseOperationException;
+
+    /**
      * Generic operation that fetches documents given the paramters
      *
      * @return
