@@ -10,18 +10,22 @@
                     <#if (page.getPageTopicDistribution())?? && (page.getPageTopicDistribution().getYakeTopicOne())??>
                         <p class="text font-italic text-center mb-0">
                             <span data-wid="${page.getPageTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}" data-wtype="P-TOPIC"
+                                  data-wcovered="${page.getPageTopicDistribution().getYakeTopicOne()}"
                                   class="open-wiki-page">
                                 #${page.getPageTopicDistribution().getYakeTopicOne()}
                             </span>
                             <span data-wid="${page.getPageTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}" data-wtype="P-TOPIC"
+                                  data-wcovered="${page.getPageTopicDistribution().getYakeTopicTwo()}"
                                   class="ml-2 open-wiki-page">
                                 #${page.getPageTopicDistribution().getYakeTopicTwo()}
                             </span>
                             <span data-wid="${page.getPageTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}" data-wtype="P-TOPIC"
+                                  data-wcovered="${page.getPageTopicDistribution().getYakeTopicThree()}"
                                   class="ml-2 open-wiki-page">
                                 #${page.getPageTopicDistribution().getYakeTopicThree()}
                             </span>
                             <span data-wid="${page.getPageTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}" data-wtype="P-TOPIC"
+                                  data-wcovered="${page.getPageTopicDistribution().getYakeTopicFour()}"
                                   class="ml-2 open-wiki-page">
                                 #${page.getPageTopicDistribution().getYakeTopicFour()}
                             </span>

@@ -35,6 +35,10 @@
     "de-DE": "Du willst suchen? Nutze das UCE-Portal!",
     "en-EN": "You want to search? Use the UCE-Portal!"
   },
+  "loadMore": {
+    "de-DE": "Mehr laden",
+    "en-EN": "Load more"
+  },
   "corpusDocuments": {
     "de-DE": "Korpus Dokumente",
     "en-EN": "Corpus Documents"
@@ -138,6 +142,18 @@
   "ogDocument": {
     "de-DE": "Original Dokument",
     "en-EN": "Original Document"
+  },
+  "document": {
+    "de-DE": "Dokument",
+    "en-EN": "Document"
+  },
+  "annotatedInDocument": {
+    "de-DE": "Annotiert im Dokument",
+    "en-EN": "Annotated within document"
+  },
+  "similarAnnotations": {
+    "de-DE": "Weitere passende Annotationen",
+    "en-EN": "Further matching annotations"
   },
   "settings": {
     "de-DE": "Einstellungen",

@@ -1,27 +1,34 @@
-package org.texttechnologylab.viewModels.wiki;
+package org.texttechnologylab.models.viewModels.wiki;
 
-import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.corpus.Page;
 import org.texttechnologylab.models.corpus.TopicDistribution;
 import org.texttechnologylab.models.viewModels.CorpusViewModel;
-import org.texttechnologylab.viewModels.ViewModelBase;
 
-public class TopicAnnotationWikiPageViewModel extends ViewModelBase {
-    private TopicDistribution topicDistribution;
+import java.util.List;
+
+public class AnnotationWikiPageViewModel extends ViewModelBase {
+    private String coveredText;
     private String type;
     private CorpusViewModel corpus;
     /**
-     * The Document this topic dist belongs to.
+     * The Document this annotation belongs to.
      */
     private Document document;
-
     /**
-     * Can be null. Not every topic dist belongs to a single page.
+     * Can be null. Not every annotation belongs to a single page.
      */
     private Page page;
 
-    public TopicAnnotationWikiPageViewModel(){}
+    public AnnotationWikiPageViewModel(){}
+
+    public String getCoveredText() {
+        return coveredText;
+    }
+
+    public void setCoveredText(String coveredText) {
+        this.coveredText = coveredText;
+    }
 
     public CorpusViewModel getCorpus() {
         return corpus;
@@ -47,14 +54,6 @@ public class TopicAnnotationWikiPageViewModel extends ViewModelBase {
         this.page = page;
     }
 
-    public TopicDistribution getTopicDistribution() {
-        return topicDistribution;
-    }
-
-    public void setTopicDistribution(TopicDistribution topicDistribution) {
-        this.topicDistribution = topicDistribution;
-    }
-
     public String getType() {
         return type;
     }
@@ -62,4 +61,5 @@ public class TopicAnnotationWikiPageViewModel extends ViewModelBase {
     public void setType(String type) {
         this.type = type;
     }
+
 }

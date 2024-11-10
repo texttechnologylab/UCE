@@ -4,6 +4,7 @@ import org.hibernate.*;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.stereotype.Service;
+import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.UIMAAnnotation;
@@ -15,6 +16,7 @@ import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
 
 import javax.persistence.criteria.Join;
+import javax.persistence.criteria.Predicate;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -349,6 +351,56 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             var doc = session.get(Document.class, id);
             Hibernate.initialize(doc.getPages());
             return doc;
+        });
+    }
+
+    public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var builder = session.getCriteriaBuilder();
+            var query = builder.createQuery(clazz);
+            var root = query.from(clazz);
+
+            // Convert the search topic to lowercase for case-insensitive matching
+            var searchTopic = topic.toLowerCase();
+            var predicates = new ArrayList<>();
+
+            // Use reflection to find fields annotated with @Searchable. Otherwise, we'd have to
+            // hardocde the SQL columns for every topic field in here which I really dont wanna do. If the reflection
+            // is too costly, then think about changing it.
+            // PS: Reflection in java sucks.
+            Class<?> currentClass = clazz;
+            while (currentClass != null) {
+                for (var field : currentClass.getDeclaredFields()) {
+                    if (field.isAnnotationPresent(Searchable.class)) {
+                        // Build a case-insensitive equality predicate for each searchable field
+                        predicates.add(
+                                builder.equal(
+                                        builder.lower(root.get(field.getName())),
+                                        searchTopic
+                                )
+                        );
+                    }
+                }
+                currentClass = currentClass.getSuperclass();
+            }
+
+            // Combine all predicates with OR condition
+            var combinedPredicate = builder.or(predicates.toArray(new Predicate[0]));
+            query.select(root).where(combinedPredicate);
+
+            var finalQuery = session.createQuery(query);
+            finalQuery.setMaxResults(limit);
+
+            var results = finalQuery.getResultList();
+
+            // Initialize document pages if any result is an instance of DocumentTopicDistribution
+            for (T dist : results) {
+                if (dist instanceof DocumentTopicDistribution) {
+                    Hibernate.initialize(((DocumentTopicDistribution) dist).getDocument().getPages());
+                }
+            }
+
+            return results;
         });
     }
 

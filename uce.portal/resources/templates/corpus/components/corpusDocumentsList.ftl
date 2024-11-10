@@ -12,7 +12,7 @@
     <div class="mt-3 w-100 h-100 flexed align-items-center justify-content-center">
         <button class="btn load-more-documents-btn clickable color-prime" data-page="2"
                 data-corpusid="${corpusId}">
-            Load more
+            ${languageResource.get("loadMore")}
         </button>
     </div>
 </div>

@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.corpus;
 
+import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.models.ModelBase;
 
 import javax.persistence.Column;
@@ -22,11 +23,20 @@ public class TopicDistribution extends ModelBase {
     private String rakeTopicThree;
 
     // YAKE on the other hand does keyword extraction and hence these are words.
+    @Searchable
     private String yakeTopicOne;
+    @Searchable
     private String yakeTopicTwo;
+    @Searchable
     private String yakeTopicThree;
+    @Searchable
     private String yakeTopicFour;
+    @Searchable
     private String yakeTopicFive;
+
+    public String getType(){
+        return this.getClass().getSimpleName().substring(0, 1);
+    }
 
     public String toString(){
         return rakeTopicOne + " "

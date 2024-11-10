@@ -40,14 +40,17 @@
     <div class="flexed align-items-center topic-list">
         <#if document.getDocumentTopicDistribution()?has_content>
             <label data-wid="${document.getDocumentTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}"
+                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicOne()}"
                    data-wtype="D-TOPIC" class="open-wiki-page">
                 #${document.getDocumentTopicDistribution().getYakeTopicOne()}
             </label>
             <label data-wid="${document.getDocumentTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}"
+                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicTwo()}"
                    data-wtype="D-TOPIC" class="open-wiki-page">
                 #${document.getDocumentTopicDistribution().getYakeTopicTwo()}
             </label>
             <label data-wid="${document.getDocumentTopicDistribution().getId()?string?replace('.', '')?replace(',', '')}"
+                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicThree()}"
                    data-wtype="D-TOPIC" class="open-wiki-page">
                 #${document.getDocumentTopicDistribution().getYakeTopicThree()}
             </label>

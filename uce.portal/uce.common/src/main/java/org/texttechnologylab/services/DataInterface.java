@@ -151,6 +151,16 @@ public interface DataInterface {
     public <T extends TopicDistribution> T getTopicDistributionById(Class<T> clazz, long id) throws DatabaseOperationException;
 
     /**
+     * Get Topic Distributions by a topic. This is basically a search for annotated topics.
+      * @param clazz
+     * @param topic
+     * @return
+     * @param <T>
+     * @throws DatabaseOperationException
+     */
+    public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException;
+
+    /**
      * Generic operation that fetches documents given the paramters
      *
      * @return

@@ -1,6 +1,52 @@
 
 .wiki-page-modal{
+}
+
+.wiki-page-modal .minimized-content{
     display: none;
+}
+
+.wiki-page-modal-minimized{
+    position: fixed;
+    z-index: 9;
+    display: block !important;
+    transition: 0.15s;
+}
+
+.wiki-page-modal-minimized .backdrop{
+    display: none !important;
+}
+
+.wiki-page-modal-minimized .content{
+    display: none !important;
+}
+
+.wiki-page-modal-minimized .minimized-content{
+    position: fixed;
+    left: 36px;
+    bottom: 36px;
+    border-radius: 50%;
+    width: 65px;
+    height: 65px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    border: lightgray 1px solid;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+    cursor: pointer;
+    z-index: 9;
+    transition: 0.15s;
+}
+
+.wiki-page-modal-minimized .minimized-content:hover i{
+    color:white !important;
+}
+
+.wiki-page-modal-minimized .minimized-content:hover{
+    background-color: var(--prime);
+    color:white !important;
+    transition: 0.15s;
 }
 
 .wiki-page-modal .backdrop {
@@ -105,4 +151,21 @@
     border-radius: 3px;
     cursor: pointer;
     color:rgba(85, 85, 85, 1);
+}
+
+.wiki-page .breadcrumbs a:last-of-type{
+    color:var(--prime) !important;
+    border:gray 1px solid !important;
+}
+
+.wiki-page .similar-topics{
+    border:lightgrey 1px solid;
+    border-radius: 6px;
+    background-color: rgba(125, 125, 125, 0.15);
+}
+
+.wiki-page .similar-topics a{
+    background-color: ghostwhite;
+    border-radius: 3px;
+    padding: 3px 6px;
 }

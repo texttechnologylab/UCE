@@ -40,6 +40,9 @@
 
     <#include "*/wiki/components/wikiPageModal.ftl">
 
+    <div class="corpus-inspector-include display-none">
+    </div>
+
     <div class="pages-loader-popup">
         <div class="flexed align-items-center justify-content-center h-100 w-100">
             <p class="mb-0 text">

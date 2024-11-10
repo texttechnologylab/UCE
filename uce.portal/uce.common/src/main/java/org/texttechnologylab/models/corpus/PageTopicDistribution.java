@@ -8,11 +8,9 @@ import javax.persistence.*;
 @Entity
 @Table(name="pagetopicdistribution")
 public class PageTopicDistribution extends TopicDistribution {
-
     @OneToOne()
     @JoinColumn(name="page_id")
     private Page page;
-
     @Column(name = "\"beginn\"")
     private Integer begin;
     @Column(name = "\"endd\"")

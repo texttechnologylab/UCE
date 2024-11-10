@@ -97,7 +97,9 @@ $('body').on('click', '.open-corpus-inspector-btn', function () {
         corpusId = selectedOption.getAttribute("data-id");
     }
 
-    $('.corpus-inspector-include').show(150);
+    // If the wiki modal is currently open, close it.
+    $('.corpus-inspector-include').show(0);
+    $('.wiki-page-modal').addClass('wiki-page-modal-minimized');
 
     $.ajax({
         url: "/api/corpus/inspector?id=" + corpusId,
@@ -155,11 +157,17 @@ $('body').on('click', '.open-wiki-page', function () {
     const $el = $(this);
     const id = $el.data('wid');
     const type = $el.data('wtype');
+    let coveredText = $el.data('wcovered');
+    if(coveredText === undefined || coveredText === ''){
+        coveredText = $el.html();
+    }
     // Show the modal
-    $('.wiki-page-modal').fadeIn(100);
+    $('.wiki-page-modal').removeClass('wiki-page-modal-minimized');
 
     $.ajax({
-        url: "/api/wiki/annotationPage?id=" + id + "&type=" + type,
+        url: "/api/wiki/annotationPage?id=" + id
+            + "&type=" + type
+            + "&covered=" + encodeURIComponent(coveredText),
         type: "GET",
         success: function (response) {
             $('.wiki-page-modal .include').html(response);

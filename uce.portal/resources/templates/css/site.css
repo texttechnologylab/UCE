@@ -106,6 +106,10 @@ nav .selected-nav-btn.text::before {
     font-size: small;
 }
 
+.medium-font{
+    font-size: medium;
+}
+
 .underlined {
     text-decoration: underline;
 }
