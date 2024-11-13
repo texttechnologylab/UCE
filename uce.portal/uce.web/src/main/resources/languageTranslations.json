@@ -211,6 +211,10 @@
     "de-DE": "Quelle",
     "en-EN": "Source"
   },
+  "noneFound": {
+    "de-DE": "Keine gefunden",
+    "en-EN": "None found"
+  },
   "language": {
     "de-DE": "Sprache",
     "en-EN": "Language"

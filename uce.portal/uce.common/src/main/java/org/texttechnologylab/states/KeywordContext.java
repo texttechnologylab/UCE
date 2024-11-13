@@ -1,4 +1,4 @@
-package org.texttechnologylab.features;
+package org.texttechnologylab.states;
 
 import java.util.List;
 

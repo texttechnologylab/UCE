@@ -18,7 +18,7 @@ public class SpringConfig {
     }
     @Bean
     public WikiService wikiService(){
-        return new WikiService(databaseService(), ragService());
+        return new WikiService(databaseService(), ragService(), jenaSparqlService());
     }
 
     @Bean

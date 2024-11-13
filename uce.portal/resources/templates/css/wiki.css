@@ -92,12 +92,26 @@
     border-bottom: lightgrey 1px solid;
 }
 
-.wiki-page-modal .content .include{
-    padding: 12px 24px;
+.wiki-page-modal .content .page-content{
+    padding: 18px 24px;
     height: 100%;
     width: 100%;
+    position: relative;
     flex-grow: 1;
     overflow-y: auto;
+}
+
+.wiki-page-modal .loading-div{
+    position: fixed;
+    top:0;
+    left:0;
+    height: 100%;
+    width: 100%;
+    background-color: rgba(255, 255, 255, 0.55);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .w-rounded-btn {
@@ -121,6 +135,7 @@
 }
 
 .wiki-page{
+
 }
 
 .wiki-page *{
@@ -168,4 +183,15 @@
     background-color: ghostwhite;
     border-radius: 3px;
     padding: 3px 6px;
+}
+
+.wiki-page .kwic-include{
+    border:lightgrey 1px solid;
+    background-color: ghostwhite;
+    border-radius: 6px;
+}
+
+.wiki-page .kwic-include header{
+    border-bottom: lightgrey 1px solid;
+    background-color: rgba(125, 125, 125, 0.15);
 }

@@ -3,7 +3,7 @@ package org.texttechnologylab;
 import org.apache.http.annotation.Obsolete;
 import org.joda.time.DateTime;
 import org.texttechnologylab.config.CorpusConfig;
-import org.texttechnologylab.features.KeywordInContextState;
+import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.search.*;
 

@@ -14,6 +14,7 @@
         <#include "*/css/search-redesign.css">
         <#include "*/css/corpus-universe.css">
         <#include "*/css/wiki.css">
+        <#include "*/css/kwic.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
@@ -308,7 +309,6 @@
     <#include "js/site.js">
     <#include "js/language.js">
     <#include "js/search.js">
-    <#include "js/wiki.js">
     <#include "js/keywordInContext.js">
 </script>
 

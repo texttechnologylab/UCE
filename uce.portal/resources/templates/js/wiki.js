@@ -1,53 +1,58 @@
-
 let WikiHandler = (function () {
 
     WikiHandler.prototype.history = [];
     WikiHandler.prototype.currentPage = undefined;
 
-    function WikiHandler() {}
-
-    WikiHandler.prototype.addPageToHistory = function (wikiDto) {
-        if(wikiDto !== undefined) this.history.push(wikiDto);
+    function WikiHandler() {
     }
 
-    WikiHandler.prototype.handleGoBackBtnClicked = function (){
-        if(this.history.length === 0) return;
-        let lastPage = this.history[this.history.length - 1];
-        this.history.pop();
+    WikiHandler.prototype.addPageToHistory = function (wikiDto) {
+        if (wikiDto !== undefined) this.history.push(wikiDto);
+        console.log(this.history);
+    }
+
+    WikiHandler.prototype.handleGoBackBtnClicked = function () {
+        if (this.history.length === 0) return;
+        let lastPage = this.history.pop();
         this.loadPage(lastPage, true);
     }
 
-    WikiHandler.prototype.loadPage = function(wikiDto, calledFromBackBtn = false){
+    WikiHandler.prototype.loadPage = function (wikiDto, calledFromBackBtn = false) {
         // If the current open page is the clicked wiki annotation, don't reload it.
-        if(window.wikiHandler.currentPage !== undefined && window.wikiHandler.currentPage.hash === wikiDto.hash) return;
+        if (window.wikiHandler.currentPage !== undefined && window.wikiHandler.currentPage.hash === wikiDto.hash) return;
+        $('.wiki-page-modal .page-content .loading-div').fadeIn(100);
 
         $.ajax({
             url: "/api/wiki/annotationPage?wid=" + wikiDto.wid + "&covered=" + encodeURIComponent(wikiDto.coveredText),
             type: "GET",
-            success: function (response) {
-                $('.wiki-page-modal .include').html(response);
+            success: (response) => {
+                $('.wiki-page-modal .page-content .include').html(response);
                 activatePopovers();
-                // Add the last page to the history.
-                if(calledFromBackBtn){
-                    window.wikiHandler.currentPage = wikiDto;
-                    window.wikiHandler.addPageToHistory(window.wikiHandler.currentPage);
-                } else{
-                    window.wikiHandler.addPageToHistory(window.wikiHandler.currentPage);
-                    window.wikiHandler.currentPage = wikiDto;
+
+                // Only add to history if it's not called from the back button
+                if (!calledFromBackBtn) {
+                    if (this.currentPage) {
+                        this.addPageToHistory(this.currentPage);
+                    }
+                    this.currentPage = wikiDto;
+                } else {
+                    // Update current page without adding to history
+                    this.currentPage = wikiDto;
                 }
             },
-            error: function (xhr, status, error) {
+            error: (xhr, status, error) => {
                 console.error(xhr.responseText);
-                // TODO: Make this alert prettier.
                 alert("There was an unknown error loading your page.")
             }
+        }).always(() => {
+            $('.wiki-page-modal .page-content .loading-div').fadeOut(100);
         });
     }
 
-    WikiHandler.prototype.handleAnnotationClicked = function ($wikiEl){
+    WikiHandler.prototype.handleAnnotationClicked = function ($wikiEl) {
         const wid = $wikiEl.data('wid');
         let coveredText = $wikiEl.data('wcovered');
-        if(coveredText === undefined || coveredText === ''){
+        if (coveredText === undefined || coveredText === '') {
             coveredText = $wikiEl.html();
         }
         // Show the modal
@@ -64,12 +69,13 @@ let WikiHandler = (function () {
     return WikiHandler;
 }());
 
-function getNewWikiHandler(){
+function getNewWikiHandler() {
     return new WikiHandler();
 }
 
-$(document).ready(function(){
+$(document).ready(function () {
     window.wikiHandler = getNewWikiHandler();
+    console.log('Created Wiki Handler');
 });
 
 /**

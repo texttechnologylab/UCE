@@ -1,6 +1,5 @@
-package org.texttechnologylab.features;
+package org.texttechnologylab.states;
 
-import org.javatuples.Tuple;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.utils.Pair;
 import org.texttechnologylab.utils.RegexUtils;

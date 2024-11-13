@@ -1,3 +1,7 @@
+<style>
+    <#include "*/css/kwic.css">
+</style>
+
 <div class="wiki-page-modal wiki-page-modal-minimized">
     <div class="backdrop" onclick="$('.wiki-page-modal').addClass('wiki-page-modal-minimized')"></div>
 
@@ -32,8 +36,22 @@
             </div>
         </div>
 
-        <div class="include">
+        <div class="page-content">
+
+            <div class="loading-div">
+                <div class="spinner-grow" style="width: 3rem; height: 3rem;" role="status">
+                    <span class="sr-only">Loading...</span>
+                </div>
+            </div>
+
+            <div class="include">
+
+            </div>
         </div>
 
     </div>
 </div>
+
+<script>
+    <#include "*/js/wiki.js">
+</script>

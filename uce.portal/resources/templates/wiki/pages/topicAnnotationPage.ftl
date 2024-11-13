@@ -6,11 +6,15 @@
 
     <!-- metadata header -->
     <div class="flexed align-items-center justify-content-between pl-1 pr-1">
-        <p class="mb-0 mr-2"><i class="fas fa-vector-square small-font color-prime mr-1"></i> Annotation
+        <p class="mb-0 mr-2">
+            <i class="fas fa-vector-square small-font color-prime mr-1"></i>
+            <span class="font-italic">${vm.getAnnotationType()}</span> -
+            Annotation
             <span class="text">${vm.getTopicDistribution().getWikiId()}:</span>
             <span class="color-prime font-italic">${vm.getCoveredText()}</span>
         </p>
-        <p class="mb-0">${languageResource.get("annotatedInDocument")} <span class="text">${vm.getDocument().getId()}</span></p>
+        <p class="mb-0">${languageResource.get("annotatedInDocument")} <span
+                    class="text">${vm.getDocument().getId()}</span></p>
     </div>
 
     <hr class="mt-2 mb-4"/>
@@ -56,9 +60,9 @@
 
     <!-- similar topics -->
     <div>
-        <#if vm.getSimilarTopicDistributions()?has_content>
-            <h6 class="mb-1 text-center">${languageResource.get("similarAnnotations")}: </h6>
-            <div class="flexed align-items-center justify-content-start wrapped similar-topics p-2">
+        <h6 class="mb-2 text-center">${languageResource.get("similarAnnotations")}: </h6>
+        <div class="flexed align-items-center justify-content-center wrapped similar-topics p-2">
+            <#if vm.getSimilarTopicDistributions()?has_content>
                 <#list vm.getSimilarTopicDistributions() as topic>
                     <a class=" ml-0 mr-2 mb-0 mb-1 mt-1 small-font text-wrap open-wiki-page clickable"
                        data-wid="${topic.getWikiId()}"
@@ -66,7 +70,21 @@
                         <i class="fas fa-vector-square color-prime mr-1 small-font"></i> ${topic.getYakeTopicOne()}
                     </a>
                 </#list>
-            </div>
-        </#if>
+            <#else>
+                <p class="small text text-center mb-0 w-100">${languageResource.get("noneFound")}</p>
+            </#if>
+        </div>
+    </div>
+
+    <!-- kwic view -->
+    <div class="kwic-include mt-4">
+        <header class="pb-2 pt-2 pl-3 pr-3">
+            <h6 class="mb-0 text-dark">Keyword-in-Context</h6>
+        </header>
+        <div class="p-2">
+            <#assign contextState = vm.getKwicState()>
+            <#assign showHeader = false>
+            <#include "*/search/components/keywordInContext.ftl">
+        </div>
     </div>
 </div>

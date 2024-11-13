@@ -1,10 +1,13 @@
 <div class="keyword-context-card" data-expanded="false">
-    <div class="flexed align-items-center justify-content-between">
-        <h6 class="mb-0 text-center"><i class="fas fa-bezier-curve mr-1"></i> Keyword-in-Context</h6>
-        <button class="btn expand-keyword-context-btn">
-            <i class="color-secondary fas fa-expand m-0"></i>
-        </button>
-    </div>
+
+    <#if !(showHeader??) || (showHeader?is_boolean && showHeader == true)>
+        <div class="flexed align-items-center justify-content-between">
+            <h6 class="mb-0 text-center"><i class="fas fa-bezier-curve mr-1"></i> Keyword-in-Context</h6>
+            <button class="btn expand-keyword-context-btn">
+                <i class="color-secondary fas fa-expand m-0"></i>
+            </button>
+        </div>
+    </#if>
 
     <#if contextState?? && contextState != "">
         <div class="context-table-container">
