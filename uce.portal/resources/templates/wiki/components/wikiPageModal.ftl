@@ -11,6 +11,11 @@
 
         <div class="w-header">
             <div class="container w-100 flexed align-items-center justify-content-between">
+                <div class="flexed align-items-center">
+                    <a class="w-rounded-btn mr-2 go-back-btn">
+                        <i class="fas fa-angle-left"></i>
+                    </a>
+                </div>
                 <h5 class="color-prime mb-0 mr-2">
                     <i class="fab fa-wikipedia-w xlarge-font"><span class="xlarge-font">iki</span></i>
                 </h5>

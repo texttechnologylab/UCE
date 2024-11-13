@@ -9,7 +9,6 @@ import java.util.List;
 
 public class AnnotationWikiPageViewModel extends ViewModelBase {
     private String coveredText;
-    private String type;
     private CorpusViewModel corpus;
     /**
      * The Document this annotation belongs to.
@@ -52,14 +51,6 @@ public class AnnotationWikiPageViewModel extends ViewModelBase {
 
     public void setPage(Page page) {
         this.page = page;
-    }
-
-    public String getType() {
-        return type;
-    }
-
-    public void setType(String type) {
-        this.type = type;
     }
 
 }

@@ -2,12 +2,13 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.models.ModelBase;
+import org.texttechnologylab.models.WikiModel;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 
 @MappedSuperclass
-public class TopicDistribution extends ModelBase {
+public class TopicDistribution extends ModelBase implements WikiModel {
 
     // The following properties aren't really "topics". They are quick and
     // easy ways to determine the keywords and sentences from a text.
@@ -33,10 +34,6 @@ public class TopicDistribution extends ModelBase {
     private String yakeTopicFour;
     @Searchable
     private String yakeTopicFive;
-
-    public String getType(){
-        return this.getClass().getSimpleName().substring(0, 1);
-    }
 
     public String toString(){
         return rakeTopicOne + " "
@@ -113,4 +110,8 @@ public class TopicDistribution extends ModelBase {
         this.yakeTopicFive = yakeTopicFive;
     }
 
+    @Override
+    public String getWikiId() {
+        return "T" + this.getClass().getSimpleName().charAt(0) + "-" + this.getId();
+    }
 }

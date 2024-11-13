@@ -151,38 +151,6 @@ $('body').on('click', '.open-globe', function () {
 })
 
 /**
- * Triggers whenever someone clicks onto an annotation that has a wiki page.
- */
-$('body').on('click', '.open-wiki-page', function () {
-    const $el = $(this);
-    const id = $el.data('wid');
-    const type = $el.data('wtype');
-    let coveredText = $el.data('wcovered');
-    if(coveredText === undefined || coveredText === ''){
-        coveredText = $el.html();
-    }
-    // Show the modal
-    $('.wiki-page-modal').removeClass('wiki-page-modal-minimized');
-
-    $.ajax({
-        url: "/api/wiki/annotationPage?id=" + id
-            + "&type=" + type
-            + "&covered=" + encodeURIComponent(coveredText),
-        type: "GET",
-        success: function (response) {
-            $('.wiki-page-modal .include').html(response);
-            activatePopovers();
-        },
-        error: function (xhr, status, error) {
-            console.error(xhr.responseText);
-            // TODO: Make this alert prettier.
-            alert("There was an unknown error loading your page.")
-        }
-    });
-
-});
-
-/**
  * Opens a new globe view
  * @param modelId
  */

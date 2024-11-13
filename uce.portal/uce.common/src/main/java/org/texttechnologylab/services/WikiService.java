@@ -26,18 +26,17 @@ public class WikiService {
      */
     public TopicAnnotationWikiPageViewModel buildTopicAnnotationWikiPageViewModel(long id, String type, String coveredText) throws DatabaseOperationException {
         var viewModel = new TopicAnnotationWikiPageViewModel();
-        viewModel.setType(type.substring(0, 1));
         viewModel.setCoveredText(coveredText);
 
         Class<? extends TopicDistribution> clazz = null;
 
         // We have currently document level topics and page level topics.
-        if (type.startsWith("D")) {
+        if (type.equals("TD")) {
             clazz = DocumentTopicDistribution.class;
             var docDist = db.getTopicDistributionById(DocumentTopicDistribution.class, id);
             viewModel.setTopicDistribution(docDist);
             viewModel.setDocument(docDist.getDocument());
-        } else if (type.startsWith("P")) {
+        } else if (type.equals("TP")) {
             clazz = PageTopicDistribution.class;
             var pageDist = db.getTopicDistributionById(PageTopicDistribution.class, id);
             viewModel.setTopicDistribution(pageDist);

@@ -155,6 +155,7 @@
     <#include "../js/site.js">
     <#include "../js/documentReader.js">
     <#include "../js/customContextMenu.js">
+    <#include "../js/wiki.js">
 </script>
 
 </html>

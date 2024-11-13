@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.viewModels.wiki.AnnotationWikiPageViewModel;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.WikiService;
 import spark.ModelAndView;
@@ -30,31 +31,38 @@ public class WikiApi {
     }
 
     public Route getAnnotationPage = ((request, response) -> {
-        var gson = new Gson();
         var model = new HashMap<String, Object>();
 
         try {
             var languageResources = LanguageResources.fromRequest(request);
 
-            var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
+            var wid = ExceptionUtils.tryCatchLog(() -> request.queryParams("wid"),
                     (ex) -> logger.error("The WikiView couldn't be generated - id missing.", ex));
-            var type = ExceptionUtils.tryCatchLog(() -> request.queryParams("type"),
-                    (ex) -> logger.error("The WikiView couldn't be generated - type missing.", ex));
             var coveredText = ExceptionUtils.tryCatchLog(() -> request.queryParams("covered"),
                     (ex) -> logger.error("The WikiView couldn't be generated - covered text missing.", ex));
 
-            if (id == null || type == null || type.isEmpty() || coveredText == null || coveredText.isEmpty()) {
+            if (wid == null || !wid.contains("-") || coveredText == null || coveredText.isEmpty()) {
                 model.put("information", languageResources.get("missingParameterError"));
                 return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
+            // Determine the type. A wikiID always has the following format: <type>-<model_id>
+            var splited = wid.split("-");
+            var type = splited[0];
+            var id = Long.parseLong(splited[1]);
+
             if(type.equals("NE")){
                 // We generate a NER annotation view
                 var xd = "";
-            } else if(type.contains("TOPIC")){
+            } else if(type.equals("TP") || type.equals("TD")){
+                // TP = TopicPage TD = TopicDocument
                 var viewModel = wikiService.buildTopicAnnotationWikiPageViewModel(id, type, coveredText);
                 model.put("vm", viewModel);
                 return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "/wiki/pages/topicAnnotationPage.ftl"));
+            } else{
+                // The type part of the wikiId was unknown. Throw an error.
+                model.put("information", languageResources.get("missingParameterError"));
+                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
         } catch (Exception ex) {

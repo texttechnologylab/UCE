@@ -308,6 +308,7 @@
     <#include "js/site.js">
     <#include "js/language.js">
     <#include "js/search.js">
+    <#include "js/wiki.js">
     <#include "js/keywordInContext.js">
 </script>
 

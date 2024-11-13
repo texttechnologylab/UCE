@@ -7,7 +7,7 @@
     <!-- metadata header -->
     <div class="flexed align-items-center justify-content-between pl-1 pr-1">
         <p class="mb-0 mr-2"><i class="fas fa-vector-square small-font color-prime mr-1"></i> Annotation
-            <span class="text">${vm.getType()}${vm.getTopicDistribution().getId()}:</span>
+            <span class="text">${vm.getTopicDistribution().getWikiId()}:</span>
             <span class="color-prime font-italic">${vm.getCoveredText()}</span>
         </p>
         <p class="mb-0">${languageResource.get("annotatedInDocument")} <span class="text">${vm.getDocument().getId()}</span></p>
@@ -61,9 +61,8 @@
             <div class="flexed align-items-center justify-content-start wrapped similar-topics p-2">
                 <#list vm.getSimilarTopicDistributions() as topic>
                     <a class=" ml-0 mr-2 mb-0 mb-1 mt-1 small-font text-wrap open-wiki-page clickable"
-                       data-wid="${topic.getId()?string?replace('.', '')?replace(',', '')}"
-                       data-wcovered="${topic.getYakeTopicOne()}"
-                       data-wtype="${topic.getType()}-TOPIC">
+                       data-wid="${topic.getWikiId()}"
+                       data-wcovered="${topic.getYakeTopicOne()}">
                         <i class="fas fa-vector-square color-prime mr-1 small-font"></i> ${topic.getYakeTopicOne()}
                     </a>
                 </#list>

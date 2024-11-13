@@ -367,7 +367,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             // Use reflection to find fields annotated with @Searchable. Otherwise, we'd have to
             // hardocde the SQL columns for every topic field in here which I really dont wanna do. If the reflection
             // is too costly, then think about changing it.
-            // PS: Reflection in java sucks.
+            // PS: Reflection in java sucks. (as well as ORM)
             Class<?> currentClass = clazz;
             while (currentClass != null) {
                 for (var field : currentClass.getDeclaredFields()) {
