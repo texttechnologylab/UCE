@@ -231,6 +231,10 @@
     "de-DE": "Die Korpus-Überblick konnte nicht geladen werden, da keine oder nicht genügend annotierte embeddings vorhanden sind.",
     "en-EN": "The corpus overview could not be loaded because there are no or not enough annotated embeddings available."
   },
+  "wikiDefault": {
+    "de-DE": "Klicken Sie auf eine der Annotationen, Dokumente oder andere Wiki-Elemente.",
+    "en-EN": "Click on one of the annotations, documents or other wiki elements."
+  },
   "noKWIC": {
     "de-DE": "Die Suche wurde ohne das Keyword-on-context feature gestartet.",
     "en-EN": "Search has been started without the Keyword-in-context feature."

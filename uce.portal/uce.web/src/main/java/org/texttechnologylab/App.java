@@ -187,12 +187,12 @@ public class App {
         before((request, response) -> {
             // Setup and log all API calls with some information.
             request.attribute("id", UUID.randomUUID().toString());
-            logger.info("Received API call: ID={}, IP={}, Method={}, URI={}, BODY={}",
-                    request.attribute("id"), request.ip(), request.requestMethod(), request.uri(), request.body());
+            logger.info("Received API call: ID={}, IP={}, Method={}, URI={}, QUERY={}, BODY={}",
+                    request.attribute("id"), request.ip(), request.requestMethod(), request.uri(), request.queryString(), request.body());
 
             // Should we log to db as well?
             if (commonConfig.getLogToDb() && SystemStatus.PostgresqlDbStatus.isAlive()) {
-                var uceLog = new UCELog(request.ip(), request.requestMethod(), request.uri(), request.body());
+                var uceLog = new UCELog(request.ip(), request.requestMethod(), request.uri(), request.body(), request.queryString());
                 ExceptionUtils.tryCatchLog(
                         () -> context.getBean(PostgresqlDataInterface_Impl.class).saveUceLog(uceLog),
                         (ex) -> logger.error("Error storing a log to the database: ", ex));

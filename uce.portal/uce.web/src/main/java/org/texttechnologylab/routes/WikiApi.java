@@ -51,9 +51,11 @@ public class WikiApi {
             var type = splited[0];
             var id = Long.parseLong(splited[1]);
 
-            if(type.equals("NE")){
-                // We generate a NER annotation view
-                var xd = "";
+            if(type.startsWith("NE")){
+                // We then clicked onto a Named-Entity wiki item
+                var viewModel = wikiService.buildNamedEntityWikiPageViewModel(id, coveredText);
+                model.put("vm", viewModel);
+                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "/wiki/pages/namedEntityAnnotationPage.ftl"));
             } else if(type.equals("TP") || type.equals("TD")){
                 // TP = TopicPage TD = TopicDocument
                 var viewModel = wikiService.buildTopicAnnotationWikiPageViewModel(id, type, coveredText);
@@ -61,6 +63,7 @@ public class WikiApi {
                 return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "/wiki/pages/topicAnnotationPage.ftl"));
             } else{
                 // The type part of the wikiId was unknown. Throw an error.
+                logger.warn("Someone tried to query a wiki page of a type that does not exist in UCE. This shouldn't happen.");
                 model.put("information", languageResources.get("missingParameterError"));
                 return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
@@ -70,8 +73,6 @@ public class WikiApi {
                     "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
             return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
-
-        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "/wiki/pages/annotationPage.ftl"));
     });
 
 }

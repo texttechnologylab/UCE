@@ -45,7 +45,9 @@
             </div>
 
             <div class="include">
-
+                <p class="text-center mb-0 w-100 text mt-3">
+                    ${languageResource.get("wikiDefault")}
+                </p>
             </div>
         </div>
 

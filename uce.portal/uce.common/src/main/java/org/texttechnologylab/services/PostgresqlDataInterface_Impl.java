@@ -34,11 +34,11 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public PostgresqlDataInterface_Impl() {
-        try{
+        try {
             sessionFactory = HibernateConf.buildSessionFactory();
             var test = getCorpusById(1);
             SystemStatus.PostgresqlDbStatus = new HealthStatus(true, "", null);
-        } catch (Exception ex){
+        } catch (Exception ex) {
             SystemStatus.PostgresqlDbStatus = new HealthStatus(false, "Couldn't build the session factory.", ex);
         }
     }
@@ -127,7 +127,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             criteria.setFirstResult(skip);
             criteria.setMaxResults(take);
             criteria.add(Restrictions.eq("corpusId", corpusId));
-            var documents = (List<Document>)criteria.list();
+            var documents = (List<Document>) criteria.list();
             documents.forEach(d -> Hibernate.initialize(d.getPages()));
             return documents;
         });
@@ -334,7 +334,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
                     // Finally, parse the found snippets of the search
                     // This is only done for the fulltext search
-                    if(layer == SearchLayer.FULLTEXT){
+                    if (layer == SearchLayer.FULLTEXT) {
                         var resultSet = result.getArray("snippets_found").getResultSet();
                         var foundSnippets = new HashMap<Integer, String>();
                         while (resultSet.next()) foundSnippets.put(resultSet.getInt(1) - 1, resultSet.getString(2));
@@ -346,12 +346,63 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
+    public List<Lemma> getLemmasWithinBeginAndEndOfDocument(int begin, int end, long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var query = cb.createQuery(Lemma.class);
+            var lemmaRoot = query.from(Lemma.class);
+
+            // Predicate for begin and end range
+            Predicate beginPredicate = cb.greaterThanOrEqualTo(lemmaRoot.get("begin"), begin);
+            Predicate endPredicate = cb.lessThanOrEqualTo(lemmaRoot.get("end"), end);
+
+            // Combine predicates for range and documentId
+            Predicate combinedPredicate = cb.and(beginPredicate, endPredicate);
+
+            Predicate documentIdPredicate = cb.equal(lemmaRoot.get("document").get("id"), documentId);
+            combinedPredicate = cb.and(combinedPredicate, documentIdPredicate);
+            query.where(combinedPredicate);
+
+            var resultQuery = session.createQuery(query);
+            return resultQuery.getResultList();
+        });
+    }
+
+    public List<Lemma> getLemmasByValue(String covered, int limit, long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var query = cb.createQuery(Lemma.class);
+            var lemmaRoot = query.from(Lemma.class);
+
+            Predicate valuePredicate = cb.equal(lemmaRoot.get("coveredText"), covered);
+
+            // If documentId is not -1, add a where clause to filter by documentId
+            if (documentId != -1) {
+                Predicate documentIdPredicate = cb.equal(lemmaRoot.get("document").get("id"), documentId);
+                query.where(cb.and(valuePredicate, documentIdPredicate));
+            } else {
+                query.where(valuePredicate);
+            }
+
+            var resultQuery = session.createQuery(query);
+            if (limit > 0) {
+                resultQuery.setMaxResults(limit);
+            }
+
+            return resultQuery.getResultList();
+        });
+    }
+
     public Document getDocumentById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
             Hibernate.initialize(doc.getPages());
             return doc;
         });
+    }
+
+    public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(NamedEntity.class, id));
     }
 
     public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
@@ -511,11 +562,13 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             var resultArray = (Array) resultSet.getArray(2);
             var arrayElements = (String[]) resultArray.getArray();
             // The search query should return a quadruple of data
-            if (arrayElements.length == 4)
-                foundNamedEntities.add(new AnnotationSearchResult(arrayElements[0],
-                        Integer.parseInt(arrayElements[1]),
-                        arrayElements[2],
-                        Integer.parseInt(arrayElements[3])));
+            if (arrayElements.length == 5)
+                foundNamedEntities.add(new AnnotationSearchResult(
+                        Long.parseLong(arrayElements[0]),
+                        arrayElements[1],
+                        Integer.parseInt(arrayElements[2]),
+                        arrayElements[3],
+                        Integer.parseInt(arrayElements[4])));
         }
         return foundNamedEntities;
     }

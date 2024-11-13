@@ -1,14 +1,16 @@
 package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.WikiModel;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
+import javax.persistence.*;
 
 @Entity
 @Table(name="namedEntity")
-public class NamedEntity extends UIMAAnnotation {
+public class NamedEntity extends UIMAAnnotation implements WikiModel {
+
+    @Column(name = "document_id", nullable = false, insertable = true, updatable = true)
+    private Long documentId;
 
     @Column(name = "\"typee\"")
     private String type;
@@ -21,10 +23,17 @@ public class NamedEntity extends UIMAAnnotation {
         super(begin, end);
     }
 
+    public Long getDocumentId(){return this.documentId;}
+
     public String getType() {
         return type;
     }
     public void setType(String type) {
         this.type = type;
+    }
+
+    @Override
+    public String getWikiId() {
+        return "NE" + "-" + this.getId();
     }
 }

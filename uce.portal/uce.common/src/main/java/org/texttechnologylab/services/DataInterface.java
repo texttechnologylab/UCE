@@ -161,19 +161,34 @@ public interface DataInterface {
     public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException;
 
     /**
-     * Generic operation that fetches documents given the paramters
-     *
-     * @return
+     * Generic operation that fetches documents given the parameters
      */
     public Document getDocumentById(long id) throws DatabaseOperationException;
+
+    /**
+     * Gets lemmas from a specific document that are within a begin and end range
+     * @param begin
+     * @param end
+     * @param documentId
+     * @return
+     * @throws DatabaseOperationException
+     */
+    public List<Lemma> getLemmasWithinBeginAndEndOfDocument(int begin, int end, long documentId) throws DatabaseOperationException;
+
+    /**
+     * Gets a named entity by its id
+     */
+    public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException;
+
+    /**
+     * Given a string value, return a list of lemmas that match that value.
+     */
+    public List<Lemma> getLemmasByValue(String covered, int limit, long documentId) throws DatabaseOperationException;
 
     public boolean checkIfGbifOccurrencesExist(long gbifTaxonId) throws DatabaseOperationException;
 
     /**
      * Gets a complete document, alongside its lists, from the database.
-     *
-     * @param id
-     * @return
      */
     public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) throws DatabaseOperationException;
 

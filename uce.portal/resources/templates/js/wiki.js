@@ -8,7 +8,6 @@ let WikiHandler = (function () {
 
     WikiHandler.prototype.addPageToHistory = function (wikiDto) {
         if (wikiDto !== undefined) this.history.push(wikiDto);
-        console.log(this.history);
     }
 
     WikiHandler.prototype.handleGoBackBtnClicked = function () {
@@ -75,6 +74,7 @@ function getNewWikiHandler() {
 
 $(document).ready(function () {
     window.wikiHandler = getNewWikiHandler();
+    $('.wiki-page-modal .page-content .loading-div').fadeOut();
     console.log('Created Wiki Handler');
 });
 

@@ -1,13 +1,20 @@
 package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.WikiModel;
 
 import javax.persistence.Entity;
+import javax.persistence.JoinColumn;
+import javax.persistence.OneToOne;
 import javax.persistence.Table;
 
 @Entity
 @Table(name="lemma")
-public class Lemma extends UIMAAnnotation {
+public class Lemma extends UIMAAnnotation implements WikiModel {
+    @OneToOne()
+    @JoinColumn(name="document_id")
+    private Document document;
+
     private String value;
 
     /* POS properties */
@@ -39,6 +46,11 @@ public class Lemma extends UIMAAnnotation {
         super(begin, end);
     }
     public Lemma() { super(); }
+
+    @Override
+    public String getWikiId() {
+        return "L" + "-" + this.getId();
+    }
 
     public String getAnimacy() {
         return animacy;

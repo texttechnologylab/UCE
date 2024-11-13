@@ -40,15 +40,18 @@
     <div class="flexed align-items-center topic-list">
         <#if document.getDocumentTopicDistribution()?has_content>
             <label data-wid="${document.getDocumentTopicDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicOne()}" class="open-wiki-page">
+                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicOne()}"
+                   class="add-wiki-logo open-wiki-page">
                 #${document.getDocumentTopicDistribution().getYakeTopicOne()}
             </label>
             <label data-wid="${document.getDocumentTopicDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicTwo()}" class="open-wiki-page">
+                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicTwo()}"
+                   class="add-wiki-logo open-wiki-page">
                 #${document.getDocumentTopicDistribution().getYakeTopicTwo()}
             </label>
             <label data-wid="${document.getDocumentTopicDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicThree()}" class="open-wiki-page">
+                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicThree()}"
+                   class="add-wiki-logo open-wiki-page">
                 #${document.getDocumentTopicDistribution().getYakeTopicThree()}
             </label>
         </#if>

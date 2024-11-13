@@ -1,4 +1,26 @@
 
+.open-wiki-page {
+    position: relative;
+    display: flex;
+    align-items: center;
+}
+
+.add-wiki-logo::after{
+    content: "W";
+    font-family: "Times New Roman";
+    font-size: x-small !important;
+    font-weight: normal !important;
+    height: 15px;
+    width: 16px;
+    font-style: normal !important;
+    margin-left: 4px;
+    color:white;
+    text-align: center;
+    background-color: gray;
+    border-radius: 50%;
+    display: inline-block;
+}
+
 .wiki-page-modal{
 }
 
@@ -135,7 +157,6 @@
 }
 
 .wiki-page{
-
 }
 
 .wiki-page *{
@@ -194,4 +215,56 @@
 .wiki-page .kwic-include header{
     border-bottom: lightgrey 1px solid;
     background-color: rgba(125, 125, 125, 0.15);
+}
+
+.wiki-page .lemma-tree{
+    padding: 14px;
+    border-radius: 6px;
+    border:1px solid lightgrey;
+    background-color: rgba(125, 125, 125, 0.15);
+}
+
+.wiki-page .lemma-tree .tree{
+    display: flex;
+    justify-content: space-around;
+    width: 100%;
+    align-items: center;
+    margin-top: 20px;
+    position: relative;
+}
+
+.wiki-page .lemma-tree .tree{
+    border-top: 1px solid gray;
+    padding-top: 18px;
+}
+
+.wiki-page .lemma-tree .tree::before{
+    position: absolute;
+    content: '';
+    left:calc(50% - 1px);
+    top:-20px;
+    height: 20px;
+    background-color: gray;
+    width: 1px;
+}
+
+.wiki-page .lemma-tree .tree div::before{
+    position: absolute;
+    content: '';
+    left:calc(50% - 1px);
+    top:-18px;
+    height: 18px;
+    background-color: gray;
+    width: 1px;
+}
+
+.wiki-page .lemma-tree .tree div::after{
+    position: absolute;
+    content: '';
+    left:calc(50% - 4px);
+    top:-3px;
+    height: 6px;
+    width: 6px;
+    border-radius: 50%;
+    background-color: gray;
 }

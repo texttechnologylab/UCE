@@ -20,7 +20,7 @@
                             <#assign foundTimes = searchState.getAnnotationsByTypeAndDocumentId("Times", document.getId(), "")>
 
                             <div class="flexed align-items-center justify-content-between small text mt-2 text-center">
-                                            <span class="w-100 text-center"><i
+                                <span class="w-100 text-center"><i
                                                         class="fas fa-map-marker-alt mr-1"></i>${foundLocations?size}</span>
                                 <span class="w-100 text-center"><i
                                             class="fas fa-user-tag mr-1"></i>${foundPersons?size}</span>
@@ -61,31 +61,49 @@
                                     <div class="search-hits col-2">
                                         <#list foundLocations as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass} open-wiki-page"
+                                                  data-wid="NE-${annotation.getId()?string?replace('.', '')?replace(',', '')}"
+                                                  data-wcovered="${annotation.getCoveredText()}">
+                                                (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
+                                            </span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundPersons as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass} open-wiki-page"
+                                                  data-wid="NE-${annotation.getId()?string?replace('.', '')?replace(',', '')}"
+                                                  data-wcovered="${annotation.getCoveredText()}">
+                                                (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
+                                            </span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundOrgas as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass} open-wiki-page"
+                                                  data-wid="NE-${annotation.getId()?string?replace('.', '')?replace(',', '')}"
+                                                  data-wcovered="${annotation.getCoveredText()}">
+                                                (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
+                                            </span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundMisc as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass} open-wiki-page"
+                                                  data-wid="NE-${annotation.getId()?string?replace('.', '')?replace(',', '')}"
+                                                  data-wcovered="${annotation.getCoveredText()}">
+                                                (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
+                                            </span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">
                                         <#list foundTaxons as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass}">
+                                                (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
+                                            </span>
                                         </#list>
                                     </div>
                                     <div class="search-hits col-2">

@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.viewModels.wiki;
 
+import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.corpus.Page;
 import org.texttechnologylab.models.corpus.TopicDistribution;
@@ -10,6 +11,7 @@ import java.util.List;
 
 public class AnnotationWikiPageViewModel extends ViewModelBase {
     private String coveredText;
+    private WikiModel wikiModel;
     private CorpusViewModel corpus;
     private KeywordInContextState kwicState;
     /**
@@ -23,6 +25,14 @@ public class AnnotationWikiPageViewModel extends ViewModelBase {
     private String annotationType;
 
     public AnnotationWikiPageViewModel(){}
+
+    public WikiModel getWikiModel() {
+        return wikiModel;
+    }
+
+    public void setWikiModel(WikiModel wikiModel) {
+        this.wikiModel = wikiModel;
+    }
 
     public String getCoveredText() {
         return coveredText;

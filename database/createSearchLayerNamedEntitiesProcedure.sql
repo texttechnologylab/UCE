@@ -116,35 +116,34 @@ BEGIN
       ) AS document_ids_temp,
 	  
 	  -- Count the occurences of all the found entities, taxons etc. --
-	  
-	  CASE WHEN count_all THEN
+ 	 CASE WHEN count_all THEN
 		  ARRAY(
-			SELECT ARRAY[ne.coveredtext, COUNT(ne.id)::text, ne.typee, ne.document_id::text] AS named_entity
+			SELECT ARRAY[ne.id::text, ne.coveredtext, COUNT(ne.id)::text, ne.typee, ne.document_id::text] AS named_entity
 			FROM documents_query dq
 			JOIN namedentity ne ON dq.id = ne.document_id
-			GROUP BY ne.coveredtext, ne.typee, ne.document_id
+			GROUP BY ne.id, ne.coveredtext, ne.typee, ne.document_id
 		  )
-		  ELSE ARRAY[]::text[][][][]
+		  ELSE ARRAY[]::text[][]
 	  END AS named_entities_temp,
 	  
 	  CASE WHEN count_all THEN
 		  ARRAY(
-			SELECT ARRAY[t.coveredtext, COUNT(t.id)::text, t.valuee, t.document_id::text] AS time
+			SELECT ARRAY[t.id::text, t.coveredtext, COUNT(t.id)::text, t.valuee, t.document_id::text] AS time
 			FROM documents_query dq
 			JOIN time t ON dq.id = t.document_id
-			GROUP BY t.coveredtext, t.valuee, t.document_id
+			GROUP BY t.id, t.coveredtext, t.valuee, t.document_id
 		  ) 
-		  ELSE ARRAY[]::text[][][][]
+		  ELSE ARRAY[]::text[][]
 	  END AS time_temp,
 	  
 	  CASE WHEN count_all THEN
       ARRAY(
-        SELECT ARRAY[ta.coveredtext, COUNT(ta.id)::text, ta.valuee, ta.document_id::text] AS taxon
+        SELECT ARRAY[ta.id::text, ta.coveredtext, COUNT(ta.id)::text, ta.valuee, ta.document_id::text] AS taxon
         FROM documents_query dq
         JOIN taxon ta ON dq.id = ta.document_id
-        GROUP BY ta.coveredtext, ta.valuee, ta.document_id
+        GROUP BY ta.id, ta.coveredtext, ta.valuee, ta.document_id
       )
-	  ELSE ARRAY[]::text[][][][]
+	  ELSE ARRAY[]::text[][]
 	  END AS taxons_temp
 	  
     INTO total_count_temp, document_ids_temp, named_entities_temp, time_temp, taxons_temp

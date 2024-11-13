@@ -8,7 +8,7 @@
                        data-placement="top"
                        data-content="${languageResource.get("topicModellingInfo")}"></i>
                     <#if (page.getPageTopicDistribution())?? && (page.getPageTopicDistribution().getYakeTopicOne())??>
-                        <p class="text font-italic text-center mb-0">
+                        <div class="text small-font font-italic text-center mb-0 flexed align-items-center justify-content-center wrapped">
                             <span data-wid="${page.getPageTopicDistribution().getWikiId()}"
                                   data-wcovered="${page.getPageTopicDistribution().getYakeTopicOne()}"
                                   class="open-wiki-page">
@@ -29,7 +29,7 @@
                                   class="ml-2 open-wiki-page">
                                 #${page.getPageTopicDistribution().getYakeTopicFour()}
                             </span>
-                        </p>
+                        </div>
                     </#if>
                     <div></div>
                 </div>

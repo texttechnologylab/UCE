@@ -5,20 +5,13 @@
     </div>
 
     <!-- metadata header -->
-    <div class="flexed align-items-center justify-content-between pl-1 pr-1">
-        <p class="mb-0 mr-2">
-            <i class="fas fa-vector-square small-font color-prime mr-1"></i>
-            <span class="font-italic">${vm.getAnnotationType()}</span> -
-            Annotation
-            <span class="text">${vm.getTopicDistribution().getWikiId()}:</span>
-            <span class="color-prime font-italic">${vm.getCoveredText()}</span>
-        </p>
-        <p class="mb-0">${languageResource.get("annotatedInDocument")} <span
-                    class="text">${vm.getDocument().getId()}</span></p>
+    <div>
+        <#include "*/wiki/components/metadata.ftl">
     </div>
 
     <hr class="mt-2 mb-4"/>
 
+    <!-- special for topic annotation -->
     <div class="row m-0 p-0 align-items-start justify-content-between">
         <div class="col-md-4 p-0 m-0">
             <h6 class="ml-2">
@@ -77,14 +70,7 @@
     </div>
 
     <!-- kwic view -->
-    <div class="kwic-include mt-4">
-        <header class="pb-2 pt-2 pl-3 pr-3">
-            <h6 class="mb-0 text-dark">Keyword-in-Context</h6>
-        </header>
-        <div class="p-2">
-            <#assign contextState = vm.getKwicState()>
-            <#assign showHeader = false>
-            <#include "*/search/components/keywordInContext.ftl">
-        </div>
+    <div class="mt-4">
+        <#include "*/wiki/components/kwic.ftl">
     </div>
 </div>
