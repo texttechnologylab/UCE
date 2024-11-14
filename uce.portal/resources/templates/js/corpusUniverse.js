@@ -47,8 +47,6 @@ var CorpusUniverseHandler = (function () {
 
     /**
      * Renders a corpus in an empty universe
-     * @param corpusId
-     * @returns {Promise<void>}
      */
     CorpusUniverseHandler.prototype.fromCorpus = async function(corpusId, currentCenter) {
         console.log('New universe from corpus with id ' + corpusId + ' with center ' + currentCenter);

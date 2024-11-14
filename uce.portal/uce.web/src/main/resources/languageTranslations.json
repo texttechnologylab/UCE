@@ -155,6 +155,10 @@
     "de-DE": "Annotiert im Korpus",
     "en-EN": "Annotated within corpus"
   },
+  "documentInSemanticSpace": {
+    "de-DE": "Dokument im semantischen Raum",
+    "en-EN": "Document in semantic space"
+  },
   "similarAnnotations": {
     "de-DE": "Weitere passende Annotationen",
     "en-EN": "Further matching annotations"

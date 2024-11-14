@@ -47,8 +47,10 @@ public class WikiApi {
             }
 
             // Check if we have loaded, built and cached that wikipage before. We dont re-render it then.
-            if (SessionManager.CachedWikiPages.containsKey(wid)) {
-                return SessionManager.CachedWikiPages.get(wid);
+            // BUT: We have different wiki views for different languages so the lang needs to be part of the key!
+            var cacheId = wid + languageResources.getDefaultLanguage();
+            if (SessionManager.CachedWikiPages.containsKey(cacheId)) {
+                return SessionManager.CachedWikiPages.get(cacheId);
             }
 
             // Determine the type. A wikiID always has the following format: <type>-<model_id>
@@ -81,7 +83,7 @@ public class WikiApi {
 
             // cache and return the wiki page
             var view = new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, renderView));
-            SessionManager.CachedWikiPages.put(wid, view);
+            SessionManager.CachedWikiPages.put(cacheId, view);
             return view;
         } catch (Exception ex) {
             logger.error("Error getting a wiki page for an annotation - best refer to the last logged API call " +

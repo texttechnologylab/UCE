@@ -2,6 +2,7 @@ let WikiHandler = (function () {
 
     WikiHandler.prototype.history = [];
     WikiHandler.prototype.currentPage = undefined;
+    WikiHandler.prototype.universeHandler = undefined;
 
     function WikiHandler() {
     }
@@ -63,6 +64,12 @@ let WikiHandler = (function () {
         }
 
         this.loadPage(wikiDto);
+    }
+
+    WikiHandler.prototype.addUniverseToDocumentWikiPage = async function(corpusId, currentCenter){
+        this.universeHandler = window.getNewCorpusUniverseHandler;
+        await this.universeHandler.createEmptyUniverse('wiki-universe-container');
+        await this.universeHandler.fromCorpus(corpusId, currentCenter);
     }
 
     return WikiHandler;

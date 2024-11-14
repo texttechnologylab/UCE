@@ -5,7 +5,7 @@
     align-items: center;
 }
 
-.add-wiki-logo::after{
+.add-wiki-logo::after {
     content: "W";
     font-family: "Times New Roman";
     font-size: x-small !important;
@@ -14,7 +14,7 @@
     width: 16px;
     font-style: normal !important;
     margin-left: 4px;
-    color:white;
+    color: white;
     text-align: center;
     background-color: gray;
     border-radius: 50%;
@@ -23,29 +23,29 @@
     justify-content: center;
 }
 
-.wiki-page-modal{
+.wiki-page-modal {
 }
 
-.wiki-page-modal .minimized-content{
+.wiki-page-modal .minimized-content {
     display: none;
 }
 
-.wiki-page-modal-minimized{
+.wiki-page-modal-minimized {
     position: fixed;
     z-index: 9;
     display: block !important;
     transition: 0.15s;
 }
 
-.wiki-page-modal-minimized .backdrop{
+.wiki-page-modal-minimized .backdrop {
     display: none !important;
 }
 
-.wiki-page-modal-minimized .content{
+.wiki-page-modal-minimized .content {
     display: none !important;
 }
 
-.wiki-page-modal-minimized .minimized-content{
+.wiki-page-modal-minimized .minimized-content {
     position: fixed;
     left: 36px;
     bottom: 36px;
@@ -63,13 +63,13 @@
     transition: 0.15s;
 }
 
-.wiki-page-modal-minimized .minimized-content:hover i{
-    color:white !important;
+.wiki-page-modal-minimized .minimized-content:hover i {
+    color: white !important;
 }
 
-.wiki-page-modal-minimized .minimized-content:hover{
+.wiki-page-modal-minimized .minimized-content:hover {
     background-color: var(--prime);
-    color:white !important;
+    color: white !important;
     transition: 0.15s;
 }
 
@@ -101,7 +101,7 @@
     transition: 0.2s;
 }
 
-.wiki-page-modal .fullscreen{
+.wiki-page-modal .fullscreen {
     width: 100vw !important;
     max-width: 99999px !important;
     height: 100vh !important;
@@ -116,7 +116,7 @@
     border-bottom: lightgrey 1px solid;
 }
 
-.wiki-page-modal .content .page-content{
+.wiki-page-modal .content .page-content {
     padding: 18px 24px;
     height: 100%;
     width: 100%;
@@ -125,10 +125,10 @@
     overflow-y: auto;
 }
 
-.wiki-page-modal .loading-div{
+.wiki-page-modal .loading-div {
     position: fixed;
-    top:0;
-    left:0;
+    top: 0;
+    left: 0;
     height: 100%;
     width: 100%;
     background-color: rgba(255, 255, 255, 0.55);
@@ -152,21 +152,21 @@
 }
 
 .w-rounded-btn:hover {
-    color:var(--prime) !important;
+    color: var(--prime) !important;
     cursor: pointer;
     transition: 0.15s;
     background-color: white !important;
 }
 
-.wiki-page{
+.wiki-page {
 }
 
-.wiki-page *{
+.wiki-page * {
     font-family: "Times New Roman", serif;
 }
 
-.wiki-page .keywords-container{
-    border:lightgrey 1px solid;
+.wiki-page .keywords-container {
+    border: lightgrey 1px solid;
     padding-left: 3px;
     padding-right: 3px;
     padding-bottom: 3px;
@@ -177,56 +177,56 @@
     border-radius: 6px 0px 0px 6px;
 }
 
-.wiki-page .keywords-container:hover{
+.wiki-page .keywords-container:hover {
     border-color: gray !important;
     transition: 0.15s;
 }
 
-.wiki-page .breadcrumbs a{
+.wiki-page .breadcrumbs a {
     background-color: rgba(125, 125, 125, 0.15);
     padding: 3px 6px;
     font-size: small;
     border-radius: 3px;
     cursor: pointer;
-    color:rgba(85, 85, 85, 1);
+    color: rgba(85, 85, 85, 1);
 }
 
-.wiki-page .breadcrumbs a:last-of-type{
-    color:var(--prime) !important;
-    border:gray 1px solid !important;
+.wiki-page .breadcrumbs a:last-of-type {
+    color: var(--prime) !important;
+    border: gray 1px solid !important;
 }
 
-.wiki-page .similar-topics{
-    border:lightgrey 1px solid;
+.wiki-page .similar-topics {
+    border: lightgrey 1px solid;
     border-radius: 6px;
     background-color: rgba(125, 125, 125, 0.15);
 }
 
-.wiki-page .similar-topics a{
+.wiki-page .similar-topics a {
     background-color: ghostwhite;
     border-radius: 3px;
     padding: 3px 6px;
 }
 
-.wiki-page .kwic-include{
-    border:lightgrey 1px solid;
+.wiki-page .kwic-include {
+    border: lightgrey 1px solid;
     background-color: ghostwhite;
     border-radius: 6px;
 }
 
-.wiki-page .kwic-include header{
+.wiki-page .kwic-include header {
     border-bottom: lightgrey 1px solid;
     background-color: rgba(125, 125, 125, 0.15);
 }
 
-.wiki-page .lemma-tree{
+.wiki-page .lemma-tree {
     padding: 14px;
     border-radius: 6px;
-    border:1px solid lightgrey;
+    border: 1px solid lightgrey;
     background-color: rgba(125, 125, 125, 0.15);
 }
 
-.wiki-page .lemma-tree .tree{
+.wiki-page .lemma-tree .tree {
     display: flex;
     justify-content: space-around;
     width: 100%;
@@ -235,56 +235,71 @@
     position: relative;
 }
 
-.wiki-page .lemma-tree .tree{
+.wiki-page .lemma-tree .tree {
     border-top: 1px solid gray;
     padding-top: 18px;
 }
 
-.wiki-page .lemma-tree .tree::before{
+.wiki-page .lemma-tree .tree::before {
     position: absolute;
     content: '';
-    left:calc(50% - 1px);
-    top:-20px;
+    left: calc(50% - 1px);
+    top: -20px;
     height: 20px;
     background-color: gray;
     width: 1px;
 }
 
-.wiki-page .lemma-tree .tree div::before{
+.wiki-page .lemma-tree .tree div::before {
     position: absolute;
     content: '';
-    left:calc(50% - 1px);
-    top:-18px;
+    left: calc(50% - 1px);
+    top: -18px;
     height: 18px;
     background-color: gray;
     width: 1px;
 }
 
-.wiki-page .lemma-tree .tree div::after{
+.wiki-page .lemma-tree .tree div::after {
     position: absolute;
     content: '';
-    left:calc(50% - 4px);
-    top:-3px;
+    left: calc(50% - 4px);
+    top: -3px;
     height: 6px;
     width: 6px;
     border-radius: 50%;
     background-color: gray;
 }
 
-.wiki-page .similar-documents{
+.wiki-page .similar-documents {
 
 }
 
-.wiki-page .similar-documents .item{
+.wiki-page .similar-documents .item {
     background-color: ghostwhite;
     padding: 6px;
     border-radius: 3px;
     box-shadow: rgba(149, 157, 165, 0.2) 0px 4px 12px;
-    border:lightgrey 1px solid;
+    border: lightgrey 1px solid;
 }
 
-.wiki-page .similar-documents .item p{
+.wiki-page .similar-documents .item p {
     padding: 6px;
     border-radius: 3px;
     background-color: rgba(125, 125, 125, 0.15);
+}
+
+.wiki-page #wiki-corpus-universe-include {
+    height: 100%;
+    width: 100%;
+    position: relative;
+}
+
+.wiki-page #wiki-universe-container {
+    box-shadow: rgba(0, 0, 0, 0.1) -4px 8px 24px -6px;
+    border: lightgrey 1px solid;
+    position: relative;
+    width: 100%;
+    height: 60vh;
+    min-height: 400px;
 }
