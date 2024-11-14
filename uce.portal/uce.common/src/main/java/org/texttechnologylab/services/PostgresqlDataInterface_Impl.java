@@ -346,6 +346,33 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
+    public List<Document> getDocumentsByNamedEntityValue(String coveredText, int limit) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(Document.class);
+            var root = criteriaQuery.from(Document.class);
+
+            // Join with NamedEntity entity via foreign key documentId
+            var namedEntityJoin = root.join("namedEntities");
+
+            criteriaQuery.select(root).distinct(true) // Ensure distinct documents
+                    .where(criteriaBuilder.equal(namedEntityJoin.get("coveredText"), coveredText));
+
+            // set the limit
+            var docs = session.createQuery(criteriaQuery)
+                    .setMaxResults(limit)
+                    .getResultList();
+
+            // Initialize each document if needed
+            for (var doc : docs) {
+                // as always, I want the pages count
+                Hibernate.initialize(doc.getPages());
+            }
+
+            return docs;
+        });
+    }
+
     public List<Lemma> getLemmasWithinBeginAndEndOfDocument(int begin, int end, long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var cb = session.getCriteriaBuilder();

@@ -1,6 +1,7 @@
 package org.texttechnologylab.config.corpusConfig;
 
 public class CorpusAnnotationConfig {
+    private boolean annotatorMetadata;
     private boolean OCRPage;
     private boolean OCRParagraph;
     private boolean OCRBlock;
@@ -12,6 +13,14 @@ public class CorpusAnnotationConfig {
     private boolean sentence;
     private boolean time;
     private boolean wikipediaLink;
+
+    public boolean isAnnotatorMetadata() {
+        return annotatorMetadata;
+    }
+
+    public void setAnnotatorMetadata(boolean annotatorMetadata) {
+        this.annotatorMetadata = annotatorMetadata;
+    }
 
     public boolean isLemma() {
         return lemma;

@@ -6,9 +6,10 @@ import java.util.HashMap;
 
 public final class SessionManager {
 
-    // TODO: outsource this to a db or something.
-    // TODO^2: This needs to be adressed! At some point, if we cache the search states in RAM, we will overflow eventually!
+    // TODO: I think these search states can stay in RAM for a while. Everything in this SessionManager
+    // gets cleaned up anyways from time to time by a cronjob
     public static HashMap<String, SearchState> ActiveSearches = new HashMap<String, SearchState>();
+    public static HashMap<String, String> CachedWikiPages = new HashMap<>();
 
     public static void InitSessionManager(long cleanupInterval){
         Runnable runnable = new SessionJob(cleanupInterval);

@@ -144,17 +144,32 @@ public class Page extends UIMAAnnotation {
                 var html = "";
 
                 if (a instanceof NamedEntity ne) {
-                    html = String.format("<span class='annotation custom-context-menu ne-%1$s' title='%2$s'>", ne.getType(), ne.getCoveredText());
+                    html = String.format(
+                            "<span class='open-wiki-page annotation custom-context-menu ne-%1$s' title='%2$s' data-wid='%3$s' data-wcovered='%4$s'>",
+                            ne.getType(),
+                            ne.getCoveredText(),
+                            ne.getWikiId(),
+                            ne.getCoveredText());
                     ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</span>"));
                 } else if (a instanceof Time time) {
-                    html = String.format("<span class='annotation custom-context-menu time' title='%1$s'>", time.getCoveredText());
+                    html = String.format(
+                            "<span class='open-wiki-page annotation custom-context-menu time' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
+                            time.getCoveredText(),
+                            time.getWikiId(),
+                            time.getCoveredText());
                     ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</span>"));
                 } else if (a instanceof WikipediaLink wikipediaLink) {
-                    html = String.format("<span class='annotation custom-context-menu wiki' title='%2$s'>", wikipediaLink.getCoveredText());
+                    html = String.format(
+                            "<span class='open-wiki-page annotation custom-context-menu wiki' title='%1$s'>",
+                            wikipediaLink.getCoveredText());
                     ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</span>"));
                 } else if (a instanceof Taxon taxon) {
-                    html = String.format("<a class='annotation custom-context-menu taxon' href='%1$s' target='_blank' title='%2$s'>", taxon.getValue(), taxon.getCoveredText());
-                    ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</a><i class='mr-1 fas fa-external-link-alt'></i>"));
+                    html = String.format(
+                            "<span class='open-wiki-page annotation custom-context-menu taxon' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
+                            taxon.getCoveredText(),
+                            taxon.getWikiId(),
+                            taxon.getCoveredText());
+                    ends.add(new AbstractMap.SimpleEntry<>(a.getEnd() - offset, "</span>"));
                 }
                 finalText.append(html);
             }

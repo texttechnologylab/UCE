@@ -110,6 +110,14 @@ nav .selected-nav-btn.text::before {
     font-size: medium;
 }
 
+.normal-line-height{
+    line-height: normal;
+}
+
+.block-text{
+    text-align: justify;
+}
+
 .underlined {
     text-decoration: underline;
 }
@@ -313,6 +321,7 @@ nav .selected-nav-btn.text::before {
     height: 100%;
     overflow: hidden;
 }
+
 
 .circles li {
     position: absolute;

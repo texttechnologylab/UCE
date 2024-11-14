@@ -4,7 +4,7 @@ import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 
 @MappedSuperclass
-public class UIMAAnnotation extends ModelBase{
+public class UIMAAnnotation extends ModelBase {
 
     @Column(name = "\"beginn\"")
     private int begin;
@@ -16,13 +16,15 @@ public class UIMAAnnotation extends ModelBase{
     public String getCoveredText() {
         return coveredText;
     }
+
     public void setCoveredText(String coveredText) {
         this.coveredText = coveredText.replaceAll("<", "");
     }
 
-    public UIMAAnnotation(){}
+    public UIMAAnnotation() {
+    }
 
-    public UIMAAnnotation(int begin, int end){
+    public UIMAAnnotation(int begin, int end) {
         this.begin = begin;
         this.end = end;
     }

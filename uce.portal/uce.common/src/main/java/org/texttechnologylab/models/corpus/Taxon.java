@@ -1,6 +1,7 @@
 package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 
 import javax.persistence.*;
@@ -8,7 +9,11 @@ import java.util.List;
 
 @Entity
 @Table(name="taxon")
-public class Taxon extends UIMAAnnotation {
+public class Taxon extends UIMAAnnotation implements WikiModel {
+    @Override
+    public String getWikiId() {
+        return "TA" + "-" + this.getId();
+    }
 
     @Column(name = "\"valuee\"", columnDefinition = "TEXT")
     private String value;

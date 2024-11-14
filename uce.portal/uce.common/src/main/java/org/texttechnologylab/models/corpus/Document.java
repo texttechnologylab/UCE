@@ -2,6 +2,7 @@ package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.WikiModel;
 
 import javax.persistence.*;
 import java.util.*;
@@ -12,7 +13,11 @@ import java.util.stream.Collectors;
 /*
 The documents should be scanned and extracted via OCR. This is a base class for that.
  */
-public class Document extends ModelBase {
+public class Document extends ModelBase implements WikiModel {
+    @Override
+    public String getWikiId() {
+        return "D" + "-" + this.getId();
+    }
     private String language;
     @Column(columnDefinition = "TEXT")
     private String documentTitle;

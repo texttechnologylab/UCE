@@ -523,7 +523,7 @@ public class UIMAService {
     private void setCleanedFullText(Document document, JCas jCas) {
         var cleanedText = new StringJoiner(" ");
         JCasUtil.select(jCas, Token.class).forEach(t -> {
-            // We don't want any tokens with suspicous chars here.
+            // We don't want any tokens with suspicious chars here.
             if (t instanceof OCRToken ocr && ocr.getSuspiciousChars() > 0) {
                 return;
             }

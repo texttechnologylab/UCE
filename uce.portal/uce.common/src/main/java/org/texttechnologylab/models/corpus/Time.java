@@ -1,6 +1,7 @@
 package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.WikiModel;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -8,7 +9,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name="time")
-public class Time extends UIMAAnnotation {
+public class Time extends UIMAAnnotation implements WikiModel {
     @Column(name = "\"valuee\"", columnDefinition = "TEXT")
     private String value;
     public Time(){
@@ -22,5 +23,9 @@ public class Time extends UIMAAnnotation {
     }
     public void setValue(String value) {
         this.value = value;
+    }
+    @Override
+    public String getWikiId() {
+        return "TI" + "-" + this.getId();
     }
 }

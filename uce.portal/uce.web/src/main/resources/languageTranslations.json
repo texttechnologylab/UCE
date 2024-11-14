@@ -151,6 +151,10 @@
     "de-DE": "Annotiert im Dokument",
     "en-EN": "Annotated within document"
   },
+  "annotatedInCorpus": {
+    "de-DE": "Annotiert im Korpus",
+    "en-EN": "Annotated within corpus"
+  },
   "similarAnnotations": {
     "de-DE": "Weitere passende Annotationen",
     "en-EN": "Further matching annotations"
@@ -234,6 +238,10 @@
   "wikiDefault": {
     "de-DE": "Klicken Sie auf eine der Annotationen, Dokumente oder andere Wiki-Elemente.",
     "en-EN": "Click on one of the annotations, documents or other wiki elements."
+  },
+  "foundInDocuments": {
+    "de-DE": "Findet sich auch in folgenden Dokumenten",
+    "en-EN": "Can also be found in the following documents"
   },
   "noKWIC": {
     "de-DE": "Die Suche wurde ohne das Keyword-on-context feature gestartet.",

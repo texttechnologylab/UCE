@@ -46,28 +46,43 @@ public class WikiApi {
                 return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
+            // Check if we have loaded, built and cached that wikipage before. We dont re-render it then.
+            if (SessionManager.CachedWikiPages.containsKey(wid)) {
+                return SessionManager.CachedWikiPages.get(wid);
+            }
+
             // Determine the type. A wikiID always has the following format: <type>-<model_id>
             var splited = wid.split("-");
             var type = splited[0];
             var id = Long.parseLong(splited[1]);
 
-            if(type.startsWith("NE")){
+            var renderView = "";
+            if (type.startsWith("NE")) {
                 // We then clicked onto a Named-Entity wiki item
                 var viewModel = wikiService.buildNamedEntityWikiPageViewModel(id, coveredText);
                 model.put("vm", viewModel);
-                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "/wiki/pages/namedEntityAnnotationPage.ftl"));
-            } else if(type.equals("TP") || type.equals("TD")){
+                renderView = "/wiki/pages/namedEntityAnnotationPage.ftl";
+            } else if (type.equals("TP") || type.equals("TD")) {
                 // TP = TopicPage TD = TopicDocument
                 var viewModel = wikiService.buildTopicAnnotationWikiPageViewModel(id, type, coveredText);
                 model.put("vm", viewModel);
-                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "/wiki/pages/topicAnnotationPage.ftl"));
-            } else{
+                renderView = "/wiki/pages/topicAnnotationPage.ftl";
+            } else if (type.equals("D")) {
+                // Then we have a document
+                var viewModel = wikiService.buildDocumentWikiPageViewModel(id);
+                model.put("vm", viewModel);
+                renderView = "/wiki/pages/documentAnnotationPage.ftl";
+            } else {
                 // The type part of the wikiId was unknown. Throw an error.
                 logger.warn("Someone tried to query a wiki page of a type that does not exist in UCE. This shouldn't happen.");
                 model.put("information", languageResources.get("missingParameterError"));
                 return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
+            // cache and return the wiki page
+            var view = new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, renderView));
+            SessionManager.CachedWikiPages.put(wid, view);
+            return view;
         } catch (Exception ex) {
             logger.error("Error getting a wiki page for an annotation - best refer to the last logged API call " +
                     "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);

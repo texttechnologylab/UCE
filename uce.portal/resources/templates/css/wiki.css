@@ -1,7 +1,7 @@
 
 .open-wiki-page {
     position: relative;
-    display: flex;
+    display: inline-flex;
     align-items: center;
 }
 
@@ -18,7 +18,9 @@
     text-align: center;
     background-color: gray;
     border-radius: 50%;
-    display: inline-block;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
 }
 
 .wiki-page-modal{
@@ -267,4 +269,22 @@
     width: 6px;
     border-radius: 50%;
     background-color: gray;
+}
+
+.wiki-page .similar-documents{
+
+}
+
+.wiki-page .similar-documents .item{
+    background-color: ghostwhite;
+    padding: 6px;
+    border-radius: 3px;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 4px 12px;
+    border:lightgrey 1px solid;
+}
+
+.wiki-page .similar-documents .item p{
+    padding: 6px;
+    border-radius: 3px;
+    background-color: rgba(125, 125, 125, 0.15);
 }

@@ -166,6 +166,11 @@ public interface DataInterface {
     public Document getDocumentById(long id) throws DatabaseOperationException;
 
     /**
+     * Gets a list of distinct documents that contain a named entity with a given covered text.
+     */
+    public List<Document> getDocumentsByNamedEntityValue(String coveredText, int limit) throws DatabaseOperationException;
+
+    /**
      * Gets lemmas from a specific document that are within a begin and end range
      * @param begin
      * @param end

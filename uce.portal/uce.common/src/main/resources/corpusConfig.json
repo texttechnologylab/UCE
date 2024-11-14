@@ -6,6 +6,8 @@
   "addToExistingCorpus": false,
 
   "annotations": {
+    "annotatorMetadata": true,
+
     "OCRPage": true,
     "OCRParagraph": true,
     "OCRBlock": false,
