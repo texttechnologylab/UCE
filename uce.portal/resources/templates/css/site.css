@@ -194,6 +194,13 @@ nav .selected-nav-btn.text::before {
     width: 100%;
 }
 
+.system-status-bar{
+    border-left:lightgrey 1px solid;
+    padding-bottom: 12px;
+    padding-top: 12px;
+    background-color: rgba(125, 125, 125, 0.15);
+}
+
 .team-member-card{
     border-right:lightgrey 1px solid;
     border-top:lightgrey 1px solid;

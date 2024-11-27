@@ -2,6 +2,7 @@ package org.texttechnologylab.services;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
+import java.net.InetAddress;
 import java.net.URI;
 import java.net.URISyntaxException;
 import java.net.http.HttpClient;
@@ -38,7 +39,11 @@ public class RAGService {
             this.postgresqlDataInterfaceImpl = postgresqlDataInterfaceImpl;
             this.vectorDbConnection = setupVectorDbConnection();
 
-            SystemStatus.RagServiceStatus = new HealthStatus(true, "", null);
+            if(InetAddress.getByName(this.config.getRAGWebserverBaseUrl()).isReachable(2)){
+                SystemStatus.RagServiceStatus = new HealthStatus(true, "", null);
+            } else{
+                SystemStatus.RagServiceStatus = new HealthStatus(false, "Couldn't connect to the vector database, Ping timeout.", null);
+            }
         } catch (Exception ex) {
             SystemStatus.RagServiceStatus = new HealthStatus(false, "Couldn't connect to the vector database.", ex);
         }

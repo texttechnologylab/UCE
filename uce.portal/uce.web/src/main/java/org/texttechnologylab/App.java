@@ -215,6 +215,8 @@ public class App {
                     .toList());
             model.put("system", SystemStatus.UceConfig);
             model.put("isSparqlAlive", SystemStatus.JenaSparqlStatus.isAlive());
+            model.put("isDbAlive", SystemStatus.PostgresqlDbStatus.isAlive());
+            model.put("isRagAlive", SystemStatus.RagServiceStatus.isAlive());
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");

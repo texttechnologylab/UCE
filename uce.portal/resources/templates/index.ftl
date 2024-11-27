@@ -64,15 +64,31 @@
                 <img class="mb-0 logo" src="${system.getCorporate().getLogo()}">
             </button>
 
-            <div class="flexed align-items-center nav-container">
-                <div class="flexed align-items-center nav-buttons">
-                    <a class="switch-view-btn btn text" data-id="search">Portal</a>
-                    <a class="switch-view-btn btn text" data-id="team">${languageResource.get("team")}</a>
+            <div class="flexed align-items-stretch">
+                <!-- system alive buttons -->
+                <div class="system-status-bar">
+                    <p class="mb-3 text-center text">System Status</p>
+                    <div class="flexed align-items-center">
+                        <i class="large-font fas fa-project-diagram ml-3 mr-3"
+                           style="color: ${isSparqlAlive?string("#222831", "darkgray")}"></i>
+                        <i class="large-font fas fa-robot ml-3 mr-3"
+                           style="color: ${isRagAlive?string("#222831", "darkgray")}"></i>
+                        <i class="large-font fas fa-database ml-3 mr-3"
+                           style="color: ${isDbAlive?string("#222831", "darkgray")}"></i>
+                    </div>
                 </div>
-                <select class="form-control bg-light rounded-0 color-prime border-right-0 large-font switch-language-select">
-                    <option data-lang="de-DE">Deutsch</option>
-                    <option data-lang="en-EN">Englisch</option>
-                </select>
+
+                <!-- right side buttons -->
+                <div class="flexed align-items-center nav-container">
+                    <div class="flexed align-items-center nav-buttons">
+                        <a class="switch-view-btn btn text" data-id="search">Portal</a>
+                        <a class="switch-view-btn btn text" data-id="team">${languageResource.get("team")}</a>
+                    </div>
+                    <select class="form-control bg-light rounded-0 color-prime border-right-0 large-font switch-language-select">
+                        <option data-lang="de-DE">Deutsch</option>
+                        <option data-lang="en-EN">Englisch</option>
+                    </select>
+                </div>
             </div>
         </div>
     </nav>
