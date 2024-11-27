@@ -26,3 +26,22 @@ CREATE INDEX IF NOT EXISTS idx_srlink_document_id ON srlink(document_id);
 CREATE INDEX IF NOT EXISTS idx_srlink_figurecoveredtext ON srlink(LOWER(figurecoveredtext));
 CREATE INDEX IF NOT EXISTS idx_srlink_groundcoveredtext ON srlink(LOWER(groundcoveredtext));
 
+-- Create a Generated Column for the "taxon" value column that splits the values x|y|z into its own array
+DO $$
+BEGIN
+    -- Check if the value_array column exists in the taxon table
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'taxon' AND column_name = 'value_array'
+    ) THEN
+        -- Add the generated column, and remove occurrences of " before splitting
+        ALTER TABLE taxon
+        ADD COLUMN value_array TEXT[] GENERATED ALWAYS AS (string_to_array(REPLACE(valuee, '"', ''), '|')) STORED;
+    END IF;
+END
+$$;
+
+-- Add the index on the value_array column
+CREATE INDEX IF NOT EXISTS idx_taxon_value_array ON taxon USING gin (value_array);
+

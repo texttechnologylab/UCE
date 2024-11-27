@@ -235,8 +235,6 @@
     })
 
     function moveToGlobePos(lat, long, altitude) {
-        console.log(lat);
-        console.log(long);
         myGlobe.pointOfView({lat: lat, lng: long, altitude: altitude}, 750);
     }
 

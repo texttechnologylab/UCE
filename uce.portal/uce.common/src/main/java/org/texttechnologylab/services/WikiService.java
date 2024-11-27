@@ -4,11 +4,11 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.DocumentTopicDistribution;
 import org.texttechnologylab.models.corpus.PageTopicDistribution;
 import org.texttechnologylab.models.corpus.TopicDistribution;
-import org.texttechnologylab.models.viewModels.wiki.AnnotationWikiPageViewModel;
-import org.texttechnologylab.models.viewModels.wiki.NamedEntityAnnotationWikiPageViewModel;
-import org.texttechnologylab.models.viewModels.wiki.TopicAnnotationWikiPageViewModel;
+import org.texttechnologylab.models.viewModels.wiki.*;
 import org.texttechnologylab.states.KeywordInContextState;
+import org.texttechnologylab.utils.SystemStatus;
 
+import java.util.Arrays;
 import java.util.List;
 
 public class WikiService {
@@ -19,7 +19,26 @@ public class WikiService {
     public WikiService(PostgresqlDataInterface_Impl db, RAGService ragService, JenaSparqlService sparqlService) {
         this.db = db;
         this.sparqlService = sparqlService;
-        ragService = ragService;
+        this.ragService = ragService;
+    }
+
+    /**
+     * Builds a viewmodel to render a lemma annotation wiki page
+     */
+    public LemmaAnnotationWikiPageViewModel buildLemmaAnnotationWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new LemmaAnnotationWikiPageViewModel();
+        var lemma = db.getLemmaById(id);
+        viewModel.setWikiModel(lemma);
+        viewModel.setDocument(db.getDocumentById(lemma.getDocumentId()));
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("Lemma");
+
+        var kwicState = new KeywordInContextState();
+        kwicState.recalculate(List.of(viewModel.getDocument()), List.of(viewModel.getCoveredText()));
+        viewModel.setKwicState(kwicState);
+
+        return viewModel;
     }
 
     /**
@@ -38,9 +57,39 @@ public class WikiService {
     }
 
     /**
+     * Gets an TaxonAnnotationWikiPageViewModel to render a Wikipage for that annotation
+     */
+    public TaxonAnnotationWikiPageViewModel buildTaxonWikipageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new TaxonAnnotationWikiPageViewModel();
+        viewModel.setCoveredText(coveredText);
+        var taxon = db.getTaxonById(id);
+        viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(taxon.getBegin(), taxon.getEnd(), taxon.getDocumentId()));
+        viewModel.setWikiModel(taxon);
+        viewModel.setGbifOccurrences(db.getGbifOccurrencesByGbifTaxonId(taxon.getGbifTaxonId()));
+        viewModel.setDocument(db.getDocumentById(taxon.getDocumentId()));
+        viewModel.setAnnotationType("Taxon");
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setSimilarDocuments(
+                db.getDocumentsByNamedEntityValue(taxon.getCoveredText(), 10)
+                        .stream()
+                        .filter(d -> d.getId() != viewModel.getDocument().getId())
+                        .toList());
+
+        var kwicState = new KeywordInContextState();
+        kwicState.recalculate(List.of(viewModel.getDocument()), List.of(viewModel.getCoveredText()));
+        viewModel.setKwicState(kwicState);
+
+        if(SystemStatus.JenaSparqlStatus.isAlive() && taxon.getIdentifier() != null && !taxon.getIdentifier().isEmpty()){
+            viewModel.setAlternativeNames(sparqlService.getAlternativeNamesOfTaxons(taxon.getIdentifierAsList()));
+        }
+
+        return viewModel;
+    }
+
+    /**
      * Gets an AnnotationWikiPageViewModel to render a Wikipage for that annotation.
      */
-    public AnnotationWikiPageViewModel buildNamedEntityWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+    public NamedEntityAnnotationWikiPageViewModel buildNamedEntityWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
         var viewModel = new NamedEntityAnnotationWikiPageViewModel();
         viewModel.setCoveredText(coveredText);
         var ner = db.getNamedEntityById(id);

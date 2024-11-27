@@ -1,51 +1,99 @@
 package org.texttechnologylab.models.corpus;
 
+import org.texttechnologylab.annotations.Presentation;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
+import org.texttechnologylab.utils.Pair;
 
-import javax.persistence.Entity;
-import javax.persistence.JoinColumn;
-import javax.persistence.OneToOne;
-import javax.persistence.Table;
+import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
-@Table(name="lemma")
+@Table(name = "lemma")
 public class Lemma extends UIMAAnnotation implements WikiModel {
-    @OneToOne()
-    @JoinColumn(name="document_id")
-    private Document document;
+    @Column(name = "document_id", nullable = false, insertable = true, updatable = true)
+    private Long documentId;
 
+    @Presentation(name = "Value")
     private String value;
 
     /* POS properties */
+    @Presentation(name = "PoS Tag")
     private String posValue;
+
+    @Presentation(name = "Coarse Value")
     private String coarseValue;
-    /* POS properties */
 
     /* Morph properties */
+
+    @Presentation(name = "Animacy")
     private String animacy;
+
+    @Presentation(name = "Aspect")
     private String aspect;
+
+    @Presentation(name = "Case")
     private String casee;
+
+    @Presentation(name = "Definiteness")
     private String definiteness;
+
+    @Presentation(name = "Degree")
     private String degree;
+
+    @Presentation(name = "Gender")
     private String gender;
+
+    @Presentation(name = "Mood")
     private String mood;
+
+    @Presentation(name = "Negative")
     private String negative;
+
+    @Presentation(name = "Number")
     private String number;
+
+    @Presentation(name = "Number Type")
     private String numberType;
+
+    @Presentation(name = "Person")
     private String person;
+
+    @Presentation(name = "Possessive")
     private String possessive;
+
+    @Presentation(name = "Pronoun Type")
     private String pronType;
+
+    @Presentation(name = "Reflexive")
     private String reflex;
+
+    @Presentation(name = "Tense")
     private String tense;
+
+    @Presentation(name = "Verb Form")
     private String verbForm;
+
+    @Presentation(name = "Voice")
     private String voice;
     /* Morph properties */
 
     public Lemma(int begin, int end) {
         super(begin, end);
     }
-    public Lemma() { super(); }
+
+    public Lemma() {
+        super();
+    }
+
+    public Long getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(Long documentId) {
+        this.documentId = documentId;
+    }
 
     @Override
     public String getWikiId() {
@@ -207,7 +255,35 @@ public class Lemma extends UIMAAnnotation implements WikiModel {
     public String getValue() {
         return value;
     }
+
     public void setValue(String value) {
         this.value = value;
+    }
+
+    /**
+     * Since we print all these properties in the UI, I could add a new
+     * div by hand foreach property. Instead, I'm gonna return a list of
+     * tuples
+     */
+    public List<Pair<String, String>> loopThroughProperties() {
+        var result = new ArrayList<Pair<String, String>>();
+        Class<?> clazz = this.getClass();
+
+        for (var field : clazz.getDeclaredFields()) {
+            if (field.isAnnotationPresent(Presentation.class)) {
+                var annotation = field.getAnnotation(Presentation.class);
+                String presentationName = annotation.name();
+                try {
+                    field.setAccessible(true);
+                    Object value = field.get(this);
+                    var stringValue = "/";
+                    if(value != null) stringValue = value.toString();
+                    result.add(new Pair<>(presentationName, stringValue));
+                } catch (IllegalAccessException e) {
+                    System.out.println("Couldn't access field.");
+                }
+            }
+        }
+        return result;
     }
 }

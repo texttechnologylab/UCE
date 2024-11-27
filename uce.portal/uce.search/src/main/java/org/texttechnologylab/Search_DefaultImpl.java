@@ -229,14 +229,19 @@ public class Search_DefaultImpl implements Search {
         // and we have taxonomy annotated.
         if (SystemStatus.JenaSparqlStatus.isAlive() && this.searchState.getCorpusConfig() != null && this.searchState.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()) {
             var potentialTaxons = ExceptionUtils.tryCatchLog(
-                    () -> db.getIdentifiableTaxonsByValues(tokens),
+                    () -> db.getIdentifiableTaxonsByValues(tokens.stream().map(String::toLowerCase).toList()),
                     (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
+
             if (potentialTaxons == null || potentialTaxons.isEmpty()) return tokens;
+
+            potentialTaxons.forEach(t -> {
+                if(!finalTokens.contains(t.getCoveredText())) finalTokens.add(t.getCoveredText());
+            });
 
             var ids = new ArrayList<String>();
             for (var taxon : potentialTaxons) {
-                if (taxon.getIdentifier().contains("|")) {
-                    ids.addAll(Arrays.stream(taxon.getIdentifier().split("|")).toList());
+                if (taxon.getIdentifier().contains("|") || taxon.getIdentifier().contains(" ")) {
+                    ids.addAll(taxon.getIdentifierAsList());
                 } else {
                     ids.add(taxon.getIdentifier().trim());
                 }

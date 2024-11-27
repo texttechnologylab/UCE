@@ -71,6 +71,8 @@
                         <#list searchState.getFoundDocumentChunkEmbeddings() as documentChunkEmbedding>
                             <#assign document = documentChunkEmbedding.getDocument()>
                             <#assign embedding = documentChunkEmbedding.getDocumentChunkEmbedding()>
+                            <#assign documentIdx = 999999>
+                            <#assign searchId = searchState.getSearchId()>
 
                             <div class="document-card">
                                 <div class="content">

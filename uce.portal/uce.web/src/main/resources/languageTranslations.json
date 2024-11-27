@@ -207,6 +207,10 @@
     "de-DE": "Korpus-Überblick",
     "en-EN": "Corpus Overview"
   },
+  "alternativeNames": {
+    "de-DE": "Alternative Namen",
+    "en-EN": "Alternative Names"
+  },
   "finalSearchTokens": {
     "de-DE": "Die endgültigen Suchbegriffe der Eingabe (nach möglicher Anreicherung).",
     "en-EN": "The final search tokens of the input (after possible enrichment)."

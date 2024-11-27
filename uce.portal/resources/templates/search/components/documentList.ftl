@@ -101,7 +101,9 @@
                                     <div class="search-hits col-2">
                                         <#list foundTaxons as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="${annotationClass}">
+                                            <span class="${annotationClass} open-wiki-page"
+                                                  data-wid="TA-${annotation.getId()?string?replace('.', '')?replace(',', '')}"
+                                                  data-wcovered="${annotation.getCoveredText()}">
                                                 (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
                                             </span>
                                         </#list>
@@ -109,7 +111,11 @@
                                     <div class="search-hits col-2">
                                         <#list foundTimes as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
-                                            <span class="${annotationClass}">(${annotation.getOccurrences()}) ${annotation.getCoveredText()}</span>
+                                            <span class="${annotationClass} open-wiki-page"
+                                                  data-wid="TI-${annotation.getId()?string?replace('.', '')?replace(',', '')}"
+                                                  data-wcovered="${annotation.getCoveredText()}">
+                                                (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
+                                            </span>
                                         </#list>
                                     </div>
                                 </div>

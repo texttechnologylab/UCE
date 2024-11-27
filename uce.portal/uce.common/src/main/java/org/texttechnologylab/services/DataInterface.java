@@ -2,6 +2,7 @@ package org.texttechnologylab.services;
 
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
 
@@ -166,6 +167,11 @@ public interface DataInterface {
     public Document getDocumentById(long id) throws DatabaseOperationException;
 
     /**
+     * Gets the corresponding gbifOccurrences to a gbifTaxonId
+     */
+    public List<GbifOccurrence> getGbifOccurrencesByGbifTaxonId(long gbifTaxonId) throws DatabaseOperationException;
+    
+    /**
      * Gets a list of distinct documents that contain a named entity with a given covered text.
      */
     public List<Document> getDocumentsByNamedEntityValue(String coveredText, int limit) throws DatabaseOperationException;
@@ -184,6 +190,16 @@ public interface DataInterface {
      * Gets a named entity by its id
      */
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException;
+
+    /**
+     * Gets a single taxon by its id
+     */
+    public Taxon getTaxonById(long id) throws DatabaseOperationException;
+
+    /**
+     * Gets a lemma by its id
+     */
+    public Lemma getLemmaById(long id) throws DatabaseOperationException;
 
     /**
      * Given a string value, return a list of lemmas that match that value.

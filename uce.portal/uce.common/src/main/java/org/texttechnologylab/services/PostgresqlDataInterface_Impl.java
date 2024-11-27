@@ -67,21 +67,25 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public List<Taxon> getIdentifiableTaxonsByValues(List<String> tokens) throws DatabaseOperationException {
+        var tokensAsOneString = String.join(" ", tokens);
+        var finalTokens = new ArrayList<String>(tokens);
+        finalTokens.add(tokensAsOneString);
+
+        // TODO: Hardcoded SQL, since writing this in Hibernate is waaaay more painful
         return executeOperationSafely((session) -> {
-            var criteriaBuilder = session.getCriteriaBuilder();
-            var criteriaQuery = criteriaBuilder.createQuery(Taxon.class);
-            var root = criteriaQuery.from(Taxon.class);
+            String sql = "SELECT * FROM taxon t " +
+                    "WHERE (lower(t.coveredText) IN :tokens " +
+                    "OR EXISTS ( " +
+                    "    SELECT 1 FROM unnest(t.value_array) AS val " +
+                    "    WHERE TRIM(LOWER(val)) IN :tokens " +
+                    ")) " +
+                    "AND t.identifier IS NOT NULL " +
+                    "AND t.identifier <> '' ";
 
-            // Adding conditions: coveredText in values and identifier not null or empty and ignore lower and upper case
-            criteriaQuery.select(root).where(
-                    criteriaBuilder.and(
-                            criteriaBuilder.lower(root.get("coveredText")).in(tokens.stream().map(String::toLowerCase).toList()),
-                            criteriaBuilder.isNotNull(root.get("identifier")),
-                            criteriaBuilder.notEqual(root.get("identifier"), "")
-                    )
-            );
+            // Create a query with the native SQL
+            var query = session.createNativeQuery(sql, Taxon.class);
+            query.setParameter("tokens", finalTokens.stream().map(String::toLowerCase).toList());
 
-            var query = session.createQuery(criteriaQuery);
             return query.getResultList();
         });
     }
@@ -170,7 +174,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public List<GlobeTaxon> getGlobeDataForDocument(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-
             var taxonCommand = "SELECT DISTINCT t " +
                     "FROM Document d " +
                     "JOIN d.taxons t " +
@@ -309,8 +312,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             DocumentSearchResult search = null;
             try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() + "(?, ?, ?, ?, ?, ?, ?, ?)}")) {
                 storedProcedure.setInt(1, (int) corpusId);
-                storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.toArray()));
-                storedProcedure.setString(3, String.join("|", searchTokens).trim());
+                storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.stream().map(this::escapeSql).toArray()));
+                storedProcedure.setString(3, String.join("|", searchTokens.stream().map(this::escapeSql).toList()).trim());
                 storedProcedure.setInt(4, take);
                 storedProcedure.setInt(5, skip);
                 storedProcedure.setBoolean(6, countAll);
@@ -386,7 +389,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             // Combine predicates for range and documentId
             Predicate combinedPredicate = cb.and(beginPredicate, endPredicate);
 
-            Predicate documentIdPredicate = cb.equal(lemmaRoot.get("document").get("id"), documentId);
+            Predicate documentIdPredicate = cb.equal(lemmaRoot.get("documentId"), documentId);
             combinedPredicate = cb.and(combinedPredicate, documentIdPredicate);
             query.where(combinedPredicate);
 
@@ -428,8 +431,34 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<GbifOccurrence> getGbifOccurrencesByGbifTaxonId(long gbifTaxonId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(GbifOccurrence.class);
+
+            var root = criteriaQuery.from(GbifOccurrence.class);
+            var gbifTaxonIdPredicate = criteriaBuilder.equal(root.get("gbifTaxonId"), gbifTaxonId);
+            var longitudePredicate = criteriaBuilder.notEqual(root.get("longitude"), -1000);
+            var latitudePredicate = criteriaBuilder.notEqual(root.get("latitude"), -1000);
+
+            var combinedPredicate = criteriaBuilder.and(gbifTaxonIdPredicate, longitudePredicate, latitudePredicate);
+
+            criteriaQuery.where(combinedPredicate);
+
+            return session.createQuery(criteriaQuery).getResultList();
+        });
+    }
+
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(NamedEntity.class, id));
+    }
+
+    public Taxon getTaxonById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(Taxon.class, id));
+    }
+
+    public Lemma getLemmaById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(Lemma.class, id));
     }
 
     public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
@@ -664,6 +693,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 session.close();
             }
         }
+    }
+
+    private String escapeSql(String input) {
+        return input.replace("(", "\\(").replace(")", "\\)").replace(":", "\\:").replace("|", "\\|");
     }
 
 }

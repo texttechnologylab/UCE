@@ -8,6 +8,7 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.viewModels.wiki.AnnotationWikiPageViewModel;
+import org.texttechnologylab.models.viewModels.wiki.CachedWikiPage;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.WikiService;
 import spark.ModelAndView;
@@ -46,11 +47,11 @@ public class WikiApi {
                 return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
-            // Check if we have loaded, built and cached that wikipage before. We dont re-render it then.
+            // Check if we have loaded, built and cached that wikipage before. We don't re-render it then.
             // BUT: We have different wiki views for different languages so the lang needs to be part of the key!
             var cacheId = wid + languageResources.getDefaultLanguage();
             if (SessionManager.CachedWikiPages.containsKey(cacheId)) {
-                return SessionManager.CachedWikiPages.get(cacheId);
+                return SessionManager.CachedWikiPages.get(cacheId).getRenderedView();
             }
 
             // Determine the type. A wikiID always has the following format: <type>-<model_id>
@@ -64,7 +65,12 @@ public class WikiApi {
                 var viewModel = wikiService.buildNamedEntityWikiPageViewModel(id, coveredText);
                 model.put("vm", viewModel);
                 renderView = "/wiki/pages/namedEntityAnnotationPage.ftl";
-            } else if (type.equals("TP") || type.equals("TD")) {
+            } else if(type.startsWith("TA")){
+                // We then clicked onto a Taxon wiki item
+                var viewModel = wikiService.buildTaxonWikipageViewModel(id, coveredText);
+                model.put("vm", viewModel);
+                renderView = "/wiki/pages/taxonAnnotationPage.ftl";
+            }else if (type.equals("TP") || type.equals("TD")) {
                 // TP = TopicPage TD = TopicDocument
                 var viewModel = wikiService.buildTopicAnnotationWikiPageViewModel(id, type, coveredText);
                 model.put("vm", viewModel);
@@ -74,6 +80,11 @@ public class WikiApi {
                 var viewModel = wikiService.buildDocumentWikiPageViewModel(id);
                 model.put("vm", viewModel);
                 renderView = "/wiki/pages/documentAnnotationPage.ftl";
+            }  else if (type.equals("L")) {
+                // Then we have a lemma
+                var viewModel = wikiService.buildLemmaAnnotationWikiPageViewModel(id, coveredText);
+                model.put("vm", viewModel);
+                renderView = "/wiki/pages/lemmaAnnotationPage.ftl";
             } else {
                 // The type part of the wikiId was unknown. Throw an error.
                 logger.warn("Someone tried to query a wiki page of a type that does not exist in UCE. This shouldn't happen.");
@@ -83,7 +94,8 @@ public class WikiApi {
 
             // cache and return the wiki page
             var view = new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, renderView));
-            SessionManager.CachedWikiPages.put(cacheId, view);
+            var cachedWikiPage = new CachedWikiPage(view);
+            SessionManager.CachedWikiPages.put(cacheId, cachedWikiPage);
             return view;
         } catch (Exception ex) {
             logger.error("Error getting a wiki page for an annotation - best refer to the last logged API call " +

@@ -13,21 +13,9 @@
     <hr class="mt-2 mb-4"/>
 
     <!-- list the lemmas that form this named entity -->
-    <div class="mt-3 mb-3 lemma-tree">
-        <h6 class="w-100 text-center color-prime font-weight-bold">
-            ${vm.getCoveredText()}
-            <span class="text ml-1 small-font text">(${vm.getWikiModel().getType()})</span>
-        </h6>
-        <div class="tree">
-            <#list vm.getLemmas() as lemma>
-                <div class="mb-0 mr-1 ml-1 position-relative pt-1">
-                    <label data-wid="${lemma.getWikiId()}" data-wcovered="${lemma.getValue()}"
-                           class="mb-0 open-wiki-page add-wiki-logo text">
-                        ${lemma.getValue()}
-                    </label>
-                </div>
-            </#list>
-        </div>
+    <div class="mt-3 mb-3">
+        <#assign neType = vm.getWikiModel().getType()>
+        <#include "*/wiki/components/lemmaTree.ftl">
     </div>
 
     <!-- the document this is from -->
@@ -55,14 +43,15 @@
                         <div class="col-md-4 m-0 p-2">
                             <div class="item">
                                 <div class="p-2">
-                                    <h6 class="color-prime mb-0 text-center flexed align-items-center justify-content-center">
+                                    <h6 data-wid="${document.getWikiId()}" data-wcovered=""
+                                        class="open-wiki-page color-prime mb-0 text-center flexed align-items-center justify-content-center">
                                         ${document.getDocumentTitle()}
                                     </h6>
                                 </div>
                                 <hr class="mb-1 mt-1"/>
                                 <div class="p-1">
-                                    <p class="font-italic mb-0 small-font text block-text normal-line-height">
-                                        ${document.getFullTextSnippet(30)}
+                                    <p class="font-italic mb-0 small-font block-text text normal-line-height">
+                                        ${document.getFullTextSnippet(30)}...
                                     </p>
                                 </div>
                             </div>
