@@ -100,27 +100,27 @@
         <!-- The following two dependencies are tricky. One of those is working in the release for the
         whole portal but not in debug. So for release, choose the bottom ones. Otherwise, top ones.
         TODO: Fix this -->
-        <dependency>
+        <!--<dependency>
             <groupId>com.github.texttechnologylab</groupId>
             <artifactId>UIMATypeSystem</artifactId>
             <version>74a8489af5</version>
-        </dependency>
-        <!--<dependency>
+        </dependency>-->
+        <dependency>
             <groupId>com.github.texttechnologylab</groupId>
             <artifactId>UIMATypeSystem</artifactId>
             <version>3.0.1</version>
-        </dependency>-->
-
-        <dependency>
-            <groupId>com.github.texttechnologylab</groupId>
-            <artifactId>DockerUnifiedUIMAInterface</artifactId>
-            <version>1.0</version>
         </dependency>
+
         <!--<dependency>
             <groupId>com.github.texttechnologylab</groupId>
             <artifactId>DockerUnifiedUIMAInterface</artifactId>
-            <version>1.4.1</version>
+            <version>1.0</version>
         </dependency>-->
+        <dependency>
+            <groupId>com.github.texttechnologylab</groupId>
+            <artifactId>DockerUnifiedUIMAInterface</artifactId>
+            <version>1.4</version>
+        </dependency>
 
     </dependencies>
 </project>

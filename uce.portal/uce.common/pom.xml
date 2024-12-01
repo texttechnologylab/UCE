@@ -83,7 +83,7 @@
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>apache-jena-libs</artifactId>
-            <version>5.0.0-rc1</version>
+            <version>5.2.0</version>
             <type>pom</type>
         </dependency>
 
@@ -97,7 +97,7 @@
         <dependency>
             <groupId>org.apache.jena</groupId>
             <artifactId>jena-arq</artifactId>
-            <version>5.0.0-rc1</version>
+            <version>5.2.0</version>
         </dependency>
 
         <dependency>
@@ -105,7 +105,6 @@
             <artifactId>pgvector</artifactId>
             <version>0.1.4</version>
         </dependency>
-
 
         <dependency>
             <groupId>com.github.heideltime</groupId>
@@ -128,7 +127,7 @@
         <dependency>
             <groupId>com.github.texttechnologylab</groupId>
             <artifactId>DockerUnifiedUIMAInterface</artifactId>
-            <version>1.4.1</version>
+            <version>1.4</version>
         </dependency>
 
         <!--        local projects-->
@@ -147,7 +146,7 @@
         <dependency>
             <groupId>com.github.texttechnologylab</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.3</version>
         </dependency>
 
     </dependencies>

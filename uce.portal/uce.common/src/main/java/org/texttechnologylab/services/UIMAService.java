@@ -125,7 +125,7 @@ public class UIMAService {
                 logger.info("Trying to store document with document id " + doc.getDocumentId() + "...");
                 ExceptionUtils.tryCatchLog(
                         () -> db.saveDocument(doc),
-                        (ex) -> logger.error("Error saving a finished document with id " + doc.getId()));
+                        (ex) -> logger.error("Error saving a finished document with id " + doc.getId(), ex));
                 logger.info("Stored document with document id " + doc.getDocumentId());
                 logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
 
@@ -254,13 +254,17 @@ public class UIMAService {
             logger.info("Setting potential metadata title info done.");
         } else {
             // There are possibly additional metadata hidden in the DocumentAnnotation type.
-            var documentAnnotation = JCasUtil.selectSingle(jCas, DocumentAnnotation.class);
-            try {
-                metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
-                        + documentAnnotation.getDateMonth() + "."
-                        + documentAnnotation.getDateYear());
-            } catch (Exception ex) {
-                logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
+            var documentAnnotation = ExceptionUtils.tryCatchLog(
+                    () -> JCasUtil.selectSingle(jCas, DocumentAnnotation.class),
+                    (ex) -> logger.info("No DocumentAnnotation found. Skipping this annotation then."));
+            if(documentAnnotation != null){
+                try {
+                    metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
+                            + documentAnnotation.getDateMonth() + "."
+                            + documentAnnotation.getDateYear());
+                } catch (Exception ex) {
+                    logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
+                }
             }
         }
         document.setMetadataTitleInfo(metadataTitleInfo);
@@ -277,6 +281,7 @@ public class UIMAService {
             JCasUtil.select(jCas, OCRPage.class).forEach(p -> {
                 // New page
                 var page = new Page(p.getBegin(), p.getEnd(), p.getPageNumber(), p.getPageId());
+                page.setDocument(document);
                 if (corpusConfig.getAnnotations().isOCRParagraph())
                     page.setParagraphs(getCoveredParagraphs(p));
 
@@ -301,6 +306,7 @@ public class UIMAService {
 
             for (var i = 0; i < fullText.length(); i += pageSize) {
                 var page = new Page(i, i + pageSize, pageNumber, "");
+                page.setDocument(document);
                 pageNumber += 1;
                 pages.add(page);
             }
@@ -337,6 +343,7 @@ public class UIMAService {
         var taxons = new ArrayList<Taxon>();
         JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Taxon.class).forEach(t -> {
             var taxon = new Taxon(t.getBegin(), t.getEnd());
+            taxon.setDocument(document);
             taxon.setValue(t.getValue());
             taxon.setCoveredText(t.getCoveredText());
             taxon.setIdentifier(t.getIdentifier());
@@ -436,6 +443,7 @@ public class UIMAService {
         var lemmas = new ArrayList<org.texttechnologylab.models.corpus.Lemma>();
         JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma.class).forEach(l -> {
             var lemma = new org.texttechnologylab.models.corpus.Lemma(l.getBegin(), l.getEnd());
+            lemma.setDocument(document);
             lemma.setCoveredText(l.getCoveredText());
             lemma.setValue(l.getValue());
 
@@ -492,6 +500,7 @@ public class UIMAService {
             if (neType.isEmpty()) return;
 
             var namedEntity = new org.texttechnologylab.models.corpus.NamedEntity(ne.getBegin(), ne.getEnd());
+            namedEntity.setDocument(document);
             namedEntity.setType(neType);
             namedEntity.setCoveredText(ne.getCoveredText());
             nes.add(namedEntity);
@@ -691,6 +700,7 @@ public class UIMAService {
                 topicDistribution.setBegin(page.getBegin());
                 topicDistribution.setEnd(page.getEnd());
                 topicDistribution.setPage(page);
+                topicDistribution.setPageId(page.getId());
                 page.setPageTopicDistribution(topicDistribution);
                 // Store it in the db
                 ExceptionUtils.tryCatchLog(() -> db.savePageTopicDistribution(page),
@@ -704,6 +714,7 @@ public class UIMAService {
             if (documentTopicDistribution == null) return;
 
             documentTopicDistribution.setDocument(document);
+            documentTopicDistribution.setDocumentId(document.getId());
             document.setDocumentTopicDistribution(documentTopicDistribution);
             // Store it
             ExceptionUtils.tryCatchLog(() -> db.saveDocumentTopicDistribution(document),

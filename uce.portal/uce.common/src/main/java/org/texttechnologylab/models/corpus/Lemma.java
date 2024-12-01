@@ -12,7 +12,12 @@ import java.util.List;
 @Entity
 @Table(name = "lemma")
 public class Lemma extends UIMAAnnotation implements WikiModel {
-    @Column(name = "document_id", nullable = false, insertable = true, updatable = true)
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id", nullable = false)
+    private Document document;
+
+    @Column(name = "document_id", insertable = false, updatable = false)
     private Long documentId;
 
     @Presentation(name = "Value")
@@ -85,6 +90,14 @@ public class Lemma extends UIMAAnnotation implements WikiModel {
 
     public Lemma() {
         super();
+    }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
     }
 
     public Long getDocumentId() {

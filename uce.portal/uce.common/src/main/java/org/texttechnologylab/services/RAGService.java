@@ -2,13 +2,12 @@ package org.texttechnologylab.services;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.sql.*;
+import java.time.Duration;
 import java.util.*;
 
 import com.google.gson.Gson;
@@ -16,6 +15,7 @@ import com.pgvector.PGvector;
 import org.jsoup.HttpStatusException;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
+import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.corpus.TopicDistribution;
 import org.texttechnologylab.models.dto.*;
@@ -39,10 +39,12 @@ public class RAGService {
             this.postgresqlDataInterfaceImpl = postgresqlDataInterfaceImpl;
             this.vectorDbConnection = setupVectorDbConnection();
 
-            if(InetAddress.getByName(this.config.getRAGWebserverBaseUrl()).isReachable(2)){
+            var test = ExceptionUtils.tryCatchLog(
+                    () -> getEmbeddingForText("This is an embedding test."),
+                    (ex) -> SystemStatus.RagServiceStatus = new HealthStatus(false, "Embedding the text failed", ex));
+
+            if(test != null){
                 SystemStatus.RagServiceStatus = new HealthStatus(true, "", null);
-            } else{
-                SystemStatus.RagServiceStatus = new HealthStatus(false, "Couldn't connect to the vector database, Ping timeout.", null);
             }
         } catch (Exception ex) {
             SystemStatus.RagServiceStatus = new HealthStatus(false, "Couldn't connect to the vector database.", ex);
@@ -564,11 +566,14 @@ public class RAGService {
         var jsonData = gson.toJson(params);
 
         // Create request
-        var request = HttpRequest.newBuilder()
+        var request = HttpRequest
+                .newBuilder()
                 .uri(new URI(url))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonData))
+                .timeout(Duration.ofSeconds(2))
                 .build();
+
         // Send request and get response
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         var statusCode = response.statusCode();

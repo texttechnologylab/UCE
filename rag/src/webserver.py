@@ -284,6 +284,10 @@ def rag_complete():
         print(ex)
     return jsonify(result)
 
+@app.route('/', methods=['GET'])
+def hello():
+    return 'RAGServer running.'
+
 def get_embedding_model():
     '''Gets the embedding model from the app's cache'''
     if 'embedding_model' not in current_app.config:

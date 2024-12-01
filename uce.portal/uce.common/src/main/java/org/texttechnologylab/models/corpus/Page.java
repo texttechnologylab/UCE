@@ -12,10 +12,15 @@ import java.util.stream.Stream;
 @Entity
 @Table(name = "page")
 public class Page extends UIMAAnnotation {
-
     private int pageNumber;
     private String pageId;
+    @Column(name = "document_id", insertable = false, updatable = false)
     private long document_id;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id", nullable = false)
+    private Document document;
+
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "page_Id")
     private List<Paragraph> paragraphs;
@@ -29,6 +34,7 @@ public class Page extends UIMAAnnotation {
     private List<Line> lines;
 
     @OneToOne(mappedBy = "page", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "page_id")
     private PageTopicDistribution pageTopicDistribution;
 
     public Page(int begin, int end, int pageNumber, String pageId) {
@@ -39,6 +45,14 @@ public class Page extends UIMAAnnotation {
 
     public Page() {
         super(-1, -1);
+    }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
     }
 
     public long getDocumentId() {

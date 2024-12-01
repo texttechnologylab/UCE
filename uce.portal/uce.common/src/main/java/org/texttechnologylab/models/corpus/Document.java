@@ -67,6 +67,7 @@ public class Document extends ModelBase implements WikiModel {
     private MetadataTitleInfo metadataTitleInfo;
 
     @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "document_id")
     private DocumentTopicDistribution documentTopicDistribution;
 
     public Document() {

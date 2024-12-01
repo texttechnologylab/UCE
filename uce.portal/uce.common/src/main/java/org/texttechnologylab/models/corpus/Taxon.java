@@ -17,14 +17,19 @@ public class Taxon extends UIMAAnnotation implements WikiModel {
         return "TA" + "-" + this.getId();
     }
 
-    @Column(name = "document_id", nullable = false, insertable = true, updatable = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id", nullable = false)
+    private Document document;
+
+    @Column(name = "document_id", insertable = false, updatable = false)
     private Long documentId;
 
     @Column(name = "\"valuee\"", columnDefinition = "TEXT")
     private String value;
 
+    @Transient
     @Column(name = "value_array")
-    private String valueArray;
+    private List<String> valueArray;
 
     @Column(columnDefinition = "TEXT")
     private String identifier;
@@ -46,6 +51,14 @@ public class Taxon extends UIMAAnnotation implements WikiModel {
 
     public Taxon(int begin, int end) {
         super(begin, end);
+    }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
     }
 
     public Long getDocumentId() {

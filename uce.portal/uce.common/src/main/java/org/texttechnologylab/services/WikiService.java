@@ -8,6 +8,7 @@ import org.texttechnologylab.models.viewModels.wiki.*;
 import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.utils.SystemStatus;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -59,7 +60,7 @@ public class WikiService {
     /**
      * Gets an TaxonAnnotationWikiPageViewModel to render a Wikipage for that annotation
      */
-    public TaxonAnnotationWikiPageViewModel buildTaxonWikipageViewModel(long id, String coveredText) throws DatabaseOperationException {
+    public TaxonAnnotationWikiPageViewModel buildTaxonWikipageViewModel(long id, String coveredText) throws DatabaseOperationException, IOException {
         var viewModel = new TaxonAnnotationWikiPageViewModel();
         viewModel.setCoveredText(coveredText);
         var taxon = db.getTaxonById(id);

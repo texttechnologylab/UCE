@@ -6,9 +6,12 @@ import javax.persistence.*;
 @Table(name="documenttopicdistribution")
 public class DocumentTopicDistribution extends TopicDistribution{
 
-    @OneToOne()
-    @JoinColumn(name="document_id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name="document_id", insertable = false, updatable = false)
     private Document document;
+
+    @Column(name = "document_id")
+    private Long documentId;
 
     public Document getDocument() {
         return document;
@@ -18,4 +21,11 @@ public class DocumentTopicDistribution extends TopicDistribution{
         this.document = document;
     }
 
+    public Long getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(Long documentId) {
+        this.documentId = documentId;
+    }
 }
