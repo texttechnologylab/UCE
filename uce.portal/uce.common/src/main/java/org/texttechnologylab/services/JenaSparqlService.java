@@ -22,7 +22,7 @@ import java.util.List;
  * UPDATE 12-2024: I completely replaced the org.apache.jena.rdfconnection imports and libraries as they were
  * HORRIBLE. They threw so many shitty errors under circumstances that were un-debuggable. I had error occur
  * in docker environments *only*, that made absolutely no sense, so fk it, I parse them by hand now with regular requests.
- * I wasted enough time on this shit.
+ * I wasted enough time to get a shit library working.
  */
 public class JenaSparqlService {
 
@@ -111,7 +111,7 @@ public class JenaSparqlService {
                 "}";
         command = command.replace("{BIOFID_URL_ID}", potentialBiofidId.trim());
         var result = executeCommand(command, RDFSelectQueryDto.class);
-        if(result == null || result.getResults() == null || result.getResults().getBindings() == null) return -1;
+        if(result == null || result.getResults() == null || result.getResults().getBindings() == null || result.getResults().getBindings().isEmpty()) return -1;
 
         var gbifTaxonUrl = result.getResults().getBindings().getFirst().getObject().getValue();
         return Long.parseLong(Arrays.stream(gbifTaxonUrl.split("/")).toList().getLast());

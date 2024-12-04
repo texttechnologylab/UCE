@@ -1,5 +1,7 @@
 package org.texttechnologylab.config;
 
+import org.texttechnologylab.utils.SystemStatus;
+
 import java.util.Properties;
 
 public class CommonConfig {
@@ -41,10 +43,10 @@ public class CommonConfig {
         return getProperty("rag.webserver.base.url");
     }
     public String getRAGModel(){
-        return getProperty("rag.model");
+        return SystemStatus.UceConfig.getSettings().getRag().getModel();
     }
     public String getRagOpenAIApiKey(){
-        return getProperty("rag.openai.apiKey");
+        return SystemStatus.UceConfig.getSettings().getRag().getApiKey();
     }
     public boolean getLogToDb(){ return Boolean.parseBoolean(getProperty("log.db")); }
     public String getTemplatesLocation(){

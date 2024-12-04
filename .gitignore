@@ -7,7 +7,7 @@ target/
 uce.portal/logs/
 
 ### Sensible Configs ###
-uce.portal/uce.common/src/main/resources/uceConfig.json
+/uce.portal/uce.common/src/main/resources/uceConfig.json
 
 ### IntelliJ IDEA ###
 .idea

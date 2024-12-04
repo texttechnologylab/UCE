@@ -69,12 +69,12 @@
                 <div class="system-status-bar">
                     <p class="mb-3 text-center text">System Status</p>
                     <div class="flexed align-items-center">
-                        <i class="large-font fas fa-project-diagram ml-3 mr-3"
-                           style="color: ${isSparqlAlive?string("#222831", "darkgray")}"></i>
-                        <i class="large-font fas fa-robot ml-3 mr-3"
-                           style="color: ${isRagAlive?string("#222831", "darkgray")}"></i>
-                        <i class="large-font fas fa-database ml-3 mr-3"
-                           style="color: ${isDbAlive?string("#222831", "darkgray")}"></i>
+                        <i class="fas fa-project-diagram ml-3 mr-3"
+                           style="color: ${isSparqlAlive?string("var(--prime)", "darkgray")}"></i>
+                        <i class="fas fa-robot ml-3 mr-3"
+                           style="color: ${isRagAlive?string("var(--prime)", "darkgray")}"></i>
+                        <i class="fas fa-database ml-3 mr-3"
+                           style="color: ${isDbAlive?string("var(--prime)", "darkgray")}"></i>
                     </div>
                 </div>
 

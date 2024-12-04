@@ -431,6 +431,29 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public Document getDocumentByCorpusAndDocumentId(long corpusId, String documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var criteriaQuery = cb.createQuery(Document.class);
+            var root = criteriaQuery.from(Document.class);
+
+            criteriaQuery.select(root)
+                    .where(
+                            cb.and(
+                                    cb.equal(root.get("corpusId"), corpusId),
+                                    cb.equal(root.get("documentId"), documentId)
+                            )
+                    );
+
+            Document doc = session.createQuery(criteriaQuery).uniqueResult();
+
+            if (doc != null) {
+                Hibernate.initialize(doc.getPages());
+            }
+            return doc;
+        });
+    }
+
     public List<GbifOccurrence> getGbifOccurrencesByGbifTaxonId(long gbifTaxonId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteriaBuilder = session.getCriteriaBuilder();

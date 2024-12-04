@@ -8,7 +8,7 @@ import javax.persistence.*;
 @Entity
 @Table(name="pagetopicdistribution")
 public class PageTopicDistribution extends TopicDistribution {
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne()
     @JoinColumn(name="page_id", insertable = false, updatable = false)
     private Page page;
 

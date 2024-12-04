@@ -162,6 +162,11 @@ public interface DataInterface {
     public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException;
 
     /**
+     * Gets a document by its corpusId and the documentId, which isn't its primary key identifier "id".
+     */
+    public Document getDocumentByCorpusAndDocumentId(long corpusId, String documentId) throws DatabaseOperationException;
+
+    /**
      * Generic operation that fetches documents given the parameters
      */
     public Document getDocumentById(long id) throws DatabaseOperationException;

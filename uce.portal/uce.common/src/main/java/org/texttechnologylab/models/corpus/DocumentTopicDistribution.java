@@ -6,7 +6,7 @@ import javax.persistence.*;
 @Table(name="documenttopicdistribution")
 public class DocumentTopicDistribution extends TopicDistribution{
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @OneToOne()
     @JoinColumn(name="document_id", insertable = false, updatable = false)
     private Document document;
 
