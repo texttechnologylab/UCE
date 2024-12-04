@@ -162,7 +162,7 @@ public class App {
 
         // If we haven't gotten a proper config, then we will use a default
         if (SystemStatus.UceConfig == null) {
-            var inputStream = App.class.getClassLoader().getResourceAsStream("uceConfig.json");
+            var inputStream = App.class.getClassLoader().getResourceAsStream("defaultUceConfig.json");
             if (inputStream != null) {
                 SystemStatus.UceConfig = gson.fromJson(new InputStreamReader(inputStream), UceConfig.class);
             } else {

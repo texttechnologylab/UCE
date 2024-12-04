@@ -27,16 +27,21 @@ import java.util.stream.Collectors;
 @Service
 public class PostgresqlDataInterface_Impl implements DataInterface {
 
-    private SessionFactory sessionFactory;
+    private final SessionFactory sessionFactory;
 
     private Session getCurrentSession() {
         return sessionFactory.openSession();
     }
 
     public PostgresqlDataInterface_Impl() {
+        sessionFactory = HibernateConf.buildSessionFactory();
+        TestConnection();
+    }
+
+    public void TestConnection(){
         try {
-            sessionFactory = HibernateConf.buildSessionFactory();
-            var test = getCorpusById(1);
+            var log = new UCELog("localhost", "TEST", "/", "Testing DB Connection", "/");
+            saveUceLog(log);
             SystemStatus.PostgresqlDbStatus = new HealthStatus(true, "", null);
         } catch (Exception ex) {
             SystemStatus.PostgresqlDbStatus = new HealthStatus(false, "Couldn't build the session factory.", ex);

@@ -34,9 +34,13 @@ public class RAGService {
     private CommonConfig config;
 
     public RAGService(PostgresqlDataInterface_Impl postgresqlDataInterfaceImpl) {
+        this.postgresqlDataInterfaceImpl = postgresqlDataInterfaceImpl;
+        TestConnection();
+    }
+
+    public void TestConnection(){
         try {
             this.config = new CommonConfig();
-            this.postgresqlDataInterfaceImpl = postgresqlDataInterfaceImpl;
             this.vectorDbConnection = setupVectorDbConnection();
 
             var test = ExceptionUtils.tryCatchLog(

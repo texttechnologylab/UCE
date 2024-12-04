@@ -34,6 +34,10 @@ public class JenaSparqlService {
      * @return
      */
     public JenaSparqlService() {
+        TestConnection();
+    }
+
+    public void TestConnection(){
         try{
             if (isServerResponsive()) {
                 SystemStatus.JenaSparqlStatus = new HealthStatus(true, "Connection successful.", null);
