@@ -6,6 +6,9 @@ target/
 ### Logging ###
 uce.portal/logs/
 
+### Sensible Configs ###
+uce.portal/uce.common/src/main/resources/uceConfig.json
+
 ### IntelliJ IDEA ###
 .idea
 .idea/modules.xml
