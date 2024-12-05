@@ -6,7 +6,6 @@ import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.MissingOptionException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
-import org.apache.jena.base.Sys;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.simpleframework.xml.transform.InvalidFormatException;
@@ -27,7 +26,6 @@ import spark.ExceptionHandler;
 import spark.ModelAndView;
 
 import java.io.*;
-import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
@@ -76,8 +74,12 @@ public class App {
         var languageResource = new LanguageResources("de-DE");
         logger.info(languageResource.get("search"));
 
-        SessionManager.InitSessionManager(commonConfig.getSessionJobCleanupInterval());
-        logger.info("Initialized the Session Manager.");
+        // Start the different cronjobs in the background
+        SessionManager.InitSessionManager(commonConfig.getSessionJobInterval());
+        logger.info("Initialized the Session Job.");
+
+        SystemStatus.InitSystemStatus(commonConfig.getSystemJobInterval(), context);
+        logger.info("Initialized the System Job.");
 
         // Set the folder for our template files of freemaker
         try {
