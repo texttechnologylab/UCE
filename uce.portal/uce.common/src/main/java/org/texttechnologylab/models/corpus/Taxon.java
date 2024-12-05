@@ -70,6 +70,8 @@ public class Taxon extends UIMAAnnotation implements WikiModel {
     }
 
     public String getPrimaryBiofidOntologyIdentifier() {
+        if(this.primaryBiofidOntologyIdentifier == null || this.primaryBiofidOntologyIdentifier.isEmpty())
+            return this.getIdentifierAsList().getFirst();
         return primaryBiofidOntologyIdentifier;
     }
 

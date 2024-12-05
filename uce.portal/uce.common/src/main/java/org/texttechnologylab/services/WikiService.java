@@ -66,6 +66,9 @@ public class WikiService {
         var taxon = db.getTaxonById(id);
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(taxon.getBegin(), taxon.getEnd(), taxon.getDocumentId()));
         viewModel.setWikiModel(taxon);
+        // We are not interested in the standard w3 XML triplets
+        viewModel.setNextRDFNodes(
+                sparqlService.queryBySubject(taxon.getPrimaryBiofidOntologyIdentifier()));
         viewModel.setGbifOccurrences(db.getGbifOccurrencesByGbifTaxonId(taxon.getGbifTaxonId()));
         viewModel.setDocument(db.getDocumentById(taxon.getDocumentId()));
         viewModel.setAnnotationType("Taxon");

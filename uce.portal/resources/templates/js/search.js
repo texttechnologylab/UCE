@@ -331,7 +331,7 @@ $(window).on('scroll', function() {
 
     // If the keyword in context window exists, then highlight the
     // corresponding items there.
-    $contextContainer = $('.keyword-context-card');
+    $contextContainer = $('.search-result-container .keyword-context-card');
 
     if($contextContainer != null){
         const isExpanded = $contextContainer.data('expanded');

@@ -156,7 +156,6 @@ public class SearchApi {
             model.put("searchState", searchState);
 
             return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
-
         } catch (Exception ex) {
             logger.error("Error starting a new search with the request body:\n " + gson.toJson(requestBody), ex);
             return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));

@@ -5,7 +5,7 @@
     align-items: center;
 }
 
-.open-wiki-page br{
+.open-wiki-page br {
     display: none;
 }
 
@@ -318,49 +318,73 @@
     border-right: 1px lightgray solid;
 }
 
-.wiki-page .taxon-alt-names{
+.wiki-page .taxon-alt-names {
     display: flex;
     justify-content: space-around;
     background-color: rgba(125, 125, 125, 0.15);
     border-radius: 3px;
-    border:lightgrey 1px solid;
+    border: lightgrey 1px solid;
     flex-wrap: wrap;
     padding: 8px;
 }
 
-.wiki-page .taxon-alt-names label{
+.wiki-page .taxon-alt-names label {
     padding-left: 6px;
     padding-right: 6px;
     padding-top: 3px;
     padding-bottom: 3px;
-    border:lightgray 1px solid;
+    border: lightgray 1px solid;
     background-color: ghostwhite;
     border-radius: 3px;
     margin-top: 2px;
     margin-bottom: 2px;
 }
 
-.wiki-page .taxon-alt-names label:hover{
+.wiki-page .taxon-alt-names label:hover {
     cursor: pointer;
     text-decoration: underline;
     color: var(--prime);
     transition: 0.15s;
 }
 
-.wiki-page #wiki-taxon-occurrences-map{
+.wiki-page #wiki-taxon-occurrences-map {
     height: 500px;
     width: 100%;
-    border:1px lightgray solid;
+    border: 1px lightgray solid;
 }
 
-.wiki-page .img-gallery{
+.wiki-page .img-gallery {
     width: 100%;
     overflow-x: auto;
     height: 200px;
 }
 
-.wiki-page .img-gallery img{
+.wiki-page .img-gallery img {
     height: 100%;
     object-fit: cover;
-    border:1px transparent solid;
+    border: 1px transparent solid;
+}
+
+.wiki-page .next-nodes-container {
+    padding-top: 6px;
+    padding-bottom: 12px;
+    padding-left: 8px;
+    padding-right: 8px;
+    border-radius: 6px;
+    background-color: rgba(125, 125, 125, 0.15);
+    border: lightgray 1px solid;
+}
+
+.wiki-page .next-nodes-container .node-div {
+    transition: 0.15s;
+}
+
+.wiki-page .next-nodes-container .node-div .node:hover{
+    background-color: ghostwhite !important;
+    transition: 0.15s;
+}
+
+.wiki-page .nodes-list-div {
+    border-left: 1px darkgray solid;
+    border-bottom:solid darkgray 1px;
 }

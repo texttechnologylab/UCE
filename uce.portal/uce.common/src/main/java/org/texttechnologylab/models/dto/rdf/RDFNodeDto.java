@@ -1,12 +1,14 @@
 package org.texttechnologylab.models.dto.rdf;
 
-public class RDFNodeDto {
+import com.fasterxml.jackson.annotation.JsonAlias;
 
+public class RDFNodeDto {
     private TripletDto subject;
     private TripletDto predicate;
     private TripletDto object;
 
-    public RDFNodeDto(){}
+    public RDFNodeDto() {
+    }
 
     public TripletDto getSubject() {
         return subject;

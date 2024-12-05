@@ -9,12 +9,14 @@ import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.viewModels.wiki.AnnotationWikiPageViewModel;
 import org.texttechnologylab.models.viewModels.wiki.CachedWikiPage;
+import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.WikiService;
 import spark.ModelAndView;
 import spark.Route;
 
 import java.util.HashMap;
+import java.util.Map;
 
 public class WikiApi {
 
@@ -22,14 +24,45 @@ public class WikiApi {
     private ApplicationContext context = null;
     private PostgresqlDataInterface_Impl db = null;
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
+    private JenaSparqlService jenaSparqlService;
     private WikiService wikiService = null;
 
     public WikiApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
         this.freemakerConfig = freemakerConfig;
         this.context = serviceContext;
         this.wikiService = serviceContext.getBean(WikiService.class);
+        this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
     }
+
+    public Route queryOntology = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        var gson = new Gson();
+        Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
+
+        try {
+            var languageResources = LanguageResources.fromRequest(request);
+
+            // TODO: Think about adding and handling the truplettype (sub, obj, pred) here.
+            var tripletType = ExceptionUtils.tryCatchLog(() -> requestBody.get("tripletType").toString(),
+                    (ex) -> logger.error("Need the type of the Triplet to query the sparql database.", ex));
+            var value = ExceptionUtils.tryCatchLog(() -> requestBody.get("value").toString(),
+                    (ex) -> logger.error("Need the value of the Triplet to execute the query.", ex));
+
+            if (tripletType == null || tripletType.isEmpty() || value == null || value.isEmpty()) {
+                model.put("information", languageResources.get("missingParameterError"));
+                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+            }
+
+            var nodes = jenaSparqlService.queryBySubject(value);
+            model.put("rdfNodes", nodes);
+            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "/wiki/components/rdfNodeList.ftl"));
+        } catch (Exception ex) {
+            logger.error("Error querying the ontology in the graph database " +
+                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
 
     public Route getAnnotationPage = ((request, response) -> {
         var model = new HashMap<String, Object>();
@@ -41,6 +74,9 @@ public class WikiApi {
                     (ex) -> logger.error("The WikiView couldn't be generated - id missing.", ex));
             var coveredText = ExceptionUtils.tryCatchLog(() -> request.queryParams("covered"),
                     (ex) -> logger.error("The WikiView couldn't be generated - covered text missing.", ex));
+            // Its actually fine if no additional params were given.
+            var params = ExceptionUtils.tryCatchLog(() -> request.queryParams("params"), (ex) -> {
+            });
 
             if (wid == null || !wid.contains("-") || coveredText == null || coveredText.isEmpty()) {
                 model.put("information", languageResources.get("missingParameterError"));
@@ -65,12 +101,12 @@ public class WikiApi {
                 var viewModel = wikiService.buildNamedEntityWikiPageViewModel(id, coveredText);
                 model.put("vm", viewModel);
                 renderView = "/wiki/pages/namedEntityAnnotationPage.ftl";
-            } else if(type.startsWith("TA")){
+            } else if (type.startsWith("TA")) {
                 // We then clicked onto a Taxon wiki item
                 var viewModel = wikiService.buildTaxonWikipageViewModel(id, coveredText);
                 model.put("vm", viewModel);
                 renderView = "/wiki/pages/taxonAnnotationPage.ftl";
-            }else if (type.equals("TP") || type.equals("TD")) {
+            } else if (type.equals("TP") || type.equals("TD")) {
                 // TP = TopicPage TD = TopicDocument
                 var viewModel = wikiService.buildTopicAnnotationWikiPageViewModel(id, type, coveredText);
                 model.put("vm", viewModel);
@@ -80,7 +116,7 @@ public class WikiApi {
                 var viewModel = wikiService.buildDocumentWikiPageViewModel(id);
                 model.put("vm", viewModel);
                 renderView = "/wiki/pages/documentAnnotationPage.ftl";
-            }  else if (type.equals("L")) {
+            } else if (type.equals("L")) {
                 // Then we have a lemma
                 var viewModel = wikiService.buildLemmaAnnotationWikiPageViewModel(id, coveredText);
                 model.put("vm", viewModel);

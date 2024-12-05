@@ -66,10 +66,34 @@ let WikiHandler = (function () {
         this.loadPage(wikiDto);
     }
 
-    WikiHandler.prototype.addUniverseToDocumentWikiPage = async function(corpusId, currentCenter){
+    WikiHandler.prototype.addUniverseToDocumentWikiPage = async function (corpusId, currentCenter) {
         this.universeHandler = window.getNewCorpusUniverseHandler;
         await this.universeHandler.createEmptyUniverse('wiki-universe-container');
         await this.universeHandler.fromCorpus(corpusId, currentCenter);
+    }
+
+    WikiHandler.prototype.handleRdfNodeClicked = function ($el) {
+        // If an rdf node was clicked, then we query the ontology based on that premis
+        const tripletType = $el.data('triplettype');
+        const value = $el.data('value');
+
+        $.ajax({
+            url: "/api/wiki/queryOntology",
+            type: "POST",
+            data: JSON.stringify({
+                tripletType: tripletType,
+                value: value
+            }),
+            contentType: "application/json",
+            success: async function (response) {
+                const $container = $el.closest('.node-div');
+                $container.append(response);
+            },
+            error: function (xhr, status, error) {
+                console.error(xhr.responseText);
+            }
+        }).always(function () {
+        });
     }
 
     return WikiHandler;
@@ -99,3 +123,9 @@ $('body').on('click', '.wiki-page-modal .go-back-btn', function () {
     window.wikiHandler.handleGoBackBtnClicked();
 });
 
+/**
+ * Triggers when the user presses on a clickable rdf node
+ */
+$('body').on('click', '.clickable-rdf-node', function () {
+    window.wikiHandler.handleRdfNodeClicked($(this));
+});

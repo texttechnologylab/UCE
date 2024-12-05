@@ -1,12 +1,15 @@
 package org.texttechnologylab.services;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import org.jsoup.HttpStatusException;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.models.dto.rdf.RDFAskDto;
+import org.texttechnologylab.models.dto.rdf.RDFNodeDto;
 import org.texttechnologylab.models.dto.rdf.RDFRequestDto;
 import org.texttechnologylab.models.dto.rdf.RDFSelectQueryDto;
 import org.texttechnologylab.models.util.HealthStatus;
+import org.texttechnologylab.utils.RDFNodeDtoJsonDeserializer;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.BufferedReader;
@@ -37,17 +40,40 @@ public class JenaSparqlService {
         TestConnection();
     }
 
-    public void TestConnection(){
-        try{
+    public void TestConnection() {
+        try {
             if (isServerResponsive()) {
                 SystemStatus.JenaSparqlStatus = new HealthStatus(true, "Connection successful.", null);
             } else {
                 SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Server not reachable, ask failed.", null);
                 System.out.println("Unable to connect to the Fuseki Sparql database, hello returned false.");
             }
-        } catch (Exception ex){
+        } catch (Exception ex) {
             SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Server returned an error, ask failed.", null);
         }
+    }
+
+    /**
+     * Given a graph database structure, this gets all triplets where the subject matches the given sub.
+     * Example call: var test = queryBySubject("https://www.biofid.de/bio-ontologies/gbif/4356560");
+     */
+    public List<RDFNodeDto> queryBySubject(String sub) throws IOException {
+        if (!SystemStatus.JenaSparqlStatus.isAlive()) {
+            return new ArrayList<>();
+        }
+
+        var command = "SELECT * WHERE { " +
+                "   <{SUB}> ?pred ?obj . " +
+                "} " +
+                "LIMIT 100";
+        command = command.replace("{SUB}", sub);
+        var result = executeCommand(command, RDFSelectQueryDto.class);
+        if (result == null || result.getResults() == null || result.getResults().getBindings() == null)
+            return new ArrayList<>();
+
+        return result.getResults().getBindings().stream()
+                .filter(n -> !n.getPredicate().getValue().contains("www.w3.org"))
+                .toList();
     }
 
     /**
@@ -73,7 +99,7 @@ public class JenaSparqlService {
      * @return
      */
     public List<String> getAlternativeNamesOfTaxons(List<String> biofidIds) throws IOException {
-        if(!SystemStatus.JenaSparqlStatus.isAlive()) {
+        if (!SystemStatus.JenaSparqlStatus.isAlive()) {
             return new ArrayList<>();
         }
 
@@ -89,7 +115,8 @@ public class JenaSparqlService {
         command = command.replace("{BIOFID_IDS}", String.join("\n", biofidIds.stream().map(id -> "<" + id + ">").toList()));
         var result = executeCommand(command, RDFSelectQueryDto.class);
         var alternativeNames = new ArrayList<String>();
-        if(result == null || result.getResults() == null || result.getResults().getBindings() == null) return alternativeNames;
+        if (result == null || result.getResults() == null || result.getResults().getBindings() == null)
+            return alternativeNames;
 
         for (var t : result.getResults().getBindings()) {
             alternativeNames.add(t.getObject().getValue());
@@ -104,7 +131,7 @@ public class JenaSparqlService {
      * @return
      */
     public long biofidIdUrlToGbifTaxonId(String potentialBiofidId) throws IOException {
-        if(!SystemStatus.JenaSparqlStatus.isAlive()) {
+        if (!SystemStatus.JenaSparqlStatus.isAlive()) {
             return -1;
         }
 
@@ -115,7 +142,8 @@ public class JenaSparqlService {
                 "}";
         command = command.replace("{BIOFID_URL_ID}", potentialBiofidId.trim());
         var result = executeCommand(command, RDFSelectQueryDto.class);
-        if(result == null || result.getResults() == null || result.getResults().getBindings() == null || result.getResults().getBindings().isEmpty()) return -1;
+        if (result == null || result.getResults() == null || result.getResults().getBindings() == null || result.getResults().getBindings().isEmpty())
+            return -1;
 
         var gbifTaxonUrl = result.getResults().getBindings().getFirst().getObject().getValue();
         return Long.parseLong(Arrays.stream(gbifTaxonUrl.split("/")).toList().getLast());
@@ -133,8 +161,8 @@ public class JenaSparqlService {
                 + "?query="
                 + URLEncoder.encode(command, StandardCharsets.UTF_8);
         var url = new URL(endPoint);
-        var conn = (HttpURLConnection)url.openConnection();
-        try{
+        var conn = (HttpURLConnection) url.openConnection();
+        try {
             conn.setRequestMethod("GET");
             conn.setRequestProperty("Accept", "application/json");
 
@@ -148,7 +176,9 @@ public class JenaSparqlService {
                         response.append(line);
                     }
 
-                    var gson = new Gson();
+                    var gson = new GsonBuilder()
+                            .registerTypeAdapter(RDFNodeDto.class, new RDFNodeDtoJsonDeserializer())
+                            .create();
                     return gson.fromJson(response.toString(), clazz);
                 }
             } else {

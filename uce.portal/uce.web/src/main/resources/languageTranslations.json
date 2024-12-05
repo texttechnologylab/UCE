@@ -67,6 +67,10 @@
     "de-DE": "Taxonomie",
     "en-EN": "Taxonomy"
   },
+  "ontology": {
+    "de-DE": "Ontologie",
+    "en-EN": "Ontology"
+  },
   "title": {
     "de-DE": "Titel",
     "en-EN": "Title"
@@ -210,6 +214,10 @@
   "alternativeNames": {
     "de-DE": "Alternative Namen",
     "en-EN": "Alternative Names"
+  },
+  "noOntologies": {
+    "de-DE": "Keine Ontologien gefunden.",
+    "en-EN": "No ontologies found."
   },
   "finalSearchTokens": {
     "de-DE": "Die endgültigen Suchbegriffe der Eingabe (nach möglicher Anreicherung).",

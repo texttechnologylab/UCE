@@ -247,6 +247,7 @@ public class App {
 
             path("/wiki", () -> {
                 get("/annotationPage", wikiApi.getAnnotationPage);
+                post("/queryOntology", wikiApi.queryOntology);
             });
 
             path("/corpus", () -> {
