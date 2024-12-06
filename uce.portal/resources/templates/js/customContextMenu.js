@@ -29,7 +29,6 @@ $(document).bind("contextmenu", function (event) {
     }
 
     // Store the correct data in the menu entries
-    console.log(event.target);
     $('.custom-menu [data-action="highlight"]').data('target', event.target.title);
 });
 
@@ -62,7 +61,6 @@ $(".custom-menu li").click(function () {
             break;
         case "highlight":
             const toHighlight = $(this).data('target');
-            console.log(toHighlight);
             $('.document-content .annotation').each(function () {
                if($(this).attr('title').toLowerCase().includes(toHighlight.toLowerCase())){
                    $(this).addClass('highlighted');

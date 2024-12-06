@@ -2,7 +2,7 @@
     font-family: Georgia;
 }
 
-.dot {
+/*.dot {
     position: fixed;
     width: 18px;
     height: 18px;
@@ -28,7 +28,7 @@
 
 .no-cursor{
     cursor: none;
-}
+}*/
 
 body {
 }
@@ -121,12 +121,10 @@ body {
 
 .document-content .annotation {
     z-index: 3;
-    transition: 0.15s;
     position: relative;
 }
 
 .document-content .annotation:hover{
-    transition: 0.15s;
     background-color: var(--dark);
     color:white
 }
@@ -143,13 +141,21 @@ body {
     text-decoration-color: transparent;
 }
 
+.document-content .lemma{
+}
+
 .document-content .wiki {
     color: red;
+}
+
+.document-content .open-wiki-page {
+    display: inline !important;
 }
 
 .document-content .taxon {
     text-decoration-thickness: 1px;
     opacity: 0.75;
+    color: darkred;
     text-decoration-line: underline;
 }
 

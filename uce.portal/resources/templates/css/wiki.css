@@ -371,20 +371,31 @@
     padding-left: 8px;
     padding-right: 8px;
     border-radius: 6px;
-    background-color: rgba(125, 125, 125, 0.15);
     border: lightgray 1px solid;
+    background-color: ghostwhite;
 }
 
 .wiki-page .next-nodes-container .node-div {
     transition: 0.15s;
 }
 
-.wiki-page .next-nodes-container .node-div .node:hover{
+.wiki-page .next-nodes-container .node-div .node:hover {
     background-color: ghostwhite !important;
     transition: 0.15s;
 }
 
+.wiki-page .nodes-list-div:first-child {
+    border-top: 0 !important;
+    border-bottom: 0 !important;
+}
+
 .wiki-page .nodes-list-div {
-    border-left: 1px darkgray solid;
-    border-bottom:solid darkgray 1px;
+    border-top: 1px lightgray dashed;
+    border-bottom: dashed lightgray 1px;
+    transition: 0.15s;
+}
+
+.wiki-page .nodes-list-div:hover{
+    background-color: rgba(125, 125, 125, 0.1);
+    transition: 0.15s;
 }

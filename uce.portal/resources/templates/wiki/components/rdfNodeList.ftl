@@ -1,14 +1,13 @@
 <div class="nodes-list-div">
     <#list rdfNodes as node>
-        <div class="node-div ml-3">
+        <div class="node-div ml-2" data-expanded="false" data-children="false">
             <div class="flexed pl-1 pr-1 pb-1 pt-1 align-items-center justify-content-between node">
                 <p class="w-100 mb-0 small-font">
                     <i class="mb-0 mr-1 small-font text color-secondary fab fa-connectdevelop"></i>
                     <#assign splitted = node.getPredicate().getValue()?split("/")>
                     <span class="mb-0">${splitted[splitted?size - 1]}</span>
                 </p>
-                <label class="mb-0 ml-1 mr-1 small-font text">-</label>
-                <!--<i class="mb-0 ml-2 mr-2 small-font text fas fa-project-diagram"></i>-->
+                <i class="mb-0 ml-2 mr-2 small-font text fab fa-hive"></i>
                 <#if node.getObject()?has_content>
                     <#if node.getObject().getType() == "uri">
                         <a class="w-100 mb-0 text-right small-font color-prime clickable clickable-rdf-node"

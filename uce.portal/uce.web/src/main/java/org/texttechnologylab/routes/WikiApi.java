@@ -55,7 +55,8 @@ public class WikiApi {
             }
 
             var nodes = jenaSparqlService.queryBySubject(value);
-            model.put("rdfNodes", nodes);
+            // We don't need those children rdf nodes that are the exact same as the queried pne
+            model.put("rdfNodes", nodes.stream().filter(n -> !n.getObject().getValue().equals(value)).toList());
             return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "/wiki/components/rdfNodeList.ftl"));
         } catch (Exception ex) {
             logger.error("Error querying the ontology in the graph database " +

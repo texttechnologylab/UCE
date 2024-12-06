@@ -73,10 +73,28 @@ let WikiHandler = (function () {
     }
 
     WikiHandler.prototype.handleRdfNodeClicked = function ($el) {
-        // If an rdf node was clicked, then we query the ontology based on that premis
+        const $container = $el.closest('.node-div');
+
+        // Check if we have already loaded this rdfnode children before
+        const expanded = $container.data('expanded');
+        console.log(expanded);
+        console.log($container.data('children'));
+        if($container.data('children')){
+            if(expanded){
+                $container.find('.nodes-list-div').first().hide();
+            } else{
+                $container.find('.nodes-list-div').first().show();
+            }
+            $container.data('expanded', !expanded);
+            return;
+        }
+
+        // If an rdf node was clicked the first time, then we query the ontology based on that premis
         const tripletType = $el.data('triplettype');
         const value = $el.data('value');
+        const ogHtml = $el.html();
 
+        $el.html('Fetching...');
         $.ajax({
             url: "/api/wiki/queryOntology",
             type: "POST",
@@ -86,13 +104,17 @@ let WikiHandler = (function () {
             }),
             contentType: "application/json",
             success: async function (response) {
-                const $container = $el.closest('.node-div');
                 $container.append(response);
+                $container.data('expanded', true);
+                $container.data('children', true);
             },
             error: function (xhr, status, error) {
+                // TODO: Add a better error toast here
+                alert("Request failed, since the server wasn't reachable.")
                 console.error(xhr.responseText);
             }
         }).always(function () {
+            $el.html(ogHtml);
         });
     }
 
