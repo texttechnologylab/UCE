@@ -74,6 +74,13 @@ let WikiHandler = (function () {
 
     WikiHandler.prototype.handleRdfNodeClicked = function ($el) {
         const $container = $el.closest('.node-div');
+        const value = $el.data('value');
+
+        // Maybe the value is a gbif link. Open it then.
+        if(value.includes('www.gbif.org')){
+            window.open(value, '_blank').focus();
+            return;
+        }
 
         // Check if we have already loaded this rdfnode children before
         const expanded = $container.data('expanded');
@@ -91,7 +98,6 @@ let WikiHandler = (function () {
 
         // If an rdf node was clicked the first time, then we query the ontology based on that premis
         const tripletType = $el.data('triplettype');
-        const value = $el.data('value');
         const ogHtml = $el.html();
 
         $el.html('Fetching...');

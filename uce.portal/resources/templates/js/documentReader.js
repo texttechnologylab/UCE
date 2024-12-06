@@ -1,10 +1,10 @@
-var currentFocusedPage = 0;
+let currentFocusedPage = 0;
 
 /**
  * Handles the expanding and depanding of the side bar
  */
 $('body').on('click', '.side-bar .expander', function () {
-    var expanded = $(this).data('expanded');
+    let expanded = $(this).data('expanded');
 
     if (expanded) {
         $('.side-bar').css('width', '20px');
@@ -40,6 +40,21 @@ $('body').on('click', '.side-bar .toggle-focus-btn', function () {
     }
 
     $blurrer.data('toggled', !toggled);
+})
+
+/**
+ * Handles the toggling of the annotations highlighting.
+ */
+$('body').on('click', '.side-bar .toggle-highlighting-btn', function () {
+    let highlight = $(this).data('highlighted');
+    highlight = !highlight;
+
+    $('.document-content .annotation').each(function(){
+        if(highlight) $(this).removeClass('no-highlighting');
+        else $(this).addClass('no-highlighting');
+    })
+
+    $(this).data('highlighted', highlight);
 })
 
 /**
@@ -100,6 +115,14 @@ $('body').on('mouseenter', '.reader-container .annotation', function () {
 $('body').on('mouseleave', '.reader-container .annotation', function () {
 })
 
+$('body').on('click', '.found-searchtokens-list .found-search-token', function () {
+    const y = $(this).data('y');
+    window.scroll({
+        top: (y - 400),
+        behavior: 'smooth'
+    });
+})
+
 $(document).ready(function () {
     checkScroll();
 
@@ -110,17 +133,19 @@ $(document).ready(function () {
     activatePopovers();
 
     // Highlight potential search terms
-    highlightPotentialSearchTokens();
+    for (let i = 1; i < 11; i++) searchPotentialSearchTokensInPage(i);
 })
 
 /**
  * Handle the custom cursor
+ * I removed that custom cursor for now.
  */
-document.addEventListener("mousemove", function (event) {
+
+/*document.addEventListener("mousemove", function (event) {
     var dot = document.getElementById("custom-cursor");
     dot.style.left = event.clientX - 9 + "px";
     dot.style.top = event.clientY - 9 + "px";
-});
+});*/
 
 /**
  * Handle the lazy loading of more pages
@@ -129,13 +154,12 @@ async function lazyLoadPages() {
     const $readerContainer = $('.reader-container');
     const id = $readerContainer.data('id');
     const pagesCount = $readerContainer.data('pagescount');
-    let counter = 0;
     for (let i = 10; i <= pagesCount; i += 10) {
         const $loadedPagesCount = $('.site-container .loaded-pages-count');
         $loadedPagesCount.html(i);
-        if (i >= pagesCount)
+        if (i >= pagesCount) {
             $loadedPagesCount.html(i);
-        else {
+        } else {
             await $.ajax({
                 url: "/api/document/reader/pagesList?id=" + id + "&skip=" + i,
                 type: "GET",
@@ -143,8 +167,7 @@ async function lazyLoadPages() {
                     // Render the new pages
                     $('.reader-container .document-content').append(response);
                     activatePopovers();
-                    counter++;
-                    highlightPotentialSearchTokens();
+                    for (let k = i + 1; k < Math.max(i + 10, pagesCount); k++) searchPotentialSearchTokensInPage(k);
                 },
                 error: function (xhr, status, error) {
                     console.error(xhr.responseText);
@@ -157,25 +180,30 @@ async function lazyLoadPages() {
     }
 
     $('.site-container .pages-loader-popup').fadeOut(250);
+    $('.search-tokens-box .fa-spinner').fadeOut(250);
 }
 
-function highlightPotentialSearchTokens() {
+function searchPotentialSearchTokensInPage(page) {
     let searchTokens = $('.reader-container').data('searchtokens');
     if (searchTokens === undefined || searchTokens === '') return;
-
     searchTokens = searchTokens.split('[TOKEN]');
-    $('.document-content .annotation').each(function () {
+    $('.document-content .page[data-id="' + page + '"] .annotation').each(function () {
         for (let i = 0; i < searchTokens.length; i++) {
             const toHighlight = searchTokens[i];
             if ($(this).attr('title').toLowerCase().includes(toHighlight.toLowerCase())) {
                 $(this).addClass('highlighted');
                 const y = $(this).get(0).getBoundingClientRect().top + window.scrollY;
-                window.scroll({
-                    top: (y - 400),
-                    behavior: 'smooth'
-                });
-            } else {
-                $(this).removeClass('highlighted');
+                // We cant use \$\{ the syntax as freemarker owns this syntax and hence, throws an error.
+                let html = `
+                    <div data-y="[y]" class="found-search-token flexed mt-1 align-items-center justify-content-between">
+                        <label class="font-italic mb-0 text small-font no-pointer-events">"[value]"</label>
+                        <label class="small-font mb-0">
+                            <i class="color-prime fas fa-file-alt ml-2 mr-1"></i>
+                            <span class="text mb-0">[page]</span>
+                        </label>
+                    </div>
+                `.replace('[value]', toHighlight).replace('[y]', y).replace('[page]', page);
+                $('.found-searchtokens-list').append(html);
             }
         }
     });

@@ -131,9 +131,20 @@ body {
 
 .document-content .annotation.highlighted{
     font-weight: bold;
-    background-color: rgba(235, 226, 52, 1);
-    font-size: large;
-    color:black !important;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-bottom: 1.5px;
+    color:var(--dark);
+    padding-top: 1.5px;
+    border-radius: 3px;
+    border:lightgrey 1px solid;
+    background-color: rgba(235, 226, 52, 0.75);
+}
+
+.document-content .annotation.no-highlighting{
+    color:gray !important;
+    opacity: 1 !important;
+    text-decoration: none !important;
 }
 
 .document-content .time {
@@ -142,6 +153,7 @@ body {
 }
 
 .document-content .lemma{
+    z-index: 0 !important;
 }
 
 .document-content .wiki {
@@ -225,4 +237,22 @@ body {
 .side-bar .side-bar-content .group-box .toggled-btn{
     background-color: var(--prime);
     color:white;
+}
+
+.side-bar .found-searchtokens-list{
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.side-bar .found-searchtokens-list .found-search-token{
+    cursor: pointer;
+    padding-left: 6px;
+    padding-right: 6px;
+    padding-top: 3px;
+    padding-bottom: 3px;
+    border-radius: 3px;
+}
+
+.side-bar .found-searchtokens-list .found-search-token:hover{
+    background-color: lightgray;
 }
