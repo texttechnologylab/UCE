@@ -1,7 +1,7 @@
 let currentFocusedPage = 0;
 
 /**
- * Handles the expanding and depanding of the side bar
+ * Handles the expanding and de-expanding of the side bar
  */
 $('body').on('click', '.side-bar .expander', function () {
     let expanded = $(this).data('expanded');
@@ -49,7 +49,7 @@ $('body').on('click', '.side-bar .toggle-highlighting-btn', function () {
     let highlight = $(this).data('highlighted');
     highlight = !highlight;
 
-    $('.document-content .annotation').each(function(){
+    $('.document-content .annotation, .multi-annotation').each(function(){
         if(highlight) $(this).removeClass('no-highlighting');
         else $(this).addClass('no-highlighting');
     })
@@ -115,6 +115,9 @@ $('body').on('mouseenter', '.reader-container .annotation', function () {
 $('body').on('mouseleave', '.reader-container .annotation', function () {
 })
 
+/**
+ * Jumps to that location of the search occurrence.
+ */
 $('body').on('click', '.found-searchtokens-list .found-search-token', function () {
     const y = $(this).data('y');
     window.scroll({
@@ -132,7 +135,7 @@ $(document).ready(function () {
     // Enable popovers
     activatePopovers();
 
-    // Highlight potential search terms
+    // Highlight potential search terms for the first 10 pages
     for (let i = 1; i < 11; i++) searchPotentialSearchTokensInPage(i);
 })
 
@@ -154,9 +157,11 @@ async function lazyLoadPages() {
     const $readerContainer = $('.reader-container');
     const id = $readerContainer.data('id');
     const pagesCount = $readerContainer.data('pagescount');
+
     for (let i = 10; i <= pagesCount; i += 10) {
         const $loadedPagesCount = $('.site-container .loaded-pages-count');
         $loadedPagesCount.html(i);
+
         if (i >= pagesCount) {
             $loadedPagesCount.html(i);
         } else {
@@ -183,16 +188,23 @@ async function lazyLoadPages() {
     $('.search-tokens-box .fa-spinner').fadeOut(250);
 }
 
+/**
+ * Within a page container, look for possible search tokens.
+ */
 function searchPotentialSearchTokensInPage(page) {
     let searchTokens = $('.reader-container').data('searchtokens');
     if (searchTokens === undefined || searchTokens === '') return;
+
     searchTokens = searchTokens.split('[TOKEN]');
-    $('.document-content .page[data-id="' + page + '"] .annotation').each(function () {
+
+    $('.document-content .page[data-id="' + page + '"] .annotation, .multi-annotation').each(function () {
         for (let i = 0; i < searchTokens.length; i++) {
             const toHighlight = searchTokens[i];
+
             if ($(this).attr('title').toLowerCase().includes(toHighlight.toLowerCase())) {
                 $(this).addClass('highlighted');
                 const y = $(this).get(0).getBoundingClientRect().top + window.scrollY;
+
                 // We cant use \$\{ the syntax as freemarker owns this syntax and hence, throws an error.
                 let html = `
                     <div data-y="[y]" class="found-search-token flexed mt-1 align-items-center justify-content-between">
@@ -203,6 +215,7 @@ function searchPotentialSearchTokensInPage(page) {
                         </label>
                     </div>
                 `.replace('[value]', toHighlight).replace('[y]', y).replace('[page]', page);
+
                 $('.found-searchtokens-list').append(html);
             }
         }

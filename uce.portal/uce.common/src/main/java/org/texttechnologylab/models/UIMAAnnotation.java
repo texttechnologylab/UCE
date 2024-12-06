@@ -12,7 +12,6 @@ import java.util.TreeMap;
 
 @MappedSuperclass
 public class UIMAAnnotation extends ModelBase {
-
     @Column(name = "\"beginn\"")
     private int begin;
     @Column(name = "\"endd\"")
@@ -56,45 +55,67 @@ public class UIMAAnnotation extends ModelBase {
         int offset = getBegin();
         coveredText = getCoveredText(coveredText);
 
-        // Prepare annotations grouped by start and end indices
-        Map<Integer, List<String>> startTags = new TreeMap<>();
+        // We build start and end of the annotations and store them in the TreeMap
+        Map<Integer, List<UIMAAnnotation>> startTags = new TreeMap<>();
         Map<Integer, List<String>> endTags = new TreeMap<>();
 
         for (var annotation : annotations) {
             if (annotation.getBegin() < getBegin() || annotation.getEnd() > getEnd() || annotation.getBegin() == annotation.getEnd()) {
                 continue;
             }
-            int start = annotation.getBegin() - offset;
-            int end = annotation.getEnd() - offset;
+            var start = annotation.getBegin() - offset;
+            var end = annotation.getEnd() - offset;
 
-            // Generate HTML opening and closing tags
-            String openingTag = generateHTMLTag(annotation);
-            String closingTag = "</span>";
+            //var openingTag = generateHTMLTag(annotation);
+            var closingTag = "</span>";
 
             // Add to respective maps
-            startTags.computeIfAbsent(start, k -> new ArrayList<>()).add(openingTag);
+            startTags.computeIfAbsent(start, k -> new ArrayList<>()).add(annotation);
             endTags.computeIfAbsent(end, k -> new ArrayList<>()).add(closingTag);
         }
 
         // Build the final HTML string in a single pass
-        StringBuilder finalText = new StringBuilder();
+        var finalText = new StringBuilder();
+
         for (int i = 0; i < coveredText.length(); i++) {
             // Add opening tags at this index
             if (startTags.containsKey(i)) {
-                finalText.append(startTags.get(i).getFirst());
+                finalText.append(generateMultiHTMLTag(startTags.get(i)));
             }
 
             // Append the current character
             finalText.append(coveredText.charAt(i));
 
-            // Add closing tags at this index
+            // Add closing tags at this index. Add the END tags before OPENING NEW ones
             if (endTags.containsKey(i)) {
-                finalText.append(endTags.get(i).getFirst());
+                //finalText.append(endTags.get(i).getFirst());
+                for (var tag : endTags.get(i)) {
+                    finalText.append(tag);
+                }
             }
         }
 
         // We apply some heuristic post-processing to make the text more readable.
         return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
+    }
+
+    private String generateMultiHTMLTag(List<UIMAAnnotation> annotations) {
+        var size = annotations.size();
+
+        if (size == 0) return "";
+        else if (size == 1) return generateHTMLTag(annotations.getFirst());
+        else {
+            var btnsHtml = new StringBuilder();
+            for (var anno : annotations) {
+                btnsHtml.append(generateHTMLTag(anno)).append(anno.getClass().getSimpleName()).append("</span>");
+            }
+
+            var tag = "<span class='multi-annotation position-relative'>" +
+                            "<div class='multi-annotation-popup'>" +
+                            btnsHtml +
+                            "</div>";
+            return tag;
+        }
     }
 
     // Utility method to generate an HTML opening tag for an annotation

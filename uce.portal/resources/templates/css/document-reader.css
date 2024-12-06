@@ -119,6 +119,51 @@ body {
     margin-bottom: 24px;
 }
 
+.document-content .page .page-content{
+    color:gray;
+    line-height:25px;
+}
+
+.document-content .multi-annotation{
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-decoration-color: dodgerblue;
+}
+
+.document-content .multi-annotation:hover{
+    background-color: lightgrey;
+}
+
+.document-content .multi-annotation:hover .multi-annotation-popup{
+    display: flex;
+}
+
+.document-content .multi-annotation-popup{
+    box-shadow: rgba(0, 0, 0, 0.1) -2px 4px 12px -6px;
+    position: absolute;
+    top:0;
+    left:50%;
+    transform: translate(-50%, -105%);
+    padding-top: 6px;
+    padding-left: 3px;
+    padding-right: 3px;
+    padding-bottom: 6px;
+    display: none;
+    background-color: white;
+    border-radius: 3px;
+    border:gray 1px solid;
+}
+
+.document-content .multi-annotation-popup .annotation{
+    border-right: 1px lightgray solid;
+    padding-left: 6px;
+    padding-right: 6px;
+}
+
+.document-content .multi-annotation-popup .annotation:last-child{
+    border-right:0 !important;
+}
+
 .document-content .annotation {
     z-index: 3;
     position: relative;
@@ -141,7 +186,7 @@ body {
     background-color: rgba(235, 226, 52, 0.75);
 }
 
-.document-content .annotation.no-highlighting{
+.document-content .no-highlighting{
     color:gray !important;
     opacity: 1 !important;
     text-decoration: none !important;
