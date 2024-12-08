@@ -5,10 +5,7 @@ import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 @MappedSuperclass
 public class UIMAAnnotation extends ModelBase {
@@ -103,43 +100,43 @@ public class UIMAAnnotation extends ModelBase {
         var size = annotations.size();
 
         if (size == 0) return "";
-        else if (size == 1) return generateHTMLTag(annotations.getFirst());
+        else if (size == 1) return generateHTMLTag(annotations.getFirst(), true);
         else {
             var btnsHtml = new StringBuilder();
             for (var anno : annotations) {
-                btnsHtml.append(generateHTMLTag(anno)).append(anno.getClass().getSimpleName()).append("</span>");
+                btnsHtml.append(generateHTMLTag(anno, true)).append(anno.getClass().getSimpleName()).append("</span>");
             }
 
-            var tag = "<span class='multi-annotation position-relative'>" +
+            var tag = String.format("<span class='multi-annotation' title='%1$s'>" +
                             "<div class='multi-annotation-popup'>" +
-                            btnsHtml +
-                            "</div>";
+                            btnsHtml.toString().replace("%", "%%") +
+                            "</div>", UUID.randomUUID());
             return tag;
         }
     }
 
     // Utility method to generate an HTML opening tag for an annotation
-    private String generateHTMLTag(UIMAAnnotation annotation) {
+    private String generateHTMLTag(UIMAAnnotation annotation, boolean includeTitle) {
         if (annotation instanceof NamedEntity ne) {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu ne-%1$s' title='%2$s' data-wid='%3$s' data-wcovered='%4$s'>",
-                    ne.getType(), ne.getCoveredText(), ne.getWikiId(), ne.getCoveredText());
+                    ne.getType(), includeTitle ? ne.getCoveredText() : "", ne.getWikiId(), ne.getCoveredText());
         } else if (annotation instanceof Time time) {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu time' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
-                    time.getCoveredText(), time.getWikiId(), time.getCoveredText());
+                    includeTitle ? time.getCoveredText() : "", time.getWikiId(), time.getCoveredText());
         } else if (annotation instanceof WikipediaLink wikipediaLink) {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu wiki' title='%1$s'>",
-                    wikipediaLink.getCoveredText());
+                    includeTitle ? wikipediaLink.getCoveredText() : "");
         } else if (annotation instanceof Taxon taxon) {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu taxon' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
-                    taxon.getCoveredText(), taxon.getWikiId(), taxon.getCoveredText());
+                    includeTitle ? taxon.getCoveredText() : "", taxon.getWikiId(), taxon.getCoveredText());
         } else if (annotation instanceof Lemma lemma) {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu lemma' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
-                    lemma.getCoveredText(), lemma.getWikiId(), lemma.getCoveredText());
+                    includeTitle ? lemma.getCoveredText() : "", lemma.getWikiId(), lemma.getCoveredText());
         }
         return "";
     }

@@ -126,6 +126,8 @@ body {
 
 .document-content .multi-annotation{
     text-decoration: underline;
+    position: relative;
+    z-index: 3;
     text-decoration-thickness: 2px;
     text-decoration-color: dodgerblue;
 }
@@ -174,7 +176,7 @@ body {
     color:white
 }
 
-.document-content .annotation.highlighted{
+.document-content .highlighted{
     font-weight: bold;
     padding-left: 3px;
     padding-right: 3px;

@@ -119,12 +119,13 @@ $('body').on('mouseleave', '.reader-container .annotation', function () {
  * Jumps to that location of the search occurrence.
  */
 $('body').on('click', '.found-searchtokens-list .found-search-token', function () {
-    const y = $(this).data('y');
-    window.scroll({
-        top: (y - 400),
-        behavior: 'smooth'
-    });
-})
+    const pageNumber = $(this).data('page');
+    const $page = $('.document-content .page[data-id="' + pageNumber + '"] ');
+
+    $([document.documentElement, document.body]).animate({
+        scrollTop: $page.offset().top
+    }, 1000);
+});
 
 $(document).ready(function () {
     checkScroll();
@@ -196,25 +197,35 @@ function searchPotentialSearchTokensInPage(page) {
     if (searchTokens === undefined || searchTokens === '') return;
 
     searchTokens = searchTokens.split('[TOKEN]');
+    let highlightedAnnos = [];
+    const $page = $('.document-content .page[data-id="' + page + '"] ');
 
-    $('.document-content .page[data-id="' + page + '"] .annotation, .multi-annotation').each(function () {
+    $page.find('.annotation').each(function () {
         for (let i = 0; i < searchTokens.length; i++) {
             const toHighlight = searchTokens[i];
+            let $el = $(this);
 
-            if ($(this).attr('title').toLowerCase().includes(toHighlight.toLowerCase())) {
-                $(this).addClass('highlighted');
-                const y = $(this).get(0).getBoundingClientRect().top + window.scrollY;
+            if ($el.attr('title').toLowerCase().includes(toHighlight.toLowerCase())) {
+
+                // If this annotation is within a multi-annotation, we need to highlight the multi-anno.
+                if($el.parent().hasClass('multi-annotation-popup')){
+                    $el = $el.closest('.multi-annotation');
+                    if(highlightedAnnos.includes($el.attr('title'))) continue;
+                    else highlightedAnnos.push($el.attr('title'))
+                }
+
+                $el.addClass('highlighted');
 
                 // We cant use \$\{ the syntax as freemarker owns this syntax and hence, throws an error.
                 let html = `
-                    <div data-y="[y]" class="found-search-token flexed mt-1 align-items-center justify-content-between">
+                    <div data-page="[page]" class="found-search-token flexed mt-1 align-items-center justify-content-between">
                         <label class="font-italic mb-0 text small-font no-pointer-events">"[value]"</label>
                         <label class="small-font mb-0">
                             <i class="color-prime fas fa-file-alt ml-2 mr-1"></i>
                             <span class="text mb-0">[page]</span>
                         </label>
                     </div>
-                `.replace('[value]', toHighlight).replace('[y]', y).replace('[page]', page);
+                `.replace('[value]', toHighlight).replace('[page]', page).replace('[page]', page);
 
                 $('.found-searchtokens-list').append(html);
             }
