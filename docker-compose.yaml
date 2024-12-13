@@ -38,6 +38,9 @@ services:
       - uce-postgresql-db
     networks:
       - app_net
+    volumes:
+      - "./../releases/uceConfig.json:/app/config/uceConfig.json"
+    command: ["java", "-jar", "./target/webportal-jar-with-dependencies.jar", "-cf", "/app/config/uceConfig.json"]
 
   uce-postgresql-db:
     image: pgvector/pgvector:pg16
