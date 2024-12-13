@@ -1,7 +1,5 @@
 import { Mesh, MeshStandardMaterial, MathUtils, Vector3, MeshBasicMaterial } from 'three';
 import { TextGeometry } from 'three/addons/geometries/TextGeometry.js';
-import { FontLoader } from 'three/addons/loaders/FontLoader.js';
-
 class ThreeText extends Mesh {
 
     constructor(font, color, text, size = 0.2) {

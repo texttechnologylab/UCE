@@ -12,11 +12,11 @@
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
     <style>
-        <#include "../css/site.css">
-        <#include "../css/document-reader.css">
-        <#include "../css/custom-context-menu.css">
+        <#include "*/css/site.css">
+        <#include "*/css/document-reader.css">
+        <#include "*/css/custom-context-menu.css">
         <#include "*/css/wiki.css">
-        <#include "../css/bg-anim.css">
+        <#include "*/css/bg-anim.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
@@ -36,11 +36,6 @@
 </head>
 
 <body class="no-cursor">
-
-<link href='https://fonts.googleapis.com/css?family=Lato:300,400,700' rel='stylesheet' type='text/css'>
-<div id='stars'></div>
-<div id='stars2'></div>
-<div id='stars3'></div>
 
 <div class="site-container">
 
@@ -170,13 +165,13 @@
 </body>
 
 <script type="module">
-    <#include "../js/corpusUniverse.js">
+    <#include "*/js/corpusUniverse.js">
 </script>
 
 <script>
-    <#include "../js/site.js">
-    <#include "../js/documentReader.js">
-    <#include "../js/customContextMenu.js">
+    <#include "*/js/site.js">
+    <#include "*/js/documentReader.js">
+    <#include "*/js/customContextMenu.js">
 </script>
 
 </html>

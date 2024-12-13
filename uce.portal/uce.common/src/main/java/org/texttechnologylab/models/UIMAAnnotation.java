@@ -6,6 +6,7 @@ import org.texttechnologylab.utils.StringUtils;
 import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 import java.util.*;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @MappedSuperclass
 public class UIMAAnnotation extends ModelBase {
@@ -50,6 +51,7 @@ public class UIMAAnnotation extends ModelBase {
      */
     public String buildHTMLString(List<UIMAAnnotation> annotations, String coveredText) {
         int offset = getBegin();
+        int errorOffset = 0;
         coveredText = getCoveredText(coveredText);
 
         // We build start and end of the annotations and store them in the TreeMap
@@ -57,11 +59,30 @@ public class UIMAAnnotation extends ModelBase {
         Map<Integer, List<String>> endTags = new TreeMap<>();
 
         for (var annotation : annotations) {
-            if (annotation.getBegin() < getBegin() || annotation.getEnd() > getEnd() || annotation.getBegin() == annotation.getEnd()) {
+
+            if(annotation.getBegin() < getBegin() && annotation.getEnd() < getBegin()){
+                if(annotation.getCoveredText().isEmpty()){
+                    errorOffset += 1;
+                    continue;
+                }
+            }
+
+            if (annotation.getBegin() < getBegin()
+                    || annotation.getEnd() > getEnd()
+                    || annotation.getBegin() == annotation.getEnd()) {
                 continue;
             }
-            var start = annotation.getBegin() - offset;
-            var end = annotation.getEnd() - offset;
+
+            // So sometimes, we have broken annotations have a supposed length of "1" but really,
+            // they don't as they are empty. This screws up our begin and ends though! Hence, when we
+            // meet an empty annotation, track it and substract a single value of the begins and ends!
+            if(annotation.getCoveredText().isEmpty()){
+                errorOffset += 1;
+                continue;
+            }
+
+            var start = annotation.getBegin() - offset - errorOffset;
+            var end = annotation.getEnd() - offset - errorOffset;
 
             //var openingTag = generateHTMLTag(annotation);
             var closingTag = "</span>";
@@ -75,14 +96,6 @@ public class UIMAAnnotation extends ModelBase {
         var finalText = new StringBuilder();
 
         for (int i = 0; i < coveredText.length(); i++) {
-            // Add opening tags at this index
-            if (startTags.containsKey(i)) {
-                finalText.append(generateMultiHTMLTag(startTags.get(i)));
-            }
-
-            // Append the current character
-            finalText.append(coveredText.charAt(i));
-
             // Add closing tags at this index. Add the END tags before OPENING NEW ones
             if (endTags.containsKey(i)) {
                 //finalText.append(endTags.get(i).getFirst());
@@ -90,6 +103,14 @@ public class UIMAAnnotation extends ModelBase {
                     finalText.append(tag);
                 }
             }
+
+            // Add opening tags at this index
+            if (startTags.containsKey(i)) {
+                finalText.append(generateMultiHTMLTag(startTags.get(i)));
+            }
+
+            // Append the current character
+            finalText.append(coveredText.charAt(i));
         }
 
         // We apply some heuristic post-processing to make the text more readable.
@@ -107,11 +128,10 @@ public class UIMAAnnotation extends ModelBase {
                 btnsHtml.append(generateHTMLTag(anno, true)).append(anno.getClass().getSimpleName()).append("</span>");
             }
 
-            var tag = String.format("<span class='multi-annotation' title='%1$s'>" +
-                            "<div class='multi-annotation-popup'>" +
-                            btnsHtml.toString().replace("%", "%%") +
-                            "</div>", UUID.randomUUID());
-            return tag;
+            return String.format("<span class='multi-annotation' title='%1$s'>" +
+                    "<div class='multi-annotation-popup'>" +
+                    btnsHtml.toString().replace("%", "%%") +
+                    "</div>", UUID.randomUUID());
         }
     }
 

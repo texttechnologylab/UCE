@@ -67,7 +67,7 @@ let WikiHandler = (function () {
     }
 
     WikiHandler.prototype.addUniverseToDocumentWikiPage = async function (corpusId, currentCenter) {
-        this.universeHandler = window.getNewCorpusUniverseHandler;
+        this.universeHandler = getNewCorpusUniverseHandler;
         await this.universeHandler.createEmptyUniverse('wiki-universe-container');
         await this.universeHandler.fromCorpus(corpusId, currentCenter);
     }

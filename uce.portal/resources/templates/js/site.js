@@ -151,6 +151,7 @@ $('body').on('click', '.open-globe', function () {
     openNewGlobeView(type, id);
 })
 
+
 /**
  * Opens a new globe view
  * @param modelId

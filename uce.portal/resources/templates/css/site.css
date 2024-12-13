@@ -288,6 +288,23 @@ nav .selected-nav-btn.text::before {
     }
 }
 
+.open-corpus-universe-btn{
+    position: absolute;
+    top:6px;
+    right:6px;
+    height: 40px;
+    width: 40px;
+    border: lightgray 1px solid;
+    z-index: 9;
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: white;
+    cursor: pointer;
+    border-radius: 50%;
+}
+
 .ne-MISC {
     color: rgba(125, 125, 125, 1);
 }

@@ -224,6 +224,8 @@ public class Document extends ModelBase implements WikiModel {
         annotations.addAll(times.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(wikipediaLinks.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(lemmas.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+
+        annotations.sort(Comparator.comparingInt(UIMAAnnotation::getBegin));
         return annotations;
     }
 
