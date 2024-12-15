@@ -3,10 +3,13 @@ package org.texttechnologylab.config;
 import com.google.gson.Gson;
 import org.texttechnologylab.config.uceConfig.CorporateConfig;
 import org.texttechnologylab.config.uceConfig.MetaConfig;
+import org.texttechnologylab.config.uceConfig.SettingsConfig;
 
 public class UceConfig {
     private MetaConfig meta;
     private CorporateConfig corporate;
+
+    private SettingsConfig settings;
 
     public static UceConfig fromJson(String uceConfigJson){
         var gson = new Gson();
@@ -15,6 +18,14 @@ public class UceConfig {
     }
 
     public UceConfig(){}
+
+    public SettingsConfig getSettings() {
+        return settings;
+    }
+
+    public void setSettings(SettingsConfig settings) {
+        this.settings = settings;
+    }
 
     public MetaConfig getMeta() {
         return meta;

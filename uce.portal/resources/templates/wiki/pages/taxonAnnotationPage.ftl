@@ -37,6 +37,15 @@
         </div>
     </div>
 
+    <!-- The next rdf nodes from the sparql db if they exist -->
+    <div class="mt-1 mb-3">
+        <p class="mb-1 w-100 text-center">
+            ${languageResource.get("ontology")}
+        </p>
+        <#assign rdfNodes = vm.getNextRDFNodes()>
+        <#include '*/wiki/components/ontology.ftl' >
+    </div>
+
     <!-- alternative names of this taxon -->
     <#if vm.getAlternativeNames()?has_content && vm.getAlternativeNames()?size gt 0>
         <div class="mt-0 mb-4">

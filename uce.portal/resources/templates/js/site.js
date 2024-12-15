@@ -73,8 +73,9 @@ $('body').on('change', '#corpus-select', function () {
     if (hasSr === 'true') $('.open-sr-builder-btn').show(50);
     else $('.open-sr-builder-btn').hide(50);
 
-    if (hasBiofidOnthology === 'true' && sparqlAlive === 'true') $('.taxonomy-tree-include').show();
-    else $('.taxonomy-tree-include').hide();
+    // The taxonomy tree will maybe be removed. Just hide it always for now.
+    //if (hasBiofidOnthology === 'true' && sparqlAlive === 'true') $('.taxonomy-tree-include').show();
+    //else $('.taxonomy-tree-include').hide();
 
     if (hasEmbeddings === 'true') $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').show();
     else $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').hide();
@@ -149,6 +150,7 @@ $('body').on('click', '.open-globe', function () {
     const type = $(this).data('type');
     openNewGlobeView(type, id);
 })
+
 
 /**
  * Opens a new globe view

@@ -27,16 +27,21 @@ import java.util.stream.Collectors;
 @Service
 public class PostgresqlDataInterface_Impl implements DataInterface {
 
-    private SessionFactory sessionFactory;
+    private final SessionFactory sessionFactory;
 
     private Session getCurrentSession() {
         return sessionFactory.openSession();
     }
 
     public PostgresqlDataInterface_Impl() {
+        sessionFactory = HibernateConf.buildSessionFactory();
+        TestConnection();
+    }
+
+    public void TestConnection(){
         try {
-            sessionFactory = HibernateConf.buildSessionFactory();
-            var test = getCorpusById(1);
+            var log = new UCELog("localhost", "TEST", "/", "Testing DB Connection", "/");
+            saveUceLog(log);
             SystemStatus.PostgresqlDbStatus = new HealthStatus(true, "", null);
         } catch (Exception ex) {
             SystemStatus.PostgresqlDbStatus = new HealthStatus(false, "Couldn't build the session factory.", ex);
@@ -431,6 +436,29 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public Document getDocumentByCorpusAndDocumentId(long corpusId, String documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var criteriaQuery = cb.createQuery(Document.class);
+            var root = criteriaQuery.from(Document.class);
+
+            criteriaQuery.select(root)
+                    .where(
+                            cb.and(
+                                    cb.equal(root.get("corpusId"), corpusId),
+                                    cb.equal(root.get("documentId"), documentId)
+                            )
+                    );
+
+            Document doc = session.createQuery(criteriaQuery).uniqueResult();
+
+            if (doc != null) {
+                Hibernate.initialize(doc.getPages());
+            }
+            return doc;
+        });
+    }
+
     public List<GbifOccurrence> getGbifOccurrencesByGbifTaxonId(long gbifTaxonId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteriaBuilder = session.getCriteriaBuilder();
@@ -658,6 +686,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getTaxons());
         Hibernate.initialize(doc.getTimes());
         Hibernate.initialize(doc.getWikipediaLinks());
+        Hibernate.initialize(doc.getLemmas());
         for (var link : doc.getWikipediaLinks()) {
             Hibernate.initialize(link.getWikiDataHyponyms());
         }

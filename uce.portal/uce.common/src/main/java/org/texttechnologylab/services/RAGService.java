@@ -2,13 +2,12 @@ package org.texttechnologylab.services;
 
 import java.io.IOException;
 import java.lang.reflect.InvocationTargetException;
-import java.net.InetAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
+import java.net.*;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.sql.*;
+import java.time.Duration;
 import java.util.*;
 
 import com.google.gson.Gson;
@@ -16,6 +15,7 @@ import com.pgvector.PGvector;
 import org.jsoup.HttpStatusException;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
+import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.corpus.TopicDistribution;
 import org.texttechnologylab.models.dto.*;
@@ -34,15 +34,21 @@ public class RAGService {
     private CommonConfig config;
 
     public RAGService(PostgresqlDataInterface_Impl postgresqlDataInterfaceImpl) {
+        this.postgresqlDataInterfaceImpl = postgresqlDataInterfaceImpl;
+        TestConnection();
+    }
+
+    public void TestConnection(){
         try {
             this.config = new CommonConfig();
-            this.postgresqlDataInterfaceImpl = postgresqlDataInterfaceImpl;
             this.vectorDbConnection = setupVectorDbConnection();
 
-            if(InetAddress.getByName(this.config.getRAGWebserverBaseUrl()).isReachable(2)){
+            var test = ExceptionUtils.tryCatchLog(
+                    () -> getEmbeddingForText("This is an embedding test."),
+                    (ex) -> SystemStatus.RagServiceStatus = new HealthStatus(false, "Embedding the text failed", ex));
+
+            if(test != null){
                 SystemStatus.RagServiceStatus = new HealthStatus(true, "", null);
-            } else{
-                SystemStatus.RagServiceStatus = new HealthStatus(false, "Couldn't connect to the vector database, Ping timeout.", null);
             }
         } catch (Exception ex) {
             SystemStatus.RagServiceStatus = new HealthStatus(false, "Couldn't connect to the vector database.", ex);
@@ -411,6 +417,23 @@ public class RAGService {
     }
 
     /**
+     *  Returns true if the given document by its id has documentchunkembeddings in the database.
+     */
+    public boolean documentHasDocumentEmbedding(long documentId) throws SQLException {
+        String query = "SELECT COUNT(*) FROM documentembeddings WHERE document_id = ?";
+        try (var statement = vectorDbConnection.prepareStatement(query)) {
+            statement.setLong(1, documentId);
+            try (var resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    int count = resultSet.getInt(1);
+                    return count > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
      * Saves a document embedding.
      */
     public void saveDocumentEmbedding(DocumentEmbedding documentEmbedding) throws SQLException {
@@ -432,6 +455,23 @@ public class RAGService {
                 new PGvector(documentEmbedding.getTsne2d()),
                 new PGvector(documentEmbedding.getTsne3d()),
                 documentEmbedding.getDocument_id());
+    }
+
+    /**
+     *  Returns true if the given document by its id has documentchunkembeddings in the database.
+     */
+    public boolean documentHasDocumentChunkEmbeddings(long documentId) throws SQLException {
+        String query = "SELECT COUNT(*) FROM documentchunkembeddings WHERE document_id = ?";
+        try (var statement = vectorDbConnection.prepareStatement(query)) {
+            statement.setLong(1, documentId);
+            try (var resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    int count = resultSet.getInt(1);
+                    return count > 0;
+                }
+            }
+        }
+        return false;
     }
 
     /**
@@ -564,11 +604,14 @@ public class RAGService {
         var jsonData = gson.toJson(params);
 
         // Create request
-        var request = HttpRequest.newBuilder()
+        var request = HttpRequest
+                .newBuilder()
                 .uri(new URI(url))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonData))
+                .timeout(Duration.ofSeconds(2))
                 .build();
+
         // Send request and get response
         var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
         var statusCode = response.statusCode();

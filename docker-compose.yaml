@@ -1,6 +1,22 @@
 # version: '3.8'
 
 services:
+
+  uce-fuseki-sparql:
+    build:
+      context: ./sparql
+      dockerfile: ./Dockerfile
+      args:
+        JENA_VERSION: 5.2.0
+    image: fuseki
+    ports:
+      - "8030:5430"
+    volumes:
+      - ./../sparql/run/databases/biofid-search:/fuseki/databases/biofid-search
+    command: --update --tdb2 --port 5430 --loc /fuseki/databases/biofid-search /biofid-search
+    networks:
+      - app_net
+    
   uce-rag-service:
     build:
       context: .
@@ -9,6 +25,8 @@ services:
       - "8080:5678" 
     depends_on:
       - uce-postgresql-db 
+    networks:
+      - app_net
 
   uce-web:
     build:
@@ -18,17 +36,26 @@ services:
       - "8008:4567"
     depends_on:
       - uce-postgresql-db
+    networks:
+      - app_net
+    volumes:
+      - "./../releases/uceConfig.json:/app/config/uceConfig.json"
+    command: ["java", "-jar", "./target/webportal-jar-with-dependencies.jar", "-cf", "/app/config/uceConfig.json"]
 
   uce-postgresql-db:
     image: pgvector/pgvector:pg16
     environment:
-      POSTGRES_DB: uce-gerparcor
+      POSTGRES_DB: uce
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234 
     ports:
       - "8002:5432"
-    #volumes:
-    #  - pgdata:/var/lib/uce-gerparcor-eval/data 
+    networks:
+      - app_net
+
+networks:
+  app_net:
+    driver: bridge
 
 volumes:
   pgdata:

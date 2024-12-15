@@ -9,7 +9,11 @@ import javax.persistence.*;
 @Table(name="namedEntity")
 public class NamedEntity extends UIMAAnnotation implements WikiModel {
 
-    @Column(name = "document_id", nullable = false, insertable = true, updatable = true)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "document_id", nullable = false)
+    private Document document;
+
+    @Column(name = "document_id", insertable = false, updatable = false)
     private Long documentId;
 
     @Column(name = "\"typee\"")
@@ -21,6 +25,14 @@ public class NamedEntity extends UIMAAnnotation implements WikiModel {
 
     public NamedEntity(int begin, int end) {
         super(begin, end);
+    }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
     }
 
     public Long getDocumentId(){return this.documentId;}

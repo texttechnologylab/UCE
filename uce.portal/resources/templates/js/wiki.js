@@ -66,10 +66,62 @@ let WikiHandler = (function () {
         this.loadPage(wikiDto);
     }
 
-    WikiHandler.prototype.addUniverseToDocumentWikiPage = async function(corpusId, currentCenter){
-        this.universeHandler = window.getNewCorpusUniverseHandler;
+    WikiHandler.prototype.addUniverseToDocumentWikiPage = async function (corpusId, currentCenter) {
+        this.universeHandler = getNewCorpusUniverseHandler;
         await this.universeHandler.createEmptyUniverse('wiki-universe-container');
         await this.universeHandler.fromCorpus(corpusId, currentCenter);
+    }
+
+    WikiHandler.prototype.handleRdfNodeClicked = function ($el) {
+        const $container = $el.closest('.node-div');
+        const value = $el.data('value');
+
+        // Maybe the value is a gbif link. Open it then.
+        if(value.includes('www.gbif.org')){
+            window.open(value, '_blank').focus();
+            return;
+        }
+
+        // Check if we have already loaded this rdfnode children before
+        const expanded = $container.data('expanded');
+        console.log(expanded);
+        console.log($container.data('children'));
+        if($container.data('children')){
+            if(expanded){
+                $container.find('.nodes-list-div').first().hide();
+            } else{
+                $container.find('.nodes-list-div').first().show();
+            }
+            $container.data('expanded', !expanded);
+            return;
+        }
+
+        // If an rdf node was clicked the first time, then we query the ontology based on that premis
+        const tripletType = $el.data('triplettype');
+        const ogHtml = $el.html();
+
+        $el.html('Fetching...');
+        $.ajax({
+            url: "/api/wiki/queryOntology",
+            type: "POST",
+            data: JSON.stringify({
+                tripletType: tripletType,
+                value: value
+            }),
+            contentType: "application/json",
+            success: async function (response) {
+                $container.append(response);
+                $container.data('expanded', true);
+                $container.data('children', true);
+            },
+            error: function (xhr, status, error) {
+                // TODO: Add a better error toast here
+                alert("Request failed, since the server wasn't reachable.")
+                console.error(xhr.responseText);
+            }
+        }).always(function () {
+            $el.html(ogHtml);
+        });
     }
 
     return WikiHandler;
@@ -99,3 +151,9 @@ $('body').on('click', '.wiki-page-modal .go-back-btn', function () {
     window.wikiHandler.handleGoBackBtnClicked();
 });
 
+/**
+ * Triggers when the user presses on a clickable rdf node
+ */
+$('body').on('click', '.clickable-rdf-node', function () {
+    window.wikiHandler.handleRdfNodeClicked($(this));
+});

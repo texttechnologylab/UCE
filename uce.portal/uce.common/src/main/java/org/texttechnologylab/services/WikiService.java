@@ -8,6 +8,7 @@ import org.texttechnologylab.models.viewModels.wiki.*;
 import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.utils.SystemStatus;
 
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 
@@ -59,12 +60,15 @@ public class WikiService {
     /**
      * Gets an TaxonAnnotationWikiPageViewModel to render a Wikipage for that annotation
      */
-    public TaxonAnnotationWikiPageViewModel buildTaxonWikipageViewModel(long id, String coveredText) throws DatabaseOperationException {
+    public TaxonAnnotationWikiPageViewModel buildTaxonWikipageViewModel(long id, String coveredText) throws DatabaseOperationException, IOException {
         var viewModel = new TaxonAnnotationWikiPageViewModel();
         viewModel.setCoveredText(coveredText);
         var taxon = db.getTaxonById(id);
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(taxon.getBegin(), taxon.getEnd(), taxon.getDocumentId()));
         viewModel.setWikiModel(taxon);
+        // We are not interested in the standard w3 XML triplets
+        viewModel.setNextRDFNodes(
+                sparqlService.queryBySubject(taxon.getPrimaryBiofidOntologyIdentifier()));
         viewModel.setGbifOccurrences(db.getGbifOccurrencesByGbifTaxonId(taxon.getGbifTaxonId()));
         viewModel.setDocument(db.getDocumentById(taxon.getDocumentId()));
         viewModel.setAnnotationType("Taxon");

@@ -45,7 +45,7 @@
                                 text-align: ${paragraph.getAlign()};
                                 font-weight: ${paragraph.getFontWeight()};
                                 text-decoration: ${paragraph.getUnderlined()};">
-                            ${paragraph.buildHTMLString(documentAnnotations)}
+                            ${paragraph.buildHTMLString(documentAnnotations, documentText)}
                         </p>
                     </#list>
                 </#if>

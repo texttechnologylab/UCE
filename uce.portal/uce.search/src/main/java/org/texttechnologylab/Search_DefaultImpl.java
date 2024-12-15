@@ -246,7 +246,9 @@ public class Search_DefaultImpl implements Search {
                     ids.add(taxon.getIdentifier().trim());
                 }
             }
-            var newTokens = jenaSparqlService.getAlternativeNamesOfTaxons(ids);
+            var newTokens = ExceptionUtils.tryCatchLog(
+                    () ->jenaSparqlService.getAlternativeNamesOfTaxons(ids),
+                    (ex) -> logger.error("Error getting the alt names of a taxon while searching. Operation continues.", ex));
             if (newTokens != null) finalTokens.addAll(newTokens);
         }
 

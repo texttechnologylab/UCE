@@ -1,0 +1,13 @@
+version: '3.0'
+
+services:
+  fuseki:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: fuseki
+    ports:
+      - "3030:3030"
+    volumes:
+      - C:/kevin/projects/uce/sparql/run/databases/biofid-search:/fuseki/databases/biofid-search
+    command: --tdb2 --update --loc /fuseki/databases/biofid-search /biofid-search

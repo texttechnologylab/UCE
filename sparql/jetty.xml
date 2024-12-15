@@ -1,0 +1,13 @@
+<?xml version="1.0"?>
+<Configure id="Server" class="org.eclipse.jetty.server.Server">
+    <Call name="addConnector">
+        <Arg>
+            <New class="org.eclipse.jetty.server.ServerConnector">
+                <Arg name="server">
+                    <Ref id="Server" />
+                </Arg>
+                <Set name="host">0.0.0.0</Set>
+            </New>
+        </Arg>
+    </Call>
+</Configure>

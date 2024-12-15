@@ -20,7 +20,7 @@
                             <#include "*/search/components/keywordInContext.ftl">
                         </div>
 
-                        <div class="pb-0 taxonomy-tree-include">
+                        <div class="pb-0 taxonomy-tree-include display-none">
                             <hr class="mt-3 mb-3"/>
                             <h6 class="text-center underlined mb-4">${languageResource.get("taxonomy")}</h6>
                             <#include "*/search/components/taxonomyTree.ftl">

@@ -120,21 +120,21 @@ public class UIMAService {
                 new File(foldername)
                         .listFiles((dir, name) -> name.toLowerCase().endsWith(".xmi")))) {
             var doc = XMIToDocument(file.getPath(), corpus);
-            if (doc != null) {
-                // Save it
-                logger.info("Trying to store document with document id " + doc.getDocumentId() + "...");
-                ExceptionUtils.tryCatchLog(
-                        () -> db.saveDocument(doc),
-                        (ex) -> logger.error("Error saving a finished document with id " + doc.getId()));
-                logger.info("Stored document with document id " + doc.getDocumentId());
-                logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
+            if (doc == null) continue;
 
-                // Now eventually do postprocessing of the document
-                ExceptionUtils.tryCatchLog(
-                        () -> postProccessDocument(doc, corpusConfigFinal),
-                        (ex) -> logger.error("Error postprocessing a saved document with id " + doc.getId()));
-                logger.info("Finished postprocessing.");
-            }
+            // Save it
+            logger.info("Trying to store document with document id " + doc.getDocumentId() + "...");
+            ExceptionUtils.tryCatchLog(
+                    () -> db.saveDocument(doc),
+                    (ex) -> logger.error("Error saving a finished document with id " + doc.getId(), ex));
+            logger.info("Stored document with document id " + doc.getDocumentId());
+            logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
+
+            // Now eventually do postprocessing of the document
+            ExceptionUtils.tryCatchLog(
+                    () -> postProccessDocument(doc, corpusConfigFinal),
+                    (ex) -> logger.error("Error postprocessing a saved document with id " + doc.getId()));
+            logger.info("Finished postprocessing.");
 
             // We occasionally postprocess the corpus while we still import to keep it up to date
             if (counter % 100 == 0 && counter != 0) {
@@ -212,7 +212,14 @@ public class UIMAService {
             var exists = db.documentExists(corpus.getId(), document.getDocumentId());
             if (exists) {
                 logger.info("Document with id " + document.getDocumentId()
-                        + " already exists in the corpus " + corpus.getId() + ". Skipping it.");
+                        + " already exists in the corpus " + corpus.getId() + ".");
+                logger.info("Checking if that document was also post-processed yet...");
+                var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
+                if(!existingDoc.isPostProcessed()){
+                    logger.info("Not yet post-processed. Doing that now.");
+                    postProccessDocument(existingDoc, corpusConfig);
+                }
+                logger.info("Done.");
                 return null;
             }
 
@@ -254,13 +261,17 @@ public class UIMAService {
             logger.info("Setting potential metadata title info done.");
         } else {
             // There are possibly additional metadata hidden in the DocumentAnnotation type.
-            var documentAnnotation = JCasUtil.selectSingle(jCas, DocumentAnnotation.class);
-            try {
-                metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
-                        + documentAnnotation.getDateMonth() + "."
-                        + documentAnnotation.getDateYear());
-            } catch (Exception ex) {
-                logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
+            var documentAnnotation = ExceptionUtils.tryCatchLog(
+                    () -> JCasUtil.selectSingle(jCas, DocumentAnnotation.class),
+                    (ex) -> logger.info("No DocumentAnnotation found. Skipping this annotation then."));
+            if(documentAnnotation != null){
+                try {
+                    metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
+                            + documentAnnotation.getDateMonth() + "."
+                            + documentAnnotation.getDateYear());
+                } catch (Exception ex) {
+                    logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
+                }
             }
         }
         document.setMetadataTitleInfo(metadataTitleInfo);
@@ -277,6 +288,7 @@ public class UIMAService {
             JCasUtil.select(jCas, OCRPage.class).forEach(p -> {
                 // New page
                 var page = new Page(p.getBegin(), p.getEnd(), p.getPageNumber(), p.getPageId());
+                page.setDocument(document);
                 if (corpusConfig.getAnnotations().isOCRParagraph())
                     page.setParagraphs(getCoveredParagraphs(p));
 
@@ -301,6 +313,7 @@ public class UIMAService {
 
             for (var i = 0; i < fullText.length(); i += pageSize) {
                 var page = new Page(i, i + pageSize, pageNumber, "");
+                page.setDocument(document);
                 pageNumber += 1;
                 pages.add(page);
             }
@@ -337,6 +350,7 @@ public class UIMAService {
         var taxons = new ArrayList<Taxon>();
         JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Taxon.class).forEach(t -> {
             var taxon = new Taxon(t.getBegin(), t.getEnd());
+            taxon.setDocument(document);
             taxon.setValue(t.getValue());
             taxon.setCoveredText(t.getCoveredText());
             taxon.setIdentifier(t.getIdentifier());
@@ -436,6 +450,7 @@ public class UIMAService {
         var lemmas = new ArrayList<org.texttechnologylab.models.corpus.Lemma>();
         JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma.class).forEach(l -> {
             var lemma = new org.texttechnologylab.models.corpus.Lemma(l.getBegin(), l.getEnd());
+            lemma.setDocument(document);
             lemma.setCoveredText(l.getCoveredText());
             lemma.setValue(l.getValue());
 
@@ -492,6 +507,7 @@ public class UIMAService {
             if (neType.isEmpty()) return;
 
             var namedEntity = new org.texttechnologylab.models.corpus.NamedEntity(ne.getBegin(), ne.getEnd());
+            namedEntity.setDocument(document);
             namedEntity.setType(neType);
             namedEntity.setCoveredText(ne.getCoveredText());
             nes.add(namedEntity);
@@ -651,38 +667,54 @@ public class UIMAService {
 
         // Calculate embeddings if they are activated
         if (corpusConfig.getOther().isEnableEmbeddings()) {
-            logger.info("embeddings...");
-            // Build the chunks, which are the most crucial embeddings
-            var documentChunkEmbeddings = ExceptionUtils.tryCatchLog(
-                    () -> ragService.getCompleteEmbeddingChunksFromDocument(document),
-                    (ex) -> logger.error("Error getting the complete embedding chunks for document: " + document.getId(), ex));
+            logger.info("Embeddings...");
 
-            // Build a single document embeddings for the whole text
-            var documentEmbedding = ExceptionUtils.tryCatchLog(
-                    () -> ragService.getCompleteEmbeddingFromDocument(document),
-                    (ex) -> logger.error("Error getting the complete embedding from a document.", ex));
+            // Chunk Embeddings
+            var docHasChunkEmbeddings = ExceptionUtils.tryCatchLog(
+                    () -> ragService.documentHasDocumentChunkEmbeddings(document.getId()),
+                    (ex) -> logger.error("Error while checking if a document already has DocumentChunkEmbeddings.", ex));
+            if(docHasChunkEmbeddings != null && !docHasChunkEmbeddings){
+                // Build the chunks, which are the most crucial embeddings
+                var documentChunkEmbeddings = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getCompleteEmbeddingChunksFromDocument(document),
+                        (ex) -> logger.error("Error getting the complete embedding chunks for document: " + document.getId(), ex));
 
-            // Store the single document embedding
-            if (documentEmbedding != null)
-                ExceptionUtils.tryCatchLog(
-                        () -> ragService.saveDocumentEmbedding(documentEmbedding),
-                        (ex) -> logger.error("Error saving a document embedding.", ex));
+                // Store the chunks
+                if (documentChunkEmbeddings != null)
+                    for (var docEmbedding : documentChunkEmbeddings) {
+                        ExceptionUtils.tryCatchLog(
+                                () -> ragService.saveDocumentChunkEmbedding(docEmbedding),
+                                (ex) -> logger.error("Error saving a document chunk embeddings.", ex)
+                        );
+                    }
+            }
 
-            // Store the chunks
-            if (documentChunkEmbeddings != null)
-                for (var docEmbedding : documentChunkEmbeddings) {
+            // Document Embedding
+            var docHasEmbedding = ExceptionUtils.tryCatchLog(
+                    () -> ragService.documentHasDocumentEmbedding(document.getId()),
+                    (ex) -> logger.error("Error while checking if a document already has a DocumentEmbedding.", ex));
+            if(docHasEmbedding != null && !docHasEmbedding){
+                // Build a single document embeddings for the whole text
+                var documentEmbedding = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getCompleteEmbeddingFromDocument(document),
+                        (ex) -> logger.error("Error getting the complete embedding from a document.", ex));
+
+                // Store the single document embedding
+                if (documentEmbedding != null)
                     ExceptionUtils.tryCatchLog(
-                            () -> ragService.saveDocumentChunkEmbedding(docEmbedding),
-                            (ex) -> logger.error("Error saving a document chunk embeddings.", ex)
-                    );
-                }
+                            () -> ragService.saveDocumentEmbedding(documentEmbedding),
+                            (ex) -> logger.error("Error saving a document embedding.", ex));
+            }
         }
 
         if (corpusConfig.getOther().isIncludeTopicDistribution()) {
-            logger.info("topic distribution...");
+            logger.info("Topic Distribution...");
 
             // Calculate the page topic distribution if activated
             for (var page : document.getPages()) {
+                // If this page already has a topic dist, continue.
+                if(page.getPageTopicDistribution() != null) continue;
+
                 var topicDistribution = ExceptionUtils.tryCatchLog(
                         () -> ragService.getTextTopicDistribution(PageTopicDistribution.class, page.getCoveredText(document.getFullText())),
                         (ex) -> logger.error("Error getting the PageTopicDistribution - the postprocessing continues. Document id: " + document.getId(), ex));
@@ -691,23 +723,27 @@ public class UIMAService {
                 topicDistribution.setBegin(page.getBegin());
                 topicDistribution.setEnd(page.getEnd());
                 topicDistribution.setPage(page);
+                topicDistribution.setPageId(page.getId());
                 page.setPageTopicDistribution(topicDistribution);
                 // Store it in the db
                 ExceptionUtils.tryCatchLog(() -> db.savePageTopicDistribution(page),
                         (ex) -> logger.error("Error storing the page topic distribution - the postprocessing continues.", ex));
             }
 
-            // And the document topic dist.
-            var documentTopicDistribution = ExceptionUtils.tryCatchLog(
-                    () -> ragService.getTextTopicDistribution(DocumentTopicDistribution.class, document.getFullText()),
-                    (ex) -> logger.error("Error getting the DocumentTopicDistribution - the postprocessing ends now. Document id: " + document.getId(), ex));
-            if (documentTopicDistribution == null) return;
+            // And the document topic dist if this wasn't added before.
+            if(document.getDocumentTopicDistribution() == null){
+                var documentTopicDistribution = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getTextTopicDistribution(DocumentTopicDistribution.class, document.getFullText()),
+                        (ex) -> logger.error("Error getting the DocumentTopicDistribution - the postprocessing ends now. Document id: " + document.getId(), ex));
+                if (documentTopicDistribution == null) return;
 
-            documentTopicDistribution.setDocument(document);
-            document.setDocumentTopicDistribution(documentTopicDistribution);
-            // Store it
-            ExceptionUtils.tryCatchLog(() -> db.saveDocumentTopicDistribution(document),
-                    (ex) -> logger.error("Error storing the document topic distribution - the postprocessing ends now.", ex));
+                documentTopicDistribution.setDocument(document);
+                documentTopicDistribution.setDocumentId(document.getId());
+                document.setDocumentTopicDistribution(documentTopicDistribution);
+                // Store it
+                ExceptionUtils.tryCatchLog(() -> db.saveDocumentTopicDistribution(document),
+                        (ex) -> logger.error("Error storing the document topic distribution - the postprocessing ends now.", ex));
+            }
         }
     }
 

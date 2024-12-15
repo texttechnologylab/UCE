@@ -1,18 +1,35 @@
 package org.texttechnologylab.services;
 
-import org.apache.jena.query.QueryExecution;
-import org.apache.jena.query.QuerySolution;
-import org.apache.jena.rdfconnection.RDFConnection;
-import org.apache.jena.rdfconnection.RDFConnectionRemote;
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
+import org.jsoup.HttpStatusException;
 import org.texttechnologylab.config.CommonConfig;
+import org.texttechnologylab.models.dto.rdf.RDFAskDto;
+import org.texttechnologylab.models.dto.rdf.RDFNodeDto;
+import org.texttechnologylab.models.dto.rdf.RDFRequestDto;
+import org.texttechnologylab.models.dto.rdf.RDFSelectQueryDto;
 import org.texttechnologylab.models.util.HealthStatus;
+import org.texttechnologylab.utils.RDFNodeDtoJsonDeserializer;
 import org.texttechnologylab.utils.SystemStatus;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
+import java.net.*;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+/**
+ * UPDATE 12-2024: I completely replaced the org.apache.jena.rdfconnection imports and libraries as they were
+ * HORRIBLE. They threw so many shitty errors under circumstances that were un-debuggable. I had error occur
+ * in docker environments *only*, that made absolutely no sense, so fk it, I parse them by hand now with regular requests.
+ * I wasted enough time to get a shit library working.
+ */
 public class JenaSparqlService {
+
+    private final CommonConfig config = new CommonConfig();
 
     /**
      * Initializes the service like setting the default connection url. Service has to be initialized before it can be used.
@@ -20,15 +37,43 @@ public class JenaSparqlService {
      * @return
      */
     public JenaSparqlService() {
-        try (RDFConnection testConn = buildConnection()) {
-            if (isServerResponsive(testConn)) {
+        TestConnection();
+    }
+
+    public void TestConnection() {
+        try {
+            if (isServerResponsive()) {
                 SystemStatus.JenaSparqlStatus = new HealthStatus(true, "Connection successful.", null);
             } else {
                 SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Server not reachable, ask failed.", null);
+                System.out.println("Unable to connect to the Fuseki Sparql database, hello returned false.");
             }
         } catch (Exception ex) {
-            SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Couldn't connect to the SPARQL server - an error was even thrown.", ex);
+            SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Server returned an error, ask failed.", null);
         }
+    }
+
+    /**
+     * Given a graph database structure, this gets all triplets where the subject matches the given sub.
+     * Example call: var test = queryBySubject("https://www.biofid.de/bio-ontologies/gbif/4356560");
+     */
+    public List<RDFNodeDto> queryBySubject(String sub) throws IOException {
+        if (!SystemStatus.JenaSparqlStatus.isAlive()) {
+            return new ArrayList<>();
+        }
+
+        var command = "SELECT * WHERE { " +
+                "   <{SUB}> ?pred ?obj . " +
+                "} " +
+                "LIMIT 100";
+        command = command.replace("{SUB}", sub);
+        var result = executeCommand(command, RDFSelectQueryDto.class);
+        if (result == null || result.getResults() == null || result.getResults().getBindings() == null)
+            return new ArrayList<>();
+
+        return result.getResults().getBindings().stream()
+                .filter(n -> !n.getPredicate().getValue().contains("www.w3.org"))
+                .toList();
     }
 
     /**
@@ -53,7 +98,11 @@ public class JenaSparqlService {
      *
      * @return
      */
-    public List<String> getAlternativeNamesOfTaxons(List<String> biofidIds) {
+    public List<String> getAlternativeNamesOfTaxons(List<String> biofidIds) throws IOException {
+        if (!SystemStatus.JenaSparqlStatus.isAlive()) {
+            return new ArrayList<>();
+        }
+
         biofidIds = biofidIds.stream().distinct().toList();
         // We want all objects where the subjects fit any of the given ids and the predicate is either vascularName or scientificName
         // By doing so, we get more possible alternative names
@@ -64,18 +113,13 @@ public class JenaSparqlService {
                 "  FILTER(?predicate IN (<http://rs.tdwg.org/dwc/terms/vernacularName>, <http://rs.tdwg.org/dwc/terms/scientificName>)) " +
                 "}";
         command = command.replace("{BIOFID_IDS}", String.join("\n", biofidIds.stream().map(id -> "<" + id + ">").toList()));
-        var result = executeCommand(command);
+        var result = executeCommand(command, RDFSelectQueryDto.class);
         var alternativeNames = new ArrayList<String>();
-        for (var t : result) {
-            var objectNode = t.get("object");
-            // Check if the object is a literal
-            if (objectNode.isLiteral()) {
-                alternativeNames.add(objectNode.asLiteral().getString());
-            }
-            // otherwise, it's a resource
-            else if (objectNode.isResource()) {
-                alternativeNames.add(objectNode.asResource().getURI());
-            }
+        if (result == null || result.getResults() == null || result.getResults().getBindings() == null)
+            return alternativeNames;
+
+        for (var t : result.getResults().getBindings()) {
+            alternativeNames.add(t.getObject().getValue());
         }
         return alternativeNames;
     }
@@ -86,29 +130,23 @@ public class JenaSparqlService {
      *
      * @return
      */
-    public long biofidIdUrlToGbifTaxonId(String potentialBiofidId) {
+    public long biofidIdUrlToGbifTaxonId(String potentialBiofidId) throws IOException {
+        if (!SystemStatus.JenaSparqlStatus.isAlive()) {
+            return -1;
+        }
+
         var command = "SELECT ?predicate ?object " +
                 "WHERE {" +
                 "  <{BIOFID_URL_ID}> <http://rs.tdwg.org/dwc/terms/taxonID> ?object ; " +
                 "  . " +
                 "}";
         command = command.replace("{BIOFID_URL_ID}", potentialBiofidId.trim());
-        var result = executeCommand(command);
-        if (result == null || result.isEmpty()) return -1;
+        var result = executeCommand(command, RDFSelectQueryDto.class);
+        if (result == null || result.getResults() == null || result.getResults().getBindings() == null || result.getResults().getBindings().isEmpty())
+            return -1;
 
-        var gbifTaxonUrl = result.getFirst().getResource("object").toString();
+        var gbifTaxonUrl = result.getResults().getBindings().getFirst().getObject().getValue();
         return Long.parseLong(Arrays.stream(gbifTaxonUrl.split("/")).toList().getLast());
-    }
-
-    private RDFConnection buildConnection() {
-        var config = new CommonConfig();
-        return RDFConnectionRemote.newBuilder()
-                .destination(config.getSparqlHost())
-                .queryEndpoint(config.getSparqlEndpoint())
-                // Set a specific accept header; here, sparql-results+json (preferred) and text/tab-separated-values
-                // The default is "application/sparql-results+json, application/sparql-results+xml;q=0.9, text/tab-separated-values;q=0.7, text/csv;q=0.5, application/json;q=0.2, application/xml;q=0.2, */*;q=0.1"
-                .acceptHeaderSelectQuery("application/sparql-results+json, application/sparql-results+xml;q=0.9")
-                .build();
     }
 
     /**
@@ -117,27 +155,44 @@ public class JenaSparqlService {
      * @param command
      * @return
      */
-    private ArrayList<QuerySolution> executeCommand(String command) {
-        if(!SystemStatus.JenaSparqlStatus.isAlive()) {
-            return null;
+    private <T extends RDFRequestDto> T executeCommand(String command, Class<T> clazz) throws IOException {
+        var endPoint = config.getSparqlHost()
+                + config.getSparqlEndpoint()
+                + "?query="
+                + URLEncoder.encode(command, StandardCharsets.UTF_8);
+        var url = new URL(endPoint);
+        var conn = (HttpURLConnection) url.openConnection();
+        try {
+            conn.setRequestMethod("GET");
+            conn.setRequestProperty("Accept", "application/json");
+
+            int responseCode = conn.getResponseCode();
+            if (responseCode == HttpURLConnection.HTTP_OK) {
+                // Parse the returned json
+                try (var reader = new BufferedReader(new InputStreamReader(conn.getInputStream()))) {
+                    StringBuilder response = new StringBuilder();
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        response.append(line);
+                    }
+
+                    var gson = new GsonBuilder()
+                            .registerTypeAdapter(RDFNodeDto.class, new RDFNodeDtoJsonDeserializer())
+                            .create();
+                    return gson.fromJson(response.toString(), clazz);
+                }
+            } else {
+                throw new HttpStatusException("Fuseki server returned error status: ", responseCode, endPoint);
+            }
+        } finally {
+            conn.disconnect();
         }
-
-        var querySolutions = new ArrayList<QuerySolution>();
-
-        try (RDFConnection conn = buildConnection()) {
-            conn.querySelect(command, querySolutions::add);
-        }
-
-        return querySolutions;
     }
 
-    private boolean isServerResponsive(RDFConnection conn) {
+    private boolean isServerResponsive() throws IOException {
         String testQuery = "ASK WHERE { ?s ?p ?o }";
-        try (var qExec = conn.query(testQuery)) {
-            return qExec.execAsk();
-        } catch (Exception e) {
-            SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Query failed, server might be down.", e);
-            return false;
-        }
+        var response = executeCommand(testQuery, RDFAskDto.class);
+        if (response == null) return false;
+        return response.isBool();
     }
 }

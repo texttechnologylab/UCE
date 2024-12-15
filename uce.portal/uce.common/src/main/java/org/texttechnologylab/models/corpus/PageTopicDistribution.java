@@ -9,12 +9,24 @@ import javax.persistence.*;
 @Table(name="pagetopicdistribution")
 public class PageTopicDistribution extends TopicDistribution {
     @OneToOne()
-    @JoinColumn(name="page_id")
+    @JoinColumn(name="page_id", insertable = false, updatable = false)
     private Page page;
+
+    @Column(name = "page_id")
+    private Long pageId;
+
     @Column(name = "\"beginn\"")
     private Integer begin;
     @Column(name = "\"endd\"")
     private Integer end;
+
+    public Long getPageId() {
+        return pageId;
+    }
+
+    public void setPageId(Long pageId) {
+        this.pageId = pageId;
+    }
 
     public Integer getBegin() {
         return begin;

@@ -67,6 +67,7 @@ public class Document extends ModelBase implements WikiModel {
     private MetadataTitleInfo metadataTitleInfo;
 
     @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    @JoinColumn(name = "document_id")
     private DocumentTopicDistribution documentTopicDistribution;
 
     public Document() {
@@ -218,10 +219,13 @@ public class Document extends ModelBase implements WikiModel {
         var pagesEnd = getPages().stream().skip(Math.min(pagesSkip + pagesTake, getPages().size() - 1)).limit(1).findFirst().get().getEnd();
 
         var annotations = new ArrayList<UIMAAnnotation>();
+        annotations.addAll(taxons.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(namedEntities.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(times.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(wikipediaLinks.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
-        annotations.addAll(taxons.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        annotations.addAll(lemmas.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+
+        annotations.sort(Comparator.comparingInt(UIMAAnnotation::getBegin));
         return annotations;
     }
 
