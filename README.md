@@ -12,6 +12,7 @@
 <hr/>
 <div align="center">
   <a href="#"><img src="https://img.shields.io/static/v1?label=&message=Documentation&color=blueviolet&style=for-the-badge&logo=internetarchive" alt="Documentation"></a>
+  <a href="http://eval.uce.texttechnologylab.org/"><img src="https://img.shields.io/static/v1?label=&message=Demo&color=orange&style=for-the-badge&logo=abstract" alt="Demo"></a>
   <a href="#"><img src="https://img.shields.io/static/v1?label=Languages%3A&message=German|English&color=green&style=for-the-badge" alt="Languages: - German | English"></a>
   <a href="https://www.texttechnologylab.org/team/kevin-boenisch/"><img src="https://img.shields.io/static/v1?label=&message=Text+Technology+Lab&color=informational&style=for-the-badge&logo=buffer" alt="Text Technology Lab"></a>
   <!--<a href="https://ebooks.iospress.nl/doi/10.3233/FAIA230996"> <img src="https://img.shields.io/static/v1?label=Paper%3A&message=IOS+Press&color=important&style=for-the-badge&logo=adobefonts" alt="Paper: - IOS Press"></a>-->
@@ -19,8 +20,78 @@
   <br/>
 </div>
 
+# Quick Start
+
+Clone this repository:
+
+```
+git clone https://github.com/texttechnologylab/UCE.git
+```
+
+Start the docker containers:
+
+```
+docker-compose up
+```
+
+The web instance, by deafult, is reachable under: http://localhost:8008. If you're looking for a small demo without creating it yourself, please check our [open demo](http://eval.uce.texttechnologylab.org/).
+
+**We are currently creating a dedicated Documentation Page which will be up soon to explain the configuration in more detail and how you can customize UCE.**
+
 # About
 
-asdasd
+UCE is customizable in terms of annotations imported, corporate identity used, and background information added. It allows the creation of a specific UCE instance for your project, regardless of the domain. It does so by utilizing UIMA-annotated corpora, with the primary tool for creating those being the [Docker Unified UIMA Interface (DUUI)](https://github.com/texttechnologylab/DockerUnifiedUIMAInterface). Hence, you would gather your corpus, use DUUI to annotate whatever you want to annotate, and finally import those annotations into UCE to host them.
 
-# Quick Start
+## Microservices 
+
+UCE consists of several microservices, each dockerized and utilizing distinct technologies, which is being outlined in the following:
+
+<div align="center">
+  <img src="https://github.com/user-attachments/assets/e27f1f00-aa89-4080-a08f-ccc043245d2d" width="500px">
+</div>
+<br/>
+
+| Microservice               | Description                                                                                                                                                                                                                                   |
+|-----------------------|-----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| A: Corpus-Importer | UCE is based on Corpus-Importer, a Java application that reads UIMA-annotated documents from a specified path, along with a corresponding corpus-configuration JSON file. The importer extracts the raw data and the configured annotations, applying its own post-processing to set up the environment, which includes text segmentation, database indexing, keyword extraction, and the creation of various embedding spaces, before finally storing each processed document in a PostgreSQL database (B). </details> |
+| B: Relational Database | As our primary database, we opted for a relational PostgreSQL database, as UCE requires a structured and standardized database schema that can be extended if necessary. Additionally, its compatibility with the pgvector extension enables efficient vector operations directly within the database engine. This allows us to store high-dimensional vector embeddings within relational data tables while also enabling fast vector operations and searches. </details> |
+| C: Graph Database | In addition to a relational database (B), UCE utilizes an Apache Jena SPARQL database to incorporate basic semantic searches in the Resource Description Framework (RDF) and Web Ontology Language (OWL) data formats. This integration enables the incorporation of domain-specific ontologies (e.g., biological taxonomy) into the UCE environment, further enriching its search capabilities. </details> |
+| D: Python Webserver | Within UCE, we also utilize a Python web service to provide an interface to machine learning and AI models, as these are primarily accessible through Python. In this context, the web server facilitates access to the generation of embedding vectors, their dimensionality reduction methods, such as t-SNE and PCA, and the inference of (Large) Language Models. The web server is accessible via a REST API and is utilized by services (A) and (E). </details> |
+| E: UCE Web Portal | The user interacts with UCE and all of its features through a web portal implemented in Java. This service communicates with all other services except for (B), providing a variety of search methods, visualization features, and different ways to interact with the underlying information units, as outlined in detail in Section 3.2. </details> |
+
+## In Medias Res
+
+Some, but not all of the search and visualization features within UCE:
+
+<table>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/b51db617-6041-4e38-9959-eb440f18bede" /></td>
+    <td><img src="https://github.com/user-attachments/assets/7e5d6d09-b6b0-4be0-9c93-5d12b712f2fb" /></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="https://github.com/user-attachments/assets/c9a10b81-46f5-40e3-b78b-41b3b2edb4f1" /></td>
+  </tr>
+  <tr>
+    <td colspan="2"><img src="https://github.com/user-attachments/assets/9c72b914-5d74-4113-8e49-4b062b25086d" /></td>
+  </tr>
+  <tr>
+    <td><img src="https://github.com/user-attachments/assets/d42adc6f-99b8-49db-b4e5-c98961e28f4d" /></td>
+    <td><img src="https://github.com/user-attachments/assets/d6188244-85b3-4fca-a18b-4ea3de020abf" /></td>
+  </tr>
+</table>
+
+## Annotations
+
+Currently supported annotations within UCE are outlined in the following table:
+
+| **Annotation**                        | **Description**                                                                                                                                                        |
+|---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| **Sentence**                          | Divides the documents into their respective sentences.                                                                                                                 |
+| **Named-Entity**                      | Extracts named entities from a document, categorizing them into four types: organization (ORG), person (PER), location (LOC), and miscellaneous (MISC). |                                                  |
+| **Lemma and POS**                             | Lemmatization reduces inflected words to their root form. Within UCE, searches are enhanced by considering these root forms.                                           |
+| **Semantic Role Labels (SRL)**        | SRL identifies semantic relations between the lexical constituents of a sentence, assigning labels to words or phrases that indicate their semantic roles, such as agent, goal, or result. | 
+| **Time**                              | Extracts temporal expressions, including time and date formats, from a document, analogous to Named-Entity Recognition tasks.                                          |
+| **Taxon**                             | The recognition of unambiguous names of biological entities is referred to as a taxon.                                                                                 |
+| **WikiLinks**                         | Maps potential words and phrases to their corresponding Wikidata URLs, facilitating the retrieval and access of additional information.                                |
+| **OCR**                               | Since much of the literature has yet to be digitized, UCE provides support for corpora containing documents that have undergone Optical Character Recognition (OCR) extraction. These annotations assist in reconstructing the physical layout of the pages within UCE. | 
+
