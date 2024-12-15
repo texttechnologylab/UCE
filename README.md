@@ -20,7 +20,9 @@
   <br/>
 </div>
 
-https://github.com/user-attachments/assets/1a6dd327-9d31-474e-90d4-4eb7f5ebcca8
+<div align="center">
+  <video src="https://github.com/user-attachments/assets/1a6dd327-9d31-474e-90d4-4eb7f5ebcca8" width="800" />
+</div>
 
 # Quick Start
 
