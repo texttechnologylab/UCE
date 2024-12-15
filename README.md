@@ -21,7 +21,7 @@
 </div>
 
 <div align="center">
-  <video src="https://github.com/user-attachments/assets/1a6dd327-9d31-474e-90d4-4eb7f5ebcca8" width="800" />
+  <video src="https://github.com/user-attachments/assets/6911aff1-71a7-4d17-9ffb-d45126cb0ea7" />
 </div>
 
 # Quick Start
