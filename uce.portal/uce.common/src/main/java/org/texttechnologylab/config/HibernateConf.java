@@ -8,6 +8,8 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
+import org.texttechnologylab.models.imp.ImportLog;
+import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.test.test;
 
 import java.util.HashMap;
@@ -44,6 +46,8 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Corpus.class);
         metadataSources.addAnnotatedClass(CorpusTsnePlot.class);
         metadataSources.addAnnotatedClass(UCELog.class);
+        metadataSources.addAnnotatedClass(UCEImport.class);
+        metadataSources.addAnnotatedClass(ImportLog.class);
 
         var metadata = metadataSources.buildMetadata();
 

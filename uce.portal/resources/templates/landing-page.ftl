@@ -52,7 +52,7 @@
         </div>
 
         <!-- clal to search -->
-        <div class="flexed align-items-center justify-content-center mt-3">
+        <div class="flexed align-items-center justify-content-center mt-3 mb-4">
             <a class="clickable text mb-0 text small ml-1" onclick="navigateToView('search')">
                 <i class="fas fa-search mr-1"></i> ${languageResource.get("callForSearch")}
             </a>

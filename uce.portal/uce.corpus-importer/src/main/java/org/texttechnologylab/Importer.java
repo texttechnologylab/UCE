@@ -1,4 +1,4 @@
-package org.texttechnologylab.services;
+package org.texttechnologylab;
 
 import com.google.gson.Gson;
 import com.google.gson.JsonIOException;
@@ -7,20 +7,18 @@ import de.tudarmstadt.ukp.dkpro.core.api.anomaly.type.Anomaly;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.morph.MorphologicalFeatures;
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
-import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
 import org.apache.http.annotation.Obsolete;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.apache.uima.jcas.cas.AnnotationBase;
-import org.apache.uima.util.CasLoadMode;
-import org.texttechnologylab.annotation.DocumentAnnotation;
-import org.texttechnologylab.annotation.semaf.semafsr.SrLink;
 import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
+import org.apache.uima.jcas.cas.AnnotationBase;
 import org.apache.uima.util.CasIOUtils;
-import org.springframework.stereotype.Service;
+import org.apache.uima.util.CasLoadMode;
+import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
@@ -29,12 +27,12 @@ import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.util.HealthStatus;
+import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.EmbeddingUtils;
 import org.texttechnologylab.utils.ListUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.File;
-
 import java.io.FileInputStream;
 import java.io.FileReader;
 import java.io.IOException;
@@ -42,64 +40,68 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Obsolete
-@Service
-/*
-Obsolete service, which was outsourced into a simple class uce.corpus-importer.org.texttechnologylab.Importer
-*/
-public class UIMAService {
+public class Importer {
+
     private static final Logger logger = LogManager.getLogger();
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
-    private GoetheUniversityService goetheUniversityService;
-    private PostgresqlDataInterface_Impl db;
-    private GbifService gbifService;
-    private RAGService ragService;
-    private JenaSparqlService jenaSparqlService;
+    private final GoetheUniversityService goetheUniversityService;
+    private final PostgresqlDataInterface_Impl db;
+    private final GbifService gbifService;
+    private final RAGService ragService;
+    private final JenaSparqlService jenaSparqlService;
+    private String path;
+    private String importId;
+    private Integer importerNumber;
 
-    public UIMAService(GoetheUniversityService goetheUniversityService,
-                       PostgresqlDataInterface_Impl db,
-                       GbifService gbifService,
-                       RAGService ragService,
-                       JenaSparqlService jenaSparqlService) {
-        try {
-            this.goetheUniversityService = goetheUniversityService;
-            this.db = db;
-            this.ragService = ragService;
-            this.jenaSparqlService = jenaSparqlService;
-            this.gbifService = gbifService;
-            SystemStatus.UIMAService = new HealthStatus(true, "", null);
-        } catch (Exception ex) {
-            SystemStatus.UIMAService = new HealthStatus(false, "Error initing the service", ex);
-        }
+    public Importer(ApplicationContext serviceContext,
+                    String foldername,
+                    int importerNumber,
+                    String importId) {
+        this.goetheUniversityService = serviceContext.getBean(GoetheUniversityService.class);
+        this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
+        this.ragService = serviceContext.getBean(RAGService.class);
+        this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
+        this.gbifService = serviceContext.getBean(GbifService.class);
+        this.importerNumber = importerNumber;
+        this.importId = importId;
+        this.path = foldername;
+    }
+
+    /**
+     * Starts the importing processing of this instance.
+     * @throws DatabaseOperationException
+     */
+    public void start() throws DatabaseOperationException {
+        logger.info(
+                "\n _   _ _____  _____   _____                           _   \n" +
+                        "| | | /  __ \\|  ___| |_   _|                         | |  \n" +
+                        "| | | | /  \\/| |__     | | _ __ ___  _ __   ___  _ __| |_ \n" +
+                        "| | | | |    |  __|    | || '_ ` _ \\| '_ \\ / _ \\| '__| __|\n" +
+                        "| |_| | \\__/\\| |___   _| || | | | | | |_) | (_) | |  | |_ \n" +
+                        " \\___/ \\____/\\____/   \\___/_| |_| |_| .__/ \\___/|_|   \\__|\n" +
+                        "                                    | |                   \n" +
+                        "                                    |_|"
+        );
+        logger.info("===========> Global Import Id: " + importId);
+        logger.info("===========> Importer Number: " + importerNumber);
+        logger.info("===========> Importing from path: " + path + "\n\n");
+
+        storeCorpusFromFolder(path);
     }
 
     /**
      * Imports all UIMA xmi files in a folder
      *
      */
-    public void storeCorpusFromFolder(String foldername, int importerNumber, String importId) throws DatabaseOperationException {
+    public void storeCorpusFromFolder(String foldername) throws DatabaseOperationException {
         var corpus = new Corpus();
         var gson = new Gson();
         CorpusConfig corpusConfig = null;
 
         if (!SystemStatus.PostgresqlDbStatus.isAlive())
             throw new DatabaseOperationException("Postgresql DB is not alive - cancelling import.");
-
-        logger.info(
-                "\n _   _ _____  _____   _____                           _   \n" +
-                "| | | /  __ \\|  ___| |_   _|                         | |  \n" +
-                "| | | | /  \\/| |__     | | _ __ ___  _ __   ___  _ __| |_ \n" +
-                "| | | | |    |  __|    | || '_ ` _ \\| '_ \\ / _ \\| '__| __|\n" +
-                "| |_| | \\__/\\| |___   _| || | | | | | |_) | (_) | |  | |_ \n" +
-                " \\___/ \\____/\\____/   \\___/_| |_| |_| .__/ \\___/|_|   \\__|\n" +
-                "                                    | |                   \n" +
-                "                                    |_|"
-        );
-        logger.info("===========> Global Import Id: " + importId);
-        logger.info("===========> Importer Number: " + importerNumber);
-        logger.info("===========> Importing from path: " + foldername + "\n\n");
 
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
         try (var reader = new FileReader(foldername + "\\corpusConfig.json")) {
@@ -448,7 +450,7 @@ public class UIMAService {
      */
     private void setSemanticRoleLabels(Document document, JCas jCas){
         var srLinks = new ArrayList<org.texttechnologylab.models.corpus.SrLink>();
-        JCasUtil.select(jCas, SrLink.class).forEach(a -> {
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.semaf.semafsr.SrLink.class).forEach(a -> {
             var srLink = new org.texttechnologylab.models.corpus.SrLink();
             var figure = a.getFigure();
             var ground = a.getGround();
@@ -523,7 +525,7 @@ public class UIMAService {
     private void setNamedEntities(Document document, JCas jCas) {
         // Set the named entities
         var nes = new ArrayList<org.texttechnologylab.models.corpus.NamedEntity>();
-        JCasUtil.select(jCas, NamedEntity.class).forEach(ne -> {
+        JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity.class).forEach(ne -> {
             // We don't want all NE types
             if (ne == null || ne.getValue() == null) return;
             // We have different names for the types... sometimes they are full name, sometimes just the first three letters.

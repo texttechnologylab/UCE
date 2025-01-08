@@ -17,7 +17,6 @@ import org.texttechnologylab.models.universe.CorpusUniverseNode;
 import org.texttechnologylab.models.universe.UniverseLayer;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
-import org.texttechnologylab.services.UIMAService;
 import org.texttechnologylab.utils.ListUtils;
 import spark.ModelAndView;
 import spark.Route;
@@ -27,14 +26,11 @@ import java.util.*;
 public class CorpusUniverseApi {
     private static final Logger logger = LogManager.getLogger();
     private ApplicationContext context = null;
-    private UIMAService uimaService = null;
     private RAGService ragService = null;
     private PostgresqlDataInterface_Impl db = null;
-
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
 
     public CorpusUniverseApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
-        this.uimaService = serviceContext.getBean(UIMAService.class);
         this.context = serviceContext;
         this.ragService = serviceContext.getBean(RAGService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);

@@ -12,22 +12,16 @@ import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.search.SearchType;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
-import org.texttechnologylab.services.RAGService;
-import org.texttechnologylab.services.UIMAService;
 import spark.ModelAndView;
 import spark.Route;
 
 import java.util.HashMap;
 
 public class DocumentApi {
-    private UIMAService uimaService = null;
-    private RAGService ragService = null;
     private PostgresqlDataInterface_Impl db = null;
     private static final Logger logger = LogManager.getLogger();
     private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
     public DocumentApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
-        this.uimaService = serviceContext.getBean(UIMAService.class);
-        this.ragService = serviceContext.getBean(RAGService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.freemakerConfig = freemakerConfig;
     }
