@@ -255,13 +255,41 @@ public class UIMAService {
             setMetadataTitleInfo(document, jCas, corpusConfig);
             // For now, we skip this. This doesn't relly improve anything and is very costly.
             //setCleanedFullText(document, jCas);
-            if (corpusConfig.getAnnotations().isSentence()) setSentences(document, jCas);
-            if (corpusConfig.getAnnotations().isNamedEntity()) setNamedEntities(document, jCas);
-            if (corpusConfig.getAnnotations().isLemma()) setLemmata(document, jCas);
-            if (corpusConfig.getAnnotations().isSrLink()) setSemanticRoleLabels(document, jCas);
-            if (corpusConfig.getAnnotations().isTime()) setTimes(document, jCas);
-            if (corpusConfig.getAnnotations().getTaxon().isAnnotated()) setTaxonomy(document, jCas, corpusConfig);
-            if (corpusConfig.getAnnotations().isWikipediaLink()) setWikiLinks(document, jCas);
+            if (corpusConfig.getAnnotations().isSentence())
+                ExceptionUtils.tryCatchLog(
+                        () -> setSentences(document, jCas),
+                        (ex) -> logger.error("This file should have contained sentence annotations, but selecting them cased an error."));
+
+            if (corpusConfig.getAnnotations().isNamedEntity())
+                ExceptionUtils.tryCatchLog(
+                        () -> setNamedEntities(document, jCas),
+                        (ex) -> logger.error("This file should have contained ner annotations, but selecting them cased an error."));
+
+            if (corpusConfig.getAnnotations().isLemma())
+                ExceptionUtils.tryCatchLog(
+                        () -> setLemmata(document, jCas),
+                        (ex) -> logger.error("This file should have contained lemmata annotations, but selecting them cased an error."));
+
+            if (corpusConfig.getAnnotations().isSrLink())
+                ExceptionUtils.tryCatchLog(
+                        () -> setSemanticRoleLabels(document, jCas),
+                        (ex) -> logger.error("This file should have contained SRL annotations, but selecting them cased an error."));
+
+            if (corpusConfig.getAnnotations().isTime())
+                ExceptionUtils.tryCatchLog(
+                        () -> setTimes(document, jCas),
+                        (ex) -> logger.error("This file should have contained time annotations, but selecting them cased an error."));
+
+            if (corpusConfig.getAnnotations().getTaxon().isAnnotated())
+                ExceptionUtils.tryCatchLog(
+                        () -> setTaxonomy(document, jCas, corpusConfig),
+                        (ex) -> logger.error("This file should have contained taxon annotations, but selecting them cased an error."));
+
+            if (corpusConfig.getAnnotations().isWikipediaLink())
+                ExceptionUtils.tryCatchLog(
+                        () -> setWikiLinks(document, jCas),
+                        (ex) -> logger.error("This file should have contained wiki links annotations, but selecting them cased an error."));
+
             setPages(document, jCas, corpusConfig);
 
             logger.info("Finished extracting all the annotations.");

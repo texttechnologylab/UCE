@@ -26,7 +26,6 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
-import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.EmbeddingUtils;
 import org.texttechnologylab.utils.ListUtils;
@@ -38,7 +37,8 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Executors;
 
 public class Importer {
 
@@ -73,7 +73,7 @@ public class Importer {
      * Starts the importing processing of this instance.
      * @throws DatabaseOperationException
      */
-    public void start() throws DatabaseOperationException {
+    public void start(int numThreads) throws DatabaseOperationException {
         logger.info(
                 "\n _   _ _____  _____   _____                           _   \n" +
                         "| | | /  __ \\|  ___| |_   _|                         | |  \n" +
@@ -86,16 +86,20 @@ public class Importer {
         );
         logger.info("===========> Global Import Id: " + importId);
         logger.info("===========> Importer Number: " + importerNumber);
+        logger.info("===========> Used Threads: " + numThreads);
         logger.info("===========> Importing from path: " + path + "\n\n");
 
-        storeCorpusFromFolder(path);
+        storeCorpusFromFolderAsync(path, numThreads);
     }
 
     /**
      * Imports all UIMA xmi files in a folder
      *
      */
-    public void storeCorpusFromFolder(String foldername) throws DatabaseOperationException {
+    public void storeCorpusFromFolderAsync(String folderName, int numThreads) throws DatabaseOperationException {
+        var executor = Executors.newFixedThreadPool(numThreads);
+        List<CompletableFuture<Void>> futures = new ArrayList<>();
+
         var corpus = new Corpus();
         var gson = new Gson();
         CorpusConfig corpusConfig = null;
@@ -104,7 +108,7 @@ public class Importer {
             throw new DatabaseOperationException("Postgresql DB is not alive - cancelling import.");
 
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
-        try (var reader = new FileReader(foldername + "\\corpusConfig.json")) {
+        try (var reader = new FileReader(folderName + "\\corpusConfig.json")) {
 
             corpusConfig = gson.fromJson(reader, CorpusConfig.class);
             corpus.setName(corpusConfig.getName());
@@ -133,53 +137,59 @@ public class Importer {
         }
 
         var counter = 0;
-        var inputFolderName = Path.of(foldername, "input").toString();
+        var inputFolderName = Path.of(folderName, "input").toString();
         final var corpusConfigFinal = corpusConfig;
         for (var file : Objects.requireNonNull(
                 new File(inputFolderName)
                         .listFiles((dir, name) -> name.toLowerCase().endsWith(".xmi")))) {
-            var doc = XMIToDocument(file.getPath(), corpus);
-            if (doc == null) continue;
 
-            // Save it
-            logger.info("Trying to store document with document id " + doc.getDocumentId() + "...");
-            var saved = new AtomicBoolean(false);
-            ExceptionUtils.tryCatchLog(
-                    () -> {
-                        db.saveDocument(doc);
-                        saved.set(true);
-                    },
-                    (ex) -> logger.error("Error saving a finished document with id " + doc.getId(), ex));
-            if(!saved.get()){
-                logger.info("Document couldn't be saved properly, hence skipping any other postprocessing.");
-            }
+            final var corpus1 = corpus;
+            var docFuture = CompletableFuture.supplyAsync(() -> XMIToDocument(file.getPath(), corpus1), executor)
+                    .thenApply(doc -> {
+                        if (doc == null) return null;
 
-            logger.info("Stored document with document id " + doc.getDocumentId());
-            logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
+                        logger.info("Trying to store document with document id " + doc.getDocumentId() + "...");
+                        ExceptionUtils.tryCatchLog(
+                                () -> db.saveDocument(doc),
+                                (ex) -> logger.error("Error saving document with id " + doc.getId(), ex));
+                        return doc;
+                    })
+                    .thenAcceptAsync(doc -> {
+                        if (doc != null) {
+                            logger.info("Stored document with document id " + doc.getDocumentId());
+                            logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
+                            ExceptionUtils.tryCatchLog(
+                                    () -> postProccessDocument(doc, corpusConfigFinal),
+                                    (ex) -> logger.error("Error postprocessing a saved document with id " + doc.getId()));
+                        }
+                    });
 
-            // Now eventually do postprocessing of the document
-            ExceptionUtils.tryCatchLog(
-                    () -> postProccessDocument(doc, corpusConfigFinal),
-                    (ex) -> logger.error("Error postprocessing a saved document with id " + doc.getId()));
-            logger.info("Finished postprocessing.");
+            futures.add(docFuture);
 
-            // We occasionally postprocess the corpus while we still import to keep it up to date
+            // Periodic corpus postprocessing
             if (counter % 100 == 0 && counter != 0) {
                 final var finalCorpus = corpus;
-                ExceptionUtils.tryCatchLog(
-                        () -> postProccessCorpus(finalCorpus, corpusConfigFinal),
-                        (ex) -> logger.error("Error postprocessing the current corpus with id " + finalCorpus.getId()));
+                CompletableFuture.runAsync(() -> {
+                    ExceptionUtils.tryCatchLog(
+                            () -> postProccessCorpus(finalCorpus, corpusConfigFinal),
+                            (ex) -> logger.error("Error postprocessing the current corpus with id " + finalCorpus.getId()));
+                }, executor);
             }
+
             counter++;
         }
 
-        // At the end, postprocess the corpus
+        // Wait for all tasks to complete
+        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        // Final corpus postprocessing
         final var finalCorpus = corpus;
         ExceptionUtils.tryCatchLog(
                 () -> postProccessCorpus(finalCorpus, corpusConfigFinal),
                 (ex) -> logger.error("Error in the final postprocessing of the current corpus with id " + finalCorpus.getId()));
 
         logger.info("\n\n=================================\n Done with the corpus import.");
+        executor.shutdown();
     }
 
     /**
@@ -215,7 +225,7 @@ public class Importer {
         JCasUtil.select(jCas, AnnotationBase.class).forEach(a -> {
             unique.add(a.getType().getName());
         });
-        unique.forEach(logger::info);
+        //unique.forEach(logger::info);
 
         try {
             // Corpus config so we know what do look for
@@ -257,14 +267,44 @@ public class Importer {
             setMetadataTitleInfo(document, jCas, corpusConfig);
             // For now, we skip this. This doesn't relly improve anything and is very costly.
             //setCleanedFullText(document, jCas);
-            if (corpusConfig.getAnnotations().isSentence()) setSentences(document, jCas);
-            if (corpusConfig.getAnnotations().isNamedEntity()) setNamedEntities(document, jCas);
-            if (corpusConfig.getAnnotations().isLemma()) setLemmata(document, jCas);
-            if (corpusConfig.getAnnotations().isSrLink()) setSemanticRoleLabels(document, jCas);
-            if (corpusConfig.getAnnotations().isTime()) setTimes(document, jCas);
-            if (corpusConfig.getAnnotations().getTaxon().isAnnotated()) setTaxonomy(document, jCas, corpusConfig);
-            if (corpusConfig.getAnnotations().isWikipediaLink()) setWikiLinks(document, jCas);
-            setPages(document, jCas, corpusConfig);
+            if (corpusConfig.getAnnotations().isSentence())
+                ExceptionUtils.tryCatchLog(
+                        () -> setSentences(document, jCas),
+                        (ex) -> logger.warn("This file should have contained sentence annotations, but selecting them caused an error."));
+
+            if (corpusConfig.getAnnotations().isNamedEntity())
+                ExceptionUtils.tryCatchLog(
+                        () -> setNamedEntities(document, jCas),
+                        (ex) -> logger.warn("This file should have contained ner annotations, but selecting them caused an error."));
+
+            if (corpusConfig.getAnnotations().isLemma())
+                ExceptionUtils.tryCatchLog(
+                        () -> setLemmata(document, jCas),
+                        (ex) -> logger.warn("This file should have contained lemmata annotations, but selecting them caused an error."));
+
+            if (corpusConfig.getAnnotations().isSrLink())
+                ExceptionUtils.tryCatchLog(
+                        () -> setSemanticRoleLabels(document, jCas),
+                        (ex) -> logger.warn("This file should have contained SRL annotations, but selecting them caused an error."));
+
+            if (corpusConfig.getAnnotations().isTime())
+                ExceptionUtils.tryCatchLog(
+                        () -> setTimes(document, jCas),
+                        (ex) -> logger.warn("This file should have contained time annotations, but selecting them caused an error."));
+
+            if (corpusConfig.getAnnotations().getTaxon().isAnnotated())
+                ExceptionUtils.tryCatchLog(
+                        () -> setTaxonomy(document, jCas, corpusConfig),
+                        (ex) -> logger.warn("This file should have contained taxon annotations, but selecting them caused an error."));
+
+            if (corpusConfig.getAnnotations().isWikipediaLink())
+                ExceptionUtils.tryCatchLog(
+                        () -> setWikiLinks(document, jCas),
+                        (ex) -> logger.warn("This file should have contained wiki links annotations, but selecting them caused an error."));
+
+            ExceptionUtils.tryCatchLog(
+                    () -> setPages(document, jCas, corpusConfig),
+                    (ex) -> logger.warn("This file should have contained OCRPage annotations, but selecting them caused an error."));
 
             logger.info("Finished extracting all the annotations.");
             return document;

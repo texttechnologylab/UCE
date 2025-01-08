@@ -45,6 +45,9 @@ public class App {
         var importDirPath = cmd.getOptionValue("importSrc");
         var importId = cmd.getOptionValue("importId");
         var importerNumber = Integer.parseInt(cmd.getOptionValue("importerNumber"));
+        var numThreadsStr = cmd.getOptionValue("numThreads");
+        var numThreads = 1;
+        if(numThreadsStr != null) numThreads = Integer.parseInt(numThreadsStr);
 
         if(importId == null && importerNumber != 1){
             throw new InvalidParameterException("When no -importId is given, the -importerNumber must be 1, since this will be the only instance. Canceling.");
@@ -62,7 +65,7 @@ public class App {
             ;
         }
 
-        importer.start();
+        importer.start(numThreads);
 
         // Decomment if you want to import test documents
         //importer.storeCorpusFromFolder("C:\\kevin\\projects\\biofid\\test_data\\2020_02_10");
@@ -78,6 +81,7 @@ public class App {
         options.addOption("src", "importSrc", true, "The path to the import source where the UIMA-annotated files are stored.");
         options.addOption("iid", "importId", true, "When starting multiple importers, assign an id to each instance by counting up from 1 to n.");
         options.addOption("num", "importerNumber", true, "When starting multiple importers, assign an id to each instance by counting up from 1 to n.");
+        options.addOption("t", "numThreads", true, "We do the import asynchronous. Decide with how many threads, e.g. 4-8. By default, this is single threaded.");
         return options;
     }
 }
