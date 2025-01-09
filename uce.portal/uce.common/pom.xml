@@ -107,12 +107,6 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.heideltime</groupId>
-            <artifactId>heideltime</artifactId>
-            <version>2.2.1</version>
-        </dependency>
-
-        <dependency>
             <groupId>org.apache.uima</groupId>
             <artifactId>uimaj-core</artifactId>
             <version>3.5.0</version>
