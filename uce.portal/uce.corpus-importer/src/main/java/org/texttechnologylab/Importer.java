@@ -265,6 +265,8 @@ public class Importer {
             logger.info("Setting full text done.");
 
             setMetadataTitleInfo(document, jCas, corpusConfig);
+            setUceMetadata(document, jCas);
+
             // For now, we skip this. This doesn't relly improve anything and is very costly.
             //setCleanedFullText(document, jCas);
             if (corpusConfig.getAnnotations().isSentence())
@@ -314,6 +316,23 @@ public class Importer {
         } finally {
             logger.info("Finished with importing that CAS.\n\n\n");
         }
+    }
+
+    /**
+     * Selects and sets the times to the document.
+     */
+    private void setUceMetadata(Document document, JCas jCas){
+        var data = new ArrayList<UCEMetadata>();
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.uce.Metadata.class).forEach(t -> {
+            var metadata = new UCEMetadata();
+            metadata.setComment(t.getComment());
+            metadata.setValue(t.getValue());
+            metadata.setKey(t.getKey());
+            metadata.setValueType(UCEMetadataValueType.valueOf(t.getValueType().toUpperCase()));
+            data.add(metadata);
+        });
+        document.setUceMetadata(data);
+        logger.info("Setting UCE Metadata done.");
     }
 
     /**

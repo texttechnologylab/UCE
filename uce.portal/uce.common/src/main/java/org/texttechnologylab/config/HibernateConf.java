@@ -28,6 +28,7 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(test.class);
         metadataSources.addAnnotatedClass(Block.class);
         metadataSources.addAnnotatedClass(MetadataTitleInfo.class);
+        metadataSources.addAnnotatedClass(UCEMetadata.class);
         metadataSources.addAnnotatedClass(Line.class);
         metadataSources.addAnnotatedClass(SrLink.class);
         metadataSources.addAnnotatedClass(Lemma.class);

@@ -60,6 +60,10 @@ public class Document extends ModelBase implements WikiModel {
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
+    private List<UCEMetadata> uceMetadata;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
     private List<WikipediaLink> wikipediaLinks;
 
     @OneToOne(cascade = CascadeType.ALL)
@@ -79,6 +83,14 @@ public class Document extends ModelBase implements WikiModel {
         this.documentTitle = documentTitle;
         this.documentId = documentId;
         this.corpusId = corpusId;
+    }
+
+    public List<UCEMetadata> getUceMetadata() {
+        return uceMetadata;
+    }
+
+    public void setUceMetadata(List<UCEMetadata> uceMetadata) {
+        this.uceMetadata = uceMetadata;
     }
 
     public boolean isPostProcessed() {
