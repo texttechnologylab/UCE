@@ -12,6 +12,7 @@ import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.models.search.SearchOrder;
 import org.texttechnologylab.models.search.SearchType;
+import org.texttechnologylab.models.viewModels.CorpusViewModel;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
 import org.texttechnologylab.services.UIMAService;
@@ -123,6 +124,7 @@ public class SearchApi {
             var languageResources = LanguageResources.fromRequest(request);
             var searchInput = requestBody.get("searchInput").toString();
             var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
+            model.put("corpusVm", db.getCorpusById(corpusId).getViewModel());
             var fulltextOrNeLayer = requestBody.get("fulltextOrNeLayer").toString();
             var useEmbeddings = Boolean.parseBoolean(requestBody.get("useEmbeddings").toString());
             var includeKeywordInContext = Boolean.parseBoolean(requestBody.get("kwic").toString());
@@ -173,6 +175,7 @@ public class SearchApi {
 
         try{
             var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
+            model.put("corpusVm", db.getCorpusById(corpusId).getViewModel());
             var arg0 = (ArrayList<String>) requestBody.get("arg0");
             var arg1 = (ArrayList<String>) requestBody.get("arg1");
             var argm = (ArrayList<String>) requestBody.get("argm");
