@@ -109,10 +109,10 @@ public class Search_DefaultImpl implements Search {
         if (searchState.getSearchLayers().contains(SearchLayer.EMBEDDINGS)) {
             var closestDocumentsEmbeddings = ExceptionUtils.tryCatchLog(
                     () -> ragService.getClosestDocumentChunkEmbeddings(
-                            this.searchState.getSearchPhrase(),
+                            this.searchState.getOriginalSearchQuery(),
                             20,
                             this.searchState.getCorpusId()),
-                    (ex) -> logger.error("Error getting the closest document chunk embeddings of the searchphrase: " + this.searchState.getSearchPhrase(), ex));
+                    (ex) -> logger.error("Error getting the closest document chunk embeddings of the searchphrase: " + this.searchState.getOriginalSearchQuery(), ex));
 
             if (closestDocumentsEmbeddings == null) return searchState;
             var foundDocumentChunkEmbeddings = new ArrayList<DocumentChunkEmbeddingSearchResult>();
@@ -163,6 +163,7 @@ public class Search_DefaultImpl implements Search {
             return ExceptionUtils.tryCatchLog(
                     () -> db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
                             searchState.getTake(),
+                            searchState.getOriginalSearchQuery(),
                             searchState.getSearchTokens(),
                             SearchLayer.FULLTEXT,
                             countAll,
@@ -177,6 +178,7 @@ public class Search_DefaultImpl implements Search {
             return ExceptionUtils.tryCatchLog(
                     () -> db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
                             searchState.getTake(),
+                            searchState.getOriginalSearchQuery(),
                             searchState.getSearchTokens(),
                             SearchLayer.NAMED_ENTITIES,
                             countAll,

@@ -134,6 +134,7 @@ public interface DataInterface {
      */
     public DocumentSearchResult defaultSearchForDocuments(int skip,
                                                           int take,
+                                                          String ogSearchQuery,
                                                           List<String> searchTokens,
                                                           SearchLayer layer,
                                                           boolean countAll,

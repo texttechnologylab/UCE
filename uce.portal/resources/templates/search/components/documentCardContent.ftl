@@ -70,18 +70,17 @@
             </#if>
 
             <!-- Get the list of search tokens -->
-            <#assign searchTokens = searchState.getSearchTokens()!>
-
+            <!-- We used to manuall highlight the tokens here, which sucked. We now do it in the db -->
+            <#-- <#assign searchTokens = searchState.getSearchTokens()!> -->
             <!-- Initialize the highlighted snippet -->
-            <#assign highlightedSnippet = snippet>
-
+            <#-- <#assign highlightedSnippet = snippet> -->
             <!-- Loop through each search token and highlight it -->
-            <#list searchTokens as searchToken>
+            <#-- <#list searchTokens as searchToken>
                 <#assign highlightedSnippet = highlightedSnippet?replace(searchToken, "<span class='highlighted-token'>${searchToken}</span>", "i")>
-            </#list>
+            </#list>-->
 
             <!-- Render the highlighted snippet -->
-            ${highlightedSnippet}...
+            ${snippet}...
         </p>
     <#else>
         <p class="mb-0 small-font text font-italic mr-2">

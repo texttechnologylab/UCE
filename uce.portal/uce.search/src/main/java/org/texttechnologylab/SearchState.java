@@ -253,7 +253,7 @@ public class SearchState {
         this.searchId = searchId;
     }
 
-    public String getSearchPhrase() {
+    public String getOriginalSearchQuery() {
         return searchPhrase;
     }
 

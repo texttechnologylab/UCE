@@ -377,6 +377,7 @@ public class Importer {
                 // New page
                 var page = new Page(p.getBegin(), p.getEnd(), p.getPageNumber(), p.getPageId());
                 page.setDocument(document);
+                page.setCoveredText(page.getCoveredText());
                 if (corpusConfig.getAnnotations().isOCRParagraph())
                     page.setParagraphs(getCoveredParagraphs(p));
 
@@ -395,12 +396,14 @@ public class Importer {
             // We want pages as our pagination of the document reader relies on it to handle larger documents.
             // In this case: we chunk the whole text into pages
             var fullText = document.getFullText();
-            var pageSize = 6000;
+            var pageSize = 10000;
             var pageNumber = 1;
             var pages = new ArrayList<Page>();
 
             for (var i = 0; i < fullText.length(); i += pageSize) {
-                var page = new Page(i, i + pageSize, pageNumber, "");
+                var pageEnd = Math.min(i + pageSize, fullText.length());
+                var page = new Page(i, pageEnd, pageNumber, "");
+                page.setCoveredText(fullText.substring(i, pageEnd));
                 page.setDocument(document);
                 pageNumber += 1;
                 pages.add(page);

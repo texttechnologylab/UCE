@@ -4,6 +4,9 @@ CREATE EXTENSION IF NOT EXISTS btree_gin;
 -- Some standard indexes on title and such
 CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_title ON metadatatitleinfo (title);
 CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_published ON metadatatitleinfo (published);
+-- and also some trigram index:
+CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_title_trgm ON metadatatitleinfo USING gin (title gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_published_trgm ON metadatatitleinfo USING gin (published gin_trgm_ops);
 
 -- Enable the pg_trgm extension, if not already enabled
 -- For the following indexes, see also: https://www.postgresql.org/docs/9.1/textsearch-indexes.html
@@ -18,7 +21,8 @@ CREATE INDEX IF NOT EXISTS idx_taxon_coveredtext_trgm ON taxon USING gin (covere
 CREATE INDEX IF NOT EXISTS idx_lemma_coveredtext_trgm ON lemma USING gin ((value || ' ' || coveredtext) gin_trgm_ops); 
 
 -- For the fulltext search of the documents
-CREATE INDEX IF NOT EXISTS idx_document_fulltext_trgm ON document USING gin (fulltext gin_trgm_ops); 
+CREATE INDEX IF NOT EXISTS idx_document_fulltext_trgm ON document USING gin (fulltext gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_textsearch_gin ON page USING gin(to_tsvector('simple', coveredtext));
 
 -- For the semantic role labels
 CREATE INDEX IF NOT EXISTS idx_srl_relationtype_trgm ON srlink USING gin (relationtype gin_trgm_ops); 

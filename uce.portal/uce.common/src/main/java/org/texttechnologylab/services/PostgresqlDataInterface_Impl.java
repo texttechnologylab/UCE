@@ -305,6 +305,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public DocumentSearchResult defaultSearchForDocuments(int skip,
                                                           int take,
+                                                          String ogSearchQuery,
                                                           List<String> searchTokens,
                                                           SearchLayer layer,
                                                           boolean countAll,
@@ -318,7 +319,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() + "(?, ?, ?, ?, ?, ?, ?, ?)}")) {
                 storedProcedure.setInt(1, (int) corpusId);
                 storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.stream().map(this::escapeSql).toArray()));
-                storedProcedure.setString(3, String.join("|", searchTokens.stream().map(this::escapeSql).toList()).trim());
+                storedProcedure.setString(3, ogSearchQuery);
                 storedProcedure.setInt(4, take);
                 storedProcedure.setInt(5, skip);
                 storedProcedure.setBoolean(6, countAll);
