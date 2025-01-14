@@ -61,7 +61,15 @@ $('body').on('click', '.view .search-btn', function (event) {
  * Fires whenever a new corpus is selected. We update some UI components then
  */
 $('body').on('change', '#corpus-select', function () {
-    const selectedOption = $(this).get(0).options[$(this).get(0).selectedIndex];
+    handleCorpusSelectionChanged($(this));
+})
+
+/**
+ * We need to hide and display different ui elements according to the corpus selected.
+ * @param $select
+ */
+function handleCorpusSelectionChanged($select){
+    const selectedOption = $select.get(0).options[$select.get(0).selectedIndex];
     const hasSr = selectedOption.getAttribute("data-hassr");
     const hasBiofidOnthology = selectedOption.getAttribute("data-hasbiofid");
     const sparqlAlive = selectedOption.getAttribute("data-sparqlalive");
@@ -84,7 +92,7 @@ $('body').on('change', '#corpus-select', function () {
     else $('.ragbot-chat-include').hide();
 
     updateSearchHistoryUI();
-})
+}
 
 /**
  * Triggers whenever an open-corpus inspector button is clicked.
@@ -183,7 +191,7 @@ function activatePopovers() {
  * We have some UI components that need to be refreshed when the corpus is loaded.
  */
 function reloadCorpusComponents() {
-    $('#corpus-select').change();
+    handleCorpusSelectionChanged($('#corpus-select'));
 }
 
 $(document).ready(function () {
