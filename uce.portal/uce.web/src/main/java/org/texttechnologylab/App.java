@@ -81,7 +81,7 @@ public class App {
         SystemStatus.InitSystemStatus(commonConfig.getSystemJobInterval(), context);
         logger.info("Initialized the System Job.");
 
-        // Set the folder for our template files of freemaker
+        // Set the folder for our template files of freemarker
         try {
             configuration.setDirectoryForTemplateLoading(new File(commonConfig.getTemplatesLocation()));
 

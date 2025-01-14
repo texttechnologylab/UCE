@@ -5,5 +5,6 @@ public enum UCEMetadataValueType {
     NUMBER,
     JSON,
     DATE,
-    URL
+    URL,
+    ENUM,
 }

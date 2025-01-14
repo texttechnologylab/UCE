@@ -7,7 +7,6 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
-import org.texttechnologylab.models.viewModels.wiki.AnnotationWikiPageViewModel;
 import org.texttechnologylab.models.viewModels.wiki.CachedWikiPage;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
@@ -21,24 +20,20 @@ import java.util.Map;
 public class WikiApi {
 
     private static final Logger logger = LogManager.getLogger();
-    private ApplicationContext context = null;
-    private PostgresqlDataInterface_Impl db = null;
-    private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
+    private Configuration freemarkerConfig;
     private JenaSparqlService jenaSparqlService;
-    private WikiService wikiService = null;
+    private WikiService wikiService;
 
-    public WikiApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
-        this.freemakerConfig = freemakerConfig;
-        this.context = serviceContext;
+    public WikiApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
+        this.freemarkerConfig = freemarkerConfig;
         this.wikiService = serviceContext.getBean(WikiService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
-        this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
     }
 
     public Route queryOntology = ((request, response) -> {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
-        Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
+        Map requestBody = gson.fromJson(request.body(), Map.class);
 
         try {
             var languageResources = LanguageResources.fromRequest(request);
@@ -51,17 +46,17 @@ public class WikiApi {
 
             if (tripletType == null || tripletType.isEmpty() || value == null || value.isEmpty()) {
                 model.put("information", languageResources.get("missingParameterError"));
-                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
             var nodes = jenaSparqlService.queryBySubject(value);
             // We don't need those children rdf nodes that are the exact same as the queried pne
             model.put("rdfNodes", nodes.stream().filter(n -> !n.getObject().getValue().equals(value)).toList());
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "/wiki/components/rdfNodeList.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/components/rdfNodeList.ftl"));
         } catch (Exception ex) {
             logger.error("Error querying the ontology in the graph database " +
                     "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
     });
 
@@ -81,7 +76,7 @@ public class WikiApi {
 
             if (wid == null || !wid.contains("-") || coveredText == null || coveredText.isEmpty()) {
                 model.put("information", languageResources.get("missingParameterError"));
-                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
             // Check if we have loaded, built and cached that wikipage before. We don't re-render it then.
@@ -126,18 +121,18 @@ public class WikiApi {
                 // The type part of the wikiId was unknown. Throw an error.
                 logger.warn("Someone tried to query a wiki page of a type that does not exist in UCE. This shouldn't happen.");
                 model.put("information", languageResources.get("missingParameterError"));
-                return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
             // cache and return the wiki page
-            var view = new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, renderView));
+            var view = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, renderView));
             var cachedWikiPage = new CachedWikiPage(view);
             SessionManager.CachedWikiPages.put(cacheId, cachedWikiPage);
             return view;
         } catch (Exception ex) {
             logger.error("Error getting a wiki page for an annotation - best refer to the last logged API call " +
                     "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
     });
 

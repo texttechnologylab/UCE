@@ -7,15 +7,14 @@ import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
-import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.dto.UceMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
 
-import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import java.sql.Array;
 import java.sql.ResultSet;
@@ -130,6 +129,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<UCEMetadataFilter> getUCEMetadataFiltersByCorpusId(long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            Criteria criteria = session.createCriteria(UCEMetadataFilter.class);
+            criteria.add(Restrictions.eq("corpusId", corpusId));
+            return (List<UCEMetadataFilter>) criteria.list();
+        });
+    }
+
     public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             Criteria criteria = session.createCriteria(Document.class);
@@ -173,7 +180,11 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var criteriaQuery = session.getCriteriaBuilder().createQuery(Corpus.class);
             criteriaQuery.from(Corpus.class);
-            return session.createQuery(criteriaQuery).getResultList();
+            var corpora = session.createQuery(criteriaQuery).getResultList();
+            for(var corpus: corpora){
+                Hibernate.initialize(corpus.getUceMetadataFilters());
+            }
+            return corpora;
         });
     }
 
@@ -311,7 +322,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                           boolean countAll,
                                                           SearchOrder order,
                                                           OrderByColumn orderedByColumn,
-                                                          long corpusId) throws DatabaseOperationException {
+                                                          long corpusId,
+                                                          List<UceMetadataFilterDto> uceMetadataFilters) throws DatabaseOperationException {
 
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
@@ -580,6 +592,20 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             if (corpus.getCorpusTsnePlot() != null) {
                 session.saveOrUpdate(corpus.getCorpusTsnePlot());
             }
+            return null;
+        });
+    }
+
+    public void saveOrUpdateUCEMetadataFilter(UCEMetadataFilter filter) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(filter);
+            return null;
+        });
+    }
+
+    public void saveUCEMetadataFilter(UCEMetadataFilter filter) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            session.save(filter);
             return null;
         });
     }

@@ -18,12 +18,12 @@ import spark.Route;
 import java.util.HashMap;
 
 public class DocumentApi {
-    private PostgresqlDataInterface_Impl db = null;
+    private PostgresqlDataInterface_Impl db;
     private static final Logger logger = LogManager.getLogger();
-    private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
-    public DocumentApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
+    private Configuration freemarkerConfig;
+    public DocumentApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
-        this.freemakerConfig = freemakerConfig;
+        this.freemarkerConfig = freemarkerConfig;
     }
 
     public Route getDocumentListOfCorpus = ((request, response) -> {
@@ -34,7 +34,7 @@ public class DocumentApi {
                 (ex) -> logger.error("Error: couldn't determine the corpusId and hence can't return the document list. ", ex));
         if(corpusId == null){
             model.put("information", languageResources.get("missingParameterError"));
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
         var page = ExceptionUtils.tryCatchLog(() -> Integer.parseInt(request.queryParams("page")),
                 (ex) -> logger.error("Error: couldn't determine the page, defaulting to page 1 then. ", ex));
@@ -48,13 +48,13 @@ public class DocumentApi {
             model.put("corpusId", corpusId);
         } catch (Exception ex) {
             logger.error("Error getting the documents list of a corpus.", ex);
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
         // Depending on the page, we returns JUST a rendered list of documents or
         // a view that contains the documents but also styles navigation and such
-        if(page == 1) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/components/corpusDocumentsList.ftl"));
-        else return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/components/documents.ftl"));
+        if(page == 1) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/corpusDocumentsList.ftl"));
+        else return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/documents.ftl"));
     });
 
     public Route getCorpusInspectorView = ((request, response) -> {
@@ -62,7 +62,7 @@ public class DocumentApi {
 
         var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
                 (ex) -> logger.error("Error: the url for the corpus inspector requires an 'id' query parameter that is the corpusId. ", ex));
-        if(corpusId == null) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if(corpusId == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         try {
             var corpus = db.getCorpusById(corpusId);
@@ -75,10 +75,10 @@ public class DocumentApi {
 
         } catch (Exception ex) {
             logger.error("Error getting the corpus inspector view.", ex);
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
-        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/corpusInspector.ftl"));
+        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/corpusInspector.ftl"));
     });
 
     public Route get3dGlobe = ((request, response) -> {
@@ -86,7 +86,7 @@ public class DocumentApi {
 
         var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
                 (ex) -> logger.error("Error: the url for the document 3d globe requires an 'id' query parameter that is the document id.", ex));
-        if(id == null) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if(id == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         try {
             // I've forgotten why I introduced this variable here?...
@@ -101,10 +101,10 @@ public class DocumentApi {
             model.put("jsonData", dataJson);
         } catch (Exception ex) {
             logger.error("Error getting the 3D globe of a document, returning default error view.", ex);
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
-        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/globe.ftl"));
+        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/globe.ftl"));
     });
 
     public Route getSingleDocumentReadView = ((request, response) -> {
@@ -113,7 +113,7 @@ public class DocumentApi {
         var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
                 (ex) -> logger.error("Error: the url for the document reader requires an 'id' query parameter. " +
                         "Document reader can't be built.", ex));
-        if(id == null) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if(id == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         // Check if we have an searchId parameter. This is optional
         var searchId = ExceptionUtils.tryCatchLog(() -> request.queryParams("searchId"),
@@ -133,10 +133,10 @@ public class DocumentApi {
             }
         } catch (Exception ex) {
             logger.error("Error creating the document reader view for document with id: " + id, ex);
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
-        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "reader/documentReaderView.ftl"));
+        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "reader/documentReaderView.ftl"));
     });
 
     public Route getPagesListView = ((request, response) -> {
@@ -145,7 +145,7 @@ public class DocumentApi {
 
         var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
                 (ex) -> logger.error("Error: the url for the document pages list view requires an 'id' query parameter. ", ex));
-        if(id == null) return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if(id == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         try{
             var skip = Integer.parseInt(request.queryParams("skip"));
@@ -156,9 +156,9 @@ public class DocumentApi {
             model.put("documentPages", doc.getPages(10, skip));
         } catch (Exception ex){
             logger.error("Error getting the pages list view - either the document couldn't be fetched (id=" + id + ") or its annotations.", ex);
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
-        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "reader/components/pagesList.ftl"));
+        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "reader/components/pagesList.ftl"));
     });
 }

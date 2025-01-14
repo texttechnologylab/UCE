@@ -157,11 +157,34 @@
                         <div class="backdrop"></div>
 
                         <div style="z-index: 2; position:relative;">
+                            <!-- The search history div -->
                             <div class="search-history-div">
                             </div>
+
+                            <!-- these are the UCEMetadata annotations that can act as a filter if they exist -->
+                            <div class="uce-search-filters mb-3">
+                                <#list corpora as corpusVm>
+                                    <#if corpusVm.getCorpusConfig().getAnnotations().isUceMetadata()
+                                    && corpusVm.getCorpus().getUceMetadataFilters()?has_content
+                                    && corpusVm.getCorpus().getUceMetadataFilters()?size gt 0>
+                                        <div class="uce-corpus-search-filter" data-id="${corpusVm.getCorpus().getId()}">
+                                            <div class="flexed align-items-center text-secondary w-100">
+                                                <i class="fas fa-filter mr-2"></i>
+                                                <div class="m-0 pl-0 pr-0 rounded pt-2 pb-2 row w-100 light-border bg-lightgray">
+                                                    <#list corpusVm.getCorpus().getUceMetadataFilters() as filter>
+                                                        <#include "*/search/components/uceMetadataFilter.ftl">
+                                                    </#list>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </#if>
+                                </#list>
+                            </div>
+
+                            <!-- and the search settings that are always on display -->
                             <div class="search-settings-div flexed align-items-center justify-content-around">
                                 <!-- The data-ids are corresponding to the SearchLayer enum. Change them with care!! -->
-                                <i class="text w-auto fab fa-searchengin mr-2 large-font"></i>
+                                <i class="w-auto fab fa-searchengin text-secondary large-font"></i>
                                 <div class="option" data-type="radio">
                                     <div class="form-check form-check-inline" data-trigger="hover"
                                          data-toggle="popover" data-placement="top" data-html="true"

@@ -5,6 +5,8 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.corpus.UCEMetadataFilter;
+import org.texttechnologylab.models.dto.UceMetadataFilterDto;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
@@ -65,6 +67,11 @@ public class Search_DefaultImpl implements Search {
     }
 
     public Search_DefaultImpl() {
+    }
+
+    public Search_DefaultImpl withUceMetadataFilters(List<UceMetadataFilterDto> filters){
+        this.searchState.setUceMetadataFilters(filters);
+        return this;
     }
 
     public void fromSearchState(ApplicationContext serviceContext,
@@ -169,7 +176,8 @@ public class Search_DefaultImpl implements Search {
                             countAll,
                             searchState.getOrder(),
                             searchState.getOrderBy(),
-                            searchState.getCorpusId()),
+                            searchState.getCorpusId(),
+                            searchState.getUceMetadataFilters()),
                     (ex) -> logger.error("Error executing a search on the database with search layer METADATA. Search can't be executed.", ex));
         }
 
@@ -184,7 +192,8 @@ public class Search_DefaultImpl implements Search {
                             countAll,
                             searchState.getOrder(),
                             searchState.getOrderBy(),
-                            searchState.getCorpusId()),
+                            searchState.getCorpusId(),
+                            searchState.getUceMetadataFilters()),
                     (ex) -> logger.error("Error executing a search on the database with search layer NAMED_ENTITIES. Search can't be executed.", ex));
         }
 

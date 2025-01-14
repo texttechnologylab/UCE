@@ -38,6 +38,7 @@ import java.io.IOException;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 
 public class Importer {
@@ -54,6 +55,7 @@ public class Importer {
     private String path;
     private String importId;
     private Integer importerNumber;
+    private List<UCEMetadataFilter> uceMetadataFilters = new CopyOnWriteArrayList<>(); // need thread safety.
 
     public Importer(ApplicationContext serviceContext,
                     String foldername,
@@ -71,6 +73,7 @@ public class Importer {
 
     /**
      * Starts the importing processing of this instance.
+     *
      * @throws DatabaseOperationException
      */
     public void start(int numThreads) throws DatabaseOperationException {
@@ -94,7 +97,6 @@ public class Importer {
 
     /**
      * Imports all UIMA xmi files in a folder
-     *
      */
     public void storeCorpusFromFolderAsync(String folderName, int numThreads) throws DatabaseOperationException {
         var executor = Executors.newFixedThreadPool(numThreads);
@@ -125,6 +127,9 @@ public class Importer {
                                 "to not add to existing corpus then.", ex));
                 if (existingCorpus != null) { // If we have the corpus, use that. Else store the new corpus.
                     corpus = existingCorpus;
+                    // In case that we have a corpus already, we load the existing filters if they exist.
+                    if (corpusConfig.getAnnotations().isUceMetadata())
+                        this.uceMetadataFilters = new CopyOnWriteArrayList<>(db.getUCEMetadataFiltersByCorpusId(corpus.getId()));
                 } else {
                     final var corpus1 = corpus;
                     ExceptionUtils.tryCatchLog(() -> db.saveCorpus(corpus1),
@@ -194,7 +199,6 @@ public class Importer {
 
     /**
      * Converts an XMI to an OCRDocument by path
-     *
      */
     public Document XMIToDocument(String filename, Corpus corpus) {
         try {
@@ -215,7 +219,6 @@ public class Importer {
 
     /**
      * Convert a UIMA jCas to an OCRDocument
-     *
      */
     public Document XMIToDocument(JCas jCas, Corpus corpus) {
 
@@ -252,7 +255,7 @@ public class Importer {
                         + " already exists in the corpus " + corpus.getId() + ".");
                 logger.info("Checking if that document was also post-processed yet...");
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
-                if(!existingDoc.isPostProcessed()){
+                if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
                     postProccessDocument(existingDoc, corpusConfig);
                 }
@@ -265,10 +268,14 @@ public class Importer {
             logger.info("Setting full text done.");
 
             setMetadataTitleInfo(document, jCas, corpusConfig);
-            setUceMetadata(document, jCas);
 
             // For now, we skip this. This doesn't relly improve anything and is very costly.
             //setCleanedFullText(document, jCas);
+            if (corpusConfig.getAnnotations().isUceMetadata())
+                ExceptionUtils.tryCatchLog(
+                        () -> setUceMetadata(document, jCas, corpus.getId()),
+                        (ex) -> logger.warn("This file should have contained UceMetadata annotations, but selecting them caused an error."));
+
             if (corpusConfig.getAnnotations().isSentence())
                 ExceptionUtils.tryCatchLog(
                         () -> setSentences(document, jCas),
@@ -321,15 +328,51 @@ public class Importer {
     /**
      * Selects and sets the times to the document.
      */
-    private void setUceMetadata(Document document, JCas jCas){
+    private void setUceMetadata(Document document, JCas jCas, long corpusId) {
         var data = new ArrayList<UCEMetadata>();
         JCasUtil.select(jCas, org.texttechnologylab.annotation.uce.Metadata.class).forEach(t -> {
             var metadata = new UCEMetadata();
             metadata.setComment(t.getComment());
             metadata.setValue(t.getValue());
             metadata.setKey(t.getKey());
-            metadata.setValueType(UCEMetadataValueType.valueOf(t.getValueType().toUpperCase()));
+            // TODO: THIS IS JUST FOR TESTING. Delete this domain check and leave only the last line
+            if(metadata.getKey().equals("domain")) metadata.setValueType(UCEMetadataValueType.ENUM);
+            else
+                metadata.setValueType(UCEMetadataValueType.valueOf(t.getValueType().toUpperCase()));
             data.add(metadata);
+
+            // Now check if we have added a new distinct metadata. If not, then cache it for filtering later.
+            // But we are not interested in filtering for JSON content. That's not feasible.
+            if(metadata.getValueType() == UCEMetadataValueType.JSON) return;
+            var possibleFilter = this.uceMetadataFilters
+                    .stream()
+                    .filter(f -> f.getKey().equals(t.getKey()) && metadata.getValueType() == metadata.getValueType())
+                    .findFirst();
+            // If it's empty, we don't have that metadata cached as a filter yet. So do it.
+            if (possibleFilter.isEmpty()) {
+                var newFilter = new UCEMetadataFilter(corpusId, metadata.getKey(), metadata.getValueType());
+                newFilter.addPossibleCategory(metadata.getValue());
+                synchronized (newFilter){
+                    this.uceMetadataFilters.add(newFilter);
+                }
+                ExceptionUtils.tryCatchLog(
+                        () -> db.saveUCEMetadataFilter(newFilter),
+                        (ex) -> logger.error("Tried saving a new UCEMetadataFilter, but got an error: ", ex));
+            } else {
+                // If this filter already exists, then we need to check if it's an Enum filter. If yes, there is a chance
+                // that a new category to that enum must be added and stored. Let's check.
+                var existingFilter = possibleFilter.get();
+                if(existingFilter.getValueType() != UCEMetadataValueType.ENUM) return; // There is nothing to update for none enums.
+                // Again, thread safety. If this worker updates a filter category, we need the other to know.
+                synchronized (existingFilter){
+                    if (existingFilter.getPossibleCategories().stream().noneMatch(c -> c.equals(metadata.getValue()))) {
+                        existingFilter.addPossibleCategory(metadata.getValue());
+                        ExceptionUtils.tryCatchLog(
+                                () -> db.saveOrUpdateUCEMetadataFilter(existingFilter),
+                                (ex) -> logger.error("Tried updating an existing UCEMetadataFilter, but got an error: ", ex));
+                    }
+                }
+            }
         });
         document.setUceMetadata(data);
         logger.info("Setting UCE Metadata done.");
@@ -338,7 +381,7 @@ public class Importer {
     /**
      * Select and set possible metadata. Also adds Goethe Scraping if applicable
      */
-    private void setMetadataTitleInfo(Document document, JCas jCas, CorpusConfig corpusConfig){
+    private void setMetadataTitleInfo(Document document, JCas jCas, CorpusConfig corpusConfig) {
         // See if we can get any more information from the goethe collections
         var metadataTitleInfo = new MetadataTitleInfo();
         if (corpusConfig.getOther().isAvailableOnFrankfurtUniversityCollection()) {
@@ -352,7 +395,7 @@ public class Importer {
             var documentAnnotation = ExceptionUtils.tryCatchLog(
                     () -> JCasUtil.selectSingle(jCas, DocumentAnnotation.class),
                     (ex) -> logger.info("No DocumentAnnotation found. Skipping this annotation then."));
-            if(documentAnnotation != null){
+            if (documentAnnotation != null) {
                 try {
                     metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
                             + documentAnnotation.getDateMonth() + "."
@@ -368,7 +411,7 @@ public class Importer {
     /**
      * Selects and sets pages to a document.
      */
-    private void setPages(Document document, JCas jCas, CorpusConfig corpusConfig){
+    private void setPages(Document document, JCas jCas, CorpusConfig corpusConfig) {
         // Set the OCRpages
         if (corpusConfig.getAnnotations().isOCRPage()) {
             var pages = new ArrayList<Page>();
@@ -416,7 +459,7 @@ public class Importer {
     /**
      * Selects and sets the WikiLinks to the document.
      */
-    private void setWikiLinks(Document document, JCas jCas){
+    private void setWikiLinks(Document document, JCas jCas) {
         var wikiDatas = new ArrayList<org.texttechnologylab.models.corpus.WikipediaLink>();
         JCasUtil.select(jCas, org.hucompute.textimager.uima.type.wikipedia.WikipediaLink.class).forEach(w -> {
             var data = new org.texttechnologylab.models.corpus.WikipediaLink(w.getBegin(), w.getEnd());
@@ -437,7 +480,7 @@ public class Importer {
     /**
      * Selects taxnomies and tries to enrich specific biofid onthologies as well.
      */
-    private void setTaxonomy(Document document, JCas jCas, CorpusConfig corpusConfig){
+    private void setTaxonomy(Document document, JCas jCas, CorpusConfig corpusConfig) {
         var taxons = new ArrayList<Taxon>();
         JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Taxon.class).forEach(t -> {
             var taxon = new Taxon(t.getBegin(), t.getEnd());
@@ -495,7 +538,7 @@ public class Importer {
     /**
      * Selects and sets the times to the document.
      */
-    private void setTimes(Document document, JCas jCas){
+    private void setTimes(Document document, JCas jCas) {
         var times = new ArrayList<Time>();
         JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Time.class).forEach(t -> {
             var time = new Time(t.getBegin(), t.getEnd());
@@ -510,7 +553,7 @@ public class Importer {
     /**
      * Selects and sets the SRL to the document
      */
-    private void setSemanticRoleLabels(Document document, JCas jCas){
+    private void setSemanticRoleLabels(Document document, JCas jCas) {
         var srLinks = new ArrayList<org.texttechnologylab.models.corpus.SrLink>();
         JCasUtil.select(jCas, org.texttechnologylab.annotation.semaf.semafsr.SrLink.class).forEach(a -> {
             var srLink = new org.texttechnologylab.models.corpus.SrLink();
@@ -534,7 +577,6 @@ public class Importer {
 
     /**
      * Selects and sets the lemmata to the document
-     *
      */
     private void setLemmata(Document document, JCas jCas) {
         // Set the lemmas
@@ -546,14 +588,14 @@ public class Importer {
             lemma.setValue(l.getValue());
 
             var potentialPos = JCasUtil.selectCovered(POS.class, l).stream().findFirst();
-            if(potentialPos.isPresent()) {
+            if (potentialPos.isPresent()) {
                 var pos = potentialPos.get();
                 lemma.setPosValue(pos.getPosValue());
                 lemma.setCoarseValue(pos.getCoarseValue());
             }
 
             var potentialMorph = JCasUtil.selectCovered(MorphologicalFeatures.class, l).stream().findFirst();
-            if(potentialMorph.isPresent()){
+            if (potentialMorph.isPresent()) {
                 var morph = potentialMorph.get();
                 lemma.setAnimacy(morph.getAnimacy());
                 lemma.setAspect(morph.getAspect());
@@ -582,7 +624,6 @@ public class Importer {
 
     /**
      * Select and set the Named-Entities to the document
-     *
      */
     private void setNamedEntities(Document document, JCas jCas) {
         // Set the named entities
@@ -610,7 +651,6 @@ public class Importer {
 
     /**
      * Selects and sets the sentences to a document
-     *
      */
     private void setSentences(Document document, JCas jCas) {
         // Set the sentences
@@ -624,7 +664,6 @@ public class Importer {
 
     /**
      * Set the cleaned full text. That is the sum of all tokens except of all anomalies
-     *
      */
     @Obsolete
     private void setCleanedFullText(Document document, JCas jCas) {
@@ -643,7 +682,6 @@ public class Importer {
     /**
      * Apply any postprocessing once the corpus is finished calculating. This will be called even
      * when the corpus import didn't finish due to an error. We still postprocess what we have.
-     *
      */
     private void postProccessCorpus(Corpus corpus, CorpusConfig corpusConfig) {
         logger.info("Postprocessing the Corpus " + corpus.getName());
@@ -764,7 +802,7 @@ public class Importer {
             var docHasChunkEmbeddings = ExceptionUtils.tryCatchLog(
                     () -> ragService.documentHasDocumentChunkEmbeddings(document.getId()),
                     (ex) -> logger.error("Error while checking if a document already has DocumentChunkEmbeddings.", ex));
-            if(docHasChunkEmbeddings != null && !docHasChunkEmbeddings){
+            if (docHasChunkEmbeddings != null && !docHasChunkEmbeddings) {
                 // Build the chunks, which are the most crucial embeddings
                 var documentChunkEmbeddings = ExceptionUtils.tryCatchLog(
                         () -> ragService.getCompleteEmbeddingChunksFromDocument(document),
@@ -784,7 +822,7 @@ public class Importer {
             var docHasEmbedding = ExceptionUtils.tryCatchLog(
                     () -> ragService.documentHasDocumentEmbedding(document.getId()),
                     (ex) -> logger.error("Error while checking if a document already has a DocumentEmbedding.", ex));
-            if(docHasEmbedding != null && !docHasEmbedding){
+            if (docHasEmbedding != null && !docHasEmbedding) {
                 // Build a single document embeddings for the whole text
                 var documentEmbedding = ExceptionUtils.tryCatchLog(
                         () -> ragService.getCompleteEmbeddingFromDocument(document),
@@ -804,7 +842,7 @@ public class Importer {
             // Calculate the page topic distribution if activated
             for (var page : document.getPages()) {
                 // If this page already has a topic dist, continue.
-                if(page.getPageTopicDistribution() != null) continue;
+                if (page.getPageTopicDistribution() != null) continue;
 
                 var topicDistribution = ExceptionUtils.tryCatchLog(
                         () -> ragService.getTextTopicDistribution(PageTopicDistribution.class, page.getCoveredText(document.getFullText())),
@@ -822,7 +860,7 @@ public class Importer {
             }
 
             // And the document topic dist if this wasn't added before.
-            if(document.getDocumentTopicDistribution() == null){
+            if (document.getDocumentTopicDistribution() == null) {
                 var documentTopicDistribution = ExceptionUtils.tryCatchLog(
                         () -> ragService.getTextTopicDistribution(DocumentTopicDistribution.class, document.getFullText()),
                         (ex) -> logger.error("Error getting the DocumentTopicDistribution - the postprocessing ends now. Document id: " + document.getId(), ex));
@@ -840,7 +878,6 @@ public class Importer {
 
     /**
      * Gets all covered lines from a OCR page in a cas
-     *
      */
     private List<Line> getCoveredLines(OCRPage page) {
         // Paragraphs
@@ -861,7 +898,6 @@ public class Importer {
 
     /**
      * Gets all covered blocks from a OCR page in a cas
-     *
      */
     private List<Block> getCoveredBlocks(OCRPage page) {
         // Paragraphs
@@ -877,7 +913,6 @@ public class Importer {
 
     /**
      * Gets all covered paragraphs from a OCR page in a cas
-     *
      */
     private List<Paragraph> getCoveredParagraphs(OCRPage page) {
         // Paragraphs
