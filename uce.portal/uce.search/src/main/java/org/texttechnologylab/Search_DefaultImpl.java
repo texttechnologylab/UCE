@@ -106,6 +106,7 @@ public class Search_DefaultImpl implements Search {
         searchState.setCurrentDocuments(documents);
         searchState.setCurrentDocumentHits(documentSearchResult.getDocumentHits());
         searchState.setDocumentIdxToSnippet(documentSearchResult.getSearchSnippets());
+        searchState.setDocumentIdxToRank(documentSearchResult.getSearchRanks());
         searchState.setTotalHits(documentSearchResult.getDocumentCount());
         searchState.setFoundNamedEntities(documentSearchResult.getFoundNamedEntities());
         searchState.setFoundTaxons(documentSearchResult.getFoundTaxons());
@@ -156,6 +157,7 @@ public class Search_DefaultImpl implements Search {
         searchState.setCurrentDocuments(documents);
         searchState.setCurrentDocumentHits(documentSearchResult.getDocumentHits());
         searchState.setDocumentIdxToSnippet(documentSearchResult.getSearchSnippets());
+        searchState.setDocumentIdxToRank(documentSearchResult.getSearchRanks());
         return searchState;
     }
 

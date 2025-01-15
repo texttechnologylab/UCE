@@ -1,5 +1,6 @@
 package org.texttechnologylab.services;
 
+import com.google.gson.Gson;
 import org.hibernate.*;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
@@ -28,6 +29,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     private final SessionFactory sessionFactory;
 
+    private final Gson gson = new Gson();
+
     private Session getCurrentSession() {
         return sessionFactory.openSession();
     }
@@ -37,7 +40,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         TestConnection();
     }
 
-    public void TestConnection(){
+    public void TestConnection() {
         try {
             var log = new UCELog("localhost", "TEST", "/", "Testing DB Connection", "/");
             saveUceLog(log);
@@ -181,7 +184,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             var criteriaQuery = session.getCriteriaBuilder().createQuery(Corpus.class);
             criteriaQuery.from(Corpus.class);
             var corpora = session.createQuery(criteriaQuery).getResultList();
-            for(var corpus: corpora){
+            for (var corpus : corpora) {
                 Hibernate.initialize(corpus.getUceMetadataFilters());
             }
             return corpora;
@@ -328,7 +331,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
             DocumentSearchResult search = null;
-            try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() + "(?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() +
+                    "(?::bigint, ?::text[], ?::text, ?::integer, ?::integer, ?::boolean, ?::text, ?::text, ?::jsonb)}")) {
                 storedProcedure.setInt(1, (int) corpusId);
                 storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.stream().map(this::escapeSql).toArray()));
                 storedProcedure.setString(3, ogSearchQuery);
@@ -337,6 +341,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 storedProcedure.setBoolean(6, countAll);
                 storedProcedure.setString(7, order.name());
                 storedProcedure.setString(8, orderedByColumn.name().toLowerCase());
+                if (uceMetadataFilters == null || uceMetadataFilters.isEmpty())
+                    storedProcedure.setString(9, null);
+                else {
+                    var applicableFilters = uceMetadataFilters.stream().filter(f -> !(f.getValue().isEmpty() || f.getValue().equals("{ANY}"))).toList();
+                    if (applicableFilters.isEmpty()) storedProcedure.setString(9, null);
+                    else storedProcedure.setString(9, gson.toJson(applicableFilters)
+                            .replaceAll("\"valueType\"", "\"valueType::text\""));
+                }
 
                 var result = storedProcedure.executeQuery();
                 while (result.next()) {
@@ -356,10 +368,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     // Finally, parse the found snippets of the search
                     // This is only done for the fulltext search
                     if (layer == SearchLayer.FULLTEXT) {
+                        // The found text snippets.
                         var resultSet = result.getArray("snippets_found").getResultSet();
                         var foundSnippets = new HashMap<Integer, String>();
                         while (resultSet.next()) foundSnippets.put(resultSet.getInt(1) - 1, resultSet.getString(2));
                         search.setSearchSnippets(foundSnippets);
+
+                        // And the ranks of each document.
+                        var rankResultSet = result.getArray("document_ranks").getResultSet();
+                        var documentRanks = new HashMap<Integer, Float>();
+                        while (rankResultSet.next()) documentRanks.put(rankResultSet.getInt(1) - 1, rankResultSet.getFloat(2));
+                        search.setSearchRanks(documentRanks);
                     }
                 }
                 return search;

@@ -75,6 +75,10 @@
     "de-DE": "Titel",
     "en-EN": "Title"
   },
+  "relevancy": {
+    "de-DE": "Relevanz",
+    "en-EN": "Relevancy"
+  },
   "locations": {
     "de-DE": "Orte",
     "en-EN": "Locations"

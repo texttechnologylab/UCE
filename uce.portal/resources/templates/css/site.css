@@ -514,6 +514,10 @@ nav .selected-nav-btn.text::before {
     text-decoration-thickness: 3px;
 }
 
+.document-card .snippet-content b{
+    color:var(--prime);
+}
+
 .document-card .embedding-text {
     font-size: small;
     font-style: italic;

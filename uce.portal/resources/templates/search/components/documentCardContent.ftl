@@ -28,11 +28,17 @@
         </div>
     </div>
 
-    <div class="flexed align-items-center">
+    <div class="flexed align-items-center w-100 justify-content-end">
         <p class="mb-0 text mr-3"> ${document.getLanguage()?upper_case}</p>
         <div class="mb-0 flexed align-items-center text">
             <i class="fas fa-file-alt"></i> <label
                     class="mb-0 ml-2">${document.getPages()?size}</label>
+        </div>
+        <div class="ml-3 mb-0 flexed align-items-center text">
+            <#assign rank = searchState.getPossibleRankOfDocumentIdx(documentIdx)!>
+            <#if rank gt -1>
+                <p class="mb-0 color-prime"><i class="fab fa-hackerrank mr-1"></i> ${rank}</p>
+            </#if>
         </div>
     </div>
 </div>

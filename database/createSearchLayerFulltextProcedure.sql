@@ -6,7 +6,8 @@ CREATE OR REPLACE FUNCTION uce_search_layer_fulltext(
     IN offset_count integer,
     IN count_all boolean DEFAULT false,
     IN order_direction text DEFAULT 'DESC',
-    IN order_by_column text DEFAULT 'title',
+    IN order_by_column text DEFAULT 'rank',
+    IN uce_metadata_filters jsonb DEFAULT NULL, -- Accepts JSON arrays now
     OUT total_count_out integer,
     OUT document_ids integer[],
     OUT named_entities_found text[][],
@@ -25,29 +26,81 @@ DECLARE
     taxons_temp text[][];
     snippets_temp text[];
 BEGIN
-    -- Use a Common Table Expression (CTE) for page-level search and ranking
-    WITH page_ranked AS (
+    -- Validate the order direction
+    IF order_direction NOT IN ('ASC', 'DESC') THEN
+        RAISE EXCEPTION 'Invalid order_direction: %', order_direction;
+    END IF;
+
+    -- Handle potential metadata filters dynamically via JSON
+    WITH expanded_filters AS (
+        SELECT 
+            (filter->>'key')::text AS key,
+            (filter->>'value')::text AS value,
+            (filter->>'valueType')::text AS value_type
+        FROM jsonb_array_elements(uce_metadata_filters) AS filter
+    ),
+    filter_matches AS (
+        SELECT um.document_id
+        FROM ucemetadata um
+        JOIN expanded_filters ef ON (
+            (ef.value_type IS NULL OR um.valueType::text = ef.value_type) AND
+            (ef.key IS NULL OR um.key = ef.key) AND
+            (ef.value IS NULL OR um.value = ef.value)
+        )
+        WHERE um.valueType::text != 'JSON' -- JSON is not filterable.
+        GROUP BY um.document_id
+        HAVING COUNT(*) = (SELECT COUNT(*) FROM expanded_filters)
+    ),
+	
+	-- This gets all documents that are applicable to the filter.
+    page_ranked AS (
         SELECT 
             p.document_id AS doc_id, 
-            MAX(ts_rank_cd(p.textsearch, query)) AS rank
-        FROM page p, to_tsquery(input2) query
+            MAX(ts_rank_cd(p.textsearch, query)) AS rank,
+            d.documenttitle
+        FROM page p
+        JOIN document d ON d.id = p.document_id
+        CROSS JOIN to_tsquery(input2) query
         WHERE query @@ p.textsearch
-        GROUP BY p.document_id
+          AND (uce_metadata_filters IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
+          AND d.corpusid = corpus_id
+        GROUP BY p.document_id, d.documenttitle
     ),
+	
+	-- This limits and sorts those found documents.
     limited_pages AS (
         SELECT 
             pr.doc_id,
-            pr.rank
+            pr.rank,
+            pr.documenttitle
         FROM page_ranked pr
-        ORDER BY pr.rank DESC -- Sorting by rank to fetch the most relevant documents
-        LIMIT take_count OFFSET offset_count
+		ORDER BY 
+			CASE 
+				WHEN order_by_column = 'rank' AND order_direction = 'ASC' THEN pr.rank
+				WHEN order_by_column = 'rank' AND order_direction = 'DESC' THEN NULL
+			END ASC,
+			CASE 
+				WHEN order_by_column = 'rank' AND order_direction = 'DESC' THEN pr.rank
+				WHEN order_by_column = 'rank' AND order_direction = 'ASC' THEN NULL
+			END DESC,
+			CASE 
+				WHEN order_by_column = 'documenttitle' AND order_direction = 'ASC' THEN pr.documenttitle
+				WHEN order_by_column = 'documenttitle' AND order_direction = 'DESC' THEN NULL
+			END ASC,
+			CASE 
+				WHEN order_by_column = 'documenttitle' AND order_direction = 'DESC' THEN pr.documenttitle
+				WHEN order_by_column = 'documenttitle' AND order_direction = 'ASC' THEN NULL
+			END DESC
+		LIMIT take_count OFFSET offset_count
     ),
+	
+	-- Finally, this extract additional data like snippets and the sorts
     ranked_documents AS (
         SELECT 
             d.id,
             lp.rank,
             ARRAY_AGG(DISTINCT ts_headline(
-                'simple',  -- Replace with appropriate text configuration
+                'simple',
                 p.coveredtext, 
                 to_tsquery(input2),
                 'MaxWords=100, MinWords=80, MaxFragments=2, FragmentDelimiter=" ... "'
@@ -55,10 +108,7 @@ BEGIN
         FROM limited_pages lp
         JOIN document d ON d.id = lp.doc_id
         JOIN page p ON p.document_id = lp.doc_id
-        WHERE d.corpusid = corpus_id
-          AND (d.documenttitle = ANY(input1) OR d.language = ANY(input1) OR lp.rank > 0)
         GROUP BY d.id, lp.rank
-		ORDER BY lp.rank DESC
     ),
     counted_documents AS (
         SELECT COUNT(*) AS total_count FROM page_ranked

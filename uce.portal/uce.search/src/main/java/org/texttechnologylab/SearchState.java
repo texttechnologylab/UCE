@@ -3,7 +3,6 @@ package org.texttechnologylab;
 import org.apache.http.annotation.Obsolete;
 import org.joda.time.DateTime;
 import org.texttechnologylab.config.CorpusConfig;
-import org.texttechnologylab.models.corpus.UCEMetadataFilter;
 import org.texttechnologylab.models.dto.UceMetadataFilterDto;
 import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.models.corpus.Document;
@@ -33,7 +32,7 @@ public class SearchState {
     private CorpusConfig corpusConfig;
     private Integer totalHits;
     private SearchOrder order = SearchOrder.ASC;
-    private OrderByColumn orderBy = OrderByColumn.TITLE;
+    private OrderByColumn orderBy = OrderByColumn.DOCUMENTTITLE;
     private ArrayList<AnnotationSearchResult> foundNamedEntities;
     private ArrayList<AnnotationSearchResult> foundTimes;
     private ArrayList<AnnotationSearchResult> foundTaxons;
@@ -57,11 +56,26 @@ public class SearchState {
     @Obsolete
     private List<Integer> currentDocumentHits;
     private HashMap<Integer, String> documentIdxToSnippet;
+    private HashMap<Integer, Float> documentIdxToRank;
 
     public SearchState(SearchType searchType) {
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
         this.created = DateTime.now();
+    }
+
+    public String getSearchPhrase() {
+        return searchPhrase;
+    }
+
+    public float getPossibleRankOfDocumentIdx(Integer idx) {
+        if (this.documentIdxToRank != null && this.documentIdxToRank.containsKey(idx))
+            return this.documentIdxToRank.get(idx);
+        return -1;
+    }
+
+    public void setDocumentIdxToRank(HashMap<Integer, Float> documentIdxToRank) {
+        this.documentIdxToRank = documentIdxToRank;
     }
 
     public List<UceMetadataFilterDto> getUceMetadataFilters() {

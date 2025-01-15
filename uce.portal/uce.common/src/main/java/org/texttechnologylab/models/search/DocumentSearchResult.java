@@ -13,11 +13,20 @@ public class DocumentSearchResult {
     private ArrayList<AnnotationSearchResult> foundTimes;
     private ArrayList<AnnotationSearchResult> foundTaxons;
     private HashMap<Integer, String> searchSnippets;
+    private HashMap<Integer, Float> searchRanks;
 
     public DocumentSearchResult(int documentCount,
                                 ArrayList<Integer> documentIds) {
         this.documentCount = documentCount;
         this.documentIds = documentIds;
+    }
+
+    public HashMap<Integer, Float> getSearchRanks() {
+        return searchRanks;
+    }
+
+    public void setSearchRanks(HashMap<Integer, Float> searchRanks) {
+        this.searchRanks = searchRanks;
     }
 
     public HashMap<Integer, String> getSearchSnippets() {
