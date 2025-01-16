@@ -17,7 +17,7 @@
                         <#assign layout = "">
                     </#if>
                     <#if has_value>
-                        <div class="w-100 item-container ${layout}">
+                        <div class="item-container ${layout}">
                             <div class="flexed align-items-center">
                                 <i class="fas fa-key xsmall-font mr-2 text"></i>
                                 <#assign k_class = "">
@@ -25,6 +25,7 @@
                             </div>
                             <#if has_value>
                                 <#if is_long_string>
+                                    <hr class="mt-1 mb-0"/>
                                     <div class="p-2">
                                         <md-block class="mb-0 value">${item.getValue()!''}</md-block>
                                     </div>

@@ -3,6 +3,8 @@
     border: lightgrey 1px solid;
     overflow-y: auto;
     padding-bottom: 12px;
+    padding-right: 12px;
+    padding-top: 6px;
     background-color: rgba(125, 125, 125, 0.15);
 }
 
@@ -12,14 +14,15 @@
 }
 
 .json-display .item-container{
-    padding-top: 4px;
-    padding-left: 4px;
-    padding-bottom: 4px;
-    padding-right: 4px;
+    padding-top: 6px;
+    margin-top:4px;
+    margin-bottom: 4px;
+    border-radius: 3px;
+    padding-left: 8px;
+    padding-bottom: 6px;
+    padding-right: 8px;
     font-size: small;
     background-color: rgba(247, 247, 247, 1);
-    border-bottom: 1px rgba(125, 125, 125, 0.15) solid;
-    border-left: 1px rgba(125, 125, 125, 0.15) solid;
 }
 
 .json-display .key {

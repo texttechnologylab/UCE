@@ -6,7 +6,7 @@
             <#list uceMetadata as metadata>
                 <#if metadata?? && metadata.getValueType()?? && metadata.getValueType().name()?string == 'JSON'>
                     <#if metadata.getJsonValueAsIterable()??>
-                        <div class="col-12 mb-2 mr-0 ml-0 mt-0 p-0">
+                        <div class="col-12 mb-3 mr-0 ml-0 mt-0 p-0">
                             <p class="mb-0 text-center color-prime w-100 mb-1" data-trigger="hover"
                                data-toggle="popover" data-placement="top" data-content="${metadata.getComment()!''}">
                                 ${metadata.getKey()!''}

@@ -144,7 +144,12 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             Criteria criteria = session.createCriteria(UCEMetadata.class);
             criteria.add(Restrictions.eq("documentId", documentId));
-            return (List<UCEMetadata>) criteria.list();
+            // I want the JSON value types to be last in list.
+            return ((List<UCEMetadata>) criteria.list())
+                    .stream()
+                    .sorted(Comparator.comparing((UCEMetadata m) -> "JSON".equals(m.getValueType().name()) ? 1 : 0)
+                            .thenComparingInt(m -> m.getValueType().ordinal()))
+                    .toList();
         });
     }
 
@@ -385,7 +390,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         // And the ranks of each document.
                         var rankResultSet = result.getArray("document_ranks").getResultSet();
                         var documentRanks = new HashMap<Integer, Float>();
-                        while (rankResultSet.next()) documentRanks.put(rankResultSet.getInt(1) - 1, rankResultSet.getFloat(2));
+                        while (rankResultSet.next())
+                            documentRanks.put(rankResultSet.getInt(1) - 1, rankResultSet.getFloat(2));
                         search.setSearchRanks(documentRanks);
                     }
                 }
