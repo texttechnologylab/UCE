@@ -395,7 +395,11 @@
     transition: 0.15s;
 }
 
-.wiki-page .nodes-list-div:hover{
+.wiki-page .nodes-list-div:hover {
     background-color: rgba(125, 125, 125, 0.1);
     transition: 0.15s;
+}
+
+.wiki-page .json-display{
+    max-height: 550px;
 }

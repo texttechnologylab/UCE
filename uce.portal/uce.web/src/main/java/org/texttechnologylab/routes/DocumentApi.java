@@ -1,6 +1,7 @@
 package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -10,6 +11,7 @@ import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.SessionManager;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.corpus.UCEMetadataValueType;
 import org.texttechnologylab.models.search.SearchType;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import spark.ModelAndView;
@@ -25,6 +27,36 @@ public class DocumentApi {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.freemarkerConfig = freemarkerConfig;
     }
+
+    public Route getUceMetadataOfDocument = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        var languageResources = LanguageResources.fromRequest(request);
+
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId and hence can't return the metadata. ", ex));
+        if(documentId == null){
+            model.put("information", languageResources.get("missingParameterError"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+
+        try {
+            var uceMetadata = db.getUCEMetadataByDocumentId(documentId);
+            var gson = new GsonBuilder().setPrettyPrinting().create();
+            uceMetadata.forEach(m -> {
+                if(m.getValueType() == UCEMetadataValueType.JSON){
+                    var obj = gson.fromJson(m.getValue(), Object.class);
+                    m.setValue(gson.toJson(obj));
+                }
+            });
+            model.put("uceMetadata", uceMetadata);
+        } catch (Exception ex) {
+            logger.error("Error getting the uce metadata of a document.", ex);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+
+        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "document/documentUceMetadata.ftl"));
+    });
+
 
     public Route getDocumentListOfCorpus = ((request, response) -> {
         var model = new HashMap<String, Object>();

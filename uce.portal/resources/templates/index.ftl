@@ -34,7 +34,7 @@
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
+    <script type="module" src="https://md-block.verou.me/md-block.js"></script>
 
     <!-- For corpus universe three.js -->
     <script type="importmap">
@@ -162,7 +162,7 @@
                             </div>
 
                             <!-- these are the UCEMetadata annotations that can act as a filter if they exist -->
-                            <div class="uce-search-filters mb-3">
+                            <div class="uce-search-filters mb-3 mt-3">
                                 <#list corpora as corpusVm>
                                     <#if corpusVm.getCorpusConfig().getAnnotations().isUceMetadata()
                                     && corpusVm.getCorpus().getUceMetadataFilters()?has_content

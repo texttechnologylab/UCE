@@ -58,10 +58,12 @@
                             <i class="fas fa-sort-amount-up"></i>
                         </a>
                     </div>
-                    <div class="ml-2 flexed align-items-center w-100 justify-content-between">
+                    <div class="ml-2 flexed align-items-center w-100 justify-content-between"
+                         data-trigger="hover" data-toggle="popover" data-placement="top"
+                         data-content="${languageResource.get("searchRankDescription")}">
                         <p class="mb-0 mr-1">${languageResource.get("relevancy")}</p>
-                        <a class="btn m-0 rounded-a small-font sort-btn active-sort-btn" data-orderby="rank"
-                           data-curorder="ASC">
+                        <a class="btn m-0 rounded-a small-font sort-btn active-sort-btn"
+                           data-orderby="rank" data-curorder="ASC">
                             <i class="fas fa-sort-amount-up"></i>
                         </a>
                     </div>

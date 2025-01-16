@@ -3,7 +3,7 @@ package org.texttechnologylab;
 import org.apache.http.annotation.Obsolete;
 import org.joda.time.DateTime;
 import org.texttechnologylab.config.CorpusConfig;
-import org.texttechnologylab.models.dto.UceMetadataFilterDto;
+import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.search.*;
@@ -24,7 +24,7 @@ public class SearchState {
     private String searchPhrase;
     private List<String> searchTokens;
     private List<SearchLayer> searchLayers;
-    private List<UceMetadataFilterDto> uceMetadataFilters;
+    private List<UCEMetadataFilterDto> uceMetadataFilters;
     private SearchType searchType;
     private Integer currentPage = 1;
     private Integer take = 10;
@@ -78,11 +78,11 @@ public class SearchState {
         this.documentIdxToRank = documentIdxToRank;
     }
 
-    public List<UceMetadataFilterDto> getUceMetadataFilters() {
+    public List<UCEMetadataFilterDto> getUceMetadataFilters() {
         return uceMetadataFilters;
     }
 
-    public void setUceMetadataFilters(List<UceMetadataFilterDto> uceMetadataFilters) {
+    public void setUceMetadataFilters(List<UCEMetadataFilterDto> uceMetadataFilters) {
         this.uceMetadataFilters = uceMetadataFilters;
     }
 

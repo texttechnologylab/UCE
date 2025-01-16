@@ -106,6 +106,10 @@ nav .selected-nav-btn.text::before {
     color: rgba(0, 0, 0, 0.5) !important;
 }
 
+.xsmall-font{
+    font-size: smaller;
+}
+
 .small-font {
     font-size: small;
 }
@@ -644,3 +648,11 @@ nav .selected-nav-btn.text::before {
 
 }
 /* Document cards */
+
+.uce-metadata-container .uce-metadata-item{
+    padding: 8px;
+    background-color: rgba(125, 125, 125, 0.15);
+    border:lightgrey 1px solid;
+    border-radius: 3px;
+    margin-bottom: 12px;
+}

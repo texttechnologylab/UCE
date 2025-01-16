@@ -2,12 +2,12 @@ package org.texttechnologylab.models.dto;
 
 import org.texttechnologylab.models.corpus.UCEMetadataValueType;
 
-public class UceMetadataFilterDto {
+public class UCEMetadataFilterDto {
     private String key;
     private UCEMetadataValueType valueType;
     private String value;
 
-    public UceMetadataFilterDto(){}
+    public UCEMetadataFilterDto(){}
 
     public String getKey() {
         return key;

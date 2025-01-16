@@ -273,6 +273,7 @@ public class App {
 
             path("/document", () -> {
                 get("/reader/pagesList", documentApi.getPagesListView);
+                get("/uceMetadata", documentApi.getUceMetadataOfDocument);
             });
 
             path("/rag", () -> {

@@ -68,31 +68,24 @@ BEGIN
     ),
 	
 	-- This limits and sorts those found documents.
-    limited_pages AS (
-        SELECT 
-            pr.doc_id,
-            pr.rank,
-            pr.documenttitle
-        FROM page_ranked pr
+	-- TODO: The sorting for documenttitle isn't working properly I feel like...
+	limited_pages AS (
+		SELECT 
+			pr.doc_id,
+			pr.rank,
+			pr.documenttitle
+		FROM page_ranked pr
 		ORDER BY 
 			CASE 
 				WHEN order_by_column = 'rank' AND order_direction = 'ASC' THEN pr.rank
-				WHEN order_by_column = 'rank' AND order_direction = 'DESC' THEN NULL
+				WHEN order_by_column = 'documenttitle' AND order_direction = 'ASC' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle ASC)
 			END ASC,
 			CASE 
 				WHEN order_by_column = 'rank' AND order_direction = 'DESC' THEN pr.rank
-				WHEN order_by_column = 'rank' AND order_direction = 'ASC' THEN NULL
-			END DESC,
-			CASE 
-				WHEN order_by_column = 'documenttitle' AND order_direction = 'ASC' THEN pr.documenttitle
-				WHEN order_by_column = 'documenttitle' AND order_direction = 'DESC' THEN NULL
-			END ASC,
-			CASE 
-				WHEN order_by_column = 'documenttitle' AND order_direction = 'DESC' THEN pr.documenttitle
-				WHEN order_by_column = 'documenttitle' AND order_direction = 'ASC' THEN NULL
+				WHEN order_by_column = 'documenttitle' AND order_direction = 'DESC' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle DESC)
 			END DESC
 		LIMIT take_count OFFSET offset_count
-    ),
+	),
 	
 	-- Finally, this extract additional data like snippets and the sorts
     ranked_documents AS (
@@ -102,13 +95,14 @@ BEGIN
             ARRAY_AGG(DISTINCT ts_headline(
                 'simple',
                 p.coveredtext, 
-                to_tsquery(input2),
+                to_tsquery('simple', input2),
                 'MaxWords=100, MinWords=80, MaxFragments=2, FragmentDelimiter=" ... "'
             )) AS snippets
         FROM limited_pages lp
         JOIN document d ON d.id = lp.doc_id
         JOIN page p ON p.document_id = lp.doc_id
         GROUP BY d.id, lp.rank
+		ORDER BY lp.rank DESC
     ),
     counted_documents AS (
         SELECT COUNT(*) AS total_count FROM page_ranked

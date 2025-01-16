@@ -9,7 +9,7 @@ import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.*;
-import org.texttechnologylab.models.dto.UceMetadataFilterDto;
+import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
@@ -137,6 +137,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             Criteria criteria = session.createCriteria(UCEMetadataFilter.class);
             criteria.add(Restrictions.eq("corpusId", corpusId));
             return (List<UCEMetadataFilter>) criteria.list();
+        });
+    }
+
+    public List<UCEMetadata> getUCEMetadataByDocumentId(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            Criteria criteria = session.createCriteria(UCEMetadata.class);
+            criteria.add(Restrictions.eq("documentId", documentId));
+            return (List<UCEMetadata>) criteria.list();
         });
     }
 
@@ -326,7 +334,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                           SearchOrder order,
                                                           OrderByColumn orderedByColumn,
                                                           long corpusId,
-                                                          List<UceMetadataFilterDto> uceMetadataFilters) throws DatabaseOperationException {
+                                                          List<UCEMetadataFilterDto> uceMetadataFilters) throws DatabaseOperationException {
 
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 

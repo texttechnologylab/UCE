@@ -5,8 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
-import org.texttechnologylab.models.corpus.UCEMetadataFilter;
-import org.texttechnologylab.models.dto.UceMetadataFilterDto;
+import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
@@ -69,7 +68,7 @@ public class Search_DefaultImpl implements Search {
     public Search_DefaultImpl() {
     }
 
-    public Search_DefaultImpl withUceMetadataFilters(List<UceMetadataFilterDto> filters){
+    public Search_DefaultImpl withUceMetadataFilters(List<UCEMetadataFilterDto> filters){
         this.searchState.setUceMetadataFilters(filters);
         return this;
     }

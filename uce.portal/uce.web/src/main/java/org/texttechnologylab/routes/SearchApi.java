@@ -9,7 +9,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
-import org.texttechnologylab.models.dto.UceMetadataFilterDto;
+import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.models.search.SearchOrder;
@@ -131,9 +131,9 @@ public class SearchApi {
 
             // It's not tragic if no filters are given, not every corpus has them.
             @SuppressWarnings("unchecked") var uceMetadataFilters = ExceptionUtils.tryCatchLog(
-                    () -> (ArrayList<UceMetadataFilterDto>) gson.fromJson(
+                    () -> (ArrayList<UCEMetadataFilterDto>) gson.fromJson(
                             requestBody.get("uceMetadataFilters").toString(),
-                            new TypeToken<ArrayList<UceMetadataFilterDto>>() {
+                            new TypeToken<ArrayList<UCEMetadataFilterDto>>() {
                             }.getType()),
                     (ex) -> {});
 

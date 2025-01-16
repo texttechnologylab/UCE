@@ -2,7 +2,7 @@ package org.texttechnologylab.services;
 
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.*;
-import org.texttechnologylab.models.dto.UceMetadataFilterDto;
+import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
@@ -147,7 +147,7 @@ public interface DataInterface {
                                                           SearchOrder order,
                                                           OrderByColumn orderedByColumn,
                                                           long corpusId,
-                                                          List<UceMetadataFilterDto> uceMetadataFilters) throws DatabaseOperationException;
+                                                          List<UCEMetadataFilterDto> uceMetadataFilters) throws DatabaseOperationException;
 
     /**
      * Gets a Topic Distribution determined by the T generic inheritance.
@@ -175,6 +175,8 @@ public interface DataInterface {
      * Gets a document by its corpusId and the documentId, which isn't its primary key identifier "id".
      */
     public Document getDocumentByCorpusAndDocumentId(long corpusId, String documentId) throws DatabaseOperationException;
+
+    public List<UCEMetadata> getUCEMetadataByDocumentId(long documentId) throws DatabaseOperationException;
 
     /**
      * Generic operation that fetches documents given the parameters

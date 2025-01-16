@@ -34,12 +34,17 @@
             <i class="fas fa-file-alt"></i> <label
                     class="mb-0 ml-2">${document.getPages()?size}</label>
         </div>
-        <div class="ml-3 mb-0 flexed align-items-center text">
-            <#assign rank = searchState.getPossibleRankOfDocumentIdx(documentIdx)!>
-            <#if rank gt -1>
-                <p class="mb-0 color-prime"><i class="fab fa-hackerrank mr-1"></i> ${rank}</p>
-            </#if>
-        </div>
+        <#if searchState??>
+            <div class="ml-3 mb-0 flexed align-items-center text">
+                <#assign rank = searchState.getPossibleRankOfDocumentIdx(documentIdx)!>
+                <#if rank gt -1>
+                    <p class="mb-0 color-prime" data-trigger="hover" data-toggle="popover" data-placement="top"
+                       data-content="${languageResource.get("searchRankDescription")}">
+                        <i class="fab fa-hackerrank mr-1"></i> ${rank}
+                    </p>
+                </#if>
+            </div>
+        </#if>
     </div>
 </div>
 
