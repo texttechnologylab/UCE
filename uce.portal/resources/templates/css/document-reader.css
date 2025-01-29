@@ -33,14 +33,14 @@
 body {
 }
 
-.pages-loader-popup{
+.pages-loader-popup {
     position: fixed;
-    left:12px;
+    left: 12px;
     bottom: 12px;
     width: 225px;
     height: 75px;
     background-color: white;
-    border:lightgray 1px solid;
+    border: lightgray 1px solid;
     z-index: 99;
     box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
 }
@@ -67,14 +67,21 @@ body {
     background-color: ghostwhite;
 }
 
-.open-metadata-url-btn {
+.header-btn {
     border: Lightgray 1px solid;
     height: 50px;
     width: 50px;
     border-radius: 50%;
     display: flex;
     align-items: center;
+    transition: 0.15s;
     justify-content: center;
+}
+
+.header-btn:hover {
+    background-color: lightgray;
+    transition: 0.15s;
+    color:white;
 }
 
 .document-content {
@@ -87,7 +94,7 @@ body {
     z-index: 1;
 }
 
-.document-content .page .fa-external-link{
+.document-content .page .fa-external-link {
     font-size: small;
 }
 
@@ -110,21 +117,21 @@ body {
     z-index: 2;
 }
 
-.document-content .page .page-topic-container{
+.document-content .page .page-topic-container {
     width: 100%;
     background-color: rgba(125, 125, 125, 0.2);
     border-radius: 6px;
-    border:lightgray 1px solid;
+    border: lightgray 1px solid;
     padding: 12px;
     margin-bottom: 24px;
 }
 
-.document-content .page .page-content{
-    color:gray;
-    line-height:25px;
+.document-content .page .page-content {
+    color: gray;
+    line-height: 25px;
 }
 
-.document-content .multi-annotation{
+.document-content .multi-annotation {
     text-decoration: underline;
     position: relative;
     z-index: 3;
@@ -132,19 +139,19 @@ body {
     text-decoration-color: dodgerblue;
 }
 
-.document-content .multi-annotation:hover{
+.document-content .multi-annotation:hover {
     background-color: lightgrey;
 }
 
-.document-content .multi-annotation:hover .multi-annotation-popup{
+.document-content .multi-annotation:hover .multi-annotation-popup {
     display: flex;
 }
 
-.document-content .multi-annotation-popup{
+.document-content .multi-annotation-popup {
     box-shadow: rgba(0, 0, 0, 0.1) -2px 4px 12px -6px;
     position: absolute;
-    top:0;
-    left:50%;
+    top: 0;
+    left: 50%;
     transform: translate(-50%, -105%);
     padding-top: 6px;
     padding-left: 3px;
@@ -153,17 +160,17 @@ body {
     display: none;
     background-color: white;
     border-radius: 3px;
-    border:gray 1px solid;
+    border: gray 1px solid;
 }
 
-.document-content .multi-annotation-popup .annotation{
+.document-content .multi-annotation-popup .annotation {
     border-right: 1px lightgray solid;
     padding-left: 6px;
     padding-right: 6px;
 }
 
-.document-content .multi-annotation-popup .annotation:last-child{
-    border-right:0 !important;
+.document-content .multi-annotation-popup .annotation:last-child {
+    border-right: 0 !important;
 }
 
 .document-content .annotation {
@@ -171,25 +178,25 @@ body {
     position: relative;
 }
 
-.document-content .annotation:hover{
+.document-content .annotation:hover {
     background-color: var(--dark);
-    color:white
+    color: white
 }
 
-.document-content .highlighted{
+.document-content .highlighted {
     font-weight: bold;
     padding-left: 3px;
     padding-right: 3px;
     padding-bottom: 1.5px;
-    color:var(--dark);
+    color: var(--dark);
     padding-top: 1.5px;
     border-radius: 3px;
-    border:lightgrey 1px solid;
+    border: lightgrey 1px solid;
     background-color: rgba(235, 226, 52, 0.75);
 }
 
-.document-content .no-highlighting{
-    color:gray !important;
+.document-content .no-highlighting {
+    color: gray !important;
     opacity: 1 !important;
     text-decoration: none !important;
 }
@@ -199,7 +206,7 @@ body {
     text-decoration-color: transparent;
 }
 
-.document-content .lemma{
+.document-content .lemma {
     z-index: 0 !important;
 }
 
@@ -237,13 +244,13 @@ body {
     height: 100vh;
 }
 
-.side-bar .title-image{
+.side-bar .title-image {
     display: flex;
     align-items: center;
     justify-content: center;
 }
 
-.side-bar .title-image img{
+.side-bar .title-image img {
     object-fit: contain;
     max-height: 200px;
     width: 100%;
@@ -281,17 +288,17 @@ body {
     padding: 1.5rem;
 }
 
-.side-bar .side-bar-content .group-box .toggled-btn{
+.side-bar .side-bar-content .group-box .toggled-btn {
     background-color: var(--prime);
-    color:white;
+    color: white;
 }
 
-.side-bar .found-searchtokens-list{
+.side-bar .found-searchtokens-list {
     max-height: 300px;
     overflow-y: auto;
 }
 
-.side-bar .found-searchtokens-list .found-search-token{
+.side-bar .found-searchtokens-list .found-search-token {
     cursor: pointer;
     padding-left: 6px;
     padding-right: 6px;
@@ -300,6 +307,6 @@ body {
     border-radius: 3px;
 }
 
-.side-bar .found-searchtokens-list .found-search-token:hover{
+.side-bar .found-searchtokens-list .found-search-token:hover {
     background-color: lightgray;
 }

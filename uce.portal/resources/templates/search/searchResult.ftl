@@ -114,12 +114,14 @@
                                    data-toggle="popover" data-placement="top"
                                    data-content="${languageResource.get("finalSearchTokens")}"></i>
                                 <div class="flexed wrapped mb-0 h-100">
-                                    <#if searchState.getSearchTokens()?has_content>
-                                        <#list searchState.getSearchTokens() as token>
-                                            <span class="mr-1 mb-1 small-font text-dark p-1 search-token">
-                                                ${token}
-                                            </span>
-                                        </#list>
+                                    <#if searchState.getEnrichedSearchQuery()?has_content>
+                                        <span class="mr-1 mb-1 small-font text-dark p-1 search-token text-center">
+                                                ${searchState.getEnrichedSearchQuery()}
+                                        </span>
+                                    <#elseif searchState.getSearchQuery()?has_content>
+                                        <span class="mr-1 mb-1 small-font text-dark p-1 search-token">
+                                                ${searchState.getSearchQuery()}
+                                        </span>
                                     </#if>
                                 </div>
                             </div>

@@ -17,11 +17,12 @@ public class SearchState {
     private UUID searchId;
     private DateTime created;
     private boolean cleanupNextCycle;
-
+    private boolean proModeActivated;
     /**
      * The raw search phrase
      */
-    private String searchPhrase;
+    private String searchQuery;
+    private String enrichedSearchQuery;
     private List<String> searchTokens;
     private List<SearchLayer> searchLayers;
     private List<UCEMetadataFilterDto> uceMetadataFilters;
@@ -64,8 +65,24 @@ public class SearchState {
         this.created = DateTime.now();
     }
 
-    public String getSearchPhrase() {
-        return searchPhrase;
+    public boolean isProModeActivated() {
+        return proModeActivated;
+    }
+
+    public void setProModeActivated(boolean proModeActivated) {
+        this.proModeActivated = proModeActivated;
+    }
+
+    public String getEnrichedSearchQuery() {
+        return enrichedSearchQuery;
+    }
+
+    public void setEnrichedSearchQuery(String enrichedSearchQuery) {
+        this.enrichedSearchQuery = enrichedSearchQuery;
+    }
+
+    public String getSearchQuery() {
+        return searchQuery;
     }
 
     public float getPossibleRankOfDocumentIdx(Integer idx) {
@@ -278,12 +295,8 @@ public class SearchState {
         this.searchId = searchId;
     }
 
-    public String getOriginalSearchQuery() {
-        return searchPhrase;
-    }
-
-    public void setSearchPhrase(String searchPhrase) {
-        this.searchPhrase = searchPhrase;
+    public void setSearchQuery(String searchQuery) {
+        this.searchQuery = searchQuery;
     }
 
     public List<String> getSearchTokens() {

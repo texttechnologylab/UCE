@@ -9,7 +9,7 @@
                         <div class="col-12 mb-3 mr-0 ml-0 mt-0 p-0">
                             <p class="mb-0 text-center color-prime w-100 mb-1" data-trigger="hover"
                                data-toggle="popover" data-placement="top" data-content="${metadata.getComment()!''}">
-                                ${metadata.getKey()!''}
+                                ${metadata.getKey()!''} <i class="mb-0 small-font text">(${metadata.getValueType()?lower_case!''})</i>
                             </p>
                             <div class="w-100">
                                 <#assign jsonValueAsIterable = metadata.getJsonValueAsIterable()>
@@ -28,7 +28,7 @@
                                 <i class="mb-0 small-font text">(${metadata.getValueType()?lower_case!''})</i>
                             </div>
                             <#if metadata.getValueType()?has_content && metadata.getValueType() == 'URL'>
-                                <a class="ml-2 small-font" href="${metadata.getValue()!''}"
+                                <a class="ml-2 small-font word-break-all" href="${metadata.getValue()!''}"
                                    target="_blank">${metadata.getValue()!''}</a>
                             <#else>
                                 <label class="mb-0 ml-2 small-font color-dark">${metadata.getValue()!''}</label>

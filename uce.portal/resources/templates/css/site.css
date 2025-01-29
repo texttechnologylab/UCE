@@ -30,6 +30,12 @@ footer {
 
 .hoverable {
     cursor: pointer;
+    transition: 0.25s;
+}
+
+.hoverable:hover{
+    border-color: gray !important;
+    transition: 0.25s;
 }
 
 nav {
@@ -228,6 +234,32 @@ nav .selected-nav-btn.text::before {
     max-height: 200px;
     width: 100%;
     object-fit: contain;
+}
+
+.word-break-all{
+    word-break: break-all;
+}
+
+.rounded-a {
+    margin-left: 3px;
+    margin-right: 3px;
+    background-color: lightgray;
+    border-radius: 50%;
+    height: 30px;
+    padding: 0;
+    margin-top: 3px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 30px;
+    cursor: pointer;
+}
+
+.rounded-a:hover {
+    background-color: ghostwhite;
+    color: black;
+    border: 1px gray solid;
 }
 
 .open-wiki-page{
@@ -656,3 +688,29 @@ nav .selected-nav-btn.text::before {
     border-radius: 3px;
     margin-bottom: 12px;
 }
+
+/* Custom button switches */
+.custom-control-input:focus~.custom-control-label::before {
+    border-color: var(--prime) !important;
+    box-shadow: 0 0 0 0.2rem rgba(125, 125, 125, 0.25) !important;
+}
+
+.custom-control-input:checked~.custom-control-label::before {
+    border-color: var(--prime) !important;
+    background-color: var(--prime) !important;
+}
+
+.custom-control-input:active~.custom-control-label::before {
+    background-color: var(--prime) !important;
+    border-color: var(--prime) !important;
+}
+
+.custom-control-input:focus:not(:checked)~.custom-control-label::before {
+    border-color: var(--prime) !important;
+}
+
+.custom-control-input-green:not(:disabled):active~.custom-control-label::before {
+    background-color: var(--prime) !important;
+    border-color: var(--prime) !important;
+}
+/*Custom button switches */

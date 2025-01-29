@@ -2,9 +2,13 @@ package org.texttechnologylab;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.exception.SQLGrammarException;
+import org.jetbrains.annotations.Nullable;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.config.CorpusConfig;
+import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.services.JenaSparqlService;
@@ -32,6 +36,7 @@ public class Search_DefaultImpl implements Search {
     private PostgresqlDataInterface_Impl db;
     private RAGService ragService;
     private JenaSparqlService jenaSparqlService;
+    public static final String[] QUERY_OPERATORS = {"&", "|", "!", "<->", "(", ")"};
 
     /**
      * Creates a new instance of the Search_DefaultImpl, throws exceptions if components couldn't be inited.
@@ -45,30 +50,40 @@ public class Search_DefaultImpl implements Search {
                               long corpusId,
                               String languageCode,
                               List<SearchLayer> searchLayers,
-                              boolean enrichSearchTerm) throws URISyntaxException, IOException {
+                              boolean enrichSearchTerm,
+                              boolean proModeActivated) throws URISyntaxException, IOException {
         this.searchState = new SearchState(SearchType.DEFAULT);
         this.searchState.setSearchLayers(searchLayers);
+        this.searchState.setProModeActivated(proModeActivated);
         initServices(serviceContext, languageCode);
 
         this.searchState.setCorpusId(corpusId);
         this.searchState.setCorpusConfig(ExceptionUtils.tryCatchLog(
                 () -> CorpusConfig.fromJson(db.getCorpusById(corpusId).getCorpusJsonConfig()),
                 (ex) -> logger.error("Error fetching the corpus and corpus config of corpus: " + corpusId, ex)));
-        this.searchState.setSearchPhrase(searchPhrase);
 
+        // First: enrich if wanted
+        if (enrichSearchTerm)
+            this.searchState.setEnrichedSearchQuery(enrichSearchQuery(searchPhrase));
+
+        // Then store the search tokens
         var cleanedSearchPhrase = cleanSearchPhrase(searchPhrase);
-        if(enrichSearchTerm) this.searchState.setSearchTokens(enrichSearchTokens(removeStopwords(cleanedSearchPhrase)));
-        else {
-            var searchTokens = new ArrayList<String>();
-            searchTokens.add(String.join(" ", cleanedSearchPhrase));
-            this.searchState.setSearchTokens(searchTokens);
-        }
+        var searchTokens = new ArrayList<String>();
+        searchTokens.add(String.join(" ", cleanedSearchPhrase));
+        this.searchState.setSearchTokens(searchTokens);
+
+        // Finally, if we dont have the pro mode, escape all spaces to +
+        // otherwise we get a syntax error in our vector-textsearch
+        if (!proModeActivated)
+            searchPhrase = searchPhrase.replace(" ", "+");
+
+        this.searchState.setSearchQuery(searchPhrase);
     }
 
     public Search_DefaultImpl() {
     }
 
-    public Search_DefaultImpl withUceMetadataFilters(List<UCEMetadataFilterDto> filters){
+    public Search_DefaultImpl withUceMetadataFilters(List<UCEMetadataFilterDto> filters) {
         this.searchState.setUceMetadataFilters(filters);
         return this;
     }
@@ -93,7 +108,7 @@ public class Search_DefaultImpl implements Search {
      *
      * @return
      */
-    public SearchState initSearch() {
+    public SearchState initSearch() throws SQLGrammarException {
         DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
         if (documentSearchResult == null)
             throw new NullPointerException("Document Init Search returned null - not empty.");
@@ -116,10 +131,10 @@ public class Search_DefaultImpl implements Search {
         if (searchState.getSearchLayers().contains(SearchLayer.EMBEDDINGS)) {
             var closestDocumentsEmbeddings = ExceptionUtils.tryCatchLog(
                     () -> ragService.getClosestDocumentChunkEmbeddings(
-                            this.searchState.getOriginalSearchQuery(),
+                            this.searchState.getSearchQuery(),
                             20,
                             this.searchState.getCorpusId()),
-                    (ex) -> logger.error("Error getting the closest document chunk embeddings of the searchphrase: " + this.searchState.getOriginalSearchQuery(), ex));
+                    (ex) -> logger.error("Error getting the closest document chunk embeddings of the searchphrase: " + this.searchState.getSearchQuery(), ex));
 
             if (closestDocumentsEmbeddings == null) return searchState;
             var foundDocumentChunkEmbeddings = new ArrayList<DocumentChunkEmbeddingSearchResult>();
@@ -166,20 +181,25 @@ public class Search_DefaultImpl implements Search {
      * @param countAll determines whether we also count all search hits or just using pagination
      * @return
      */
-    private DocumentSearchResult executeSearchOnDatabases(boolean countAll) {
+    @Nullable
+    private DocumentSearchResult executeSearchOnDatabases(boolean countAll) throws SQLGrammarException {
         if (searchState.getSearchLayers().contains(SearchLayer.FULLTEXT)) {
-            return ExceptionUtils.tryCatchLog(
-                    () -> db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
-                            searchState.getTake(),
-                            searchState.getOriginalSearchQuery(),
-                            searchState.getSearchTokens(),
-                            SearchLayer.FULLTEXT,
-                            countAll,
-                            searchState.getOrder(),
-                            searchState.getOrderBy(),
-                            searchState.getCorpusId(),
-                            searchState.getUceMetadataFilters()),
-                    (ex) -> logger.error("Error executing a search on the database with search layer METADATA. Search can't be executed.", ex));
+            try {
+                return db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
+                        searchState.getTake(),
+                        searchState.getEnrichedSearchQuery() == null ? searchState.getSearchQuery() : searchState.getEnrichedSearchQuery(),
+                        searchState.getSearchTokens(),
+                        SearchLayer.FULLTEXT,
+                        countAll,
+                        searchState.getOrder(),
+                        searchState.getOrderBy(),
+                        searchState.getCorpusId(),
+                        searchState.getUceMetadataFilters());
+            } catch (Exception ex) {
+                logger.error("Error executing a search on the database with search layer FULLTEXT. Search can't be executed.", ex);
+                // We only want to rethrow grammar exceptions for the pro mode.
+                if (ex.getCause() instanceof SQLGrammarException) throw (SQLGrammarException)ex.getCause();
+            }
         }
 
         // Execute the Named Entity search
@@ -187,7 +207,7 @@ public class Search_DefaultImpl implements Search {
             return ExceptionUtils.tryCatchLog(
                     () -> db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
                             searchState.getTake(),
-                            searchState.getOriginalSearchQuery(),
+                            searchState.getEnrichedSearchQuery() == null ? searchState.getSearchQuery() : searchState.getEnrichedSearchQuery(),
                             searchState.getSearchTokens(),
                             SearchLayer.NAMED_ENTITIES,
                             countAll,
@@ -228,6 +248,65 @@ public class Search_DefaultImpl implements Search {
         return Stopwords.GetStopwords(languageCode);
     }
 
+    private String enrichSearchQuery(String searchQuery) {
+        // We split the tokens and remove special characters at their edges.
+        var tokens = searchQuery.split(" ");
+        var enrichedSearchQuery = new StringBuilder();
+
+        // Step 1: Look for annotated ontologies
+        // The enrichment happens through our sparql database. We look for potential ontologies and add them as tokens
+        if (SystemStatus.JenaSparqlStatus.isAlive()) {
+            for (var token : tokens) {
+
+                // If this token is an operator, skip it and just append it.
+                if (Arrays.asList(QUERY_OPERATORS).contains(token)) {
+                    enrichedSearchQuery.append(token).append(" ");
+                    continue;
+                }
+
+                // Else, we can see if we get more data of that token
+                var cleanedToken = StringUtils.removeSpecialCharactersAtEdges(token);
+                var potentialTaxons = ExceptionUtils.tryCatchLog(
+                        () -> db.getIdentifiableTaxonsByValues(List.of(cleanedToken.toLowerCase())),
+                        (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
+
+                if (potentialTaxons == null || potentialTaxons.isEmpty()) {
+                    enrichedSearchQuery.append(token).append(" ");
+                    continue;
+                }
+
+                // Of those potential taxons, fetch their alternative names
+                var ids = new ArrayList<String>();
+                for (var taxon : potentialTaxons) {
+                    if (taxon.getIdentifier().contains("|") || taxon.getIdentifier().contains(" ")) {
+                        ids.addAll(taxon.getIdentifierAsList());
+                    } else {
+                        ids.add(taxon.getIdentifier().trim());
+                    }
+                }
+
+                // Get the alt names
+                var alternativeNames = ExceptionUtils.tryCatchLog(
+                        () -> jenaSparqlService.getAlternativeNamesOfTaxons(ids),
+                        (ex) -> logger.error("Error getting the alt names of a taxon while searching. Operation continues.", ex));
+                if (alternativeNames == null) {
+                    enrichedSearchQuery.append(token).append(" ");
+                    continue;
+                }
+
+                // Enrich this token
+                enrichedSearchQuery
+                        .append(" ( ")
+                        .append(token)
+                        .append(" | ")
+                        .append(String.join(" | ", alternativeNames.stream().map(n -> n.replace(" ", "+")).toList()))
+                        .append(" ) ");
+            }
+        }
+
+        return enrichedSearchQuery.toString();
+    }
+
     /**
      * Possibly enriches search tokens with taxon ontologies. The function may produce more tokens in the end.
      *
@@ -247,7 +326,7 @@ public class Search_DefaultImpl implements Search {
             if (potentialTaxons == null || potentialTaxons.isEmpty()) return tokens;
 
             potentialTaxons.forEach(t -> {
-                if(!finalTokens.contains(t.getCoveredText())) finalTokens.add(t.getCoveredText());
+                if (!finalTokens.contains(t.getCoveredText())) finalTokens.add(t.getCoveredText());
             });
 
             var ids = new ArrayList<String>();
@@ -259,7 +338,7 @@ public class Search_DefaultImpl implements Search {
                 }
             }
             var newTokens = ExceptionUtils.tryCatchLog(
-                    () ->jenaSparqlService.getAlternativeNamesOfTaxons(ids),
+                    () -> jenaSparqlService.getAlternativeNamesOfTaxons(ids),
                     (ex) -> logger.error("Error getting the alt names of a taxon while searching. Operation continues.", ex));
             if (newTokens != null) finalTokens.addAll(newTokens);
         }
@@ -279,7 +358,7 @@ public class Search_DefaultImpl implements Search {
         return splited;
     }
 
-    private List<String> removeStopwords(List<String> searchTokens){
+    private List<String> removeStopwords(List<String> searchTokens) {
         return searchTokens.stream().filter(s -> !stopwords.contains(s.toLowerCase())).toList();
     }
 

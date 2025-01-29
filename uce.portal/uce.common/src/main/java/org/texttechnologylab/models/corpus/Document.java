@@ -18,6 +18,7 @@ public class Document extends ModelBase implements WikiModel {
     public String getWikiId() {
         return "D" + "-" + this.getId();
     }
+
     private String language;
     @Column(columnDefinition = "TEXT")
     private String documentTitle;
@@ -85,7 +86,16 @@ public class Document extends ModelBase implements WikiModel {
         this.corpusId = corpusId;
     }
 
+    public boolean hasJsonUceMetadata() {
+        return getUceMetadata().stream().anyMatch(u -> u.getValueType() == UCEMetadataValueType.JSON);
+    }
+
+    public List<UCEMetadata> getUceMetadataWithoutJson() {
+        return getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON).toList();
+    }
+
     public List<UCEMetadata> getUceMetadata() {
+        if (uceMetadata == null) new ArrayList<>();
         return uceMetadata;
     }
 

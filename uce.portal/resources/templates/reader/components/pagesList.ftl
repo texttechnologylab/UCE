@@ -52,7 +52,7 @@
             </div>
         </div>
         <p class="text-center text-dark mb-0">
-            — ${page.getPageNumber() + 1} —
+            — ${page.getPageNumber()} —
         </p>
     </div>
 </#list>

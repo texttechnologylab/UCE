@@ -143,6 +143,14 @@
     "de-DE": "Die Relevanz des Dokuments für die gegebene Suchanfrage. Ein höherer Wert bedeutet eine höhere Relevanz des Dokuments.",
     "en-EN": "The relevance of the document to the given search query. A higher value indicates a higher relevance of the document."
   },
+  "searchProModeDescription": {
+    "de-DE": "Aktiviert den Pro-Modus der Suche, der es Ihnen ermöglicht, Suchen mit logischen Operatoren wie <b>&, |, !</b> und anderen zu erstellen.",
+    "en-EN": "Activates the Pro mode of the search, which allows you to build searches using logical operators such as <b>&, |, !</b> and others."
+  },
+  "showUceMetadata": {
+    "de-DE": "Zeige alle Metadaten an",
+    "en-EN": "Show all metadata"
+  },
   "more": {
     "de-DE": "Mehr dazu",
     "en-EN": "More"
@@ -214,6 +222,10 @@
   "ragBotErrorMessage": {
     "de-DE": "Es tut mir leid, es scheint ein technischer Fehler aufgetreten zu sein. Ich war nicht in der Lage, auf diese Anfrage zu antworten.",
     "en-EN": "I'm sorry, there seems to have been a technical error. I was unable to respond to this request."
+  },
+  "searchGrammarError": {
+    "de-DE": "Die Syntax der eingegebenen Suche war falsch. Bitte lesen Sie in der Dokumentation nach und korrigieren Sie Ihre Suchanfrage oder schalten Sie den Pro-Modus aus.",
+    "en-EN": "The syntax of the entered search was incorrect. Please refer to the documentation and correct your search query or switch off Pro mode."
   },
   "corpusInspector": {
     "de-DE": "Korpus-Überblick",

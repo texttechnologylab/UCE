@@ -57,7 +57,6 @@ public class DocumentApi {
         return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "document/documentUceMetadata.ftl"));
     });
 
-
     public Route getDocumentListOfCorpus = ((request, response) -> {
         var model = new HashMap<String, Object>();
         var languageResources = LanguageResources.fromRequest(request);

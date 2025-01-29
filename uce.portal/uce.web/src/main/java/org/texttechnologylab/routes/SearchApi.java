@@ -6,6 +6,7 @@ import freemarker.template.Configuration;
 import org.apache.http.annotation.Obsolete;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.exception.SQLGrammarException;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
@@ -117,10 +118,10 @@ public class SearchApi {
     public Route search = ((request, response) -> {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
-        Map requestBody = gson.fromJson(request.body(), Map.class);
+        var requestBody = gson.fromJson(request.body(), Map.class);
+        var languageResources = LanguageResources.fromRequest(request);
 
         try {
-            var languageResources = LanguageResources.fromRequest(request);
             var searchInput = requestBody.get("searchInput").toString();
             var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
             model.put("corpusVm", db.getCorpusById(corpusId).getViewModel());
@@ -128,6 +129,7 @@ public class SearchApi {
             var useEmbeddings = Boolean.parseBoolean(requestBody.get("useEmbeddings").toString());
             var includeKeywordInContext = Boolean.parseBoolean(requestBody.get("kwic").toString());
             var enrichSearchTerm = Boolean.parseBoolean(requestBody.get("enrich").toString());
+            var proModeActivated = Boolean.parseBoolean(requestBody.get("proMode").toString());
 
             // It's not tragic if no filters are given, not every corpus has them.
             @SuppressWarnings("unchecked") var uceMetadataFilters = ExceptionUtils.tryCatchLog(
@@ -158,7 +160,8 @@ public class SearchApi {
                         corpusId,
                         languageResources.getDefaultLanguage(),
                         searchLayers,
-                        enrichSearchTerm)
+                        enrichSearchTerm,
+                        proModeActivated)
                         .withUceMetadataFilters(uceMetadataFilters);
                 searchState = search.initSearch();
             }
@@ -167,6 +170,9 @@ public class SearchApi {
             model.put("searchState", searchState);
 
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
+        } catch (SQLGrammarException grammarException){
+            response.status(406);
+            return languageResources.get("searchGrammarError");
         } catch (Exception ex) {
             logger.error("Error starting a new search with the request body:\n " + gson.toJson(requestBody), ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));

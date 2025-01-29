@@ -5,11 +5,11 @@
     border-top: lightgrey 1px solid;
 }
 
-.search-result-container .search-row{
+.search-result-container .search-row {
     z-index: 1;
 }
 
-.search-result-container .document-list-include{
+.search-result-container .document-list-include {
     min-height: 100vh;
 }
 
@@ -53,6 +53,20 @@
     border-radius: 0;
     background-color: ghostwhite;
     border-color: lightgray;
+    border-right: 0 !important;
+    border-bottom: 0 !important;
+    border-top: 0 !important;
+    border-left: 1px lightgrey solid;
+}
+
+.search-pro-mode-switch {
+    z-index: 2;
+    padding-left: 3.25rem !important;
+    padding-right: 16px !important;
+    height: 41px !important;
+    display: flex !important;
+    align-items: center !important;
+    background-color: lightgrey !important;
 }
 
 .search-menu-div {
@@ -165,17 +179,17 @@
     height: 100%;
 }
 
-.matched-tokens-list{
+.matched-tokens-list {
     padding-top: 12px;
     padding-left: 6px;
     position: relative;
-    border-top:lightgray 1px solid;
+    border-top: lightgray 1px solid;
 }
 
-.matched-tokens-list::before{
+.matched-tokens-list::before {
     position: absolute;
-    top:-4.5px;
-    left:-4.5px;
+    top: -4.5px;
+    left: -4.5px;
     border-radius: 50%;
     width: 9px;
     height: 9px;
@@ -183,8 +197,8 @@
     background-color: lightgray;
 }
 
-.matched-tokens-list .matched-token{
-    color:var(--dark);
+.matched-tokens-list .matched-token {
+    color: var(--dark);
     border-radius: 6px;
     padding-left: 6px;
     padding-right: 6px;
@@ -236,7 +250,7 @@
     color: black;
 }
 
-#search-corpus-universe-include{
+#search-corpus-universe-include {
     height: 50vh;
     width: 100%;
     position: relative;
@@ -312,29 +326,6 @@
     border-bottom-color: var(--secondary);
     color: black !important;
 }
-
-.rounded-a {
-    margin-left: 3px;
-    margin-right: 3px;
-    background-color: lightgray;
-    border-radius: 50%;
-    height: 30px;
-    padding: 0;
-    margin-top: 3px;
-    text-align: center;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    width: 30px;
-    cursor: pointer;
-}
-
-.rounded-a:hover {
-    background-color: ghostwhite;
-    color: black;
-    border: 1px gray solid;
-}
-
 
 .pagination {
     width: 100%;

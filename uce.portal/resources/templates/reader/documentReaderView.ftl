@@ -70,20 +70,48 @@
                      data-id="${document.getId()?string?replace('.', '')?replace(',', '')}"
                      data-pagescount="${document.getPages()?size}" data-searchtokens="${(searchTokens)!''}">
 
-                    <div class="header text-center flexed align-items-center justify-content-around">
+                    <div class="header ">
+                        <div class="text-center flexed align-items-center justify-content-around w-100">
+                            <div class="flexed align-items-center">
+                                <a class="header-btn open-wiki-page color-prime" data-wid="${document.getWikiId()}">
+                                    <i class="large-font m-0 fab fa-wikipedia-w"></i>
+                                </a>
+                                <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
+                                    <a class="header-btn open-metadata-url-btn m-0"
+                                       href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank">
+                                        <i class="color-prime m-0 large-font fas fa-university"></i>
+                                    </a>
+                                </#if>
+                            </div>
 
-                        <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
-                            <a class="open-metadata-url-btn m-0"
-                               href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank">
-                                <i class="color-prime m-0 large-font fas fa-university"></i>
-                            </a>
-                        </#if>
-                        <div class="ml-2 mr-2">
-                            <h5>${document.getDocumentTitle()}</h5>
-                            <p class="text mb-0">${document.getMetadataTitleInfo().getPublished()}</p>
+                            <div class="ml-2 mr-2">
+                                <h5>${document.getDocumentTitle()}</h5>
+                                <p class="text mb-0">${document.getMetadataTitleInfo().getPublished()}</p>
+                            </div>
+                            <p class="m-0 text">${document.getLanguage()?upper_case}</p>
                         </div>
-                        <p class="m-0 text">${document.getLanguage()?upper_case}</p>
                     </div>
+
+                    <!-- metadata if exists -->
+                    <#assign uceMetadata = document.getUceMetadataWithoutJson()>
+                    <#if uceMetadata?has_content && uceMetadata?size gt 0>
+                        <div class="w-100 pt-4 pl-4 pr-4 pb-1 mt-2">
+                            <div class="small-font">
+                                <#include "*/document/documentUceMetadata.ftl">
+                            </div>
+                            <#if document.hasJsonUceMetadata()>
+                                <div class="flexed align-items-center justify-content-center text-center mt-1">
+                                    <a class="btn bg-lightgray rounded light-border xsmall-font open-wiki-page
+                                    align-items-center flexed hoverable"
+                                       data-wid="${document.getWikiId()}">
+                                        <i class="fab fa-wikipedia-w bg-light light-border rounded p-1 mr-2"></i>
+                                        <span class="font-italic text-secondary" style="margin-top: 3px">${languageResource.get("showUceMetadata")}...</span>
+                                    </a>
+                                </div>
+                            </#if>
+                        </div>
+                        <hr class="mb-0"/>
+                    </#if>
 
                     <div class="document-content">
                         <#assign documentPages = document.getPages(10, 0)>

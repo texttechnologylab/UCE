@@ -20,6 +20,7 @@ function startNewSearch(searchInput) {
     const embeddings = $('.search-menu-div .search-settings-div .option input[data-id="EMBEDDINGS"]').is(':checked');
     const kwic = $('.search-menu-div .search-settings-div .option input[data-id="KWIC"]').is(':checked');
     const enrich = $('.search-menu-div .search-settings-div .option input[data-id="ENRICH"]').is(':checked');
+    const proMode = $('#proModeSwitch').is(':checked');
 
     // Get possible uce metadata filters
     let metadataFilters = [];
@@ -42,7 +43,8 @@ function startNewSearch(searchInput) {
             useEmbeddings: embeddings,
             kwic: kwic,
             enrich: enrich,
-            uceMetadataFilters: JSON.stringify(metadataFilters)
+            uceMetadataFilters: JSON.stringify(metadataFilters),
+            proMode: proMode
         }),
         contentType: "application/json",
         //dataType: "json",
@@ -59,8 +61,11 @@ function startNewSearch(searchInput) {
             await currentCorpusUniverseHandler.fromSearch(searchId);
         },
         error: function (xhr, status, error) {
-            console.error(xhr.responseText);
-            $('.view .search-result-container').html(xhr.responseText);
+            if(xhr.status === 406){
+                alert(xhr.responseText);
+            } else{
+                $('.view .search-result-container').html(xhr.responseText);
+            }
         }
     }).always(function () {
         $('.view[data-id="search"] .loader-container').first().fadeOut(150);

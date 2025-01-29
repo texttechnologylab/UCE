@@ -33,9 +33,6 @@
             src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script type="module" src="https://md-block.verou.me/md-block.js"></script>
-
     <!-- For corpus universe three.js -->
     <script type="importmap">
         {
@@ -45,6 +42,8 @@
           }
         }
     </script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script type="module" src="https://md-block.verou.me/md-block.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.4.0/gsap.min.js"></script>
     <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
     <!--<script src="https://unpkg.com/@tweenjs/tween.js@^20.0.0/dist/tween.umd.js"></script>-->
@@ -150,8 +149,19 @@
 
                 <!-- Search bar and menu -->
                 <div class="w-100 position-relative">
-                    <input type="text" class="search-input form-control large-font w-100"
-                           placeholder="${languageResource.get("searchPlaceholder")}"/>
+                    <div class="w-100 flexed align-items-center">
+                        <input type="text" class="search-input form-control large-font w-100 rounded-0"
+                               placeholder="${languageResource.get("searchPlaceholder")}"/>
+
+                        <div class="custom-control custom-switch search-pro-mode-switch"
+                             data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
+                             data-content="${languageResource.get("searchProModeDescription")}">
+                            <input type="checkbox" checked class="custom-control-input" id="proModeSwitch">
+                            <label class="font-weight-bold font-italic custom-control-label flexed align-items-center" for="proModeSwitch">
+                                Pro
+                            </label>
+                        </div>
+                    </div>
 
                     <div class="search-menu-div">
                         <div class="backdrop"></div>
