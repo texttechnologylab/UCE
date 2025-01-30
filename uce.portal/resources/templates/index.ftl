@@ -60,9 +60,12 @@
     <nav class="position-relative">
 
         <div class="container-fluid flexed align-items-center justify-content-around">
-            <button class="btn switch-view-btn selected-nav-btn" data-id="landing">
-                <img class="mb-0 logo" src="${system.getCorporate().getLogo()}">
-            </button>
+            <div class="flexed h-100">
+                <button class="btn switch-view-btn selected-nav-btn" data-id="landing">
+                    <img class="mb-0 logo" src="${system.getCorporate().getLogo()}">
+                </button>
+                <p class="mb-0 ml-3 text xsmall-font align-self-center"><b>Version</b> <i>${uceVersion}</i></p>
+            </div>
 
             <div class="flexed align-items-stretch">
                 <!-- system alive buttons -->
@@ -158,7 +161,8 @@
                              data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
                              data-content="${languageResource.get("searchProModeDescription")}">
                             <input type="checkbox" checked class="custom-control-input" id="proModeSwitch">
-                            <label class="font-weight-bold font-italic custom-control-label flexed align-items-center" for="proModeSwitch">
+                            <label class="font-weight-bold font-italic custom-control-label flexed align-items-center"
+                                   for="proModeSwitch">
                                 Pro
                             </label>
                         </div>

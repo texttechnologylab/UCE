@@ -443,10 +443,14 @@
     overflow-y: auto;
     color: rgba(125, 125, 125, 1);
     line-height: 1.5;
-
     font-family: "Times New Roman", serif;
 }
 
-.wiki-metadata-expanded-view .content-reader .content h1, h2, h3, h4, h5, h6 {
+.wiki-metadata-expanded-view .content-reader .content h1,
+.wiki-metadata-expanded-view .content-reader .content h2,
+.wiki-metadata-expanded-view .content-reader .content h3,
+.wiki-metadata-expanded-view .content-reader .content h4,
+.wiki-metadata-expanded-view .content-reader .content h5,
+.wiki-metadata-expanded-view .content-reader .content h6 {
     color: var(--dark);
 }

@@ -203,6 +203,10 @@
     "de-DE": "Keine Korpus-Beschreibung vorhanden.",
     "en-EN": "No corpus description provided."
   },
+  "noMetadataFound": {
+    "de-DE": "Keine Metadaten vorhanden.",
+    "en-EN": "No metadata found."
+  },
   "ragBotSearch": {
     "de-DE": "Ich durchsuche folgende Dokumente aus unserer Sammlung, die Ihrer Anfrage am Ähnlichsten sind...",
     "en-EN": "I'm looking through the following documents from our repository which may fit your query..."

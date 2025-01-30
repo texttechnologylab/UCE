@@ -1,6 +1,6 @@
 <div class="uce-metadata-container">
     <#if !(uceMetadata?? && uceMetadata?has_content) || uceMetadata?size == 0>
-        <p class="text-center mb-0 text">No metadata found for that document.</p>
+        <p class="text-center mb-0 text">${languageResource.get("noMetadataFound")}</p>
     <#else>
         <div class="row m-0 p-0">
             <#list uceMetadata as metadata>

@@ -32,6 +32,14 @@
             src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
+    <script type="importmap">
+        {
+          "imports": {
+            "three": "https://unpkg.com/three@v0.161.0/build/three.module.js",
+            "three/addons/": "https://unpkg.com/three@v0.161.0/examples/jsm/"
+          }
+        }
+    </script>
     <script type="module" src="https://md-block.verou.me/md-block.js"></script>
     <title>${document.getDocumentTitle()}</title>
 </head>
@@ -105,7 +113,8 @@
                                     align-items-center flexed hoverable"
                                        data-wid="${document.getWikiId()}">
                                         <i class="fab fa-wikipedia-w bg-light light-border rounded p-1 mr-2"></i>
-                                        <span class="font-italic text-secondary" style="margin-top: 3px">${languageResource.get("showUceMetadata")}...</span>
+                                        <span class="font-italic text-secondary"
+                                              style="margin-top: 3px">${languageResource.get("showUceMetadata")}...</span>
                                     </a>
                                 </div>
                             </#if>
