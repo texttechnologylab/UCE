@@ -2,6 +2,7 @@ package org.texttechnologylab.config.corpusConfig;
 
 public class CorpusAnnotationConfig {
     private boolean annotatorMetadata;
+    private boolean uceMetadata;
     private boolean OCRPage;
     private boolean OCRParagraph;
     private boolean OCRBlock;
@@ -13,6 +14,14 @@ public class CorpusAnnotationConfig {
     private boolean sentence;
     private boolean time;
     private boolean wikipediaLink;
+
+    public boolean isUceMetadata() {
+        return uceMetadata;
+    }
+
+    public void setUceMetadata(boolean uceMetadata) {
+        this.uceMetadata = uceMetadata;
+    }
 
     public boolean isAnnotatorMetadata() {
         return annotatorMetadata;

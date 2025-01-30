@@ -45,14 +45,16 @@ public class WikiService {
     /**
      * Gets an DocumentAnnitationWikiPageViewmodel to render a Wikipage for this document.
      */
-    public AnnotationWikiPageViewModel buildDocumentWikiPageViewModel(long id) throws DatabaseOperationException {
-        var viewModel = new AnnotationWikiPageViewModel();
+    public DocumentAnnotationWikiPageViewModel buildDocumentWikiPageViewModel(long id) throws DatabaseOperationException {
+        var viewModel = new DocumentAnnotationWikiPageViewModel();
         var doc = db.getDocumentById(id);
         viewModel.setDocument(doc);
         viewModel.setWikiModel(doc);
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
         viewModel.setCoveredText("Document");
         viewModel.setAnnotationType("Document");
+        if(viewModel.getCorpus().getCorpusConfig().getAnnotations().isUceMetadata())
+            viewModel.setUceMetadata(db.getUCEMetadataByDocumentId(doc.getId()));
 
         return viewModel;
     }

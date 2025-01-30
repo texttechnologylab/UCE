@@ -53,8 +53,17 @@
                     </div>
                     <div class="ml-2 flexed align-items-center w-100 justify-content-between">
                         <p class="mb-0 mr-1">${languageResource.get("title")}</p>
-                        <a class="btn m-0 rounded-a small-font sort-btn active-sort-btn" data-orderby="title"
+                        <a class="btn m-0 rounded-a small-font sort-btn" data-orderby="documenttitle"
                            data-curorder="ASC">
+                            <i class="fas fa-sort-amount-up"></i>
+                        </a>
+                    </div>
+                    <div class="ml-2 flexed align-items-center w-100 justify-content-between"
+                         data-trigger="hover" data-toggle="popover" data-placement="top"
+                         data-content="${languageResource.get("searchRankDescription")}">
+                        <p class="mb-0 mr-1">${languageResource.get("relevancy")}</p>
+                        <a class="btn m-0 rounded-a small-font sort-btn active-sort-btn"
+                           data-orderby="rank" data-curorder="ASC">
                             <i class="fas fa-sort-amount-up"></i>
                         </a>
                     </div>
@@ -105,12 +114,14 @@
                                    data-toggle="popover" data-placement="top"
                                    data-content="${languageResource.get("finalSearchTokens")}"></i>
                                 <div class="flexed wrapped mb-0 h-100">
-                                    <#if searchState.getSearchTokens()?has_content>
-                                        <#list searchState.getSearchTokens() as token>
-                                            <span class="mr-1 mb-1 small-font text-dark p-1 search-token">
-                                                ${token}
-                                            </span>
-                                        </#list>
+                                    <#if searchState.getEnrichedSearchQuery()?has_content>
+                                        <span class="mr-1 mb-1 small-font text-dark p-1 search-token text-center">
+                                                ${searchState.getEnrichedSearchQuery()}
+                                        </span>
+                                    <#elseif searchState.getSearchQuery()?has_content>
+                                        <span class="mr-1 mb-1 small-font text-dark p-1 search-token">
+                                                ${searchState.getSearchQuery()}
+                                        </span>
                                     </#if>
                                 </div>
                             </div>
@@ -128,13 +139,15 @@
                             <#include "*/search/components/navigation.ftl">
                         </div>
 
-                        <div id="search-corpus-universe-include">
-                            <a class="open-corpus-universe-btn">
-                                <i class="fas fa-external-link-alt"></i>
-                            </a>
-                            <div id="search-universe-container" class="corpus-universe-container bg-light">
+                        <#if corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()>
+                            <div id="search-corpus-universe-include">
+                                <a class="open-corpus-universe-btn">
+                                    <i class="fas fa-external-link-alt"></i>
+                                </a>
+                                <div id="search-universe-container" class="corpus-universe-container bg-light">
+                                </div>
                             </div>
-                        </div>
+                        </#if>
 
                     </div>
                 </div>

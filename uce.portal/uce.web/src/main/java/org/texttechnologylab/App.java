@@ -81,7 +81,7 @@ public class App {
         SystemStatus.InitSystemStatus(commonConfig.getSystemJobInterval(), context);
         logger.info("Initialized the System Job.");
 
-        // Set the folder for our template files of freemaker
+        // Set the folder for our template files of freemarker
         try {
             configuration.setDirectoryForTemplateLoading(new File(commonConfig.getTemplatesLocation()));
 
@@ -219,6 +219,7 @@ public class App {
             model.put("isSparqlAlive", SystemStatus.JenaSparqlStatus.isAlive());
             model.put("isDbAlive", SystemStatus.PostgresqlDbStatus.isAlive());
             model.put("isRagAlive", SystemStatus.RagServiceStatus.isAlive());
+            model.put("uceVersion", commonConfig.getUceVersion());
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");
@@ -273,6 +274,7 @@ public class App {
 
             path("/document", () -> {
                 get("/reader/pagesList", documentApi.getPagesListView);
+                get("/uceMetadata", documentApi.getUceMetadataOfDocument);
             });
 
             path("/rag", () -> {

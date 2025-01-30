@@ -1,4 +1,5 @@
 let currentFocusedPage = 0;
+let searchTokens = "";
 
 /**
  * Handles the expanding and de-expanding of the side bar
@@ -136,6 +137,10 @@ $(document).ready(function () {
     // Enable popovers
     activatePopovers();
 
+    let possibleSearchTokens = $('.reader-container').data('searchtokens');
+    if (possibleSearchTokens === undefined || possibleSearchTokens === '') return;
+    searchTokens = possibleSearchTokens.split('[TOKEN]');
+
     // Highlight potential search terms for the first 10 pages
     for (let i = 1; i < 11; i++) searchPotentialSearchTokensInPage(i);
 })
@@ -193,10 +198,6 @@ async function lazyLoadPages() {
  * Within a page container, look for possible search tokens.
  */
 function searchPotentialSearchTokensInPage(page) {
-    let searchTokens = $('.reader-container').data('searchtokens');
-    if (searchTokens === undefined || searchTokens === '') return;
-
-    searchTokens = searchTokens.split('[TOKEN]');
     let highlightedAnnos = [];
     const $page = $('.document-content .page[data-id="' + page + '"] ');
 

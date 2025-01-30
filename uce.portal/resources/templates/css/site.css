@@ -22,7 +22,7 @@
 footer {
     min-height: 150px;
     width: 100%;
-    border-top:lightgrey 1px solid;
+    border-top: lightgrey 1px solid;
 }
 
 * {
@@ -30,6 +30,12 @@ footer {
 
 .hoverable {
     cursor: pointer;
+    transition: 0.25s;
+}
+
+.hoverable:hover {
+    border-color: gray !important;
+    transition: 0.25s;
 }
 
 nav {
@@ -83,6 +89,10 @@ nav .selected-nav-btn.text::before {
     content: '';
 }
 
+.light-border {
+    border: 1px lightgray solid !important;
+}
+
 .position-relative {
     position: relative;
 }
@@ -102,19 +112,23 @@ nav .selected-nav-btn.text::before {
     color: rgba(0, 0, 0, 0.5) !important;
 }
 
+.xsmall-font {
+    font-size: smaller;
+}
+
 .small-font {
     font-size: small;
 }
 
-.medium-font{
+.medium-font {
     font-size: medium;
 }
 
-.normal-line-height{
+.normal-line-height {
     line-height: normal;
 }
 
-.block-text{
+.block-text {
     text-align: justify;
 }
 
@@ -126,7 +140,7 @@ nav .selected-nav-btn.text::before {
     flex-wrap: wrap;
 }
 
-.card-shadow{
+.card-shadow {
     box-shadow: rgba(0, 0, 0, 0.1) -2px 4px 12px -6px;
 }
 
@@ -134,7 +148,7 @@ nav .selected-nav-btn.text::before {
     pointer-events: none;
 }
 
-.no-text-wrap{
+.no-text-wrap {
     white-space: nowrap;
 }
 
@@ -146,9 +160,9 @@ nav .selected-nav-btn.text::before {
     font-size: x-large;
 }
 
-.sticky{
+.sticky {
     position: sticky;
-    top:0;
+    top: 0;
 }
 
 .color-dark {
@@ -194,40 +208,79 @@ nav .selected-nav-btn.text::before {
     width: 100%;
 }
 
-.system-status-bar{
-    border-left:lightgrey 1px solid;
+.system-status-bar {
+    border-left: lightgrey 1px solid;
     padding-bottom: 12px;
     padding-top: 12px;
     background-color: rgba(125, 125, 125, 0.15);
 }
 
-.team-member-card{
-    border-right:lightgrey 1px solid;
-    border-top:lightgrey 1px solid;
-    border-bottom:lightgrey 1px solid;
-    border-left:var(--prime) 6px solid;
+.team-member-card {
+    border-right: lightgrey 1px solid;
+    border-top: lightgrey 1px solid;
+    border-bottom: lightgrey 1px solid;
+    border-left: var(--prime) 6px solid;
     border-radius: 0px 8px 8px 0px;
     transition: 0.15s;
 }
 
-.team-member-card:hover{
+.team-member-card:hover {
     background-color: ghostwhite;
-    border-color:gray !important;
+    border-color: gray !important;
     transition: 0.15s;
 }
 
-.team-member-card img{
+.team-member-card img {
     max-height: 200px;
     width: 100%;
     object-fit: contain;
 }
 
-.open-wiki-page{
+.ellipsis-text {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.word-break-all {
+    word-break: break-all;
+}
+
+.rounded-a {
+    margin-left: 3px;
+    margin-right: 3px;
+    background-color: lightgray;
+    border-radius: 50%;
+    height: 30px;
+    padding: 0;
+    margin-top: 3px;
+    text-align: center;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    transition: 0.25s;
+    width: 30px;
+    cursor: pointer;
+}
+
+.rounded-a:hover {
+    background-color: ghostwhite;
+    color: black;
+    border: 1px gray solid;
+    transition: 0.25s;
+}
+
+.rounded-a:hover * {
+    transition: 0.25s;
+    color: black !important;
+}
+
+.open-wiki-page {
     cursor: pointer;
     transition: 0.15s;
 }
 
-.open-wiki-page:hover{
+.open-wiki-page:hover {
     transition: 0.15s;
     text-decoration: underline;
     text-decoration-thickness: 2px;
@@ -288,10 +341,10 @@ nav .selected-nav-btn.text::before {
     }
 }
 
-.open-corpus-universe-btn{
+.open-corpus-universe-btn {
     position: absolute;
-    top:6px;
-    right:6px;
+    top: 6px;
+    right: 6px;
     height: 40px;
     width: 40px;
     border: lightgray 1px solid;
@@ -456,6 +509,7 @@ nav .selected-nav-btn.text::before {
 
 .corpora-list .corpus-card {
     border: lightgray 1px solid;
+    border-radius: 6px;
     box-shadow: rgba(0, 0, 0, 0.1) -2px 4px 12px -6px;
     padding: 16px;
 }
@@ -467,19 +521,37 @@ nav .selected-nav-btn.text::before {
     align-items: center;
     justify-content: center;
     width: 30px;
-    color:var(--secondary);
+    color: var(--secondary);
     height: 30px;
 }
 
-.corpora-list .corpus-card .corpus-description{
+.corpora-list .corpus-card .corpus-description {
     margin-top: 12px;
     padding: 6px;
-    background-color: rgba(125, 125, 125, 0.15);
+    background-color: rgba(125, 125, 125, 0.075);
     border-radius: 3px;
 }
 
-.uce-description{
-    border:lightgrey 1px solid;
+.corpora-list .corpus-card .corpus-description {
+    color: gray;
+}
+
+.corpora-list .corpus-card .corpus-description *{
+    line-height: 1.5;
+}
+
+.corpora-list .corpus-card .corpus-description h1,
+.corpora-list .corpus-card .corpus-description h2,
+.corpora-list .corpus-card .corpus-description h3,
+.corpora-list .corpus-card .corpus-description h4,
+.corpora-list .corpus-card .corpus-description h5,
+.corpora-list .corpus-card .corpus-description h6 {
+    color: rgba(0, 0, 0, 0.65);
+}
+
+
+.uce-description {
+    border: lightgrey 1px solid;
     border-radius: 6px;
     padding: 16px;
     box-shadow: rgba(0, 0, 0, 0.1) -2px 4px 12px -6px;
@@ -503,11 +575,15 @@ nav .selected-nav-btn.text::before {
     transition: 0.15s;
 }
 
-.document-card .highlighted-token{
-    color:black;
+.document-card .highlighted-token {
+    color: black;
     text-decoration: underline;
     text-decoration-color: var(--secondary);
     text-decoration-thickness: 3px;
+}
+
+.document-card .snippet-content b {
+    color: var(--prime);
 }
 
 .document-card .embedding-text {
@@ -519,9 +595,9 @@ nav .selected-nav-btn.text::before {
     border-radius: 6px;
 }
 
-.document-card .topic-list label{
+.document-card .topic-list label {
     font-size: small;
-    color:rgba(0, 0, 0, 0.75);
+    color: rgba(0, 0, 0, 0.75);
     text-align: center;
     background-color: rgba(125, 125, 125, 0.15);
     border-radius: 6px;
@@ -551,10 +627,10 @@ nav .selected-nav-btn.text::before {
     background-color: lightgray;
 }
 
-.focused-document-card{
+.focused-document-card {
     margin-bottom: 4rem;
     position: relative;
-    border:gray 1px solid;
+    border: gray 1px solid;
     transform: scale(1.008);
     transition: transform 0.5s ease;
     box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
@@ -630,9 +706,45 @@ nav .selected-nav-btn.text::before {
     background-color: rgba(125, 125, 125, 0.15);
 }
 
-.enriched-search-tokens .search-token{
+.enriched-search-tokens .search-token {
     background-color: rgba(125, 125, 125, 0.1);
     border-radius: 6px;
 
 }
+
 /* Document cards */
+
+.uce-metadata-container .uce-metadata-item {
+    padding: 8px;
+    background-color: rgba(125, 125, 125, 0.15);
+    border: lightgrey 1px solid;
+    border-radius: 3px;
+    margin-bottom: 12px;
+}
+
+/* Custom button switches */
+.custom-control-input:focus ~ .custom-control-label::before {
+    border-color: var(--prime) !important;
+    box-shadow: 0 0 0 0.2rem rgba(125, 125, 125, 0.25) !important;
+}
+
+.custom-control-input:checked ~ .custom-control-label::before {
+    border-color: var(--prime) !important;
+    background-color: var(--prime) !important;
+}
+
+.custom-control-input:active ~ .custom-control-label::before {
+    background-color: var(--prime) !important;
+    border-color: var(--prime) !important;
+}
+
+.custom-control-input:focus:not(:checked) ~ .custom-control-label::before {
+    border-color: var(--prime) !important;
+}
+
+.custom-control-input-green:not(:disabled):active ~ .custom-control-label::before {
+    background-color: var(--prime) !important;
+    border-color: var(--prime) !important;
+}
+
+/*Custom button switches */

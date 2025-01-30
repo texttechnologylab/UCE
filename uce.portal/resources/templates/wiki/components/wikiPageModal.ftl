@@ -2,6 +2,23 @@
     <#include "*/css/kwic.css">
 </style>
 
+<!-- a small reading view for expanded metadata -->
+<div class="wiki-metadata-expanded-view display-none">
+    <div class="content-reader">
+
+        <header class="pl-4 pr-4 pt-3 pb-3 flexed align-items-center justify-content-between">
+            <h5 class="mb-0 text-light title"></h5>
+            <a class="rounded-a" onclick="$(this).closest('.wiki-metadata-expanded-view').fadeOut(25)">
+                <i class="fas fa-times"></i>
+            </a>
+        </header>
+
+        <div class="content">
+
+        </div>
+    </div>
+</div>
+
 <div class="wiki-page-modal wiki-page-modal-minimized">
     <div class="backdrop" onclick="$('.wiki-page-modal').addClass('wiki-page-modal-minimized')"></div>
 

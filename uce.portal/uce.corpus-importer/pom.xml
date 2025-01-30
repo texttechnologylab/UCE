@@ -87,9 +87,9 @@
             <version>3.0.3</version>
         </dependency>-->
         <dependency>
-            <groupId>com.github.texttechnologylab</groupId>
+            <groupId>com.github.TheItCrOw</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.4</version>
         </dependency>
 
         <!--<dependency>

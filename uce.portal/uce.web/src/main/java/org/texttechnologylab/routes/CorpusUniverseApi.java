@@ -11,13 +11,13 @@ import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.Search_DefaultImpl;
 import org.texttechnologylab.SessionManager;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.rag.DocumentEmbedding;
 import org.texttechnologylab.models.universe.CorpusUniverseNode;
 import org.texttechnologylab.models.universe.UniverseLayer;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
-import org.texttechnologylab.services.UIMAService;
 import org.texttechnologylab.utils.ListUtils;
 import spark.ModelAndView;
 import spark.Route;
@@ -26,19 +26,16 @@ import java.util.*;
 
 public class CorpusUniverseApi {
     private static final Logger logger = LogManager.getLogger();
-    private ApplicationContext context = null;
-    private UIMAService uimaService = null;
-    private RAGService ragService = null;
-    private PostgresqlDataInterface_Impl db = null;
+    private ApplicationContext context;
+    private RAGService ragService;
+    private PostgresqlDataInterface_Impl db;
+    private Configuration freemarkerConfig;
 
-    private Configuration freemakerConfig = Configuration.getDefaultConfiguration();
-
-    public CorpusUniverseApi(ApplicationContext serviceContext, Configuration freemakerConfig) {
-        this.uimaService = serviceContext.getBean(UIMAService.class);
+    public CorpusUniverseApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
         this.context = serviceContext;
         this.ragService = serviceContext.getBean(RAGService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
-        this.freemakerConfig = freemakerConfig;
+        this.freemarkerConfig = freemarkerConfig;
     }
 
     public Route getNodeInspectorContentView = ((request, response) -> {
@@ -47,17 +44,17 @@ public class CorpusUniverseApi {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
                 (ex) -> logger.error("Error: the url for the node inspector requires a 'documentId' query parameter. ", ex));
         if (documentId == null)
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         try {
             var document = db.getDocumentById(documentId);
             model.put("document", document);
         } catch (Exception ex) {
             logger.error("Error fetching the document for the node inspector with id: " + documentId, ex);
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
-        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "universe/nodeInspectorContent.ftl"));
+        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "universe/nodeInspectorContent.ftl"));
     });
 
     public Route getCorpusUniverseView = ((request, response) -> {
@@ -71,10 +68,10 @@ public class CorpusUniverseApi {
             // Later
         } catch (Exception ex) {
             logger.error("Error fetching a new corpus universe view");
-            return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
 
-        return new CustomFreeMarkerEngine(this.freemakerConfig).render(new ModelAndView(model, "corpus/corpusUniverse.ftl"));
+        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/corpusUniverse.ftl"));
     });
 
     public Route fromCorpus = ((request, response) -> {
@@ -163,7 +160,7 @@ public class CorpusUniverseApi {
             case DOCUMENTS:
                 var docEmbeddings = ExceptionUtils.tryCatchLog(
                         () -> ragService.getManyDocumentEmbeddingsOfDocuments(
-                                search.getSearchState().getCurrentDocuments().stream().map(d -> d.getId()).toList()),
+                                search.getSearchState().getCurrentDocuments().stream().map(ModelBase::getId).toList()),
                         (ex) -> logger.error("Error fetching document embeddings of many documents.", ex));
                 if (docEmbeddings == null) {
                     result.replace("status", 500);

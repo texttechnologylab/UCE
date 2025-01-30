@@ -3,6 +3,7 @@ package org.texttechnologylab;
 import org.apache.http.annotation.Obsolete;
 import org.joda.time.DateTime;
 import org.texttechnologylab.config.CorpusConfig;
+import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.search.*;
@@ -16,13 +17,15 @@ public class SearchState {
     private UUID searchId;
     private DateTime created;
     private boolean cleanupNextCycle;
-
+    private boolean proModeActivated;
     /**
      * The raw search phrase
      */
-    private String searchPhrase;
+    private String searchQuery;
+    private String enrichedSearchQuery;
     private List<String> searchTokens;
     private List<SearchLayer> searchLayers;
+    private List<UCEMetadataFilterDto> uceMetadataFilters;
     private SearchType searchType;
     private Integer currentPage = 1;
     private Integer take = 10;
@@ -30,7 +33,7 @@ public class SearchState {
     private CorpusConfig corpusConfig;
     private Integer totalHits;
     private SearchOrder order = SearchOrder.ASC;
-    private OrderByColumn orderBy = OrderByColumn.TITLE;
+    private OrderByColumn orderBy = OrderByColumn.DOCUMENTTITLE;
     private ArrayList<AnnotationSearchResult> foundNamedEntities;
     private ArrayList<AnnotationSearchResult> foundTimes;
     private ArrayList<AnnotationSearchResult> foundTaxons;
@@ -54,11 +57,50 @@ public class SearchState {
     @Obsolete
     private List<Integer> currentDocumentHits;
     private HashMap<Integer, String> documentIdxToSnippet;
+    private HashMap<Integer, Float> documentIdxToRank;
 
     public SearchState(SearchType searchType) {
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
         this.created = DateTime.now();
+    }
+
+    public boolean isProModeActivated() {
+        return proModeActivated;
+    }
+
+    public void setProModeActivated(boolean proModeActivated) {
+        this.proModeActivated = proModeActivated;
+    }
+
+    public String getEnrichedSearchQuery() {
+        return enrichedSearchQuery;
+    }
+
+    public void setEnrichedSearchQuery(String enrichedSearchQuery) {
+        this.enrichedSearchQuery = enrichedSearchQuery;
+    }
+
+    public String getSearchQuery() {
+        return searchQuery;
+    }
+
+    public float getPossibleRankOfDocumentIdx(Integer idx) {
+        if (this.documentIdxToRank != null && this.documentIdxToRank.containsKey(idx))
+            return this.documentIdxToRank.get(idx);
+        return -1;
+    }
+
+    public void setDocumentIdxToRank(HashMap<Integer, Float> documentIdxToRank) {
+        this.documentIdxToRank = documentIdxToRank;
+    }
+
+    public List<UCEMetadataFilterDto> getUceMetadataFilters() {
+        return uceMetadataFilters;
+    }
+
+    public void setUceMetadataFilters(List<UCEMetadataFilterDto> uceMetadataFilters) {
+        this.uceMetadataFilters = uceMetadataFilters;
     }
 
     public boolean isCleanupNextCycle() {
@@ -253,12 +295,8 @@ public class SearchState {
         this.searchId = searchId;
     }
 
-    public String getSearchPhrase() {
-        return searchPhrase;
-    }
-
-    public void setSearchPhrase(String searchPhrase) {
-        this.searchPhrase = searchPhrase;
+    public void setSearchQuery(String searchQuery) {
+        this.searchQuery = searchQuery;
     }
 
     public List<String> getSearchTokens() {

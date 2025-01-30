@@ -2,12 +2,12 @@
     <div class="page" data-id="${page.getPageNumber()}">
         <div class="blurrer display-none" data-toggled="false"></div>
         <div>
-            <div class="page-topic-container">
-                <div class="flexed align-items-center justify-content-between">
-                    <i class="fas fa-info-circle mr-1 color-prime" data-trigger="hover" data-toggle="popover"
-                       data-placement="top"
-                       data-content="${languageResource.get("topicModellingInfo")}"></i>
-                    <#if (page.getPageTopicDistribution())?? && (page.getPageTopicDistribution().getYakeTopicOne())??>
+            <#if (page.getPageTopicDistribution())?? && (page.getPageTopicDistribution().getYakeTopicOne())??>
+                <div class="page-topic-container">
+                    <div class="flexed align-items-center justify-content-between">
+                        <i class="fas fa-info-circle mr-1 color-prime" data-trigger="hover" data-toggle="popover"
+                           data-placement="top"
+                           data-content="${languageResource.get("topicModellingInfo")}"></i>
                         <div class="text small-font font-italic text-center mb-0 flexed align-items-center justify-content-center wrapped">
                             <span data-wid="${page.getPageTopicDistribution().getWikiId()}"
                                   data-wcovered="${page.getPageTopicDistribution().getYakeTopicOne()}"
@@ -30,29 +30,29 @@
                                 #${page.getPageTopicDistribution().getYakeTopicFour()}
                             </span>
                         </div>
-                    </#if>
-                    <div></div>
+                        <div></div>
+                    </div>
                 </div>
-            </div>
+            </#if>
             <div class="page-content">
                 <#if (page.getParagraphs())?? && page.getParagraphs()?size == 0>
-                    <p class="text paragraph">
+                    <div class="text paragraph">
                         ${page.buildHTMLString(documentAnnotations, documentText)}
-                    </p>
+                    </div>
                 <#else>
                     <#list page.getParagraphs() as paragraph>
-                        <p class="text paragraph" style="
+                        <div class="text paragraph" style="
                                 text-align: ${paragraph.getAlign()};
                                 font-weight: ${paragraph.getFontWeight()};
                                 text-decoration: ${paragraph.getUnderlined()};">
                             ${paragraph.buildHTMLString(documentAnnotations, documentText)}
-                        </p>
+                        </div>
                     </#list>
                 </#if>
             </div>
         </div>
         <p class="text-center text-dark mb-0">
-            — ${page.getPageNumber() + 1} —
+            — ${page.getPageNumber()} —
         </p>
     </div>
 </#list>

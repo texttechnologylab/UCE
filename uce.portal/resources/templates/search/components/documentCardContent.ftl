@@ -28,12 +28,23 @@
         </div>
     </div>
 
-    <div class="flexed align-items-center">
+    <div class="flexed align-items-center justify-content-end">
         <p class="mb-0 text mr-3"> ${document.getLanguage()?upper_case}</p>
         <div class="mb-0 flexed align-items-center text">
             <i class="fas fa-file-alt"></i> <label
                     class="mb-0 ml-2">${document.getPages()?size}</label>
         </div>
+        <#if searchState??>
+            <div class="ml-3 mb-0 flexed align-items-center text">
+                <#assign rank = searchState.getPossibleRankOfDocumentIdx(documentIdx)!>
+                <#if rank gt -1>
+                    <p class="mb-0 color-prime flexed align-items-center" data-trigger="hover" data-toggle="popover" data-placement="top"
+                       data-content="${languageResource.get("searchRankDescription")}">
+                        <i class="fab fa-hackerrank mr-1"></i> ${rank}
+                    </p>
+                </#if>
+            </div>
+        </#if>
     </div>
 </div>
 
@@ -70,18 +81,17 @@
             </#if>
 
             <!-- Get the list of search tokens -->
-            <#assign searchTokens = searchState.getSearchTokens()!>
-
+            <!-- We used to manuall highlight the tokens here, which sucked. We now do it in the db -->
+            <#-- <#assign searchTokens = searchState.getSearchTokens()!> -->
             <!-- Initialize the highlighted snippet -->
-            <#assign highlightedSnippet = snippet>
-
+            <#-- <#assign highlightedSnippet = snippet> -->
             <!-- Loop through each search token and highlight it -->
-            <#list searchTokens as searchToken>
+            <#-- <#list searchTokens as searchToken>
                 <#assign highlightedSnippet = highlightedSnippet?replace(searchToken, "<span class='highlighted-token'>${searchToken}</span>", "i")>
-            </#list>
+            </#list>-->
 
             <!-- Render the highlighted snippet -->
-            ${highlightedSnippet}...
+            ${snippet}...
         </p>
     <#else>
         <p class="mb-0 small-font text font-italic mr-2">

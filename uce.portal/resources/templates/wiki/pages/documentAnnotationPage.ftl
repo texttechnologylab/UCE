@@ -14,7 +14,7 @@
     <hr class="mt-2 mb-4"/>
 
     <!-- the document this is from -->
-    <div class="mt-4 mb-3 w-100 p-0 m-0 justify-content-center flexed align-items-start">
+    <div class="mt-4 mb-2 w-100 p-0 m-0 justify-content-center flexed align-items-start">
         <div class="document-card w-100">
             <#assign document = vm.getDocument()>
             <#assign searchId = "">
@@ -22,19 +22,30 @@
         </div>
     </div>
 
-    <!-- Corpus Universe -->
-    <div class="mt-3 mb-4">
-        <h6 class="text-dark text-center w-100 mb-2">
-            ${languageResource.get("documentInSemanticSpace")}
-        </h6>
-        <div id="wiki-corpus-universe-include">
-            <a class="open-corpus-universe-btn">
-                <i class="fas fa-external-link-alt"></i>
-            </a>
-            <div id="wiki-universe-container" class="corpus-universe-container bg-light">
-            </div>
+    <!-- possible metadata of this document -->
+    <div class="mt-2 mb-4 w-100 p-0 m-0">
+        <h5 class="text-center mb-2">Document Metadata</h5>
+        <div class="light-border rounded p-3 bg-light card-shadow">
+            <#assign uceMetadata = vm.getUceMetadata()!>
+            <#include "*/document/documentUceMetadata.ftl">
         </div>
     </div>
+
+    <!-- Corpus Universe -->
+    <#if vm.getCorpus().getCorpusConfig().getOther().isEnableEmbeddings()>
+        <div class="mt-3 mb-4">
+            <h6 class="text-dark text-center w-100 mb-2">
+                ${languageResource.get("documentInSemanticSpace")}
+            </h6>
+            <div id="wiki-corpus-universe-include">
+                <a class="open-corpus-universe-btn">
+                    <i class="fas fa-external-link-alt"></i>
+                </a>
+                <div id="wiki-universe-container" class="corpus-universe-container bg-light">
+                </div>
+            </div>
+        </div>
+    </#if>
 
 </div>
 

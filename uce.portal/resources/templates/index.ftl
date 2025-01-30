@@ -33,9 +33,6 @@
             src="https://cdn.jsdelivr.net/npm/bootstrap@4.3.1/dist/js/bootstrap.min.js"
             integrity="sha384-JjSmVgyd0p3pXB1rRibZUAYoIIy6OrQ6VrjIEaFf/nJGzIxFDsf4x0xIM+B07jRM"
             crossorigin="anonymous"></script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-
-
     <!-- For corpus universe three.js -->
     <script type="importmap">
         {
@@ -45,6 +42,9 @@
           }
         }
     </script>
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <script type="module" src="https://md-block.verou.me/md-block.js"></script>
+
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.4.0/gsap.min.js"></script>
     <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
     <!--<script src="https://unpkg.com/@tweenjs/tween.js@^20.0.0/dist/tween.umd.js"></script>-->
@@ -60,9 +60,12 @@
     <nav class="position-relative">
 
         <div class="container-fluid flexed align-items-center justify-content-around">
-            <button class="btn switch-view-btn selected-nav-btn" data-id="landing">
-                <img class="mb-0 logo" src="${system.getCorporate().getLogo()}">
-            </button>
+            <div class="flexed h-100">
+                <button class="btn switch-view-btn selected-nav-btn" data-id="landing">
+                    <img class="mb-0 logo" src="${system.getCorporate().getLogo()}">
+                </button>
+                <p class="mb-0 ml-3 text xsmall-font align-self-center"><b>Version</b> <i>${uceVersion}</i></p>
+            </div>
 
             <div class="flexed align-items-stretch">
                 <!-- system alive buttons -->
@@ -150,18 +153,53 @@
 
                 <!-- Search bar and menu -->
                 <div class="w-100 position-relative">
-                    <input type="text" class="search-input form-control large-font w-100"
-                           placeholder="${languageResource.get("searchPlaceholder")}"/>
+                    <div class="w-100 flexed align-items-center">
+                        <input type="text" class="search-input form-control large-font w-100 rounded-0"
+                               placeholder="${languageResource.get("searchPlaceholder")}"/>
+
+                        <div class="custom-control custom-switch search-pro-mode-switch"
+                             data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
+                             data-content="${languageResource.get("searchProModeDescription")}">
+                            <input type="checkbox" checked class="custom-control-input" id="proModeSwitch">
+                            <label class="font-weight-bold font-italic custom-control-label flexed align-items-center"
+                                   for="proModeSwitch">
+                                Pro
+                            </label>
+                        </div>
+                    </div>
 
                     <div class="search-menu-div">
                         <div class="backdrop"></div>
 
                         <div style="z-index: 2; position:relative;">
+                            <!-- The search history div -->
                             <div class="search-history-div">
                             </div>
+
+                            <!-- these are the UCEMetadata annotations that can act as a filter if they exist -->
+                            <div class="uce-search-filters mb-3 mt-3">
+                                <#list corpora as corpusVm>
+                                    <#if corpusVm.getCorpusConfig().getAnnotations().isUceMetadata()
+                                    && corpusVm.getCorpus().getUceMetadataFilters()?has_content
+                                    && corpusVm.getCorpus().getUceMetadataFilters()?size gt 0>
+                                        <div class="uce-corpus-search-filter" data-id="${corpusVm.getCorpus().getId()}">
+                                            <div class="flexed align-items-center text-secondary w-100">
+                                                <i class="fas fa-filter mr-2"></i>
+                                                <div class="m-0 pl-0 pr-0 rounded pt-2 pb-2 row w-100 light-border bg-lightgray">
+                                                    <#list corpusVm.getCorpus().getUceMetadataFilters() as filter>
+                                                        <#include "*/search/components/uceMetadataFilter.ftl">
+                                                    </#list>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </#if>
+                                </#list>
+                            </div>
+
+                            <!-- and the search settings that are always on display -->
                             <div class="search-settings-div flexed align-items-center justify-content-around">
                                 <!-- The data-ids are corresponding to the SearchLayer enum. Change them with care!! -->
-                                <i class="text w-auto fab fa-searchengin mr-2 large-font"></i>
+                                <i class="w-auto fab fa-searchengin text-secondary large-font"></i>
                                 <div class="option" data-type="radio">
                                     <div class="form-check form-check-inline" data-trigger="hover"
                                          data-toggle="popover" data-placement="top" data-html="true"

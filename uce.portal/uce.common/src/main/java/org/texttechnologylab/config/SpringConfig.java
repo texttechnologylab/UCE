@@ -13,10 +13,6 @@ public class SpringConfig {
     }
 
     @Bean
-    public UIMAService uimaService(){
-        return new UIMAService(goetheUniversityService(), databaseService(), gbifService(), ragService(), jenaSparqlService());
-    }
-    @Bean
     public WikiService wikiService(){
         return new WikiService(databaseService(), ragService(), jenaSparqlService());
     }

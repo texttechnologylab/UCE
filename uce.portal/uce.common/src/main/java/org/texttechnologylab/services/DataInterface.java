@@ -2,6 +2,7 @@ package org.texttechnologylab.services;
 
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
@@ -12,12 +13,14 @@ public interface DataInterface {
 
     /**
      * Fetches annotations (NE, Taxon, Time,...) of a given corpus.
+     *
      * @return
      */
     public List<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) throws DatabaseOperationException;
 
     /**
      * Returns all taxons (if any) that match the given string values AND their identifier column is not empty.
+     *
      * @return
      * @throws DatabaseOperationException
      */
@@ -25,6 +28,7 @@ public interface DataInterface {
 
     /**
      * Counts all documents within a given corpus
+     *
      * @return
      */
     public int countDocumentsInCorpus(long id) throws DatabaseOperationException;
@@ -32,6 +36,7 @@ public interface DataInterface {
     /**
      * Returns true if the document with the given documentId exists in
      * the given corpus
+     *
      * @param corpusId
      * @param documentId
      * @return
@@ -41,48 +46,48 @@ public interface DataInterface {
     /**
      * Gets a single corpus by its id.
      *
-     * @param id
-     * @return
      */
     public Corpus getCorpusById(long id) throws DatabaseOperationException;
 
     /**
      * Stores a page topic distribution by a page.
-     * @param page
+     *
      */
     public void savePageTopicDistribution(Page page) throws DatabaseOperationException;
 
     /**
      * Stores a document topic distributions by a document.
-     * @param document
+     *
      */
     public void saveDocumentTopicDistribution(Document document) throws DatabaseOperationException;
 
     /**
      * Returns a corpus by name. As they aren't unique, it returns the first match.
-     * @param name
-     * @return
+     *
      */
     public Corpus getCorpusByName(String name) throws DatabaseOperationException;
 
     /**
+     * Gets all UCE filters of a corpus.
+     *
+     */
+    public List<UCEMetadataFilter> getUCEMetadataFiltersByCorpusId(long corpusId) throws DatabaseOperationException;
+
+    /**
      * Gets all documents that belong to the given corpus
-     * @param corpusId
-     * @return
+     *
      */
     public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException;
 
     /**
      * Gets all documents of a corpus which arent psotprocessed yet.
-     * @param corpusId
-     * @return
+     *
      */
     public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId) throws DatabaseOperationException;
 
     /**
      * Returns a corpus tsne plot by the given corpusId
-     * @param corpusId
-     * @return
+     *
      */
     public CorpusTsnePlot getCorpusTsnePlotByCorpusId(long corpusId) throws DatabaseOperationException;
 
@@ -95,6 +100,7 @@ public interface DataInterface {
 
     /**
      * Gets the data required for the world globus to render correctly.
+     *
      * @param documentId
      * @return
      */
@@ -134,29 +140,33 @@ public interface DataInterface {
      */
     public DocumentSearchResult defaultSearchForDocuments(int skip,
                                                           int take,
+                                                          String ogSearchQuery,
                                                           List<String> searchTokens,
                                                           SearchLayer layer,
                                                           boolean countAll,
                                                           SearchOrder order,
                                                           OrderByColumn orderedByColumn,
-                                                          long corpusId) throws DatabaseOperationException;
+                                                          long corpusId,
+                                                          List<UCEMetadataFilterDto> uceMetadataFilters) throws DatabaseOperationException;
 
     /**
      * Gets a Topic Distribution determined by the T generic inheritance.
+     *
      * @param clazz
      * @param id
-     * @return
      * @param <T>
+     * @return
      * @throws DatabaseOperationException
      */
     public <T extends TopicDistribution> T getTopicDistributionById(Class<T> clazz, long id) throws DatabaseOperationException;
 
     /**
      * Get Topic Distributions by a topic. This is basically a search for annotated topics.
-      * @param clazz
+     *
+     * @param clazz
      * @param topic
-     * @return
      * @param <T>
+     * @return
      * @throws DatabaseOperationException
      */
     public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException;
@@ -165,6 +175,8 @@ public interface DataInterface {
      * Gets a document by its corpusId and the documentId, which isn't its primary key identifier "id".
      */
     public Document getDocumentByCorpusAndDocumentId(long corpusId, String documentId) throws DatabaseOperationException;
+
+    public List<UCEMetadata> getUCEMetadataByDocumentId(long documentId) throws DatabaseOperationException;
 
     /**
      * Generic operation that fetches documents given the parameters
@@ -175,7 +187,7 @@ public interface DataInterface {
      * Gets the corresponding gbifOccurrences to a gbifTaxonId
      */
     public List<GbifOccurrence> getGbifOccurrencesByGbifTaxonId(long gbifTaxonId) throws DatabaseOperationException;
-    
+
     /**
      * Gets a list of distinct documents that contain a named entity with a given covered text.
      */
@@ -183,6 +195,7 @@ public interface DataInterface {
 
     /**
      * Gets lemmas from a specific document that are within a begin and end range
+     *
      * @param begin
      * @param end
      * @param documentId
@@ -219,6 +232,22 @@ public interface DataInterface {
     public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) throws DatabaseOperationException;
 
     /**
+     * Saves and updates a filter.
+     *
+     * @param filter
+     * @throws DatabaseOperationException
+     */
+    public void saveOrUpdateUCEMetadataFilter(UCEMetadataFilter filter) throws DatabaseOperationException;
+
+    /**
+     * Stores a new UCEMetadataFilter
+     *
+     * @param filter
+     * @throws DatabaseOperationException
+     */
+    public void saveUCEMetadataFilter(UCEMetadataFilter filter) throws DatabaseOperationException;
+
+    /**
      * Stores the complete document with all its lists in the database.
      *
      * @param document
@@ -232,6 +261,7 @@ public interface DataInterface {
 
     /**
      * Saves a UCELog to the database. In those, we log requests from the user and more.
+     *
      * @param log
      * @throws DatabaseOperationException
      */
@@ -239,6 +269,7 @@ public interface DataInterface {
 
     /**
      * Stores an corpus tsne plot instance
+     *
      * @param corpusTsnePlot
      */
     public void saveOrUpdateCorpusTsnePlot(CorpusTsnePlot corpusTsnePlot, Corpus corpus) throws DatabaseOperationException;

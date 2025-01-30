@@ -18,6 +18,10 @@ public class Corpus extends ModelBase {
     @JoinColumn(name="corpusid")
     private List<Document> documents;
 
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name="corpusid")
+    private List<UCEMetadataFilter> uceMetadataFilters;
+
     @OneToOne(mappedBy = "corpus", cascade = CascadeType.ALL, orphanRemoval = true)
     private CorpusTsnePlot corpusTsnePlot;
 
@@ -26,6 +30,14 @@ public class Corpus extends ModelBase {
 
     public Corpus(){
         this.created = DateTime.now();
+    }
+
+    public List<UCEMetadataFilter> getUceMetadataFilters() {
+        return uceMetadataFilters;
+    }
+
+    public void setUceMetadataFilters(List<UCEMetadataFilter> uceMetadataFilters) {
+        this.uceMetadataFilters = uceMetadataFilters;
     }
 
     public CorpusViewModel getViewModel(){

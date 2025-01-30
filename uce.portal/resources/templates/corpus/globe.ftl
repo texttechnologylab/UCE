@@ -122,7 +122,7 @@
 
 <script type="module">
 
-    // We get the data through the freemaker template engine
+    // We get the data through the freemarker template engine
     const data = ${jsonData};
     const map = L.map('map').setView([0, 0], 100);
     const tiles = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {

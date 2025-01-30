@@ -18,6 +18,7 @@ public class Document extends ModelBase implements WikiModel {
     public String getWikiId() {
         return "D" + "-" + this.getId();
     }
+
     private String language;
     @Column(columnDefinition = "TEXT")
     private String documentTitle;
@@ -60,6 +61,10 @@ public class Document extends ModelBase implements WikiModel {
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
+    private List<UCEMetadata> uceMetadata;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
     private List<WikipediaLink> wikipediaLinks;
 
     @OneToOne(cascade = CascadeType.ALL)
@@ -79,6 +84,23 @@ public class Document extends ModelBase implements WikiModel {
         this.documentTitle = documentTitle;
         this.documentId = documentId;
         this.corpusId = corpusId;
+    }
+
+    public boolean hasJsonUceMetadata() {
+        return getUceMetadata().stream().anyMatch(u -> u.getValueType() == UCEMetadataValueType.JSON);
+    }
+
+    public List<UCEMetadata> getUceMetadataWithoutJson() {
+        return getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON).toList();
+    }
+
+    public List<UCEMetadata> getUceMetadata() {
+        if (uceMetadata == null) new ArrayList<>();
+        return uceMetadata;
+    }
+
+    public void setUceMetadata(List<UCEMetadata> uceMetadata) {
+        this.uceMetadata = uceMetadata;
     }
 
     public boolean isPostProcessed() {

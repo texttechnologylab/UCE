@@ -1,5 +1,6 @@
 package org.texttechnologylab.services;
 
+import com.google.gson.Gson;
 import org.hibernate.*;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
@@ -7,15 +8,14 @@ import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
-import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
 
-import javax.persistence.criteria.Join;
 import javax.persistence.criteria.Predicate;
 import java.sql.Array;
 import java.sql.ResultSet;
@@ -29,6 +29,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     private final SessionFactory sessionFactory;
 
+    private final Gson gson = new Gson();
+
     private Session getCurrentSession() {
         return sessionFactory.openSession();
     }
@@ -38,7 +40,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         TestConnection();
     }
 
-    public void TestConnection(){
+    public void TestConnection() {
         try {
             var log = new UCELog("localhost", "TEST", "/", "Testing DB Connection", "/");
             saveUceLog(log);
@@ -130,6 +132,27 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<UCEMetadataFilter> getUCEMetadataFiltersByCorpusId(long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            Criteria criteria = session.createCriteria(UCEMetadataFilter.class);
+            criteria.add(Restrictions.eq("corpusId", corpusId));
+            return (List<UCEMetadataFilter>) criteria.list();
+        });
+    }
+
+    public List<UCEMetadata> getUCEMetadataByDocumentId(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            Criteria criteria = session.createCriteria(UCEMetadata.class);
+            criteria.add(Restrictions.eq("documentId", documentId));
+            // I want the JSON value types to be last in list.
+            return ((List<UCEMetadata>) criteria.list())
+                    .stream()
+                    .sorted(Comparator.comparing((UCEMetadata m) -> "JSON".equals(m.getValueType().name()) ? 1 : 0)
+                            .thenComparingInt(m -> m.getValueType().ordinal()))
+                    .toList();
+        });
+    }
+
     public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             Criteria criteria = session.createCriteria(Document.class);
@@ -173,7 +196,11 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var criteriaQuery = session.getCriteriaBuilder().createQuery(Corpus.class);
             criteriaQuery.from(Corpus.class);
-            return session.createQuery(criteriaQuery).getResultList();
+            var corpora = session.createQuery(criteriaQuery).getResultList();
+            for (var corpus : corpora) {
+                Hibernate.initialize(corpus.getUceMetadataFilters());
+            }
+            return corpora;
         });
     }
 
@@ -305,25 +332,36 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public DocumentSearchResult defaultSearchForDocuments(int skip,
                                                           int take,
+                                                          String ogSearchQuery,
                                                           List<String> searchTokens,
                                                           SearchLayer layer,
                                                           boolean countAll,
                                                           SearchOrder order,
                                                           OrderByColumn orderedByColumn,
-                                                          long corpusId) throws DatabaseOperationException {
+                                                          long corpusId,
+                                                          List<UCEMetadataFilterDto> uceMetadataFilters) throws DatabaseOperationException {
 
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
             DocumentSearchResult search = null;
-            try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() + "(?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() +
+                    "(?::bigint, ?::text[], ?::text, ?::integer, ?::integer, ?::boolean, ?::text, ?::text, ?::jsonb)}")) {
                 storedProcedure.setInt(1, (int) corpusId);
                 storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.stream().map(this::escapeSql).toArray()));
-                storedProcedure.setString(3, String.join("|", searchTokens.stream().map(this::escapeSql).toList()).trim());
+                storedProcedure.setString(3, ogSearchQuery);
                 storedProcedure.setInt(4, take);
                 storedProcedure.setInt(5, skip);
                 storedProcedure.setBoolean(6, countAll);
                 storedProcedure.setString(7, order.name());
                 storedProcedure.setString(8, orderedByColumn.name().toLowerCase());
+                if (uceMetadataFilters == null || uceMetadataFilters.isEmpty())
+                    storedProcedure.setString(9, null);
+                else {
+                    var applicableFilters = uceMetadataFilters.stream().filter(f -> !(f.getValue().isEmpty() || f.getValue().equals("{ANY}"))).toList();
+                    if (applicableFilters.isEmpty()) storedProcedure.setString(9, null);
+                    else storedProcedure.setString(9, gson.toJson(applicableFilters)
+                            .replaceAll("\"valueType\"", "\"valueType::text\""));
+                }
 
                 var result = storedProcedure.executeQuery();
                 while (result.next()) {
@@ -343,10 +381,18 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     // Finally, parse the found snippets of the search
                     // This is only done for the fulltext search
                     if (layer == SearchLayer.FULLTEXT) {
+                        // The found text snippets.
                         var resultSet = result.getArray("snippets_found").getResultSet();
                         var foundSnippets = new HashMap<Integer, String>();
                         while (resultSet.next()) foundSnippets.put(resultSet.getInt(1) - 1, resultSet.getString(2));
                         search.setSearchSnippets(foundSnippets);
+
+                        // And the ranks of each document.
+                        var rankResultSet = result.getArray("document_ranks").getResultSet();
+                        var documentRanks = new HashMap<Integer, Float>();
+                        while (rankResultSet.next())
+                            documentRanks.put(rankResultSet.getInt(1) - 1, rankResultSet.getFloat(2));
+                        search.setSearchRanks(documentRanks);
                     }
                 }
                 return search;
@@ -583,6 +629,20 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public void saveOrUpdateUCEMetadataFilter(UCEMetadataFilter filter) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(filter);
+            return null;
+        });
+    }
+
+    public void saveUCEMetadataFilter(UCEMetadataFilter filter) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            session.save(filter);
+            return null;
+        });
+    }
+
     public void saveDocument(Document document) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.save(document);
@@ -687,6 +747,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getTimes());
         Hibernate.initialize(doc.getWikipediaLinks());
         Hibernate.initialize(doc.getLemmas());
+        Hibernate.initialize(doc.getUceMetadata());
         for (var link : doc.getWikipediaLinks()) {
             Hibernate.initialize(link.getWikiDataHyponyms());
         }

@@ -1,3 +1,0 @@
-# Publications
-
-To be added.

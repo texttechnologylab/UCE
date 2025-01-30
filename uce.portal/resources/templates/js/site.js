@@ -159,6 +159,24 @@ $('body').on('click', '.open-globe', function () {
     openNewGlobeView(type, id);
 })
 
+$('body').on('click', '.open-document-metadata', async function(){
+    await $.ajax({
+        url: "/api/document/reader/pagesList?id=" + id + "&skip=" + i,
+        type: "GET",
+        success: function (response) {
+            // Render the new pages
+            $('.reader-container .document-content').append(response);
+            activatePopovers();
+            for (let k = i + 1; k < Math.max(i + 10, pagesCount); k++) searchPotentialSearchTokensInPage(k);
+        },
+        error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+            $('.reader-container .document-content').append(xhr.responseText);
+        }
+    }).always(function () {
+        $('.site-container .loaded-pages-count').html(i);
+    });
+})
 
 /**
  * Opens a new globe view
