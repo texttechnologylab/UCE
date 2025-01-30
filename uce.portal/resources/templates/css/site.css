@@ -236,6 +236,12 @@ nav .selected-nav-btn.text::before {
     object-fit: contain;
 }
 
+.ellipsis-text{
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
 .word-break-all{
     word-break: break-all;
 }
@@ -252,6 +258,7 @@ nav .selected-nav-btn.text::before {
     display: flex;
     justify-content: center;
     align-items: center;
+    transition: 0.25s;
     width: 30px;
     cursor: pointer;
 }
@@ -260,6 +267,12 @@ nav .selected-nav-btn.text::before {
     background-color: ghostwhite;
     color: black;
     border: 1px gray solid;
+    transition: 0.25s;
+}
+
+.rounded-a:hover *{
+    transition: 0.25s;
+    color:black !important;
 }
 
 .open-wiki-page{

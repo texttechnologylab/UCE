@@ -28,7 +28,7 @@
                                 <i class="mb-0 small-font text">(${metadata.getValueType()?lower_case!''})</i>
                             </div>
                             <#if metadata.getValueType()?has_content && metadata.getValueType() == 'URL'>
-                                <a class="ml-2 small-font word-break-all" href="${metadata.getValue()!''}"
+                                <a class="ml-2 small-font ellipsis-text" href="${metadata.getValue()!''}"
                                    target="_blank">${metadata.getValue()!''}</a>
                             <#else>
                                 <label class="mb-0 ml-2 small-font color-dark">${metadata.getValue()!''}</label>

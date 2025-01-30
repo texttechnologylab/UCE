@@ -2,8 +2,6 @@
     <#include "*/css/json-beautfifier.css">
 </style>
 
-<script src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
-
 <#macro render metadataList>
     <#if metadataList?? && metadataList?has_content>
         <ul class="json-ul">
@@ -18,10 +16,19 @@
                     </#if>
                     <#if has_value>
                         <div class="item-container ${layout}">
-                            <div class="flexed align-items-center">
-                                <i class="fas fa-key xsmall-font mr-2 text"></i>
-                                <#assign k_class = "">
-                                <label class="key mb-0 mr-2 color-prime">${item.getKey()!''}:</label>
+                            <div class="flexed align-items-center justify-content-between">
+                                <div class="flexed align-items-center">
+                                    <i class="fas fa-key xsmall-font mr-2 text"></i>
+                                    <#assign k_class = "">
+                                    <label class="key mb-0 mr-2 color-prime">${item.getKey()!''}:</label>
+                                </div>
+                                <div>
+                                    <#if is_long_string>
+                                        <a class="rounded-a expand-metadata-string-btn">
+                                            <i class="text-light fas fa-expand"></i>
+                                        </a>
+                                    </#if>
+                                </div>
                             </div>
                             <#if has_value>
                                 <#if is_long_string>

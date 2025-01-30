@@ -24,6 +24,7 @@ public class UCEMetadata extends ModelBase {
     @Column(columnDefinition = "TEXT")
     private String comment;
 
+    // TODO: Refactor this json rendering somewhere else, this is disgusting.
     public List<UCEMetadataJsonViewModel> getJsonValueAsIterable() {
         if (this.valueType != UCEMetadataValueType.JSON) return null;
         var jsonString = this.value;

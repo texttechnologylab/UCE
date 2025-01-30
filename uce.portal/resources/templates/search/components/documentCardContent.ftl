@@ -28,7 +28,7 @@
         </div>
     </div>
 
-    <div class="flexed align-items-center w-100 justify-content-end">
+    <div class="flexed align-items-center justify-content-end">
         <p class="mb-0 text mr-3"> ${document.getLanguage()?upper_case}</p>
         <div class="mb-0 flexed align-items-center text">
             <i class="fas fa-file-alt"></i> <label
@@ -38,7 +38,7 @@
             <div class="ml-3 mb-0 flexed align-items-center text">
                 <#assign rank = searchState.getPossibleRankOfDocumentIdx(documentIdx)!>
                 <#if rank gt -1>
-                    <p class="mb-0 color-prime" data-trigger="hover" data-toggle="popover" data-placement="top"
+                    <p class="mb-0 color-prime flexed align-items-center" data-trigger="hover" data-toggle="popover" data-placement="top"
                        data-content="${languageResource.get("searchRankDescription")}">
                         <i class="fab fa-hackerrank mr-1"></i> ${rank}
                     </p>

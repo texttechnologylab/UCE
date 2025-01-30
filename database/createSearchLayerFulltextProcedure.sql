@@ -7,7 +7,7 @@ CREATE OR REPLACE FUNCTION uce_search_layer_fulltext(
     IN count_all boolean DEFAULT false,
     IN order_direction text DEFAULT 'DESC',
     IN order_by_column text DEFAULT 'rank',
-    IN uce_metadata_filters jsonb DEFAULT NULL, -- Accepts JSON arrays now
+    IN uce_metadata_filters jsonb DEFAULT NULL,
     OUT total_count_out integer,
     OUT document_ids integer[],
     OUT named_entities_found text[][],
@@ -53,19 +53,19 @@ BEGIN
     ),
 	
 	-- This gets all documents that are applicable to the filter.
-    page_ranked AS (
-        SELECT 
-            p.document_id AS doc_id, 
-            MAX(ts_rank_cd(p.textsearch, query)) AS rank,
-            d.documenttitle
-        FROM page p
-        JOIN document d ON d.id = p.document_id
-        CROSS JOIN to_tsquery(input2) query
-        WHERE query @@ p.textsearch
-          AND (uce_metadata_filters IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
-          AND d.corpusid = corpus_id
-        GROUP BY p.document_id, d.documenttitle
-    ),
+	page_ranked AS (
+		SELECT 
+			p.document_id AS doc_id, 
+			MAX(ts_rank_cd(p.textsearch, query)) AS rank,
+			d.documenttitle
+		FROM page p
+		JOIN document d ON d.id = p.document_id
+		LEFT JOIN LATERAL to_tsquery(input2) query ON input2 IS NOT NULL AND input2 <> ''
+		WHERE (query IS NULL OR query @@ p.textsearch)
+		  AND (uce_metadata_filters IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
+		  AND d.corpusid = corpus_id
+		GROUP BY p.document_id, d.documenttitle
+	),
 	
 	-- This limits and sorts those found documents.
 	-- TODO: The sorting for documenttitle isn't working properly I feel like...

@@ -4,7 +4,7 @@ let currentCorpusUniverseHandler = undefined;
  * Starts a new search with the given input
  */
 function startNewSearch(searchInput) {
-    if (searchInput === undefined || searchInput === '') {
+    if (searchInput === undefined) {
         return;
     }
     console.log('New Search with input: ' + searchInput);

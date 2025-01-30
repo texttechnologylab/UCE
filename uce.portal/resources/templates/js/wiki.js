@@ -157,3 +157,14 @@ $('body').on('click', '.wiki-page-modal .go-back-btn', function () {
 $('body').on('click', '.clickable-rdf-node', function () {
     window.wikiHandler.handleRdfNodeClicked($(this));
 });
+
+/**
+ * Triggers when the user wants to expand a long metadata string
+ */
+$('body').on('click', '.expand-metadata-string-btn', function () {
+    const expandedContent = $(this).closest('.item-container').find('md-block').html();
+    const title = $(this).closest('.item-container').find('label,.key').html();
+    $('.wiki-metadata-expanded-view .content').html(expandedContent);
+    $('.wiki-metadata-expanded-view .title').html(title);
+    $('.wiki-metadata-expanded-view').fadeIn(25);
+});
