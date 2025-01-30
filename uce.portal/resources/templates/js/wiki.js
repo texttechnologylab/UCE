@@ -42,7 +42,7 @@ let WikiHandler = (function () {
             },
             error: (xhr, status, error) => {
                 console.error(xhr.responseText);
-                alert("There was an unknown error loading your page.")
+                showMessageModal("Unknown Error", "There was an unknown error loading your page.")
             }
         }).always(() => {
             $('.wiki-page-modal .page-content .loading-div').fadeOut(100);
@@ -115,8 +115,7 @@ let WikiHandler = (function () {
                 $container.data('children', true);
             },
             error: function (xhr, status, error) {
-                // TODO: Add a better error toast here
-                alert("Request failed, since the server wasn't reachable.")
+                showMessageModal("Bad Request", "Request failed, since the server wasn't reachable.");
                 console.error(xhr.responseText);
             }
         }).always(function () {

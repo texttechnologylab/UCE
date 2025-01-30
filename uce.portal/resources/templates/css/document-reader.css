@@ -136,7 +136,7 @@ body {
     position: relative;
     z-index: 3;
     text-decoration-thickness: 2px;
-    text-decoration-color: dodgerblue;
+    text-decoration-color: var(--secondary);
 }
 
 .document-content .multi-annotation:hover {

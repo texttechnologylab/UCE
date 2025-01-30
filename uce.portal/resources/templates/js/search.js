@@ -62,7 +62,7 @@ function startNewSearch(searchInput) {
         },
         error: function (xhr, status, error) {
             if(xhr.status === 406){
-                alert(xhr.responseText);
+                showMessageModal("Query Error", xhr.responseText);
             } else{
                 $('.view .search-result-container').html(xhr.responseText);
             }
@@ -181,7 +181,7 @@ $('body').on('click', '.open-sr-builder-btn', function () {
             activatePopovers();
         },
         error: function (xhr, status, error) {
-            alert("Error opening the SR builder.")
+            showMessageModal("Error", "Error opening the SR builder.");
             console.error(xhr.responseText);
         }
     }).always(function () {
@@ -221,8 +221,7 @@ async function handleSwitchingOfPage(page) {
         success: function (response) {
             if (response.status === 500) {
                 // Something went wrong, in this case, showcase an error.
-                // TODO: Replace this ALERT with a more appropriate error popup
-                alert("There was a problem fetching the right page on the server, operation cancelled.");
+                showMessageModal("Error", "There was a problem fetching the right page on the server, operation cancelled.");
                 return;
             }
             // Render the new documents

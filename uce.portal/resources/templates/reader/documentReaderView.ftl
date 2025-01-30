@@ -46,6 +46,8 @@
 
 <body class="no-cursor">
 
+<#include "*/messageModal.ftl">
+
 <div class="site-container">
 
     <#include "*/wiki/components/wikiPageModal.ftl">

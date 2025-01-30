@@ -54,6 +54,7 @@
 </head>
 
 <body>
+<#include "*/messageModal.ftl">
 
 <div class="site-container">
 
@@ -318,8 +319,8 @@
     <div class="ragbot-chat-include">
         <#include "*/ragbot/chatwindow.ftl"/>
     </div>
-
 </div>
+
 </body>
 
 <footer class="bg-lightgray">

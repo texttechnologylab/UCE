@@ -74,8 +74,9 @@ public class Search_DefaultImpl implements Search {
 
         // Finally, if we dont have the pro mode, escape all spaces to +
         // otherwise we get a syntax error in our vector-textsearch
-        if (!proModeActivated)
-            searchPhrase = searchPhrase.replace(" ", "+");
+        if (!proModeActivated) {
+            //searchPhrase = searchPhrase.replace(" ", "+");
+        }
 
         this.searchState.setSearchQuery(searchPhrase);
     }
@@ -194,7 +195,8 @@ public class Search_DefaultImpl implements Search {
                         searchState.getOrder(),
                         searchState.getOrderBy(),
                         searchState.getCorpusId(),
-                        searchState.getUceMetadataFilters());
+                        searchState.getUceMetadataFilters(),
+                        searchState.isProModeActivated());
             } catch (Exception ex) {
                 logger.error("Error executing a search on the database with search layer FULLTEXT. Search can't be executed.", ex);
                 // We only want to rethrow grammar exceptions for the pro mode.
@@ -214,7 +216,8 @@ public class Search_DefaultImpl implements Search {
                             searchState.getOrder(),
                             searchState.getOrderBy(),
                             searchState.getCorpusId(),
-                            searchState.getUceMetadataFilters()),
+                            searchState.getUceMetadataFilters(),
+                            searchState.isProModeActivated()),
                     (ex) -> logger.error("Error executing a search on the database with search layer NAMED_ENTITIES. Search can't be executed.", ex));
         }
 

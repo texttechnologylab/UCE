@@ -339,13 +339,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                           SearchOrder order,
                                                           OrderByColumn orderedByColumn,
                                                           long corpusId,
-                                                          List<UCEMetadataFilterDto> uceMetadataFilters) throws DatabaseOperationException {
+                                                          List<UCEMetadataFilterDto> uceMetadataFilters,
+                                                          boolean useTsVectorSearch) throws DatabaseOperationException {
 
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 
             DocumentSearchResult search = null;
             try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() +
-                    "(?::bigint, ?::text[], ?::text, ?::integer, ?::integer, ?::boolean, ?::text, ?::text, ?::jsonb)}")) {
+                    "(?::bigint, ?::text[], ?::text, ?::integer, ?::integer, ?::boolean, ?::text, ?::text, ?::jsonb, ?::boolean)}")) {
                 storedProcedure.setInt(1, (int) corpusId);
                 storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.stream().map(this::escapeSql).toArray()));
                 storedProcedure.setString(3, ogSearchQuery);
@@ -362,6 +363,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     else storedProcedure.setString(9, gson.toJson(applicableFilters)
                             .replaceAll("\"valueType\"", "\"valueType::text\""));
                 }
+                storedProcedure.setBoolean(10, useTsVectorSearch);
 
                 var result = storedProcedure.executeQuery();
                 while (result.next()) {

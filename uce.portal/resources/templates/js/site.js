@@ -41,6 +41,16 @@ function navigateToView(id) {
 }
 
 /**
+ * Popups a modal with a message and a title.
+ */
+function showMessageModal(title, body){
+    const $modal = $('#messageModal');
+    $modal.find('.modal-title').html(title);
+    $modal.find('.modal-body').html(body);
+    $modal.modal();
+}
+
+/**
  * Start a search by pressing Enter
  */
 $('body').on('keydown', '.view .search-input', function (event) {

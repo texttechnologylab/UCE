@@ -147,7 +147,8 @@ public interface DataInterface {
                                                           SearchOrder order,
                                                           OrderByColumn orderedByColumn,
                                                           long corpusId,
-                                                          List<UCEMetadataFilterDto> uceMetadataFilters) throws DatabaseOperationException;
+                                                          List<UCEMetadataFilterDto> uceMetadataFilters,
+                                                          boolean useTsVectorSearch) throws DatabaseOperationException;
 
     /**
      * Gets a Topic Distribution determined by the T generic inheritance.
