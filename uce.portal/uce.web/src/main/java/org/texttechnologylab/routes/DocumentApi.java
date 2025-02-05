@@ -75,6 +75,7 @@ public class DocumentApi {
             var take = 15;
             var documents = db.getDocumentsByCorpusId(corpusId, (page - 1) * take, take);
 
+            model.put("requestId", request.attribute("id"));
             model.put("documents", documents);
             model.put("corpusId", corpusId);
         } catch (Exception ex) {

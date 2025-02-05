@@ -18,6 +18,7 @@ import org.apache.uima.jcas.cas.AnnotationBase;
 import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
+import org.springframework.scheduling.annotation.Async;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
@@ -31,10 +32,7 @@ import org.texttechnologylab.utils.EmbeddingUtils;
 import org.texttechnologylab.utils.ListUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -43,15 +41,16 @@ import java.util.concurrent.Executors;
 
 public class Importer {
 
+    private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger();
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
-    private final GoetheUniversityService goetheUniversityService;
-    private final PostgresqlDataInterface_Impl db;
-    private final GbifService gbifService;
-    private final RAGService ragService;
-    private final JenaSparqlService jenaSparqlService;
+    private GoetheUniversityService goetheUniversityService;
+    private PostgresqlDataInterface_Impl db;
+    private GbifService gbifService;
+    private RAGService ragService;
+    private JenaSparqlService jenaSparqlService;
     private String path;
     private String importId;
     private Integer importerNumber;
@@ -61,14 +60,22 @@ public class Importer {
                     String foldername,
                     int importerNumber,
                     String importId) {
+        initServices(serviceContext);
+        this.importerNumber = importerNumber;
+        this.importId = importId;
+        this.path = foldername;
+    }
+
+    public Importer(ApplicationContext serviceContext) {
+        initServices(serviceContext);
+    }
+
+    private void initServices(ApplicationContext serviceContext) {
         this.goetheUniversityService = serviceContext.getBean(GoetheUniversityService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.ragService = serviceContext.getBean(RAGService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
         this.gbifService = serviceContext.getBean(GbifService.class);
-        this.importerNumber = importerNumber;
-        this.importId = importId;
-        this.path = foldername;
     }
 
     /**
@@ -96,6 +103,27 @@ public class Importer {
     }
 
     /**
+     * Stores an uploaded xmi to a given corpus
+     */
+    public void storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus) throws DatabaseOperationException {
+        logger.info("Trying to store an uploaded UIMA file...");
+
+        // Before we try to parse the document, we need to check if we have UCEMetadata filters for this corpus.
+        if (CorpusConfig.fromJson(corpus.getCorpusJsonConfig()).getAnnotations().isUceMetadata())
+            this.uceMetadataFilters = ExceptionUtils.tryCatchLog(
+                    () -> new CopyOnWriteArrayList<>(db.getUCEMetadataFiltersByCorpusId(corpus.getId())),
+                    (ex) -> logger.error("Couldn't fetch UCEMetadataFilters to a corpus - this shouldn't happen. The process continues without filters.", ex));
+
+        // We don't catch exceptions here, we let them be raised.
+        var doc = XMIToDocument(inputStream, corpus);
+        if(doc == null) throw new DatabaseOperationException("The document was already imported into the corpus according to its documentId.");
+        db.saveDocument(doc);
+        postProccessDocument(doc, CorpusConfig.fromJson(corpus.getCorpusJsonConfig()));
+
+        logger.info("Finished storing and uploaded UIMA file.");
+    }
+
+    /**
      * Imports all UIMA xmi files in a folder
      */
     public void storeCorpusFromFolderAsync(String folderName, int numThreads) throws DatabaseOperationException {
@@ -103,7 +131,6 @@ public class Importer {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         var corpus = new Corpus();
-        var gson = new Gson();
         CorpusConfig corpusConfig = null;
 
         if (!SystemStatus.PostgresqlDbStatus.isAlive())
@@ -198,7 +225,26 @@ public class Importer {
     }
 
     /**
-     * Converts an XMI to an OCRDocument by path
+     * Converts an XMI inputstream to a Document.
+     *
+     * @param inputStream
+     * @param corpus
+     * @return
+     */
+    public Document XMIToDocument(InputStream inputStream, Corpus corpus) {
+        try {
+            var jCas = JCasFactory.createJCas();
+            CasIOUtils.load(inputStream, null, jCas.getCas(), CasLoadMode.LENIENT);
+
+            return XMIToDocument(jCas, corpus);
+        } catch (Exception ex) {
+            logger.error("Error while reading an annotated xmi file from stream to a cas and transforming it into a document:", ex);
+            return null;
+        }
+    }
+
+    /**
+     * Converts an XMI to a Document by path
      */
     public Document XMIToDocument(String filename, Corpus corpus) {
         try {
@@ -232,7 +278,6 @@ public class Importer {
 
         try {
             // Corpus config so we know what do look for
-            var gson = new Gson();
             var corpusConfig = gson.fromJson(corpus.getCorpusJsonConfig(), CorpusConfig.class);
 
             // First, metadata
@@ -336,14 +381,14 @@ public class Importer {
             metadata.setValue(t.getValue());
             metadata.setKey(t.getKey());
             // TODO: THIS IS JUST FOR TESTING. Delete this domain check and leave only the last line
-            if(metadata.getKey().equals("domain")) metadata.setValueType(UCEMetadataValueType.ENUM);
-            else
-                metadata.setValueType(UCEMetadataValueType.valueOf(t.getValueType().toUpperCase()));
+            //if (metadata.getKey().equals("domain")) metadata.setValueType(UCEMetadataValueType.ENUM);
+            //else
+            metadata.setValueType(UCEMetadataValueType.valueOf(t.getValueType().toUpperCase()));
             data.add(metadata);
 
             // Now check if we have added a new distinct metadata. If not, then cache it for filtering later.
             // But we are not interested in filtering for JSON content. That's not feasible.
-            if(metadata.getValueType() == UCEMetadataValueType.JSON) return;
+            if (metadata.getValueType() == UCEMetadataValueType.JSON) return;
             var possibleFilter = this.uceMetadataFilters
                     .stream()
                     .filter(f -> f.getKey().equals(t.getKey()) && metadata.getValueType() == metadata.getValueType())
@@ -352,7 +397,7 @@ public class Importer {
             if (possibleFilter.isEmpty()) {
                 var newFilter = new UCEMetadataFilter(corpusId, metadata.getKey(), metadata.getValueType());
                 newFilter.addPossibleCategory(metadata.getValue());
-                synchronized (newFilter){
+                synchronized (newFilter) {
                     this.uceMetadataFilters.add(newFilter);
                 }
                 ExceptionUtils.tryCatchLog(
@@ -362,9 +407,10 @@ public class Importer {
                 // If this filter already exists, then we need to check if it's an Enum filter. If yes, there is a chance
                 // that a new category to that enum must be added and stored. Let's check.
                 var existingFilter = possibleFilter.get();
-                if(existingFilter.getValueType() != UCEMetadataValueType.ENUM) return; // There is nothing to update for none enums.
+                if (existingFilter.getValueType() != UCEMetadataValueType.ENUM)
+                    return; // There is nothing to update for none enums.
                 // Again, thread safety. If this worker updates a filter category, we need the other to know.
-                synchronized (existingFilter){
+                synchronized (existingFilter) {
                     if (existingFilter.getPossibleCategories().stream().noneMatch(c -> c.equals(metadata.getValue()))) {
                         existingFilter.addPossibleCategory(metadata.getValue());
                         ExceptionUtils.tryCatchLog(

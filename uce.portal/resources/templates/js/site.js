@@ -43,7 +43,7 @@ function navigateToView(id) {
 /**
  * Popups a modal with a message and a title.
  */
-function showMessageModal(title, body){
+function showMessageModal(title, body) {
     const $modal = $('#messageModal');
     $modal.find('.modal-title').html(title);
     $modal.find('.modal-body').html(body);
@@ -120,20 +120,7 @@ $('body').on('click', '.open-corpus-inspector-btn', function () {
             $('.corpus-inspector-include').html(response);
 
             // After that, we load documentsListView
-            $.ajax({
-                url: "/api/corpus/documentsList?corpusId=" + corpusId + "&page=" + 1,
-                type: "GET",
-                success: function (response) {
-                    $('.corpus-inspector-include .corpus-documents-list-include').html(response);
-                },
-                error: function (xhr, status, error) {
-                    console.error(xhr.responseText);
-                    $('.corpus-inspector-include .corpus-documents-list-include').html(xhr.responseText);
-                },
-                always: function () {
-                    $('.corpus-inspector-include .simple-loader').fadeOut(150);
-                }
-            });
+            loadCorpusDocuments(corpusId, $('.corpus-inspector-include .corpus-documents-list-include'));
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);
@@ -141,6 +128,27 @@ $('body').on('click', '.open-corpus-inspector-btn', function () {
         }
     });
 })
+
+/**
+ * Loads the raw document list to a corpus into a target include.
+ * @param corpusId
+ * @param $target
+ */
+function loadCorpusDocuments(corpusId, $target) {
+    $.ajax({
+        url: "/api/corpus/documentsList?corpusId=" + corpusId + "&page=" + 1,
+        type: "GET",
+        success: function (response) {
+            $target.html(response);
+        },
+        error: function (xhr, status, error) {
+            $target.html(xhr.responseText);
+        },
+        always: function () {
+            $target.find('.simple-loader').fadeOut(150);
+        }
+    });
+}
 
 /**
  * Triggers whenever an open-document element is clicked. This causes to load a new full read view of a doc
@@ -161,7 +169,7 @@ $('body').on('click', '.open-globe', function () {
     openNewGlobeView(type, id);
 })
 
-$('body').on('click', '.open-document-metadata', async function(){
+$('body').on('click', '.open-document-metadata', async function () {
     await $.ajax({
         url: "/api/document/reader/pagesList?id=" + id + "&skip=" + i,
         type: "GET",
@@ -218,4 +226,6 @@ $(document).ready(function () {
     console.log('Webpage loaded!');
     activatePopovers();
     reloadCorpusComponents();
+    // We start an initial search with the default corpus.
+    startNewSearch("");
 })

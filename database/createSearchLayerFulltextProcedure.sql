@@ -8,6 +8,7 @@ CREATE OR REPLACE FUNCTION uce_search_layer_fulltext(
     IN order_direction text DEFAULT 'DESC',
     IN order_by_column text DEFAULT 'rank',
     IN uce_metadata_filters jsonb DEFAULT NULL,
+    IN useTsVector boolean DEFAULT true, -- NEW PARAMETER
     OUT total_count_out integer,
     OUT document_ids integer[],
     OUT named_entities_found text[][],
@@ -51,62 +52,77 @@ BEGIN
         GROUP BY um.document_id
         HAVING COUNT(*) = (SELECT COUNT(*) FROM expanded_filters)
     ),
-	
-	-- This gets all documents that are applicable to the filter.
-	page_ranked AS (
-		SELECT 
-			p.document_id AS doc_id, 
-			MAX(ts_rank_cd(p.textsearch, query)) AS rank,
-			d.documenttitle
-		FROM page p
-		JOIN document d ON d.id = p.document_id
-		LEFT JOIN LATERAL to_tsquery(input2) query ON input2 IS NOT NULL AND input2 <> ''
-		WHERE (query IS NULL OR query @@ p.textsearch)
-		  AND (uce_metadata_filters IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
-		  AND d.corpusid = corpus_id
-		GROUP BY p.document_id, d.documenttitle
-	),
-	
-	-- This limits and sorts those found documents.
-	-- TODO: The sorting for documenttitle isn't working properly I feel like...
-	limited_pages AS (
-		SELECT 
-			pr.doc_id,
-			pr.rank,
-			pr.documenttitle
-		FROM page_ranked pr
-		ORDER BY 
-			CASE 
-				WHEN order_by_column = 'rank' AND order_direction = 'ASC' THEN pr.rank
-				WHEN order_by_column = 'documenttitle' AND order_direction = 'ASC' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle ASC)
-			END ASC,
-			CASE 
-				WHEN order_by_column = 'rank' AND order_direction = 'DESC' THEN pr.rank
-				WHEN order_by_column = 'documenttitle' AND order_direction = 'DESC' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle DESC)
-			END DESC
-		LIMIT take_count OFFSET offset_count
-	),
-	
-	-- Finally, this extract additional data like snippets and the sorts
+    
+    -- This gets all documents that match the filters and search query.
+    page_ranked AS (
+        SELECT 
+            p.document_id AS doc_id, 
+            CASE 
+                WHEN useTsVector THEN MAX(ts_rank_cd(p.textsearch, query)) 
+                ELSE NULL
+            END AS rank,
+            d.documenttitle
+        FROM page p
+        JOIN document d ON d.id = p.document_id
+        LEFT JOIN LATERAL to_tsquery(input2) query ON useTsVector AND input2 IS NOT NULL AND input2 <> ''
+        WHERE 
+            (
+                (useTsVector AND (query IS NULL OR query @@ p.textsearch)) OR 
+                (NOT useTsVector AND (input2 IS NULL OR input2 = '' OR p.coveredtext ILIKE '%' || input2 || '%'))
+            )
+            AND (uce_metadata_filters IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
+            AND d.corpusid = corpus_id
+        GROUP BY p.document_id, d.documenttitle
+    ),
+    
+    -- This limits and sorts those found documents.
+    limited_pages AS (
+        SELECT 
+            pr.doc_id,
+            pr.rank,
+            pr.documenttitle
+        FROM page_ranked pr
+        ORDER BY 
+            CASE 
+                WHEN order_by_column = 'rank' AND order_direction = 'ASC' THEN pr.rank
+                WHEN order_by_column = 'documenttitle' AND order_direction = 'ASC' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle ASC)
+            END ASC,
+            CASE 
+                WHEN order_by_column = 'rank' AND order_direction = 'DESC' THEN pr.rank
+                WHEN order_by_column = 'documenttitle' AND order_direction = 'DESC' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle DESC)
+            END DESC
+        LIMIT take_count OFFSET offset_count
+    ),
+    
+    -- Snippet extraction: Uses full-text highlighting or raw substring extraction
     ranked_documents AS (
         SELECT 
             d.id,
             lp.rank,
-            ARRAY_AGG(DISTINCT ts_headline(
-                'simple',
-                p.coveredtext, 
-                to_tsquery('simple', input2),
-                'MaxWords=100, MinWords=80, MaxFragments=2, FragmentDelimiter=" ... "'
-            )) AS snippets
+            CASE 
+                WHEN useTsVector THEN 
+                    ARRAY_AGG(DISTINCT ts_headline(
+                        'simple',
+                        p.coveredtext, 
+                        to_tsquery('simple', input2),
+                        'StartSel=<b>, StopSel=</b>, MaxWords=100, MinWords=50, MaxFragments=2, FragmentDelimiter=" ... "'
+                    ))
+                ELSE 
+                    ARRAY_AGG(DISTINCT 
+                        SUBSTRING(p.coveredtext FROM POSITION(input2 IN p.coveredtext) FOR 400)
+                    )
+            END AS snippets
         FROM limited_pages lp
         JOIN document d ON d.id = lp.doc_id
         JOIN page p ON p.document_id = lp.doc_id
         GROUP BY d.id, lp.rank
-		ORDER BY lp.rank DESC
+        ORDER BY lp.rank DESC
     ),
+    
     counted_documents AS (
         SELECT COUNT(*) AS total_count FROM page_ranked
     ),
+    
     extracted_entities AS (
         SELECT ARRAY[
             ne.id::text, 
@@ -119,6 +135,7 @@ BEGIN
         JOIN namedentity ne ON rd.id = ne.document_id
         GROUP BY ne.id, ne.coveredtext, ne.typee, ne.document_id
     )
+    
     SELECT 
         CASE WHEN count_all THEN (SELECT total_count FROM counted_documents) ELSE NULL END,
         ARRAY(SELECT id FROM ranked_documents),

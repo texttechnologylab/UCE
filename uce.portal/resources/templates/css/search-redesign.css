@@ -13,6 +13,10 @@
     min-height: 100vh;
 }
 
+.search-result-container .corpus-documents-list{
+    max-height: 99999vh !important;
+}
+
 #corpus-select {
     width: auto;
     max-width: 200px;

@@ -7,7 +7,7 @@
     <div class="content-reader">
 
         <header class="pl-4 pr-4 pt-3 pb-3 flexed align-items-center justify-content-between">
-            <h5 class="mb-0 text-light title"></h5>
+            <h5 class="mb-0 text-dark title"></h5>
             <a class="rounded-a" onclick="$(this).closest('.wiki-metadata-expanded-view').fadeOut(25)">
                 <i class="fas fa-times"></i>
             </a>

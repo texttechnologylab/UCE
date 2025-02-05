@@ -252,6 +252,7 @@
             <div class="position-relative">
                 <#include "*/search/components/loader.ftl">
                 <div class="search-result-container container-fluid position-relative">
+
                 </div>
             </div>
 

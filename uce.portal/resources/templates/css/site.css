@@ -1,7 +1,7 @@
 :root {
     /* Variables prime and secondary MUST ALWAYS be in line 3 and 4! */
-    --prime: #5c7a17;
-    --secondary: darkgreen;
+    --prime: #00618f;
+    --secondary: rgba(35, 35, 35, 1);
     --gold: rgba(255, 165, 0, 1);
     --dark: rgba(38, 38, 38, 1);
 }
@@ -548,7 +548,6 @@ nav .selected-nav-btn.text::before {
 .corpora-list .corpus-card .corpus-description h6 {
     color: rgba(0, 0, 0, 0.65);
 }
-
 
 .uce-description {
     border: lightgrey 1px solid;
