@@ -446,6 +446,7 @@ public class Importer {
                     metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
                             + documentAnnotation.getDateMonth() + "."
                             + documentAnnotation.getDateYear());
+                    metadataTitleInfo.setAuthor(documentAnnotation.getAuthor());
                 } catch (Exception ex) {
                     logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
                 }

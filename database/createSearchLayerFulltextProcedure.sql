@@ -105,7 +105,7 @@ BEGIN
                         'simple',
                         p.coveredtext, 
                         to_tsquery('simple', input2),
-                        'StartSel=<b>, StopSel=</b>, MaxWords=100, MinWords=50, MaxFragments=2, FragmentDelimiter=" ... "'
+                        'StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "'
                     ))
                 ELSE 
                     ARRAY_AGG(DISTINCT 

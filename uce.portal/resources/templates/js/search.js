@@ -3,7 +3,7 @@ let currentCorpusUniverseHandler = undefined;
 /**
  * Starts a new search with the given input
  */
-function startNewSearch(searchInput) {
+function startNewSearch(searchInput, reloadCorpus=true) {
     if (searchInput === undefined) {
         return;
     }
@@ -22,9 +22,9 @@ function startNewSearch(searchInput) {
     const enrich = $('.search-menu-div .search-settings-div .option input[data-id="ENRICH"]').is(':checked');
     const proMode = $('#proModeSwitch').is(':checked');
 
-    // Get possible uce metadata filters
+    // Get possible uce metadata filters of this selectec corpus
     let metadataFilters = [];
-    $('.uce-search-filters .filter-div').each(function () {
+    $('.uce-corpus-search-filter[data-id="' + corpusId + '"]').find('.filter-div').each(function () {
         metadataFilters.push({
             'key': $(this).find('label').html(),
             'valueType': $(this).data('type'),
@@ -51,9 +51,11 @@ function startNewSearch(searchInput) {
         success: async function (response) {
             $('.view .search-result-container').html(response);
             activatePopovers();
-            reloadCorpusComponents();
-            // Store the search in the local browser for a history.
-            addSearchToHistory(searchInput);
+            if(reloadCorpus) {
+                reloadCorpusComponents();
+                // Store the search in the local browser for a history.
+                addSearchToHistory(searchInput);
+            }
             // Load the corpus universe from search
             const searchId = $('.search-state').data('id');
             currentCorpusUniverseHandler = getNewCorpusUniverseHandler;

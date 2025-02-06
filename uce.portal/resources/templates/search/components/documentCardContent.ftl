@@ -38,7 +38,8 @@
             <div class="ml-3 mb-0 flexed align-items-center text">
                 <#assign rank = searchState.getPossibleRankOfDocumentIdx(documentIdx)!>
                 <#if rank gt -1>
-                    <p class="mb-0 color-prime flexed align-items-center" data-trigger="hover" data-toggle="popover" data-placement="top"
+                    <p class="mb-0 color-prime flexed align-items-center" data-trigger="hover" data-toggle="popover"
+                       data-placement="top"
                        data-content="${languageResource.get("searchRankDescription")}">
                         <i class="fab fa-hackerrank mr-1"></i> ${rank}
                     </p>
@@ -50,7 +51,10 @@
 
 <!-- topics -->
 <div class="flexed align-items-center justify-content-between w-100">
-    <label class="text-secondary small-font mr-2">${document.getMetadataTitleInfo().getPublished()}</label>
+    <div class="flexed align-items-center">
+        <label class="text-secondary small-font mr-2"><i class="far fa-clock mr-1"></i> ${document.getMetadataTitleInfo().getPublished()}</label>
+        <label class="text-secondary small-font mr-2"><i class="fas fa-pen-nib mr-1"></i> ${document.getMetadataTitleInfo().getAuthor()}</label>
+    </div>
     <div class="flexed align-items-center topic-list">
         <#if document.getDocumentTopicDistribution()?has_content>
             <label data-wid="${document.getDocumentTopicDistribution().getWikiId()}"
@@ -74,7 +78,7 @@
 
 <div class="snippet-content flexed align-items-center justify-content-between h-100">
     <#if searchState??>
-        <p class="mb-0 small-font text font-italic mr-2">
+        <p class="mb-0 small-font text font-italic mr-2 block-text">
             <#assign snippet = searchState.getPossibleSnippetOfDocumentIdx(documentIdx)!>
             <#if !snippet?has_content>
                 <#assign snippet = document.getFullTextSnippet(85)!>
@@ -94,9 +98,17 @@
             ${snippet}...
         </p>
     <#else>
-        <p class="mb-0 small-font text font-italic mr-2">
+        <p class="mb-0 small-font text font-italic mr-2 block-text">
             ${document.getFullTextSnippet(85)}...
         </p>
     </#if>
-
 </div>
+
+<!-- metadata if it exists -->
+<#if document.getUceMetadataWithoutJson()?size gt 0>
+    <#assign uceMetadata = document.getUceMetadataWithoutJson()>
+    <div class="metadata-div">
+        <#include "*/document/documentUceMetadata.ftl">
+    </div>
+</#if>
+

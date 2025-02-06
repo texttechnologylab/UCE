@@ -96,6 +96,7 @@ public class Document extends ModelBase implements WikiModel {
 
     public List<UCEMetadata> getUceMetadata() {
         if (uceMetadata == null) new ArrayList<>();
+        uceMetadata.sort(Comparator.comparing(UCEMetadata::getValueType));
         return uceMetadata;
     }
 

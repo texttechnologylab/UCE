@@ -93,7 +93,15 @@ $('body').on('change', '#corpus-select', function () {
     if (hasRagBot === 'true') $('.ragbot-chat-include').show();
     else $('.ragbot-chat-include').hide();
 
+    // Change the UCE Metadata according to the corpus
+    $('.uce-corpus-search-filter').each(function(){
+        if($(this).data('id') === selectedCorpus) $(this).show();
+        else $(this).hide();
+    })
+
     updateSearchHistoryUI();
+    // We start an initial search with the default corpus.
+    startNewSearch("", false);
 })
 
 /**
@@ -226,6 +234,4 @@ $(document).ready(function () {
     console.log('Webpage loaded!');
     activatePopovers();
     reloadCorpusComponents();
-    // We start an initial search with the default corpus.
-    startNewSearch("");
 })

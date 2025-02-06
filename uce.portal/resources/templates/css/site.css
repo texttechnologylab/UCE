@@ -705,13 +705,24 @@ nav .selected-nav-btn.text::before {
     background-color: rgba(125, 125, 125, 0.15);
 }
 
+.document-card .metadata-div{
+    font-size: small;
+    margin-top: 14px;
+}
+
+.document-card .metadata-div *{
+    font-size: small !important;
+}
+
 .enriched-search-tokens .search-token {
     background-color: rgba(125, 125, 125, 0.1);
     border-radius: 6px;
-
 }
 
 /* Document cards */
+
+.uce-metadata-container{
+}
 
 .uce-metadata-container .uce-metadata-item {
     padding: 8px;

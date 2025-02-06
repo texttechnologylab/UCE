@@ -22,6 +22,7 @@ CREATE INDEX IF NOT EXISTS idx_lemma_coveredtext_trgm ON lemma USING gin ((value
 
 -- For the fulltext search of the documents
 CREATE INDEX IF NOT EXISTS idx_document_fulltext_trgm ON document USING gin (fulltext gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_page_fulltext_trgm ON page USING gin (coveredtext gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_textsearch_gin ON page USING gin(to_tsvector('simple', coveredtext));
 
 -- For the semantic role labels

@@ -161,6 +161,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             criteria.add(Restrictions.eq("corpusId", corpusId));
             var documents = (List<Document>) criteria.list();
             documents.forEach(d -> Hibernate.initialize(d.getPages()));
+            documents.forEach(d -> Hibernate.initialize(d.getUceMetadata()));
             return documents;
         });
     }
@@ -264,7 +265,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             var query = builder.createQuery(Document.class);
             var root = query.from(Document.class);
 
-            // HARDCODED_SQL
             query.select(root).where(root.get("id").in(documentIds));
             var q = session.createQuery(query);
             var docs = q.getResultList();
@@ -276,6 +276,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
                 // doc cannot be null.
                 Hibernate.initialize(doc.getPages());
+                Hibernate.initialize(doc.getUceMetadata());
                 sortedDocs[documentIds.indexOf(id)] = doc;
             }
             return Arrays.stream(sortedDocs).filter(Objects::nonNull).toList();
@@ -480,6 +481,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
             Hibernate.initialize(doc.getPages());
+            Hibernate.initialize(doc.getUceMetadata());
             return doc;
         });
     }
@@ -502,6 +504,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             if (doc != null) {
                 Hibernate.initialize(doc.getPages());
+                Hibernate.initialize(doc.getUceMetadata());
             }
             return doc;
         });
