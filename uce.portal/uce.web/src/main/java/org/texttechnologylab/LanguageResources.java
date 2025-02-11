@@ -50,7 +50,7 @@ public final class LanguageResources {
      */
     public static LanguageResources fromRequest(Request request) throws IOException {
         var language = request.cookie("language");
-        var languageResources = new LanguageResources("de-DE"); // German is standard
+        var languageResources = new LanguageResources("en-EN"); // English is standard
         if (language != null && !language.equals("undefined")) {
             var langCode = language;
             // Sometimes the language is sent through a weird string with much more text. We just want the lang code then.

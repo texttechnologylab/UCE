@@ -40,7 +40,7 @@ public class UCEMetadataFilter extends ModelBase {
     }
 
     public void addPossibleCategory(String category){
-        if(this.valueType != UCEMetadataValueType.ENUM) return;
+        if(category.isBlank() || category.isEmpty() || this.valueType != UCEMetadataValueType.ENUM) return;
         this.possibleCategories += category + ";;;";
     }
 

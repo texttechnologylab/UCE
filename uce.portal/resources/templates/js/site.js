@@ -78,7 +78,12 @@ $('body').on('change', '#corpus-select', function () {
     const hasEmbeddings = selectedOption.getAttribute("data-hasembeddings");
     const hasRagBot = selectedOption.getAttribute("data-hasragbot");
     const hasTopicDist = selectedOption.getAttribute("data-hastopicdist");
+    const oldCorpusId = selectedCorpus;
     selectedCorpus = parseInt(selectedOption.getAttribute("data-id"));
+    if(oldCorpusId !== selectedCorpus){
+        // We have switched corpora then, start a new empty search.
+        startNewSearch("", false);
+    }
 
     if (hasSr === 'true') $('.open-sr-builder-btn').show(50);
     else $('.open-sr-builder-btn').hide(50);
@@ -100,8 +105,6 @@ $('body').on('change', '#corpus-select', function () {
     })
 
     updateSearchHistoryUI();
-    // We start an initial search with the default corpus.
-    startNewSearch("", false);
 })
 
 /**

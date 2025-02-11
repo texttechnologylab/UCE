@@ -89,8 +89,8 @@
                         <a class="switch-view-btn btn text" data-id="team">${languageResource.get("team")}</a>
                     </div>
                     <select class="form-control bg-light rounded-0 color-prime border-right-0 large-font switch-language-select">
-                        <option data-lang="de-DE">Deutsch</option>
                         <option data-lang="en-EN">Englisch</option>
+                        <option data-lang="de-DE">Deutsch</option>
                     </select>
                 </div>
             </div>
@@ -161,7 +161,7 @@
                         <div class="custom-control custom-switch search-pro-mode-switch"
                              data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
                              data-content="${languageResource.get("searchProModeDescription")}">
-                            <input type="checkbox" checked class="custom-control-input" id="proModeSwitch">
+                            <input type="checkbox" class="custom-control-input" id="proModeSwitch">
                             <label class="font-weight-bold font-italic custom-control-label flexed align-items-center"
                                    for="proModeSwitch">
                                 Pro

@@ -161,7 +161,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             criteria.add(Restrictions.eq("corpusId", corpusId));
             var documents = (List<Document>) criteria.list();
             documents.forEach(d -> Hibernate.initialize(d.getPages()));
-            documents.forEach(d -> Hibernate.initialize(d.getUceMetadata()));
+            documents.forEach(d -> Hibernate.initialize(d.getUceMetadata()
+                    .stream()
+                    .filter(u -> u.getValueType() != UCEMetadataValueType.JSON)));
             return documents;
         });
     }
@@ -276,7 +278,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
                 // doc cannot be null.
                 Hibernate.initialize(doc.getPages());
-                Hibernate.initialize(doc.getUceMetadata());
+                Hibernate.initialize(doc.getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON));
                 sortedDocs[documentIds.indexOf(id)] = doc;
             }
             return Arrays.stream(sortedDocs).filter(Objects::nonNull).toList();

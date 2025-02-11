@@ -4,9 +4,15 @@ CREATE EXTENSION IF NOT EXISTS btree_gin;
 -- Some standard indexes on title and such
 CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_title ON metadatatitleinfo (title);
 CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_published ON metadatatitleinfo (published);
+CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_author ON metadatatitleinfo (author);
+
+-- Filters on the UCEMEtadata filters since we always join those
+CREATE INDEX IF NOT EXISTS idx_ucemetadata_doc_filters ON ucemetadata(document_id, key, value, valueType) WHERE valueType != 2;
+
 -- and also some trigram index:
 CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_title_trgm ON metadatatitleinfo USING gin (title gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_published_trgm ON metadatatitleinfo USING gin (published gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_author_trgm ON metadatatitleinfo USING gin (author gin_trgm_ops);
 
 -- Enable the pg_trgm extension, if not already enabled
 -- For the following indexes, see also: https://www.postgresql.org/docs/9.1/textsearch-indexes.html

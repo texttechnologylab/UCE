@@ -8,7 +8,7 @@ CREATE OR REPLACE FUNCTION uce_search_layer_fulltext(
     IN order_direction text DEFAULT 'DESC',
     IN order_by_column text DEFAULT 'rank',
     IN uce_metadata_filters jsonb DEFAULT NULL,
-    IN useTsVector boolean DEFAULT true, -- NEW PARAMETER
+    IN useTsVector boolean DEFAULT true,
     OUT total_count_out integer,
     OUT document_ids integer[],
     OUT named_entities_found text[][],
@@ -27,11 +27,20 @@ DECLARE
     taxons_temp text[][];
     snippets_temp text[];
 BEGIN
+    -- Ensure PostgreSQL uses indexes
+    SET enable_seqscan = OFF;
+	SET work_mem = '2048MB';
+
+    -- If input2 is NULL or empty, set useTsVector to false
+    IF input2 IS NULL OR input2 = '' THEN
+        useTsVector := false;
+    END IF;
+
     -- Validate the order direction
     IF order_direction NOT IN ('ASC', 'DESC') THEN
         RAISE EXCEPTION 'Invalid order_direction: %', order_direction;
     END IF;
-
+	
     -- Handle potential metadata filters dynamically via JSON
     WITH expanded_filters AS (
         SELECT 
@@ -48,33 +57,46 @@ BEGIN
             (ef.key IS NULL OR um.key = ef.key) AND
             (ef.value IS NULL OR um.value = ef.value)
         )
-        WHERE um.valueType::text != 'JSON' -- JSON is not filterable.
+        WHERE um.valueType != 2 -- Json is not filterable
         GROUP BY um.document_id
         HAVING COUNT(*) = (SELECT COUNT(*) FROM expanded_filters)
     ),
     
     -- This gets all documents that match the filters and search query.
-    page_ranked AS (
-        SELECT 
-            p.document_id AS doc_id, 
-            CASE 
-                WHEN useTsVector THEN MAX(ts_rank_cd(p.textsearch, query)) 
-                ELSE NULL
-            END AS rank,
-            d.documenttitle
-        FROM page p
-        JOIN document d ON d.id = p.document_id
-        LEFT JOIN LATERAL to_tsquery(input2) query ON useTsVector AND input2 IS NOT NULL AND input2 <> ''
-        WHERE 
-            (
-                (useTsVector AND (query IS NULL OR query @@ p.textsearch)) OR 
-                (NOT useTsVector AND (input2 IS NULL OR input2 = '' OR p.coveredtext ILIKE '%' || input2 || '%'))
-            )
-            AND (uce_metadata_filters IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
-            AND d.corpusid = corpus_id
-        GROUP BY p.document_id, d.documenttitle
-    ),
-    
+	page_ranked AS (
+		SELECT 
+			p.document_id AS doc_id, 
+			CASE 
+				WHEN useTsVector AND input2 IS NOT NULL AND input2 <> '' 
+				THEN MAX(ts_rank_cd(p.textsearch, 
+					CASE 
+						WHEN useTsVector THEN to_tsquery('simple', input2) 
+						ELSE plainto_tsquery('simple', input2) 
+					END
+				)) 
+				ELSE NULL 
+			END AS rank,
+			d.documenttitle
+		FROM page p
+		JOIN document d ON d.id = p.document_id
+		WHERE 
+			(
+				-- Full-text search using `to_tsquery()` if enabled
+				(useTsVector AND input2 IS NOT NULL AND input2 <> '' 
+					AND p.textsearch @@ to_tsquery('simple', input2))
+
+				-- Use `plainto_tsquery()` if full-text search is disabled
+				OR (NOT useTsVector AND input2 IS NOT NULL AND input2 <> '' 
+					AND p.textsearch @@ plainto_tsquery('simple', input2))
+
+				-- Skip search if input2 is empty
+				OR (input2 IS NULL OR input2 = '')
+			)
+			AND (uce_metadata_filters IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
+			AND d.corpusid = corpus_id
+		GROUP BY p.document_id, d.documenttitle
+	),
+
     -- This limits and sorts those found documents.
     limited_pages AS (
         SELECT 
@@ -95,30 +117,37 @@ BEGIN
     ),
     
     -- Snippet extraction: Uses full-text highlighting or raw substring extraction
-    ranked_documents AS (
-        SELECT 
-            d.id,
-            lp.rank,
-            CASE 
-                WHEN useTsVector THEN 
-                    ARRAY_AGG(DISTINCT ts_headline(
-                        'simple',
-                        p.coveredtext, 
-                        to_tsquery('simple', input2),
-                        'StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "'
-                    ))
-                ELSE 
-                    ARRAY_AGG(DISTINCT 
-                        SUBSTRING(p.coveredtext FROM POSITION(input2 IN p.coveredtext) FOR 400)
-                    )
-            END AS snippets
-        FROM limited_pages lp
-        JOIN document d ON d.id = lp.doc_id
-        JOIN page p ON p.document_id = lp.doc_id
-        GROUP BY d.id, lp.rank
-        ORDER BY lp.rank DESC
-    ),
-    
+	ranked_documents AS (
+		SELECT 
+			d.id,
+			lp.rank,
+			CASE 
+				-- If input2 is empty, just take the first 400 characters of the text
+				WHEN input2 IS NULL OR input2 = '' THEN 
+					ARRAY_AGG(DISTINCT LEFT(p.coveredtext, 400))
+
+				-- Use full-text search highlighting when tsVector is enabled
+				WHEN useTsVector THEN 
+					ARRAY_AGG(DISTINCT ts_headline(
+						'simple',
+						p.coveredtext, 
+						to_tsquery('simple', input2),
+						'StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "' 
+					))
+
+				-- Otherwise, perform normal ILIKE-based substring extraction
+				ELSE 
+					ARRAY_AGG(DISTINCT 
+						SUBSTRING(p.coveredtext FROM POSITION(input2 IN p.coveredtext) FOR 400)
+					)
+			END AS snippets
+		FROM limited_pages lp
+		JOIN document d ON d.id = lp.doc_id
+		JOIN page p ON p.document_id = lp.doc_id
+		GROUP BY d.id, lp.rank
+		ORDER BY lp.rank DESC
+	),
+
     counted_documents AS (
         SELECT COUNT(*) AS total_count FROM page_ranked
     ),

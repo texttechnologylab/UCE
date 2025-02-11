@@ -68,7 +68,7 @@ public class App {
 
         // Load in and test the language translation objects to handle multiple languages
         logger.info("Testing the language resources:");
-        var languageResource = new LanguageResources("de-DE");
+        var languageResource = new LanguageResources("en-EN");
         logger.info(languageResource.get("search"));
 
         // Start the different cronjobs in the background
