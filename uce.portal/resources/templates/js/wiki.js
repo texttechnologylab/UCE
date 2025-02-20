@@ -84,8 +84,6 @@ let WikiHandler = (function () {
 
         // Check if we have already loaded this rdfnode children before
         const expanded = $container.data('expanded');
-        console.log(expanded);
-        console.log($container.data('children'));
         if($container.data('children')){
             if(expanded){
                 $container.find('.nodes-list-div').first().hide();

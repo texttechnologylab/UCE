@@ -73,7 +73,7 @@ BEGIN
 				THEN MAX(ts_rank_cd(p.textsearch, 
 					CASE 
 						WHEN useTsVector THEN to_tsquery('simple', input2) 
-						ELSE plainto_tsquery('simple', input2) 
+						ELSE websearch_to_tsquery('simple', input2) 
 					END
 				)) 
 				ELSE NULL 
@@ -89,7 +89,7 @@ BEGIN
 
 				-- Use `plainto_tsquery()` if pro-mode is disabled
 				OR (NOT useTsVector AND input2 IS NOT NULL AND input2 <> '' 
-					AND p.textsearch @@ plainto_tsquery('simple', input2))
+					AND p.textsearch @@ websearch_to_tsquery('simple', input2))
 
 				-- Skip search if input2 is empty
 				OR (input2 IS NULL OR input2 = '')
@@ -140,15 +140,18 @@ BEGIN
 					ARRAY_AGG(DISTINCT ts_headline(
 						'simple',
 						p.coveredtext, 
-						plainto_tsquery('simple', input2),
+						to_tsquery('simple', input2),
 						'StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "' 
 					))
 
-				-- Otherwise, perform normal ILIKE-based substring extraction
+				-- Otherwise, perform the other operation
 				ELSE 
-					ARRAY_AGG(DISTINCT 
-						SUBSTRING(p.coveredtext FROM POSITION(input2 IN p.coveredtext) FOR 400)
-					)
+					ARRAY_AGG(DISTINCT ts_headline(
+						'simple',
+						p.coveredtext, 
+						websearch_to_tsquery('simple', input2),
+						'StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "' 
+					))
 			END AS snippets
 		FROM limited_pages lp
 		JOIN document d ON d.id = lp.doc_id
