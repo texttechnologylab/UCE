@@ -27,9 +27,9 @@ DECLARE
     taxons_temp text[][];
     snippets_temp text[];
 BEGIN
-    -- Ensure PostgreSQL uses indexes
+    -- Ensure PostgreSQL uses indexes and has enough memory
     SET enable_seqscan = OFF;
-	SET work_mem = '2048MB';
+	SET work_mem = '4096MB';
 
     -- If input2 is NULL or empty, set useTsVector to false
     IF input2 IS NULL OR input2 = '' THEN
@@ -49,18 +49,20 @@ BEGIN
             (filter->>'valueType')::text AS value_type
         FROM jsonb_array_elements(uce_metadata_filters) AS filter
     ),
-    filter_matches AS (
-        SELECT um.document_id
-        FROM ucemetadata um
-        JOIN expanded_filters ef ON (
-            (ef.value_type IS NULL OR um.valueType::text = ef.value_type) AND
-            (ef.key IS NULL OR um.key = ef.key) AND
-            (ef.value IS NULL OR um.value = ef.value)
-        )
-        WHERE um.valueType != 2 -- Json is not filterable
-        GROUP BY um.document_id
-        HAVING COUNT(*) = (SELECT COUNT(*) FROM expanded_filters)
-    ),
+	filter_matches AS (
+		SELECT um.document_id
+		FROM ucemetadata um
+		JOIN document d ON um.document_id = d.id
+		JOIN expanded_filters ef ON (
+			(ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
+			AND (ef.key IS NULL OR um.key = ef.key) 
+			AND (ef.value IS NULL OR um.value = ef.value)
+		)
+		WHERE um.valueType != 2  -- Json is not filterable
+		  AND d.corpusid = corpus_id
+		GROUP BY um.document_id
+		HAVING COUNT(*) = (SELECT COUNT(*) FROM expanded_filters)
+	),
     
     -- This gets all documents that match the filters and search query.
 	page_ranked AS (
@@ -85,7 +87,7 @@ BEGIN
 				(useTsVector AND input2 IS NOT NULL AND input2 <> '' 
 					AND p.textsearch @@ to_tsquery('simple', input2))
 
-				-- Use `plainto_tsquery()` if full-text search is disabled
+				-- Use `plainto_tsquery()` if pro-mode is disabled
 				OR (NOT useTsVector AND input2 IS NOT NULL AND input2 <> '' 
 					AND p.textsearch @@ plainto_tsquery('simple', input2))
 
@@ -98,24 +100,31 @@ BEGIN
 	),
 
     -- This limits and sorts those found documents.
-    limited_pages AS (
-        SELECT 
-            pr.doc_id,
-            pr.rank,
-            pr.documenttitle
-        FROM page_ranked pr
-        ORDER BY 
-            CASE 
-                WHEN order_by_column = 'rank' AND order_direction = 'ASC' THEN pr.rank
-                WHEN order_by_column = 'documenttitle' AND order_direction = 'ASC' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle ASC)
-            END ASC,
-            CASE 
-                WHEN order_by_column = 'rank' AND order_direction = 'DESC' THEN pr.rank
-                WHEN order_by_column = 'documenttitle' AND order_direction = 'DESC' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle DESC)
-            END DESC
-        LIMIT take_count OFFSET offset_count
-    ),
-    
+	limited_pages AS (
+		SELECT 
+			pr.doc_id,
+			pr.rank,
+			pr.documenttitle
+		FROM page_ranked pr
+		ORDER BY 
+			CASE 
+				-- Only apply sorting when input2 is provided
+				WHEN input2 IS NOT NULL AND input2 <> '' THEN 
+					CASE 
+						WHEN order_by_column = 'rank' AND order_direction = 'ASC' THEN pr.rank
+						WHEN order_by_column = 'documenttitle' AND order_direction = 'ASC' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle ASC)
+					END
+			END ASC,
+			CASE 
+				WHEN input2 IS NOT NULL AND input2 <> '' THEN 
+					CASE 
+						WHEN order_by_column = 'rank' AND order_direction = 'DESC' THEN pr.rank
+						WHEN order_by_column = 'documenttitle' AND order_direction = 'DESC' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle DESC)
+					END
+			END DESC
+		LIMIT take_count OFFSET offset_count
+	),
+
     -- Snippet extraction: Uses full-text highlighting or raw substring extraction
 	ranked_documents AS (
 		SELECT 
@@ -131,7 +140,7 @@ BEGIN
 					ARRAY_AGG(DISTINCT ts_headline(
 						'simple',
 						p.coveredtext, 
-						to_tsquery('simple', input2),
+						plainto_tsquery('simple', input2),
 						'StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "' 
 					))
 

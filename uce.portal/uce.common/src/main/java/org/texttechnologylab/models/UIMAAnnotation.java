@@ -114,7 +114,8 @@ public class UIMAAnnotation extends ModelBase {
         }
 
         // We apply some heuristic post-processing to make the text more readable.
-        return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
+        //return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
+        return StringUtils.CleanText(finalText.toString());
     }
 
     private String generateMultiHTMLTag(List<UIMAAnnotation> annotations) {

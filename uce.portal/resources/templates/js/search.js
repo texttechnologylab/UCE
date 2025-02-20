@@ -78,6 +78,8 @@ function startNewSearch(searchInput, reloadCorpus=true) {
  * Adds a new search to the history in the local browser
  */
 function addSearchToHistory(searchTerm) {
+    if (searchTerm === '' || searchTerm === undefined) return;
+
     let history = getSearchHistory();
     // If the latest entry in the search history is the same search as now, we
     // dont need to add it. It clouds the history.

@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.corpus;
 
+import org.hibernate.Hibernate;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
@@ -59,7 +60,7 @@ public class Document extends ModelBase implements WikiModel {
     @JoinColumn(name = "document_Id")
     private List<Taxon> taxons;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "document_Id")
     private List<UCEMetadata> uceMetadata;
 

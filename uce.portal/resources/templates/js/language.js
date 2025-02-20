@@ -16,12 +16,12 @@ $(document).ready(function () {
     }
 
     // Highlight the correct language select
-    const languageSelect = document.querySelector('.switch-language-select'); // Use querySelector instead of getElementsByClassName
+    const languageSelect = document.querySelector('.switch-language-select');
     if(languageSelect !== null){ // Check if languageSelect is not null
         for(var i = 0; i < languageSelect.options.length; i++){
             const curOption = languageSelect.options[i];
             console.log(curOption);
-            if(curOption.getAttribute('data-lang') === contentLanguage){ // Use getAttribute instead of attr
+            if(curOption.getAttribute('data-lang') === contentLanguage){
                 languageSelect.options[i].selected = true;
                 break;
             }
