@@ -137,20 +137,34 @@ BEGIN
 
 				-- Use full-text search highlighting when tsVector is enabled
 				WHEN useTsVector THEN 
-					ARRAY_AGG(DISTINCT ts_headline(
-						'simple',
-						p.coveredtext, 
-						to_tsquery('simple', input2),
-						'StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "' 
+					ARRAY_AGG(DISTINCT (
+						SELECT ts_headline(
+							'simple',
+							p.coveredtext, 
+							to_tsquery('simple', input2),
+							'StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "' 
+						)
+						FROM page p
+						WHERE p.document_id = lp.doc_id 
+						AND p.textsearch @@ to_tsquery('simple', input2) -- Ensure match is on this page
+						ORDER BY ts_rank_cd(p.textsearch, to_tsquery('simple', input2)) DESC
+						LIMIT 1 -- Pick only the most relevant page
 					))
 
-				-- Otherwise, perform the other operation
+				-- Otherwise, perform the websearch-based highlighting
 				ELSE 
-					ARRAY_AGG(DISTINCT ts_headline(
-						'simple',
-						p.coveredtext, 
-						websearch_to_tsquery('simple', input2),
-						'StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "' 
+					ARRAY_AGG(DISTINCT (
+						SELECT ts_headline(
+							'simple',
+							p.coveredtext, 
+							websearch_to_tsquery('simple', input2),
+							'StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "' 
+						)
+						FROM page p
+						WHERE p.document_id = lp.doc_id 
+						AND p.textsearch @@ websearch_to_tsquery('simple', input2)
+						ORDER BY ts_rank_cd(p.textsearch, websearch_to_tsquery('simple', input2)) DESC
+						LIMIT 1 -- Pick only the most relevant page
 					))
 			END AS snippets
 		FROM limited_pages lp
@@ -159,6 +173,7 @@ BEGIN
 		GROUP BY d.id, lp.rank
 		ORDER BY lp.rank DESC
 	),
+
 
     counted_documents AS (
         SELECT COUNT(*) AS total_count FROM page_ranked
