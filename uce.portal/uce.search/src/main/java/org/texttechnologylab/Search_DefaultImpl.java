@@ -37,6 +37,8 @@ public class Search_DefaultImpl implements Search {
     private RAGService ragService;
     private JenaSparqlService jenaSparqlService;
     public static final String[] QUERY_OPERATORS = {"&", "|", "!", "<->", "(", ")"};
+    // https://en.wikipedia.org/wiki/Taxonomic_rank#:~:text=Main%20ranks,-In%20his%20landmark&text=Today%2C%20the%20nomenclature%20is%20regulated,family%2C%20genus%2C%20and%20species.
+    public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::"};
 
     /**
      * Creates a new instance of the Search_DefaultImpl, throws exceptions if components couldn't be inited.
@@ -252,6 +254,9 @@ public class Search_DefaultImpl implements Search {
 
         // We split the tokens and remove special characters at their edges.
         var tokens = searchQuery.split(" ");
+        // The two different modes have different syntax for keeping words together... one is '' and other is ""
+        var delimiter = this.searchState.isProModeActivated() ? "'" : "\"";
+
         var enrichedSearchQuery = new StringBuilder();
 
         // Step 1: Look for annotated ontologies
@@ -265,6 +270,9 @@ public class Search_DefaultImpl implements Search {
                     continue;
                 }
 
+                var taxonIds = new ArrayList<String>();
+                var isTaxonCommandToken = false;
+
                 // Else, we can see if we get more data of that token
                 var cleanedToken = StringUtils.removeSpecialCharactersAtEdges(token);
                 // If this token contains __ then it's a multi-token word that belongs together.
@@ -272,41 +280,59 @@ public class Search_DefaultImpl implements Search {
                     cleanedToken = cleanedToken.replaceAll("__", " ");
                 }
 
-                String finalCleanedToken = cleanedToken;
-                var potentialTaxons = ExceptionUtils.tryCatchLog(
-                        () -> db.getIdentifiableTaxonsByValues(List.of(finalCleanedToken.toLowerCase())),
-                        (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
+                // If the token starts with a tax command, parse it
+                if(cleanedToken.length() > 3){
+                    var possibleCommand = cleanedToken.substring(0, 3);
 
-                if (potentialTaxons == null || potentialTaxons.isEmpty()) {
-                    enrichedSearchQuery.append(token.replaceAll("__", " ")).append(" ");
-                    continue;
-                }
-
-                // Of those potential taxons, fetch their alternative names
-                var ids = new ArrayList<String>();
-                for (var taxon : potentialTaxons) {
-                    if (taxon.getIdentifier().contains("|") || taxon.getIdentifier().contains(" ")) {
-                        ids.addAll(taxon.getIdentifierAsList());
-                    } else {
-                        ids.add(taxon.getIdentifier().trim());
+                    // Do we have a taxon rank command?
+                    if(Arrays.asList(TAX_RANKS).contains(possibleCommand)){
+                        isTaxonCommandToken = true;
+                        cleanedToken = cleanedToken.substring(3);
+                        cleanedToken = StringUtils.removeSpecialCharactersAtEdges(cleanedToken);
+                        var finalCleanedToken = cleanedToken;
+                        var speciesIds = ExceptionUtils.tryCatchLog(
+                                () -> jenaSparqlService.getSpeciesIdsOfUpperRank(StringUtils.GetFullTaxonRankByCode(possibleCommand.replace("::", "")), finalCleanedToken),
+                                (ex) -> logger.error("Error querying species by an upper rank.", ex));
+                        if(speciesIds != null) taxonIds.addAll(speciesIds);
                     }
                 }
 
-                // Get the alt names
+                // If we already parsed a taxon command, we can skip the fetching of alternative taxon names
+                if(!isTaxonCommandToken) {
+                    String finalCleanedToken = cleanedToken;
+                    var potentialTaxons = ExceptionUtils.tryCatchLog(
+                            () -> db.getIdentifiableTaxonsByValues(List.of(finalCleanedToken.toLowerCase())),
+                            (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
+
+                    if (potentialTaxons == null || potentialTaxons.isEmpty()) {
+                        enrichedSearchQuery.append(token.replaceAll("__", " ")).append(" ");
+                        continue;
+                    }
+
+                    // Of those potential taxons, fetch their alternative names
+                    for (var taxon : potentialTaxons) {
+                        if (taxon.getIdentifier().contains("|") || taxon.getIdentifier().contains(" ")) {
+                            taxonIds.addAll(taxon.getIdentifierAsList());
+                        } else {
+                            taxonIds.add(taxon.getIdentifier().trim());
+                        }
+                    }
+                }
+
+                // Get the names of the taxon ids
                 var alternativeNames = ExceptionUtils.tryCatchLog(
-                        () -> jenaSparqlService.getAlternativeNamesOfTaxons(ids),
+                        () -> jenaSparqlService.getAlternativeNamesOfTaxons(taxonIds),
                         (ex) -> logger.error("Error getting the alt names of a taxon while searching. Operation continues.", ex));
-                if (alternativeNames == null) {
-                    enrichedSearchQuery.append(token).append(" ");
+                if (alternativeNames == null || alternativeNames.isEmpty()) {
+                    enrichedSearchQuery.append(!isTaxonCommandToken ? token : delimiter + cleanedToken + delimiter).append(" ");
                     continue;
                 }
 
                 // Enrich this token
                 enrichedSearchQuery
                         .append(" ( ")
-                        .append(token.replaceAll("__", " "))
-                        .append(" | '")
-                        .append(String.join(" | '", alternativeNames.stream().map(n -> n + "'").toList()))
+                        .append(!isTaxonCommandToken ? token.replaceAll("__", " ") + " | " + delimiter : delimiter) // Only append if this wasn't a taxon command
+                        .append(String.join(" | " + delimiter, alternativeNames.stream().map(n -> n + delimiter).toList()))
                         .append(" ) ");
             }
         }

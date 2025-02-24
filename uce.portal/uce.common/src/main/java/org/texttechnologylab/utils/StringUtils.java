@@ -94,4 +94,16 @@ public class StringUtils {
 
         return result.toString();
     }
+
+    public static String GetFullTaxonRankByCode(String code){
+        return switch (code) {
+            case "C" -> "class";
+            case "F" -> "family";
+            case "K" -> "kingdom";
+            case "P" -> "phylum";
+            case "O" -> "order";
+            case "G" -> "genus";
+            default -> null;
+        };
+    }
 }
