@@ -27,7 +27,9 @@ public class UIMAAnnotation extends ModelBase {
     }
 
     public void setCoveredText(String coveredText) {
-        this.coveredText = coveredText.replaceAll("<", "");
+        this.coveredText = coveredText.replaceAll("<", "")
+                .replaceAll("\n", " ")
+                .replaceAll("\r", " ");
     }
 
     public UIMAAnnotation() {

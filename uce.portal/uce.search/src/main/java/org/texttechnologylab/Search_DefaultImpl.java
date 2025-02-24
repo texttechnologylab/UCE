@@ -63,20 +63,15 @@ public class Search_DefaultImpl implements Search {
                 (ex) -> logger.error("Error fetching the corpus and corpus config of corpus: " + corpusId, ex)));
 
         // First: enrich if wanted
-        if (enrichSearchTerm)
+        if (enrichSearchTerm){
             this.searchState.setEnrichedSearchQuery(enrichSearchQuery(searchPhrase));
+        }
 
         // Then store the search tokens
         var cleanedSearchPhrase = cleanSearchPhrase(searchPhrase);
         var searchTokens = new ArrayList<String>();
         searchTokens.add(String.join(" ", cleanedSearchPhrase));
         this.searchState.setSearchTokens(searchTokens);
-
-        // Finally, if we dont have the pro mode, escape all spaces to +
-        // otherwise we get a syntax error in our vector-textsearch
-        if (!proModeActivated) {
-            //searchPhrase = searchPhrase.replace(" ", "+");
-        }
 
         this.searchState.setSearchQuery(searchPhrase);
     }
@@ -252,6 +247,9 @@ public class Search_DefaultImpl implements Search {
     }
 
     private String enrichSearchQuery(String searchQuery) {
+        // First off, we replace the spaces in "" and '' enclosed tokens with __ as to indicate: these are a token
+        searchQuery = StringUtils.ReplaceSpacesInQuotes(searchQuery);
+
         // We split the tokens and remove special characters at their edges.
         var tokens = searchQuery.split(" ");
         var enrichedSearchQuery = new StringBuilder();
@@ -269,12 +267,18 @@ public class Search_DefaultImpl implements Search {
 
                 // Else, we can see if we get more data of that token
                 var cleanedToken = StringUtils.removeSpecialCharactersAtEdges(token);
+                // If this token contains __ then it's a multi-token word that belongs together.
+                if(cleanedToken.contains("__")){
+                    cleanedToken = cleanedToken.replaceAll("__", " ");
+                }
+
+                String finalCleanedToken = cleanedToken;
                 var potentialTaxons = ExceptionUtils.tryCatchLog(
-                        () -> db.getIdentifiableTaxonsByValues(List.of(cleanedToken.toLowerCase())),
+                        () -> db.getIdentifiableTaxonsByValues(List.of(finalCleanedToken.toLowerCase())),
                         (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
 
                 if (potentialTaxons == null || potentialTaxons.isEmpty()) {
-                    enrichedSearchQuery.append(token).append(" ");
+                    enrichedSearchQuery.append(token.replaceAll("__", " ")).append(" ");
                     continue;
                 }
 
@@ -300,14 +304,14 @@ public class Search_DefaultImpl implements Search {
                 // Enrich this token
                 enrichedSearchQuery
                         .append(" ( ")
-                        .append(token)
-                        .append(" | ")
-                        .append(String.join(" | ", alternativeNames.stream().map(n -> n.replace(" ", "+")).toList()))
+                        .append(token.replaceAll("__", " "))
+                        .append(" | '")
+                        .append(String.join(" | '", alternativeNames.stream().map(n -> n + "'").toList()))
                         .append(" ) ");
             }
         }
 
-        return enrichedSearchQuery.toString();
+        return enrichedSearchQuery.toString().trim();
     }
 
     /**

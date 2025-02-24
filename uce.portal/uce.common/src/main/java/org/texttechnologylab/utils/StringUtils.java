@@ -1,6 +1,8 @@
 package org.texttechnologylab.utils;
 
 import java.util.Random;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StringUtils {
 
@@ -75,5 +77,21 @@ public class StringUtils {
         }
 
         return formattedText.toString();
+    }
+
+    public static String ReplaceSpacesInQuotes(String input) {
+        // Regex pattern to match any text inside quotes and replace spaces inside
+        Pattern pattern = Pattern.compile("(['\"])(.*?)\\1");
+        Matcher matcher = pattern.matcher(input);
+
+        StringBuffer result = new StringBuffer();
+        while (matcher.find()) {
+            // Replace spaces within the quotes
+            String modified = matcher.group(2).replace(" ", "__");
+            matcher.appendReplacement(result, matcher.group(1) + modified + matcher.group(1));
+        }
+        matcher.appendTail(result);
+
+        return result.toString();
     }
 }
