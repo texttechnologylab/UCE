@@ -143,6 +143,10 @@
                         <h5 class="text-center">Navigator</h5>
                     </div>
 
+                    <div class="group-box">
+                        <p class="text-center mb-0"><i class="fas fa-id-card-alt mr-1"></i> ${document.getDocumentId()}</p>
+                    </div>
+
                     <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
                         <div class="group-box">
                             <p class="title">${languageResource.get("ogDocument")}</p>

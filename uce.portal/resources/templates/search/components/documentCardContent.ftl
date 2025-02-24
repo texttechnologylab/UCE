@@ -22,8 +22,9 @@
                    data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                     <i class="m-0 fas fa-book-open"></i></a>
             </div>
-            <a class="open-document clickable" data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
+            <a class="open-document clickable flexed align-items-baseline" data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                 <h6 class="title mb-0">${document.getDocumentTitle()}</h6>
+                <label class="xsmall-font ml-1 text mb-0 font-italic">(${document.getDocumentId()})</label>
             </a>
         </div>
     </div>

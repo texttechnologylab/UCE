@@ -314,44 +314,6 @@ public class Search_DefaultImpl implements Search {
         return enrichedSearchQuery.toString().trim();
     }
 
-    /**
-     * Possibly enriches search tokens with taxon ontologies. The function may produce more tokens in the end.
-     *
-     * @param tokens
-     * @return
-     */
-    private List<String> enrichSearchTokens(List<String> tokens) {
-        var finalTokens = new ArrayList<>(tokens);
-
-        // Check for potential ontology alternative names. This can only work if our jena sparql db is running
-        // and we have taxonomy annotated.
-        if (SystemStatus.JenaSparqlStatus.isAlive() && this.searchState.getCorpusConfig() != null && this.searchState.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()) {
-            var potentialTaxons = ExceptionUtils.tryCatchLog(
-                    () -> db.getIdentifiableTaxonsByValues(tokens.stream().map(String::toLowerCase).toList()),
-                    (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
-
-            if (potentialTaxons == null || potentialTaxons.isEmpty()) return tokens;
-
-            potentialTaxons.forEach(t -> {
-                if (!finalTokens.contains(t.getCoveredText())) finalTokens.add(t.getCoveredText());
-            });
-
-            var ids = new ArrayList<String>();
-            for (var taxon : potentialTaxons) {
-                if (taxon.getIdentifier().contains("|") || taxon.getIdentifier().contains(" ")) {
-                    ids.addAll(taxon.getIdentifierAsList());
-                } else {
-                    ids.add(taxon.getIdentifier().trim());
-                }
-            }
-            var newTokens = ExceptionUtils.tryCatchLog(
-                    () -> jenaSparqlService.getAlternativeNamesOfTaxons(ids),
-                    (ex) -> logger.error("Error getting the alt names of a taxon while searching. Operation continues.", ex));
-            if (newTokens != null) finalTokens.addAll(newTokens);
-        }
-
-        return finalTokens;
-    }
 
     /**
      * Cleans the search phrase like stopwords removal, trimming
