@@ -33,39 +33,91 @@
         </div>
 
         <div class="col-md-6 search-row" data-type="mid">
-            <div class="flexed align-items-center justify-content-between sort-container pl-3 pr-3 pt-2 pb-2 mb-3">
-                <div class="flexed align-items-center">
-                    <a class="btn switch-search-layer-result-btn text hoverable selected"
-                       data-layer="${searchState.getPrimarySearchLayer()}">
-                        <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}</a>
-                    <#if searchState.getFoundDocumentChunkEmbeddings()?exists>
-                        <a class="btn switch-search-layer-result-btn text hoverable" data-layer="EMBEDDING">
-                            <i class="fab fa-searchengin mr-1"></i> Embedding</a>
-                    </#if>
-                </div>
 
-                <div class="flexed">
-                    <div class="flexed align-items-center w-100">
-                        <p class="mb-0 mr-1">Published</p>
-                        <a class="btn m-0 rounded-a small-font sort-btn" data-orderby="published" data-curorder="ASC">
-                            <i class="fas fa-sort-amount-up"></i>
-                        </a>
+            <div class="sort-container pl-3 pr-3 pt-2 pb-2 mb-3">
+
+                <!-- enriched search tokens if they exist -->
+                <#if searchState.getEnrichedSearchTokens()?has_content && searchState.getEnrichedSearchTokens()?size gt 0>
+                    <div class="mt-2 enriched-search-tokens-list">
+                        <label class="query-input display-none">
+                            ${searchState.getEnrichedSearchQuery()}
+                        </label>
+                        <!-- header -->
+                        <div class="flexed align-items-baseline mb-2 justify-content-center">
+                            <p class="text-center mb-0">Enriched Search Query</p>
+                            <a class="rounded-a ml-2 mb-0 light-border" style="height: 25px; width: 25px"
+                               onclick="openInExpandedTextView('Enriched Search Query', $(this).closest('.enriched-search-tokens-list').find('.query-input').html())">
+                                <i class="fas fa-eye small-font"></i>
+                            </a>
+                        </div>
+                        <div class="flexed align-items-center justify-content-around">
+                            <#list searchState.getEnrichedSearchTokens() as token>
+                                <#assign width = "">
+                                <#if token.getChildren()?has_content && token.getChildren()?size gt 0>
+                                    <#assign width = "w-100">
+                                </#if>
+                                <div class="enriched-token ml-1 mr-1 ${width}" data-type="${token.getType().name()}">
+                                    <div class="flexed align-items-center justify-content-between">
+                                        <label class="mb-0 text-dark font-italic ml-1 mr-1 text-center w-100 clickable hoverable value"
+                                               onclick="$(this).closest('.enriched-token').find('.expanded-content').toggle(75)">
+                                            ${token.getValue()}
+                                        </label>
+                                    </div>
+                                    <#if width == "w-100">
+                                        <div class="display-none expanded-content">
+                                            <hr class="mt-1 mb-2 bg-lightgray"/>
+                                            <div class="w-100 children-container">
+                                                <label class="mb-0 text">( </label>
+                                                <#list token.getChildren() as child>
+                                                    <label class="mb-0 text small-font block-text">'${child.getValue()}' | </label>
+                                                </#list>
+                                                <label class="mb-0 text"> ) </label>
+                                            </div>
+                                        </div>
+                                    </#if>
+                                </div>
+                            </#list>
+                        </div>
                     </div>
-                    <div class="ml-2 flexed align-items-center w-100 justify-content-between">
-                        <p class="mb-0 mr-1">${languageResource.get("title")}</p>
-                        <a class="btn m-0 rounded-a small-font sort-btn" data-orderby="documenttitle"
-                           data-curorder="ASC">
-                            <i class="fas fa-sort-amount-up"></i>
-                        </a>
+                    <hr class="mt-3 mb-3 bg-lightgray"/>
+                </#if>
+
+                <!-- search layers and such -->
+                <div class="flexed align-items-center justify-content-between">
+                    <div class="flexed align-items-center">
+                        <a class="btn switch-search-layer-result-btn text hoverable selected"
+                           data-layer="${searchState.getPrimarySearchLayer()}">
+                            <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}</a>
+                        <#if searchState.getFoundDocumentChunkEmbeddings()?exists>
+                            <a class="btn switch-search-layer-result-btn text hoverable" data-layer="EMBEDDING">
+                                <i class="fab fa-searchengin mr-1"></i> Embedding</a>
+                        </#if>
                     </div>
-                    <div class="ml-2 flexed align-items-center w-100 justify-content-between"
-                         data-trigger="hover" data-toggle="popover" data-placement="top"
-                         data-content="${languageResource.get("searchRankDescription")}">
-                        <p class="mb-0 mr-1">${languageResource.get("relevancy")}</p>
-                        <a class="btn m-0 rounded-a small-font sort-btn active-sort-btn"
-                           data-orderby="rank" data-curorder="ASC">
-                            <i class="fas fa-sort-amount-up"></i>
-                        </a>
+
+                    <div class="flexed">
+                        <div class="flexed align-items-center w-100">
+                            <p class="mb-0 mr-1">Published</p>
+                            <a class="btn m-0 rounded-a small-font sort-btn" data-orderby="published"
+                               data-curorder="ASC">
+                                <i class="fas fa-sort-amount-up"></i>
+                            </a>
+                        </div>
+                        <div class="ml-2 flexed align-items-center w-100 justify-content-between">
+                            <p class="mb-0 mr-1">${languageResource.get("title")}</p>
+                            <a class="btn m-0 rounded-a small-font sort-btn" data-orderby="documenttitle"
+                               data-curorder="ASC">
+                                <i class="fas fa-sort-amount-up"></i>
+                            </a>
+                        </div>
+                        <div class="ml-2 flexed align-items-center w-100 justify-content-between"
+                             data-trigger="hover" data-toggle="popover" data-placement="top"
+                             data-content="${languageResource.get("searchRankDescription")}">
+                            <p class="mb-0 mr-1">${languageResource.get("relevancy")}</p>
+                            <a class="btn m-0 rounded-a small-font sort-btn active-sort-btn"
+                               data-orderby="rank" data-curorder="ASC">
+                                <i class="fas fa-sort-amount-up"></i>
+                            </a>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -114,15 +166,9 @@
                                    data-toggle="popover" data-placement="top"
                                    data-content="${languageResource.get("finalSearchTokens")}"></i>
                                 <div class="flexed wrapped mb-0 h-100">
-                                    <#if searchState.getEnrichedSearchQuery()?has_content>
-                                        <span class="mr-1 mb-1 small-font text-dark p-1 search-token text-center">
-                                                ${searchState.getEnrichedSearchQuery()}
-                                        </span>
-                                    <#elseif searchState.getSearchQuery()?has_content>
-                                        <span class="mr-1 mb-1 small-font text-dark p-1 search-token">
-                                                ${searchState.getSearchQuery()}
-                                        </span>
-                                    </#if>
+                                    <span class="mr-1 mb-1 small-font text-dark p-1 search-token">
+                                            ${searchState.getSearchQuery()}
+                                    </span>
                                 </div>
                             </div>
                         </div>

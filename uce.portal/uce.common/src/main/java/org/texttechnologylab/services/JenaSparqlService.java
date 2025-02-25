@@ -218,7 +218,7 @@ public class JenaSparqlService {
                 "        {IDS}" +
                 "    } " +
                 "} " +
-                "LIMIT 50";
+                "LIMIT 200";
         command = command
                 .replace("{RANK}", rankName)
                 .replace("{IDS}", String.join("\n", ids.stream().map(i -> "<" + i + ">").toList()));

@@ -23,6 +23,7 @@ public class SearchState {
      */
     private String searchQuery;
     private String enrichedSearchQuery;
+    private List<EnrichedSearchToken> enrichedSearchTokens;
     private List<String> searchTokens;
     private List<SearchLayer> searchLayers;
     private List<UCEMetadataFilterDto> uceMetadataFilters;
@@ -63,6 +64,14 @@ public class SearchState {
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
         this.created = DateTime.now();
+    }
+
+    public List<EnrichedSearchToken> getEnrichedSearchTokens() {
+        return enrichedSearchTokens;
+    }
+
+    public void setEnrichedSearchTokens(List<EnrichedSearchToken> enrichedSearchTokens) {
+        this.enrichedSearchTokens = enrichedSearchTokens;
     }
 
     public boolean isProModeActivated() {

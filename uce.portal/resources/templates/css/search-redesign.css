@@ -299,6 +299,35 @@
     width: 75px;
 }
 
+.enriched-search-tokens-list{
+    width: 100%;
+}
+
+.enriched-search-tokens-list .enriched-token{
+    border:solid lightgray 1px;
+    border-radius: 3px;
+    padding: 6px;
+    background-color: rgba(125, 125, 125, 0.05);
+}
+
+.enriched-search-tokens-list .enriched-token[data-type="OPERATOR"] .value{
+    color: var(--dark) !important;
+}
+
+.enriched-search-tokens-list .enriched-token[data-type="TAXON"] .value{
+    color: var(--prime) !important;
+}
+
+.enriched-search-tokens-list .enriched-token[data-type="TAXON_COMMAND"] .value{
+    color: orange !important;
+}
+
+.enriched-search-tokens-list .enriched-token .children-container{
+    max-height: 200px;
+    overflow-y: auto;
+    padding: 3px;
+}
+
 .sort-container {
     z-index: 2;
     border: 1px lightgray solid;

@@ -161,7 +161,14 @@ $('body').on('click', '.clickable-rdf-node', function () {
 $('body').on('click', '.expand-metadata-string-btn', function () {
     const expandedContent = $(this).closest('.item-container').find('md-block').html();
     const title = $(this).closest('.item-container').find('label,.key').html();
-    $('.wiki-metadata-expanded-view .content').html(expandedContent);
+    openInExpandedTextView(title, expandedContent);
+});
+
+/**
+ * Opens something in a large text window
+ */
+function openInExpandedTextView(title, content){
+    $('.wiki-metadata-expanded-view .content').html(content);
     $('.wiki-metadata-expanded-view .title').html(title);
     $('.wiki-metadata-expanded-view').fadeIn(25);
-});
+}

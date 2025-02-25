@@ -14,6 +14,7 @@ import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
+import org.texttechnologylab.utils.Pair;
 import org.texttechnologylab.utils.Stopwords;
 import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
@@ -22,6 +23,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
+import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -39,6 +41,7 @@ public class Search_DefaultImpl implements Search {
     public static final String[] QUERY_OPERATORS = {"&", "|", "!", "<->", "(", ")"};
     // https://en.wikipedia.org/wiki/Taxonomic_rank#:~:text=Main%20ranks,-In%20his%20landmark&text=Today%2C%20the%20nomenclature%20is%20regulated,family%2C%20genus%2C%20and%20species.
     public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::"};
+    private Pair<String, ArrayList<EnrichedSearchToken>> enrichment;
 
     /**
      * Creates a new instance of the Search_DefaultImpl, throws exceptions if components couldn't be inited.
@@ -65,8 +68,10 @@ public class Search_DefaultImpl implements Search {
                 (ex) -> logger.error("Error fetching the corpus and corpus config of corpus: " + corpusId, ex)));
 
         // First: enrich if wanted
-        if (enrichSearchTerm){
-            this.searchState.setEnrichedSearchQuery(enrichSearchQuery(searchPhrase));
+        if (enrichSearchTerm) {
+            var enrichment = enrichSearchQuery(searchPhrase);
+            this.searchState.setEnrichedSearchQuery(enrichment.getLeft());
+            this.searchState.setEnrichedSearchTokens(enrichment.getRight());
         }
 
         // Then store the search tokens
@@ -197,7 +202,7 @@ public class Search_DefaultImpl implements Search {
             } catch (Exception ex) {
                 logger.error("Error executing a search on the database with search layer FULLTEXT. Search can't be executed.", ex);
                 // We only want to rethrow grammar exceptions for the pro mode.
-                if (ex.getCause() instanceof SQLGrammarException) throw (SQLGrammarException)ex.getCause();
+                if (ex.getCause() instanceof SQLGrammarException) throw (SQLGrammarException) ex.getCause();
             }
         }
 
@@ -248,7 +253,7 @@ public class Search_DefaultImpl implements Search {
         return Stopwords.GetStopwords(languageCode);
     }
 
-    private String enrichSearchQuery(String searchQuery) {
+    private Pair<String, ArrayList<EnrichedSearchToken>> enrichSearchQuery(String searchQuery) {
         // First off, we replace the spaces in "" and '' enclosed tokens with __ as to indicate: these are a token
         searchQuery = StringUtils.ReplaceSpacesInQuotes(searchQuery);
 
@@ -256,8 +261,10 @@ public class Search_DefaultImpl implements Search {
         var tokens = searchQuery.split(" ");
         // The two different modes have different syntax for keeping words together... one is '' and other is ""
         var delimiter = this.searchState.isProModeActivated() ? "'" : "\"";
+        var or = this.searchState.isProModeActivated() ? " | " : " or ";
 
         var enrichedSearchQuery = new StringBuilder();
+        var enrichedSearchTokens = new ArrayList<EnrichedSearchToken>();
 
         // Step 1: Look for annotated ontologies
         // The enrichment happens through our sparql database. We look for potential ontologies and add them as tokens
@@ -267,38 +274,43 @@ public class Search_DefaultImpl implements Search {
                 // If this token is an operator, skip it and just append it.
                 if (Arrays.asList(QUERY_OPERATORS).contains(token)) {
                     enrichedSearchQuery.append(token).append(" ");
+                    enrichedSearchTokens.add(new EnrichedSearchToken(token, EnrichedSearchTokenType.OPERATOR));
                     continue;
                 }
 
                 var taxonIds = new ArrayList<String>();
                 var isTaxonCommandToken = false;
+                var enrichedSearchToken = new EnrichedSearchToken();
 
                 // Else, we can see if we get more data of that token
                 var cleanedToken = StringUtils.removeSpecialCharactersAtEdges(token);
                 // If this token contains __ then it's a multi-token word that belongs together.
-                if(cleanedToken.contains("__")){
+                if (cleanedToken.contains("__")) {
                     cleanedToken = cleanedToken.replaceAll("__", " ");
                 }
+                enrichedSearchToken.setValue(cleanedToken);
 
                 // If the token starts with a tax command, parse it
-                if(cleanedToken.length() > 3){
+                if (cleanedToken.length() > 3) {
                     var possibleCommand = cleanedToken.substring(0, 3);
 
                     // Do we have a taxon rank command?
-                    if(Arrays.asList(TAX_RANKS).contains(possibleCommand)){
+                    if (Arrays.asList(TAX_RANKS).contains(possibleCommand)) {
                         isTaxonCommandToken = true;
+                        enrichedSearchToken.setType(EnrichedSearchTokenType.TAXON_COMMAND);
                         cleanedToken = cleanedToken.substring(3);
                         cleanedToken = StringUtils.removeSpecialCharactersAtEdges(cleanedToken);
+                        enrichedSearchToken.setValue(cleanedToken);
                         var finalCleanedToken = cleanedToken;
                         var speciesIds = ExceptionUtils.tryCatchLog(
                                 () -> jenaSparqlService.getSpeciesIdsOfUpperRank(StringUtils.GetFullTaxonRankByCode(possibleCommand.replace("::", "")), finalCleanedToken),
                                 (ex) -> logger.error("Error querying species by an upper rank.", ex));
-                        if(speciesIds != null) taxonIds.addAll(speciesIds);
+                        if (speciesIds != null) taxonIds.addAll(speciesIds);
                     }
                 }
 
                 // If we already parsed a taxon command, we can skip the fetching of alternative taxon names
-                if(!isTaxonCommandToken) {
+                if (!isTaxonCommandToken) {
                     String finalCleanedToken = cleanedToken;
                     var potentialTaxons = ExceptionUtils.tryCatchLog(
                             () -> db.getIdentifiableTaxonsByValues(List.of(finalCleanedToken.toLowerCase())),
@@ -306,10 +318,12 @@ public class Search_DefaultImpl implements Search {
 
                     if (potentialTaxons == null || potentialTaxons.isEmpty()) {
                         enrichedSearchQuery.append(token.replaceAll("__", " ")).append(" ");
+                        enrichedSearchTokens.add(enrichedSearchToken);
                         continue;
                     }
 
                     // Of those potential taxons, fetch their alternative names
+                    enrichedSearchToken.setType(EnrichedSearchTokenType.TAXON);
                     for (var taxon : potentialTaxons) {
                         if (taxon.getIdentifier().contains("|") || taxon.getIdentifier().contains(" ")) {
                             taxonIds.addAll(taxon.getIdentifierAsList());
@@ -325,19 +339,21 @@ public class Search_DefaultImpl implements Search {
                         (ex) -> logger.error("Error getting the alt names of a taxon while searching. Operation continues.", ex));
                 if (alternativeNames == null || alternativeNames.isEmpty()) {
                     enrichedSearchQuery.append(!isTaxonCommandToken ? token : delimiter + cleanedToken + delimiter).append(" ");
+                    enrichedSearchTokens.add(enrichedSearchToken);
                     continue;
                 }
 
-                // Enrich this token
+                // Build the enriched query for this token
                 enrichedSearchQuery
                         .append(" ( ")
-                        .append(!isTaxonCommandToken ? token.replaceAll("__", " ") + " | " + delimiter : delimiter) // Only append if this wasn't a taxon command
-                        .append(String.join(" | " + delimiter, alternativeNames.stream().map(n -> n + delimiter).toList()))
+                        .append(!isTaxonCommandToken ? token.replaceAll("__", " ") + or + delimiter : delimiter) // Only append if this wasn't a taxon command
+                        .append(String.join(or + delimiter, alternativeNames.stream().map(n -> n.replace("'", "") + delimiter).toList()))
                         .append(" ) ");
+                enrichedSearchToken.setChildren(alternativeNames.stream().map(n -> new EnrichedSearchToken(n, EnrichedSearchTokenType.TAXON)).toList());
+                enrichedSearchTokens.add(enrichedSearchToken);
             }
         }
-
-        return enrichedSearchQuery.toString().trim();
+        return new Pair<>(enrichedSearchQuery.toString().trim(), enrichedSearchTokens);
     }
 
 
