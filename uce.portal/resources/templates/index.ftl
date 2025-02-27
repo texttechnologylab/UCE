@@ -17,6 +17,7 @@
         <#include "*/css/search-redesign.css">
         <#include "*/css/corpus-universe.css">
         <#include "*/css/wiki.css">
+        <#include "*/css/layered-search-builder.css">
         <#include "*/css/kwic.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
@@ -97,6 +98,10 @@
         </div>
     </nav>
 
+    <div class="layered-search-builder-modal">
+        <#include "*/search/components/layeredSearchBuilder.ftl"/>
+    </div>
+
     <div class="sr-query-builder-include">
     </div>
 
@@ -145,11 +150,19 @@
                                     data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
                         </#list>
                     </select>
+                    <!-- semantic role button -->
                     <button class="btn open-sr-builder-btn" data-trigger="hover" data-toggle="popover"
                             data-placement="top"
                             data-content="${languageResource.get("openSrBuilder")}">
                         <i class="fas fa-project-diagram mr-1 ml-1"></i>
                     </button>
+                    <!-- layered search button -->
+                    <button class="btn open-layered-search-builder-btn" data-trigger="hover" data-toggle="popover"
+                            data-placement="top"
+                            data-content="">
+                        <i class="fas fa-layer-group mr-1 ml-1"></i>
+                    </button>
+
                 </div>
 
                 <!-- Search bar and menu -->
@@ -372,6 +385,7 @@
     <#include "js/site.js">
     <#include "js/language.js">
     <#include "js/search.js">
+    <#include "js/layeredSearch.js">
     <#include "js/keywordInContext.js">
 </script>
 

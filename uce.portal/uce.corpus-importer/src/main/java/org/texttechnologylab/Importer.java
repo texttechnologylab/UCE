@@ -24,6 +24,7 @@ import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
@@ -467,7 +468,8 @@ public class Importer {
                 // New page
                 var page = new Page(p.getBegin(), p.getEnd(), p.getPageNumber(), p.getPageId());
                 page.setDocument(document);
-                page.setCoveredText(page.getCoveredText());
+                page.setCoveredText(p.getCoveredText());
+
                 if (corpusConfig.getAnnotations().isOCRParagraph())
                     page.setParagraphs(getCoveredParagraphs(p));
 
@@ -477,6 +479,7 @@ public class Importer {
                 if (corpusConfig.getAnnotations().isOCRLine())
                     page.setLines(getCoveredLines(p));
 
+                updateAnnotationsWithPageId(document, page, false);
                 pages.add(page);
             });
             document.setPages(pages);
@@ -496,10 +499,37 @@ public class Importer {
                 page.setCoveredText(fullText.substring(i, pageEnd));
                 page.setDocument(document);
                 pageNumber += 1;
+                updateAnnotationsWithPageId(document, page, false);
+
                 pages.add(page);
             }
             document.setPages(pages);
             logger.info("Setting synthetic pages done.");
+        }
+
+        // Since we have some errors in the annotation (mainly we have an offset in begin and end sometimes),
+        // we need to cleanup at the end so that every annotation that doesn't have a page (because of the error offset)
+        // is assigned to the last page.
+        updateAnnotationsWithPageId(document, document.getPages().getLast(), true);
+    }
+
+    private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage){
+        // Set the pages for the different annotations
+        for(var anno:document.getBiofidTaxons().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()){
+            anno.setPage(page);
+        }
+        for(var anno:document.getTaxons().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()){
+            anno.setPage(page);
+        }
+        for(var anno:document.getNamedEntities().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()){
+            anno.setPage(page);
+        }
+        for(var anno:document.getTimes().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()){
+            anno.setPage(page);
         }
     }
 
@@ -529,6 +559,8 @@ public class Importer {
      */
     private void setTaxonomy(Document document, JCas jCas, CorpusConfig corpusConfig) {
         var taxons = new ArrayList<Taxon>();
+        var biofidTaxons = new ArrayList<BiofidTaxon>();
+
         JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Taxon.class).forEach(t -> {
             var taxon = new Taxon(t.getBegin(), t.getEnd());
             taxon.setDocument(document);
@@ -550,6 +582,21 @@ public class Importer {
                     // We need the last number in that string, have a lookup into our sparql database and from there fetch the
                     // correct TaxonId
                     if (potentialBiofidId.isEmpty()) continue;
+
+                    // Before we do GbifOccurence stuff, we build specific BiofidTaxon objects if we can.
+                    var newBiofidTaxons = ExceptionUtils.tryCatchLog(
+                            () -> jenaSparqlService.queryBiofidTaxon(potentialBiofidId),
+                            (ex) -> logger.error("Error building a BiofidTaxon object from a potential id.", ex));
+                    if(newBiofidTaxons != null){
+                        for(var biofidTaxon:newBiofidTaxons){
+                            biofidTaxon.setCoveredText(t.getCoveredText());
+                            biofidTaxon.setBegin(t.getBegin());
+                            biofidTaxon.setEnd(t.getEnd());
+                            biofidTaxon.setDocument(document);
+                            biofidTaxon.setBiofidUrl(potentialBiofidId);
+                            biofidTaxons.add(biofidTaxon);
+                        }
+                    }
 
                     var taxonId = ExceptionUtils.tryCatchLog(
                             () -> jenaSparqlService.biofidIdUrlToGbifTaxonId(potentialBiofidId),
@@ -579,6 +626,7 @@ public class Importer {
             taxons.add(taxon);
         });
         document.setTaxons(taxons);
+        document.setBiofidTaxons(biofidTaxons);
         logger.info("Setting Taxons done.");
     }
 
@@ -693,7 +741,6 @@ public class Importer {
         });
         document.setNamedEntities(nes);
         logger.info("Setting Named-Entities done.");
-
     }
 
     /**
@@ -703,10 +750,9 @@ public class Importer {
         // Set the sentences
         document.setSentences(JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence.class)
                 .stream()
-                .map(s -> new org.texttechnologylab.models.corpus.Sentence(s.getBegin(), s.getEnd()))
+                .map(s -> new org.texttechnologylab.models.corpus.Sentence(s.getBegin(), s.getEnd(), s.getCoveredText()))
                 .toList());
         logger.info("Setting sentences done.");
-
     }
 
     /**

@@ -39,8 +39,6 @@ public class Search_DefaultImpl implements Search {
     private RAGService ragService;
     private JenaSparqlService jenaSparqlService;
     public static final String[] QUERY_OPERATORS = {"&", "|", "!", "<->", "(", ")"};
-    // https://en.wikipedia.org/wiki/Taxonomic_rank#:~:text=Main%20ranks,-In%20his%20landmark&text=Today%2C%20the%20nomenclature%20is%20regulated,family%2C%20genus%2C%20and%20species.
-    public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::"};
     private Pair<String, ArrayList<EnrichedSearchToken>> enrichment;
 
     /**
@@ -295,7 +293,7 @@ public class Search_DefaultImpl implements Search {
                     var possibleCommand = cleanedToken.substring(0, 3);
 
                     // Do we have a taxon rank command?
-                    if (Arrays.asList(TAX_RANKS).contains(possibleCommand)) {
+                    if (Arrays.asList(StringUtils.TAX_RANKS).contains(possibleCommand)) {
                         isTaxonCommandToken = true;
                         enrichedSearchToken.setType(EnrichedSearchTokenType.TAXON_COMMAND);
                         cleanedToken = cleanedToken.substring(3);

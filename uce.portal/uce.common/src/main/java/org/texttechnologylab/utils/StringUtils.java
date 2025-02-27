@@ -95,6 +95,9 @@ public class StringUtils {
         return result.toString();
     }
 
+    // https://en.wikipedia.org/wiki/Taxonomic_rank#:~:text=Main%20ranks,-In%20his%20landmark&text=Today%2C%20the%20nomenclature%20is%20regulated,family%2C%20genus%2C%20and%20species.
+    public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::"};
+
     public static String GetFullTaxonRankByCode(String code){
         return switch (code) {
             case "C" -> "class";
@@ -105,5 +108,14 @@ public class StringUtils {
             case "G" -> "genus";
             default -> null;
         };
+    }
+
+    public static String ConvertSparqlQuery(String query) {
+        // Regex pattern to match <https://www.biofid.de/bio-ontologies/gbif/123123>
+        Pattern pattern = Pattern.compile("<https://www\\.biofid\\.de/bio-ontologies/gbif/(\\d+)>");
+
+        // Replace with bio:123123
+        Matcher matcher = pattern.matcher(query);
+        return matcher.replaceAll("bio:$1");
     }
 }

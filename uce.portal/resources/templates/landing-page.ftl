@@ -44,7 +44,7 @@
 
                         </div>
 
-                        <div class="expanded-content">
+                        <div class="expanded-content display-none">
                             <hr class="mt-3 mb-1 "/>
 
                             <!-- content -->

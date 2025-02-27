@@ -4,12 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.jsoup.HttpStatusException;
 import org.texttechnologylab.config.CommonConfig;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.dto.rdf.RDFAskDto;
 import org.texttechnologylab.models.dto.rdf.RDFNodeDto;
 import org.texttechnologylab.models.dto.rdf.RDFRequestDto;
 import org.texttechnologylab.models.dto.rdf.RDFSelectQueryDto;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.RDFNodeDtoJsonDeserializer;
+import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.BufferedReader;
@@ -51,6 +53,18 @@ public class JenaSparqlService {
         } catch (Exception ex) {
             SystemStatus.JenaSparqlStatus = new HealthStatus(false, "Server returned an error, ask failed.", null);
         }
+    }
+
+    /**
+     * Given a biofidUrl, returns a BiofidTaxon objects
+     */
+    public List<BiofidTaxon> queryBiofidTaxon(String biofidUrl) throws IOException, CloneNotSupportedException {
+        if (!SystemStatus.JenaSparqlStatus.isAlive()) {
+            return null;
+        }
+
+        var nodes = queryBySubject(biofidUrl);
+        return BiofidTaxon.createFromRdfNodes(nodes);
     }
 
     /**
@@ -168,6 +182,9 @@ public class JenaSparqlService {
      * @return
      */
     private <T extends RDFRequestDto> T executeCommand(String command, Class<T> clazz) throws IOException {
+        // Put our prefixes into the command
+        command = StringUtils.ConvertSparqlQuery(command);
+        command = "PREFIX bio: <https://www.biofid.de/bio-ontologies/gbif/>\n" + command;
         var endPoint = config.getSparqlHost()
                 + config.getSparqlEndpoint()
                 + "?query="
@@ -218,7 +235,7 @@ public class JenaSparqlService {
                 "        {IDS}" +
                 "    } " +
                 "} " +
-                "LIMIT 200";
+                "LIMIT 300";
         command = command
                 .replace("{RANK}", rankName)
                 .replace("{IDS}", String.join("\n", ids.stream().map(i -> "<" + i + ">").toList()));
@@ -243,7 +260,7 @@ public class JenaSparqlService {
      *   ?subject <http://rs.tdwg.org/dwc/terms/cleanedScientificName> "Corella" .
      * } LIMIT 10
      */
-    private List<String> getIdsOfTaxonRank(String rank, String name) throws IOException {
+    public List<String> getIdsOfTaxonRank(String rank, String name) throws IOException {
         var rankCommand = "SELECT distinct ?subject WHERE {\n" +
                 "  ?subject <http://rs.tdwg.org/dwc/terms/taxonRank> \"{RANK}\"^^<xsd:string> . " +
                 "  ?subject <http://rs.tdwg.org/dwc/terms/cleanedScientificName> \"{NAME}\" . " +

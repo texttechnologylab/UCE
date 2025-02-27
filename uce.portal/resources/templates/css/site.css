@@ -275,6 +275,10 @@ nav .selected-nav-btn.text::before {
     color: black !important;
 }
 
+.justify-items-center{
+    justify-items: center;
+}
+
 .open-wiki-page {
     cursor: pointer;
     transition: 0.15s;

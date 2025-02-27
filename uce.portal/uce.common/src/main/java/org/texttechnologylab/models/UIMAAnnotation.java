@@ -40,6 +40,14 @@ public class UIMAAnnotation extends ModelBase {
         this.end = end;
     }
 
+    public void setBegin(int begin) {
+        this.begin = begin;
+    }
+
+    public void setEnd(int end) {
+        this.end = end;
+    }
+
     public int getBegin() {
         return begin;
     }

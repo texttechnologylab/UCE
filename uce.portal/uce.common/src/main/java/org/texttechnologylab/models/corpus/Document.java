@@ -4,6 +4,7 @@ import org.hibernate.Hibernate;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
 
 import javax.persistence.*;
 import java.util.*;
@@ -60,6 +61,10 @@ public class Document extends ModelBase implements WikiModel {
     @JoinColumn(name = "document_Id")
     private List<Taxon> taxons;
 
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
+    private List<BiofidTaxon> biofidTaxons;
+
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @JoinColumn(name = "document_Id")
     private List<UCEMetadata> uceMetadata;
@@ -85,6 +90,14 @@ public class Document extends ModelBase implements WikiModel {
         this.documentTitle = documentTitle;
         this.documentId = documentId;
         this.corpusId = corpusId;
+    }
+
+    public List<BiofidTaxon> getBiofidTaxons() {
+        return biofidTaxons;
+    }
+
+    public void setBiofidTaxons(List<BiofidTaxon> biofidTaxons) {
+        this.biofidTaxons = biofidTaxons;
     }
 
     public boolean hasJsonUceMetadata() {

@@ -42,6 +42,21 @@
     height: 41px;
 }
 
+.open-layered-search-builder-btn {
+    border-radius: 0;
+    color: white;
+    background-color: var(--dark);
+    border-top: var(--dark) 1px solid;
+    border-bottom: var(--dark) 1px solid;
+    height: 41px;
+}
+
+.open-layered-search-builder-btn:hover{
+    background-color: white !important;
+    border-color: gray !important;
+    color: var(--dark) !important;
+}
+
 .search-header {
     position: sticky;
     top: 0;
@@ -155,6 +170,7 @@
     margin-left: 8px;
 }
 
+/*
 .header {
     position: static;
     z-index: 10;
@@ -173,10 +189,10 @@
 }
 
 .header .selected-btn {
-    /*background-color: rgba(245, 245, 247, 1);*/
     border-bottom: 2px var(--secondary) solid;
     font-weight: bold;
 }
+*/
 
 .side-bar-container {
     width: 100%;

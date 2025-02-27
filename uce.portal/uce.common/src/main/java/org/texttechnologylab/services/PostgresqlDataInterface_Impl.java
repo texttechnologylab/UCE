@@ -50,6 +50,13 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }
     }
 
+    public void executeSqlWithoutReturn(String sql) throws DatabaseOperationException {
+        executeOperationSafely(session -> {
+            session.createNativeQuery(sql).executeUpdate();
+            return null;
+        });
+    }
+
     public ArrayList<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
 

@@ -10,6 +10,7 @@ import org.hibernate.exception.SQLGrammarException;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.dto.LayeredSearchLayerDto;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
@@ -175,6 +176,37 @@ public class SearchApi {
             return languageResources.get("searchGrammarError");
         } catch (Exception ex) {
             logger.error("Error starting a new search with the request body:\n " + gson.toJson(requestBody), ex);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
+
+    public Route layeredSearch = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        var gson = new Gson();
+        var requestBody = gson.fromJson(request.body(), Map.class);
+        var languageResources = LanguageResources.fromRequest(request);
+
+        try {
+            @SuppressWarnings("unchecked")
+            var layers = (ArrayList<LayeredSearchLayerDto>) gson.fromJson(
+                            requestBody.get("layers").toString(),
+                            new TypeToken<ArrayList<LayeredSearchLayerDto>>() {
+                            }.getType());
+            var searchId = requestBody.get("searchId").toString();
+
+            // If there isn't an existing searchId, we create a new layeredSearch and cache it
+            var layeredSearch = SessionManager.ActiveLayeredSearches.get(searchId);
+            if(layeredSearch == null){
+                layeredSearch = new LayeredSearch(this.context, searchId);
+                layeredSearch.init();
+                SessionManager.ActiveLayeredSearches.put(layeredSearch.getId(), layeredSearch);
+            }
+            // Either way, apply the layers
+            layeredSearch.updateLayers(layers);
+
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
+        }catch (Exception ex) {
+            logger.error("Error starting a new layered search with the request body:\n " + gson.toJson(requestBody), ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
     });

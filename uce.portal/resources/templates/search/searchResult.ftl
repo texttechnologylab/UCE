@@ -47,7 +47,7 @@
                             <p class="text-center mb-0">Enriched Search Query</p>
                             <a class="rounded-a ml-2 mb-0 light-border" style="height: 25px; width: 25px"
                                onclick="openInExpandedTextView('Enriched Search Query', $(this).closest('.enriched-search-tokens-list').find('.query-input').html())">
-                                <i class="fas fa-eye small-font"></i>
+                                <i class="fas fa-eye small-font color-prime"></i>
                             </a>
                         </div>
                         <div class="flexed align-items-center justify-content-around">
@@ -167,7 +167,9 @@
                                    data-content="${languageResource.get("finalSearchTokens")}"></i>
                                 <div class="flexed wrapped mb-0 h-100">
                                     <span class="mr-1 mb-1 small-font text-dark p-1 search-token">
+                                        <#if searchState.getSearchQuery()?has_content>
                                             ${searchState.getSearchQuery()}
+                                        </#if>
                                     </span>
                                 </div>
                             </div>
