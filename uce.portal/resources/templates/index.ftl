@@ -157,11 +157,14 @@
                         <i class="fas fa-project-diagram mr-1 ml-1"></i>
                     </button>
                     <!-- layered search button -->
-                    <button class="btn open-layered-search-builder-btn" data-trigger="hover" data-toggle="popover"
-                            data-placement="top"
-                            data-content="">
-                        <i class="fas fa-layer-group mr-1 ml-1"></i>
-                    </button>
+                    <div class="position-relative">
+                        <button class="btn open-layered-search-builder-btn" data-trigger="hover" data-toggle="popover"
+                                data-placement="top"
+                                data-content="" onclick="$('.layered-search-builder-modal').fadeIn(75);">
+                            <i class="fas fa-layer-group mr-1 ml-1"></i>
+                        </button>
+                        <div class="open-layered-search-builder-btn-badge">0</div>
+                    </div>
 
                 </div>
 
@@ -196,7 +199,8 @@
                                     <#if corpusVm.getCorpusConfig().getAnnotations().isUceMetadata()
                                     && corpusVm.getCorpus().getUceMetadataFilters()?has_content
                                     && corpusVm.getCorpus().getUceMetadataFilters()?size gt 0>
-                                        <div class="uce-corpus-search-filter display-none" data-id="${corpusVm.getCorpus().getId()}">
+                                        <div class="uce-corpus-search-filter display-none"
+                                             data-id="${corpusVm.getCorpus().getId()}">
                                             <div class="flexed align-items-center text-secondary w-100">
                                                 <i class="fas fa-filter mr-2"></i>
                                                 <div class="m-0 pl-0 pr-0 rounded pt-2 pb-2 row w-100 light-border bg-lightgray">

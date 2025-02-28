@@ -23,6 +23,8 @@ public class SearchState {
      */
     private String searchQuery;
     private String enrichedSearchQuery;
+    private String dbSchema = "public";
+    private String sourceTable = "page";
     private List<EnrichedSearchToken> enrichedSearchTokens;
     private List<String> searchTokens;
     private List<SearchLayer> searchLayers;
@@ -64,6 +66,22 @@ public class SearchState {
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
         this.created = DateTime.now();
+    }
+
+    public String getDbSchema() {
+        return dbSchema;
+    }
+
+    public void setDbSchema(String dbSchema) {
+        this.dbSchema = dbSchema;
+    }
+
+    public String getSourceTable() {
+        return sourceTable;
+    }
+
+    public void setSourceTable(String sourceTable) {
+        this.sourceTable = sourceTable;
     }
 
     public List<EnrichedSearchToken> getEnrichedSearchTokens() {

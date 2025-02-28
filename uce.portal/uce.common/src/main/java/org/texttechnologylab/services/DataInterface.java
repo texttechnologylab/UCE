@@ -148,7 +148,9 @@ public interface DataInterface {
                                                           OrderByColumn orderedByColumn,
                                                           long corpusId,
                                                           List<UCEMetadataFilterDto> uceMetadataFilters,
-                                                          boolean useTsVectorSearch) throws DatabaseOperationException;
+                                                          boolean useTsVectorSearch,
+                                                          String schema,
+                                                          String sourceTable) throws DatabaseOperationException;
 
     /**
      * Gets a Topic Distribution determined by the T generic inheritance.

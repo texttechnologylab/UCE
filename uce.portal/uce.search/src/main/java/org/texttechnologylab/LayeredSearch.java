@@ -19,12 +19,13 @@ import java.util.List;
 
 public class LayeredSearch {
 
-    private final String insertTemplateQuery = "INSERT INTO layered_search_temp.{NAME} (id, document_id) \n" +
-            "SELECT p.id, p.document_id\n" +
+    private final String insertTemplateQuery = "INSERT INTO temp.{NAME} (id, document_id, begin_end) \n" +
+            "SELECT p.id, p.document_id, jsonb_agg(jsonb_build_array({ALIAS}.beginn, {ALIAS}.endd)) AS begin_end \n" +
             "FROM {SOURCE} p\n" +
             "JOIN {TABLE} {ALIAS} ON {ALIAS}.page_id = p.id\n" +
             "WHERE {CONDITION} \n" +
             "ON CONFLICT (id) DO NOTHING;";
+    private final String conditionEnding = "GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
     private final String id;
     private List<LayeredSearchLayerDto> layers = new ArrayList<>();
     private final PostgresqlDataInterface_Impl db;
@@ -107,7 +108,7 @@ public class LayeredSearch {
             var sql = insertTemplateQuery;
             sql = sql.replace("{NAME}", buildLayerTableName(layer.getDepth()));
             sql = sql.replace("{ALIAS}", "a");
-            sql = sql.replace("{SOURCE}", layer.getDepth() == 1 ? "page" : "layered_search_temp." + buildLayerTableName(layer.getDepth() - 1));
+            sql = sql.replace("{SOURCE}", layer.getDepth() == 1 ? "page" : "temp." + buildLayerTableName(layer.getDepth() - 1));
 
             if (slot.getType() == LayeredSearchSlotType.TAXON) {
                 sql = sql.replace("{TABLE}", "biofidtaxon");
@@ -125,7 +126,7 @@ public class LayeredSearch {
                                 (ex) -> logger.error("Error fetching the biofid ids of a specific rank.", ex));
                         if (idsOfRank == null || idsOfRank.isEmpty()) continue;
 
-                        var condition = "a.{RANK_NAME} IN ({ID_LIST}) GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
+                        var condition = "a.{RANK_NAME} IN ({ID_LIST}) " + conditionEnding;
                         condition = condition.replace("{RANK_NAME}", fullRankName);
                         condition = condition.replace("{ID_LIST}", String.join(",", idsOfRank.stream().map(i -> "'" + i + "'").toList()));
 
@@ -136,7 +137,7 @@ public class LayeredSearch {
                 }
 
                 // If it's not a taxon command, then we are just looking for taxons by their primary name
-                var condition = "a.primaryname = E'{VALUE}' GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
+                var condition = "a.primaryname = E'{VALUE}' " + conditionEnding;
                 condition = condition.replace("{VALUE}", slot.getCleanedValue());
                 var statement = sql.replace("{CONDITION}", condition);
                 statements.add(statement);
@@ -150,7 +151,7 @@ public class LayeredSearch {
                     var from = split[0].trim();
                     var to = split[1].trim();
 
-                    var condition = "a.year >= {FROM} and a.year <= {TO} GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
+                    var condition = "a.year >= {FROM} and a.year <= {TO} " + conditionEnding;
                     condition = condition.replace("{FROM}", from);
                     condition = condition.replace("{TO}", to);
                     var statement = sql.replace("{CONDITION}", condition);
@@ -166,7 +167,7 @@ public class LayeredSearch {
                         var unitName = StringUtils.GetFullTimeUnitByCode(possibleCommand.replace("::", "")).toLowerCase();
                         var value = slot.getValue().substring(3);
 
-                        var condition = "a.{UNIT_NAME} = {VALUE} GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
+                        var condition = "a.{UNIT_NAME} = {VALUE} " + conditionEnding;
                         condition = condition.replace("{UNIT_NAME}", unitName);
                         if(unitName.equals("year")) condition = condition.replace("{VALUE}", value);
                         else condition = condition.replace("{VALUE}", "'" + value + "'");
@@ -178,7 +179,7 @@ public class LayeredSearch {
                 }
 
                 // If it's not a command, then we are just looking by string
-                var condition = "a.coveredtext = E'{VALUE}' GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
+                var condition = "a.coveredtext = E'{VALUE}' " + conditionEnding;
                 condition = condition.replace("{VALUE}", slot.getCleanedValue());
                 var statement = sql.replace("{CONDITION}", condition);
                 statements.add(statement);
@@ -192,13 +193,14 @@ public class LayeredSearch {
     }
 
     private void createSearchTableIfNotExists(String name) throws DatabaseOperationException {
-        var query = "CREATE SCHEMA IF NOT EXISTS layered_search_temp;\n" +
+        var query = "CREATE SCHEMA IF NOT EXISTS temp;\n" +
                 "DO $$ \n" +
                 "BEGIN\n" +
-                "    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'layered_search_temp' AND table_name = '{NAME}') THEN\n" +
-                "        CREATE TABLE layered_search_temp.{NAME} (\n" +
+                "    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'temp' AND table_name = '{NAME}') THEN\n" +
+                "        CREATE TABLE temp.{NAME} (\n" +
                 "            id BIGINT PRIMARY KEY, \n" +
-                "            document_id BIGINT\n" +
+                "            document_id BIGINT,\n" +
+                "            begin_end jsonb\n" +
                 "        );\n" +
                 "    END IF;\n" +
                 "END $$;\n";
@@ -207,7 +209,7 @@ public class LayeredSearch {
     }
 
     private void calculateLayerCount(LayeredSearchLayerDto layer) throws DatabaseOperationException {
-        var query = "SELECT COUNT(DISTINCT id) AS p_count, COUNT(DISTINCT document_id) as d_count FROM layered_search_temp." + buildLayerTableName(layer.getDepth());
+        var query = "SELECT COUNT(DISTINCT id) AS p_count, COUNT(DISTINCT document_id) as d_count FROM temp." + buildLayerTableName(layer.getDepth());
         var resultList = db.executeSqlWithReturn(query);
         if(resultList.isEmpty()) return;
         else{
@@ -218,7 +220,7 @@ public class LayeredSearch {
     }
 
     private void dropTable(String name) throws DatabaseOperationException {
-        var query = "DROP TABLE IF EXISTS layered_search_temp.{NAME}";
+        var query = "DROP TABLE IF EXISTS temp.{NAME}";
         query = query.replace("{NAME}", name);
         db.executeSqlWithoutReturn(query);
     }

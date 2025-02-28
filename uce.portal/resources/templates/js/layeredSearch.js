@@ -1,20 +1,56 @@
 let LayeredSearchHandler = (function () {
 
-    LayeredSearchHandler.prototype.layers = {1: []};
+    LayeredSearchHandler.prototype.layers = {};
     LayeredSearchHandler.prototype.searchId = "";
 
     function LayeredSearchHandler() {
     }
 
     LayeredSearchHandler.prototype.init = function () {
-        this.addNewLayer(1);
+        //this.addNewLayer(1);
         this.searchId = generateUUID().toString().replaceAll("-", "");
     }
 
     LayeredSearchHandler.prototype.setLayerIsLoading = function (depth, isLoading) {
         let $layer = $('.layered-search-builder-container .layer-container[data-depth="' + depth + '"]');
-        if (isLoading) $layer.find('.load').removeClass('hidden');
-        else $layer.find('.load').addClass('hidden');
+        if (isLoading) $layer.find('.apply-layer-btn').addClass('loading-btn');
+        else $layer.find('.apply-layer-btn').removeClass('loading-btn');
+    }
+
+    LayeredSearchHandler.prototype.deleteSlot = function($slot){
+        const $layer = $slot.closest('.layer-container');
+        const depth = $layer.attr('data-depth');
+        if(!this.layers[depth]) return;
+        let newSlotList = [];
+        this.layers[depth].forEach(($s) => {
+            if($s.attr('data-id') === $slot.attr('data-id')) $s.remove();
+            else newSlotList.push($s);
+        })
+        this.layers[depth] = newSlotList;
+        if(newSlotList.length === 0) $layer.find('.empty-slot').get(0).style.maxWidth = '100%';
+        this.markLayersAsDirty(depth);
+    }
+
+    LayeredSearchHandler.prototype.deleteLayer = function (depth) {
+        delete this.layers[depth];
+        let newLayers = {};
+        Object.keys(this.layers).forEach((k) => {
+            if(k > depth) newLayers[k - 1] = this.layers[k];
+            else newLayers[k] = this.layers[k];
+        })
+        this.layers = newLayers;
+        let _this = this;
+        // Delete the UI element
+        $('.layered-search-builder-container .layers-container .layer-container').each(function(){
+            let dataDepth = $(this).attr('data-depth');
+            if(dataDepth === depth) $(this).remove();
+            else if(dataDepth > depth) {
+                const newDepth = dataDepth - 1;
+                $(this).attr('data-depth', newDepth);
+                $(this).find('.depth-label').html(newDepth);
+                _this.markLayersAsDirty(newDepth);
+            }
+        });
     }
 
     LayeredSearchHandler.prototype.addNewLayerAtEnd = function () {
@@ -32,7 +68,7 @@ let LayeredSearchHandler = (function () {
 
     LayeredSearchHandler.prototype.addNewSlot = function ($btn) {
         const type = $btn.data('type');
-        const depth = parseInt($btn.closest('.layer-container').data('depth'));
+        const depth = parseInt($btn.closest('.layer-container').attr('data-depth'));
         const $slot = $btn.closest('.empty-slot');
         $slot.get(0).style.maxWidth = '100px';
 
@@ -98,6 +134,9 @@ let LayeredSearchHandler = (function () {
             $metadata.find('.document-hits').html('?');
             $metadata.find('.page-hits').html('?');
             $metadata.find('.apply-layer-btn').removeClass('applied');
+
+            // Automatic recalculation?
+            this.applyLayerSearch(d);
         });
     }
 
@@ -130,7 +169,7 @@ $('body').on('click', '.layered-search-builder-container .choose-layer-popup a',
  * Triggers when we apply a layer filter.
  */
 $('body').on('click', '.layered-search-builder-container .apply-layer-btn', async function () {
-    const depth = $(this).closest('.layer-container').data('depth');
+    const depth = $(this).closest('.layer-container').attr('data-depth');
     window.layeredSearchHandler.applyLayerSearch(parseInt(depth));
 })
 
@@ -138,15 +177,29 @@ $('body').on('click', '.layered-search-builder-container .apply-layer-btn', asyn
  * Triggers when we change any slot of a layer.
  */
 $('body').on('change', '.layered-search-builder-container .layer .slot input', async function () {
-    const depth = $(this).closest('.layer-container').data('depth');
+    const depth = $(this).closest('.layer-container').attr('data-depth');
     window.layeredSearchHandler.markLayersAsDirty(parseInt(depth));
 })
 
 /**
  * Triggers when we want to add a new layer.
  */
-$('body').on('click', '.layered-search-builder-container .add-new-layer-btn', async function () {
+$('body').on('click', '.layered-search-builder-container .add-new-layer-btn',  function () {
     window.layeredSearchHandler.addNewLayerAtEnd();
+})
+
+/**
+ * Triggers when we want to delete a layer.
+ */
+$('body').on('click', '.layered-search-builder-container .layer-container .delete-layer-btn',  function () {
+    window.layeredSearchHandler.deleteLayer($(this).closest('.layer-container').attr('data-depth'));
+})
+
+/**
+ * Triggers when we want to delete a slot.
+ */
+$('body').on('click', '.layered-search-builder-container .layer-container .slot .delete-slot-btn',  function () {
+    window.layeredSearchHandler.deleteSlot($(this).closest('.slot'));
 })
 
 $(document).ready(function () {

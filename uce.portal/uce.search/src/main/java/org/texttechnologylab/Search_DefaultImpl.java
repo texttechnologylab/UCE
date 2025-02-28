@@ -196,7 +196,9 @@ public class Search_DefaultImpl implements Search {
                         searchState.getOrderBy(),
                         searchState.getCorpusId(),
                         searchState.getUceMetadataFilters(),
-                        searchState.isProModeActivated());
+                        searchState.isProModeActivated(),
+                        searchState.getDbSchema(),
+                        searchState.getSourceTable());
             } catch (Exception ex) {
                 logger.error("Error executing a search on the database with search layer FULLTEXT. Search can't be executed.", ex);
                 // We only want to rethrow grammar exceptions for the pro mode.
@@ -217,7 +219,9 @@ public class Search_DefaultImpl implements Search {
                             searchState.getOrderBy(),
                             searchState.getCorpusId(),
                             searchState.getUceMetadataFilters(),
-                            searchState.isProModeActivated()),
+                            searchState.isProModeActivated(),
+                            searchState.getDbSchema(),
+                            searchState.getSourceTable()),
                     (ex) -> logger.error("Error executing a search on the database with search layer NAMED_ENTITIES. Search can't be executed.", ex));
         }
 

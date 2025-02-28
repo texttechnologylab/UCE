@@ -15,6 +15,8 @@
 
 .layered-search-builder-container {
     width: 100%;
+    margin-left: 24px;
+    margin-right: 24px;
     max-width: 1200px;
     height: calc(100vh - 36px);
     overflow-y: auto;
@@ -146,4 +148,61 @@
     border-color: var(--prime);
     background-color: var(--prime);
     font-weight: bold;
+}
+
+.layered-search-builder-container .apply-layer-btn.loading-btn {
+    position: relative;
+    border-color: transparent !important;
+    overflow: hidden;
+}
+
+.layered-search-builder-container .apply-layer-btn.loading-btn::after {
+    content: "";
+    position: absolute;
+    top: -2px;
+    left: -2px;
+    width: calc(100% + 4px);
+    height: calc(100% + 4px);
+    border-radius: 50%;
+    border: 5px solid transparent;
+    border-top-color: var(--prime);
+    animation: rotate-border 1s linear infinite;
+}
+
+@keyframes rotate-border {
+    from {
+        transform: rotate(0deg);
+    }
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.layered-search-builder-container .submit-div{
+    border-radius: 25px 25px 25px 25px;
+    border:lightgrey 1px solid;
+}
+
+.layered-search-builder-container .submit-div a{
+    width: 50px;
+    height: 50px;
+    cursor: pointer;
+    border-radius: 50px;
+    display: flex;
+    align-items: center;
+    transition: 0.15s;
+    background-color: gray;
+    justify-content: center;
+    border: gray 2px solid;
+}
+
+.layered-search-builder-container .submit-div a:hover{
+    transition: 0.15s;
+    background-color: var(--prime);
+    border-color: var(--prime);
+}
+
+.layered-search-builder-container .submit-div a.activated{
+    background-color: var(--prime);
+    border-color:var(--prime);
 }
