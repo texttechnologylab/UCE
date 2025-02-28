@@ -18,7 +18,6 @@ import org.apache.uima.jcas.cas.AnnotationBase;
 import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
-import org.springframework.scheduling.annotation.Async;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
@@ -31,6 +30,7 @@ import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.EmbeddingUtils;
 import org.texttechnologylab.utils.ListUtils;
+import org.texttechnologylab.utils.RegexUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.*;
@@ -117,7 +117,8 @@ public class Importer {
 
         // We don't catch exceptions here, we let them be raised.
         var doc = XMIToDocument(inputStream, corpus);
-        if(doc == null) throw new DatabaseOperationException("The document was already imported into the corpus according to its documentId.");
+        if (doc == null)
+            throw new DatabaseOperationException("The document was already imported into the corpus according to its documentId.");
         db.saveDocument(doc);
         postProccessDocument(doc, CorpusConfig.fromJson(corpus.getCorpusJsonConfig()));
 
@@ -513,22 +514,22 @@ public class Importer {
         updateAnnotationsWithPageId(document, document.getPages().getLast(), true);
     }
 
-    private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage){
+    private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage) {
         // Set the pages for the different annotations
-        for(var anno:document.getBiofidTaxons().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()){
+        for (var anno : document.getBiofidTaxons().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
             anno.setPage(page);
         }
-        for(var anno:document.getTaxons().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()){
+        for (var anno : document.getTaxons().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
             anno.setPage(page);
         }
-        for(var anno:document.getNamedEntities().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()){
+        for (var anno : document.getNamedEntities().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
             anno.setPage(page);
         }
-        for(var anno:document.getTimes().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()){
+        for (var anno : document.getTimes().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
             anno.setPage(page);
         }
     }
@@ -587,8 +588,8 @@ public class Importer {
                     var newBiofidTaxons = ExceptionUtils.tryCatchLog(
                             () -> jenaSparqlService.queryBiofidTaxon(potentialBiofidId),
                             (ex) -> logger.error("Error building a BiofidTaxon object from a potential id.", ex));
-                    if(newBiofidTaxons != null){
-                        for(var biofidTaxon:newBiofidTaxons){
+                    if (newBiofidTaxons != null) {
+                        for (var biofidTaxon : newBiofidTaxons) {
                             biofidTaxon.setCoveredText(t.getCoveredText());
                             biofidTaxon.setBegin(t.getBegin());
                             biofidTaxon.setEnd(t.getEnd());
@@ -639,6 +640,15 @@ public class Importer {
             var time = new Time(t.getBegin(), t.getEnd());
             time.setValue(t.getValue());
             time.setCoveredText(t.getCoveredText());
+
+            // Let's see if we can dissect the raw time string into more usable formats for our db.
+            var units = RegexUtils.DissectTimeAnnotationString(time.getCoveredText());
+            time.setYear(units.year);
+            time.setMonth(units.month);
+            time.setDay(units.day);
+            time.setDate(units.fullDate);
+            time.setSeason(units.season);
+
             times.add(time);
         });
         document.setTimes(times);

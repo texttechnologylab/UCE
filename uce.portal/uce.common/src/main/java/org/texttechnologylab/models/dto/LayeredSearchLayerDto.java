@@ -8,6 +8,8 @@ public class LayeredSearchLayerDto {
     private List<LayeredSearchSlotDto> slots;
     private boolean isDirty;
     private String slotsHash;
+    private int documentHits;
+    private int pageHits;
 
     public LayeredSearchLayerDto() {
     }
@@ -23,6 +25,22 @@ public class LayeredSearchLayerDto {
             fullString.append(slot.getValue());
         }
         this.slotsHash = String.valueOf(fullString.toString().hashCode());
+    }
+
+    public int getDocumentHits() {
+        return documentHits;
+    }
+
+    public void setDocumentHits(int documentHits) {
+        this.documentHits = documentHits;
+    }
+
+    public int getPageHits() {
+        return pageHits;
+    }
+
+    public void setPageHits(int pageHits) {
+        this.pageHits = pageHits;
     }
 
     public String getSlotsHash() {

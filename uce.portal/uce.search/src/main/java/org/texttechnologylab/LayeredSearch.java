@@ -11,6 +11,7 @@ import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.StringUtils;
 
+import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -18,9 +19,9 @@ import java.util.List;
 
 public class LayeredSearch {
 
-    private final String insertTemplateQuery = "INSERT INTO layered_search_temp.layered_search_{NAME} (id, document_id) \n" +
+    private final String insertTemplateQuery = "INSERT INTO layered_search_temp.{NAME} (id, document_id) \n" +
             "SELECT p.id, p.document_id\n" +
-            "FROM page p\n" +
+            "FROM {SOURCE} p\n" +
             "JOIN {TABLE} {ALIAS} ON {ALIAS}.page_id = p.id\n" +
             "WHERE {CONDITION} \n" +
             "ON CONFLICT (id) DO NOTHING;";
@@ -36,21 +37,19 @@ public class LayeredSearch {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
     }
 
-    public String getId() {
-        return this.id;
-    }
+    public String getId() { return this.id; }
+
+    public List<LayeredSearchLayerDto> getLayers(){return this.layers;}
 
     /**
      * Initalize this layered search. This setups the materialized view in the background and more.
      */
-    public void init() throws DatabaseOperationException {
-        createSearchTableIfNotExists(this.id + "_0");
-    }
+    public void init() {}
 
     /**
      * Takes in a layer of any depth and updates the corresponding layered search with the information.
      */
-    public void updateLayers(ArrayList<LayeredSearchLayerDto> layerDtos) {
+    public void updateLayers(ArrayList<LayeredSearchLayerDto> layerDtos) throws DatabaseOperationException {
         for (var layer : layerDtos) {
             var existingLayer = this.layers.stream().filter(l -> l.getDepth() == layer.getDepth()).findFirst();
             // If we have a layer of that depth, check if its dirty (the slots changed its value)
@@ -74,7 +73,7 @@ public class LayeredSearch {
     /**
      * This looks at the existing layers and, if necessary, applies and updates new and existing sql queries of the layers
      */
-    public void executeLayersOnDb() {
+    public void executeLayersOnDb() throws DatabaseOperationException {
         // If no layers are dirty, we don't have to do anything
         if (this.layers.stream().noneMatch(LayeredSearchLayerDto::isDirty)) return;
 
@@ -92,16 +91,27 @@ public class LayeredSearch {
             var result = ExceptionUtils.tryCatchLog(
                     () -> this.executeSingleLayerOnDb(layer),
                     (ex) -> logger.error("Error executing a layer update on the db.", ex));
+            if(result != null && result) {
+                layer.setDirty(false);
+                calculateLayerCount(layer);
+            }
         }
     }
 
     private boolean executeSingleLayerOnDb(LayeredSearchLayerDto layer) throws DatabaseOperationException {
-        createSearchTableIfNotExists(this.id + "_" + layer.getDepth());
+        dropTable(buildLayerTableName(layer.getDepth()));
+        createSearchTableIfNotExists(buildLayerTableName(layer.getDepth()));
         var statements = new ArrayList<String>();
 
         for (var slot : layer.getSlots()) {
+            var sql = insertTemplateQuery;
+            sql = sql.replace("{NAME}", buildLayerTableName(layer.getDepth()));
+            sql = sql.replace("{ALIAS}", "a");
+            sql = sql.replace("{SOURCE}", layer.getDepth() == 1 ? "page" : "layered_search_temp." + buildLayerTableName(layer.getDepth() - 1));
 
             if (slot.getType() == LayeredSearchSlotType.TAXON) {
+                sql = sql.replace("{TABLE}", "biofidtaxon");
+
                 // Check if its a taxon command
                 if (slot.getValue().length() > 2) {
                     var possibleCommand = slot.getValue().substring(0, 3);
@@ -113,20 +123,65 @@ public class LayeredSearch {
                         var idsOfRank = ExceptionUtils.tryCatchLog(
                                 () -> jenaSparqlService.getIdsOfTaxonRank(fullRankName, value),
                                 (ex) -> logger.error("Error fetching the biofid ids of a specific rank.", ex));
-                        if (idsOfRank == null) continue;
+                        if (idsOfRank == null || idsOfRank.isEmpty()) continue;
 
-                        var condition = "b.{RANK_NAME} IN ({ID_LIST}) GROUP BY p.id, p.document_id HAVING COUNT(b.page_id) > 0";
+                        var condition = "a.{RANK_NAME} IN ({ID_LIST}) GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
                         condition = condition.replace("{RANK_NAME}", fullRankName);
                         condition = condition.replace("{ID_LIST}", String.join(",", idsOfRank.stream().map(i -> "'" + i + "'").toList()));
 
-                        var sql = insertTemplateQuery;
-                        sql = sql.replace("{NAME}", this.id + "_" + layer.getDepth());
-                        sql = sql.replace("{TABLE}", "biofidtaxon");
-                        sql = sql.replace("{ALIAS}", "b");
-                        sql = sql.replace("{CONDITION}", condition);
-                        statements.add(sql);
+                        var statement = sql.replace("{CONDITION}", condition);
+                        statements.add(statement);
+                        continue;
                     }
                 }
+
+                // If it's not a taxon command, then we are just looking for taxons by their primary name
+                var condition = "a.primaryname = E'{VALUE}' GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
+                condition = condition.replace("{VALUE}", slot.getCleanedValue());
+                var statement = sql.replace("{CONDITION}", condition);
+                statements.add(statement);
+            } else if(slot.getType() == LayeredSearchSlotType.TIME){
+                // Handle the time slots.
+                sql = sql.replace("{TABLE}", "time");
+
+                // Let's see if we got a range in here!
+                if(slot.getValue().contains("-")){
+                    var split = slot.getValue().split("-");
+                    var from = split[0].trim();
+                    var to = split[1].trim();
+
+                    var condition = "a.year >= {FROM} and a.year <= {TO} GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
+                    condition = condition.replace("{FROM}", from);
+                    condition = condition.replace("{TO}", to);
+                    var statement = sql.replace("{CONDITION}", condition);
+                    statements.add(statement);
+                    continue;
+                }
+
+                // Let's see if we too have some commands in here.
+                if (slot.getValue().length() > 2) {
+                    var possibleCommand = slot.getValue().substring(0, 3);
+                    if (Arrays.asList(StringUtils.TIME_COMMANDS).contains(possibleCommand)) {
+                        // The full name of the taxonomic rank
+                        var unitName = StringUtils.GetFullTimeUnitByCode(possibleCommand.replace("::", "")).toLowerCase();
+                        var value = slot.getValue().substring(3);
+
+                        var condition = "a.{UNIT_NAME} = {VALUE} GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
+                        condition = condition.replace("{UNIT_NAME}", unitName);
+                        if(unitName.equals("year")) condition = condition.replace("{VALUE}", value);
+                        else condition = condition.replace("{VALUE}", "'" + value + "'");
+
+                        var statement = sql.replace("{CONDITION}", condition);
+                        statements.add(statement);
+                        continue;
+                    }
+                }
+
+                // If it's not a command, then we are just looking by string
+                var condition = "a.coveredtext = E'{VALUE}' GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
+                condition = condition.replace("{VALUE}", slot.getCleanedValue());
+                var statement = sql.replace("{CONDITION}", condition);
+                statements.add(statement);
             }
         }
 
@@ -140,8 +195,8 @@ public class LayeredSearch {
         var query = "CREATE SCHEMA IF NOT EXISTS layered_search_temp;\n" +
                 "DO $$ \n" +
                 "BEGIN\n" +
-                "    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'layered_search_temp' AND table_name = 'layered_search_{NAME}') THEN\n" +
-                "        CREATE TABLE layered_search_temp.layered_search_{NAME} (\n" +
+                "    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'layered_search_temp' AND table_name = '{NAME}') THEN\n" +
+                "        CREATE TABLE layered_search_temp.{NAME} (\n" +
                 "            id BIGINT PRIMARY KEY, \n" +
                 "            document_id BIGINT\n" +
                 "        );\n" +
@@ -149,6 +204,27 @@ public class LayeredSearch {
                 "END $$;\n";
         query = query.replace("{NAME}", name);
         db.executeSqlWithoutReturn(query);
+    }
+
+    private void calculateLayerCount(LayeredSearchLayerDto layer) throws DatabaseOperationException {
+        var query = "SELECT COUNT(DISTINCT id) AS p_count, COUNT(DISTINCT document_id) as d_count FROM layered_search_temp." + buildLayerTableName(layer.getDepth());
+        var resultList = db.executeSqlWithReturn(query);
+        if(resultList.isEmpty()) return;
+        else{
+            var counts = (Object[])resultList.getFirst();
+            layer.setPageHits(((Number)counts[0]).intValue());
+            layer.setDocumentHits(((Number)counts[1]).intValue());
+        }
+    }
+
+    private void dropTable(String name) throws DatabaseOperationException {
+        var query = "DROP TABLE IF EXISTS layered_search_temp.{NAME}";
+        query = query.replace("{NAME}", name);
+        db.executeSqlWithoutReturn(query);
+    }
+
+    private String buildLayerTableName(int depth){
+        return "layered_search_" + this.id + "_" + depth;
     }
 
 }

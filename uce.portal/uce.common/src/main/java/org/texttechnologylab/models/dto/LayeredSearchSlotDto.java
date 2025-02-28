@@ -11,6 +11,8 @@ public class LayeredSearchSlotDto {
         return value;
     }
 
+    public String getCleanedValue(){return getValue().replace("'", "\\'");}
+
     public void setValue(String value) {
         this.value = value;
     }

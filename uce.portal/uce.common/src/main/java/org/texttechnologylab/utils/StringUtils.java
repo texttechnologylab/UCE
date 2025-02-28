@@ -118,4 +118,16 @@ public class StringUtils {
         Matcher matcher = pattern.matcher(query);
         return matcher.replaceAll("bio:$1");
     }
+
+    public static final String[] TIME_COMMANDS = {"Y::", "M::", "D::", "S::"};
+    public static String GetFullTimeUnitByCode(String code){
+        return switch (code) {
+            case "Y" -> "year";
+            case "M" -> "month";
+            case "D" -> "day";
+            case "S" -> "season";
+            default -> null;
+        };
+    }
+
 }

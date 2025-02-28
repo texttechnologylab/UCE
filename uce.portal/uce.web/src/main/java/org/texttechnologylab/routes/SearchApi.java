@@ -201,12 +201,13 @@ public class SearchApi {
                 layeredSearch.init();
                 SessionManager.ActiveLayeredSearches.put(layeredSearch.getId(), layeredSearch);
             }
-            // Either way, apply the layers
-            layeredSearch.updateLayers(layers);
 
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
+            // Either way, update the layers
+            layeredSearch.updateLayers(layers);
+            return gson.toJson(layeredSearch.getLayers());
         }catch (Exception ex) {
             logger.error("Error starting a new layered search with the request body:\n " + gson.toJson(requestBody), ex);
+            response.status(500);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
     });

@@ -9,21 +9,39 @@
 
     <!-- contains the layer templates we later just copy -->
     <div class="slot-templates display-none">
+
         <div class="template-TAXON slot" data-id="-" data-type="TAXON">
-            <label class="mb-0 w-100 mb-1 text ml-1 mr-1"><i class="fas fa-tenge mr-1"></i>Taxon Filter</label>
+            <label class="mb-0 w-100 mb-2 text ml-1 mr-1"><i class="fas fa-tenge mr-2"></i>Taxon Filter</label>
             <div class="w-100 flexed align-items-center">
-                <input class="form-control rounded-0 w-100 slot-value" />
+                <input class="form-control rounded-0 w-100 slot-value" placeholder="Callorhinchus capensis..."/>
             </div>
         </div>
+
+        <div class="template-TIME slot" data-id="-" data-type="TIME">
+            <label class="mb-0 w-100 mb-2 text ml-1 mr-1"><i class="fas fa-clock mr-2"></i>Time Filter</label>
+            <div class="w-100 flexed align-items-center">
+                <input class="form-control rounded-0 w-100 slot-value" placeholder="1890-1920"/>
+            </div>
+        </div>
+
     </div>
 
     <!-- this is the template for an empty new layer -->
     <div class="layer-template display-none">
-        <div class="layer-container mb-4">
-            <h5 class="text-center text w-100 mb-1"><i class="color-prime fas fa-layer-group mr-2"></i> <span class="depth-label"></span></h5>
+        <div class="layer-container position-relative mb-4" data-depth="1">
+            <h6 class="text-center text w-100 mb-1"><i class="color-prime fas fa-layer-group mr-2"></i> Layer <span class="depth-label"></span></h6>
+
+            <!-- loader -->
+            <div class="load hidden">
+                <div class="loading-div">
+                    <div class="spinner-grow" style="width: 3rem; height: 3rem;" role="status">
+                        <span class="sr-only">Loading...</span>
+                    </div>
+                </div>
+            </div>
 
             <!-- actual layer with the slots -->
-            <div class="layer" data-depth="1">
+            <div class="layer">
                 <div class="empty-slot">
                     <!-- add new layer div -->
                     <div class="w-100">
@@ -53,7 +71,13 @@
 
             <!-- the status and metadata of this layer -->
             <div class="layer-metadata-container">
-                <button class="btn apply-layer-btn"><i class="mr-2 fas fa-database"></i> Apply Layer</button>
+                <div class="w-100 flexed align-items-center justify-content-between">
+                    <div class="w-100 flexed justify-content-around align-items-center">
+                        <label class="mb-0 mr-2 text"><i class="fas fa-book"></i> Hits: <span class="document-hits color-prime">?</span></label>
+                        <label class="mb-0 mr-2 text"><i class="fas fa-file-alt"></i> Hits: <span class="page-hits color-prime">?</span></label>
+                    </div>
+                    <button class="btn apply-layer-btn"><i class="fas fa-check"></i></button>
+                </div>
             </div>
         </div>
     </div>
@@ -65,6 +89,13 @@
 
 
         </div>
+
+        <div class="w-100 mt-3 flexed justify-content-center pl-3">
+            <button class="btn btn-primary add-new-layer-btn">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+
     </div>
 
 </div>
