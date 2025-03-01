@@ -3,7 +3,7 @@
     <div class="header p-3 w-100">
         <div class="flexed align-items-center justify-content-between">
             <h5 class="text mb-0"><i class="fas fa-layer-group mr-2 color-prime"></i> Layered Search Builder</h5>
-            <a class="w-rounded-btn" onclick="$(this).closest('.layered-search-builder-modal').fadeOut(50)"><i class="fas fa-times"></i></a>
+            <a class="w-rounded-btn" onclick="$(this).closest('.layered-search-builder-include').fadeOut(50)"><i class="fas fa-times"></i></a>
         </div>
     </div>
 

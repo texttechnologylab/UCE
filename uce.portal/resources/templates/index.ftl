@@ -98,8 +98,10 @@
         </div>
     </nav>
 
-    <div class="layered-search-builder-modal">
-        <#include "*/search/components/layeredSearchBuilder.ftl"/>
+    <div class="layered-search-builder-include display-none">
+        <div class="layered-search-builder-modal">
+            <#include "*/search/components/layeredSearchBuilder.ftl"/>
+        </div>
     </div>
 
     <div class="sr-query-builder-include">
@@ -160,7 +162,7 @@
                     <div class="position-relative">
                         <button class="btn open-layered-search-builder-btn" data-trigger="hover" data-toggle="popover"
                                 data-placement="top"
-                                data-content="" onclick="$('.layered-search-builder-modal').fadeIn(75);">
+                                data-content="" onclick="$('.layered-search-builder-include').show();">
                             <i class="fas fa-layer-group mr-1 ml-1"></i>
                         </button>
                         <div class="open-layered-search-builder-btn-badge">0</div>
