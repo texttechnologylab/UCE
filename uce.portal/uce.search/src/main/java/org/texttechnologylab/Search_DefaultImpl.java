@@ -89,6 +89,11 @@ public class Search_DefaultImpl implements Search {
         return this;
     }
 
+    public Search_DefaultImpl withLayeredSearch(LayeredSearch layeredSearch){
+        this.searchState.setLayeredSearch(layeredSearch);
+        return this;
+    }
+
     public void fromSearchState(ApplicationContext serviceContext,
                                 String languageCode,
                                 SearchState searchState) throws URISyntaxException, IOException {

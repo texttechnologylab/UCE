@@ -2,6 +2,7 @@ let LayeredSearchHandler = (function () {
 
     LayeredSearchHandler.prototype.layers = {};
     LayeredSearchHandler.prototype.searchId = "";
+    LayeredSearchHandler.prototype.submitStatus = false;
 
     function LayeredSearchHandler() {
     }
@@ -15,6 +16,30 @@ let LayeredSearchHandler = (function () {
         let $layer = $('.layered-search-builder-container .layer-container[data-depth="' + depth + '"]');
         if (isLoading) $layer.find('.apply-layer-btn').addClass('loading-btn');
         else $layer.find('.apply-layer-btn').removeClass('loading-btn');
+    }
+
+    LayeredSearchHandler.prototype.updateUIBatch = function(){
+        const status = this.submitStatus;
+        if(status === true){
+            $('.search-header .open-layered-search-builder-btn-badge').html(Object.keys(this.layers).length);
+        } else{
+            $('.search-header .open-layered-search-builder-btn-badge').html('0');
+        }
+    }
+
+    LayeredSearchHandler.prototype.setSubmitStatus = function($clickedBtn){
+        const status = $clickedBtn.attr('data-submit') === 'true';
+        if(status === true && Object.keys(this.layers).length === 0) {
+            showMessageModal('No Layers', 'You can only apply if you have added at least one layer.');
+            return;
+        }
+        $('.layered-search-builder-container .submit-div a').each(function(){
+            if($(this).attr('data-submit') !== status.toString()) $(this).removeClass('activated');
+            else $(this).addClass('activated');
+        })
+        $('.search-settings-div .submit-layered-search-input').val(status);
+        this.submitStatus = status;
+        this.updateUIBatch();
     }
 
     LayeredSearchHandler.prototype.deleteSlot = function($slot){
@@ -51,6 +76,7 @@ let LayeredSearchHandler = (function () {
                 _this.markLayersAsDirty(newDepth);
             }
         });
+        this.updateUIBatch();
     }
 
     LayeredSearchHandler.prototype.addNewLayerAtEnd = function () {
@@ -64,6 +90,7 @@ let LayeredSearchHandler = (function () {
         $template.find('.depth-label').html(depth);
         $('.layered-search-builder-container .layers-container').append($template.html());
         this.layers[depth] = [];
+        this.updateUIBatch();
     }
 
     LayeredSearchHandler.prototype.addNewSlot = function ($btn) {
@@ -81,10 +108,9 @@ let LayeredSearchHandler = (function () {
         this.markLayersAsDirty(depth);
     }
 
-    LayeredSearchHandler.prototype.applyLayerSearch = async function (depth) {
-        if (!this.layers[depth]) return;
-        let applicableDepths = Object.keys(this.layers).filter(d => d <= depth);
+    LayeredSearchHandler.prototype.buildApplicableLayers = function(applicableDepths){
         let applicableLayers = [];
+        if(applicableDepths.length === 0) applicableDepths = Object.keys(this.layers);
 
         applicableDepths.forEach((d) => {
             this.setLayerIsLoading(d, true);
@@ -106,6 +132,13 @@ let LayeredSearchHandler = (function () {
             }
             applicableLayers.push(layer);
         })
+        return applicableLayers;
+    }
+
+    LayeredSearchHandler.prototype.applyLayerSearch = async function (depth) {
+        if (!this.layers[depth]) return;
+        let applicableDepths = Object.keys(this.layers).filter(d => d <= depth);
+        let applicableLayers = this.buildApplicableLayers(applicableDepths);
 
         $.ajax({
             url: "/api/search/layered",
@@ -193,6 +226,13 @@ $('body').on('click', '.layered-search-builder-container .add-new-layer-btn',  f
  */
 $('body').on('click', '.layered-search-builder-container .layer-container .delete-layer-btn',  function () {
     window.layeredSearchHandler.deleteLayer($(this).closest('.layer-container').attr('data-depth'));
+})
+
+/**
+ * Triggers when we want to delete a layer.
+ */
+$('body').on('click', '.layered-search-builder-container .submit-div a',  function () {
+    window.layeredSearchHandler.setSubmitStatus($(this));
 })
 
 /**

@@ -380,8 +380,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                             .replaceAll("\"valueType\"", "\"valueType::text\""));
                 }
                 storedProcedure.setBoolean(10, useTsVectorSearch);
-                storedProcedure.setString(11, schema);
-                storedProcedure.setString(12, sourceTable);
+                storedProcedure.setString(11, sourceTable);
+                storedProcedure.setString(12, schema);
 
                 var result = storedProcedure.executeQuery();
                 while (result.next()) {

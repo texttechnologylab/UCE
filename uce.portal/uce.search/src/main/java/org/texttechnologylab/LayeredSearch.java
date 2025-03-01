@@ -25,7 +25,6 @@ public class LayeredSearch {
             "JOIN {TABLE} {ALIAS} ON {ALIAS}.page_id = p.id\n" +
             "WHERE {CONDITION} \n" +
             "ON CONFLICT (id) DO NOTHING;";
-    private final String conditionEnding = "GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
     private final String id;
     private List<LayeredSearchLayerDto> layers = new ArrayList<>();
     private final PostgresqlDataInterface_Impl db;
@@ -41,6 +40,11 @@ public class LayeredSearch {
     public String getId() { return this.id; }
 
     public List<LayeredSearchLayerDto> getLayers(){return this.layers;}
+
+    public String getFinalLayerTableName(){
+        var maxDepth = this.layers.stream().max(Comparator.comparing(LayeredSearchLayerDto::getDepth)).get().getDepth();
+        return buildLayerTableName(maxDepth);
+    }
 
     /**
      * Initalize this layered search. This setups the materialized view in the background and more.
@@ -102,6 +106,7 @@ public class LayeredSearch {
     private boolean executeSingleLayerOnDb(LayeredSearchLayerDto layer) throws DatabaseOperationException {
         dropTable(buildLayerTableName(layer.getDepth()));
         createSearchTableIfNotExists(buildLayerTableName(layer.getDepth()));
+        var conditionEnding = "GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
         var statements = new ArrayList<String>();
 
         for (var slot : layer.getSlots()) {

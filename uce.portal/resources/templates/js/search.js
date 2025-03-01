@@ -3,7 +3,7 @@ let currentCorpusUniverseHandler = undefined;
 /**
  * Starts a new search with the given input
  */
-function startNewSearch(searchInput, reloadCorpus=true) {
+function startNewSearch(searchInput, reloadCorpus = true) {
     if (searchInput === undefined) {
         return;
     }
@@ -21,6 +21,13 @@ function startNewSearch(searchInput, reloadCorpus=true) {
     const kwic = $('.search-menu-div .search-settings-div .option input[data-id="KWIC"]').is(':checked');
     const enrich = $('.search-menu-div .search-settings-div .option input[data-id="ENRICH"]').is(':checked');
     const proMode = $('#proModeSwitch').is(':checked');
+    const useLayeredSearch = $('.search-menu-div .search-settings-div .submit-layered-search-input').val() === 'true';
+    let layers = {};
+    let layeredSearchId = '';
+    if (useLayeredSearch === true) {
+        layers = window.layeredSearchHandler.buildApplicableLayers([]);
+        layeredSearchId = window.layeredSearchHandler.searchId;
+    }
 
     // Get possible uce metadata filters of this selectec corpus
     let metadataFilters = [];
@@ -44,14 +51,16 @@ function startNewSearch(searchInput, reloadCorpus=true) {
             kwic: kwic,
             enrich: enrich,
             uceMetadataFilters: JSON.stringify(metadataFilters),
-            proMode: proMode
+            proMode: proMode,
+            layeredSearchId: layeredSearchId,
+            layers: JSON.stringify(layers),
         }),
         contentType: "application/json",
         //dataType: "json",
         success: async function (response) {
             $('.view .search-result-container').html(response);
             activatePopovers();
-            if(reloadCorpus) {
+            if (reloadCorpus) {
                 reloadCorpusComponents();
                 // Store the search in the local browser for a history.
                 addSearchToHistory(searchInput);
@@ -63,9 +72,9 @@ function startNewSearch(searchInput, reloadCorpus=true) {
             await currentCorpusUniverseHandler.fromSearch(searchId);
         },
         error: function (xhr, status, error) {
-            if(xhr.status === 406){
+            if (xhr.status === 406) {
                 showMessageModal("Query Error", xhr.responseText);
-            } else{
+            } else {
                 $('.view .search-result-container').html(xhr.responseText);
             }
         }

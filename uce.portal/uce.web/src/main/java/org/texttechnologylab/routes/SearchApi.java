@@ -131,14 +131,30 @@ public class SearchApi {
             var includeKeywordInContext = Boolean.parseBoolean(requestBody.get("kwic").toString());
             var enrichSearchTerm = Boolean.parseBoolean(requestBody.get("enrich").toString());
             var proModeActivated = Boolean.parseBoolean(requestBody.get("proMode").toString());
+            var layeredSearchId = requestBody.get("layeredSearchId").toString();
+            var layers = new ArrayList<LayeredSearchLayerDto>();
 
             // It's not tragic if no filters are given, not every corpus has them.
-            @SuppressWarnings("unchecked") var uceMetadataFilters = ExceptionUtils.tryCatchLog(
-                    () -> (ArrayList<UCEMetadataFilterDto>) gson.fromJson(
+            ArrayList<UCEMetadataFilterDto> uceMetadataFilters = ExceptionUtils.tryCatchLog(
+                    () -> gson.fromJson(
                             requestBody.get("uceMetadataFilters").toString(),
                             new TypeToken<ArrayList<UCEMetadataFilterDto>>() {
                             }.getType()),
-                    (ex) -> {});
+                    (ex) -> {
+                    });
+
+            LayeredSearch layeredSearch = null;
+            // If the layeredSearchId isn't empty, we need to apply the layered search as well.
+            if (!layeredSearchId.isEmpty()) {
+                layeredSearch = SessionManager.ActiveLayeredSearches.get(layeredSearchId);
+                if(layeredSearch != null){
+                    layers = gson.fromJson(
+                            requestBody.get("layers").toString(),
+                            new TypeToken<ArrayList<LayeredSearchLayerDto>>() {
+                            }.getType());
+                    layeredSearch.updateLayers(layers);
+                }
+            }
 
             // We have our own query language for SemanticRole Searches. Check if this is one of those.
             SearchState searchState = null;
@@ -163,7 +179,9 @@ public class SearchApi {
                         searchLayers,
                         enrichSearchTerm,
                         proModeActivated)
-                        .withUceMetadataFilters(uceMetadataFilters);
+                        .withUceMetadataFilters(uceMetadataFilters)
+                        .withLayeredSearch(layeredSearch);
+
                 searchState = search.initSearch();
             }
 
@@ -171,7 +189,7 @@ public class SearchApi {
             model.put("searchState", searchState);
 
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
-        } catch (SQLGrammarException grammarException){
+        } catch (SQLGrammarException grammarException) {
             response.status(406);
             return languageResources.get("searchGrammarError");
         } catch (Exception ex) {
@@ -187,16 +205,15 @@ public class SearchApi {
         var languageResources = LanguageResources.fromRequest(request);
 
         try {
-            @SuppressWarnings("unchecked")
-            var layers = (ArrayList<LayeredSearchLayerDto>) gson.fromJson(
-                            requestBody.get("layers").toString(),
-                            new TypeToken<ArrayList<LayeredSearchLayerDto>>() {
-                            }.getType());
+            ArrayList<LayeredSearchLayerDto> layers = gson.fromJson(
+                    requestBody.get("layers").toString(),
+                    new TypeToken<ArrayList<LayeredSearchLayerDto>>() {
+                    }.getType());
             var searchId = requestBody.get("searchId").toString();
 
             // If there isn't an existing searchId, we create a new layeredSearch and cache it
             var layeredSearch = SessionManager.ActiveLayeredSearches.get(searchId);
-            if(layeredSearch == null){
+            if (layeredSearch == null) {
                 layeredSearch = new LayeredSearch(this.context, searchId);
                 layeredSearch.init();
                 SessionManager.ActiveLayeredSearches.put(layeredSearch.getId(), layeredSearch);
@@ -205,7 +222,7 @@ public class SearchApi {
             // Either way, update the layers
             layeredSearch.updateLayers(layers);
             return gson.toJson(layeredSearch.getLayers());
-        }catch (Exception ex) {
+        } catch (Exception ex) {
             logger.error("Error starting a new layered search with the request body:\n " + gson.toJson(requestBody), ex);
             response.status(500);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));

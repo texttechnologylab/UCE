@@ -218,6 +218,9 @@
                             <div class="search-settings-div flexed align-items-center justify-content-around">
                                 <!-- The data-ids are corresponding to the SearchLayer enum. Change them with care!! -->
                                 <i class="w-auto fab fa-searchengin text-secondary large-font"></i>
+                                <!-- hidden input for layered search -->
+                                <input type="hidden" class="submit-layered-search-input" value="false"/>
+
                                 <div class="option" data-type="radio">
                                     <div class="form-check form-check-inline" data-trigger="hover"
                                          data-toggle="popover" data-placement="top" data-html="true"

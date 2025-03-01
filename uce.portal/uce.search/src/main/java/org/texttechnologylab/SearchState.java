@@ -29,6 +29,7 @@ public class SearchState {
     private List<String> searchTokens;
     private List<SearchLayer> searchLayers;
     private List<UCEMetadataFilterDto> uceMetadataFilters;
+    private LayeredSearch layeredSearch;
     private SearchType searchType;
     private Integer currentPage = 1;
     private Integer take = 10;
@@ -68,8 +69,17 @@ public class SearchState {
         this.created = DateTime.now();
     }
 
+    public LayeredSearch getLayeredSearch() {
+        return layeredSearch;
+    }
+
+    public void setLayeredSearch(LayeredSearch layeredSearch) {
+        this.layeredSearch = layeredSearch;
+    }
+
     public String getDbSchema() {
-        return dbSchema;
+        if(this.layeredSearch == null) return this.dbSchema;
+        return this.layeredSearch.getFinalLayerTableName();
     }
 
     public void setDbSchema(String dbSchema) {
@@ -77,7 +87,8 @@ public class SearchState {
     }
 
     public String getSourceTable() {
-        return sourceTable;
+        if(this.layeredSearch == null) return this.sourceTable;
+        return "temp";
     }
 
     public void setSourceTable(String sourceTable) {

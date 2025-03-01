@@ -109,12 +109,12 @@
         <div class="w-100 mt-5 bg-lightgray submit-div">
             <div class="w-100 flexed align-items-center justify-content-between">
                 <div class="flexed align-items-center mr-2">
-                    <a class="submit-layered-search-btn activated"><i class="text-light xlarge-font fas fa-times"></i></a>
+                    <a class="activated" data-submit="false"><i class="text-light xlarge-font fas fa-times"></i></a>
                     <label class="mb-0 ml-3">Turn Off</label>
                 </div>
                 <div class="flexed align-items-center ml-2">
                     <label class="mb-0 mr-3">Apply for Search</label>
-                    <a class="submit-layered-search-btn"><i class="text-light xlarge-font fas fa-check-double"></i></a>
+                    <a class="" data-submit="true"><i class="text-light xlarge-font fas fa-check-double"></i></a>
                 </div>
             </div>
         </div>
