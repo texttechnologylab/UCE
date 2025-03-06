@@ -83,7 +83,7 @@ public class WikiApi {
             // BUT: We have different wiki views for different languages so the lang needs to be part of the key!
             var cacheId = wid + languageResources.getDefaultLanguage();
             if (SessionManager.CachedWikiPages.containsKey(cacheId)) {
-                return SessionManager.CachedWikiPages.get(cacheId).getRenderedView();
+                return ((CachedWikiPage)SessionManager.CachedWikiPages.get(cacheId)).getRenderedView();
             }
 
             // Determine the type. A wikiID always has the following format: <type>-<model_id>

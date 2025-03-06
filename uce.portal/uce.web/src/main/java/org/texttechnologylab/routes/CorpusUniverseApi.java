@@ -6,10 +6,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationContext;
-import org.texttechnologylab.CustomFreeMarkerEngine;
-import org.texttechnologylab.LanguageResources;
-import org.texttechnologylab.Search_DefaultImpl;
-import org.texttechnologylab.SessionManager;
+import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.corpus.Document;
@@ -151,7 +148,7 @@ public class CorpusUniverseApi {
             return gson.toJson(result);
         }
 
-        var activeSearchState = SessionManager.ActiveSearches.get(searchId);
+        var activeSearchState = (SearchState) SessionManager.ActiveSearches.get(searchId);
         var search = new Search_DefaultImpl();
         search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
         var nodes = new ArrayList<CorpusUniverseNode>();

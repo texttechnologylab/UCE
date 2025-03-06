@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.LanguageResources;
+import org.texttechnologylab.SearchState;
 import org.texttechnologylab.SessionManager;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
@@ -158,7 +159,7 @@ public class DocumentApi {
             // If this document was opened from an active search, we can highlight the search tokens in the text
             // This is only optional and works fine even without the search tokens.
             if(searchId != null && SessionManager.ActiveSearches.containsKey(searchId)){
-                var activeSearchState = SessionManager.ActiveSearches.get(searchId);
+                var activeSearchState = (SearchState)SessionManager.ActiveSearches.get(searchId);
                 // For SRL Search, there are no search tokens really. We will handle that exclusively later.
                 if(activeSearchState.getSearchType() != SearchType.SEMANTICROLE)
                     model.put("searchTokens", String.join("[TOKEN]", activeSearchState.getSearchTokens()));

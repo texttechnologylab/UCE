@@ -1,20 +1,14 @@
 package org.texttechnologylab.models.viewModels.wiki;
 
-public class CachedWikiPage {
 
-    private boolean cleanupNextCycle;
+import org.texttechnologylab.models.search.CacheItem;
+
+public class CachedWikiPage extends CacheItem {
+
     private String renderedView;
 
-    public CachedWikiPage(String renderedView){
+    public CachedWikiPage(String renderedView) {
         this.renderedView = renderedView;
-    }
-
-    public boolean isCleanupNextCycle() {
-        return cleanupNextCycle;
-    }
-
-    public void setCleanupNextCycle(boolean cleanupNextCycle) {
-        this.cleanupNextCycle = cleanupNextCycle;
     }
 
     public String getRenderedView() {
@@ -24,4 +18,6 @@ public class CachedWikiPage {
     public void setRenderedView(String renderedView) {
         this.renderedView = renderedView;
     }
+
+    public void dispose() { }
 }

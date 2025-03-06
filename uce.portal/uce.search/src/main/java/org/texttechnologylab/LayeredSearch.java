@@ -7,6 +7,7 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.dto.LayeredSearchLayerDto;
 import org.texttechnologylab.models.dto.LayeredSearchSlotType;
+import org.texttechnologylab.models.search.CacheItem;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.StringUtils;
@@ -17,14 +18,9 @@ import java.util.Arrays;
 import java.util.Comparator;
 import java.util.List;
 
-public class LayeredSearch {
+// TODO: This class needs cleanup. I did this in such a haste and under time pressure.
+public class LayeredSearch extends CacheItem {
 
-    private final String insertTemplateQuery = "INSERT INTO temp.{NAME} (id, document_id, begin_end) \n" +
-            "SELECT p.id, p.document_id, jsonb_agg(jsonb_build_array({ALIAS}.beginn, {ALIAS}.endd)) AS begin_end \n" +
-            "FROM {SOURCE} p\n" +
-            "JOIN {TABLE} {ALIAS} ON {ALIAS}.page_id = p.id\n" +
-            "WHERE {CONDITION} \n" +
-            "ON CONFLICT (id) DO NOTHING;";
     private final String id;
     private List<LayeredSearchLayerDto> layers = new ArrayList<>();
     private final PostgresqlDataInterface_Impl db;
@@ -50,6 +46,13 @@ public class LayeredSearch {
      * Initalize this layered search. This setups the materialized view in the background and more.
      */
     public void init() {}
+
+    /**
+     * Disposes this @LayeredSearch by also cleaning up temporary tables in the database.
+     */
+    public void dispose() throws DatabaseOperationException {
+        dropAllTables();
+    }
 
     /**
      * Takes in a layer of any depth and updates the corresponding layered search with the information.
@@ -106,6 +109,13 @@ public class LayeredSearch {
     private boolean executeSingleLayerOnDb(LayeredSearchLayerDto layer) throws DatabaseOperationException {
         dropTable(buildLayerTableName(layer.getDepth()));
         createSearchTableIfNotExists(buildLayerTableName(layer.getDepth()));
+
+        var insertTemplateQuery = "INSERT INTO search.{NAME} (id, document_id, begin_end) \n" +
+                "SELECT p.id, p.document_id, jsonb_agg(jsonb_build_array({ALIAS}.beginn, {ALIAS}.endd)) AS begin_end \n" +
+                "FROM {SOURCE} p\n" +
+                "JOIN {TABLE} {ALIAS} ON {ALIAS}.page_id = p.id\n" +
+                "WHERE {CONDITION} \n" +
+                "ON CONFLICT (id) DO NOTHING;";
         var conditionEnding = "GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
         var statements = new ArrayList<String>();
 
@@ -113,7 +123,7 @@ public class LayeredSearch {
             var sql = insertTemplateQuery;
             sql = sql.replace("{NAME}", buildLayerTableName(layer.getDepth()));
             sql = sql.replace("{ALIAS}", "a");
-            sql = sql.replace("{SOURCE}", layer.getDepth() == 1 ? "page" : "temp." + buildLayerTableName(layer.getDepth() - 1));
+            sql = sql.replace("{SOURCE}", layer.getDepth() == 1 ? "page" : "search." + buildLayerTableName(layer.getDepth() - 1));
 
             if (slot.getType() == LayeredSearchSlotType.TAXON) {
                 sql = sql.replace("{TABLE}", "biofidtaxon");
@@ -131,7 +141,7 @@ public class LayeredSearch {
                                 (ex) -> logger.error("Error fetching the biofid ids of a specific rank.", ex));
                         if (idsOfRank == null || idsOfRank.isEmpty()) continue;
 
-                        var condition = "a.{RANK_NAME} IN ({ID_LIST}) " + conditionEnding;
+                        var condition = "a.{RANK_NAME} IN ({ID_LIST}) AND a.page_id is not null " + conditionEnding;
                         condition = condition.replace("{RANK_NAME}", fullRankName);
                         condition = condition.replace("{ID_LIST}", String.join(",", idsOfRank.stream().map(i -> "'" + i + "'").toList()));
 
@@ -142,7 +152,7 @@ public class LayeredSearch {
                 }
 
                 // If it's not a taxon command, then we are just looking for taxons by their primary name
-                var condition = "a.primaryname = E'{VALUE}' " + conditionEnding;
+                var condition = "a.primaryname = E'{VALUE}' AND a.page_id is not null " + conditionEnding;
                 condition = condition.replace("{VALUE}", slot.getCleanedValue());
                 var statement = sql.replace("{CONDITION}", condition);
                 statements.add(statement);
@@ -156,7 +166,7 @@ public class LayeredSearch {
                     var from = split[0].trim();
                     var to = split[1].trim();
 
-                    var condition = "a.year >= {FROM} and a.year <= {TO} " + conditionEnding;
+                    var condition = "a.year >= {FROM} and a.year <= {TO} AND a.page_id is not null " + conditionEnding;
                     condition = condition.replace("{FROM}", from);
                     condition = condition.replace("{TO}", to);
                     var statement = sql.replace("{CONDITION}", condition);
@@ -172,7 +182,7 @@ public class LayeredSearch {
                         var unitName = StringUtils.GetFullTimeUnitByCode(possibleCommand.replace("::", "")).toLowerCase();
                         var value = slot.getValue().substring(3);
 
-                        var condition = "a.{UNIT_NAME} = {VALUE} " + conditionEnding;
+                        var condition = "a.{UNIT_NAME} = {VALUE} AND a.page_id is not null " + conditionEnding;
                         condition = condition.replace("{UNIT_NAME}", unitName);
                         if(unitName.equals("year")) condition = condition.replace("{VALUE}", value);
                         else condition = condition.replace("{VALUE}", "'" + value + "'");
@@ -198,11 +208,11 @@ public class LayeredSearch {
     }
 
     private void createSearchTableIfNotExists(String name) throws DatabaseOperationException {
-        var query = "CREATE SCHEMA IF NOT EXISTS temp;\n" +
+        var query = "CREATE SCHEMA IF NOT EXISTS search;\n" +
                 "DO $$ \n" +
                 "BEGIN\n" +
-                "    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'temp' AND table_name = '{NAME}') THEN\n" +
-                "        CREATE TABLE temp.{NAME} (\n" +
+                "    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'search' AND table_name = '{NAME}') THEN\n" +
+                "        CREATE TABLE search.{NAME} (\n" +
                 "            id BIGINT PRIMARY KEY, \n" +
                 "            document_id BIGINT,\n" +
                 "            begin_end jsonb\n" +
@@ -214,7 +224,7 @@ public class LayeredSearch {
     }
 
     private void calculateLayerCount(LayeredSearchLayerDto layer) throws DatabaseOperationException {
-        var query = "SELECT COUNT(DISTINCT id) AS p_count, COUNT(DISTINCT document_id) as d_count FROM temp." + buildLayerTableName(layer.getDepth());
+        var query = "SELECT COUNT(DISTINCT id) AS p_count, COUNT(DISTINCT document_id) as d_count FROM search." + buildLayerTableName(layer.getDepth());
         var resultList = db.executeSqlWithReturn(query);
         if(resultList.isEmpty()) return;
         else{
@@ -224,8 +234,26 @@ public class LayeredSearch {
         }
     }
 
+    /**
+     * Drops all tables that start with the given searchId, so all depths of it.
+     */
+    private void dropAllTables() throws DatabaseOperationException {
+        var query = "DO $$ \n" +
+                "DECLARE \n" +
+                "    table_name TEXT;\n" +
+                "BEGIN\n" +
+                "    FOR table_name IN \n" +
+                "        SELECT tablename FROM pg_tables WHERE schemaname = 'search' AND tablename LIKE '{PREFIX}%'\n" +
+                "    LOOP\n" +
+                "        EXECUTE 'DROP TABLE IF EXISTS search.' || table_name || ' CASCADE';\n" +
+                "    END LOOP;\n" +
+                "END $$;";
+        query = query.replace("{PREFIX}", "layered_search_" + this.id);
+        db.executeSqlWithoutReturn(query);
+    }
+
     private void dropTable(String name) throws DatabaseOperationException {
-        var query = "DROP TABLE IF EXISTS temp.{NAME}";
+        var query = "DROP TABLE IF EXISTS search.{NAME}";
         query = query.replace("{NAME}", name);
         db.executeSqlWithoutReturn(query);
     }

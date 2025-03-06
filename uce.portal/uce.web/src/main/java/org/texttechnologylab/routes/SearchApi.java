@@ -51,7 +51,7 @@ public class SearchApi {
             }
 
             // Sort the current search state.
-            var activeSearchState = SessionManager.ActiveSearches.get(searchId);
+            var activeSearchState = (SearchState) SessionManager.ActiveSearches.get(searchId);
             activeSearchState.setOrder(SearchOrder.valueOf(order));
             activeSearchState.setOrderBy(OrderByColumn.valueOf(orderBy));
             Search search = new Search_DefaultImpl();
@@ -85,7 +85,7 @@ public class SearchApi {
             }
 
             // Get the next pages.
-            var activeSearchState = SessionManager.ActiveSearches.get(searchId);
+            var activeSearchState = (SearchState) SessionManager.ActiveSearches.get(searchId);
             Search search = new Search_DefaultImpl();
             if (activeSearchState.getSearchType() == SearchType.SEMANTICROLE) search = new Search_SemanticRoleImpl();
             search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
@@ -146,7 +146,7 @@ public class SearchApi {
             LayeredSearch layeredSearch = null;
             // If the layeredSearchId isn't empty, we need to apply the layered search as well.
             if (!layeredSearchId.isEmpty()) {
-                layeredSearch = SessionManager.ActiveLayeredSearches.get(layeredSearchId);
+                layeredSearch = (LayeredSearch) SessionManager.ActiveLayeredSearches.get(layeredSearchId);
                 if(layeredSearch != null){
                     layers = gson.fromJson(
                             requestBody.get("layers").toString(),
@@ -212,8 +212,10 @@ public class SearchApi {
             var searchId = requestBody.get("searchId").toString();
 
             // If there isn't an existing searchId, we create a new layeredSearch and cache it
-            var layeredSearch = SessionManager.ActiveLayeredSearches.get(searchId);
-            if (layeredSearch == null) {
+            LayeredSearch layeredSearch = null;
+            if(SessionManager.ActiveLayeredSearches.containsKey(searchId)){
+                layeredSearch = (LayeredSearch) SessionManager.ActiveLayeredSearches.get(searchId);
+            } else{
                 layeredSearch = new LayeredSearch(this.context, searchId);
                 layeredSearch.init();
                 SessionManager.ActiveLayeredSearches.put(layeredSearch.getId(), layeredSearch);

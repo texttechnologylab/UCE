@@ -105,7 +105,7 @@ let LayeredSearchHandler = (function () {
         $btn.closest('.layer').prepend($htmlTemplate);
         this.layers[depth].push($htmlTemplate);
         $btn.closest('.choose-layer-popup').toggle(50);
-        this.markLayersAsDirty(depth);
+        this.markLayersAsDirty(depth, false);
     }
 
     LayeredSearchHandler.prototype.buildApplicableLayers = function(applicableDepths){
@@ -159,7 +159,7 @@ let LayeredSearchHandler = (function () {
         });
     }
 
-    LayeredSearchHandler.prototype.markLayersAsDirty = function (depth) {
+    LayeredSearchHandler.prototype.markLayersAsDirty = function (depth, apply=true) {
         let applicableDepths = Object.keys(this.layers).filter(d => d >= depth);
         applicableDepths.forEach((d) => {
             let $layer = $('.layers-container .layer-container[data-depth="' + d + '"]');
@@ -167,10 +167,12 @@ let LayeredSearchHandler = (function () {
             $metadata.find('.document-hits').html('?');
             $metadata.find('.page-hits').html('?');
             $metadata.find('.apply-layer-btn').removeClass('applied');
-
-            // Automatic recalculation?
-            this.applyLayerSearch(d);
         });
+
+        // Automatic recalculation?
+        if (apply) {
+            this.applyLayerSearch(Math.max(...applicableDepths.map(d => parseInt(d, 10))));
+        }
     }
 
     LayeredSearchHandler.prototype.updateLayerResults = function (layerResults) {

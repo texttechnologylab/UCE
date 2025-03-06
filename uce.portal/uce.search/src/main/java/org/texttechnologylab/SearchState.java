@@ -13,10 +13,9 @@ import java.util.*;
 /**
  * A class that holds all states of a biofid search. We can use this class to serialize the search. It shouldn't hold any services.
  */
-public class SearchState {
+public class SearchState extends CacheItem {
     private UUID searchId;
-    private DateTime created;
-    private boolean cleanupNextCycle;
+    private final DateTime created;
     private boolean proModeActivated;
     /**
      * The raw search phrase
@@ -69,6 +68,8 @@ public class SearchState {
         this.created = DateTime.now();
     }
 
+    public void dispose(){ }
+
     public LayeredSearch getLayeredSearch() {
         return layeredSearch;
     }
@@ -88,7 +89,7 @@ public class SearchState {
 
     public String getSourceTable() {
         if(this.layeredSearch == null) return this.sourceTable;
-        return "temp";
+        return "search";
     }
 
     public void setSourceTable(String sourceTable) {
@@ -139,14 +140,6 @@ public class SearchState {
 
     public void setUceMetadataFilters(List<UCEMetadataFilterDto> uceMetadataFilters) {
         this.uceMetadataFilters = uceMetadataFilters;
-    }
-
-    public boolean isCleanupNextCycle() {
-        return cleanupNextCycle;
-    }
-
-    public void setCleanupNextCycle(boolean cleanupNextCycle) {
-        this.cleanupNextCycle = cleanupNextCycle;
     }
 
     public String getPossibleSnippetOfDocumentIdx(Integer idx) {
