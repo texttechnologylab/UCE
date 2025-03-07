@@ -66,6 +66,12 @@ public class App {
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
         logger.info("Loaded application context and services.");
 
+        // Cleanup temporary db fragments for the LayeredSearch
+        ExceptionUtils.tryCatchLog(
+                () ->LayeredSearch.CleanupScheme(context.getBean(PostgresqlDataInterface_Impl.class)),
+                (ex) -> logger.warn("Error while trying to cleanup the LayeredSearch temporary schema.", ex));
+        logger.info("Cleanup temporary LayeredSearch tables.");
+
         // Load in and test the language translation objects to handle multiple languages
         logger.info("Testing the language resources:");
         var languageResource = new LanguageResources("en-EN");

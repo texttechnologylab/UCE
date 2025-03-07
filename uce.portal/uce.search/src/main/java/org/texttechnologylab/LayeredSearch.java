@@ -27,6 +27,20 @@ public class LayeredSearch extends CacheItem {
     private final JenaSparqlService jenaSparqlService;
     private static final Logger logger = LogManager.getLogger();
 
+    /**
+     * Cleans up and deletes all existing tables within the 'search' schema of the database.
+     */
+    public static void CleanupScheme(PostgresqlDataInterface_Impl db) throws DatabaseOperationException {
+        var query = "DO $$ DECLARE\n" +
+                "    r RECORD;\n" +
+                "BEGIN\n" +
+                "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'search') LOOP\n" +
+                "        EXECUTE 'DROP TABLE IF EXISTS search.' || quote_ident(r.tablename) || ' CASCADE';\n" +
+                "    END LOOP;\n" +
+                "END $$;";
+        db.executeSqlWithoutReturn(query);
+    }
+
     public LayeredSearch(ApplicationContext serviceContext, String id) {
         this.id = id;
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);

@@ -148,6 +148,8 @@
                                     data-hasembeddings="${corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()?c}"
                                     data-hastopicdist="${corpusVm.getCorpusConfig().getOther().isAvailableOnFrankfurtUniversityCollection()?c}"
                                     data-hasragbot="${corpusVm.getCorpusConfig().getOther().isEnableRAGBot()?c}"
+                                    data-hastaxonannotations="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isAnnotated()?c}"
+                                    data-hastimeannotations="${corpusVm.getCorpusConfig().getAnnotations().isTime()?c}"
                                     data-sparqlalive="${isSparqlAlive?c}"
                                     data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
                         </#list>

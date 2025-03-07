@@ -78,6 +78,8 @@ $('body').on('change', '#corpus-select', function () {
     const hasEmbeddings = selectedOption.getAttribute("data-hasembeddings");
     const hasRagBot = selectedOption.getAttribute("data-hasragbot");
     const hasTopicDist = selectedOption.getAttribute("data-hastopicdist");
+    const hasTimeAnnotations = selectedOption.getAttribute("data-hastimeannotations");
+    const hasTaxonAnnotations = selectedOption.getAttribute("data-hastaxonannotations");
     const oldCorpusId = selectedCorpus;
     selectedCorpus = parseInt(selectedOption.getAttribute("data-id"));
     if(oldCorpusId !== selectedCorpus){
@@ -87,10 +89,6 @@ $('body').on('change', '#corpus-select', function () {
 
     if (hasSr === 'true') $('.open-sr-builder-btn').show(50);
     else $('.open-sr-builder-btn').hide(50);
-
-    // The taxonomy tree will maybe be removed. Just hide it always for now.
-    //if (hasBiofidOnthology === 'true' && sparqlAlive === 'true') $('.taxonomy-tree-include').show();
-    //else $('.taxonomy-tree-include').hide();
 
     if (hasEmbeddings === 'true') $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').show();
     else $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').hide();
@@ -103,6 +101,16 @@ $('body').on('change', '#corpus-select', function () {
         if($(this).data('id') === selectedCorpus) $(this).show();
         else $(this).hide();
     })
+
+    // Update the layered search. That requires annotations and without them, is useless.
+    if(hasTaxonAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').show();
+    else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
+
+    if(hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
+    else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
+
+    if(hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false') $('.open-layered-search-builder-btn').hide();
+    else $('.open-layered-search-builder-btn').show();
 
     updateSearchHistoryUI();
 })

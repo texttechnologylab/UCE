@@ -67,8 +67,8 @@
                                                     class="fas fa-tenge"></i></a>
                                         <a class="rounded-a mt-0 ml-1 mr-1" data-type="TIME"><i
                                                     class="fas fa-clock"></i></a>
-                                        <a class="rounded-a mt-0 ml-1 mr-1" data-type="LOCATION"><i
-                                                    class="fas fa-map-marker-alt"></i></a>
+                                        <!--<a class="rounded-a mt-0 ml-1 mr-1" data-type="LOCATION"><i
+                                                    class="fas fa-map-marker-alt"></i></a>-->
                                     </div>
                                 </div>
                             </div>

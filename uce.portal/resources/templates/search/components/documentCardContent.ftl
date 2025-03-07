@@ -22,10 +22,15 @@
                    data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                     <i class="m-0 fas fa-book-open"></i></a>
             </div>
-            <a class="open-document clickable flexed align-items-baseline" data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
-                <h6 class="title mb-0">${document.getDocumentTitle()}</h6>
-                <label class="xsmall-font ml-1 text mb-0 font-italic">(${document.getDocumentId()})</label>
-            </a>
+            <div class="flexed align-items-center wrapped ml-2 w-100">
+                <a class="open-document mr-2 clickable flexed align-items-center wrapped mb-1"
+                   data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
+                    <h6 class="title mb-0">${document.getDocumentTitle()}</h6>
+                </a>
+                <label class="xsmall-font text mb-1 font-italic"><i class="fas fa-id-card-alt"></i>
+                    (${document.getDocumentId()})</label>
+            </div>
+
         </div>
     </div>
 
@@ -53,8 +58,10 @@
 <!-- topics -->
 <div class="flexed align-items-center justify-content-between w-100">
     <div class="flexed align-items-center">
-        <label class="text-secondary small-font mr-2"><i class="far fa-clock mr-1"></i> ${document.getMetadataTitleInfo().getPublished()}</label>
-        <label class="text-secondary small-font mr-2"><i class="fas fa-pen-nib mr-1"></i> ${document.getMetadataTitleInfo().getAuthor()}</label>
+        <label class="text-secondary small-font mr-2"><i
+                    class="far fa-clock mr-1"></i> ${document.getMetadataTitleInfo().getPublished()}</label>
+        <label class="text-secondary small-font mr-2"><i
+                    class="fas fa-pen-nib mr-1"></i> ${document.getMetadataTitleInfo().getAuthor()}</label>
     </div>
     <div class="flexed align-items-center topic-list">
         <#if document.getDocumentTopicDistribution()?has_content>
