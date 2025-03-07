@@ -39,6 +39,11 @@ CREATE INDEX IF NOT EXISTS idx_document_id ON document (id);
 CREATE INDEX IF NOT EXISTS idx_page_document_id ON page (document_id);
 CREATE INDEX IF NOT EXISTS idx_document_corpusid ON document (corpusid) INCLUDE (id);
 
+-- Since we look for annotations a lot:
+CREATE INDEX IF NOT EXISTS idx_namedentity_document_id ON namedentity (document_id);
+CREATE INDEX IF NOT EXISTS idx_time_document_id ON time (document_id);
+CREATE INDEX IF NOT EXISTS idx_taxon_document_id ON taxon (document_id);
+
 -- For the semantic role labels
 CREATE INDEX IF NOT EXISTS idx_srl_relationtype_trgm ON srlink USING gin (relationtype gin_trgm_ops); 
 

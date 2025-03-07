@@ -1,6 +1,10 @@
 package org.texttechnologylab.models.corpus;
 
 import org.hibernate.Hibernate;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.Filter;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
@@ -33,7 +37,8 @@ public class Document extends ModelBase implements WikiModel {
     @Column(columnDefinition = "TEXT")
     private String fullTextCleaned;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
     @JoinColumn(name = "document_Id")
     private List<Page> pages;
 
@@ -66,7 +71,9 @@ public class Document extends ModelBase implements WikiModel {
     private List<BiofidTaxon> biofidTaxons;
 
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @BatchSize(size = 50)
     @JoinColumn(name = "document_Id")
+    @Filter(name="valueTypeFilter", condition = "valueType != 2") // Dont eagerly fetch the json metadata. That is way too costly probably.
     private List<UCEMetadata> uceMetadata;
 
     @OneToMany(cascade = CascadeType.ALL)

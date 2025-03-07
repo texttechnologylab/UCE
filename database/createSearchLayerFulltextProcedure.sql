@@ -29,11 +29,13 @@ DECLARE
     time_temp text[][];
     taxons_temp text[][];
     snippets_temp text[];
-	additional_join TEXT := '';
+	additional_join_1 TEXT := '';
+	additional_join_2 TEXT := '';
+	order_by_clause TEXT := '';
 BEGIN
     -- Ensure PostgreSQL uses indexes and has enough memory
     SET enable_seqscan = OFF;
-    SET work_mem = '4096MB';
+    SET work_mem = '128MB';
 
     -- If input2 is NULL or empty, disable TsVector search
     IF input2 IS NULL OR input2 = '' THEN
@@ -44,9 +46,20 @@ BEGIN
     IF order_direction NOT IN ('ASC', 'DESC') THEN
         RAISE EXCEPTION 'Invalid order_direction: %', order_direction;
     END IF;
+	
+	-- Construct ORDER BY clause dynamically
+    IF order_by_column = 'rank' THEN
+        order_by_clause := FORMAT('ORDER BY pr.rank %s', order_direction);
+    ELSIF order_by_column = 'documenttitle' THEN
+        order_by_clause := FORMAT('ORDER BY pr.documenttitle %s', order_direction);
+    ELSE
+        order_by_clause := 'ORDER BY pr.rank DESC';  -- Default ordering
+    END IF;
     
+	-- Check what source we take, the normal page or a layered search table.
 	IF source_table != 'page' THEN
-        additional_join := FORMAT('INNER JOIN %I.%I t ON um.document_id = t.document_id', schema_name, source_table);
+        additional_join_1 := FORMAT('INNER JOIN %I.%I t ON um.document_id = t.document_id', source_table, schema_name);
+        additional_join_2 := FORMAT('INNER JOIN %I.%I t ON p.id = t.id', source_table, schema_name);
     END IF;
 	
     -- Construct the full query dynamically
@@ -58,21 +71,19 @@ BEGIN
                 (filter->>''valueType'')::text AS value_type
             FROM jsonb_array_elements($1) AS filter
         ),
-        filter_matches AS (
-            SELECT DISTINCT um.document_id
-            FROM ucemetadata um
-            JOIN document d ON um.document_id = d.id
-		    %s
-            JOIN expanded_filters ef ON (
-                (ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
-                AND (ef.key IS NULL OR um.key = ef.key) 
-                AND (ef.value IS NULL OR um.value = ef.value)
-            )
-            WHERE um.valueType != 2  -- JSON is not filterable
-              AND d.corpusid = $2
-            GROUP BY um.document_id
-            HAVING COUNT(*) = (SELECT COUNT(*) FROM expanded_filters)
-        ),
+		filter_matches AS (
+			SELECT um.document_id
+			FROM expanded_filters ef
+			JOIN ucemetadata um ON 
+				(ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
+				AND (ef.key IS NULL OR um.key = ef.key) 
+				AND (ef.value IS NULL OR um.value = ef.value)
+				AND um.valueType != 2
+			JOIN document d ON um.document_id = d.id AND d.corpusid = $2
+			%s -- additional_join_1
+			GROUP BY um.document_id
+			HAVING COUNT(DISTINCT ef.key) = (SELECT COUNT(*) FROM expanded_filters)
+		),
         page_ranked AS (
             SELECT 
                 p.document_id AS doc_id, 
@@ -88,7 +99,7 @@ BEGIN
                 END AS rank,
                 d.documenttitle
             FROM page p
-			%s
+			%s	
             JOIN document d ON d.id = p.document_id
             WHERE (
                 ($3 AND $4 IS NOT NULL AND $4 <> '''' AND p.textsearch @@ to_tsquery(''simple'', $4))
@@ -105,22 +116,8 @@ BEGIN
                 pr.rank,
                 pr.documenttitle
             FROM page_ranked pr
-            ORDER BY 
-                CASE 
-                    WHEN $4 IS NOT NULL AND $4 <> '''' THEN 
-                        CASE 
-                            WHEN $6 = ''rank'' AND $7 = ''ASC'' THEN pr.rank
-                            WHEN $6 = ''documenttitle'' AND $7 = ''ASC'' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle ASC)
-                        END
-                END ASC,
-                CASE 
-                    WHEN $4 IS NOT NULL AND $4 <> '''' THEN 
-                        CASE 
-                            WHEN $6 = ''rank'' AND $7 = ''DESC'' THEN pr.rank
-                            WHEN $6 = ''documenttitle'' AND $7 = ''DESC'' THEN ROW_NUMBER() OVER (ORDER BY pr.documenttitle DESC)
-                        END
-                END DESC
-            LIMIT $8 OFFSET $9
+            %s
+            LIMIT $6 OFFSET $7
         ),
         counted_documents AS (
             SELECT COUNT(*) AS total_count FROM page_ranked
@@ -192,18 +189,18 @@ BEGIN
             GROUP BY ta.id, ta.coveredtext, ta.valuee, ta.document_id
         )
         SELECT 
-            CASE WHEN $10 THEN (SELECT total_count FROM counted_documents) ELSE NULL END,
+            CASE WHEN $8 THEN (SELECT total_count FROM counted_documents) ELSE NULL END,
             ARRAY(SELECT id FROM ranked_documents),
             ARRAY(SELECT rank FROM ranked_documents),
-            CASE WHEN $10 THEN ARRAY(SELECT named_entity FROM extracted_entities) ELSE ARRAY[]::text[][] END,
-            CASE WHEN $10 THEN ARRAY(SELECT * FROM extracted_times) ELSE ARRAY[]::text[][] END,
-            CASE WHEN $10 THEN ARRAY(SELECT * FROM extracted_taxons) ELSE ARRAY[]::text[][] END,
+            CASE WHEN $8 THEN ARRAY(SELECT named_entity FROM extracted_entities) ELSE ARRAY[]::text[][] END,
+            CASE WHEN $8 THEN ARRAY(SELECT * FROM extracted_times) ELSE ARRAY[]::text[][] END,
+            CASE WHEN $8 THEN ARRAY(SELECT * FROM extracted_taxons) ELSE ARRAY[]::text[][] END,
             ARRAY(SELECT unnest(snippets) FROM ranked_documents)
-        ', additional_join, additional_join);
+        ', additional_join_1, additional_join_2, order_by_clause);
 
     -- Execute the query with safe parameter passing
     EXECUTE query
-    USING uce_metadata_filters, corpus_id, useTsVector, input2, uce_metadata_filters, order_by_column, order_direction, take_count, offset_count, count_all
+    USING uce_metadata_filters, corpus_id, useTsVector, input2, uce_metadata_filters, take_count, offset_count, count_all
     INTO total_count_temp, document_ids_temp, document_ranks_temp, named_entities_temp, time_temp, taxons_temp, snippets_temp;
 
     -- Set output variables

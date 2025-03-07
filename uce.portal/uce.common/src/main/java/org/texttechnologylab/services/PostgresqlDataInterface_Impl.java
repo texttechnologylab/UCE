@@ -286,12 +286,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             // order the documentIds passed in were since they could have been sorted!
             var sortedDocs = new Document[documentIds.size()];
             for (var id : documentIds) {
-                var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
                 // doc cannot be null.
-                Hibernate.initialize(doc.getPages());
-                Hibernate.initialize(doc.getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON));
+                var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
+                if(doc == null) continue;
+
+                // We EAGERLY load those for now and see how that impacts performance.
+                // Hibernate.initialize(doc.getPages());
+                // Hibernate.initialize(doc.getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON));
+
                 sortedDocs[documentIds.indexOf(id)] = doc;
             }
+
             return Arrays.stream(sortedDocs).filter(Objects::nonNull).toList();
         });
     }
@@ -359,7 +364,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                           String sourceTable) throws DatabaseOperationException {
 
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
-
+            System.out.println("Start search");
             DocumentSearchResult search = null;
             try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() +
                     "(?::bigint, ?::text[], ?::text, ?::integer, ?::integer, ?::boolean, ?::text, ?::text, ?::jsonb, ?::boolean, ?::text, ?::text)}")) {
@@ -384,6 +389,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 storedProcedure.setString(12, schema);
 
                 var result = storedProcedure.executeQuery();
+                System.out.println("Finished search.");
                 while (result.next()) {
                     var documentCount = result.getInt("total_count_out");
                     var documentIds = new ArrayList<Integer>();
@@ -415,6 +421,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         search.setSearchRanks(documentRanks);
                     }
                 }
+
                 return search;
             }
         }));

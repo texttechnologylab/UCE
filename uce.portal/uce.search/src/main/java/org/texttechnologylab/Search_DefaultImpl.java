@@ -115,6 +115,7 @@ public class Search_DefaultImpl implements Search {
      * @return
      */
     public SearchState initSearch() throws SQLGrammarException {
+        //var countAll = !this.searchState.getSearchQuery().isEmpty();
         DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
         if (documentSearchResult == null)
             throw new NullPointerException("Document Init Search returned null - not empty.");
@@ -122,6 +123,8 @@ public class Search_DefaultImpl implements Search {
         var documents = ExceptionUtils.tryCatchLog(() -> db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()),
                 (ex) -> logger.error("Error getting many documents by a list of ids in the search init. " +
                         "Search can't be created hence.", ex));
+        System.out.println("Fetched documents.");
+
         if (documents == null) return null;
         searchState.setCurrentDocuments(documents);
         searchState.setCurrentDocumentHits(documentSearchResult.getDocumentHits());

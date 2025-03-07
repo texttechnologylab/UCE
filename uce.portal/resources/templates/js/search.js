@@ -7,7 +7,7 @@ function startNewSearch(searchInput, reloadCorpus = true) {
     if (searchInput === undefined) {
         return;
     }
-    console.log('New Search with input: ' + searchInput);
+
     $('.search-menu-div').hide();
     $('.view[data-id="search"] .loader-container').first().fadeIn(150);
     // Get the selected corpus
