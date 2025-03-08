@@ -6,9 +6,7 @@ import org.hibernate.exception.SQLGrammarException;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.config.CorpusConfig;
-import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
-import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.services.JenaSparqlService;
@@ -23,7 +21,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.net.URISyntaxException;
-import java.sql.Array;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -128,7 +125,7 @@ public class Search_DefaultImpl implements Search {
         if (documents == null) return null;
         searchState.setCurrentDocuments(documents);
         searchState.setCurrentDocumentHits(documentSearchResult.getDocumentHits());
-        searchState.setDocumentIdxToSnippet(documentSearchResult.getSearchSnippets());
+        searchState.setDocumentIdxToSnippets(documentSearchResult.getSearchSnippets());
         searchState.setDocumentIdxToRank(documentSearchResult.getSearchRanks());
         searchState.setTotalHits(documentSearchResult.getDocumentCount());
         searchState.setFoundNamedEntities(documentSearchResult.getFoundNamedEntities());
@@ -179,7 +176,7 @@ public class Search_DefaultImpl implements Search {
         if (documents == null) return searchState;
         searchState.setCurrentDocuments(documents);
         searchState.setCurrentDocumentHits(documentSearchResult.getDocumentHits());
-        searchState.setDocumentIdxToSnippet(documentSearchResult.getSearchSnippets());
+        searchState.setDocumentIdxToSnippets(documentSearchResult.getSearchSnippets());
         searchState.setDocumentIdxToRank(documentSearchResult.getSearchRanks());
         return searchState;
     }

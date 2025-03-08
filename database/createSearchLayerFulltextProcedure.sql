@@ -29,9 +29,12 @@ DECLARE
     time_temp text[][];
     taxons_temp text[][];
     snippets_temp text[];
-	additional_join_1 TEXT := '';
-	additional_join_2 TEXT := '';
-	order_by_clause TEXT := '';
+    additional_join_1 TEXT := '';
+    additional_join_2 TEXT := '';
+    order_by_clause TEXT := '';
+    ts_function TEXT;
+    ts_condition TEXT;
+    snippet_query TEXT;
 BEGIN
     -- Ensure PostgreSQL uses indexes and has enough memory
     SET enable_seqscan = OFF;
@@ -46,8 +49,8 @@ BEGIN
     IF order_direction NOT IN ('ASC', 'DESC') THEN
         RAISE EXCEPTION 'Invalid order_direction: %', order_direction;
     END IF;
-	
-	-- Construct ORDER BY clause dynamically
+
+    -- Construct ORDER BY clause dynamically
     IF order_by_column = 'rank' THEN
         order_by_clause := FORMAT('ORDER BY pr.rank %s', order_direction);
     ELSIF order_by_column = 'documenttitle' THEN
@@ -55,13 +58,49 @@ BEGIN
     ELSE
         order_by_clause := 'ORDER BY pr.rank DESC';  -- Default ordering
     END IF;
-    
-	-- Check what source we take, the normal page or a layered search table.
-	IF source_table != 'page' THEN
-        additional_join_1 := FORMAT('INNER JOIN %I.%I t ON um.document_id = t.document_id', source_table, schema_name);
-        additional_join_2 := FORMAT('INNER JOIN %I.%I t ON p.id = t.id', source_table, schema_name);
+
+    -- Determine the appropriate search function
+    IF useTsVector THEN
+        ts_function := 'to_tsquery(''simple'', $4)';
+    ELSE
+        ts_function := 'websearch_to_tsquery(''simple'', $4)';
     END IF;
-	
+
+    -- Define snippet selection logic
+	IF input2 IS NULL OR input2 = '' THEN
+		snippet_query := 'SELECT jsonb_agg(jsonb_build_object(
+							''snippet'', LEFT(p.coveredtext, 400),
+							''pageId'', p.id
+						  ) ORDER BY p.id ASC)
+						  FROM (SELECT p.id, p.coveredtext 
+								FROM page p 
+								WHERE p.document_id = lp.doc_id
+								ORDER BY p.id ASC
+								LIMIT 5) p';
+	ELSE
+		snippet_query := 'SELECT jsonb_agg(jsonb_build_object(
+							''snippet'', ts_headline(
+								''simple'',
+								p.coveredtext, 
+								' || ts_function || ',
+								''StartSel=<b>, StopSel=</b>, MaxWords=60, MinWords=35, MaxFragments=3, FragmentDelimiter=" [...] "''
+							),
+							''pageId'', p.id
+						  ) ORDER BY rank_score DESC)
+						  FROM (SELECT p.id, p.coveredtext, ts_rank_cd(p.textsearch, ' || ts_function || ') AS rank_score
+								FROM page p
+								WHERE p.document_id = lp.doc_id 
+								AND p.textsearch @@ ' || ts_function || '
+								ORDER BY rank_score DESC
+								LIMIT 5) p';
+	END IF;
+
+    -- Check source table
+    IF source_table != 'page' THEN
+        additional_join_1 := FORMAT('INNER JOIN %I.%I t ON um.document_id = t.document_id', schema_name, source_table);
+        additional_join_2 := FORMAT('INNER JOIN %I.%I t ON p.id = t.id', schema_name, source_table);
+    END IF;
+
     -- Construct the full query dynamically
     query := FORMAT('
         WITH expanded_filters AS (
@@ -71,44 +110,41 @@ BEGIN
                 (filter->>''valueType'')::text AS value_type
             FROM jsonb_array_elements($1) AS filter
         ),
-		filter_matches AS (
-			SELECT um.document_id
-			FROM expanded_filters ef
-			JOIN ucemetadata um ON 
-				(ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
-				AND (ef.key IS NULL OR um.key = ef.key) 
-				AND (ef.value IS NULL OR um.value = ef.value)
-				AND um.valueType != 2
-			JOIN document d ON um.document_id = d.id AND d.corpusid = $2
-			%s -- additional_join_1
-			GROUP BY um.document_id
-			HAVING COUNT(DISTINCT ef.key) = (SELECT COUNT(*) FROM expanded_filters)
-		),
-        page_ranked AS (
+        filter_matches AS (
+            SELECT um.document_id
+            FROM expanded_filters ef
+            JOIN ucemetadata um ON 
+                (ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
+                AND (ef.key IS NULL OR um.key = ef.key) 
+                AND (ef.value IS NULL OR um.value = ef.value)
+                AND um.valueType != 2
+            JOIN document d ON um.document_id = d.id AND d.corpusid = $2
+            %s
+            GROUP BY um.document_id
+            HAVING COUNT(DISTINCT ef.key) = (SELECT COUNT(*) FROM expanded_filters)
+        ),
+        ranked_pages AS (
             SELECT 
                 p.document_id AS doc_id, 
-                CASE 
-                    WHEN $3 AND $4 IS NOT NULL AND $4 <> '''' 
-                    THEN MAX(ts_rank_cd(p.textsearch, 
-                        CASE 
-                            WHEN $3 THEN to_tsquery(''simple'', $4) 
-                            ELSE websearch_to_tsquery(''simple'', $4) 
-                        END
-                    )) 
-                    ELSE NULL 
-                END AS rank,
+                ts_rank_cd(p.textsearch, %s) AS rank,
                 d.documenttitle
             FROM page p
-			%s	
+            %s
             JOIN document d ON d.id = p.document_id
             WHERE (
-                ($3 AND $4 IS NOT NULL AND $4 <> '''' AND p.textsearch @@ to_tsquery(''simple'', $4))
-                OR (NOT $3 AND $4 IS NOT NULL AND $4 <> '''' AND p.textsearch @@ websearch_to_tsquery(''simple'', $4))
+                ($4 IS NOT NULL AND $4 <> '''' AND p.textsearch @@ %s)
                 OR ($4 IS NULL OR $4 = '''')
             )
             AND ($5 IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
             AND d.corpusid = $2
-            GROUP BY p.document_id, d.documenttitle
+        ),
+        page_ranked AS (
+            SELECT 
+                doc_id,
+                MAX(rank) AS rank, -- Get highest rank per document
+                documenttitle
+            FROM ranked_pages
+            GROUP BY doc_id, documenttitle
         ),
         limited_pages AS (
             SELECT 
@@ -122,65 +158,18 @@ BEGIN
         counted_documents AS (
             SELECT COUNT(*) AS total_count FROM page_ranked
         ),
-		ranked_documents AS (
-			SELECT 
-				d.id,
-				lp.rank,
-				CASE 
-					WHEN $4 IS NULL OR $4 = '''' THEN 
-						JSONB_AGG(DISTINCT jsonb_build_object(
-							''snippet'', LEFT(p.coveredtext, 400),
-							''pageId'', p.id
-						))
-					WHEN $3 THEN 
-						JSONB_AGG(DISTINCT (
-							SELECT jsonb_build_object(
-								''snippet'', ts_headline(
-									''simple'',
-									p.coveredtext, 
-									to_tsquery(''simple'', $4),
-									''StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "''
-								),
-								''pageId'', p.id
-							)
-							FROM page p
-							WHERE p.document_id = lp.doc_id 
-							AND p.textsearch @@ to_tsquery(''simple'', $4)
-							ORDER BY ts_rank_cd(p.textsearch, to_tsquery(''simple'', $4)) DESC
-							LIMIT 1
-						))
-					ELSE 
-						JSONB_AGG(DISTINCT (
-							SELECT jsonb_build_object(
-								''snippet'', ts_headline(
-									''simple'',
-									p.coveredtext, 
-									websearch_to_tsquery(''simple'', $4),
-									''StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "''
-								),
-								''pageId'', p.id
-							)
-							FROM page p
-							WHERE p.document_id = lp.doc_id 
-							AND p.textsearch @@ websearch_to_tsquery(''simple'', $4)
-							ORDER BY ts_rank_cd(p.textsearch, websearch_to_tsquery(''simple'', $4)) DESC
-							LIMIT 1
-						))
-				END AS snippets
-			FROM limited_pages lp
-			JOIN document d ON d.id = lp.doc_id
-			JOIN page p ON p.document_id = lp.doc_id
-			GROUP BY d.id, lp.rank
-			ORDER BY lp.rank DESC
-		),
+        ranked_documents AS (
+            SELECT 
+                d.id,
+                lp.rank,
+                JSONB_AGG((' || snippet_query || ')) AS snippets
+            FROM limited_pages lp
+            JOIN document d ON d.id = lp.doc_id
+            GROUP BY d.id, lp.rank
+            ORDER BY lp.rank DESC
+        ),
         extracted_entities AS (
-            SELECT ARRAY[
-                ne.id::text, 
-                ne.coveredtext, 
-                COUNT(ne.id)::text, 
-                ne.typee, 
-                ne.document_id::text
-            ] AS named_entity
+            SELECT ARRAY[ne.id::text, ne.coveredtext, COUNT(ne.id)::text, ne.typee, ne.document_id::text] 
             FROM ranked_documents rd
             JOIN namedentity ne ON rd.id = ne.document_id
             GROUP BY ne.id, ne.coveredtext, ne.typee, ne.document_id
@@ -201,18 +190,16 @@ BEGIN
             CASE WHEN $8 THEN (SELECT total_count FROM counted_documents) ELSE NULL END,
             ARRAY(SELECT id FROM ranked_documents),
             ARRAY(SELECT rank FROM ranked_documents),
-            CASE WHEN $8 THEN ARRAY(SELECT named_entity FROM extracted_entities) ELSE ARRAY[]::text[][] END,
+            CASE WHEN $8 THEN ARRAY(SELECT * FROM extracted_entities) ELSE ARRAY[]::text[][] END,
             CASE WHEN $8 THEN ARRAY(SELECT * FROM extracted_times) ELSE ARRAY[]::text[][] END,
             CASE WHEN $8 THEN ARRAY(SELECT * FROM extracted_taxons) ELSE ARRAY[]::text[][] END,
             ARRAY(SELECT snippets FROM ranked_documents)
-        ', additional_join_1, additional_join_2, order_by_clause);
+    ', additional_join_1, ts_function, additional_join_2, ts_function, order_by_clause);
 
-    -- Execute the query with safe parameter passing
     EXECUTE query
     USING uce_metadata_filters, corpus_id, useTsVector, input2, uce_metadata_filters, take_count, offset_count, count_all
     INTO total_count_temp, document_ids_temp, document_ranks_temp, named_entities_temp, time_temp, taxons_temp, snippets_temp;
 
-    -- Set output variables
     total_count_out := total_count_temp;
     document_ids := document_ids_temp;
     document_ranks := document_ranks_temp;

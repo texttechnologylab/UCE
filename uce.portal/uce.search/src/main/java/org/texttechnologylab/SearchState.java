@@ -59,7 +59,7 @@ public class SearchState extends CacheItem {
      */
     @Obsolete
     private List<Integer> currentDocumentHits;
-    private HashMap<Integer, PageSnippet> documentIdxToSnippet;
+    private HashMap<Integer, ArrayList<PageSnippet>> documentIdxToSnippet;
     private HashMap<Integer, Float> documentIdxToRank;
 
     public SearchState(SearchType searchType) {
@@ -80,7 +80,7 @@ public class SearchState extends CacheItem {
 
     public String getDbSchema() {
         if(this.layeredSearch == null) return this.dbSchema;
-        return this.layeredSearch.getFinalLayerTableName();
+        return "search";
     }
 
     public void setDbSchema(String dbSchema) {
@@ -89,7 +89,7 @@ public class SearchState extends CacheItem {
 
     public String getSourceTable() {
         if(this.layeredSearch == null) return this.sourceTable;
-        return "search";
+        return this.layeredSearch.getFinalLayerTableName();
     }
 
     public void setSourceTable(String sourceTable) {
@@ -142,7 +142,7 @@ public class SearchState extends CacheItem {
         this.uceMetadataFilters = uceMetadataFilters;
     }
 
-    public PageSnippet getPossibleSnippetOfDocumentIdx(Integer idx) {
+    public ArrayList<PageSnippet> getPossibleSnippetsOfDocumentIdx(Integer idx) {
         if (this.documentIdxToSnippet != null && this.documentIdxToSnippet.containsKey(idx))
             return this.documentIdxToSnippet.get(idx);
         return null;
@@ -152,7 +152,7 @@ public class SearchState extends CacheItem {
         return this.created;
     }
 
-    public void setDocumentIdxToSnippet(HashMap<Integer, PageSnippet> map) {
+    public void setDocumentIdxToSnippets(HashMap<Integer, ArrayList<PageSnippet>> map) {
         this.documentIdxToSnippet = map;
 
         // Whenever we set documents within a fulltext search, we should have found snippets.
@@ -160,10 +160,12 @@ public class SearchState extends CacheItem {
         if(searchLayers != null && searchLayers.contains(SearchLayer.FULLTEXT)){
             for(var i =0; i < this.currentDocuments.size(); i++){
                 var currentDoc = this.currentDocuments.get(i);
-                var pageSnippet = this.getPossibleSnippetOfDocumentIdx(i);
-                if(pageSnippet == null) continue;
-                var potentialPage = currentDoc.getPages().stream().filter(p -> p.getId() == pageSnippet.getPageId()).findFirst();
-                potentialPage.ifPresent(pageSnippet::setPage);
+                var pageSnippets = this.getPossibleSnippetsOfDocumentIdx(i);
+                if(pageSnippets == null) continue;
+                for(var page:pageSnippets){
+                    var potentialPage = currentDoc.getPages().stream().filter(p -> p.getId() == page.getPageId()).findFirst();
+                    potentialPage.ifPresent(page::setPage);
+                }
             }
         }
     }

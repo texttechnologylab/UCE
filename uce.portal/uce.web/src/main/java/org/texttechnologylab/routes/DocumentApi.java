@@ -142,6 +142,7 @@ public class DocumentApi {
 
     public Route getSingleDocumentReadView = ((request, response) -> {
         var model = new HashMap<String, Object>();
+        var gson = new Gson();
 
         var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
                 (ex) -> logger.error("Error: the url for the document reader requires an 'id' query parameter. " +
@@ -161,8 +162,9 @@ public class DocumentApi {
             if(searchId != null && SessionManager.ActiveSearches.containsKey(searchId)){
                 var activeSearchState = (SearchState)SessionManager.ActiveSearches.get(searchId);
                 // For SRL Search, there are no search tokens really. We will handle that exclusively later.
-                if(activeSearchState.getSearchType() != SearchType.SEMANTICROLE)
+                if(activeSearchState.getSearchType() != SearchType.SEMANTICROLE){
                     model.put("searchTokens", String.join("[TOKEN]", activeSearchState.getSearchTokens()));
+                }
             }
         } catch (Exception ex) {
             logger.error("Error creating the document reader view for document with id: " + id, ex);

@@ -12,7 +12,7 @@ public class DocumentSearchResult {
     private ArrayList<AnnotationSearchResult> foundNamedEntities;
     private ArrayList<AnnotationSearchResult> foundTimes;
     private ArrayList<AnnotationSearchResult> foundTaxons;
-    private HashMap<Integer, PageSnippet> searchSnippets;
+    private HashMap<Integer, ArrayList<PageSnippet>> searchSnippets;
     private HashMap<Integer, Float> searchRanks;
 
     public DocumentSearchResult(int documentCount,
@@ -29,11 +29,11 @@ public class DocumentSearchResult {
         this.searchRanks = searchRanks;
     }
 
-    public HashMap<Integer, PageSnippet> getSearchSnippets() {
+    public HashMap<Integer, ArrayList<PageSnippet>> getSearchSnippets() {
         return searchSnippets;
     }
 
-    public void setSearchSnippets(HashMap<Integer, PageSnippet> searchSnippets) {
+    public void setSearchSnippets(HashMap<Integer, ArrayList<PageSnippet>> searchSnippets) {
         this.searchSnippets = searchSnippets;
     }
 

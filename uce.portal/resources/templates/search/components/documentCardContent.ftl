@@ -23,10 +23,10 @@
                     <i class="m-0 fas fa-book-open"></i></a>
             </div>
             <div class="flexed align-items-center wrapped ml-2 w-100">
-                <a class="open-document mr-2 clickable flexed align-items-center wrapped mb-1"
-                   data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
+                <div class="open-document mr-2 clickable flexed align-items-center wrapped mb-1"
+                     data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                     <h6 class="title mb-0">${document.getDocumentTitle()}</h6>
-                </a>
+                </div>
                 <label class="xsmall-font text mb-1 font-italic"><i class="fas fa-id-card-alt"></i>
                     (${document.getDocumentId()})</label>
             </div>
@@ -84,41 +84,42 @@
     </div>
 </div>
 
-<div class="snippet-content h-100 position-relative">
-    <#if searchState??>
-        <p class="mb-0 small-font text font-italic mr-2 block-text">
-            <#assign snippet = searchState.getPossibleSnippetOfDocumentIdx(documentIdx)!>
-            <#if !snippet?has_content>
-                <#assign snippet = document.getFullTextSnippet(85)!>
+<#if searchState??>
+    <div class="snippets-container">
+        <#assign snippets = searchState.getPossibleSnippetsOfDocumentIdx(documentIdx)!>
+        <#if snippets?has_content>
+            <#list snippets as snippet>
+                <div class="snippet-content mt-1 mb-2 h-100 position-relative" data-id="${snippet?index}"
+                        <#if snippet?index != 0> style="display: none;" </#if>>
+                    <div class="small-font text font-italic mr-2 block-text">
+                        ${snippet.getSnippet()}
+
+                        <#if snippet.getPage()?has_content>
+                            <input type="hidden" value="${snippet.getPage().getCoveredText()}">
+                            <div class="inspect-page-btn hoverable clickable"
+                                 onclick="openInExpandedTextView('Page ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('input').val())">
+                                ${snippet.getPage().getPageNumber()}.<i class="ml-1 fas fa-file-alt"></i>
+                            </div>
+                        </#if>
+                    </div>
+                </div>
+            </#list>
+
+            <#if snippets?size gt 1>
+                <button class="toggle-snippets-btn btn small-font light-border w-100 mt-1 mb-2 color-prime">
+                    ${languageResource.get("more")} <i class="ml-1 fas fa-file-alt"></i>
+                </button>
             </#if>
+        </#if>
+    </div>
 
-            <!-- Get the list of search tokens -->
-            <!-- We used to manuall highlight the tokens here, which sucked. We now do it in the db -->
-            <#-- <#assign searchTokens = searchState.getSearchTokens()!> -->
-            <!-- Initialize the highlighted snippet -->
-            <#-- <#assign highlightedSnippet = snippet> -->
-            <!-- Loop through each search token and highlight it -->
-            <#-- <#list searchTokens as searchToken>
-                <#assign highlightedSnippet = highlightedSnippet?replace(searchToken, "<span class='highlighted-token'>${searchToken}</span>", "i")>
-            </#list>-->
-
-            <!-- Render the highlighted snippet -->
-            ${snippet.getSnippet()}...
-        </p>
-    <#else>
-        <p class="mb-0 small-font text font-italic mr-2 block-text">
+<#else>
+    <div class="snippet-content h-100 position-relative">
+        <div class="mb-0 small-font text font-italic mr-2 block-text">
             ${document.getFullTextSnippet(85)}...
-        </p>
-    </#if>
-
-    <#if snippet.getPage()?has_content>
-        <input type="hidden" value="${snippet.getPage().getCoveredText()}">
-        <div class="inspect-page-btn hoverable clickable"
-             onclick="openInExpandedTextView('Page ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('input').val())">
-            ${snippet.getPage().getPageNumber()}.<i class="ml-1 fas fa-file-alt"></i>
         </div>
-    </#if>
-</div>
+    </div>
+</#if>
 
 <!-- metadata if it exists -->
 <#if document.getUceMetadataWithoutJson()?size gt 0>

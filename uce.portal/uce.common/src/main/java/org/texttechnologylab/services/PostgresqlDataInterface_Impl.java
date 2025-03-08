@@ -411,13 +411,13 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         // The found text snippets.
                         var gson = new Gson();
                         var resultSet = result.getArray("snippets_found").getResultSet();
-                        var foundSnippets = new HashMap<Integer, PageSnippet>();
+                        var foundSnippets = new HashMap<Integer, ArrayList<PageSnippet>>();
                         // Snippets are the snippet text and the page_id to which this snippet belongs. They are json objects
                         while(resultSet.next()){
                             var idx = resultSet.getInt(1) - 1;
-                            ArrayList<PageSnippet> pageSnippet = gson.fromJson(
+                            ArrayList<ArrayList<PageSnippet>> pageSnippet = gson.fromJson(
                                     resultSet.getString(2),
-                                    new TypeToken<ArrayList<PageSnippet>>() {
+                                    new TypeToken<ArrayList<ArrayList<PageSnippet>>>() {
                                     }.getType());
                             foundSnippets.put(idx, pageSnippet.getFirst());
                         }

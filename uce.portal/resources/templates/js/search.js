@@ -324,6 +324,13 @@ $('body').on('click', '.sort-container .switch-search-layer-result-btn', functio
     $(`.search-result-container .list[data-layer=` + layer + ']').show();
 })
 
+$('body').on('click', '.document-card .snippets-container .toggle-snippets-btn', function(){
+    const $snippets = $(this).closest('.snippets-container').find('.snippet-content');
+    $snippets.each(function(){
+        if($(this).data('id') !== 0) $(this).toggle();
+    })
+})
+
 let currentFocusedDocumentId = -1;
 /**
  * Track the currently focused search card

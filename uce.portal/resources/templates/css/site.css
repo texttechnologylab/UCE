@@ -652,23 +652,22 @@ nav .selected-nav-btn.text::before {
     margin-bottom: 4rem;
     position: relative;
     border: gray 1px solid;
-    transform: scale(1.008);
+    /*transform: scale(1.008);*/
     transition: transform 0.5s ease;
     box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
 }
 
 .focused-document-card .snippet-content .inspect-page-btn{
-    border-color: gray !important;
+    border-color: darkgray !important;
 }
 
-.focused-document-card a{
+.focused-document-card .document-header a{
     border-color: gray !important;
     transform: scale(1.05, 1.05);
     transition: 0.25s;
 }
 
 .focused-document-card .snippet-content {
-    border-color: gray !important;
 }
 
 .document-card .document-header {
