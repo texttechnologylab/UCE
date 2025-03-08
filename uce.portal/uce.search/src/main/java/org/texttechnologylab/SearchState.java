@@ -35,8 +35,8 @@ public class SearchState extends CacheItem {
     private long corpusId;
     private CorpusConfig corpusConfig;
     private Integer totalHits;
-    private SearchOrder order = SearchOrder.ASC;
-    private OrderByColumn orderBy = OrderByColumn.DOCUMENTTITLE;
+    private SearchOrder order = SearchOrder.DESC;
+    private OrderByColumn orderBy = OrderByColumn.RANK;
     private ArrayList<AnnotationSearchResult> foundNamedEntities;
     private ArrayList<AnnotationSearchResult> foundTimes;
     private ArrayList<AnnotationSearchResult> foundTaxons;
