@@ -45,6 +45,7 @@ CREATE INDEX IF NOT EXISTS idx_document_corpusid ON document (corpusid) INCLUDE 
 CREATE INDEX IF NOT EXISTS idx_namedentity_document_id ON namedentity (document_id);
 CREATE INDEX IF NOT EXISTS idx_time_document_id ON time (document_id);
 CREATE INDEX IF NOT EXISTS idx_taxon_document_id ON taxon (document_id);
+CREATE INDEX IF NOT EXISTS idx_lemma_document_id ON lemma (document_id);
 
 -- For the semantic role labels
 CREATE INDEX IF NOT EXISTS idx_srl_relationtype_trgm ON srlink USING gin (relationtype gin_trgm_ops); 

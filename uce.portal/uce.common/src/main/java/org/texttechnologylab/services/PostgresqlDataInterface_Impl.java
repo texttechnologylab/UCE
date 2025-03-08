@@ -1,6 +1,7 @@
 package org.texttechnologylab.services;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.hibernate.*;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
@@ -408,9 +409,18 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     // This is only done for the fulltext search
                     if (layer == SearchLayer.FULLTEXT) {
                         // The found text snippets.
+                        var gson = new Gson();
                         var resultSet = result.getArray("snippets_found").getResultSet();
-                        var foundSnippets = new HashMap<Integer, String>();
-                        while (resultSet.next()) foundSnippets.put(resultSet.getInt(1) - 1, resultSet.getString(2));
+                        var foundSnippets = new HashMap<Integer, PageSnippet>();
+                        // Snippets are the snippet text and the page_id to which this snippet belongs. They are json objects
+                        while(resultSet.next()){
+                            var idx = resultSet.getInt(1) - 1;
+                            ArrayList<PageSnippet> pageSnippet = gson.fromJson(
+                                    resultSet.getString(2),
+                                    new TypeToken<ArrayList<PageSnippet>>() {
+                                    }.getType());
+                            foundSnippets.put(idx, pageSnippet.getFirst());
+                        }
                         search.setSearchSnippets(foundSnippets);
 
                         // And the ranks of each document.

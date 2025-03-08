@@ -594,6 +594,19 @@ nav .selected-nav-btn.text::before {
     color: var(--prime);
 }
 
+.document-card .snippet-content .inspect-page-btn{
+    position: absolute;
+    top:50%;
+    right:-15px;
+    transform: translate(50%, -50%);
+    padding: 6px;
+    border-radius: 6px;
+    border:lightgray 1px solid;
+    content: '';
+    background-color: ghostwhite;
+    color:var(--prime);
+}
+
 .document-card .embedding-text {
     font-size: small;
     font-style: italic;
@@ -642,6 +655,20 @@ nav .selected-nav-btn.text::before {
     transform: scale(1.008);
     transition: transform 0.5s ease;
     box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
+}
+
+.focused-document-card .snippet-content .inspect-page-btn{
+    border-color: gray !important;
+}
+
+.focused-document-card a{
+    border-color: gray !important;
+    transform: scale(1.05, 1.05);
+    transition: 0.25s;
+}
+
+.focused-document-card .snippet-content {
+    border-color: gray !important;
 }
 
 .document-card .document-header {
@@ -710,6 +737,7 @@ nav .selected-nav-btn.text::before {
 
 .document-card .snippet-content {
     padding: 12px;
+    border:1px transparent solid;
     border-radius: 6px;
     background-color: rgba(125, 125, 125, 0.15);
 }

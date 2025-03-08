@@ -59,7 +59,7 @@ public class SearchState extends CacheItem {
      */
     @Obsolete
     private List<Integer> currentDocumentHits;
-    private HashMap<Integer, String> documentIdxToSnippet;
+    private HashMap<Integer, PageSnippet> documentIdxToSnippet;
     private HashMap<Integer, Float> documentIdxToRank;
 
     public SearchState(SearchType searchType) {
@@ -142,7 +142,7 @@ public class SearchState extends CacheItem {
         this.uceMetadataFilters = uceMetadataFilters;
     }
 
-    public String getPossibleSnippetOfDocumentIdx(Integer idx) {
+    public PageSnippet getPossibleSnippetOfDocumentIdx(Integer idx) {
         if (this.documentIdxToSnippet != null && this.documentIdxToSnippet.containsKey(idx))
             return this.documentIdxToSnippet.get(idx);
         return null;
@@ -152,8 +152,20 @@ public class SearchState extends CacheItem {
         return this.created;
     }
 
-    public void setDocumentIdxToSnippet(HashMap<Integer, String> map) {
+    public void setDocumentIdxToSnippet(HashMap<Integer, PageSnippet> map) {
         this.documentIdxToSnippet = map;
+
+        // Whenever we set documents within a fulltext search, we should have found snippets.
+        // In those are pageIds of the snippets. Let's fill them.
+        if(searchLayers != null && searchLayers.contains(SearchLayer.FULLTEXT)){
+            for(var i =0; i < this.currentDocuments.size(); i++){
+                var currentDoc = this.currentDocuments.get(i);
+                var pageSnippet = this.getPossibleSnippetOfDocumentIdx(i);
+                if(pageSnippet == null) continue;
+                var potentialPage = currentDoc.getPages().stream().filter(p -> p.getId() == pageSnippet.getPageId()).findFirst();
+                potentialPage.ifPresent(pageSnippet::setPage);
+            }
+        }
     }
 
     public List<Integer> getCurrentDocumentHits() {
@@ -307,6 +319,7 @@ public class SearchState extends CacheItem {
 
     public void setCurrentDocuments(List<Document> currentDocuments) {
         this.currentDocuments = currentDocuments;
+
         if (searchLayers != null && searchLayers.contains(SearchLayer.KEYWORDINCONTEXT)) {
             // Whenever we set new current documents, recalculate the context state
             if (keywordInContextState == null) keywordInContextState = new KeywordInContextState();

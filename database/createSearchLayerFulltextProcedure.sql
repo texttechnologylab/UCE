@@ -123,47 +123,56 @@ BEGIN
             SELECT COUNT(*) AS total_count FROM page_ranked
         ),
 		ranked_documents AS (
-            SELECT 
-                d.id,
-                lp.rank,
-                CASE 
-                    WHEN $4 IS NULL OR $4 = '''' THEN 
-                        ARRAY_AGG(DISTINCT LEFT(p.coveredtext, 400))
-                    WHEN $3 THEN 
-                        ARRAY_AGG(DISTINCT (
-                            SELECT ts_headline(
-                                ''simple'',
-                                p.coveredtext, 
-                                to_tsquery(''simple'', $4),
-                                ''StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "''
-                            )
-                            FROM page p
-                            WHERE p.document_id = lp.doc_id 
-                            AND p.textsearch @@ to_tsquery(''simple'', $4)
-                            ORDER BY ts_rank_cd(p.textsearch, to_tsquery(''simple'', $4)) DESC
-                            LIMIT 1
-                        ))
-                    ELSE 
-                        ARRAY_AGG(DISTINCT (
-                            SELECT ts_headline(
-                                ''simple'',
-                                p.coveredtext, 
-                                websearch_to_tsquery(''simple'', $4),
-                                ''StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "''
-                            )
-                            FROM page p
-                            WHERE p.document_id = lp.doc_id 
-                            AND p.textsearch @@ websearch_to_tsquery(''simple'', $4)
-                            ORDER BY ts_rank_cd(p.textsearch, websearch_to_tsquery(''simple'', $4)) DESC
-                            LIMIT 1
-                        ))
-                END AS snippets
-            FROM limited_pages lp
-            JOIN document d ON d.id = lp.doc_id
-            JOIN page p ON p.document_id = lp.doc_id
-            GROUP BY d.id, lp.rank
-            ORDER BY lp.rank DESC
-        ),
+			SELECT 
+				d.id,
+				lp.rank,
+				CASE 
+					WHEN $4 IS NULL OR $4 = '''' THEN 
+						JSONB_AGG(DISTINCT jsonb_build_object(
+							''snippet'', LEFT(p.coveredtext, 400),
+							''pageId'', p.id
+						))
+					WHEN $3 THEN 
+						JSONB_AGG(DISTINCT (
+							SELECT jsonb_build_object(
+								''snippet'', ts_headline(
+									''simple'',
+									p.coveredtext, 
+									to_tsquery(''simple'', $4),
+									''StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "''
+								),
+								''pageId'', p.id
+							)
+							FROM page p
+							WHERE p.document_id = lp.doc_id 
+							AND p.textsearch @@ to_tsquery(''simple'', $4)
+							ORDER BY ts_rank_cd(p.textsearch, to_tsquery(''simple'', $4)) DESC
+							LIMIT 1
+						))
+					ELSE 
+						JSONB_AGG(DISTINCT (
+							SELECT jsonb_build_object(
+								''snippet'', ts_headline(
+									''simple'',
+									p.coveredtext, 
+									websearch_to_tsquery(''simple'', $4),
+									''StartSel=<b>, StopSel=</b>, MaxWords=150, MinWords=105, MaxFragments=2, FragmentDelimiter=" ... "''
+								),
+								''pageId'', p.id
+							)
+							FROM page p
+							WHERE p.document_id = lp.doc_id 
+							AND p.textsearch @@ websearch_to_tsquery(''simple'', $4)
+							ORDER BY ts_rank_cd(p.textsearch, websearch_to_tsquery(''simple'', $4)) DESC
+							LIMIT 1
+						))
+				END AS snippets
+			FROM limited_pages lp
+			JOIN document d ON d.id = lp.doc_id
+			JOIN page p ON p.document_id = lp.doc_id
+			GROUP BY d.id, lp.rank
+			ORDER BY lp.rank DESC
+		),
         extracted_entities AS (
             SELECT ARRAY[
                 ne.id::text, 
@@ -195,7 +204,7 @@ BEGIN
             CASE WHEN $8 THEN ARRAY(SELECT named_entity FROM extracted_entities) ELSE ARRAY[]::text[][] END,
             CASE WHEN $8 THEN ARRAY(SELECT * FROM extracted_times) ELSE ARRAY[]::text[][] END,
             CASE WHEN $8 THEN ARRAY(SELECT * FROM extracted_taxons) ELSE ARRAY[]::text[][] END,
-            ARRAY(SELECT unnest(snippets) FROM ranked_documents)
+            ARRAY(SELECT snippets FROM ranked_documents)
         ', additional_join_1, additional_join_2, order_by_clause);
 
     -- Execute the query with safe parameter passing

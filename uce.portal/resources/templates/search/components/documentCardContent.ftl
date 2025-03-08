@@ -84,7 +84,7 @@
     </div>
 </div>
 
-<div class="snippet-content flexed align-items-center justify-content-between h-100">
+<div class="snippet-content h-100 position-relative">
     <#if searchState??>
         <p class="mb-0 small-font text font-italic mr-2 block-text">
             <#assign snippet = searchState.getPossibleSnippetOfDocumentIdx(documentIdx)!>
@@ -103,12 +103,20 @@
             </#list>-->
 
             <!-- Render the highlighted snippet -->
-            ${snippet}...
+            ${snippet.getSnippet()}...
         </p>
     <#else>
         <p class="mb-0 small-font text font-italic mr-2 block-text">
             ${document.getFullTextSnippet(85)}...
         </p>
+    </#if>
+
+    <#if snippet.getPage()?has_content>
+        <input type="hidden" value="${snippet.getPage().getCoveredText()}">
+        <div class="inspect-page-btn hoverable clickable"
+             onclick="openInExpandedTextView('Page ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('input').val())">
+            ${snippet.getPage().getPageNumber()}.<i class="ml-1 fas fa-file-alt"></i>
+        </div>
     </#if>
 </div>
 
