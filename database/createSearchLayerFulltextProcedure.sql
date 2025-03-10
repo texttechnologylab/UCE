@@ -37,7 +37,7 @@ DECLARE
     snippet_query TEXT;
 BEGIN
     -- Ensure PostgreSQL uses indexes and has enough memory
-    SET enable_seqscan = OFF;
+    --SET enable_seqscan = OFF;
     SET work_mem = '128MB';
 
     -- If input2 is NULL or empty, disable TsVector search
@@ -76,7 +76,7 @@ BEGIN
 								FROM page p 
 								WHERE p.document_id = lp.doc_id
 								ORDER BY p.id ASC
-								LIMIT 5) p';
+								LIMIT 1) p';
 	ELSE
 		snippet_query := 'SELECT jsonb_agg(jsonb_build_object(
 							''snippet'', ts_headline(
@@ -103,26 +103,31 @@ BEGIN
 
     -- Construct the full query dynamically
     query := FORMAT('
-        WITH expanded_filters AS (
-            SELECT 
-                (filter->>''key'')::text AS key,
-                (filter->>''value'')::text AS value,
-                (filter->>''valueType'')::text AS value_type
-            FROM jsonb_array_elements($1) AS filter
-        ),
-        filter_matches AS (
-            SELECT um.document_id
-            FROM expanded_filters ef
-            JOIN ucemetadata um ON 
-                (ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
-                AND (ef.key IS NULL OR um.key = ef.key) 
-                AND (ef.value IS NULL OR um.value = ef.value)
-                AND um.valueType != 2
-            JOIN document d ON um.document_id = d.id AND d.corpusid = $2
-            %s
-            GROUP BY um.document_id
-            HAVING COUNT(DISTINCT ef.key) = (SELECT COUNT(*) FROM expanded_filters)
-        ),
+		WITH expanded_filters AS (
+			SELECT 
+				(filter->>''key'')::text AS key,
+				(filter->>''value'')::text AS value,
+				(filter->>''valueType'')::text AS value_type
+			FROM jsonb_array_elements($1) AS filter
+		),
+		filtered_ucemetadata AS (
+			-- Pre-filter metadata to exclude JSON-heavy records (valueType = 2)
+			SELECT document_id, key, value, valueType 
+			FROM ucemetadata 
+			WHERE valueType != 2
+		),
+		filter_matches AS (
+			SELECT um.document_id
+			FROM expanded_filters ef
+			JOIN filtered_ucemetadata um ON 
+				(ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
+				AND (ef.key IS NULL OR um.key = ef.key) 
+				AND (ef.value IS NULL OR um.value = ef.value)
+			JOIN document d ON um.document_id = d.id AND d.corpusid = $2
+			%s
+			GROUP BY um.document_id
+			HAVING COUNT(DISTINCT ef.key) = (SELECT COUNT(*) FROM expanded_filters)
+		),
         ranked_pages AS (
             SELECT 
                 p.document_id AS doc_id, 
@@ -137,11 +142,12 @@ BEGIN
             )
             AND ($5 IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
             AND d.corpusid = $2
+			--LIMIT 100000 -- If we put a limit here, it massively increases performance.
         ),
         page_ranked AS (
             SELECT 
                 doc_id,
-                MAX(rank) AS rank, -- Get highest rank per document
+                SUM(rank) AS rank, -- Get highest rank per document
                 documenttitle
             FROM ranked_pages
             GROUP BY doc_id, documenttitle
