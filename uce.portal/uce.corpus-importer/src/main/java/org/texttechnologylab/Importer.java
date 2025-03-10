@@ -490,7 +490,7 @@ public class Importer {
             // We want pages as our pagination of the document reader relies on it to handle larger documents.
             // In this case: we chunk the whole text into pages
             var fullText = document.getFullText();
-            var pageSize = 10000;
+            var pageSize = 7500;
             var pageNumber = 1;
             var pages = new ArrayList<Page>();
 

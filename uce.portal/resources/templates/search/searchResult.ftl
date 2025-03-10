@@ -3,7 +3,7 @@
     <div class="header">
         <div class="flexed w-100 align-items-center justify-content-center">
             <button class="btn selected-btn">
-                ${languageResource.get("searchResults")} <span class="hits">${searchState.getTotalHits()}</span>
+                ${languageResource.get("searchResults")} <span class="hits">&GreaterEqual; ${searchState.getTotalHits()}</span>
             </button>
         </div>
     </div>

@@ -41,6 +41,11 @@ public class App {
 
     public static void main(String[] args) throws IOException {
         logger.info("Starting the UCE web service...");
+        logger.info("Passed in command line args:");
+        for (String arg : args) {
+            logger.info(arg);
+            System.out.println(arg);
+        }
 
         logger.info("Parsing the UCE config...");
         try {
