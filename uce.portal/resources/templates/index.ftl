@@ -261,7 +261,7 @@
                                      data-toggle="popover" data-placement="top" data-html="true"
                                      data-content="${languageResource.get("enrichOption")}">
                                     <label class="mb-0 w-100 small-font mr-3">Enrich</label>
-                                    <input type="checkbox" data-id="ENRICH"/>
+                                    <input type="checkbox" data-id="ENRICH" checked/>
                                 </div>
                             </div>
                         </div>

@@ -35,6 +35,7 @@ DECLARE
     ts_function TEXT;
     ts_condition TEXT;
     snippet_query TEXT;
+	ranked_pages_cte TEXT;
 BEGIN
     -- Ensure PostgreSQL uses indexes and has enough memory
     --SET enable_seqscan = OFF;
@@ -65,6 +66,12 @@ BEGIN
     ELSE
         ts_function := 'websearch_to_tsquery(''simple'', $4)';
     END IF;
+	
+    -- Check source table
+    IF source_table != 'page' THEN
+        additional_join_1 := FORMAT('INNER JOIN %I.%I t ON um.document_id = t.document_id', schema_name, source_table);
+        additional_join_2 := FORMAT('INNER JOIN %I.%I t ON p.id = t.id', schema_name, source_table);
+    END IF;
 
     -- Define snippet selection logic
 	IF input2 IS NULL OR input2 = '' THEN
@@ -77,6 +84,20 @@ BEGIN
 								WHERE p.document_id = lp.doc_id
 								ORDER BY p.id ASC
 								LIMIT 1) p';
+								
+		-- If we dont search for any string, we dont need to fulltext search
+		ranked_pages_cte := 'SELECT 
+                p.document_id AS doc_id, 
+                0 AS rank,
+				-- %s
+                d.documenttitle
+            FROM page p
+            %s
+            JOIN document d ON d.id = p.document_id
+			-- %s
+            AND ($5 IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
+            AND d.corpusid = $2
+			LIMIT 10000';
 	ELSE
 		snippet_query := 'SELECT jsonb_agg(jsonb_build_object(
 							''snippet'', ts_headline(
@@ -93,43 +114,8 @@ BEGIN
 								AND p.textsearch @@ ' || ts_function || '
 								ORDER BY rank_score DESC
 								LIMIT 5) p';
-	END IF;
 
-    -- Check source table
-    IF source_table != 'page' THEN
-        additional_join_1 := FORMAT('INNER JOIN %I.%I t ON um.document_id = t.document_id', schema_name, source_table);
-        additional_join_2 := FORMAT('INNER JOIN %I.%I t ON p.id = t.id', schema_name, source_table);
-    END IF;
-
-    -- Construct the full query dynamically
-    query := FORMAT('
-		WITH expanded_filters AS (
-			SELECT 
-				(filter->>''key'')::text AS key,
-				(filter->>''value'')::text AS value,
-				(filter->>''valueType'')::text AS value_type
-			FROM jsonb_array_elements($1) AS filter
-		),
-		filtered_ucemetadata AS (
-			-- Pre-filter metadata to exclude JSON-heavy records (valueType = 2)
-			SELECT document_id, key, value, valueType 
-			FROM ucemetadata 
-			WHERE valueType != 2
-		),
-		filter_matches AS (
-			SELECT um.document_id
-			FROM expanded_filters ef
-			JOIN filtered_ucemetadata um ON 
-				(ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
-				AND (ef.key IS NULL OR um.key = ef.key) 
-				AND (ef.value IS NULL OR um.value = ef.value)
-			JOIN document d ON um.document_id = d.id AND d.corpusid = $2
-			%s
-			GROUP BY um.document_id
-			HAVING COUNT(DISTINCT ef.key) = (SELECT COUNT(*) FROM expanded_filters)
-		),
-        ranked_pages AS (
-            SELECT 
+		ranked_pages_cte := 'SELECT
                 p.document_id AS doc_id, 
                 ts_rank_cd(p.textsearch, %s) AS rank,
                 d.documenttitle
@@ -142,9 +128,37 @@ BEGIN
             )
             AND ($5 IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
             AND d.corpusid = $2
-			--LIMIT 100000 -- If we put a limit here, it massively increases performance.
-        ),
-        page_ranked AS (
+			LIMIT 20000'; -- Put a Limit here, it will increase perfomance and we dont need to show millions of hits.
+	END IF;
+
+    -- Construct the full query dynamically
+    query := FORMAT('
+		WITH expanded_filters AS NOT MATERIALIZED (
+			SELECT 
+				(filter->>''key'')::text AS key,
+				(filter->>''value'')::text AS value,
+				(filter->>''valueType'')::text AS value_type
+			FROM jsonb_array_elements($1) AS filter
+		),
+		filtered_ucemetadata AS (
+			SELECT document_id, key, value, valueType 
+			FROM ucemetadata 
+			WHERE valueType != 2
+		),
+		filter_matches AS NOT MATERIALIZED (
+			SELECT um.document_id
+			FROM expanded_filters ef
+			JOIN filtered_ucemetadata um ON 
+				(ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
+				AND (ef.key IS NULL OR um.key = ef.key) 
+				AND (ef.value IS NULL OR um.value = ef.value)
+			JOIN document d ON um.document_id = d.id AND d.corpusid = $2
+			%s
+			GROUP BY um.document_id
+			HAVING COUNT(ef.key) = (SELECT COUNT(*) FROM expanded_filters)
+		),
+        ranked_pages AS NOT MATERIALIZED ( ' || ranked_pages_cte || '),
+        page_ranked AS NOT MATERIALIZED (
             SELECT 
                 doc_id,
                 SUM(rank) AS rank, -- Get highest rank per document
@@ -152,7 +166,7 @@ BEGIN
             FROM ranked_pages
             GROUP BY doc_id, documenttitle
         ),
-        limited_pages AS (
+        limited_pages AS NOT MATERIALIZED (
             SELECT 
                 pr.doc_id,
                 pr.rank,
@@ -161,10 +175,10 @@ BEGIN
             %s
             LIMIT $6 OFFSET $7
         ),
-        counted_documents AS (
+        counted_documents AS NOT MATERIALIZED (
             SELECT COUNT(*) AS total_count FROM page_ranked
         ),
-        ranked_documents AS (
+        ranked_documents AS NOT MATERIALIZED (
             SELECT 
                 d.id,
                 lp.rank,
@@ -174,19 +188,19 @@ BEGIN
             GROUP BY d.id, lp.rank
             ORDER BY lp.rank DESC
         ),
-        extracted_entities AS (
+        extracted_entities AS NOT MATERIALIZED (
             SELECT ARRAY[ne.id::text, ne.coveredtext, COUNT(ne.id)::text, ne.typee, ne.document_id::text] 
             FROM ranked_documents rd
             JOIN namedentity ne ON rd.id = ne.document_id
             GROUP BY ne.id, ne.coveredtext, ne.typee, ne.document_id
         ),
-        extracted_times AS (
+        extracted_times AS NOT MATERIALIZED (
             SELECT ARRAY[t.id::text, t.coveredtext, COUNT(t.id)::text, t.valuee, t.document_id::text] 
             FROM ranked_documents rd
             JOIN time t ON rd.id = t.document_id
             GROUP BY t.id, t.coveredtext, t.valuee, t.document_id
         ),
-        extracted_taxons AS (
+        extracted_taxons AS NOT MATERIALIZED (
             SELECT ARRAY[ta.id::text, ta.coveredtext, COUNT(ta.id)::text, ta.valuee, ta.document_id::text] 
             FROM ranked_documents rd
             JOIN taxon ta ON rd.id = ta.document_id

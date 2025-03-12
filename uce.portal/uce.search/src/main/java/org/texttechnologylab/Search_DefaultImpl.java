@@ -259,7 +259,7 @@ public class Search_DefaultImpl implements Search {
         return Stopwords.GetStopwords(languageCode);
     }
 
-    private Pair<String, ArrayList<EnrichedSearchToken>> enrichSearchQuery(String searchQuery) {
+    private Pair<String, List<EnrichedSearchToken>> enrichSearchQuery(String searchQuery) {
         // First off, we replace the spaces in "" and '' enclosed tokens with __ as to indicate: these are a token
         searchQuery = StringUtils.ReplaceSpacesInQuotes(searchQuery);
 
@@ -359,7 +359,7 @@ public class Search_DefaultImpl implements Search {
                 enrichedSearchTokens.add(enrichedSearchToken);
             }
         }
-        return new Pair<>(enrichedSearchQuery.toString().trim(), enrichedSearchTokens);
+        return new Pair<>(enrichedSearchQuery.toString().trim(), enrichedSearchTokens.stream().filter(t -> !t.getValue().trim().isBlank()).toList());
     }
 
 
