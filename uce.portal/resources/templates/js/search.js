@@ -139,7 +139,6 @@ function updateSearchHistoryUI() {
     const $historyDiv = $('.search-menu-div .search-history-div');
     $historyDiv.html('');
     history.forEach((item) => {
-        // TODO: Adjust the fa-search according to the searchLayer.
         let html = `
             <#noparse>
             <div class="search-history-entry">
@@ -155,7 +154,7 @@ function updateSearchHistoryUI() {
  * Handles the inserting of a search item into the searchbar
  */
 $('body').on('click', '.search-history-div .search-history-entry', function () {
-    $('.search-input').val($(this).find('.content').html());
+    $('.search-input').val($(this).find('.content').text());
 })
 
 /**

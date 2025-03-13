@@ -238,7 +238,7 @@
                                     <div class="form-check form-check-inline" data-trigger="hover"
                                          data-toggle="popover" data-placement="top" data-html="true"
                                          data-content="${languageResource.get("nerSearch")}">
-                                        <input class="form-check-input" type="radio" name="searchLayerRadioOptions"
+                                        <input class="form-check-input" type="radio" disabled name="searchLayerRadioOptions"
                                                id="inlineRadio2" value="NAMED_ENTITIES">
                                         <label class="form-check-label color-secondary small-font" for="inlineRadio2">NER</label>
                                     </div>
@@ -260,8 +260,12 @@
                                 <div class="option w-auto" data-trigger="hover"
                                      data-toggle="popover" data-placement="top" data-html="true"
                                      data-content="${languageResource.get("enrichOption")}">
+                                    <#assign enrichDisabled = 'checked'>
+                                    <#if !isSparqlAlive>
+                                        <#assign enrichDisabled = 'disabled'>
+                                    </#if>
                                     <label class="mb-0 w-100 small-font mr-3">Enrich</label>
-                                    <input type="checkbox" data-id="ENRICH" checked/>
+                                    <input type="checkbox" data-id="ENRICH" ${enrichDisabled}/>
                                 </div>
                             </div>
                         </div>

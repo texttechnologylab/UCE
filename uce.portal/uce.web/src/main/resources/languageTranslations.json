@@ -136,8 +136,8 @@
     "en-EN": "Searches texts within a semantic vector space based on a given search term, without relying on the direct use of lexical units from the full text."
   },
   "enrichOption": {
-    "de-DE": "Filtert die Sucheingabe, löscht potenzielle Stoppwörter, sucht nach jedem Token einzeln und vergrößert das Suchfeld.",
-    "en-EN": "Filters the search input, deletes potential stopwords, searches for each token individually and increases the searching space."
+    "de-DE": "Nur zugänglich, wenn eine aktive Graph-Datenbank mit hinterlegter Ontologie existiert. Durchsucht den Such-Query nach potentiellen Erweiterungen durch eben jene Ontologie der Datenbank.",
+    "en-EN": "Only accessible if an active graph database with a stored ontology exists. Searches the search query for potential extensions using the same ontology of the database."
   },
   "searchRankDescription": {
     "de-DE": "Die Relevanz des Dokuments für die gegebene Suchanfrage. Ein höherer Wert bedeutet eine höhere Relevanz des Dokuments.",
