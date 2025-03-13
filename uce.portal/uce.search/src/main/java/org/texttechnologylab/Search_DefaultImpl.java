@@ -6,14 +6,13 @@ import org.hibernate.exception.SQLGrammarException;
 import org.jetbrains.annotations.Nullable;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.config.CorpusConfig;
-import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
-import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
+import org.texttechnologylab.utils.Pair;
 import org.texttechnologylab.utils.Stopwords;
 import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
@@ -37,6 +36,7 @@ public class Search_DefaultImpl implements Search {
     private RAGService ragService;
     private JenaSparqlService jenaSparqlService;
     public static final String[] QUERY_OPERATORS = {"&", "|", "!", "<->", "(", ")"};
+    private Pair<String, ArrayList<EnrichedSearchToken>> enrichment;
 
     /**
      * Creates a new instance of the Search_DefaultImpl, throws exceptions if components couldn't be inited.
@@ -62,20 +62,18 @@ public class Search_DefaultImpl implements Search {
                 () -> CorpusConfig.fromJson(db.getCorpusById(corpusId).getCorpusJsonConfig()),
                 (ex) -> logger.error("Error fetching the corpus and corpus config of corpus: " + corpusId, ex)));
 
-        // First: enrich if wanted
-        if (enrichSearchTerm)
-            this.searchState.setEnrichedSearchQuery(enrichSearchQuery(searchPhrase));
+        // First: enrich if wanted (and we can; we need the graph database for it)
+        if (enrichSearchTerm && SystemStatus.JenaSparqlStatus.isAlive() && !searchPhrase.isBlank()) {
+            var enrichment = enrichSearchQuery(searchPhrase);
+            this.searchState.setEnrichedSearchQuery(enrichment.getLeft());
+            this.searchState.setEnrichedSearchTokens(enrichment.getRight());
+        }
 
         // Then store the search tokens
         var cleanedSearchPhrase = cleanSearchPhrase(searchPhrase);
         var searchTokens = new ArrayList<String>();
         searchTokens.add(String.join(" ", cleanedSearchPhrase));
         this.searchState.setSearchTokens(searchTokens);
-
-        // Finally, if we dont have the pro mode, escape all spaces to +
-        // otherwise we get a syntax error in our vector-textsearch
-        if (!proModeActivated)
-            searchPhrase = searchPhrase.replace(" ", "+");
 
         this.searchState.setSearchQuery(searchPhrase);
     }
@@ -85,6 +83,11 @@ public class Search_DefaultImpl implements Search {
 
     public Search_DefaultImpl withUceMetadataFilters(List<UCEMetadataFilterDto> filters) {
         this.searchState.setUceMetadataFilters(filters);
+        return this;
+    }
+
+    public Search_DefaultImpl withLayeredSearch(LayeredSearch layeredSearch){
+        this.searchState.setLayeredSearch(layeredSearch);
         return this;
     }
 
@@ -109,6 +112,7 @@ public class Search_DefaultImpl implements Search {
      * @return
      */
     public SearchState initSearch() throws SQLGrammarException {
+        //var countAll = !this.searchState.getSearchQuery().isEmpty();
         DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
         if (documentSearchResult == null)
             throw new NullPointerException("Document Init Search returned null - not empty.");
@@ -116,10 +120,11 @@ public class Search_DefaultImpl implements Search {
         var documents = ExceptionUtils.tryCatchLog(() -> db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()),
                 (ex) -> logger.error("Error getting many documents by a list of ids in the search init. " +
                         "Search can't be created hence.", ex));
+
         if (documents == null) return null;
         searchState.setCurrentDocuments(documents);
         searchState.setCurrentDocumentHits(documentSearchResult.getDocumentHits());
-        searchState.setDocumentIdxToSnippet(documentSearchResult.getSearchSnippets());
+        searchState.setDocumentIdxToSnippets(documentSearchResult.getSearchSnippets());
         searchState.setDocumentIdxToRank(documentSearchResult.getSearchRanks());
         searchState.setTotalHits(documentSearchResult.getDocumentCount());
         searchState.setFoundNamedEntities(documentSearchResult.getFoundNamedEntities());
@@ -170,7 +175,7 @@ public class Search_DefaultImpl implements Search {
         if (documents == null) return searchState;
         searchState.setCurrentDocuments(documents);
         searchState.setCurrentDocumentHits(documentSearchResult.getDocumentHits());
-        searchState.setDocumentIdxToSnippet(documentSearchResult.getSearchSnippets());
+        searchState.setDocumentIdxToSnippets(documentSearchResult.getSearchSnippets());
         searchState.setDocumentIdxToRank(documentSearchResult.getSearchRanks());
         return searchState;
     }
@@ -194,11 +199,14 @@ public class Search_DefaultImpl implements Search {
                         searchState.getOrder(),
                         searchState.getOrderBy(),
                         searchState.getCorpusId(),
-                        searchState.getUceMetadataFilters());
+                        searchState.getUceMetadataFilters(),
+                        searchState.isProModeActivated(),
+                        searchState.getDbSchema(),
+                        searchState.getSourceTable());
             } catch (Exception ex) {
                 logger.error("Error executing a search on the database with search layer FULLTEXT. Search can't be executed.", ex);
                 // We only want to rethrow grammar exceptions for the pro mode.
-                if (ex.getCause() instanceof SQLGrammarException) throw (SQLGrammarException)ex.getCause();
+                if (ex.getCause() instanceof SQLGrammarException) throw (SQLGrammarException) ex.getCause();
             }
         }
 
@@ -214,7 +222,10 @@ public class Search_DefaultImpl implements Search {
                             searchState.getOrder(),
                             searchState.getOrderBy(),
                             searchState.getCorpusId(),
-                            searchState.getUceMetadataFilters()),
+                            searchState.getUceMetadataFilters(),
+                            searchState.isProModeActivated(),
+                            searchState.getDbSchema(),
+                            searchState.getSourceTable()),
                     (ex) -> logger.error("Error executing a search on the database with search layer NAMED_ENTITIES. Search can't be executed.", ex));
         }
 
@@ -248,10 +259,18 @@ public class Search_DefaultImpl implements Search {
         return Stopwords.GetStopwords(languageCode);
     }
 
-    private String enrichSearchQuery(String searchQuery) {
+    private Pair<String, List<EnrichedSearchToken>> enrichSearchQuery(String searchQuery) {
+        // First off, we replace the spaces in "" and '' enclosed tokens with __ as to indicate: these are a token
+        searchQuery = StringUtils.ReplaceSpacesInQuotes(searchQuery);
+
         // We split the tokens and remove special characters at their edges.
         var tokens = searchQuery.split(" ");
+        // The two different modes have different syntax for keeping words together... one is '' and other is ""
+        var delimiter = this.searchState.isProModeActivated() ? "'" : "\"";
+        var or = this.searchState.isProModeActivated() ? " | " : " or ";
+
         var enrichedSearchQuery = new StringBuilder();
+        var enrichedSearchTokens = new ArrayList<EnrichedSearchToken>();
 
         // Step 1: Look for annotated ontologies
         // The enrichment happens through our sparql database. We look for potential ontologies and add them as tokens
@@ -261,90 +280,88 @@ public class Search_DefaultImpl implements Search {
                 // If this token is an operator, skip it and just append it.
                 if (Arrays.asList(QUERY_OPERATORS).contains(token)) {
                     enrichedSearchQuery.append(token).append(" ");
+                    enrichedSearchTokens.add(new EnrichedSearchToken(token, EnrichedSearchTokenType.OPERATOR));
                     continue;
                 }
+
+                var taxonIds = new ArrayList<String>();
+                var isTaxonCommandToken = false;
+                var enrichedSearchToken = new EnrichedSearchToken();
 
                 // Else, we can see if we get more data of that token
                 var cleanedToken = StringUtils.removeSpecialCharactersAtEdges(token);
-                var potentialTaxons = ExceptionUtils.tryCatchLog(
-                        () -> db.getIdentifiableTaxonsByValues(List.of(cleanedToken.toLowerCase())),
-                        (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
-
-                if (potentialTaxons == null || potentialTaxons.isEmpty()) {
-                    enrichedSearchQuery.append(token).append(" ");
-                    continue;
+                // If this token contains __ then it's a multi-token word that belongs together.
+                if (cleanedToken.contains("__")) {
+                    cleanedToken = cleanedToken.replaceAll("__", " ");
                 }
+                enrichedSearchToken.setValue(cleanedToken);
 
-                // Of those potential taxons, fetch their alternative names
-                var ids = new ArrayList<String>();
-                for (var taxon : potentialTaxons) {
-                    if (taxon.getIdentifier().contains("|") || taxon.getIdentifier().contains(" ")) {
-                        ids.addAll(taxon.getIdentifierAsList());
-                    } else {
-                        ids.add(taxon.getIdentifier().trim());
+                // If the token starts with a tax command, parse it
+                if (cleanedToken.length() > 3) {
+                    var possibleCommand = cleanedToken.substring(0, 3);
+
+                    // Do we have a taxon rank command?
+                    if (Arrays.asList(StringUtils.TAX_RANKS).contains(possibleCommand)) {
+                        isTaxonCommandToken = true;
+                        enrichedSearchToken.setType(EnrichedSearchTokenType.TAXON_COMMAND);
+                        cleanedToken = cleanedToken.substring(3);
+                        cleanedToken = StringUtils.removeSpecialCharactersAtEdges(cleanedToken);
+                        enrichedSearchToken.setValue(cleanedToken);
+                        var finalCleanedToken = cleanedToken;
+                        var speciesIds = ExceptionUtils.tryCatchLog(
+                                () -> jenaSparqlService.getSpeciesIdsOfUpperRank(StringUtils.GetFullTaxonRankByCode(possibleCommand.replace("::", "")), finalCleanedToken),
+                                (ex) -> logger.error("Error querying species by an upper rank.", ex));
+                        if (speciesIds != null) taxonIds.addAll(speciesIds);
                     }
                 }
 
-                // Get the alt names
+                // If we already parsed a taxon command, we can skip the fetching of alternative taxon names
+                if (!isTaxonCommandToken) {
+                    String finalCleanedToken = cleanedToken;
+                    var potentialTaxons = ExceptionUtils.tryCatchLog(
+                            () -> db.getIdentifiableTaxonsByValues(List.of(finalCleanedToken.toLowerCase())),
+                            (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
+
+                    if (potentialTaxons == null || potentialTaxons.isEmpty()) {
+                        enrichedSearchQuery.append(token.replaceAll("__", " ")).append(" ");
+                        enrichedSearchTokens.add(enrichedSearchToken);
+                        continue;
+                    }
+
+                    // Of those potential taxons, fetch their alternative names
+                    enrichedSearchToken.setType(EnrichedSearchTokenType.TAXON);
+                    for (var taxon : potentialTaxons) {
+                        if (taxon.getIdentifier().contains("|") || taxon.getIdentifier().contains(" ")) {
+                            taxonIds.addAll(taxon.getIdentifierAsList());
+                        } else {
+                            taxonIds.add(taxon.getIdentifier().trim());
+                        }
+                    }
+                }
+
+                // Get the names of the taxon ids
                 var alternativeNames = ExceptionUtils.tryCatchLog(
-                        () -> jenaSparqlService.getAlternativeNamesOfTaxons(ids),
+                        () -> jenaSparqlService.getAlternativeNamesOfTaxons(taxonIds),
                         (ex) -> logger.error("Error getting the alt names of a taxon while searching. Operation continues.", ex));
-                if (alternativeNames == null) {
-                    enrichedSearchQuery.append(token).append(" ");
+                if (alternativeNames == null || alternativeNames.isEmpty()) {
+                    enrichedSearchQuery.append(!isTaxonCommandToken ? token : delimiter + cleanedToken + delimiter).append(" ");
+                    enrichedSearchTokens.add(enrichedSearchToken);
                     continue;
                 }
 
-                // Enrich this token
+                // Build the enriched query for this token
                 enrichedSearchQuery
                         .append(" ( ")
-                        .append(token)
-                        .append(" | ")
-                        .append(String.join(" | ", alternativeNames.stream().map(n -> n.replace(" ", "+")).toList()))
+                        .append(!isTaxonCommandToken ? token.replaceAll("__", " ") + or + delimiter : delimiter) // Only append if this wasn't a taxon command
+                        .append(String.join(or + delimiter, alternativeNames.stream().map(n -> n.replace("'", "") + delimiter).toList()))
                         .append(" ) ");
+                enrichedSearchToken.setChildren(alternativeNames.stream().map(n -> new EnrichedSearchToken(n, EnrichedSearchTokenType.TAXON)).toList());
+                enrichedSearchTokens.add(enrichedSearchToken);
             }
         }
-
-        return enrichedSearchQuery.toString();
+        return new Pair<>(enrichedSearchQuery.toString().trim(), enrichedSearchTokens.stream().filter(t -> !t.getValue().trim().isBlank()).toList());
     }
 
-    /**
-     * Possibly enriches search tokens with taxon ontologies. The function may produce more tokens in the end.
-     *
-     * @param tokens
-     * @return
-     */
-    private List<String> enrichSearchTokens(List<String> tokens) {
-        var finalTokens = new ArrayList<>(tokens);
-
-        // Check for potential ontology alternative names. This can only work if our jena sparql db is running
-        // and we have taxonomy annotated.
-        if (SystemStatus.JenaSparqlStatus.isAlive() && this.searchState.getCorpusConfig() != null && this.searchState.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()) {
-            var potentialTaxons = ExceptionUtils.tryCatchLog(
-                    () -> db.getIdentifiableTaxonsByValues(tokens.stream().map(String::toLowerCase).toList()),
-                    (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
-
-            if (potentialTaxons == null || potentialTaxons.isEmpty()) return tokens;
-
-            potentialTaxons.forEach(t -> {
-                if (!finalTokens.contains(t.getCoveredText())) finalTokens.add(t.getCoveredText());
-            });
-
-            var ids = new ArrayList<String>();
-            for (var taxon : potentialTaxons) {
-                if (taxon.getIdentifier().contains("|") || taxon.getIdentifier().contains(" ")) {
-                    ids.addAll(taxon.getIdentifierAsList());
-                } else {
-                    ids.add(taxon.getIdentifier().trim());
-                }
-            }
-            var newTokens = ExceptionUtils.tryCatchLog(
-                    () -> jenaSparqlService.getAlternativeNamesOfTaxons(ids),
-                    (ex) -> logger.error("Error getting the alt names of a taxon while searching. Operation continues.", ex));
-            if (newTokens != null) finalTokens.addAll(newTokens);
-        }
-
-        return finalTokens;
-    }
 
     /**
      * Cleans the search phrase like stopwords removal, trimming

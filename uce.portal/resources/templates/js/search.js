@@ -3,11 +3,11 @@ let currentCorpusUniverseHandler = undefined;
 /**
  * Starts a new search with the given input
  */
-function startNewSearch(searchInput) {
+function startNewSearch(searchInput, reloadCorpus = true) {
     if (searchInput === undefined) {
         return;
     }
-    console.log('New Search with input: ' + searchInput);
+
     $('.search-menu-div').hide();
     $('.view[data-id="search"] .loader-container').first().fadeIn(150);
     // Get the selected corpus
@@ -21,10 +21,17 @@ function startNewSearch(searchInput) {
     const kwic = $('.search-menu-div .search-settings-div .option input[data-id="KWIC"]').is(':checked');
     const enrich = $('.search-menu-div .search-settings-div .option input[data-id="ENRICH"]').is(':checked');
     const proMode = $('#proModeSwitch').is(':checked');
+    const useLayeredSearch = $('.search-menu-div .search-settings-div .submit-layered-search-input').val() === 'true';
+    let layers = {};
+    let layeredSearchId = '';
+    if (useLayeredSearch === true) {
+        layers = window.layeredSearchHandler.buildApplicableLayers([]);
+        layeredSearchId = window.layeredSearchHandler.searchId;
+    }
 
-    // Get possible uce metadata filters
+    // Get possible uce metadata filters of this selectec corpus
     let metadataFilters = [];
-    $('.uce-search-filters .filter-div').each(function () {
+    $('.uce-corpus-search-filter[data-id="' + corpusId + '"]').find('.filter-div').each(function () {
         metadataFilters.push({
             'key': $(this).find('label').html(),
             'valueType': $(this).data('type'),
@@ -44,16 +51,20 @@ function startNewSearch(searchInput) {
             kwic: kwic,
             enrich: enrich,
             uceMetadataFilters: JSON.stringify(metadataFilters),
-            proMode: proMode
+            proMode: proMode,
+            layeredSearchId: layeredSearchId,
+            layers: JSON.stringify(layers),
         }),
         contentType: "application/json",
         //dataType: "json",
         success: async function (response) {
             $('.view .search-result-container').html(response);
             activatePopovers();
-            reloadCorpusComponents();
-            // Store the search in the local browser for a history.
-            addSearchToHistory(searchInput);
+            if (reloadCorpus) {
+                reloadCorpusComponents();
+                // Store the search in the local browser for a history.
+                addSearchToHistory(searchInput);
+            }
             // Load the corpus universe from search
             const searchId = $('.search-state').data('id');
             currentCorpusUniverseHandler = getNewCorpusUniverseHandler;
@@ -61,9 +72,9 @@ function startNewSearch(searchInput) {
             await currentCorpusUniverseHandler.fromSearch(searchId);
         },
         error: function (xhr, status, error) {
-            if(xhr.status === 406){
-                alert(xhr.responseText);
-            } else{
+            if (xhr.status === 406) {
+                showMessageModal("Query Error", xhr.responseText);
+            } else {
                 $('.view .search-result-container').html(xhr.responseText);
             }
         }
@@ -76,6 +87,8 @@ function startNewSearch(searchInput) {
  * Adds a new search to the history in the local browser
  */
 function addSearchToHistory(searchTerm) {
+    if (searchTerm === '' || searchTerm === undefined) return;
+
     let history = getSearchHistory();
     // If the latest entry in the search history is the same search as now, we
     // dont need to add it. It clouds the history.
@@ -126,7 +139,6 @@ function updateSearchHistoryUI() {
     const $historyDiv = $('.search-menu-div .search-history-div');
     $historyDiv.html('');
     history.forEach((item) => {
-        // TODO: Adjust the fa-search according to the searchLayer.
         let html = `
             <#noparse>
             <div class="search-history-entry">
@@ -142,7 +154,7 @@ function updateSearchHistoryUI() {
  * Handles the inserting of a search item into the searchbar
  */
 $('body').on('click', '.search-history-div .search-history-entry', function () {
-    $('.search-input').val($(this).find('.content').html());
+    $('.search-input').val($(this).find('.content').text());
 })
 
 /**
@@ -181,7 +193,7 @@ $('body').on('click', '.open-sr-builder-btn', function () {
             activatePopovers();
         },
         error: function (xhr, status, error) {
-            alert("Error opening the SR builder.")
+            showMessageModal("Error", "Error opening the SR builder.");
             console.error(xhr.responseText);
         }
     }).always(function () {
@@ -221,8 +233,7 @@ async function handleSwitchingOfPage(page) {
         success: function (response) {
             if (response.status === 500) {
                 // Something went wrong, in this case, showcase an error.
-                // TODO: Replace this ALERT with a more appropriate error popup
-                alert("There was a problem fetching the right page on the server, operation cancelled.");
+                showMessageModal("Error", "There was a problem fetching the right page on the server, operation cancelled.");
                 return;
             }
             // Render the new documents
@@ -310,6 +321,13 @@ $('body').on('click', '.sort-container .switch-search-layer-result-btn', functio
     // Highlight and show the correct search layer
     $(`.sort-container .switch-search-layer-result-btn[data-layer=` + layer + ']').addClass('selected');
     $(`.search-result-container .list[data-layer=` + layer + ']').show();
+})
+
+$('body').on('click', '.document-card .snippets-container .toggle-snippets-btn', function(){
+    const $snippets = $(this).closest('.snippets-container').find('.snippet-content');
+    $snippets.each(function(){
+        if($(this).data('id') !== 0) $(this).toggle();
+    })
 })
 
 let currentFocusedDocumentId = -1;

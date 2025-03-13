@@ -36,17 +36,17 @@
             </#if>
             <div class="page-content">
                 <#if (page.getParagraphs())?? && page.getParagraphs()?size == 0>
-                    <div class="text paragraph">
+                    <p class="text paragraph">
                         ${page.buildHTMLString(documentAnnotations, documentText)}
-                    </div>
+                    </p>
                 <#else>
                     <#list page.getParagraphs() as paragraph>
-                        <div class="text paragraph" style="
+                        <p class="text paragraph" style="
                                 text-align: ${paragraph.getAlign()};
                                 font-weight: ${paragraph.getFontWeight()};
                                 text-decoration: ${paragraph.getUnderlined()};">
                             ${paragraph.buildHTMLString(documentAnnotations, documentText)}
-                        </div>
+                        </p>
                     </#list>
                 </#if>
             </div>

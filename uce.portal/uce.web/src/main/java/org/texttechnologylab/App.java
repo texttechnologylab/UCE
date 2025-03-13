@@ -25,6 +25,7 @@ import org.texttechnologylab.utils.SystemStatus;
 import spark.ExceptionHandler;
 import spark.ModelAndView;
 
+import javax.servlet.MultipartConfigElement;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
@@ -33,17 +34,18 @@ import java.util.UUID;
 
 import static spark.Spark.*;
 
-/**
- * Hello world!
- */
 public class App {
     private static final Configuration configuration = Configuration.getDefaultConfiguration();
     private static final Logger logger = LogManager.getLogger();
     private static CommonConfig commonConfig = null;
 
     public static void main(String[] args) throws IOException {
-
         logger.info("Starting the UCE web service...");
+        logger.info("Passed in command line args:");
+        for (String arg : args) {
+            logger.info(arg);
+            System.out.println(arg);
+        }
 
         logger.info("Parsing the UCE config...");
         try {
@@ -52,7 +54,7 @@ public class App {
         } catch (MissingOptionException ex) {
             logger.error("UCE couldn't parse the UceConfig in the CLI properly. " +
                     "UCE will still start with a default config, but this is not a desirable state.", ex);
-        } catch (Exception ex){
+        } catch (Exception ex) {
             logger.error("Couldn't parse the CLI arguments properly - app shutting down.", ex);
             return;
         }
@@ -69,9 +71,15 @@ public class App {
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
         logger.info("Loaded application context and services.");
 
+        // Cleanup temporary db fragments for the LayeredSearch
+        ExceptionUtils.tryCatchLog(
+                () ->LayeredSearch.CleanupScheme(context.getBean(PostgresqlDataInterface_Impl.class)),
+                (ex) -> logger.warn("Error while trying to cleanup the LayeredSearch temporary schema.", ex));
+        logger.info("Cleanup temporary LayeredSearch tables.");
+
         // Load in and test the language translation objects to handle multiple languages
         logger.info("Testing the language resources:");
-        var languageResource = new LanguageResources("de-DE");
+        var languageResource = new LanguageResources("en-EN");
         logger.info(languageResource.get("search"));
 
         // Start the different cronjobs in the background
@@ -109,29 +117,30 @@ public class App {
         var siteCss = new File(commonConfig.getTemplatesLocation() + "css/site.css");
         var lines = Files.readAllLines(siteCss.toPath());
         lines.set(2, "    --prime: " + SystemStatus.UceConfig.getCorporate().getPrimaryColor() + ";");
-        lines.set(3, "    --secondary: " +  SystemStatus.UceConfig.getCorporate().getSecondaryColor() + ";");
+        lines.set(3, "    --secondary: " + SystemStatus.UceConfig.getCorporate().getSecondaryColor() + ";");
         Files.write(siteCss.toPath(), lines, StandardOpenOption.TRUNCATE_EXISTING);
 
         // Logo
         SystemStatus.UceConfig.getCorporate().setLogo(convertConfigImageString(SystemStatus.UceConfig.getCorporate().getLogo()));
 
         // Team Members
-        for(var member: SystemStatus.UceConfig.getCorporate().getTeam().getMembers())
+        for (var member : SystemStatus.UceConfig.getCorporate().getTeam().getMembers())
             member.setImage(convertConfigImageString(member.getImage()));
     }
 
     /**
      * Converts a img string in the config to a proper usable base64encoded image
+     *
      * @param imgString
      * @return
      * @throws IOException
      * @throws InvalidFormatException
      */
     private static String convertConfigImageString(String imgString) throws Exception {
-        if(imgString.startsWith("BASE64::")){
+        if (imgString.startsWith("BASE64::")) {
             // If the logo is a base64 string, we only need to remove the prefix
             return imgString.replace("BASE64::", "");
-        } else if (imgString.startsWith("FILE::")){
+        } else if (imgString.startsWith("FILE::")) {
             // else we need to read in the file from the given path.
             var path = imgString.replace("FILE::", "");
             return ImageUtils.EncodeImageToBase64(path);
@@ -179,26 +188,33 @@ public class App {
     }
 
     private static void initSparkRoutes(ApplicationContext context) {
-
         var searchApi = new SearchApi(context, configuration);
         var documentApi = new DocumentApi(context, configuration);
         var ragApi = new RAGApi(context, configuration);
         var corpusUniverseApi = new CorpusUniverseApi(context, configuration);
         var wikiApi = new WikiApi(context, configuration);
+        var importExportApi = new ImportExportApi(context);
 
         before((request, response) -> {
-            // Setup and log all API calls with some information.
-            request.attribute("id", UUID.randomUUID().toString());
-            logger.info("Received API call: ID={}, IP={}, Method={}, URI={}, QUERY={}, BODY={}",
-                    request.attribute("id"), request.ip(), request.requestMethod(), request.uri(), request.queryString(), request.body());
+            // Setup and log all API calls with some information. We don't want to log file uploads, since it would
+            // destroy the file body stream.
+            if (!(request.contentType() != null && request.contentType().contains("multipart/form-data"))) {
+                request.attribute("id", UUID.randomUUID().toString());
+                logger.info("Received API call: ID={}, IP={}, Method={}, URI={}, QUERY={}, BODY={}",
+                        request.attribute("id"), request.ip(), request.requestMethod(), request.uri(), request.queryString(), request.body());
 
-            // Should we log to db as well?
-            if (commonConfig.getLogToDb() && SystemStatus.PostgresqlDbStatus.isAlive()) {
-                var uceLog = new UCELog(request.ip(), request.requestMethod(), request.uri(), request.body(), request.queryString());
-                ExceptionUtils.tryCatchLog(
-                        () -> context.getBean(PostgresqlDataInterface_Impl.class).saveUceLog(uceLog),
-                        (ex) -> logger.error("Error storing a log to the database: ", ex));
-                logger.info("Last log was also logged to the db with id " + uceLog.getId());
+                // Should we log to db as well?
+                if (commonConfig.getLogToDb() && SystemStatus.PostgresqlDbStatus.isAlive()) {
+                    var uceLog = new UCELog(request.ip(), request.requestMethod(), request.uri(), request.body(), request.queryString());
+                    ExceptionUtils.tryCatchLog(
+                            () -> context.getBean(PostgresqlDataInterface_Impl.class).saveUceLog(uceLog),
+                            (ex) -> logger.error("Error storing a log to the database: ", ex));
+                    logger.info("Last log was also logged to the db with id " + uceLog.getId());
+                }
+            } else{
+                // Else we have a form-data upload. We handle those explicitly.
+                // Set the multipart data configs for uploads
+                request.raw().setAttribute("org.eclipse.jetty.multipartConfig", new MultipartConfigElement("/tmp"));
             }
 
             // Check if the request contains a language parameter
@@ -246,8 +262,12 @@ public class App {
             before("/*", (req, res) -> {
             });
 
+            path("/ie", () -> {
+                post("/upload/uima", importExportApi.uploadUIMA);
+            });
+
             path("/wiki", () -> {
-                get("/annotationPage", wikiApi.getAnnotationPage);
+                get("/page", wikiApi.getPage);
                 post("/queryOntology", wikiApi.queryOntology);
             });
 
@@ -259,6 +279,7 @@ public class App {
             path("/search", () -> {
                 post("/default", searchApi.search);
                 post("/semanticRole", searchApi.semanticRoleSearch);
+                post("/layered", searchApi.layeredSearch);
                 get("/active/page", searchApi.activeSearchPage);
                 get("/active/sort", searchApi.activeSearchSort);
                 get("/semanticRole/builder", searchApi.getSemanticRoleBuilderView);

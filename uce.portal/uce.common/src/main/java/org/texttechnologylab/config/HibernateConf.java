@@ -6,6 +6,7 @@ import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.imp.ImportLog;
@@ -40,6 +41,7 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Sentence.class);
         metadataSources.addAnnotatedClass(GbifOccurrence.class);
         metadataSources.addAnnotatedClass(Taxon.class);
+        metadataSources.addAnnotatedClass(BiofidTaxon.class);
         metadataSources.addAnnotatedClass(Time.class);
         metadataSources.addAnnotatedClass(WikiDataHyponym.class);
         metadataSources.addAnnotatedClass(WikipediaLink.class);

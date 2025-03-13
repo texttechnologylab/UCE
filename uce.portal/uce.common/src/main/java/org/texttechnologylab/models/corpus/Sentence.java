@@ -15,5 +15,9 @@ public class Sentence extends UIMAAnnotation {
     public Sentence(int begin, int end) {
         super(begin, end);
     }
+    public Sentence(int begin, int end, String coveredText){
+        super(begin, end);
+        setCoveredText(coveredText);
+    }
 
 }

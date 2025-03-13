@@ -13,27 +13,30 @@ import java.util.*;
 /**
  * A class that holds all states of a biofid search. We can use this class to serialize the search. It shouldn't hold any services.
  */
-public class SearchState {
+public class SearchState extends CacheItem {
     private UUID searchId;
-    private DateTime created;
-    private boolean cleanupNextCycle;
+    private final DateTime created;
     private boolean proModeActivated;
     /**
      * The raw search phrase
      */
     private String searchQuery;
     private String enrichedSearchQuery;
+    private String dbSchema = "public";
+    private String sourceTable = "page";
+    private List<EnrichedSearchToken> enrichedSearchTokens;
     private List<String> searchTokens;
     private List<SearchLayer> searchLayers;
     private List<UCEMetadataFilterDto> uceMetadataFilters;
+    private LayeredSearch layeredSearch;
     private SearchType searchType;
     private Integer currentPage = 1;
     private Integer take = 10;
     private long corpusId;
     private CorpusConfig corpusConfig;
     private Integer totalHits;
-    private SearchOrder order = SearchOrder.ASC;
-    private OrderByColumn orderBy = OrderByColumn.DOCUMENTTITLE;
+    private SearchOrder order = SearchOrder.DESC;
+    private OrderByColumn orderBy = OrderByColumn.RANK;
     private ArrayList<AnnotationSearchResult> foundNamedEntities;
     private ArrayList<AnnotationSearchResult> foundTimes;
     private ArrayList<AnnotationSearchResult> foundTaxons;
@@ -56,13 +59,49 @@ public class SearchState {
      */
     @Obsolete
     private List<Integer> currentDocumentHits;
-    private HashMap<Integer, String> documentIdxToSnippet;
+    private HashMap<Integer, ArrayList<PageSnippet>> documentIdxToSnippet;
     private HashMap<Integer, Float> documentIdxToRank;
 
     public SearchState(SearchType searchType) {
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
         this.created = DateTime.now();
+    }
+
+    public void dispose(){ }
+
+    public LayeredSearch getLayeredSearch() {
+        return layeredSearch;
+    }
+
+    public void setLayeredSearch(LayeredSearch layeredSearch) {
+        this.layeredSearch = layeredSearch;
+    }
+
+    public String getDbSchema() {
+        if(this.layeredSearch == null) return this.dbSchema;
+        return "search";
+    }
+
+    public void setDbSchema(String dbSchema) {
+        this.dbSchema = dbSchema;
+    }
+
+    public String getSourceTable() {
+        if(this.layeredSearch == null) return this.sourceTable;
+        return this.layeredSearch.getFinalLayerTableName();
+    }
+
+    public void setSourceTable(String sourceTable) {
+        this.sourceTable = sourceTable;
+    }
+
+    public List<EnrichedSearchToken> getEnrichedSearchTokens() {
+        return enrichedSearchTokens;
+    }
+
+    public void setEnrichedSearchTokens(List<EnrichedSearchToken> enrichedSearchTokens) {
+        this.enrichedSearchTokens = enrichedSearchTokens;
     }
 
     public boolean isProModeActivated() {
@@ -103,15 +142,7 @@ public class SearchState {
         this.uceMetadataFilters = uceMetadataFilters;
     }
 
-    public boolean isCleanupNextCycle() {
-        return cleanupNextCycle;
-    }
-
-    public void setCleanupNextCycle(boolean cleanupNextCycle) {
-        this.cleanupNextCycle = cleanupNextCycle;
-    }
-
-    public String getPossibleSnippetOfDocumentIdx(Integer idx) {
+    public ArrayList<PageSnippet> getPossibleSnippetsOfDocumentIdx(Integer idx) {
         if (this.documentIdxToSnippet != null && this.documentIdxToSnippet.containsKey(idx))
             return this.documentIdxToSnippet.get(idx);
         return null;
@@ -121,8 +152,22 @@ public class SearchState {
         return this.created;
     }
 
-    public void setDocumentIdxToSnippet(HashMap<Integer, String> map) {
+    public void setDocumentIdxToSnippets(HashMap<Integer, ArrayList<PageSnippet>> map) {
         this.documentIdxToSnippet = map;
+
+        // Whenever we set documents within a fulltext search, we should have found snippets.
+        // In those are pageIds of the snippets. Let's fill them.
+        if(searchLayers != null && searchLayers.contains(SearchLayer.FULLTEXT)){
+            for(var i =0; i < this.currentDocuments.size(); i++){
+                var currentDoc = this.currentDocuments.get(i);
+                var pageSnippets = this.getPossibleSnippetsOfDocumentIdx(i);
+                if(pageSnippets == null) continue;
+                for(var page:pageSnippets){
+                    var potentialPage = currentDoc.getPages().stream().filter(p -> p.getId() == page.getPageId()).findFirst();
+                    potentialPage.ifPresent(page::setPage);
+                }
+            }
+        }
     }
 
     public List<Integer> getCurrentDocumentHits() {
@@ -276,6 +321,7 @@ public class SearchState {
 
     public void setCurrentDocuments(List<Document> currentDocuments) {
         this.currentDocuments = currentDocuments;
+
         if (searchLayers != null && searchLayers.contains(SearchLayer.KEYWORDINCONTEXT)) {
             // Whenever we set new current documents, recalculate the context state
             if (keywordInContextState == null) keywordInContextState = new KeywordInContextState();

@@ -24,8 +24,8 @@
                                 </div>
                                 <div>
                                     <#if is_long_string>
-                                        <a class="rounded-a expand-metadata-string-btn">
-                                            <i class="text-light fas fa-expand"></i>
+                                        <a class="rounded-a expand-metadata-string-btn mt-0">
+                                            <i class="color-prime fas fa-expand"></i>
                                         </a>
                                     </#if>
                                 </div>

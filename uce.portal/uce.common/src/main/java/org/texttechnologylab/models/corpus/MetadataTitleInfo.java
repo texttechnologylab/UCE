@@ -16,6 +16,8 @@ public class MetadataTitleInfo extends ModelBase {
     private String title;
     @Column(columnDefinition = "TEXT")
     private String published;
+    @Column(columnDefinition = "TEXT")
+    private String author;
     private String pdfUrl;
     private String titleImageUrl;
     private String pageViewStartUrl;
@@ -38,6 +40,12 @@ public class MetadataTitleInfo extends ModelBase {
 
     public void setPageViewStartUrl(String pageViewStartUrl) {
         this.pageViewStartUrl = pageViewStartUrl;
+    }
+
+    public String getAuthor() { return author == null ? "-" : author; }
+
+    public void setAuthor(String author) {
+        this.author = author;
     }
 
     public String getTitleImageUrl() {

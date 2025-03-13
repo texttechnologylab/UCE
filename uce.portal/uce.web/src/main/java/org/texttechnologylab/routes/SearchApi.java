@@ -10,6 +10,7 @@ import org.hibernate.exception.SQLGrammarException;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.dto.LayeredSearchLayerDto;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.search.OrderByColumn;
 import org.texttechnologylab.models.search.SearchLayer;
@@ -50,7 +51,7 @@ public class SearchApi {
             }
 
             // Sort the current search state.
-            var activeSearchState = SessionManager.ActiveSearches.get(searchId);
+            var activeSearchState = (SearchState) SessionManager.ActiveSearches.get(searchId);
             activeSearchState.setOrder(SearchOrder.valueOf(order));
             activeSearchState.setOrderBy(OrderByColumn.valueOf(orderBy));
             Search search = new Search_DefaultImpl();
@@ -84,7 +85,7 @@ public class SearchApi {
             }
 
             // Get the next pages.
-            var activeSearchState = SessionManager.ActiveSearches.get(searchId);
+            var activeSearchState = (SearchState) SessionManager.ActiveSearches.get(searchId);
             Search search = new Search_DefaultImpl();
             if (activeSearchState.getSearchType() == SearchType.SEMANTICROLE) search = new Search_SemanticRoleImpl();
             search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
@@ -130,14 +131,30 @@ public class SearchApi {
             var includeKeywordInContext = Boolean.parseBoolean(requestBody.get("kwic").toString());
             var enrichSearchTerm = Boolean.parseBoolean(requestBody.get("enrich").toString());
             var proModeActivated = Boolean.parseBoolean(requestBody.get("proMode").toString());
+            var layeredSearchId = requestBody.get("layeredSearchId").toString();
+            var layers = new ArrayList<LayeredSearchLayerDto>();
 
             // It's not tragic if no filters are given, not every corpus has them.
-            @SuppressWarnings("unchecked") var uceMetadataFilters = ExceptionUtils.tryCatchLog(
-                    () -> (ArrayList<UCEMetadataFilterDto>) gson.fromJson(
+            ArrayList<UCEMetadataFilterDto> uceMetadataFilters = ExceptionUtils.tryCatchLog(
+                    () -> gson.fromJson(
                             requestBody.get("uceMetadataFilters").toString(),
                             new TypeToken<ArrayList<UCEMetadataFilterDto>>() {
                             }.getType()),
-                    (ex) -> {});
+                    (ex) -> {
+                    });
+
+            LayeredSearch layeredSearch = null;
+            // If the layeredSearchId isn't empty, we need to apply the layered search as well.
+            if (!layeredSearchId.isEmpty()) {
+                layeredSearch = (LayeredSearch) SessionManager.ActiveLayeredSearches.get(layeredSearchId);
+                if(layeredSearch != null){
+                    layers = gson.fromJson(
+                            requestBody.get("layers").toString(),
+                            new TypeToken<ArrayList<LayeredSearchLayerDto>>() {
+                            }.getType());
+                    layeredSearch.updateLayers(layers);
+                }
+            }
 
             // We have our own query language for SemanticRole Searches. Check if this is one of those.
             SearchState searchState = null;
@@ -162,7 +179,9 @@ public class SearchApi {
                         searchLayers,
                         enrichSearchTerm,
                         proModeActivated)
-                        .withUceMetadataFilters(uceMetadataFilters);
+                        .withUceMetadataFilters(uceMetadataFilters)
+                        .withLayeredSearch(layeredSearch);
+
                 searchState = search.initSearch();
             }
 
@@ -170,11 +189,44 @@ public class SearchApi {
             model.put("searchState", searchState);
 
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
-        } catch (SQLGrammarException grammarException){
+        } catch (SQLGrammarException grammarException) {
             response.status(406);
             return languageResources.get("searchGrammarError");
         } catch (Exception ex) {
             logger.error("Error starting a new search with the request body:\n " + gson.toJson(requestBody), ex);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
+
+    public Route layeredSearch = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        var gson = new Gson();
+        var requestBody = gson.fromJson(request.body(), Map.class);
+        var languageResources = LanguageResources.fromRequest(request);
+
+        try {
+            ArrayList<LayeredSearchLayerDto> layers = gson.fromJson(
+                    requestBody.get("layers").toString(),
+                    new TypeToken<ArrayList<LayeredSearchLayerDto>>() {
+                    }.getType());
+            var searchId = requestBody.get("searchId").toString();
+
+            // If there isn't an existing searchId, we create a new layeredSearch and cache it
+            LayeredSearch layeredSearch = null;
+            if(SessionManager.ActiveLayeredSearches.containsKey(searchId)){
+                layeredSearch = (LayeredSearch) SessionManager.ActiveLayeredSearches.get(searchId);
+            } else{
+                layeredSearch = new LayeredSearch(this.context, searchId);
+                layeredSearch.init();
+                SessionManager.ActiveLayeredSearches.put(layeredSearch.getId(), layeredSearch);
+            }
+
+            // Either way, update the layers
+            layeredSearch.updateLayers(layers);
+            return gson.toJson(layeredSearch.getLayers());
+        } catch (Exception ex) {
+            logger.error("Error starting a new layered search with the request body:\n " + gson.toJson(requestBody), ex);
+            response.status(500);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
     });

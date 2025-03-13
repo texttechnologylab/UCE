@@ -1,7 +1,7 @@
 :root {
     /* Variables prime and secondary MUST ALWAYS be in line 3 and 4! */
-    --prime: #00618f;
-    --secondary: rgba(35, 35, 35, 1);
+    --prime: #5c7a17;
+    --secondary: darkgreen;
     --gold: rgba(255, 165, 0, 1);
     --dark: rgba(38, 38, 38, 1);
 }
@@ -275,6 +275,10 @@ nav .selected-nav-btn.text::before {
     color: black !important;
 }
 
+.justify-items-center{
+    justify-items: center;
+}
+
 .open-wiki-page {
     cursor: pointer;
     transition: 0.15s;
@@ -285,6 +289,11 @@ nav .selected-nav-btn.text::before {
     text-decoration: underline;
     text-decoration-thickness: 2px;
     text-decoration-color: var(--secondary);
+}
+
+.hidden{
+    visibility: hidden;
+    pointer-events: none;
 }
 
 .group-box {
@@ -549,7 +558,6 @@ nav .selected-nav-btn.text::before {
     color: rgba(0, 0, 0, 0.65);
 }
 
-
 .uce-description {
     border: lightgrey 1px solid;
     border-radius: 6px;
@@ -584,6 +592,19 @@ nav .selected-nav-btn.text::before {
 
 .document-card .snippet-content b {
     color: var(--prime);
+}
+
+.document-card .snippet-content .inspect-page-btn{
+    position: absolute;
+    top:50%;
+    right:-15px;
+    transform: translate(50%, -50%);
+    padding: 6px;
+    border-radius: 6px;
+    border:lightgray 1px solid;
+    content: '';
+    background-color: ghostwhite;
+    color:var(--prime);
 }
 
 .document-card .embedding-text {
@@ -631,9 +652,22 @@ nav .selected-nav-btn.text::before {
     margin-bottom: 4rem;
     position: relative;
     border: gray 1px solid;
-    transform: scale(1.008);
+    /*transform: scale(1.008);*/
     transition: transform 0.5s ease;
     box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
+}
+
+.focused-document-card .snippet-content .inspect-page-btn{
+    border-color: darkgray !important;
+}
+
+.focused-document-card .document-header a{
+    border-color: gray !important;
+    transform: scale(1.05, 1.05);
+    transition: 0.25s;
+}
+
+.focused-document-card .snippet-content {
 }
 
 .document-card .document-header {
@@ -702,17 +736,29 @@ nav .selected-nav-btn.text::before {
 
 .document-card .snippet-content {
     padding: 12px;
+    border:1px transparent solid;
     border-radius: 6px;
     background-color: rgba(125, 125, 125, 0.15);
+}
+
+.document-card .metadata-div{
+    font-size: small;
+    margin-top: 14px;
+}
+
+.document-card .metadata-div *{
+    font-size: small !important;
 }
 
 .enriched-search-tokens .search-token {
     background-color: rgba(125, 125, 125, 0.1);
     border-radius: 6px;
-
 }
 
 /* Document cards */
+
+.uce-metadata-container{
+}
 
 .uce-metadata-container .uce-metadata-item {
     padding: 8px;

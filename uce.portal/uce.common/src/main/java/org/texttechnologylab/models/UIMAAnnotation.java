@@ -27,7 +27,9 @@ public class UIMAAnnotation extends ModelBase {
     }
 
     public void setCoveredText(String coveredText) {
-        this.coveredText = coveredText.replaceAll("<", "");
+        this.coveredText = coveredText.replaceAll("<", "")
+                .replaceAll("\n", " ")
+                .replaceAll("\r", " ");
     }
 
     public UIMAAnnotation() {
@@ -35,6 +37,14 @@ public class UIMAAnnotation extends ModelBase {
 
     public UIMAAnnotation(int begin, int end) {
         this.begin = begin;
+        this.end = end;
+    }
+
+    public void setBegin(int begin) {
+        this.begin = begin;
+    }
+
+    public void setEnd(int end) {
         this.end = end;
     }
 
@@ -114,7 +124,8 @@ public class UIMAAnnotation extends ModelBase {
         }
 
         // We apply some heuristic post-processing to make the text more readable.
-        return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
+        //return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
+        return StringUtils.CleanText(finalText.toString());
     }
 
     private String generateMultiHTMLTag(List<UIMAAnnotation> annotations) {

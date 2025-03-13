@@ -1,4 +1,4 @@
-<div class="filter-div col-md-4 m-0 pt-1 pb-1 pl-2 pr-2 small-font" data-type="${filter.getValueType()}">
+<div class="filter-div flex-grow-1 col-md-auto m-0 pt-1 pb-1 pl-2 pr-2 small-font" data-type="${filter.getValueType()}">
     <div class="flexed align-items-center justify-content-between">
         <label class="mb-0 mr-1 color-secondary">${filter.getKey()}</label>
 

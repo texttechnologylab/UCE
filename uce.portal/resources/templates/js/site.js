@@ -41,6 +41,16 @@ function navigateToView(id) {
 }
 
 /**
+ * Popups a modal with a message and a title.
+ */
+function showMessageModal(title, body) {
+    const $modal = $('#messageModal');
+    $modal.find('.modal-title').html(title);
+    $modal.find('.modal-body').html(body);
+    $modal.modal();
+}
+
+/**
  * Start a search by pressing Enter
  */
 $('body').on('keydown', '.view .search-input', function (event) {
@@ -76,20 +86,39 @@ function handleCorpusSelectionChanged($select){
     const hasEmbeddings = selectedOption.getAttribute("data-hasembeddings");
     const hasRagBot = selectedOption.getAttribute("data-hasragbot");
     const hasTopicDist = selectedOption.getAttribute("data-hastopicdist");
+    const hasTimeAnnotations = selectedOption.getAttribute("data-hastimeannotations");
+    const hasTaxonAnnotations = selectedOption.getAttribute("data-hastaxonannotations");
+    const oldCorpusId = selectedCorpus;
     selectedCorpus = parseInt(selectedOption.getAttribute("data-id"));
+    if(oldCorpusId !== selectedCorpus){
+        // We have switched corpora then, start a new empty search.
+        startNewSearch("", false);
+    }
 
     if (hasSr === 'true') $('.open-sr-builder-btn').show(50);
     else $('.open-sr-builder-btn').hide(50);
-
-    // The taxonomy tree will maybe be removed. Just hide it always for now.
-    //if (hasBiofidOnthology === 'true' && sparqlAlive === 'true') $('.taxonomy-tree-include').show();
-    //else $('.taxonomy-tree-include').hide();
 
     if (hasEmbeddings === 'true') $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').show();
     else $('.search-settings-div input[data-id="EMBEDDINGS"]').closest('.option').hide();
 
     if (hasRagBot === 'true') $('.ragbot-chat-include').show();
     else $('.ragbot-chat-include').hide();
+
+    // Change the UCE Metadata according to the corpus
+    $('.uce-corpus-search-filter').each(function(){
+        if($(this).data('id') === selectedCorpus) $(this).show();
+        else $(this).hide();
+    })
+
+    // Update the layered search. That requires annotations and without them, is useless.
+    if(hasTaxonAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').show();
+    else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
+
+    if(hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
+    else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
+
+    if(hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false') $('.open-layered-search-builder-btn').hide();
+    else $('.open-layered-search-builder-btn').show();
 
     updateSearchHistoryUI();
 }
@@ -118,20 +147,7 @@ $('body').on('click', '.open-corpus-inspector-btn', function () {
             $('.corpus-inspector-include').html(response);
 
             // After that, we load documentsListView
-            $.ajax({
-                url: "/api/corpus/documentsList?corpusId=" + corpusId + "&page=" + 1,
-                type: "GET",
-                success: function (response) {
-                    $('.corpus-inspector-include .corpus-documents-list-include').html(response);
-                },
-                error: function (xhr, status, error) {
-                    console.error(xhr.responseText);
-                    $('.corpus-inspector-include .corpus-documents-list-include').html(xhr.responseText);
-                },
-                always: function () {
-                    $('.corpus-inspector-include .simple-loader').fadeOut(150);
-                }
-            });
+            loadCorpusDocuments(corpusId, $('.corpus-inspector-include .corpus-documents-list-include'));
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);
@@ -139,6 +155,27 @@ $('body').on('click', '.open-corpus-inspector-btn', function () {
         }
     });
 })
+
+/**
+ * Loads the raw document list to a corpus into a target include.
+ * @param corpusId
+ * @param $target
+ */
+function loadCorpusDocuments(corpusId, $target) {
+    $.ajax({
+        url: "/api/corpus/documentsList?corpusId=" + corpusId + "&page=" + 1,
+        type: "GET",
+        success: function (response) {
+            $target.html(response);
+        },
+        error: function (xhr, status, error) {
+            $target.html(xhr.responseText);
+        },
+        always: function () {
+            $target.find('.simple-loader').fadeOut(150);
+        }
+    });
+}
 
 /**
  * Triggers whenever an open-document element is clicked. This causes to load a new full read view of a doc
@@ -159,7 +196,7 @@ $('body').on('click', '.open-globe', function () {
     openNewGlobeView(type, id);
 })
 
-$('body').on('click', '.open-document-metadata', async function(){
+$('body').on('click', '.open-document-metadata', async function () {
     await $.ajax({
         url: "/api/document/reader/pagesList?id=" + id + "&skip=" + i,
         type: "GET",

@@ -23,7 +23,7 @@ let WikiHandler = (function () {
         $('.wiki-page-modal .page-content .loading-div').fadeIn(100);
 
         $.ajax({
-            url: "/api/wiki/annotationPage?wid=" + wikiDto.wid + "&covered=" + encodeURIComponent(wikiDto.coveredText),
+            url: "/api/wiki/page?wid=" + wikiDto.wid + "&covered=" + encodeURIComponent(wikiDto.coveredText),
             type: "GET",
             success: (response) => {
                 $('.wiki-page-modal .page-content .include').html(response);
@@ -42,7 +42,7 @@ let WikiHandler = (function () {
             },
             error: (xhr, status, error) => {
                 console.error(xhr.responseText);
-                alert("There was an unknown error loading your page.")
+                showMessageModal("Unknown Error", "There was an unknown error loading your page.")
             }
         }).always(() => {
             $('.wiki-page-modal .page-content .loading-div').fadeOut(100);
@@ -84,8 +84,6 @@ let WikiHandler = (function () {
 
         // Check if we have already loaded this rdfnode children before
         const expanded = $container.data('expanded');
-        console.log(expanded);
-        console.log($container.data('children'));
         if($container.data('children')){
             if(expanded){
                 $container.find('.nodes-list-div').first().hide();
@@ -115,8 +113,7 @@ let WikiHandler = (function () {
                 $container.data('children', true);
             },
             error: function (xhr, status, error) {
-                // TODO: Add a better error toast here
-                alert("Request failed, since the server wasn't reachable.")
+                showMessageModal("Bad Request", "Request failed, since the server wasn't reachable.");
                 console.error(xhr.responseText);
             }
         }).always(function () {
@@ -164,7 +161,14 @@ $('body').on('click', '.clickable-rdf-node', function () {
 $('body').on('click', '.expand-metadata-string-btn', function () {
     const expandedContent = $(this).closest('.item-container').find('md-block').html();
     const title = $(this).closest('.item-container').find('label,.key').html();
-    $('.wiki-metadata-expanded-view .content').html(expandedContent);
+    openInExpandedTextView(title, expandedContent);
+});
+
+/**
+ * Opens something in a large text window
+ */
+function openInExpandedTextView(title, content){
+    $('.wiki-metadata-expanded-view .content').html(content);
     $('.wiki-metadata-expanded-view .title').html(title);
     $('.wiki-metadata-expanded-view').fadeIn(25);
-});
+}

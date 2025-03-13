@@ -17,6 +17,7 @@
         <#include "*/css/search-redesign.css">
         <#include "*/css/corpus-universe.css">
         <#include "*/css/wiki.css">
+        <#include "*/css/layered-search-builder.css">
         <#include "*/css/kwic.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
@@ -54,6 +55,7 @@
 </head>
 
 <body>
+<#include "*/messageModal.ftl">
 
 <div class="site-container">
 
@@ -88,13 +90,19 @@
                         <a class="switch-view-btn btn text" data-id="team">${languageResource.get("team")}</a>
                     </div>
                     <select class="form-control bg-light rounded-0 color-prime border-right-0 large-font switch-language-select">
-                        <option data-lang="de-DE">Deutsch</option>
                         <option data-lang="en-EN">Englisch</option>
+                        <option data-lang="de-DE">Deutsch</option>
                     </select>
                 </div>
             </div>
         </div>
     </nav>
+
+    <div class="layered-search-builder-include display-none">
+        <div class="layered-search-builder-modal">
+            <#include "*/search/components/layeredSearchBuilder.ftl"/>
+        </div>
+    </div>
 
     <div class="sr-query-builder-include">
     </div>
@@ -140,15 +148,28 @@
                                     data-hasembeddings="${corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()?c}"
                                     data-hastopicdist="${corpusVm.getCorpusConfig().getOther().isAvailableOnFrankfurtUniversityCollection()?c}"
                                     data-hasragbot="${corpusVm.getCorpusConfig().getOther().isEnableRAGBot()?c}"
+                                    data-hastaxonannotations="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isAnnotated()?c}"
+                                    data-hastimeannotations="${corpusVm.getCorpusConfig().getAnnotations().isTime()?c}"
                                     data-sparqlalive="${isSparqlAlive?c}"
                                     data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
                         </#list>
                     </select>
+                    <!-- semantic role button -->
                     <button class="btn open-sr-builder-btn" data-trigger="hover" data-toggle="popover"
                             data-placement="top"
                             data-content="${languageResource.get("openSrBuilder")}">
                         <i class="fas fa-project-diagram mr-1 ml-1"></i>
                     </button>
+                    <!-- layered search button -->
+                    <div class="position-relative">
+                        <button class="btn open-layered-search-builder-btn" data-trigger="hover" data-toggle="popover"
+                                data-placement="top"
+                                data-content="" onclick="$('.layered-search-builder-include').show();">
+                            <i class="fas fa-layer-group mr-1 ml-1"></i>
+                        </button>
+                        <div class="open-layered-search-builder-btn-badge">0</div>
+                    </div>
+
                 </div>
 
                 <!-- Search bar and menu -->
@@ -156,12 +177,18 @@
                     <div class="w-100 flexed align-items-center">
                         <input type="text" class="search-input form-control large-font w-100 rounded-0"
                                placeholder="${languageResource.get("searchPlaceholder")}"/>
+                        <div class="open-documentation-btn pr-2 pl-2">
+                            <i class="fas fa-question-circle large-font clickable open-wiki-page color-secondary"
+                               data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
+                               data-content="${languageResource.get("openSearchDocumentation")}"
+                               data-wid="DOC-SEARCH" style="text-decoration: none !important;" data-wcovered="-"></i>
+                        </div>
 
                         <div class="custom-control custom-switch search-pro-mode-switch"
                              data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
                              data-content="${languageResource.get("searchProModeDescription")}">
-                            <input type="checkbox" checked class="custom-control-input" id="proModeSwitch">
-                            <label class="font-weight-bold font-italic custom-control-label flexed align-items-center"
+                            <input type="checkbox" class="custom-control-input" id="proModeSwitch">
+                            <label class="font-weight-bold open-search-doc-btn font-italic custom-control-label flexed align-items-center"
                                    for="proModeSwitch">
                                 Pro
                             </label>
@@ -182,7 +209,8 @@
                                     <#if corpusVm.getCorpusConfig().getAnnotations().isUceMetadata()
                                     && corpusVm.getCorpus().getUceMetadataFilters()?has_content
                                     && corpusVm.getCorpus().getUceMetadataFilters()?size gt 0>
-                                        <div class="uce-corpus-search-filter" data-id="${corpusVm.getCorpus().getId()}">
+                                        <div class="uce-corpus-search-filter display-none"
+                                             data-id="${corpusVm.getCorpus().getId()}">
                                             <div class="flexed align-items-center text-secondary w-100">
                                                 <i class="fas fa-filter mr-2"></i>
                                                 <div class="m-0 pl-0 pr-0 rounded pt-2 pb-2 row w-100 light-border bg-lightgray">
@@ -200,6 +228,9 @@
                             <div class="search-settings-div flexed align-items-center justify-content-around">
                                 <!-- The data-ids are corresponding to the SearchLayer enum. Change them with care!! -->
                                 <i class="w-auto fab fa-searchengin text-secondary large-font"></i>
+                                <!-- hidden input for layered search -->
+                                <input type="hidden" class="submit-layered-search-input" value="false"/>
+
                                 <div class="option" data-type="radio">
                                     <div class="form-check form-check-inline" data-trigger="hover"
                                          data-toggle="popover" data-placement="top" data-html="true"
@@ -213,7 +244,8 @@
                                     <div class="form-check form-check-inline" data-trigger="hover"
                                          data-toggle="popover" data-placement="top" data-html="true"
                                          data-content="${languageResource.get("nerSearch")}">
-                                        <input class="form-check-input" type="radio" name="searchLayerRadioOptions"
+                                        <input class="form-check-input" type="radio" disabled
+                                               name="searchLayerRadioOptions"
                                                id="inlineRadio2" value="NAMED_ENTITIES">
                                         <label class="form-check-label color-secondary small-font" for="inlineRadio2">NER</label>
                                     </div>
@@ -235,8 +267,12 @@
                                 <div class="option w-auto" data-trigger="hover"
                                      data-toggle="popover" data-placement="top" data-html="true"
                                      data-content="${languageResource.get("enrichOption")}">
+                                    <#assign enrichDisabled = 'checked'>
+                                    <#if !isSparqlAlive>
+                                        <#assign enrichDisabled = 'disabled'>
+                                    </#if>
                                     <label class="mb-0 w-100 small-font mr-3">Enrich</label>
-                                    <input type="checkbox" data-id="ENRICH"/>
+                                    <input type="checkbox" data-id="ENRICH" ${enrichDisabled}/>
                                 </div>
                             </div>
                         </div>
@@ -251,6 +287,7 @@
             <div class="position-relative">
                 <#include "*/search/components/loader.ftl">
                 <div class="search-result-container container-fluid position-relative">
+
                 </div>
             </div>
 
@@ -318,8 +355,8 @@
     <div class="ragbot-chat-include">
         <#include "*/ragbot/chatwindow.ftl"/>
     </div>
-
 </div>
+
 </body>
 
 <footer class="bg-lightgray">
@@ -370,6 +407,7 @@
     <#include "js/site.js">
     <#include "js/language.js">
     <#include "js/search.js">
+    <#include "js/layeredSearch.js">
     <#include "js/keywordInContext.js">
 </script>
 

@@ -3,7 +3,7 @@
     <!-- uce corporate data -->
     <div class="mt-5 uce-description">
         <div class="flexed align-items-center justify-content-between">
-            <h6 class="color-prime mb-0">${system.getMeta().getName()!"-"}</h6>
+            <h6 class="color-prime mb-0">${system.getMeta().getName()?trim!"-"}</h6>
             <button class="btn" onclick="$(this).parent().next('.content').toggle(100)">
                 <i class="fas fa-info-circle color-secondary large-font"></i>
             </button>
@@ -27,7 +27,7 @@
                             <div>
                                 <h5 class="open-corpus-inspector-btn border-0 w-100 mb-2 color-prime clickable"
                                     data-id="${corpusVm.getCorpus().getId()}">
-                                    ${corpusVm.getCorpus().getName()}
+                                    ${corpusVm.getCorpus().getName()?trim}
                                 </h5>
                                 <p class="text mb-0 small">${corpusVm.getCorpus().getAuthor()}</p>
                             </div>
@@ -44,7 +44,7 @@
 
                         </div>
 
-                        <div class="expanded-content">
+                        <div class="expanded-content display-none">
                             <hr class="mt-3 mb-1 "/>
 
                             <!-- content -->

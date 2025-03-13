@@ -23,18 +23,17 @@ import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.EmbeddingUtils;
 import org.texttechnologylab.utils.ListUtils;
+import org.texttechnologylab.utils.RegexUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
@@ -43,15 +42,16 @@ import java.util.concurrent.Executors;
 
 public class Importer {
 
+    private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger();
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
-    private final GoetheUniversityService goetheUniversityService;
-    private final PostgresqlDataInterface_Impl db;
-    private final GbifService gbifService;
-    private final RAGService ragService;
-    private final JenaSparqlService jenaSparqlService;
+    private GoetheUniversityService goetheUniversityService;
+    private PostgresqlDataInterface_Impl db;
+    private GbifService gbifService;
+    private RAGService ragService;
+    private JenaSparqlService jenaSparqlService;
     private String path;
     private String importId;
     private Integer importerNumber;
@@ -61,14 +61,22 @@ public class Importer {
                     String foldername,
                     int importerNumber,
                     String importId) {
+        initServices(serviceContext);
+        this.importerNumber = importerNumber;
+        this.importId = importId;
+        this.path = foldername;
+    }
+
+    public Importer(ApplicationContext serviceContext) {
+        initServices(serviceContext);
+    }
+
+    private void initServices(ApplicationContext serviceContext) {
         this.goetheUniversityService = serviceContext.getBean(GoetheUniversityService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.ragService = serviceContext.getBean(RAGService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
         this.gbifService = serviceContext.getBean(GbifService.class);
-        this.importerNumber = importerNumber;
-        this.importId = importId;
-        this.path = foldername;
     }
 
     /**
@@ -96,6 +104,28 @@ public class Importer {
     }
 
     /**
+     * Stores an uploaded xmi to a given corpus
+     */
+    public void storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus) throws DatabaseOperationException {
+        logger.info("Trying to store an uploaded UIMA file...");
+
+        // Before we try to parse the document, we need to check if we have UCEMetadata filters for this corpus.
+        if (CorpusConfig.fromJson(corpus.getCorpusJsonConfig()).getAnnotations().isUceMetadata())
+            this.uceMetadataFilters = ExceptionUtils.tryCatchLog(
+                    () -> new CopyOnWriteArrayList<>(db.getUCEMetadataFiltersByCorpusId(corpus.getId())),
+                    (ex) -> logger.error("Couldn't fetch UCEMetadataFilters to a corpus - this shouldn't happen. The process continues without filters.", ex));
+
+        // We don't catch exceptions here, we let them be raised.
+        var doc = XMIToDocument(inputStream, corpus);
+        if (doc == null)
+            throw new DatabaseOperationException("The document was already imported into the corpus according to its documentId.");
+        db.saveDocument(doc);
+        postProccessDocument(doc, CorpusConfig.fromJson(corpus.getCorpusJsonConfig()));
+
+        logger.info("Finished storing and uploaded UIMA file.");
+    }
+
+    /**
      * Imports all UIMA xmi files in a folder
      */
     public void storeCorpusFromFolderAsync(String folderName, int numThreads) throws DatabaseOperationException {
@@ -103,7 +133,6 @@ public class Importer {
         List<CompletableFuture<Void>> futures = new ArrayList<>();
 
         var corpus = new Corpus();
-        var gson = new Gson();
         CorpusConfig corpusConfig = null;
 
         if (!SystemStatus.PostgresqlDbStatus.isAlive())
@@ -198,7 +227,26 @@ public class Importer {
     }
 
     /**
-     * Converts an XMI to an OCRDocument by path
+     * Converts an XMI inputstream to a Document.
+     *
+     * @param inputStream
+     * @param corpus
+     * @return
+     */
+    public Document XMIToDocument(InputStream inputStream, Corpus corpus) {
+        try {
+            var jCas = JCasFactory.createJCas();
+            CasIOUtils.load(inputStream, null, jCas.getCas(), CasLoadMode.LENIENT);
+
+            return XMIToDocument(jCas, corpus);
+        } catch (Exception ex) {
+            logger.error("Error while reading an annotated xmi file from stream to a cas and transforming it into a document:", ex);
+            return null;
+        }
+    }
+
+    /**
+     * Converts an XMI to a Document by path
      */
     public Document XMIToDocument(String filename, Corpus corpus) {
         try {
@@ -232,7 +280,6 @@ public class Importer {
 
         try {
             // Corpus config so we know what do look for
-            var gson = new Gson();
             var corpusConfig = gson.fromJson(corpus.getCorpusJsonConfig(), CorpusConfig.class);
 
             // First, metadata
@@ -336,14 +383,14 @@ public class Importer {
             metadata.setValue(t.getValue());
             metadata.setKey(t.getKey());
             // TODO: THIS IS JUST FOR TESTING. Delete this domain check and leave only the last line
-            if(metadata.getKey().equals("domain")) metadata.setValueType(UCEMetadataValueType.ENUM);
-            else
-                metadata.setValueType(UCEMetadataValueType.valueOf(t.getValueType().toUpperCase()));
+            //if (metadata.getKey().equals("domain")) metadata.setValueType(UCEMetadataValueType.ENUM);
+            //else
+            metadata.setValueType(UCEMetadataValueType.valueOf(t.getValueType().toUpperCase()));
             data.add(metadata);
 
             // Now check if we have added a new distinct metadata. If not, then cache it for filtering later.
             // But we are not interested in filtering for JSON content. That's not feasible.
-            if(metadata.getValueType() == UCEMetadataValueType.JSON) return;
+            if (metadata.getValueType() == UCEMetadataValueType.JSON) return;
             var possibleFilter = this.uceMetadataFilters
                     .stream()
                     .filter(f -> f.getKey().equals(t.getKey()) && metadata.getValueType() == metadata.getValueType())
@@ -352,7 +399,7 @@ public class Importer {
             if (possibleFilter.isEmpty()) {
                 var newFilter = new UCEMetadataFilter(corpusId, metadata.getKey(), metadata.getValueType());
                 newFilter.addPossibleCategory(metadata.getValue());
-                synchronized (newFilter){
+                synchronized (newFilter) {
                     this.uceMetadataFilters.add(newFilter);
                 }
                 ExceptionUtils.tryCatchLog(
@@ -362,9 +409,10 @@ public class Importer {
                 // If this filter already exists, then we need to check if it's an Enum filter. If yes, there is a chance
                 // that a new category to that enum must be added and stored. Let's check.
                 var existingFilter = possibleFilter.get();
-                if(existingFilter.getValueType() != UCEMetadataValueType.ENUM) return; // There is nothing to update for none enums.
+                if (existingFilter.getValueType() != UCEMetadataValueType.ENUM)
+                    return; // There is nothing to update for none enums.
                 // Again, thread safety. If this worker updates a filter category, we need the other to know.
-                synchronized (existingFilter){
+                synchronized (existingFilter) {
                     if (existingFilter.getPossibleCategories().stream().noneMatch(c -> c.equals(metadata.getValue()))) {
                         existingFilter.addPossibleCategory(metadata.getValue());
                         ExceptionUtils.tryCatchLog(
@@ -400,6 +448,7 @@ public class Importer {
                     metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
                             + documentAnnotation.getDateMonth() + "."
                             + documentAnnotation.getDateYear());
+                    metadataTitleInfo.setAuthor(documentAnnotation.getAuthor());
                 } catch (Exception ex) {
                     logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
                 }
@@ -420,7 +469,8 @@ public class Importer {
                 // New page
                 var page = new Page(p.getBegin(), p.getEnd(), p.getPageNumber(), p.getPageId());
                 page.setDocument(document);
-                page.setCoveredText(page.getCoveredText());
+                page.setCoveredText(p.getCoveredText());
+
                 if (corpusConfig.getAnnotations().isOCRParagraph())
                     page.setParagraphs(getCoveredParagraphs(p));
 
@@ -430,6 +480,7 @@ public class Importer {
                 if (corpusConfig.getAnnotations().isOCRLine())
                     page.setLines(getCoveredLines(p));
 
+                updateAnnotationsWithPageId(document, page, false);
                 pages.add(page);
             });
             document.setPages(pages);
@@ -439,7 +490,7 @@ public class Importer {
             // We want pages as our pagination of the document reader relies on it to handle larger documents.
             // In this case: we chunk the whole text into pages
             var fullText = document.getFullText();
-            var pageSize = 10000;
+            var pageSize = 7500;
             var pageNumber = 1;
             var pages = new ArrayList<Page>();
 
@@ -449,10 +500,37 @@ public class Importer {
                 page.setCoveredText(fullText.substring(i, pageEnd));
                 page.setDocument(document);
                 pageNumber += 1;
+                updateAnnotationsWithPageId(document, page, false);
+
                 pages.add(page);
             }
             document.setPages(pages);
             logger.info("Setting synthetic pages done.");
+        }
+
+        // Since we have some errors in the annotation (mainly we have an offset in begin and end sometimes),
+        // we need to cleanup at the end so that every annotation that doesn't have a page (because of the error offset)
+        // is assigned to the last page.
+        updateAnnotationsWithPageId(document, document.getPages().getLast(), true);
+    }
+
+    private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage) {
+        // Set the pages for the different annotations
+        for (var anno : document.getBiofidTaxons().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+            anno.setPage(page);
+        }
+        for (var anno : document.getTaxons().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+            anno.setPage(page);
+        }
+        for (var anno : document.getNamedEntities().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+            anno.setPage(page);
+        }
+        for (var anno : document.getTimes().stream().filter(t ->
+                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+            anno.setPage(page);
         }
     }
 
@@ -482,6 +560,8 @@ public class Importer {
      */
     private void setTaxonomy(Document document, JCas jCas, CorpusConfig corpusConfig) {
         var taxons = new ArrayList<Taxon>();
+        var biofidTaxons = new ArrayList<BiofidTaxon>();
+
         JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Taxon.class).forEach(t -> {
             var taxon = new Taxon(t.getBegin(), t.getEnd());
             taxon.setDocument(document);
@@ -503,6 +583,21 @@ public class Importer {
                     // We need the last number in that string, have a lookup into our sparql database and from there fetch the
                     // correct TaxonId
                     if (potentialBiofidId.isEmpty()) continue;
+
+                    // Before we do GbifOccurence stuff, we build specific BiofidTaxon objects if we can.
+                    var newBiofidTaxons = ExceptionUtils.tryCatchLog(
+                            () -> jenaSparqlService.queryBiofidTaxon(potentialBiofidId),
+                            (ex) -> logger.error("Error building a BiofidTaxon object from a potential id.", ex));
+                    if (newBiofidTaxons != null) {
+                        for (var biofidTaxon : newBiofidTaxons) {
+                            biofidTaxon.setCoveredText(t.getCoveredText());
+                            biofidTaxon.setBegin(t.getBegin());
+                            biofidTaxon.setEnd(t.getEnd());
+                            biofidTaxon.setDocument(document);
+                            biofidTaxon.setBiofidUrl(potentialBiofidId);
+                            biofidTaxons.add(biofidTaxon);
+                        }
+                    }
 
                     var taxonId = ExceptionUtils.tryCatchLog(
                             () -> jenaSparqlService.biofidIdUrlToGbifTaxonId(potentialBiofidId),
@@ -532,6 +627,7 @@ public class Importer {
             taxons.add(taxon);
         });
         document.setTaxons(taxons);
+        document.setBiofidTaxons(biofidTaxons);
         logger.info("Setting Taxons done.");
     }
 
@@ -544,6 +640,15 @@ public class Importer {
             var time = new Time(t.getBegin(), t.getEnd());
             time.setValue(t.getValue());
             time.setCoveredText(t.getCoveredText());
+
+            // Let's see if we can dissect the raw time string into more usable formats for our db.
+            var units = RegexUtils.DissectTimeAnnotationString(time.getCoveredText());
+            time.setYear(units.year);
+            time.setMonth(units.month);
+            time.setDay(units.day);
+            time.setDate(units.fullDate);
+            time.setSeason(units.season);
+
             times.add(time);
         });
         document.setTimes(times);
@@ -646,7 +751,6 @@ public class Importer {
         });
         document.setNamedEntities(nes);
         logger.info("Setting Named-Entities done.");
-
     }
 
     /**
@@ -656,10 +760,9 @@ public class Importer {
         // Set the sentences
         document.setSentences(JCasUtil.select(jCas, de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence.class)
                 .stream()
-                .map(s -> new org.texttechnologylab.models.corpus.Sentence(s.getBegin(), s.getEnd()))
+                .map(s -> new org.texttechnologylab.models.corpus.Sentence(s.getBegin(), s.getEnd(), s.getCoveredText()))
                 .toList());
         logger.info("Setting sentences done.");
-
     }
 
     /**

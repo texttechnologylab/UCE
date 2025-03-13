@@ -4,7 +4,7 @@
     </style>
 </head>
 
-<div class="corpus-documents-list">
+<div class="corpus-documents-list" data-id="${requestId}">
     <div class="m-0 p-0 documents-include">
         <#include '*/corpus/components/documents.ftl' >
     </div>
@@ -21,7 +21,7 @@
     /**
      * Reload more documents endlessly if the user wants.
      */
-    $('body').on('click', '.corpus-documents-list .load-more-documents-btn', function () {
+    $('body').on('click', '.corpus-documents-list[data-id="${requestId}"] .load-more-documents-btn', function () {
         const $btn = $(this);
         let page = $btn.attr('data-page');
         const corpusId = $btn.data('corpusid');
@@ -32,14 +32,13 @@
             url: "/api/corpus/documentsList?corpusId=" + corpusId + "&page=" + page,
             type: "GET",
             success: function (response) {
-                $('.corpus-documents-list .documents-include').append(response);
+                $('.corpus-documents-list[data-id="${requestId}"] .documents-include').append(response);
                 page = parseInt(page) + 1;
-                console.log(page);
                 $btn.attr('data-page', page);
             },
             error: function (xhr, status, error) {
                 console.error(xhr.responseText);
-                $('.corpus-documents-list .documents-include').html(xhr.responseText);
+                $('.corpus-documents-list[data-id="${requestId}"] .documents-include').html(xhr.responseText);
             },
             complete: function () {
                 $btn.html(ogContent);

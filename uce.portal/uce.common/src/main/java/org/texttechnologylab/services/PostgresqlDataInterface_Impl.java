@@ -1,6 +1,7 @@
 package org.texttechnologylab.services;
 
 import com.google.gson.Gson;
+import com.google.gson.reflect.TypeToken;
 import org.hibernate.*;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
@@ -48,6 +49,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         } catch (Exception ex) {
             SystemStatus.PostgresqlDbStatus = new HealthStatus(false, "Couldn't build the session factory.", ex);
         }
+    }
+
+    public void executeSqlWithoutReturn(String sql) throws DatabaseOperationException {
+        executeOperationSafely(session -> {
+            session.createNativeQuery(sql).executeUpdate();
+            return null;
+        });
+    }
+
+    public List executeSqlWithReturn(String sql) throws DatabaseOperationException {
+        return executeOperationSafely(session -> session.createNativeQuery(sql).getResultList());
     }
 
     public ArrayList<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) throws DatabaseOperationException {
@@ -161,6 +173,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             criteria.add(Restrictions.eq("corpusId", corpusId));
             var documents = (List<Document>) criteria.list();
             documents.forEach(d -> Hibernate.initialize(d.getPages()));
+            documents.forEach(d -> Hibernate.initialize(d.getUceMetadata()
+                    .stream()
+                    .filter(u -> u.getValueType() != UCEMetadataValueType.JSON)));
             return documents;
         });
     }
@@ -264,7 +279,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             var query = builder.createQuery(Document.class);
             var root = query.from(Document.class);
 
-            // HARDCODED_SQL
             query.select(root).where(root.get("id").in(documentIds));
             var q = session.createQuery(query);
             var docs = q.getResultList();
@@ -273,11 +287,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             // order the documentIds passed in were since they could have been sorted!
             var sortedDocs = new Document[documentIds.size()];
             for (var id : documentIds) {
-                var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
                 // doc cannot be null.
-                Hibernate.initialize(doc.getPages());
+                var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
+                if(doc == null) continue;
+
+                // We EAGERLY load those for now and see how that impacts performance.
+                // Hibernate.initialize(doc.getPages());
+                // Hibernate.initialize(doc.getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON));
+
                 sortedDocs[documentIds.indexOf(id)] = doc;
             }
+
             return Arrays.stream(sortedDocs).filter(Objects::nonNull).toList();
         });
     }
@@ -339,13 +359,15 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                           SearchOrder order,
                                                           OrderByColumn orderedByColumn,
                                                           long corpusId,
-                                                          List<UCEMetadataFilterDto> uceMetadataFilters) throws DatabaseOperationException {
+                                                          List<UCEMetadataFilterDto> uceMetadataFilters,
+                                                          boolean useTsVectorSearch,
+                                                          String schema,
+                                                          String sourceTable) throws DatabaseOperationException {
 
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
-
             DocumentSearchResult search = null;
             try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() +
-                    "(?::bigint, ?::text[], ?::text, ?::integer, ?::integer, ?::boolean, ?::text, ?::text, ?::jsonb)}")) {
+                    "(?::bigint, ?::text[], ?::text, ?::integer, ?::integer, ?::boolean, ?::text, ?::text, ?::jsonb, ?::boolean, ?::text, ?::text)}")) {
                 storedProcedure.setInt(1, (int) corpusId);
                 storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.stream().map(this::escapeSql).toArray()));
                 storedProcedure.setString(3, ogSearchQuery);
@@ -362,6 +384,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     else storedProcedure.setString(9, gson.toJson(applicableFilters)
                             .replaceAll("\"valueType\"", "\"valueType::text\""));
                 }
+                storedProcedure.setBoolean(10, useTsVectorSearch);
+                storedProcedure.setString(11, sourceTable);
+                storedProcedure.setString(12, schema);
 
                 var result = storedProcedure.executeQuery();
                 while (result.next()) {
@@ -382,9 +407,18 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     // This is only done for the fulltext search
                     if (layer == SearchLayer.FULLTEXT) {
                         // The found text snippets.
+                        var gson = new Gson();
                         var resultSet = result.getArray("snippets_found").getResultSet();
-                        var foundSnippets = new HashMap<Integer, String>();
-                        while (resultSet.next()) foundSnippets.put(resultSet.getInt(1) - 1, resultSet.getString(2));
+                        var foundSnippets = new HashMap<Integer, ArrayList<PageSnippet>>();
+                        // Snippets are the snippet text and the page_id to which this snippet belongs. They are json objects
+                        while(resultSet.next()){
+                            var idx = resultSet.getInt(1) - 1;
+                            ArrayList<ArrayList<PageSnippet>> pageSnippet = gson.fromJson(
+                                    resultSet.getString(2),
+                                    new TypeToken<ArrayList<ArrayList<PageSnippet>>>() {
+                                    }.getType());
+                            foundSnippets.put(idx, pageSnippet.getFirst());
+                        }
                         search.setSearchSnippets(foundSnippets);
 
                         // And the ranks of each document.
@@ -395,6 +429,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         search.setSearchRanks(documentRanks);
                     }
                 }
+
                 return search;
             }
         }));
@@ -478,6 +513,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
             Hibernate.initialize(doc.getPages());
+            Hibernate.initialize(doc.getUceMetadata());
             return doc;
         });
     }
@@ -500,6 +536,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             if (doc != null) {
                 Hibernate.initialize(doc.getPages());
+                Hibernate.initialize(doc.getUceMetadata());
             }
             return doc;
         });

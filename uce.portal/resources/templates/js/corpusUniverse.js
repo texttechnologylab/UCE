@@ -66,7 +66,7 @@ var CorpusUniverseHandler = (function () {
                 success: function (response) {
                     if(response.status === 500){
                         // TODO: Show better error message
-                        alert("Problem building corpus universe - aborting operation.");
+                        showMessageModal("Error", "Problem building corpus universe - aborting operation.")
                         return;
                     }
                     networkDto = response;
@@ -106,8 +106,7 @@ var CorpusUniverseHandler = (function () {
                 dataType: "json",
                 success: function (response) {
                     if(response.status === 500){
-                        // TODO: Show better error message
-                        alert("Problem building corpus universe - aborting operation.");
+                        showMessageModal("Error", "Problem building corpus universe - aborting operation.")
                         return;
                     }
                     networkDto = response;

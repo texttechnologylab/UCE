@@ -46,6 +46,8 @@
 
 <body class="no-cursor">
 
+<#include "*/messageModal.ftl">
+
 <div class="site-container">
 
     <#include "*/wiki/components/wikiPageModal.ftl">
@@ -139,6 +141,10 @@
                 <div class="side-bar-content">
                     <div class="header">
                         <h5 class="text-center">Navigator</h5>
+                    </div>
+
+                    <div class="group-box">
+                        <p class="text-center mb-0"><i class="fas fa-id-card-alt mr-1"></i> ${document.getDocumentId()}</p>
                     </div>
 
                     <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>

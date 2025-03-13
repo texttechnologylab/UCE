@@ -5,6 +5,8 @@ import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.viewModels.CorpusViewModel;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Entity
@@ -33,6 +35,8 @@ public class Corpus extends ModelBase {
     }
 
     public List<UCEMetadataFilter> getUceMetadataFilters() {
+        if(uceMetadataFilters == null) return new ArrayList<>();
+        uceMetadataFilters.sort(Comparator.comparing(UCEMetadataFilter::getValueType));
         return uceMetadataFilters;
     }
 

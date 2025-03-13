@@ -8,6 +8,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.LanguageResources;
+import org.texttechnologylab.SearchState;
 import org.texttechnologylab.SessionManager;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
@@ -75,6 +76,7 @@ public class DocumentApi {
             var take = 15;
             var documents = db.getDocumentsByCorpusId(corpusId, (page - 1) * take, take);
 
+            model.put("requestId", request.attribute("id"));
             model.put("documents", documents);
             model.put("corpusId", corpusId);
         } catch (Exception ex) {
@@ -140,6 +142,7 @@ public class DocumentApi {
 
     public Route getSingleDocumentReadView = ((request, response) -> {
         var model = new HashMap<String, Object>();
+        var gson = new Gson();
 
         var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
                 (ex) -> logger.error("Error: the url for the document reader requires an 'id' query parameter. " +
@@ -157,10 +160,11 @@ public class DocumentApi {
             // If this document was opened from an active search, we can highlight the search tokens in the text
             // This is only optional and works fine even without the search tokens.
             if(searchId != null && SessionManager.ActiveSearches.containsKey(searchId)){
-                var activeSearchState = SessionManager.ActiveSearches.get(searchId);
+                var activeSearchState = (SearchState)SessionManager.ActiveSearches.get(searchId);
                 // For SRL Search, there are no search tokens really. We will handle that exclusively later.
-                if(activeSearchState.getSearchType() != SearchType.SEMANTICROLE)
+                if(activeSearchState.getSearchType() != SearchType.SEMANTICROLE){
                     model.put("searchTokens", String.join("[TOKEN]", activeSearchState.getSearchTokens()));
+                }
             }
         } catch (Exception ex) {
             logger.error("Error creating the document reader view for document with id: " + id, ex);

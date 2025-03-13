@@ -4,12 +4,14 @@ import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import org.jsoup.HttpStatusException;
 import org.texttechnologylab.config.CommonConfig;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.dto.rdf.RDFAskDto;
 import org.texttechnologylab.models.dto.rdf.RDFNodeDto;
 import org.texttechnologylab.models.dto.rdf.RDFRequestDto;
 import org.texttechnologylab.models.dto.rdf.RDFSelectQueryDto;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.RDFNodeDtoJsonDeserializer;
+import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.BufferedReader;
@@ -54,6 +56,18 @@ public class JenaSparqlService {
     }
 
     /**
+     * Given a biofidUrl, returns a BiofidTaxon objects
+     */
+    public List<BiofidTaxon> queryBiofidTaxon(String biofidUrl) throws IOException, CloneNotSupportedException {
+        if (!SystemStatus.JenaSparqlStatus.isAlive()) {
+            return null;
+        }
+
+        var nodes = queryBySubject(biofidUrl);
+        return BiofidTaxon.createFromRdfNodes(nodes);
+    }
+
+    /**
      * Given a graph database structure, this gets all triplets where the subject matches the given sub.
      * Example call: var test = queryBySubject("https://www.biofid.de/bio-ontologies/gbif/4356560");
      */
@@ -74,6 +88,20 @@ public class JenaSparqlService {
         return result.getResults().getBindings().stream()
                 .filter(n -> !n.getPredicate().getValue().contains("www.w3.org"))
                 .toList();
+    }
+
+    /**
+     * Given an upper taxonomic rank such as class, genus, phylum etc., fetches all species of that and returns their names.
+     */
+    public List<String> getSpeciesIdsOfUpperRank(String rank, String name) throws IOException {
+        if (!SystemStatus.JenaSparqlStatus.isAlive()) {
+            return new ArrayList<>();
+        }
+
+        // First off, we need to fetch the identifier of the objects for the rank with the given name
+        // Once we have that, we can query all species that belong to that rank by its id
+        var rankIds = getIdsOfTaxonRank(rank, name);
+        return getSpeciesOfRank(rank, rankIds);
     }
 
     /**
@@ -110,7 +138,7 @@ public class JenaSparqlService {
                 "WHERE {" +
                 "  VALUES ?subject { {BIOFID_IDS} }" +
                 "  ?subject ?predicate ?object . " +
-                "  FILTER(?predicate IN (<http://rs.tdwg.org/dwc/terms/vernacularName>, <http://rs.tdwg.org/dwc/terms/scientificName>)) " +
+                "  FILTER(?predicate IN (<http://rs.tdwg.org/dwc/terms/vernacularName>, <http://rs.tdwg.org/dwc/terms/cleanedScientificName>)) " +
                 "}";
         command = command.replace("{BIOFID_IDS}", String.join("\n", biofidIds.stream().map(id -> "<" + id + ">").toList()));
         var result = executeCommand(command, RDFSelectQueryDto.class);
@@ -127,8 +155,6 @@ public class JenaSparqlService {
     /**
      * Returns from e.g.: https://www.biofid.de/bio-ontologies/gbif/10428508 the taxon id that belongs to it.
      * We have that stored in our sparql database. Returns -1 if nothing was found.
-     *
-     * @return
      */
     public long biofidIdUrlToGbifTaxonId(String potentialBiofidId) throws IOException {
         if (!SystemStatus.JenaSparqlStatus.isAlive()) {
@@ -156,6 +182,9 @@ public class JenaSparqlService {
      * @return
      */
     private <T extends RDFRequestDto> T executeCommand(String command, Class<T> clazz) throws IOException {
+        // Put our prefixes into the command
+        command = StringUtils.ConvertSparqlQuery(command);
+        command = "PREFIX bio: <https://www.biofid.de/bio-ontologies/gbif/>\n" + command;
         var endPoint = config.getSparqlHost()
                 + config.getSparqlEndpoint()
                 + "?query="
@@ -187,6 +216,67 @@ public class JenaSparqlService {
         } finally {
             conn.disconnect();
         }
+    }
+
+    /**
+     * Gets the ids of the desired rank by its name
+     * Example:
+     * SELECT distinct ?subject WHERE {
+     *   ?s <http://rs.tdwg.org/dwc/terms/taxonRank> "genus"^^<xsd:string> .
+     *   ?subject <http://rs.tdwg.org/dwc/terms/cleanedScientificName> "Corella"
+     * } LIMIT 10
+     */
+    private List<String> getSpeciesOfRank(String rankName, List<String> ids) throws IOException {
+        var command = "SELECT DISTINCT ?subject " +
+                "WHERE { " +
+                "    ?subject <http://rs.tdwg.org/dwc/terms/taxonRank> \"species\"^^<xsd:string> . " +
+                "    ?subject <http://rs.tdwg.org/dwc/terms/{RANK}> ?rank . " +
+                "    VALUES ?rank { " +
+                "        {IDS}" +
+                "    } " +
+                "} " +
+                "LIMIT 300";
+        command = command
+                .replace("{RANK}", rankName)
+                .replace("{IDS}", String.join("\n", ids.stream().map(i -> "<" + i + ">").toList()));
+        var result = executeCommand(command, RDFSelectQueryDto.class);
+
+        if (result == null || result.getResults() == null || result.getResults().getBindings() == null || result.getResults().getBindings().isEmpty())
+            return new ArrayList<>();
+
+        // If we fetched some results, we can now fetch species according to the ids of the rank
+        var speciesIds = new ArrayList<String>();
+        for(var binding:result.getResults().getBindings()){
+            speciesIds.add(binding.getSubject().getValue());
+        }
+        return speciesIds;
+    }
+
+    /**
+     * Gets the ids of the desired rank by its name
+     * Example:
+     * SELECT distinct ?subject WHERE {
+     *   ?subject <http://rs.tdwg.org/dwc/terms/taxonRank> "genus"^^<xsd:string> .
+     *   ?subject <http://rs.tdwg.org/dwc/terms/cleanedScientificName> "Corella" .
+     * } LIMIT 10
+     */
+    public List<String> getIdsOfTaxonRank(String rank, String name) throws IOException {
+        var rankCommand = "SELECT distinct ?subject WHERE {\n" +
+                "  ?subject <http://rs.tdwg.org/dwc/terms/taxonRank> \"{RANK}\"^^<xsd:string> . " +
+                "  ?subject <http://rs.tdwg.org/dwc/terms/cleanedScientificName> \"{NAME}\" . " +
+                "} LIMIT 10";
+        rankCommand = rankCommand.replace("{RANK}", rank).replace("{NAME}", name);
+        var result = executeCommand(rankCommand, RDFSelectQueryDto.class);
+
+        if (result == null || result.getResults() == null || result.getResults().getBindings() == null || result.getResults().getBindings().isEmpty())
+            return new ArrayList<>();
+
+        // If we fetched some results, we can now fetch species according to the ids of the rank
+        var rankdIds = new ArrayList<String>();
+        for(var binding:result.getResults().getBindings()){
+            rankdIds.add(binding.getSubject().getValue());
+        }
+        return rankdIds;
     }
 
     private boolean isServerResponsive() throws IOException {

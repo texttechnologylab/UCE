@@ -1,8 +1,14 @@
 package org.texttechnologylab.models.corpus;
 
+import org.hibernate.Hibernate;
+import org.hibernate.annotations.BatchSize;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
+import org.hibernate.annotations.Filter;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
 
 import javax.persistence.*;
 import java.util.*;
@@ -31,7 +37,8 @@ public class Document extends ModelBase implements WikiModel {
     @Column(columnDefinition = "TEXT")
     private String fullTextCleaned;
 
-    @OneToMany(cascade = CascadeType.ALL)
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
     @JoinColumn(name = "document_Id")
     private List<Page> pages;
 
@@ -61,6 +68,12 @@ public class Document extends ModelBase implements WikiModel {
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
+    private List<BiofidTaxon> biofidTaxons;
+
+    @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @BatchSize(size = 50)
+    @JoinColumn(name = "document_Id")
+    @Filter(name="valueTypeFilter", condition = "valueType != 2") // Dont eagerly fetch the json metadata. That is way too costly probably.
     private List<UCEMetadata> uceMetadata;
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -86,6 +99,14 @@ public class Document extends ModelBase implements WikiModel {
         this.corpusId = corpusId;
     }
 
+    public List<BiofidTaxon> getBiofidTaxons() {
+        return biofidTaxons;
+    }
+
+    public void setBiofidTaxons(List<BiofidTaxon> biofidTaxons) {
+        this.biofidTaxons = biofidTaxons;
+    }
+
     public boolean hasJsonUceMetadata() {
         return getUceMetadata().stream().anyMatch(u -> u.getValueType() == UCEMetadataValueType.JSON);
     }
@@ -96,6 +117,7 @@ public class Document extends ModelBase implements WikiModel {
 
     public List<UCEMetadata> getUceMetadata() {
         if (uceMetadata == null) new ArrayList<>();
+        uceMetadata.sort(Comparator.comparing(UCEMetadata::getValueType));
         return uceMetadata;
     }
 

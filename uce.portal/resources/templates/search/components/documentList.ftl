@@ -42,7 +42,7 @@
                             <#function getClassForAnnotation coveredText>
                                 <#assign class = "text"?string>
                                 <#assign coveredTextLowerCase = coveredText?lower_case>
-                                <#if searchState.getSearchTokens()?has_content>
+                                <#if (searchState.getSearchTokens()?has_content) && (searchState.getSearchTokens()?size gt 1)>
                                     <#list searchState.getSearchTokens() as token>
                                         <#if coveredTextLowerCase?contains(token?lower_case)>
                                             <#assign class = "color-secondary font-weight-bold">

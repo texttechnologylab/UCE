@@ -103,7 +103,7 @@
                             <#assign isChecked = "checked"/>
                         </#if>
                         <div class="flexed align-items-center justify-content-between border p-2 rounded wrapped">
-                            <label class="mb-0 pr-1 text">Taxone</label>
+                            <label class="mb-0 pr-1 text">Taxa</label>
                             <input type="checkbox" class="rounded-0 bg-prime" disabled ${isChecked}/>
                         </div>
                     </div>
