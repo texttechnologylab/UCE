@@ -23,7 +23,7 @@ let WikiHandler = (function () {
         $('.wiki-page-modal .page-content .loading-div').fadeIn(100);
 
         $.ajax({
-            url: "/api/wiki/annotationPage?wid=" + wikiDto.wid + "&covered=" + encodeURIComponent(wikiDto.coveredText),
+            url: "/api/wiki/page?wid=" + wikiDto.wid + "&covered=" + encodeURIComponent(wikiDto.coveredText),
             type: "GET",
             success: (response) => {
                 $('.wiki-page-modal .page-content .include').html(response);

@@ -177,12 +177,18 @@
                     <div class="w-100 flexed align-items-center">
                         <input type="text" class="search-input form-control large-font w-100 rounded-0"
                                placeholder="${languageResource.get("searchPlaceholder")}"/>
+                        <div class="open-documentation-btn pr-2 pl-2">
+                            <i class="fas fa-question-circle large-font clickable open-wiki-page color-secondary"
+                               data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
+                               data-content="${languageResource.get("openSearchDocumentation")}"
+                               data-wid="DOC-SEARCH" style="text-decoration: none !important;" data-wcovered="-"></i>
+                        </div>
 
                         <div class="custom-control custom-switch search-pro-mode-switch"
                              data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
                              data-content="${languageResource.get("searchProModeDescription")}">
                             <input type="checkbox" class="custom-control-input" id="proModeSwitch">
-                            <label class="font-weight-bold font-italic custom-control-label flexed align-items-center"
+                            <label class="font-weight-bold open-search-doc-btn font-italic custom-control-label flexed align-items-center"
                                    for="proModeSwitch">
                                 Pro
                             </label>
@@ -238,7 +244,8 @@
                                     <div class="form-check form-check-inline" data-trigger="hover"
                                          data-toggle="popover" data-placement="top" data-html="true"
                                          data-content="${languageResource.get("nerSearch")}">
-                                        <input class="form-check-input" type="radio" disabled name="searchLayerRadioOptions"
+                                        <input class="form-check-input" type="radio" disabled
+                                               name="searchLayerRadioOptions"
                                                id="inlineRadio2" value="NAMED_ENTITIES">
                                         <label class="form-check-label color-secondary small-font" for="inlineRadio2">NER</label>
                                     </div>

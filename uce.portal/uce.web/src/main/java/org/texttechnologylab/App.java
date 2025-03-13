@@ -267,7 +267,7 @@ public class App {
             });
 
             path("/wiki", () -> {
-                get("/annotationPage", wikiApi.getAnnotationPage);
+                get("/page", wikiApi.getPage);
                 post("/queryOntology", wikiApi.queryOntology);
             });
 

@@ -147,6 +147,14 @@
     "de-DE": "Aktiviert den Pro-Modus der Suche, der es Ihnen ermöglicht, Suchen mit logischen Operatoren wie <b>&, |, !</b> und anderen zu erstellen.",
     "en-EN": "Activates the Pro mode of the search, which allows you to build searches using logical operators such as <b>&, |, !</b> and others."
   },
+  "openSearchDocumentation": {
+    "de-DE": "Öffnet die Suchdokumentation.",
+    "en-EN": "Opens the search documentation."
+  },
+  "searchResultsDescription": {
+    "de-DE": "Zeigt nur eine Schätzung der gefundenen Dokumente an, die in den meisten Fällen niedriger angesetzt ist.",
+    "en-EN": "Displays only an estimate of the documents found, which in most cases is understated."
+  },
   "showUceMetadata": {
     "de-DE": "Zeige alle Metadaten an",
     "en-EN": "Show all metadata"

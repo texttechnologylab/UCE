@@ -2,15 +2,16 @@
 
     <div class="header">
         <div class="flexed w-100 align-items-center justify-content-center">
-            <button class="btn selected-btn">
+            <div class="btn rounded-0 selected-btn" data-trigger="hover" data-toggle="popover" data-placement="top"
+                    data-content="${languageResource.get("searchResultsDescription")}">
                 ${languageResource.get("searchResults")} <span class="hits">&GreaterEqual; ${searchState.getTotalHits()}</span>
-            </button>
+            </div>
         </div>
     </div>
 
     <div class="row mb-0 mr-0 ml-0 pb-5">
 
-        <div class="col-md-3 position-relative search-row" data-type="left">
+        <div class="col-lg-3 position-relative search-row" data-type="left">
             <div class="side-bar-container">
                 <div class="side-bar">
 
@@ -32,7 +33,7 @@
             </div>
         </div>
 
-        <div class="col-md-6 search-row" data-type="mid">
+        <div class="col-lg-6 search-row" data-type="mid">
 
             <div class="sort-container pl-3 pr-3 pt-2 pb-2 mb-3">
 
@@ -154,7 +155,7 @@
             </div>
         </div>
 
-        <div class="col-md-3 search-row position-relative" data-type="right">
+        <div class="col-lg-3 search-row position-relative" data-type="right">
             <div class="side-bar-container">
                 <div class="side-bar">
                     <div class="content">

@@ -9,22 +9,28 @@ import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.IOException;
-import java.util.Arrays;
 import java.util.List;
 
 public class WikiService {
-    private PostgresqlDataInterface_Impl db = null;
-    private RAGService ragService = null;
-    private JenaSparqlService sparqlService = null;
+    private final PostgresqlDataInterface_Impl db;
+    private final JenaSparqlService sparqlService;
 
     public WikiService(PostgresqlDataInterface_Impl db, RAGService ragService, JenaSparqlService sparqlService) {
         this.db = db;
         this.sparqlService = sparqlService;
-        this.ragService = ragService;
     }
 
     /**
-     * Builds a viewmodel to render a lemma annotation wiki page
+     * Builds a view model for a documentation page.
+     */
+    public AnnotationWikiPageViewModel buildDocumentationWikiPageViewModel(){
+        var viewModel = new AnnotationWikiPageViewModel();
+        viewModel.setAnnotationType("Documentation");
+        return viewModel;
+    }
+
+    /**
+     * Builds a view model to render a lemma annotation wiki page
      */
     public LemmaAnnotationWikiPageViewModel buildLemmaAnnotationWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
         var viewModel = new LemmaAnnotationWikiPageViewModel();

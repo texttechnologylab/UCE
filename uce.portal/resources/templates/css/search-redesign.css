@@ -95,6 +95,13 @@
     border-left: 1px lightgrey solid;
 }
 
+.open-documentation-btn{
+    height: 41px;
+    background-color: ghostwhite;
+    display: flex;
+    align-items: center;
+}
+
 .search-pro-mode-switch {
     z-index: 2;
     padding-left: 3.25rem !important;
@@ -107,12 +114,12 @@
 
 .search-menu-div {
     position: absolute;
-    top: 40px;
     border: lightgray 1px solid;
     width: 100%;
     box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
     overflow-y: hidden;
     left: 0;
+    border-top:1px lightgrey solid;
     display: none;
     padding: 12px;
     background-color: ghostwhite;
@@ -124,8 +131,9 @@
     top: 0;
     width: 100vw;
     height: 100vh;
-    background-color: transparent;
-    z-index: 1;
+    background-color: rgba(0, 0, 0, 0.25);
+    backdrop-filter: blur(2px);
+    z-index: -1;
 }
 
 .search-history-div {
@@ -192,7 +200,7 @@
     z-index: 10;
     top: 1px;
     right: 0;
-    pointer-events: none;
+    /*pointer-events: none;*/
     margin-top: 18px;
     border-bottom: 1px lightgray solid;
     margin-bottom: 48px;

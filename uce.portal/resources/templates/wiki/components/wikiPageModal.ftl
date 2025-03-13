@@ -36,6 +36,9 @@
                     <a class="w-rounded-btn mr-2 go-back-btn">
                         <i class="fas fa-angle-left"></i>
                     </a>
+                    <a class="w-rounded-btn mr-2">
+                        <i class="fas fa-home"></i>
+                    </a>
                 </div>
                 <h5 class="color-prime mb-0 mr-2">
                     <i class="fab fa-wikipedia-w xlarge-font"><span class="xlarge-font">iki</span></i>
