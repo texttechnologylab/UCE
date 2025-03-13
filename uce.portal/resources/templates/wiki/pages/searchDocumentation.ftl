@@ -355,7 +355,7 @@
             </p>
             <div class="alert alert-warning light-border block-text small-font p-2 mt-2 mb-0" role="alert">
                 Requires the selected corpus to contain annotations of type Taxon, Time, or Geoname Location.
-                If the corpus lacks any of these annotations, this function will not be available.
+                If the corpus lacks all of these annotations, this function will not be available.
             </div>
             <div class="expanded-content mt-3 display-none">
 
