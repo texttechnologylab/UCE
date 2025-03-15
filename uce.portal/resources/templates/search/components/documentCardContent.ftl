@@ -95,9 +95,11 @@
                         ${snippet.getSnippet()}
 
                         <#if snippet.getPage()?has_content>
-                            <input type="hidden" value="${snippet.getPage().getCoveredText()}">
+                            <label class="display-none page-html">
+                                ${snippet.getPage().getCoveredText()}
+                            </label>
                             <div class="inspect-page-btn hoverable clickable"
-                                 onclick="openInExpandedTextView('${languageResource.get('page')} ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('input').val())">
+                                 onclick="openInExpandedTextView('${languageResource.get('page')} ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('.page-html').html())">
                                 ${snippet.getPage().getPageNumber()}.<i class="ml-1 fas fa-file-alt"></i>
                             </div>
                         </#if>

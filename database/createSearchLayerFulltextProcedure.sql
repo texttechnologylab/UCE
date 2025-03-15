@@ -85,19 +85,20 @@ BEGIN
 								ORDER BY p.id ASC
 								LIMIT 1) p';
 								
-		-- If we dont search for any string, we dont need to fulltext search
-		ranked_pages_cte := 'SELECT 
+		-- If we dont search for any string, we dont need to fulltext search all documents
+		ranked_pages_cte := 'WITH limited_docs AS NOT MATERIALIZED (
+				SELECT id, documenttitle from document WHERE corpusid = $2 LIMIT 999
+			)
+			SELECT 
                 p.document_id AS doc_id, 
                 0 AS rank,
 				-- %s
                 d.documenttitle
-            FROM page p
+            FROM limited_docs d
             %s
-            JOIN document d ON d.id = p.document_id
+            JOIN page p ON d.id = p.document_id
 			-- %s
-            AND ($5 IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
-            AND d.corpusid = $2
-			LIMIT 10000';
+            AND ($5 IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))';
 	ELSE
 		snippet_query := 'SELECT jsonb_agg(jsonb_build_object(
 							''snippet'', ts_headline(
@@ -128,7 +129,7 @@ BEGIN
             )
             AND ($5 IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
             AND d.corpusid = $2
-			LIMIT 20000'; -- Put a Limit here, it will increase perfomance and we dont need to show millions of hits.
+			LIMIT 5000'; -- Put a Limit here, it will increase perfomance and we dont need to show millions of hits. But I know, it's a hack...
 	END IF;
 
     -- Construct the full query dynamically
@@ -161,7 +162,7 @@ BEGIN
         page_ranked AS NOT MATERIALIZED (
             SELECT 
                 doc_id,
-                SUM(rank) AS rank, -- Get highest rank per document
+                AVG(rank) AS rank, -- Get highest rank per document
                 documenttitle
             FROM ranked_pages
             GROUP BY doc_id, documenttitle

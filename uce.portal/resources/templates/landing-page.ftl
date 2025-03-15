@@ -3,14 +3,14 @@
     <!-- uce corporate data -->
     <div class="mt-5 uce-description">
         <div class="flexed align-items-center justify-content-between">
-            <h6 class="color-prime mb-0">${system.getMeta().getName()?trim!"-"}</h6>
-            <button class="btn" onclick="$(this).parent().next('.content').toggle(100)">
-                <i class="fas fa-info-circle color-secondary large-font"></i>
+            <h5 class="color-prime mb-0">${system.getMeta().getName()?trim!"-"}</h5>
+            <button class="btn" onclick="$(this).parent().next('.content').toggle(50)">
+                <i class="fas fa-info-circle color-prime large-font"></i>
             </button>
         </div>
         <div class="content display-none">
             <hr class="mt-3 mb-3"/>
-            <p class="font-italic small text mb-0">
+            <p class="text block-text mb-0">
                 ${system.getMeta().getDescription()!languageResource.get("noCorpusDescription")}
             </p>
         </div>
@@ -44,7 +44,7 @@
 
                         </div>
 
-                        <div class="expanded-content display-none">
+                        <div class="expanded-content">
                             <hr class="mt-3 mb-1 "/>
 
                             <!-- content -->
@@ -62,7 +62,7 @@
         </div>
 
         <!-- clal to search -->
-        <div class="flexed align-items-center justify-content-center mt-3 mb-4">
+        <div class="flexed align-items-center justify-content-center mt-3 pb-4">
             <a class="clickable text mb-0 text small ml-1" onclick="navigateToView('search')">
                 <i class="fas fa-search mr-1"></i> ${languageResource.get("callForSearch")}
             </a>

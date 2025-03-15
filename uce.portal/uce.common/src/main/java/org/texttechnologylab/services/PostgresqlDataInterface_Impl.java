@@ -167,18 +167,27 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            Criteria criteria = session.createCriteria(Document.class);
-            criteria.setFirstResult(skip);
-            criteria.setMaxResults(take);
-            criteria.add(Restrictions.eq("corpusId", corpusId));
-            var documents = (List<Document>) criteria.list();
+            // TODO: Hardcoded sql, but another instance where hibernate is fucking unusable. This SQL in HQL or whatever
+            // crooked syntax is a million times slower. I'll just leave the raw sql here then.
+            var sql = "SELECT * FROM document WHERE corpusid = :corpusId ORDER BY id LIMIT :take OFFSET :skip";
+            var query = session.createNativeQuery(sql, Document.class)
+                    .setParameter("corpusId", corpusId)
+                    .setParameter("take", take)
+                    .setParameter("skip", skip);
+
+            var documents = query.getResultList();
+
             documents.forEach(d -> Hibernate.initialize(d.getPages()));
-            documents.forEach(d -> Hibernate.initialize(d.getUceMetadata()
-                    .stream()
-                    .filter(u -> u.getValueType() != UCEMetadataValueType.JSON)));
+            documents.forEach(d -> Hibernate.initialize(
+                    d.getUceMetadata().stream()
+                            .filter(u -> u.getValueType() != UCEMetadataValueType.JSON)
+                            .toList()
+            ));
+
             return documents;
         });
     }
+
 
     public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
@@ -191,8 +200,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public Corpus getCorpusById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            var corpus = session.get(Corpus.class, id);
-            return corpus;
+            return session.get(Corpus.class, id);
         });
     }
 

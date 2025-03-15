@@ -208,9 +208,9 @@
 </div>
 </body>
 
-<script type="module">
+<#--<script type="module">
     <#include "*/js/corpusUniverse.js">
-</script>
+</script>-->
 
 <script>
     <#include "*/js/site.js">
