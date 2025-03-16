@@ -44,7 +44,9 @@
         }
     </script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script type="module" src="https://md-block.verou.me/md-block.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="module" src="js/md-block.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.4.0/gsap.min.js"></script>
     <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
