@@ -56,6 +56,9 @@ public class CommonConfig {
     public String getPublicLocation(){
         return getProperty("external.public.location");
     }
+    public String getDatabaseScriptsLocation(){
+        return getProperty("database.scripts.location");
+    }
     public String getUceVersion(){
         return getProperty("uce.version");
     }

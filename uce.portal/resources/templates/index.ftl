@@ -104,8 +104,7 @@
         </div>
     </div>
 
-    <div class="sr-query-builder-include">
-    </div>
+    <div class="sr-query-builder-include"></div>
 
     <div class="corpusUniverse-content-container main-content-container">
 
@@ -360,13 +359,13 @@
 
 </body>
 
-<footer class="bg-lightgray">
-    <div class="container p-3 h-100 text-center flexed align-items-center justify-content-center">
+<footer class="bg-lightgray pt-5 pb-5">
+    <div class="container h-100 text-center flexed align-items-center justify-content-center">
         <div class="row m-0 p-0 w-100 h-100">
 
             <!-- contacts -->
-            <div class="col-sm-3 color-secondary m-0">
-                <div class="group-box bg-light mt-3">
+            <div class="col-sm-3 color-secondary m-0 justify-content-center flexed">
+                <div class="group-box bg-light mb-0">
                     <h6 class="text-left color-prime">${languageResource.get("contact")}</h6>
                     <div class="small-font text-left">
                         <p class="mb-0">${system.getCorporate().getContact().getName()}</p>
@@ -383,12 +382,18 @@
             </div>
 
             <!-- add more footer here later -->
-            <div class="col-sm-6 color-secondary w-100 m-0">
+            <div class="col-sm-6 color-secondary w-100 m-0 flexed justify-content-center">
+                <div class="group-box bg-light mb-0">
+                    <h6 class="text-dark">Powered by Unified Corpus Explorer</h6>
+                    <a href="https://github.com/texttechnologylab/UCE" target="_blank">
+                        <img class="w-100" style="max-width: 125px" src="/img/logo.png"/>
+                    </a>
+                </div>
             </div>
 
             <!-- TTLab -->
-            <div class="col-md-3 color-secondary text-right m-0 mt-3">
-                <div class="group-box bg-light">
+            <div class="col-md-3 color-secondary text-right justify-content-center">
+                <div class="group-box bg-light mb-0">
                     <a href="https://www.texttechnologylab.org/" target="_blank">
                         <h6 class="color-prime">Text Technology Lab</h6>
                     </a>

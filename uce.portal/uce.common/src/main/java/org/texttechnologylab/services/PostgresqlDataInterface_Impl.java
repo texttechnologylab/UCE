@@ -18,6 +18,10 @@ import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
 
 import javax.persistence.criteria.Predicate;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -53,13 +57,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public void executeSqlWithoutReturn(String sql) throws DatabaseOperationException {
         executeOperationSafely(session -> {
-            session.createNativeQuery(sql).executeUpdate();
+            session.doWork(connection -> {
+                try (var stmt = connection.prepareStatement(sql)) {
+                    stmt.executeUpdate();
+                }
+            });
             return null;
         });
     }
 
     public List executeSqlWithReturn(String sql) throws DatabaseOperationException {
-        return executeOperationSafely(session -> session.createNativeQuery(sql).getResultList());
+        return executeOperationSafely(session -> session.createNativeQuery(sql, Void.class).getResultList());
     }
 
     public ArrayList<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) throws DatabaseOperationException {
@@ -297,7 +305,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             for (var id : documentIds) {
                 // doc cannot be null.
                 var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
-                if(doc == null) continue;
+                if (doc == null) continue;
 
                 // We EAGERLY load those for now and see how that impacts performance.
                 // Hibernate.initialize(doc.getPages());
@@ -419,7 +427,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         var resultSet = result.getArray("snippets_found").getResultSet();
                         var foundSnippets = new HashMap<Integer, ArrayList<PageSnippet>>();
                         // Snippets are the snippet text and the page_id to which this snippet belongs. They are json objects
-                        while(resultSet.next()){
+                        while (resultSet.next()) {
                             var idx = resultSet.getInt(1) - 1;
                             ArrayList<ArrayList<PageSnippet>> pageSnippet = gson.fromJson(
                                     resultSet.getString(2),

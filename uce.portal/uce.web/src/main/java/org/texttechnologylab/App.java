@@ -41,11 +41,7 @@ public class App {
 
     public static void main(String[] args) throws IOException {
         logger.info("Starting the UCE web service...");
-        logger.info("Passed in command line args:");
-        for (String arg : args) {
-            logger.info(arg);
-            System.out.println(arg);
-        }
+        logger.info("Passed in command line args: " + String.join(" ", args));
 
         logger.info("Parsing the UCE config...");
         try {
@@ -70,6 +66,13 @@ public class App {
         // Application context for services
         var context = new AnnotationConfigApplicationContext(SpringConfig.class);
         logger.info("Loaded application context and services.");
+
+        // Execute the external database scripts
+        logger.info("Executing external database scripts from " + commonConfig.getDatabaseScriptsLocation());
+        ExceptionUtils.tryCatchLog(
+                () -> SystemStatus.ExecuteExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
+                (ex) -> logger.warn("Couldn't read the db scripts in the external database scripts folder; path wasn't found or other IO problems. ", ex));
+        logger.info("Finished with executing external database scripts.");
 
         // Cleanup temporary db fragments for the LayeredSearch
         ExceptionUtils.tryCatchLog(

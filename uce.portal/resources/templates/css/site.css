@@ -231,6 +231,7 @@ nav .selected-nav-btn.text::before {
 
 .team-member-card img {
     width: 200px;
+    border-left:lightgray 1px solid;
     height: 200px;
     object-fit: contain;
 }
