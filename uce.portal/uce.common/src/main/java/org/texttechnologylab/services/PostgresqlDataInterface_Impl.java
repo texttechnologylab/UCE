@@ -67,7 +67,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public List executeSqlWithReturn(String sql) throws DatabaseOperationException {
-        return executeOperationSafely(session -> session.createNativeQuery(sql, Void.class).getResultList());
+        return executeOperationSafely(session -> session.createNativeQuery(sql).getResultList());
     }
 
     public ArrayList<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) throws DatabaseOperationException {
@@ -451,14 +451,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
-    public List<Document> getDocumentsByNamedEntityValue(String coveredText, int limit) throws DatabaseOperationException {
+    public List<Document> getDocumentsByAnnotationCoveredText(String coveredText, int limit, String annotationName) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteriaBuilder = session.getCriteriaBuilder();
             var criteriaQuery = criteriaBuilder.createQuery(Document.class);
             var root = criteriaQuery.from(Document.class);
 
-            // Join with NamedEntity entity via foreign key documentId
-            var namedEntityJoin = root.join("namedEntities");
+            // Join with NamedEntity or other annotation entities via foreign key documentId
+            var namedEntityJoin = root.join(annotationName);
 
             criteriaQuery.select(root).distinct(true) // Ensure distinct documents
                     .where(criteriaBuilder.equal(namedEntityJoin.get("coveredText"), coveredText));
@@ -574,6 +574,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             return session.createQuery(criteriaQuery).getResultList();
         });
+    }
+
+    public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(Time.class, id));
     }
 
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException {

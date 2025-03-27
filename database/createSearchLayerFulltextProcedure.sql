@@ -129,7 +129,7 @@ BEGIN
             )
             AND ($5 IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))
             AND d.corpusid = $2
-			LIMIT 5000'; -- Put a Limit here, it will increase perfomance and we dont need to show millions of hits. But I know, it's a hack...
+			LIMIT 20000'; -- Put a Limit here, it will increase perfomance and we dont need to show millions of hits. But I know, it's a hack...
 	END IF;
 
     -- Construct the full query dynamically

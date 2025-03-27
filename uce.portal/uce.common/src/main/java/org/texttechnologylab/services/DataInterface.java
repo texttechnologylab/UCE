@@ -193,19 +193,20 @@ public interface DataInterface {
 
     /**
      * Gets a list of distinct documents that contain a named entity with a given covered text.
+     * @param annotationName Either "namedEntities" or "times". It's the list name of the annotations within a Document objects.
      */
-    public List<Document> getDocumentsByNamedEntityValue(String coveredText, int limit) throws DatabaseOperationException;
+    public List<Document> getDocumentsByAnnotationCoveredText(String coveredText, int limit, String annotationName) throws DatabaseOperationException;
 
     /**
      * Gets lemmas from a specific document that are within a begin and end range
      *
-     * @param begin
-     * @param end
-     * @param documentId
-     * @return
-     * @throws DatabaseOperationException
      */
     public List<Lemma> getLemmasWithinBeginAndEndOfDocument(int begin, int end, long documentId) throws DatabaseOperationException;
+
+    /**
+     * Gets a time annotation by its id
+     */
+    public Time getTimeAnnotationById(long id) throws DatabaseOperationException;
 
     /**
      * Gets a named entity by its id

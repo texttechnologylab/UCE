@@ -33,7 +33,7 @@ public class WikiApi {
     public Route queryOntology = ((request, response) -> {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
-        Map requestBody = gson.fromJson(request.body(), Map.class);
+        var requestBody = gson.fromJson(request.body(), Map.class);
 
         try {
             var languageResources = LanguageResources.fromRequest(request);
@@ -97,7 +97,7 @@ public class WikiApi {
                     (ex) -> logger.error("The WikiView couldn't be generated - id missing.", ex));
             var coveredText = ExceptionUtils.tryCatchLog(() -> request.queryParams("covered"),
                     (ex) -> logger.error("The WikiView couldn't be generated - covered text missing.", ex));
-            // It's actually fine if no additional params were given.
+            // It's actually fine if no additional params were given. I'm not sure anymore I'll use them anyways.
             var params = ExceptionUtils.tryCatchLog(() -> request.queryParams("params"), (ex) -> {
             });
 
@@ -116,7 +116,12 @@ public class WikiApi {
             // Determine the type. A wikiID always has the following format: <type>-<model_id>
             var split = wid.split("-");
             var type = split[0];
-            var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(split[1]), (ex) -> {});
+            var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(split[1]),
+                    (ex) -> logger.error("Error parsing the wid to just the model id part.", ex));
+            if(id == null){
+                model.put("information", languageResources.get("unexpectedError"));
+                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+            }
 
             var renderView = "";
             if(type.startsWith("DOC")){
@@ -137,7 +142,12 @@ public class WikiApi {
                 // TP = TopicPage TD = TopicDocument
                 model.put("vm", wikiService.buildTopicAnnotationWikiPageViewModel(id, type, coveredText));
                 renderView = "/wiki/pages/topicAnnotationPage.ftl";
-            } else if (type.equals("D")) {
+            } else if (type.equals("TI")) {
+                // Then we have a Time annotation
+                model.put("vm", wikiService.buildTimeAnnotationWikiPageViewModel(id, coveredText));
+                renderView = "/wiki/pages/timeAnnotationPage.ftl";
+            }
+            else if (type.equals("D")) {
                 // Then we have a document
                 model.put("vm", wikiService.buildDocumentWikiPageViewModel(id));
                 renderView = "/wiki/pages/documentAnnotationPage.ftl";
@@ -155,7 +165,7 @@ public class WikiApi {
             // cache and return the wiki page
             var view = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, renderView));
             var cachedWikiPage = new CachedWikiPage(view);
-            // TODO: UNCOMMENT THIS SessionManager.CachedWikiPages.put(cacheId, cachedWikiPage);
+            SessionManager.CachedWikiPages.put(cacheId, cachedWikiPage);
             return view;
         } catch (Exception ex) {
             logger.error("Error getting a wiki page - best refer to the last logged API call " +
