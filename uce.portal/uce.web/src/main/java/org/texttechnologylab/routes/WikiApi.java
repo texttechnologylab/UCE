@@ -116,12 +116,8 @@ public class WikiApi {
             // Determine the type. A wikiID always has the following format: <type>-<model_id>
             var split = wid.split("-");
             var type = split[0];
-            var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(split[1]),
-                    (ex) -> logger.error("Error parsing the wid to just the model id part.", ex));
-            if(id == null){
-                model.put("information", languageResources.get("unexpectedError"));
-                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
-            }
+            // A missing id isn't necessarily bad, as we also have documentation pages etc.
+            var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(split[1]), (ex) -> {});
 
             var renderView = "";
             if(type.startsWith("DOC")){
