@@ -3,21 +3,20 @@
 services:
 
   uce-fuseki-sparql:
-    build:
-      context: ./sparql
-      dockerfile: ./Dockerfile
-      args:
-        JENA_VERSION: 5.2.0
+    container_name: uce-fuseki-sparql
     image: fuseki
     ports:
       - "8030:5430"
     volumes:
-      - ./../sparql/run/databases/biofid-search:/fuseki/databases/biofid-search
-    command: --update --tdb2 --port 5430 --loc /fuseki/databases/biofid-search /biofid-search
+      - ${TDB2_DATA}:/fuseki/databases/${TDB2_ENDPOINT}
+    environment:
+      - JVM_ARGS=${JVM_ARGS}
+    command: --update --tdb2 --port 5430 --loc /fuseki/databases/${TDB2_ENDPOINT} /${TDB2_ENDPOINT}
     networks:
       - app_net
     
   uce-rag-service:
+    container_name: uce-rag-service
     build:
       context: .
       dockerfile: ./rag/Dockerfile
@@ -29,6 +28,7 @@ services:
       - app_net
 
   uce-web:
+    container_name: uce-web
     build:
       context: .
       dockerfile: ./uce.portal/uce.web/Dockerfile
@@ -39,12 +39,29 @@ services:
     networks:
       - app_net
     volumes:
-      - "./../releases/uceConfig_BIOfid.json:/app/config/uceConfig.json"
+      - "${UCE_CONFIG_PATH}:/app/config/uceConfig.json"
       - "./database:/app/database"
-    command: [ "/bin/sh", "-c", "sleep 5 && java -jar ./target/webportal-jar-with-dependencies.jar -cf /app/config/uceConfig.json" ]
+    command: [ "/bin/sh", "-c", "sleep 7 && java -jar ./target/webportal-jar-with-dependencies.jar -cf /app/config/uceConfig.json" ]
+
+  uce-importer:
+    container_name: uce-importer
+    build:
+      context: .
+      dockerfile: ./uce.portal/uce.corpus-importer/Dockerfile
+    depends_on:
+      - uce-postgresql-db
+    networks:
+      - app_net
+    volumes:
+      - "./database:/app/database"
+      # MOUNT HERE ALL UIMA CORPORA INTO THE '/app/input/corpora/zobodat' PATH 
+      - "./../test_data/corpora/zobodat:/app/input/corpora/zobodat"
+    command: [ "/bin/sh", "-c", "sleep 7 && java -jar ./target/importer.jar -srcDir /app/input/corpora/ -num 1 -t 4" ]
 
   uce-postgresql-db:
+    container_name: uce-postgresql-db
     image: pgvector/pgvector:pg16
+    shm_size: 1g
     environment:
       POSTGRES_DB: uce
       POSTGRES_USER: postgres
