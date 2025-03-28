@@ -1,4 +1,9 @@
 # version: '3.8'
+# For the variables, create an '.env' file on the same level as this compose file
+# In there, declare the variables with your desired values like:
+# UCE_CONFIG_PATH=./../uceConfig.json
+# JVM_ARGS=-Xmx8g
+# ...
 
 services:
 
