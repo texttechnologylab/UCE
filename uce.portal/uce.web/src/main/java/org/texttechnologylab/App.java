@@ -36,7 +36,7 @@ import static spark.Spark.*;
 
 public class App {
     private static final Configuration configuration = Configuration.getDefaultConfiguration();
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(App.class);
     private static CommonConfig commonConfig = null;
 
     public static void main(String[] args) throws IOException {

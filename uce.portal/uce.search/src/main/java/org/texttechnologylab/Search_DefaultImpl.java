@@ -29,7 +29,7 @@ import java.util.List;
  * Class that encapsulates all search layers within the biofid class
  */
 public class Search_DefaultImpl implements Search {
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(Search_DefaultImpl.class);
     private SearchState searchState;
     private List<String> stopwords;
     private PostgresqlDataInterface_Impl db;

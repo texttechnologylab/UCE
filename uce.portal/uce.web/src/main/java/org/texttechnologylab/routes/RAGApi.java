@@ -24,7 +24,7 @@ import spark.Route;
 import java.util.*;
 
 public class RAGApi {
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(RAGApi.class);
     private Configuration freemarkerConfig;
     private RAGService ragService;
     private PostgresqlDataInterface_Impl db;

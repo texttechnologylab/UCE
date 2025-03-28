@@ -10,6 +10,7 @@ import javax.persistence.Table;
 @Table(name="importlog")
 public class ImportLog extends ModelBase {
     private String sender;
+    @Column(columnDefinition = "TEXT")
     private String message;
     private Long created;
     private LogStatus status;

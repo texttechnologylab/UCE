@@ -10,7 +10,7 @@ import java.util.HashMap;
 
 public class SessionJob implements Runnable {
 
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(SessionJob.class);
 
     private long interval;
 

@@ -17,6 +17,7 @@ public class UCEImport extends ModelBase {
     private ImportStatus status;
     private Long targetCorpusId;
     private String targetCorpusName;
+    @Column(columnDefinition = "TEXT")
     private String comment;
     @Transient
     private List<ImportLog> logs;

@@ -22,7 +22,7 @@ import java.util.HashMap;
 
 public class DocumentApi {
     private PostgresqlDataInterface_Impl db;
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(DocumentApi.class);
     private Configuration freemarkerConfig;
     public DocumentApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);

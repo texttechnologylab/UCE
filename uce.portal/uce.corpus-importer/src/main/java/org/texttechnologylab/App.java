@@ -36,7 +36,7 @@ import java.util.logging.Level;
  * Entry of the corpus importer!
  */
 public class App {
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(App.class);
 
     public static void main(String[] args) throws DatabaseOperationException, ParseException {
         // Disable the warning and other junk logs from the UIMA project.

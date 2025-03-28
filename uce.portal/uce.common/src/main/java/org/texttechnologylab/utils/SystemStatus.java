@@ -23,7 +23,7 @@ public final class SystemStatus {
     public static HealthStatus RagServiceStatus = new HealthStatus();
     public static HealthStatus UIMAService = new HealthStatus();
     public static UceConfig UceConfig = null;
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(SystemStatus.class);
 
     public static void InitSystemStatus(long cleanupInterval, ApplicationContext serviceContext) {
         Runnable runnable = new SystemJob(cleanupInterval, serviceContext);

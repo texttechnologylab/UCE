@@ -48,7 +48,7 @@ import java.util.concurrent.atomic.AtomicBoolean;
 Obsolete service, which was outsourced into a simple class uce.corpus-importer.org.texttechnologylab.Importer
 */
 public class UIMAService {
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(UIMAService.class);
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );

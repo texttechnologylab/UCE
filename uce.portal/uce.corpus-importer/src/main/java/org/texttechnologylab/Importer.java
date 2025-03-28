@@ -41,6 +41,7 @@ import org.texttechnologylab.utils.SystemStatus;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
@@ -50,7 +51,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class Importer {
 
     private static final Gson gson = new Gson();
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(Importer.class);
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
@@ -161,7 +162,7 @@ public class Importer {
             throw new DatabaseOperationException("Postgresql DB is not alive - cancelling import.");
 
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
-        try (var reader = new FileReader(folderName + "\\corpusConfig.json")) {
+        try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString())) {
 
             corpusConfig = gson.fromJson(reader, CorpusConfig.class);
             corpus.setName(corpusConfig.getName());
@@ -348,7 +349,7 @@ public class Importer {
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
                 if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
-                    postProccessDocument(existingDoc, corpusConfig, existingDoc.getDocumentId());
+                    postProccessDocument(existingDoc, corpusConfig, filePath);
                 }
                 logger.info("Done.");
                 return null;

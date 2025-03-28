@@ -10,7 +10,7 @@ import org.texttechnologylab.utils.SystemStatus;
 
 public class SystemJob implements Runnable {
 
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(SystemJob.class);
 
     private final long interval;
     private final ApplicationContext serviceContext;

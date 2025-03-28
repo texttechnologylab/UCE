@@ -19,7 +19,7 @@ import java.util.Map;
 
 public class WikiApi {
 
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(WikiApi.class);
     private Configuration freemarkerConfig;
     private JenaSparqlService jenaSparqlService;
     private WikiService wikiService;
