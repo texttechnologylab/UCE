@@ -13,9 +13,19 @@ public class ImportLog extends ModelBase {
     private String message;
     private Long created;
     private LogStatus status;
+    private long duration;
+    @Column(columnDefinition = "TEXT")
     private String file;
-    @Column(name = "uceimport_id")
-    private Long uceImportId;
+    private String importId;
+    public ImportLog(String sender, String message, LogStatus status, String file, String importId, long duration){
+        this.created = System.currentTimeMillis();
+        this.sender = sender;
+        this.message = message;
+        this.status = status;
+        this.file = file;
+        this.importId = importId;
+        this.duration = duration;
+    }
     public ImportLog(){
         this.created = System.currentTimeMillis();
     }
@@ -55,11 +65,19 @@ public class ImportLog extends ModelBase {
         this.file = file;
     }
 
-    public Long getUceImportId() {
-        return uceImportId;
+    public String getImportId() {
+        return importId;
     }
 
-    public void setUceImportId(Long uceImportId) {
-        this.uceImportId = uceImportId;
+    public void setImportId(String importId) {
+        this.importId = importId;
+    }
+
+    public long getDuration() {
+        return duration;
+    }
+
+    public void setDuration(long duration) {
+        this.duration = duration;
     }
 }

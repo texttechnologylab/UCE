@@ -211,6 +211,10 @@
     "de-DE": "Keine Korpus-Beschreibung vorhanden.",
     "en-EN": "No corpus description provided."
   },
+  "noCorpora": {
+    "de-DE": "Keine Korpora verfügbar. Verwenden Sie den Korpusimporter und eine Korpuskonfigurationsdatei in Verbindung mit kommentierten UIMA-Dateien, um Korpora zu importieren und das UCE-Webportal zu nutzen.",
+    "en-EN": "No corpora available. Use the Corpus Importer and a corpus configuration file in conjunction with annotated UIMA files to import corpora and use the UCE web portal."
+  },
   "noMetadataFound": {
     "de-DE": "Keine Metadaten vorhanden.",
     "en-EN": "No metadata found."

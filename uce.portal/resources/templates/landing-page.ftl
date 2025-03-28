@@ -10,7 +10,7 @@
         </div>
         <div class="content display-none">
             <hr class="mt-3 mb-3"/>
-            <p class="text block-text mb-0">
+            <p class="text block-text mb-0 p-2">
                 ${system.getMeta().getDescription()!languageResource.get("noCorpusDescription")}
             </p>
         </div>
@@ -19,6 +19,11 @@
     <div class="corpora-list">
         <h3 class="text-center font-weight-bold text-dark"><i class="color-prime fas fa-database mr-2"></i> ${languageResource.get("corpora")}</h3>
         <div class="row m-0 p-0 ">
+            <#if corpora?size == 0>
+                <div class="group-box mt-2 bg-ghost">
+                    <p class="mb-0 text-center w-100 text">${languageResource.get("noCorpora")}</p>
+                </div>
+            </#if>
             <#list corpora as corpusVm>
                 <div class="col-md-12 m-0 p-3">
                     <div class="corpus-card">

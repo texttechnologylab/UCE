@@ -5,6 +5,8 @@ import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
+import org.texttechnologylab.models.imp.ImportLog;
+import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.search.*;
 
 import java.util.List;
@@ -182,6 +184,11 @@ public interface DataInterface {
     public List<UCEMetadata> getUCEMetadataByDocumentId(long documentId) throws DatabaseOperationException;
 
     /**
+     * Gets a single UCEImport object from the database.
+     */
+    public UCEImport getUceImportByImportId(String importId) throws DatabaseOperationException;
+
+    /**
      * Generic operation that fetches documents given the parameters
      */
     public Document getDocumentById(long id) throws DatabaseOperationException;
@@ -236,25 +243,30 @@ public interface DataInterface {
     public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) throws DatabaseOperationException;
 
     /**
+     * Saves or updates an ImportLog belonging to a UCEImport.
+     */
+    public void saveOrUpdateImportLog(ImportLog importLog) throws DatabaseOperationException;
+
+    /**
+     * Saves or updates a UCEImport object.
+     */
+    public void saveOrUpdateUceImport(UCEImport uceImport) throws DatabaseOperationException;
+
+    /**
      * Saves and updates a filter.
      *
-     * @param filter
-     * @throws DatabaseOperationException
      */
     public void saveOrUpdateUCEMetadataFilter(UCEMetadataFilter filter) throws DatabaseOperationException;
 
     /**
      * Stores a new UCEMetadataFilter
      *
-     * @param filter
-     * @throws DatabaseOperationException
      */
     public void saveUCEMetadataFilter(UCEMetadataFilter filter) throws DatabaseOperationException;
 
     /**
      * Stores the complete document with all its lists in the database.
      *
-     * @param document
      */
     public void saveDocument(Document document) throws DatabaseOperationException;
 

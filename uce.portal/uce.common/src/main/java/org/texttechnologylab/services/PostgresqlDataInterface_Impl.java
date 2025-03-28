@@ -13,6 +13,8 @@ import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
+import org.texttechnologylab.models.imp.ImportLog;
+import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
@@ -525,6 +527,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public UCEImport getUceImportByImportId(String importId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(UCEImport.class);
+            criteria.add(Restrictions.eq("importId", importId));
+            return (UCEImport)criteria.list().getFirst();
+        });
+    }
+
     public Document getDocumentById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
@@ -682,6 +692,20 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             if (corpus.getCorpusTsnePlot() != null) {
                 session.saveOrUpdate(corpus.getCorpusTsnePlot());
             }
+            return null;
+        });
+    }
+
+    public void saveOrUpdateUceImport(UCEImport uceImport) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(uceImport);
+            return null;
+        });
+    }
+
+    public void saveOrUpdateImportLog(ImportLog importLog) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(importLog);
             return null;
         });
     }

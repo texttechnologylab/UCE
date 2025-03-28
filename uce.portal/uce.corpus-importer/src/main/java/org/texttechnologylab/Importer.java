@@ -8,6 +8,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.morph.MorphologicalFeatur
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
+import org.apache.commons.logging.Log;
 import org.apache.http.annotation.Obsolete;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -26,6 +27,10 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
+import org.texttechnologylab.models.imp.ImportLog;
+import org.texttechnologylab.models.imp.ImportStatus;
+import org.texttechnologylab.models.imp.LogStatus;
+import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.EmbeddingUtils;
@@ -34,11 +39,13 @@ import org.texttechnologylab.utils.RegexUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class Importer {
 
@@ -80,6 +87,21 @@ public class Importer {
     }
 
     /**
+     * Counts the importable UIMA files in the importer path.
+     */
+    public int getXMICountInPath() {
+        if (this.path.isEmpty()) return -1;
+        try (var fileStream = Files.walk(Path.of(path))) {
+            return (int) fileStream
+                    .filter(Files::isRegularFile)
+                    .filter(path -> path.toString().toLowerCase().endsWith(".xmi"))
+                    .count();
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
      * Starts the importing processing of this instance.
      *
      * @throws DatabaseOperationException
@@ -116,11 +138,11 @@ public class Importer {
                     (ex) -> logger.error("Couldn't fetch UCEMetadataFilters to a corpus - this shouldn't happen. The process continues without filters.", ex));
 
         // We don't catch exceptions here, we let them be raised.
-        var doc = XMIToDocument(inputStream, corpus);
+        var doc = XMIToDocument(inputStream, corpus, "TODO: CHANGE THIS FILEPATH");
         if (doc == null)
             throw new DatabaseOperationException("The document was already imported into the corpus according to its documentId.");
         db.saveDocument(doc);
-        postProccessDocument(doc, CorpusConfig.fromJson(corpus.getCorpusJsonConfig()));
+        postProccessDocument(doc, CorpusConfig.fromJson(corpus.getCorpusJsonConfig()), "TODO: CHANGE THIS FILEPATH");
 
         logger.info("Finished storing and uploaded UIMA file.");
     }
@@ -154,6 +176,7 @@ public class Importer {
                 var existingCorpus = ExceptionUtils.tryCatchLog(() -> db.getCorpusByName(corpusConfig1.getName()),
                         (ex) -> logger.error("Error getting an existing corpus by name. The corpus config should probably be changed " +
                                 "to not add to existing corpus then.", ex));
+
                 if (existingCorpus != null) { // If we have the corpus, use that. Else store the new corpus.
                     corpus = existingCorpus;
                     // In case that we have a corpus already, we load the existing filters if they exist.
@@ -170,57 +193,74 @@ public class Importer {
                     "The corpus folder did not contain a properly formatted corpusConfig.json", CorpusConfig.class.toString(), "");
         }
 
-        var counter = 0;
-        var inputFolderName = Path.of(folderName, "input").toString();
+        // Store some corpus information in the UCEImport logging if this is the main importer
+        if (this.importerNumber == 1) {
+            var uceImport = db.getUceImportByImportId(this.importId);
+            uceImport.setTargetCorpusName(corpus.getName());
+            uceImport.setTargetCorpusId(corpus.getId());
+            uceImport.setStatus(ImportStatus.RUNNING);
+            db.saveOrUpdateUceImport(uceImport);
+        }
+
+        var inputFolderName = Path.of(folderName, "input");
         final var corpusConfigFinal = corpusConfig;
-        for (var file : Objects.requireNonNull(
-                new File(inputFolderName)
-                        .listFiles((dir, name) -> name.toLowerCase().endsWith(".xmi")))) {
+        final var counter = new AtomicInteger(0); // To handle mutation in lambdas
+        final var corpus1 = corpus;
 
-            final var corpus1 = corpus;
-            var docFuture = CompletableFuture.supplyAsync(() -> XMIToDocument(file.getPath(), corpus1), executor)
-                    .thenApply(doc -> {
-                        if (doc == null) return null;
+        try (var fileStream = Files.walk(inputFolderName)) {
+            fileStream.filter(Files::isRegularFile)
+                    .filter(path -> path.toString().toLowerCase().endsWith(".xmi"))
+                    .forEach(filePath -> {
+                        var docFuture = CompletableFuture.supplyAsync(
+                                        () -> XMIToDocument(filePath.toString(), corpus1), executor) // Convert the XMI to a Document
+                                .thenApply(doc -> {
+                                    if (doc == null) return null;
 
-                        logger.info("Trying to store document with document id " + doc.getDocumentId() + "...");
-                        ExceptionUtils.tryCatchLog(
-                                () -> db.saveDocument(doc),
-                                (ex) -> logger.error("Error saving document with id " + doc.getId(), ex));
-                        return doc;
-                    })
-                    .thenAcceptAsync(doc -> {
-                        if (doc != null) {
-                            logger.info("Stored document with document id " + doc.getDocumentId());
-                            logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
-                            ExceptionUtils.tryCatchLog(
-                                    () -> postProccessDocument(doc, corpusConfigFinal),
-                                    (ex) -> logger.error("Error postprocessing a saved document with id " + doc.getId()));
+                                    logger.info("Trying to store document with document id " + doc.getDocumentId() + "...");
+                                    ExceptionUtils.tryCatchLog(
+                                            () -> db.saveDocument(doc),
+                                            (ex) -> logImportError("Error saving document with id " + doc.getId(), ex, filePath.toString()));
+                                    return doc;
+                                })
+                                .thenAcceptAsync(doc -> {
+                                    if (doc != null) {
+                                        // Log and try to postprocess the document
+                                        logImportInfo("Stored document " + filePath.getFileName(), LogStatus.SAVED, filePath.toString(), 0);
+                                        logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
+
+                                        // Postprocess the document
+                                        ExceptionUtils.tryCatchLog(
+                                                () -> postProccessDocument(doc, corpusConfigFinal, filePath.toString()),
+                                                (ex) -> logImportError("Error postprocessing a saved document with id " + doc.getId(), (ex), filePath.toString()));
+                                        logImportInfo("Finished with import.", LogStatus.FINISHED, filePath.toString(), 0);
+                                    }
+                                });
+
+                        futures.add(docFuture);
+
+                        int currentCount = counter.incrementAndGet();
+
+                        // Periodic corpus postprocessing
+                        if (currentCount % 100 == 0) {
+                            CompletableFuture.runAsync(() -> {
+                                ExceptionUtils.tryCatchLog(
+                                        () -> postProccessCorpus(corpus1, corpusConfigFinal),
+                                        (ex) -> logger.error("Error postprocessing the current corpus with id " + corpus1.getId()));
+                            }, executor);
                         }
                     });
 
-            futures.add(docFuture);
-
-            // Periodic corpus postprocessing
-            if (counter % 100 == 0 && counter != 0) {
-                final var finalCorpus = corpus;
-                CompletableFuture.runAsync(() -> {
-                    ExceptionUtils.tryCatchLog(
-                            () -> postProccessCorpus(finalCorpus, corpusConfigFinal),
-                            (ex) -> logger.error("Error postprocessing the current corpus with id " + finalCorpus.getId()));
-                }, executor);
-            }
-
-            counter++;
+        } catch (IOException ex) {
+            logger.error("Error walking the import path: " + inputFolderName, ex);
         }
 
         // Wait for all tasks to complete
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
         // Final corpus postprocessing
-        final var finalCorpus = corpus;
         ExceptionUtils.tryCatchLog(
-                () -> postProccessCorpus(finalCorpus, corpusConfigFinal),
-                (ex) -> logger.error("Error in the final postprocessing of the current corpus with id " + finalCorpus.getId()));
+                () -> postProccessCorpus(corpus1, corpusConfigFinal),
+                (ex) -> logger.error("Error in the final postprocessing of the current corpus with id " + corpus1.getId()));
 
         logger.info("\n\n=================================\n Done with the corpus import.");
         executor.shutdown();
@@ -233,12 +273,12 @@ public class Importer {
      * @param corpus
      * @return
      */
-    public Document XMIToDocument(InputStream inputStream, Corpus corpus) {
+    public Document XMIToDocument(InputStream inputStream, Corpus corpus, String filePath) {
         try {
             var jCas = JCasFactory.createJCas();
             CasIOUtils.load(inputStream, null, jCas.getCas(), CasLoadMode.LENIENT);
 
-            return XMIToDocument(jCas, corpus);
+            return XMIToDocument(jCas, corpus, filePath);
         } catch (Exception ex) {
             logger.error("Error while reading an annotated xmi file from stream to a cas and transforming it into a document:", ex);
             return null;
@@ -258,7 +298,7 @@ public class Importer {
             // tsiInputStream: Optional stream for typesystem - only used if not null. (which it currently is)
             CasIOUtils.load(file, null, jCas.getCas(), CasLoadMode.LENIENT);
 
-            return XMIToDocument(jCas, corpus);
+            return XMIToDocument(jCas, corpus, filename);
         } catch (Exception ex) {
             logger.error("Error while reading an annotated xmi file to a cas and transforming it into a document:", ex);
             return null;
@@ -268,9 +308,10 @@ public class Importer {
     /**
      * Convert a UIMA jCas to an OCRDocument
      */
-    public Document XMIToDocument(JCas jCas, Corpus corpus) {
+    public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath) {
 
         logger.info("=============================== Importing a new CAS as a Document. ===============================");
+
         // Read in the contents of a single xmi cas to see what's inside
         var unique = new HashSet<String>();
         JCasUtil.select(jCas, AnnotationBase.class).forEach(a -> {
@@ -293,6 +334,9 @@ public class Importer {
                     metadata.getDocumentId(),
                     corpus.getId());
             logger.info("Setting Metadata done.");
+            logImportInfo("Importing " + document.getDocumentId(), LogStatus.CAS_IMPORT, filePath, 0);
+            // We track how long each document import takes.
+            var start = System.currentTimeMillis();
 
             // Before we parse and add that document, lets check if a document with that id and in that
             // corpus already exists. If we created a new corpus, this will always be null.
@@ -304,7 +348,7 @@ public class Importer {
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
                 if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
-                    postProccessDocument(existingDoc, corpusConfig);
+                    postProccessDocument(existingDoc, corpusConfig, existingDoc.getDocumentId());
                 }
                 logger.info("Done.");
                 return null;
@@ -321,51 +365,53 @@ public class Importer {
             if (corpusConfig.getAnnotations().isUceMetadata())
                 ExceptionUtils.tryCatchLog(
                         () -> setUceMetadata(document, jCas, corpus.getId()),
-                        (ex) -> logger.warn("This file should have contained UceMetadata annotations, but selecting them caused an error."));
+                        (ex) -> logImportWarn("This file should have contained UceMetadata annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().isSentence())
                 ExceptionUtils.tryCatchLog(
                         () -> setSentences(document, jCas),
-                        (ex) -> logger.warn("This file should have contained sentence annotations, but selecting them caused an error."));
+                        (ex) -> logImportWarn("This file should have contained sentence annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().isNamedEntity())
                 ExceptionUtils.tryCatchLog(
                         () -> setNamedEntities(document, jCas),
-                        (ex) -> logger.warn("This file should have contained ner annotations, but selecting them caused an error."));
+                        (ex) -> logImportWarn("This file should have contained ner annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().isLemma())
                 ExceptionUtils.tryCatchLog(
                         () -> setLemmata(document, jCas),
-                        (ex) -> logger.warn("This file should have contained lemmata annotations, but selecting them caused an error."));
+                        (ex) -> logImportWarn("This file should have contained lemmata annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().isSrLink())
                 ExceptionUtils.tryCatchLog(
                         () -> setSemanticRoleLabels(document, jCas),
-                        (ex) -> logger.warn("This file should have contained SRL annotations, but selecting them caused an error."));
+                        (ex) -> logImportWarn("This file should have contained SRL annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().isTime())
                 ExceptionUtils.tryCatchLog(
                         () -> setTimes(document, jCas),
-                        (ex) -> logger.warn("This file should have contained time annotations, but selecting them caused an error."));
+                        (ex) -> logImportWarn("This file should have contained time annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().getTaxon().isAnnotated())
                 ExceptionUtils.tryCatchLog(
                         () -> setTaxonomy(document, jCas, corpusConfig),
-                        (ex) -> logger.warn("This file should have contained taxon annotations, but selecting them caused an error."));
+                        (ex) -> logImportWarn("This file should have contained taxon annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().isWikipediaLink())
                 ExceptionUtils.tryCatchLog(
                         () -> setWikiLinks(document, jCas),
-                        (ex) -> logger.warn("This file should have contained wiki links annotations, but selecting them caused an error."));
+                        (ex) -> logImportWarn("This file should have contained wiki links annotations, but selecting them caused an error.", ex, filePath));
 
             ExceptionUtils.tryCatchLog(
                     () -> setPages(document, jCas, corpusConfig),
-                    (ex) -> logger.warn("This file should have contained OCRPage annotations, but selecting them caused an error."));
+                    (ex) -> logImportWarn("This file should have contained OCRPage annotations, but selecting them caused an error.", ex, filePath));
 
-            logger.info("Finished extracting all the annotations.");
+            var duration = System.currentTimeMillis() - start;
+            logImportInfo("Successfully extracted all annotations from " + filePath, LogStatus.FINISHED, filePath, duration);
+
             return document;
         } catch (Exception ex) {
-            logger.error("Unknown error while importing a CAS into a document. This shouldn't happen, as each operation has its own error handling.", ex);
+            logImportError("Unknown error while importing a CAS into a document. This shouldn't happen, as each operation has its own error handling.", ex, filePath);
             return null;
         } finally {
             logger.info("Finished with importing that CAS.\n\n\n");
@@ -382,9 +428,6 @@ public class Importer {
             metadata.setComment(t.getComment());
             metadata.setValue(t.getValue());
             metadata.setKey(t.getKey());
-            // TODO: THIS IS JUST FOR TESTING. Delete this domain check and leave only the last line
-            //if (metadata.getKey().equals("domain")) metadata.setValueType(UCEMetadataValueType.ENUM);
-            //else
             metadata.setValueType(UCEMetadataValueType.valueOf(t.getValueType().toUpperCase()));
             data.add(metadata);
 
@@ -767,6 +810,7 @@ public class Importer {
 
     /**
      * Set the cleaned full text. That is the sum of all tokens except of all anomalies
+     * Update: Obsolete for now, as this takes forever and makes the OCR worse.
      */
     @Obsolete
     private void setCleanedFullText(Document document, JCas jCas) {
@@ -894,8 +938,9 @@ public class Importer {
      * Here we apply any post processing of a document that isn't DUUI and needs the document to be stored once like
      * the rag vector embeddings
      */
-    private void postProccessDocument(Document document, CorpusConfig corpusConfig) {
-        logger.info("Postprocessing the document: " + document.getId());
+    private void postProccessDocument(Document document, CorpusConfig corpusConfig, String filePath) {
+        logImportInfo("Postprocessing " + filePath, LogStatus.POST_PROCESSING, filePath, 0);
+        var start = System.currentTimeMillis();
 
         // Calculate embeddings if they are activated
         if (corpusConfig.getOther().isEnableEmbeddings()) {
@@ -904,19 +949,19 @@ public class Importer {
             // Chunk Embeddings
             var docHasChunkEmbeddings = ExceptionUtils.tryCatchLog(
                     () -> ragService.documentHasDocumentChunkEmbeddings(document.getId()),
-                    (ex) -> logger.error("Error while checking if a document already has DocumentChunkEmbeddings.", ex));
+                    (ex) -> logImportError("Error while checking if a document already has DocumentChunkEmbeddings.", ex, filePath));
             if (docHasChunkEmbeddings != null && !docHasChunkEmbeddings) {
                 // Build the chunks, which are the most crucial embeddings
                 var documentChunkEmbeddings = ExceptionUtils.tryCatchLog(
                         () -> ragService.getCompleteEmbeddingChunksFromDocument(document),
-                        (ex) -> logger.error("Error getting the complete embedding chunks for document: " + document.getId(), ex));
+                        (ex) -> logImportError("Error getting the complete embedding chunks for document: " + document.getId(), ex, filePath));
 
                 // Store the chunks
                 if (documentChunkEmbeddings != null)
                     for (var docEmbedding : documentChunkEmbeddings) {
                         ExceptionUtils.tryCatchLog(
                                 () -> ragService.saveDocumentChunkEmbedding(docEmbedding),
-                                (ex) -> logger.error("Error saving a document chunk embeddings.", ex)
+                                (ex) -> logImportError("Error saving a document chunk embeddings.", ex, filePath)
                         );
                     }
             }
@@ -924,18 +969,18 @@ public class Importer {
             // Document Embedding
             var docHasEmbedding = ExceptionUtils.tryCatchLog(
                     () -> ragService.documentHasDocumentEmbedding(document.getId()),
-                    (ex) -> logger.error("Error while checking if a document already has a DocumentEmbedding.", ex));
+                    (ex) -> logImportError("Error while checking if a document already has a DocumentEmbedding.", ex, filePath));
             if (docHasEmbedding != null && !docHasEmbedding) {
                 // Build a single document embeddings for the whole text
                 var documentEmbedding = ExceptionUtils.tryCatchLog(
                         () -> ragService.getCompleteEmbeddingFromDocument(document),
-                        (ex) -> logger.error("Error getting the complete embedding from a document.", ex));
+                        (ex) -> logImportError("Error getting the complete embedding from a document.", ex, filePath));
 
                 // Store the single document embedding
                 if (documentEmbedding != null)
                     ExceptionUtils.tryCatchLog(
                             () -> ragService.saveDocumentEmbedding(documentEmbedding),
-                            (ex) -> logger.error("Error saving a document embedding.", ex));
+                            (ex) -> logImportError("Error saving a document embedding.", ex, filePath));
             }
         }
 
@@ -949,7 +994,7 @@ public class Importer {
 
                 var topicDistribution = ExceptionUtils.tryCatchLog(
                         () -> ragService.getTextTopicDistribution(PageTopicDistribution.class, page.getCoveredText(document.getFullText())),
-                        (ex) -> logger.error("Error getting the PageTopicDistribution - the postprocessing continues. Document id: " + document.getId(), ex));
+                        (ex) -> logImportError("Error getting the PageTopicDistribution - the postprocessing continues. Document id: " + document.getId(), ex, filePath));
                 if (topicDistribution == null) continue;
 
                 topicDistribution.setBegin(page.getBegin());
@@ -959,14 +1004,14 @@ public class Importer {
                 page.setPageTopicDistribution(topicDistribution);
                 // Store it in the db
                 ExceptionUtils.tryCatchLog(() -> db.savePageTopicDistribution(page),
-                        (ex) -> logger.error("Error storing the page topic distribution - the postprocessing continues.", ex));
+                        (ex) -> logImportError("Error storing the page topic distribution - the postprocessing continues.", ex, filePath));
             }
 
             // And the document topic dist if this wasn't added before.
             if (document.getDocumentTopicDistribution() == null) {
                 var documentTopicDistribution = ExceptionUtils.tryCatchLog(
                         () -> ragService.getTextTopicDistribution(DocumentTopicDistribution.class, document.getFullText()),
-                        (ex) -> logger.error("Error getting the DocumentTopicDistribution - the postprocessing ends now. Document id: " + document.getId(), ex));
+                        (ex) -> logImportError("Error getting the DocumentTopicDistribution - the postprocessing ends now. Document id: " + document.getId(), ex, filePath));
                 if (documentTopicDistribution == null) return;
 
                 documentTopicDistribution.setDocument(document);
@@ -974,9 +1019,11 @@ public class Importer {
                 document.setDocumentTopicDistribution(documentTopicDistribution);
                 // Store it
                 ExceptionUtils.tryCatchLog(() -> db.saveDocumentTopicDistribution(document),
-                        (ex) -> logger.error("Error storing the document topic distribution - the postprocessing ends now.", ex));
+                        (ex) -> logImportError("Error storing the document topic distribution - the postprocessing ends now.", ex, filePath));
             }
         }
+
+        logImportInfo("Successfully post processed document " + filePath, LogStatus.SAVED, filePath, System.currentTimeMillis() - start);
     }
 
     /**
@@ -1033,6 +1080,42 @@ public class Importer {
             paragraphs.add(paragraph);
         });
         return paragraphs;
+    }
+
+    /**
+     * Tries to store a import log; if fails, gives a warning but otherwise keeps running.
+     */
+    private void tryStoreUCEImportLog(ImportLog importLog) {
+        ExceptionUtils.tryCatchLog(
+                () -> db.saveOrUpdateImportLog(importLog),
+                (ex) -> logger.warn("Couldn't store a UCEImport log... operation continues.", ex));
+    }
+
+    /**
+     * Not only logs to the default file logger, but also as a special ImportLog into the database.
+     */
+    private void logImportInfo(String message, LogStatus status, String file, long duration) {
+        var importLog = new ImportLog(this.importerNumber.toString(), message, status, file, this.importId, duration);
+        tryStoreUCEImportLog(importLog);
+        logger.info(message);
+    }
+
+    /**
+     * Not only logs to the default file logger, but also as a special ImportLog into the database.
+     */
+    private void logImportWarn(String message, Exception ex, String file) {
+        var importLog = new ImportLog(this.importerNumber.toString(), ex.getMessage(), LogStatus.WARN, file, this.importId, 0);
+        tryStoreUCEImportLog(importLog);
+        logger.warn(message, ex);
+    }
+
+    /**
+     * Not only logs to the default file logger, but also as a special ImportLog into the database.
+     */
+    private void logImportError(String message, Exception ex, String file) {
+        var importLog = new ImportLog(this.importerNumber.toString(), ex.getMessage(), LogStatus.ERROR, file, this.importId, 0);
+        tryStoreUCEImportLog(importLog);
+        logger.error(message, ex);
     }
 
 }

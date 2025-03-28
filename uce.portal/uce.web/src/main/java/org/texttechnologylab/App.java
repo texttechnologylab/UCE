@@ -64,7 +64,11 @@ public class App {
                 (ex) -> logger.error("Couldn't implement the UceConfig. Application continues running.", ex));
 
         // Application context for services
-        var context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        var context = ExceptionUtils.tryCatchLog(
+                () -> new AnnotationConfigApplicationContext(SpringConfig.class),
+                (ex) -> logger.fatal("========== [ABORT] ==========\nThe Application context couldn't be established. " +
+                        "This is very likely due to a missing/invalid database connection. UCE will have to shutdown."));
+        if(context == null) return;
         logger.info("Loaded application context and services.");
 
         // Execute the external database scripts

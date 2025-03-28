@@ -13,13 +13,8 @@ public class RegexUtils {
 
     /**
      * Given a text and a serchterm, extract the searchterms alongside a left and right context
-     * @param text
-     * @param searchTerm
-     * @param leftContextWords
-     * @param rightContextWords
-     * @return
      */
-    public static List<String[]> extractOccurrences(String text, String searchTerm, int leftContextWords, int rightContextWords, int maxCount) {
+    public static List<String[]> ExtractOccurrences(String text, String searchTerm, int leftContextWords, int rightContextWords, int maxCount) {
         List<String[]> results = new ArrayList<>();
 
         // Constructing the regex pattern with case insensitivity and word boundaries
@@ -37,8 +32,8 @@ public class RegexUtils {
             String rightContext = match.substring(searchTermIndex + searchTerm.length()).trim();
 
             // Extracting the exact number of words for left and right contexts
-            leftContext = getLastWords(leftContext, leftContextWords);
-            rightContext = getFirstWords(rightContext, rightContextWords);
+            leftContext = GetLastWords(leftContext, leftContextWords);
+            rightContext = GetFirstWords(rightContext, rightContextWords);
 
             results.add(new String[]{leftContext, searchTerm, rightContext});
 
@@ -49,7 +44,7 @@ public class RegexUtils {
         return results;
     }
 
-    private static String getLastWords(String text, int wordCount) {
+    private static String GetLastWords(String text, int wordCount) {
         String[] words = text.split("\\s+");
         int start = Math.max(words.length - wordCount, 0);
         StringBuilder result = new StringBuilder();
@@ -59,7 +54,7 @@ public class RegexUtils {
         return result.toString().trim();
     }
 
-    private static String getFirstWords(String text, int wordCount) {
+    private static String GetFirstWords(String text, int wordCount) {
         String[] words = text.split("\\s+");
         StringBuilder result = new StringBuilder();
         for (int i = 0; i < Math.min(wordCount, words.length); i++) {
