@@ -61,7 +61,7 @@ services:
       - "./database:/app/database"
       # MOUNT HERE ALL UIMA CORPORA INTO THE '/app/input/corpora/zobodat' PATH 
       - "./../test_data/corpora/zobodat:/app/input/corpora/zobodat"
-    command: [ "/bin/sh", "-c", "sleep 7 && java -jar ./target/importer.jar -srcDir /app/input/corpora/ -num 1 -t 4" ]
+    command: [ "/bin/sh", "-c", "sleep 7 && java -jar ./target/importer.jar -srcDir /app/input/corpora/ -num 1 -t ${IMPORTER_THREADS}" ]
 
   uce-postgresql-db:
     container_name: uce-postgresql-db
