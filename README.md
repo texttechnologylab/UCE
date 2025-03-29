@@ -26,19 +26,58 @@
 
 # Quick Start
 
-Clone this repository:
+> [!TIP]
+> Please consult the documentation page for a more detailled and customizable setup documentation. The `Quick Start` is just that: a short setup guide that sets up a default UCE instance.
+
+## Usage
+
+When building from source, clone this repository:
 
 ```
 git clone https://github.com/texttechnologylab/UCE.git
 ```
 
-Start the docker containers:
+In the root folder, create a `.env` file that holds the variables for the `docker-compose.yaml` file. Example `.env`:
 
 ```
-docker-compose up
+UCE_CONFIG_PATH=./../uceConfig.json
+JVM_ARGS=-Xmx8g
+TDB2_DATA=./../tdb2-database
+TDB2_ENDPOINT=tdb2-database-name
+IMPORTER_THREADS=1
 ```
+
+Start the relevant docker containers:
+
+```
+docker-compose up --build uce-postgresql-db uce-web
+```
+
+*Optional containers, if applicable to your use-case: **[uce-fuseki-sparql], [uce-rag-service]***
+
+> [!WARNING]  
+> If the webportal container can't connect to the database, you can check the connectionstrings within the `common.conf` file. For the docker setup, the content of this file should match the `common-release.conf`.
 
 The web instance, by deafult, is reachable under: http://localhost:8008. If you're looking for a small demo without creating it yourself, please check our [open demo](http://eval.uce.texttechnologylab.org/).
+
+### Import Data
+
+Now that the webportal and database are both running, we will start the **uce-importer** docker container from within the compose to import data. To do so, first:
+
+- Create a folder `choose_any_name` that you can mount into the docker container.
+- Create a subfolder `input`. Copy all of your annotated UIMA XMI files that you want to import in there.
+- Copy a default `uce.common/src/main/resources/corpusConfig.json` file from the source code and put it into the `choose_any_name` folder.
+- Inside the `docker-compose.yaml`, find the `uce-importer` service and mount the `path/to/choose_any_name` to `:/app/input/corpora/choose_any_name` (example can be found within the compose file)
+- Finally, start the importer and import your corpus:
+
+```
+docker-compose up --build uce-importer
+```
+
+> [!IMPORTANT]  
+> More information about `corpusConfig.json`, `uceConfig.json`, annotations, enabling the RAGbot and other customizations can be found on the documentation page.
+
+## Development
 
 **We are currently creating a dedicated Documentation Page which will be up soon to explain the configuration in more detail and how you can customize UCE.**
 
