@@ -11,7 +11,7 @@
 </i>
 <hr/>
 <div align="center">
-  <a href="#"><img src="https://img.shields.io/static/v1?label=&message=Documentation&color=blueviolet&style=for-the-badge&logo=internetarchive" alt="Documentation"></a>
+  <a href="https://texttechnologylab.github.io/UCE/"><img src="https://img.shields.io/static/v1?label=&message=Documentation&color=blueviolet&style=for-the-badge&logo=internetarchive" alt="Documentation"></a>
   <!--<a href="http://eval.uce.texttechnologylab.org/"><img src="https://img.shields.io/static/v1?label=&message=Demo&color=orange&style=for-the-badge&logo=abstract" alt="Demo"></a>-->
   <a href="#"><img src="https://img.shields.io/static/v1?label=Languages%3A&message=German|English&color=green&style=for-the-badge" alt="Languages: - German | English"></a>
   <a href="https://www.texttechnologylab.org/team/kevin-boenisch/"><img src="https://img.shields.io/static/v1?label=&message=Text+Technology+Lab&color=informational&style=for-the-badge&logo=buffer" alt="Text Technology Lab"></a>
