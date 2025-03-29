@@ -12,7 +12,7 @@
 <hr/>
 <div align="center">
   <a href="#"><img src="https://img.shields.io/static/v1?label=&message=Documentation&color=blueviolet&style=for-the-badge&logo=internetarchive" alt="Documentation"></a>
-  <a href="http://eval.uce.texttechnologylab.org/"><img src="https://img.shields.io/static/v1?label=&message=Demo&color=orange&style=for-the-badge&logo=abstract" alt="Demo"></a>
+  <!--<a href="http://eval.uce.texttechnologylab.org/"><img src="https://img.shields.io/static/v1?label=&message=Demo&color=orange&style=for-the-badge&logo=abstract" alt="Demo"></a>-->
   <a href="#"><img src="https://img.shields.io/static/v1?label=Languages%3A&message=German|English&color=green&style=for-the-badge" alt="Languages: - German | English"></a>
   <a href="https://www.texttechnologylab.org/team/kevin-boenisch/"><img src="https://img.shields.io/static/v1?label=&message=Text+Technology+Lab&color=informational&style=for-the-badge&logo=buffer" alt="Text Technology Lab"></a>
   <!--<a href="https://ebooks.iospress.nl/doi/10.3233/FAIA230996"> <img src="https://img.shields.io/static/v1?label=Paper%3A&message=IOS+Press&color=important&style=for-the-badge&logo=adobefonts" alt="Paper: - IOS Press"></a>-->
@@ -23,6 +23,15 @@
 <div align="center">
   <video src="https://github.com/user-attachments/assets/6911aff1-71a7-4d17-9ffb-d45126cb0ea7" />
 </div>
+
+# Running UCE Instances
+
+UCE is used by different projects to visualize their corpora and to provide a generic, but flexible webportal for their users. Here we list some of those UCE instances.
+
+| Url        | Project           | Description  |
+| ------------- |:-------------:| :-----|
+| [URL](http://biofid.uce.texttechnologylab.org/)      | [BIOfid](https://www.biofid.de/de/) | The Specialised Information Service Biodiversity Research (BIOfid) provides access to current and historical biodiversity literature. |
+| [URL](http://prismai.uce.texttechnologylab.org/)      | PrismAI      |  A dataset for the systematic detection of AI-generated text, containg both English and German texts from 8 domains, synthesized using state-of-the-art LLMs. |
 
 # Quick Start
 
