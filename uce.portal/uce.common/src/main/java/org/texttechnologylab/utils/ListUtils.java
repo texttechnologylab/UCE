@@ -7,7 +7,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ListUtils {
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(ListUtils.class);
 
     public static float[] convertStringArrayToFloatArray(String[] stringArray) {
         float[] floatArray = new float[stringArray.length];

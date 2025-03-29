@@ -22,7 +22,7 @@ import java.util.Arrays;
  * The search logic object for Semantic Role Search.
  */
 public class Search_SemanticRoleImpl implements Search {
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(Search_SemanticRoleImpl.class);
     private PostgresqlDataInterface_Impl db;
     private SemanticRoleSearchState searchState;
 

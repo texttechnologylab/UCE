@@ -17,7 +17,7 @@ public class ImportExportApi {
     private PostgresqlDataInterface_Impl db;
     private ApplicationContext serviceContext;
 
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(PostgresqlDataInterface_Impl.class);
 
     public ImportExportApi(ApplicationContext serviceContext) {
         this.serviceContext = serviceContext;

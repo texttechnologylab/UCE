@@ -3,6 +3,9 @@ target/
 !**/src/main/**/target/
 !**/src/test/**/target/
 
+### Env files ###
+.env
+
 ### Logging ###
 uce.portal/logs/
 

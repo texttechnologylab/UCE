@@ -106,11 +106,11 @@
             <version>0.1.4</version>
         </dependency>
 
-        <dependency>
+        <!--<dependency>
             <groupId>org.apache.uima</groupId>
             <artifactId>uimaj-core</artifactId>
             <version>3.5.0</version>
-        </dependency>
+        </dependency>-->
 
         <dependency>
             <groupId>org.apache.uima</groupId>
@@ -121,26 +121,13 @@
         <dependency>
             <groupId>com.github.texttechnologylab</groupId>
             <artifactId>DockerUnifiedUIMAInterface</artifactId>
-            <version>1.4.1</version>
+            <version>1.4</version>
         </dependency>
-
-        <!--        local projects-->
-        <!--<dependency>
-            <groupId>com.github.texttechnologylab.textimager-uima</groupId>
-            <artifactId>textimager-uima-types</artifactId>
-            <version>8efebf1980</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>com.github.texttechnologylab</groupId>
-                    <artifactId>UIMATypeSystem</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>-->
 
         <dependency>
             <groupId>com.github.texttechnologylab</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>3.0.1</version>
+            <version>3.0.5</version>
         </dependency>
 
     </dependencies>

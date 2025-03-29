@@ -82,7 +82,7 @@ public class WikiService {
         viewModel.setAnnotationType("Taxon");
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
         viewModel.setSimilarDocuments(
-                db.getDocumentsByNamedEntityValue(taxon.getCoveredText(), 10)
+                db.getDocumentsByAnnotationCoveredText(taxon.getCoveredText(), 10, "namedEntities")
                         .stream()
                         .filter(d -> d.getId() != viewModel.getDocument().getId())
                         .toList());
@@ -101,6 +101,32 @@ public class WikiService {
     /**
      * Gets an AnnotationWikiPageViewModel to render a Wikipage for that annotation.
      */
+    public NamedEntityAnnotationWikiPageViewModel buildTimeAnnotationWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new NamedEntityAnnotationWikiPageViewModel();
+        viewModel.setCoveredText(coveredText);
+        // Currently, Time is handled like a NamedEntity.
+        var time = db.getTimeAnnotationById(id);
+        viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(time.getBegin(), time.getEnd(), time.getDocumentId()));
+        viewModel.setWikiModel(time);
+        viewModel.setDocument(db.getDocumentById(time.getDocumentId()));
+        viewModel.setAnnotationType("Named-Entity");
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setSimilarDocuments(
+                db.getDocumentsByAnnotationCoveredText(time.getCoveredText(), 10, "times")
+                        .stream()
+                        .filter(d -> d.getId() != viewModel.getDocument().getId())
+                        .toList());
+
+        var kwicState = new KeywordInContextState();
+        kwicState.recalculate(List.of(viewModel.getDocument()), List.of(viewModel.getCoveredText()));
+        viewModel.setKwicState(kwicState);
+
+        return viewModel;
+    }
+
+    /**
+     * Gets an AnnotationWikiPageViewModel to render a Wikipage for that annotation.
+     */
     public NamedEntityAnnotationWikiPageViewModel buildNamedEntityWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
         var viewModel = new NamedEntityAnnotationWikiPageViewModel();
         viewModel.setCoveredText(coveredText);
@@ -111,7 +137,7 @@ public class WikiService {
         viewModel.setAnnotationType("Named-Entity");
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
         viewModel.setSimilarDocuments(
-                db.getDocumentsByNamedEntityValue(ner.getCoveredText(), 10)
+                db.getDocumentsByAnnotationCoveredText(ner.getCoveredText(), 10, "namedEntities")
                         .stream()
                         .filter(d -> d.getId() != viewModel.getDocument().getId())
                         .toList());

@@ -40,7 +40,10 @@
           }
         }
     </script>
-    <script type="module" src="https://md-block.verou.me/md-block.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="module" src="js/md-block.js"></script>
+
     <title>${document.getDocumentTitle()}</title>
 </head>
 
@@ -208,9 +211,9 @@
 </div>
 </body>
 
-<script type="module">
+<#--<script type="module">
     <#include "*/js/corpusUniverse.js">
-</script>
+</script>-->
 
 <script>
     <#include "*/js/site.js">

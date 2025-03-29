@@ -22,7 +22,7 @@ import spark.Route;
 import java.util.*;
 
 public class CorpusUniverseApi {
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(CorpusUniverseApi.class);
     private ApplicationContext context;
     private RAGService ragService;
     private PostgresqlDataInterface_Impl db;

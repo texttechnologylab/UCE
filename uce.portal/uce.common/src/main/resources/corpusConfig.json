@@ -6,32 +6,32 @@
   "addToExistingCorpus": false,
 
   "annotations": {
-    "annotatorMetadata": true,
-    "uceMetadata": true,
+    "annotatorMetadata": false,
+    "uceMetadata": false,
 
-    "OCRPage": true,
-    "OCRParagraph": true,
+    "OCRPage": false,
+    "OCRParagraph": false,
     "OCRBlock": false,
     "OCRLine": false,
 
-    "srLink": true,
-    "namedEntity": true,
-    "lemma": true,
+    "srLink": false,
+    "namedEntity": false,
+    "lemma": false,
     "sentence": false,
     "taxon": {
-      "annotated": true,
+      "annotated": false,
       "//comment": "[Are the taxons annotated with biofid onthologies through the 'identifier' property?]",
-      "biofidOnthologyAnnotated": true
+      "biofidOnthologyAnnotated": false
     },
-    "time": true,
+    "time": false,
     "wikipediaLink": false
   },
   "other": {
     "//comment": "[Is this corpus also available on https://sammlungen.ub.uni-frankfurt.de/? Either true or false]",
     "availableOnFrankfurtUniversityCollection": false,
 
-    "includeTopicDistribution": true,
-    "enableEmbeddings": true,
-    "enableRAGBot": true
+    "includeTopicDistribution": false,
+    "enableEmbeddings": false,
+    "enableRAGBot": false
   }
 }

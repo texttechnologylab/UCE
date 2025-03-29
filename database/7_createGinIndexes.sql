@@ -1,3 +1,4 @@
+-- Enable the pg_trgm extension, if not already enabled
 CREATE EXTENSION IF NOT EXISTS pg_trgm;
 CREATE EXTENSION IF NOT EXISTS btree_gin;
 
@@ -17,10 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_title_trgm ON metadatatitleinfo
 CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_published_trgm ON metadatatitleinfo USING gin (published gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_author_trgm ON metadatatitleinfo USING gin (author gin_trgm_ops);
 
--- Enable the pg_trgm extension, if not already enabled
 -- For the following indexes, see also: https://www.postgresql.org/docs/9.1/textsearch-indexes.html
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-
 -- Create trigram indexes on the 'coveredtext' columns for the relevant tables
 CREATE INDEX IF NOT EXISTS idx_namedentity_coveredtext_trgm ON namedentity USING gin (coveredtext gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_time_coveredtext_trgm ON time USING gin (coveredtext gin_trgm_ops);

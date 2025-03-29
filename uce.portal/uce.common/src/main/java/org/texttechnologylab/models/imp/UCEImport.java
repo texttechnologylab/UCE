@@ -8,7 +8,7 @@ import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name="uceimport")
+@Table(name = "uceimport")
 public class UCEImport extends ModelBase {
     private String importId;
     private Integer totalDocuments;
@@ -16,13 +16,29 @@ public class UCEImport extends ModelBase {
     private String basePath;
     private ImportStatus status;
     private Long targetCorpusId;
+    private String targetCorpusName;
+    @Column(columnDefinition = "TEXT")
     private String comment;
-    @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name = "uceimport_id")
+    @Transient
     private List<ImportLog> logs;
 
-    public UCEImport(){
+    public UCEImport(String importId, String basePath, ImportStatus status){
+        this.importId = importId;
+        this.basePath = basePath;
+        this.status = status;
         this.created = System.currentTimeMillis();
+    }
+
+    public UCEImport() {
+        this.created = System.currentTimeMillis();
+    }
+
+    public String getTargetCorpusName() {
+        return targetCorpusName;
+    }
+
+    public void setTargetCorpusName(String targetCorpusName) {
+        this.targetCorpusName = targetCorpusName;
     }
 
     public String getImportId() {

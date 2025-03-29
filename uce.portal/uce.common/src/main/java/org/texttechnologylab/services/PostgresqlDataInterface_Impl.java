@@ -13,11 +13,17 @@ import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
+import org.texttechnologylab.models.imp.ImportLog;
+import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
 
 import javax.persistence.criteria.Predicate;
+import java.io.IOException;
+import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Paths;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -53,7 +59,11 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public void executeSqlWithoutReturn(String sql) throws DatabaseOperationException {
         executeOperationSafely(session -> {
-            session.createNativeQuery(sql).executeUpdate();
+            session.doWork(connection -> {
+                try (var stmt = connection.prepareStatement(sql)) {
+                    stmt.executeUpdate();
+                }
+            });
             return null;
         });
     }
@@ -167,18 +177,27 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            Criteria criteria = session.createCriteria(Document.class);
-            criteria.setFirstResult(skip);
-            criteria.setMaxResults(take);
-            criteria.add(Restrictions.eq("corpusId", corpusId));
-            var documents = (List<Document>) criteria.list();
+            // TODO: Hardcoded sql, but another instance where hibernate is fucking unusable. This SQL in HQL or whatever
+            // crooked syntax is a million times slower. I'll just leave the raw sql here then.
+            var sql = "SELECT * FROM document WHERE corpusid = :corpusId ORDER BY id LIMIT :take OFFSET :skip";
+            var query = session.createNativeQuery(sql, Document.class)
+                    .setParameter("corpusId", corpusId)
+                    .setParameter("take", take)
+                    .setParameter("skip", skip);
+
+            var documents = query.getResultList();
+
             documents.forEach(d -> Hibernate.initialize(d.getPages()));
-            documents.forEach(d -> Hibernate.initialize(d.getUceMetadata()
-                    .stream()
-                    .filter(u -> u.getValueType() != UCEMetadataValueType.JSON)));
+            documents.forEach(d -> Hibernate.initialize(
+                    d.getUceMetadata().stream()
+                            .filter(u -> u.getValueType() != UCEMetadataValueType.JSON)
+                            .toList()
+            ));
+
             return documents;
         });
     }
+
 
     public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
@@ -191,8 +210,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public Corpus getCorpusById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            var corpus = session.get(Corpus.class, id);
-            return corpus;
+            return session.get(Corpus.class, id);
         });
     }
 
@@ -289,7 +307,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             for (var id : documentIds) {
                 // doc cannot be null.
                 var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
-                if(doc == null) continue;
+                if (doc == null) continue;
 
                 // We EAGERLY load those for now and see how that impacts performance.
                 // Hibernate.initialize(doc.getPages());
@@ -411,7 +429,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         var resultSet = result.getArray("snippets_found").getResultSet();
                         var foundSnippets = new HashMap<Integer, ArrayList<PageSnippet>>();
                         // Snippets are the snippet text and the page_id to which this snippet belongs. They are json objects
-                        while(resultSet.next()){
+                        while (resultSet.next()) {
                             var idx = resultSet.getInt(1) - 1;
                             ArrayList<ArrayList<PageSnippet>> pageSnippet = gson.fromJson(
                                     resultSet.getString(2),
@@ -435,14 +453,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
-    public List<Document> getDocumentsByNamedEntityValue(String coveredText, int limit) throws DatabaseOperationException {
+    public List<Document> getDocumentsByAnnotationCoveredText(String coveredText, int limit, String annotationName) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteriaBuilder = session.getCriteriaBuilder();
             var criteriaQuery = criteriaBuilder.createQuery(Document.class);
             var root = criteriaQuery.from(Document.class);
 
-            // Join with NamedEntity entity via foreign key documentId
-            var namedEntityJoin = root.join("namedEntities");
+            // Join with NamedEntity or other annotation entities via foreign key documentId
+            var namedEntityJoin = root.join(annotationName);
 
             criteriaQuery.select(root).distinct(true) // Ensure distinct documents
                     .where(criteriaBuilder.equal(namedEntityJoin.get("coveredText"), coveredText));
@@ -509,6 +527,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public UCEImport getUceImportByImportId(String importId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(UCEImport.class);
+            criteria.add(Restrictions.eq("importId", importId));
+            return (UCEImport)criteria.list().getFirst();
+        });
+    }
+
     public Document getDocumentById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
@@ -558,6 +584,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             return session.createQuery(criteriaQuery).getResultList();
         });
+    }
+
+    public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(Time.class, id));
     }
 
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException {
@@ -662,6 +692,20 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             if (corpus.getCorpusTsnePlot() != null) {
                 session.saveOrUpdate(corpus.getCorpusTsnePlot());
             }
+            return null;
+        });
+    }
+
+    public void saveOrUpdateUceImport(UCEImport uceImport) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(uceImport);
+            return null;
+        });
+    }
+
+    public void saveOrUpdateImportLog(ImportLog importLog) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(importLog);
             return null;
         });
     }

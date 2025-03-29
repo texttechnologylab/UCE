@@ -253,9 +253,9 @@
                             <div class="flexed align-items-center">
                                 <label class="mb-0 mr-2">Example:</label>
                                 <p class="w-100 p-2 rounded mb-0 bg-default text light-border">
-                                    <i>'Bellis Perennis' & Wien</i>
+                                    <i>'Bellis Perennis' & Germany</i>
                                     <i class="fas fa-long-arrow-alt-right ml-1 mr-1"></i>
-                                    <span class="color-prime">( 'Bellis Perennis' | 'Daisy' | 'Gänseblümchen' | <i>[...]</i> ) & Wien</span>
+                                    <span class="color-prime">( 'Bellis Perennis' | 'Daisy' | 'Gänseblümchen' | <i>[...]</i> ) & Germany</span>
                                 </p>
                             </div>
                         </div>
@@ -297,10 +297,10 @@
                                         <div class="flexed align-items-center">
                                             <label class="mb-0 mr-2">Example:</label>
                                             <p class="w-100 p-2 rounded mb-0 bg-default text light-border">
-                                                <i><b class="color-prime">K::</b>Animalia & Wien</i>
+                                                <i><b class="color-prime">K::</b>Animalia & Germany</i>
                                                 <i class="fas fa-long-arrow-alt-right ml-1 mr-1"></i>
                                                 <span class="color-prime">( 'Ascidia parallelogramma' | 'Corella parallelogramma' | <i>[...]</i> ) <b
-                                                            class="color-prime">&</b> Wien</span>
+                                                            class="color-prime">&</b> Germany</span>
                                             </p>
                                         </div>
                                     </div>
@@ -355,7 +355,7 @@
             </p>
             <div class="alert alert-warning light-border block-text small-font p-2 mt-2 mb-0" role="alert">
                 Requires the selected corpus to contain annotations of type Taxon, Time, or Geoname Location.
-                If the corpus lacks any of these annotations, this function will not be available.
+                If the corpus lacks all of these annotations, this function will not be available.
             </div>
             <div class="expanded-content mt-3 display-none">
 
@@ -368,16 +368,22 @@
                             its filtering criteria to the results of the previous layer.
                             This process is logically equivalent to concatenating filters using an AND operator.
                         </p>
-                        <div class="flexed align-items-center">
+                        <hr class="mt-2 mb-2"/>
+                        <p class="text">
+                            <span class="text-dark">Example:</span>
+                            Two layers:
+                            The first layer filters out any texts that do not have "Germany" as an annotated location.
+                            The second layer further refines this filtered data pool by selecting only texts that contain the taxon Alpina.
+                        </p>
+                        <div class="flexed align-items-center mt-2">
                             <label class="mb-0 mr-2">Layer_1:</label>
                             <p class="w-100 p-2 flexed justify-content-between rounded mb-0 bg-default text light-border">
-                                <i>Wien</i>
+                                <i>Germany</i>
                                 <i></i>
                                 <span class="color-prime">10.000 Hits</span>
                             </p>
                         </div>
-                        <label class="w-100 mt-1 mb-1 color-prime text-center font-weight-bold">&</label>
-                        <div class="flexed align-items-center">
+                        <div class="flexed align-items-center mt-2">
                             <label class="mb-0 mr-2">Layer_2:</label>
                             <p class="w-100 p-2 flexed justify-content-between rounded mb-0 bg-default text light-border">
                                 <i>Alpina</i>
@@ -400,20 +406,37 @@
                             Within a layer, slots are concatenated using a logical OR operator.
                             As a result, a layer with multiple slots increases the likelihood of retrieving a larger data pool.
                         </p>
-                        <div class="flexed align-items-center">
+                        <hr class="mt-2 mb-2"/>
+                        <p class="text">
+                            <span class="text-dark">Example:</span>
+                            Two layers:
+                            The first layer contains two slots, forming an OR concatenation.
+                            This expands the data pool to include texts that either contain "Germany" or are annotated with a time range between 1800 and 1900.
+                            The second layer then further filters this pool by selecting only texts that contain the specified annotated taxon.
+                        </p>
+                        <div class="flexed mt-2 align-items-center">
                             <label class="mb-0 mr-2">Layer_1:</label>
-                            <p class="w-100 p-2 flexed justify-content-between rounded mb-0 bg-default text light-border">
-                                <i>Wien</i>
-                                <i></i>
-                                <span class="color-prime">10.000 Hits</span>
+                            <div class="flexed align-items-center mr-1 w-100">
+                                <p class="w-100 p-2 flexed justify-content-between rounded mb-0 bg-default text light-border">
+                                    <i>Germany</i>
+                                </p>
+                            </div>
+                            <div class="flexed align-items-center ml-1 mr-1 w-100">
+                                <p class="w-100 p-2 flexed justify-content-between rounded mb-0 bg-default text light-border">
+                                    <i>1800-1900</i>
+                                </p>
+                            </div>
+                            <p class="ml-1 p-2 flexed justify-content-between rounded mb-0 bg-default text light-border">
+                                <i class="color-prime">30.000&nbsp;Hits</i>
                             </p>
                         </div>
+
                         <div class="flexed align-items-center mt-2">
                             <label class="mb-0 mr-2">Layer_2:</label>
                             <p class="w-100 p-2 flexed justify-content-between rounded mb-0 bg-default text light-border">
                                 <i>Alpina</i>
                                 <i></i>
-                                <span class="color-prime">2.000 Hits</span>
+                                <span class="color-prime">4.000 Hits</span>
                             </p>
                         </div>
                     </div>

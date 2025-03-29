@@ -44,7 +44,9 @@
         }
     </script>
     <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
-    <script type="module" src="https://md-block.verou.me/md-block.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script type="module" src="js/md-block.js"></script>
 
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.4.0/gsap.min.js"></script>
     <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
@@ -104,8 +106,7 @@
         </div>
     </div>
 
-    <div class="sr-query-builder-include">
-    </div>
+    <div class="sr-query-builder-include"></div>
 
     <div class="corpusUniverse-content-container main-content-container">
 
@@ -188,7 +189,7 @@
                              data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
                              data-content="${languageResource.get("searchProModeDescription")}">
                             <input type="checkbox" class="custom-control-input" id="proModeSwitch">
-                            <label class="font-weight-bold open-search-doc-btn font-italic custom-control-label flexed align-items-center"
+                            <label class="font-weight-bold font-italic custom-control-label flexed align-items-center"
                                    for="proModeSwitch">
                                 Pro
                             </label>
@@ -295,53 +296,54 @@
 
         <!-- team -->
         <div class="view display-none" data-id="team">
-            <div class="container mt-5">
-                <h5 class="color-prime text-center mb-2">
-                    ${languageResource.get("team")}
-                </h5>
+            <div class="container" style="margin-top: 5rem">
+                <div class="group-box bg-light">
+                    <h5 class="color-prime text-center mb-2">
+                        ${languageResource.get("team")}
+                    </h5>
 
-                <p class="mb-0 text text-center font-italic">
-                    ${system.getCorporate().getTeam().getDescription()}
-                </p>
+                    <p class="mb-0 text text-center">
+                        ${system.getCorporate().getTeam().getDescription()}
+                    </p>
 
-                <hr class="mt-2 mb-4"/>
+                    <hr class="mt-2 mb-4"/>
 
-                <div class="row d-flex align-items-stretch m-0 p-0">
-                    <#if (system.getCorporate().getTeam())?? && (system.getCorporate().getTeam().getMembers())??>
-                        <#list system.getCorporate().getTeam().getMembers() as member>
-                            <div class="col-md-6 p-3 m-0 d-flex">
-                                <div class="team-member-card card-shadow w-100 h-100">
-                                    <div class="flexed align-items-center w-100">
-                                        <div class="p-3 w-100">
-                                            <div class="flexed align-items-baseline">
-                                                <h6 class="mb-0 color-prime mr-1">${member.getName()!"-"}</h6>
-                                                <label class="mb-0 small-font">(${member.getRole()!"-"})</label>
+                    <div class="row d-flex align-items-stretch m-0 p-0">
+                        <#if (system.getCorporate().getTeam())?? && (system.getCorporate().getTeam().getMembers())??>
+                            <#list system.getCorporate().getTeam().getMembers() as member>
+                                <div class="col-md-6 p-3 m-0 d-flex">
+                                    <div class="team-member-card w-100 h-100">
+                                        <div class="flexed align-items-center w-100 h-100">
+                                            <div class="p-3 w-100">
+                                                <div class="flexed align-items-baseline">
+                                                    <h6 class="mb-0 color-prime mr-1">${member.getName()!"-"}</h6>
+                                                    <label class="mb-0 small-font">(${member.getRole()!"-"})</label>
+                                                </div>
+                                                <label class="text small-font mb-0">${member.getDescription()!"-"}</label>
+                                                <hr class="mt-1 mb-2"/>
+                                                <!-- contact -->
+                                                <div class="small-font text-left">
+                                                    <a href="mailto:${member.getContact().getEmail()!"-"}">
+                                                        <i class="fas fa-envelope mr-1"></i> Mail
+                                                    </a>
+                                                    <br/>
+                                                    <a target="_blank" href="${member.getContact().getWebsite()!"-"}">
+                                                        <i class="fas fa-globe-europe mr-1"></i> Website
+                                                    </a>
+                                                    <p class="mb-0">${member.getContact().getAddress()!"-"}</p>
+                                                </div>
                                             </div>
-                                            <label class="text small-font mb-0">${member.getDescription()!"-"}</label>
-                                            <hr class="mt-1 mb-2"/>
-                                            <!-- contact -->
-                                            <div class="small-font text-left">
-                                                <a href="mailto:${member.getContact().getEmail()!"-"}">
-                                                    <i class="fas fa-envelope mr-1"></i> Mail
-                                                </a>
-                                                <br/>
-                                                <a target="_blank" href="${member.getContact().getWebsite()!"-"}">
-                                                    <i class="fas fa-globe-europe mr-1"></i> Website
-                                                </a>
-                                                <p class="mb-0">${member.getContact().getAddress()!"-"}</p>
+                                            <!-- img -->
+                                            <div class="flexed align-items-center justify-content-center text-center h-100">
+                                                <img src="${member.getImage()!""}"/>
                                             </div>
-                                        </div>
-                                        <!-- img -->
-                                        <div class="flexed align-items-center justify-content-center text-center h-100">
-                                            <img src="${member.getImage()!""}"/>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
-                        </#list>
-                    </#if>
+                            </#list>
+                        </#if>
+                    </div>
                 </div>
-
 
             </div>
         </div>
@@ -359,49 +361,59 @@
 
 </body>
 
-<footer class="bg-lightgray">
-    <div class="container p-3 h-100 text-center flexed align-items-center justify-content-center">
+<footer class="bg-lightgray pt-5 pb-5">
+    <div class="container h-100 text-center flexed align-items-center justify-content-center">
         <div class="row m-0 p-0 w-100 h-100">
 
             <!-- contacts -->
-            <div class="col-sm-3 color-secondary m-0">
-                <h6 class="text-left color-prime">${languageResource.get("contact")}</h6>
-                <div class="small-font text-left">
-                    <p class="mb-0">${system.getCorporate().getContact().getName()}</p>
-                    <a href="mailto:${system.getCorporate().getContact().getEmail()}">
-                        <i class="fas fa-envelope mr-1"></i> Mail
-                    </a>
-                    <br/>
-                    <a target="_blank" href="${system.getCorporate().getContact().getWebsite()}">
-                        <i class="fas fa-globe-europe mr-1"></i> Website
-                    </a>
-                    <p class="mb-0">${system.getCorporate().getContact().getAddress()}</p>
+            <div class="col-sm-3 color-secondary m-0 justify-content-center flexed">
+                <div class="group-box bg-light mb-0">
+                    <h6 class="text-left color-prime">${languageResource.get("contact")}</h6>
+                    <div class="small-font text-left">
+                        <p class="mb-0">${system.getCorporate().getContact().getName()}</p>
+                        <a href="mailto:${system.getCorporate().getContact().getEmail()}">
+                            <i class="fas fa-envelope mr-1"></i> Mail
+                        </a>
+                        <br/>
+                        <a target="_blank" href="${system.getCorporate().getContact().getWebsite()}">
+                            <i class="fas fa-globe-europe mr-1"></i> Website
+                        </a>
+                        <p class="mb-0">${system.getCorporate().getContact().getAddress()}</p>
+                    </div>
                 </div>
             </div>
 
             <!-- add more footer here later -->
-            <div class="col-sm-6 color-secondary w-100 m-0">
+            <div class="col-sm-6 color-secondary w-100 m-0 flexed justify-content-center">
+                <div class="group-box bg-light mb-0">
+                    <h6 class="text-dark">Powered by Unified Corpus Explorer</h6>
+                    <a href="https://github.com/texttechnologylab/UCE" target="_blank">
+                        <img class="w-100" style="max-width: 125px" src="/img/logo.png"/>
+                    </a>
+                </div>
             </div>
 
             <!-- TTLab -->
-            <div class="col-md-3 color-secondary text-right m-0">
-                <a href="https://www.texttechnologylab.org/" target="_blank">
-                    <h6 class="color-prime">Text Technology Lab</h6>
-                </a>
-                <div class="small-font">
-                    <p class="mb-0">
-                        ${languageResource.get("ttlabFooter")}
-                    </p>
-                    <img class="w-100 mt-2" style="max-width: 150px" src="/img/ttlab-logo.png"/>
+            <div class="col-md-3 color-secondary text-right justify-content-center">
+                <div class="group-box bg-light mb-0">
+                    <a href="https://www.texttechnologylab.org/" target="_blank">
+                        <h6 class="color-prime">Text Technology Lab</h6>
+                    </a>
+                    <div class="small-font">
+                        <p class="mb-0">
+                            ${languageResource.get("ttlabFooter")}
+                        </p>
+                        <img class="w-100 mt-2" style="max-width: 150px" src="/img/ttlab-logo.png"/>
+                    </div>
                 </div>
             </div>
         </div>
     </div>
 </footer>
 
-<script type="module">
+<#--<script type="module">
     <#include "js/corpusUniverse.js">
-</script>
+</script>-->
 
 <script>
     <#include "js/site.js">

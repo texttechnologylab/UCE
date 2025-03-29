@@ -25,7 +25,7 @@ public class LayeredSearch extends CacheItem {
     private List<LayeredSearchLayerDto> layers = new ArrayList<>();
     private final PostgresqlDataInterface_Impl db;
     private final JenaSparqlService jenaSparqlService;
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(LayeredSearch.class);
 
     /**
      * Cleans up and deletes all existing tables within the 'search' schema of the database.

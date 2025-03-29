@@ -5,6 +5,8 @@ import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
+import org.texttechnologylab.models.imp.ImportLog;
+import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.search.*;
 
 import java.util.List;
@@ -182,6 +184,11 @@ public interface DataInterface {
     public List<UCEMetadata> getUCEMetadataByDocumentId(long documentId) throws DatabaseOperationException;
 
     /**
+     * Gets a single UCEImport object from the database.
+     */
+    public UCEImport getUceImportByImportId(String importId) throws DatabaseOperationException;
+
+    /**
      * Generic operation that fetches documents given the parameters
      */
     public Document getDocumentById(long id) throws DatabaseOperationException;
@@ -193,19 +200,20 @@ public interface DataInterface {
 
     /**
      * Gets a list of distinct documents that contain a named entity with a given covered text.
+     * @param annotationName Either "namedEntities" or "times". It's the list name of the annotations within a Document objects.
      */
-    public List<Document> getDocumentsByNamedEntityValue(String coveredText, int limit) throws DatabaseOperationException;
+    public List<Document> getDocumentsByAnnotationCoveredText(String coveredText, int limit, String annotationName) throws DatabaseOperationException;
 
     /**
      * Gets lemmas from a specific document that are within a begin and end range
      *
-     * @param begin
-     * @param end
-     * @param documentId
-     * @return
-     * @throws DatabaseOperationException
      */
     public List<Lemma> getLemmasWithinBeginAndEndOfDocument(int begin, int end, long documentId) throws DatabaseOperationException;
+
+    /**
+     * Gets a time annotation by its id
+     */
+    public Time getTimeAnnotationById(long id) throws DatabaseOperationException;
 
     /**
      * Gets a named entity by its id
@@ -235,25 +243,30 @@ public interface DataInterface {
     public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) throws DatabaseOperationException;
 
     /**
+     * Saves or updates an ImportLog belonging to a UCEImport.
+     */
+    public void saveOrUpdateImportLog(ImportLog importLog) throws DatabaseOperationException;
+
+    /**
+     * Saves or updates a UCEImport object.
+     */
+    public void saveOrUpdateUceImport(UCEImport uceImport) throws DatabaseOperationException;
+
+    /**
      * Saves and updates a filter.
      *
-     * @param filter
-     * @throws DatabaseOperationException
      */
     public void saveOrUpdateUCEMetadataFilter(UCEMetadataFilter filter) throws DatabaseOperationException;
 
     /**
      * Stores a new UCEMetadataFilter
      *
-     * @param filter
-     * @throws DatabaseOperationException
      */
     public void saveUCEMetadataFilter(UCEMetadataFilter filter) throws DatabaseOperationException;
 
     /**
      * Stores the complete document with all its lists in the database.
      *
-     * @param document
      */
     public void saveDocument(Document document) throws DatabaseOperationException;
 

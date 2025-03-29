@@ -7,5 +7,6 @@ public enum LogStatus {
     POST_PROCESSING,
     FINISHED,
     CANCELED,
+    WARN,
     ERROR
 }

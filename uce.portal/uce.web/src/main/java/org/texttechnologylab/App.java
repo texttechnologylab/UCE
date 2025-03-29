@@ -36,16 +36,12 @@ import static spark.Spark.*;
 
 public class App {
     private static final Configuration configuration = Configuration.getDefaultConfiguration();
-    private static final Logger logger = LogManager.getLogger();
+    private static final Logger logger = LogManager.getLogger(App.class);
     private static CommonConfig commonConfig = null;
 
     public static void main(String[] args) throws IOException {
         logger.info("Starting the UCE web service...");
-        logger.info("Passed in command line args:");
-        for (String arg : args) {
-            logger.info(arg);
-            System.out.println(arg);
-        }
+        logger.info("Passed in command line args: " + String.join(" ", args));
 
         logger.info("Parsing the UCE config...");
         try {
@@ -68,8 +64,19 @@ public class App {
                 (ex) -> logger.error("Couldn't implement the UceConfig. Application continues running.", ex));
 
         // Application context for services
-        var context = new AnnotationConfigApplicationContext(SpringConfig.class);
+        var context = ExceptionUtils.tryCatchLog(
+                () -> new AnnotationConfigApplicationContext(SpringConfig.class),
+                (ex) -> logger.fatal("========== [ABORT] ==========\nThe Application context couldn't be established. " +
+                        "This is very likely due to a missing/invalid database connection. UCE will have to shutdown."));
+        if(context == null) return;
         logger.info("Loaded application context and services.");
+
+        // Execute the external database scripts
+        logger.info("Executing external database scripts from " + commonConfig.getDatabaseScriptsLocation());
+        ExceptionUtils.tryCatchLog(
+                () -> SystemStatus.ExecuteExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
+                (ex) -> logger.warn("Couldn't read the db scripts in the external database scripts folder; path wasn't found or other IO problems. ", ex));
+        logger.info("Finished with executing external database scripts.");
 
         // Cleanup temporary db fragments for the LayeredSearch
         ExceptionUtils.tryCatchLog(
