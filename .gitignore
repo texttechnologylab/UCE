@@ -5,6 +5,7 @@ target/
 
 ### Env files ###
 .env
+documentation/venv
 
 ### Logging ###
 uce.portal/logs/
