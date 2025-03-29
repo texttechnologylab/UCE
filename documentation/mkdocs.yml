@@ -1,5 +1,7 @@
 site_name: UCE Documentation
-site_url: https://sitename.example
+repo_url: https://github.com/texttechnologylab/UCE
+#site_url: https://sitename.example
+docs_dir: docs
 theme:
   name: material
   font:
