@@ -1,0 +1,23 @@
+:root  > * {
+    --md-primary-fg-color:        rgb(0,97,143);
+    --md-primary-fg-color--light: rgb(0,97,143);
+    --md-primary-fg-color--dark:  cyan;
+}
+
+.text{
+  color:rgba(125, 125, 125, 0.75);
+}
+
+.centered{
+  display: flex;
+  justify-content: center;
+  text-align: center;
+}
+
+.mb-0{
+  margin-bottom: 0px !important;
+}
+
+.mt-1{
+  margin-top: 6px !important;
+}
