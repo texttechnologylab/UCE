@@ -1,16 +1,26 @@
 site_name: UCE Documentation
 repo_url: https://github.com/texttechnologylab/UCE
-#site_url: https://sitename.example
+site_url: http://localhost:8000/
 docs_dir: docs
 theme:
   name: material
   font:
     text: Merriweather
+  #logo: /img/ttlab-logo.png
   icon:
-    logo: fontawesome/solid/book-open
+    logo: fontawesome/solid/book-atlas
   favicon: img/favicon.ico
   features:
     - navigation.footer
+    - navigation.instant
+    - navigation.instant.progress
+    - navigation.tabs
+    - navigation.sections
+    - navigation.expand
+    - navigation.path
+    - navigation.indexes
+    - toc.integrate
+    - navigation.top
   palette: 
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"
@@ -38,6 +48,7 @@ nav:
   - Home: index.md
   - About: about.md
   - Getting Started:
+    - Getting Started: getting-started/index.md
     - Web Portal: getting-started/webportal.md
     - Corpus Importer: getting-started/corpus-importer.md
     - Corpus Config: getting-started/corpus-config.md

@@ -21,3 +21,7 @@
 .mt-1{
   margin-top: 6px !important;
 }
+
+.md-grid {
+  #max-width: 1200px; 
+}
