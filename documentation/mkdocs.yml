@@ -34,6 +34,13 @@ theme:
 extra_css:
   - css/site.css
 
+nav:
+  - Home: index.md
+  - About: about.md
+  - Getting Started:
+    - Web Portal: getting-started/webportal.md
+    - Corpus Importer: getting-started/corpus-importer.md
+
 plugins:
   - search
   - glightbox:

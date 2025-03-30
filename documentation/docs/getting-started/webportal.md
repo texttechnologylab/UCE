@@ -1,8 +1,10 @@
 The heart of UCE is its webportal, which, alongside the [Postgresql](#TODO) database, are the primary microservices we will setup first. These services are obligatory, all other services are optional.
 
+This section is split into two parts: setting up the webportal as a user *(docker)* and setting it up as an active developer *(local)*.
+
 <hr/>
 
-## Setup
+## User Setup
 
 When building from source *(the option to pull finished images will be added soon)*, clone the [UCE repository](https://github.com/texttechnologylab/UCE):
 
@@ -34,6 +36,59 @@ docker-compose up --build uce-postgresql-db uce-web
 
 The web instance, by deafult, is reachable under: `http://localhost:8008`.
 
-
-!!! bug "Error?" 
+!!! bug "Problems?" 
     If the webportal container isn't working, it most likely can't connect to the database. In that case, you can check the connection strings within the `common.conf` file in the source code. For the docker setup, the content of this file should match the `common-release.conf`, which should again match the exposed ports in the `docker-compose.yaml`.
+
+<hr />
+
+## Developer Setup
+
+!!! note "Developer Code"
+    Please refer to the [Developer Code](#TODO) for details on how to correctly develop UCE.
+
+Clone the UCE repo and switch to the `develop` branch:
+
+```
+git clone https://github.com/texttechnologylab/UCE.git
+git fetch --all
+git checkout origin develop
+```
+
+**Before opening** the repo in an IDE of your choice (but for this documentation, we will always refer to [IntelliJ](https://www.jetbrains.com/de-de/idea/)), we have to setup the database first.
+
+### Database
+
+To set up the PostgreSQL database, you can either use a Docker image (refer to [User Setup](#user-setup) or simply pull the official [pgvector](https://hub.docker.com/r/pgvector/pgvector/tags?name=pg16&ordering=name) image) or install the database locally. When [installing it locally](https://www.postgresql.org/download/), you must install the `pgvector` extension, as we configure PostgreSQL to work with high-dimensional embedding vectors for UCE. This requires a manual but simple [installation](https://github.com/pgvector/pgvector).
+
+!!! info "Local Installation"
+    If installed locally, you also need to manually create a database called `uce`, with the owner set to `postgres` and the default password set to `1234`. If you adjust any of these parameters, you must also update the corresponding values in the source code's `common.conf`.
+
+    Respectively, when running the container from the official image (*and not UCE's docker-compose*), pass these parameters into the container:
+    ```ini
+    POSTGRES_DB: uce
+    POSTGRES_USER: postgres
+    POSTGRES_PASSWORD: 1234
+    ```
+
+### Web
+
+If the PostgreSQL DB is running, start by opening IntelliJ **from within the `uce.portal` folder** *(not the root of the repo)* and setting up the IDE for the web portal:
+
+- Add a new `Application` configuration  
+- UCE is being developed in **Java 21**  
+- Set `-cp web`  
+- Main class: `org.texttechnologylab.App`  
+- Program arguments can be left empty for now. For a list of potential CLI arguments, refer to the [Webportal](#TODO) documentation.
+- Maven should automatically download and index the dependencies. If, for some reason, it does not, you can force an update via `mvn clean install -U` *(in IntelliJ, open `Execute Maven Goal`, then enter the command)*.
+
+Now start the web portal. The default URL is `http://localhost:4567` and, if done correctly, the portal will appear with no corpora available. We will now set up the **Corpus-Importer** to import corpora.
+
+!!! bug "Java Version Error?"
+    Make sure that IntelliJ's Java compiler is also set to match the target bytecode version 21. Otherwise, startup will result in an error. You can check this via `Settings` → `Build, Execution, Deployment` → `Compiler` → `Java Compiler`.
+
+
+
+
+
+
+
