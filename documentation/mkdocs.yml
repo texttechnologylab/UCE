@@ -40,6 +40,7 @@ nav:
   - Getting Started:
     - Web Portal: getting-started/webportal.md
     - Corpus Importer: getting-started/corpus-importer.md
+    - Corpus Config: getting-started/corpus-config.md
 
 plugins:
   - search
