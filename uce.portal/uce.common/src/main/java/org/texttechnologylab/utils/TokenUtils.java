@@ -13,7 +13,6 @@ public class TokenUtils {
 
         // Sort tokens by start position (optional if already sorted)
         tokens.sort((t1, t2) -> Integer.compare(t1.getBegin(), t2.getEnd()));
-
         ArrayList<Token> currentSpan = new ArrayList<>();
         currentSpan.add(tokens.getFirst());
 

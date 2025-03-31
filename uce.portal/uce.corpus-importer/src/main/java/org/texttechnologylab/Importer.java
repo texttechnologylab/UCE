@@ -48,6 +48,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class Importer {
 
@@ -409,7 +410,6 @@ public class Importer {
                 ExceptionUtils.tryCatchLog(
                         () -> setCompleteNegations(document, jCas),
                         (ex) -> logImportWarn("This file should have contained negation annotations, but selecting them caused an error.", ex, filePath));
-
 
 
             ExceptionUtils.tryCatchLog(
@@ -847,6 +847,7 @@ public class Importer {
             cue.setNegation(cNegation);
             cue.setDocument(document);
             cue.setCoveredText(cueT.getCoveredText());
+
             // -> partially set scopes, xscopes, focuses and events
             ArrayList<Scope> scopes = new ArrayList<>();
             ArrayList<XScope> xScopes = new ArrayList<>();
@@ -864,7 +865,7 @@ public class Importer {
                 }
             }
             if (scopeTL != null) {
-                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(scopeTL.stream().toList());
+                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(scopeTL.stream().collect(Collectors.toCollection(ArrayList::new)));
                 for (ArrayList<Token> span : spans) {
                     // -> fully set scope
                     Scope scope = new Scope(span.getFirst().getBegin(), span.getLast().getEnd());
