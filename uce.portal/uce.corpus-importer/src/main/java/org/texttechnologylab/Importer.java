@@ -404,6 +404,13 @@ public class Importer {
                 ExceptionUtils.tryCatchLog(
                         () -> setWikiLinks(document, jCas),
                         (ex) -> logImportWarn("This file should have contained wiki links annotations, but selecting them caused an error.", ex, filePath));
+            // negations
+            if (corpusConfig.getAnnotations().isCompleteNegation())
+                ExceptionUtils.tryCatchLog(
+                        () -> setCompleteNegations(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained negation annotations, but selecting them caused an error.", ex, filePath));
+
+
 
             ExceptionUtils.tryCatchLog(
                     () -> setPages(document, jCas, corpusConfig),
