@@ -1,6 +1,6 @@
 site_name: UCE Documentation
 repo_url: https://github.com/texttechnologylab/UCE
-#site_url: http://localhost:8000/
+#site_url: https://texttechnologylab.github.io/UCE/
 docs_dir: docs
 theme:
   name: material
@@ -57,7 +57,20 @@ nav:
 
 plugins:
   - search
-  - glightbox
+  - glightbox:
+      touchNavigation: true
+      loop: false
+      effect: zoom
+      slide_effect: slide
+      width: auto
+      height: auto
+      zoomable: true
+      draggable: true
+      auto_caption: false
+      caption_position: bottom
+      background: white
+      shadow: true
+      manual: false
 
 markdown_extensions:
   - attr_list
