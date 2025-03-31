@@ -25,7 +25,7 @@ The Unified Corpus Explorer (UCE) is built on a modular microservice infrastruct
 
 <div class="dockpanel">
     <div class="left">
-        <img src="img/architecture.png"/>
+        <img src="./../img/architecture.png"/>
     </div>
     <div class="right">
     <h3>📥 Corpus Import and Enrichment</h3>
