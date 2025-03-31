@@ -127,6 +127,7 @@ public class CorpusAnnotationConfig {
         this.wikipediaLink = wikipediaLink;
     }
 
+    // negations
     public boolean isCompleteNegation() {
         return completeNegation;
     }
