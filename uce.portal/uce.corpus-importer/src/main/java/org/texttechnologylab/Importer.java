@@ -162,6 +162,7 @@ public class Importer {
             throw new DatabaseOperationException("Postgresql DB is not alive - cancelling import.");
 
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
+        //fixed paths
         try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString())) {
 
             corpusConfig = gson.fromJson(reader, CorpusConfig.class);
