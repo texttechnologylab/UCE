@@ -15,6 +15,14 @@ public class CorpusAnnotationConfig {
     private boolean time;
     private boolean wikipediaLink;
 
+    // negation annos
+    private boolean completeNegation;
+    private boolean cue;
+    private boolean event;
+    private boolean focus;
+    private boolean scope;
+    private boolean xscope;
+
     public boolean isUceMetadata() {
         return uceMetadata;
     }
@@ -117,5 +125,53 @@ public class CorpusAnnotationConfig {
 
     public void setWikipediaLink(boolean wikipediaLink) {
         this.wikipediaLink = wikipediaLink;
+    }
+
+    public boolean isCompleteNegation() {
+        return completeNegation;
+    }
+
+    public void setCompleteNegation(boolean completeNegation) {
+        this.completeNegation = completeNegation;
+    }
+
+    public boolean isCue() {
+        return cue;
+    }
+
+    public void setCue(boolean cue) {
+        this.cue = cue;
+    }
+
+    public boolean isEvent() {
+        return event;
+    }
+
+    public void setEvent(boolean event) {
+        this.event = event;
+    }
+
+    public boolean isFocus() {
+        return focus;
+    }
+
+    public void setFocus(boolean focus) {
+        this.focus = focus;
+    }
+
+    public boolean isScope() {
+        return scope;
+    }
+
+    public void setScope(boolean scope) {
+        this.scope = scope;
+    }
+
+    public boolean isXscope() {
+        return xscope;
+    }
+
+    public void setXscope(boolean xscope) {
+        this.xscope = xscope;
     }
 }
