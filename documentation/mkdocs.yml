@@ -6,9 +6,9 @@ theme:
   name: material
   font:
     text: Merriweather
-  #logo: /img/ttlab-logo.png
-  icon:
-    logo: fontawesome/solid/book-atlas
+  #logo: /img/goethe-logo.png
+  #icon:
+  #  logo: fontawesome/solid/book-atlas
   favicon: img/favicon.ico
   features:
     - navigation.footer
@@ -57,20 +57,7 @@ nav:
 
 plugins:
   - search
-  - glightbox:
-      touchNavigation: true
-      loop: false
-      effect: zoom
-      slide_effect: slide
-      width: auto
-      height: auto
-      zoomable: true
-      draggable: true
-      auto_caption: false
-      caption_position: bottom
-      background: white
-      shadow: true
-      manual: false
+  #- glightbox:
 
 markdown_extensions:
   - attr_list

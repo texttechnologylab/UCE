@@ -4,6 +4,13 @@
     --md-primary-fg-color--dark:  cyan;
 }
 
+/* If the container is smaller than 500px */
+@media only screen and (max-width: 650px) {
+  .dockpanel .left {
+    position: static !important;
+  }
+}
+
 .text{
   color:rgba(125, 125, 125, 0.75);
 }
@@ -13,6 +20,10 @@
   justify-content: center;
   text-align: center;
   align-items: center;
+}
+
+.p{
+  padding: 12px;
 }
 
 .mb-0{
@@ -28,4 +39,52 @@
 }
 
 .md-grid {
+}
+
+.video-wrapper {
+  position: relative;
+  display: block;
+  height: 0;
+  padding: 0;
+  overflow: hidden;
+  padding-bottom: 56.25%;
+}
+.video-wrapper > iframe {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  border: 0;
+}
+
+.dockpanel{
+  display: flex;
+  flex-wrap: wrap;
+  position: relative;
+  width: 100%;
+  justify-content: center;
+  align-items: start;
+}
+
+.dockpanel img{
+}
+
+.dockpanel .left{
+  padding-right: 8px;
+  width:50%;
+  position: sticky;
+  top:70px;
+  min-width: 300px;
+}
+
+.dockpanel .right{
+  padding-left: 8px;
+  width: 50%;
+  min-width: 300px;
+}
+
+.dockpanel h3{
+  margin-top: 0 !important;
 }
