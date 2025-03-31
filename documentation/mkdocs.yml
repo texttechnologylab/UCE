@@ -1,6 +1,6 @@
 site_name: UCE Documentation
 repo_url: https://github.com/texttechnologylab/UCE
-site_url: http://localhost:8000/
+#site_url: http://localhost:8000/
 docs_dir: docs
 theme:
   name: material
