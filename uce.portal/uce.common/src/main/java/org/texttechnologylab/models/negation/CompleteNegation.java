@@ -1,6 +1,7 @@
 package org.texttechnologylab.models.negation;
 
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.corpus.Document;
 
 import javax.persistence.*;
 import java.util.List;
@@ -27,6 +28,10 @@ public class CompleteNegation extends UIMAAnnotation {
     @OneToOne
     @JoinColumn(name = "cue_id")
     private Cue cue;
+
+    @ManyToOne
+    @JoinColumn(name = "document_id")
+    private Document document;
 
 
     public CompleteNegation(){
