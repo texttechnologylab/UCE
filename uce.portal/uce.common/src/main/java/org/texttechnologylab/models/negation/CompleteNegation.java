@@ -92,4 +92,12 @@ public class CompleteNegation extends UIMAAnnotation {
     public void setCue(Cue cue) {
         this.cue = cue;
     }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
+    }
 }

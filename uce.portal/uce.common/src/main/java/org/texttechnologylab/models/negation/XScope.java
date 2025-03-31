@@ -37,4 +37,12 @@ public class XScope extends UIMAAnnotation {
     public void setNegation(CompleteNegation negation) {
         this.negation = negation;
     }
+
+    public Document getDocument() {
+        return document;
+    }
+
+    public void setDocument(Document document) {
+        this.document = document;
+    }
 }
