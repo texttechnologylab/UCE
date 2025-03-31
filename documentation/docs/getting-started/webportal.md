@@ -1,6 +1,4 @@
-The heart of UCE is its webportal, which, alongside the [Postgresql](#TODO) database, are the primary microservices we will setup first. These services are obligatory, all other services are optional.
-
-This section is split into two parts: setting up the webportal as a user *(docker)* and setting it up as an active developer *(local)*.
+The heart of UCE is its webportal, which, alongside the [Postgresql](#TODO) database, are the primary microservices we will setup first, as these services are obligatory.
 
 <hr/>
 
@@ -34,7 +32,7 @@ Start the relevant docker containers:
 docker-compose up --build uce-postgresql-db uce-web
 ```
 
-The web instance, by deafult, is reachable under: `http://localhost:8008`.
+The web instance, by default, is reachable under: `http://localhost:8008`.
 
 !!! bug "Problems?" 
     If the webportal container isn't working, it most likely can't connect to the database. In that case, you can check the connection strings within the `common.conf` file in the source code. For the docker setup, the content of this file should match the `common-release.conf`, which should again match the exposed ports in the `docker-compose.yaml`.
@@ -54,7 +52,7 @@ git fetch --all
 git checkout origin develop
 ```
 
-**Before opening** the repo in an IDE of your choice (but for this documentation, we will always refer to [IntelliJ](https://www.jetbrains.com/de-de/idea/)), we have to setup the database first.
+**Before opening** the repo in an IDE of your choice *(but for this documentation, we will always refer to [IntelliJ](https://www.jetbrains.com/de-de/idea/))*, we have to setup the database first.
 
 ### Database
 
@@ -74,12 +72,13 @@ To set up the PostgreSQL database, you can either use a Docker image *(refer to 
 
 If the PostgreSQL DB is running, start by opening IntelliJ **from within the `uce.portal` folder** *(not the root of the repo)* and setting up the IDE for the web portal:
 
-- Add a new `Application` configuration  
-- UCE is being developed in **Java 21**  
-- Set `-cp web`  
-- Main class: `org.texttechnologylab.App`  
-- Program arguments can be left empty for now. For a list of potential CLI arguments, refer to the [documentation](#cli-arguments).
-- Maven should automatically download and index the dependencies. If, for some reason, it does not, you can force an update via `mvn clean install -U` *(in IntelliJ, open `Execute Maven Goal`, then enter the command)*.
+!!! note "Setup"
+    - Add a new `Application` configuration  
+    - UCE is being developed in **Java 21**  
+    - Set `-cp web`  
+    - Main class: `org.texttechnologylab.App`  
+    - Program arguments can be left empty for now. For a list of potential CLI arguments, refer to the [documentation](#cli-arguments).
+    - Maven should automatically download and index the dependencies. If, for some reason, it does not, you can force an update via `mvn clean install -U` *(in IntelliJ, open `Execute Maven Goal`, then enter the command)*.
 
 Now start the web portal. The default URL is `http://localhost:4567` and, if done correctly, the portal will appear with no corpora available. We will now set up the **Corpus-Importer** to import corpora.
 

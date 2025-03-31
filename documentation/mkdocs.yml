@@ -52,6 +52,8 @@ nav:
     - Web Portal: getting-started/webportal.md
     - Corpus Importer: getting-started/corpus-importer.md
     - Corpus Config: getting-started/corpus-config.md
+  - Projects:
+    - Projects: projects/index.md
 
 plugins:
   - search
