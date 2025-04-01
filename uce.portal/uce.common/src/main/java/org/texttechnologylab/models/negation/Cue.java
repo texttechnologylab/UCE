@@ -45,6 +45,6 @@ public class Cue extends UIMAAnnotation implements WikiModel {
 
     @Override
     public String getWikiId() {
-        return "NEG" + "-" + this.getId();
+        return "CU" + "-" + this.getId();
     }
 }
