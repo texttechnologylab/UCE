@@ -176,19 +176,19 @@ public class UIMAAnnotation extends ModelBase {
                     includeTitle ? cue.getCoveredText() : "");
         } else if (annotation instanceof Event event) {
             return String.format(
-                    "<span class='open-wiki-page annotation custom-context-menu event' title='%1$s'>",
+                    "<span class='annotation custom-context-menu event' title='%1$s'>",
                     includeTitle ? event.getCoveredText() : "");
         } else if (annotation instanceof Scope scope) {
             return String.format(
-                    "<span class='open-wiki-page annotation custom-context-menu scope' title='%1$s'>",
+                    "<span class='annotation custom-context-menu scope' title='%1$s'>",
                     includeTitle ? scope.getCoveredText() : "");
         } else if (annotation instanceof XScope xscope) {
             return String.format(
-                    "<span class='open-wiki-page annotation custom-context-menu xscope' title='%1$s'>",
+                    "<span class='annotation custom-context-menu xscope' title='%1$s'>",
                     includeTitle ? xscope.getCoveredText() : "");
         } else if (annotation instanceof Focus focus) {
             return String.format(
-                    "<span class='open-wiki-page annotation custom-context-menu focus' title='%1$s'>",
+                    "<span class='annotation custom-context-menu focus' title='%1$s'>",
                     includeTitle ? focus.getCoveredText() : "");
         }
 
