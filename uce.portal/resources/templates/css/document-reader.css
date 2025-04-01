@@ -225,6 +225,26 @@ body {
     text-decoration-line: underline;
 }
 
+.document-content .cue {
+    color: #ee00ff;
+}
+
+.document-content .scope {
+    color: rgba(228, 99, 18, 0.62);
+}
+
+.document-content .focus {
+    color: #89d517;
+}
+
+.document-content .xscope {
+    color: rgba(221, 65, 7, 0.62);
+}
+
+.document-content .event {
+    color: #2039a1;
+}
+
 .document-content .fa-search {
     color: var(--dark);
 }
