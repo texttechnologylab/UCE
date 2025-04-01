@@ -172,8 +172,8 @@ public class UIMAAnnotation extends ModelBase {
                     includeTitle ? lemma.getCoveredText() : "", lemma.getWikiId(), lemma.getCoveredText());
         } else if (annotation instanceof Cue cue) {
             return String.format(
-                    "<span class='open-wiki-page annotation custom-context-menu cue' title='%1$s'>",
-                    includeTitle ? cue.getCoveredText() : "");
+                    "<span class='open-wiki-page annotation custom-context-menu cue' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
+                    includeTitle ? cue.getCoveredText() : "", cue.getWikiId(), cue.getCoveredText());
         } else if (annotation instanceof Event event) {
             return String.format(
                     "<span class='annotation custom-context-menu event' title='%1$s'>",
