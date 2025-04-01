@@ -88,3 +88,7 @@
 .dockpanel h3{
   margin-top: 0 !important;
 }
+
+.gapped-grid{
+  grid-gap: 1rem !important;
+}

@@ -46,7 +46,9 @@ extra_css:
 
 nav:
   - Home: index.md
-  - About: about.md
+  - About:
+    - About: about/about.md
+    - Annotations: about/annotations.md
   - Getting Started:
     - Getting Started: getting-started/index.md
     - Web Portal: getting-started/webportal.md
@@ -74,6 +76,7 @@ plugins:
 
 markdown_extensions:
   - attr_list
+  - md_in_html
   - pymdownx.emoji:
       emoji_index: !!python/name:material.extensions.emoji.twemoji
       emoji_generator: !!python/name:material.extensions.emoji.to_svg
