@@ -848,7 +848,7 @@ public class Importer {
 
             // annotations for one negation
             // -> partially set complete negation
-            CompleteNegation cNegation = new CompleteNegation();
+            CompleteNegation cNegation = new CompleteNegation(cueT.getBegin(), cueT.getEnd());
             // -> fully set cue
             Cue cue = new Cue(cueT.getBegin(), cueT.getEnd());
             cue.setNegation(cNegation);
