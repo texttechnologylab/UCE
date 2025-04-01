@@ -411,10 +411,9 @@ public class Importer {
                         () -> setCompleteNegations(document, jCas),
                         (ex) -> logImportWarn("This file should have contained negation annotations, but selecting them caused an error.", ex, filePath));
 
-            if (corpusConfig.getAnnotations().isOCRPage())
-                ExceptionUtils.tryCatchLog(
-                        () -> setPages(document, jCas, corpusConfig),
-                        (ex) -> logImportWarn("This file should have contained OCRPage annotations, but selecting them caused an error.", ex, filePath));
+            ExceptionUtils.tryCatchLog(
+                    () -> setPages(document, jCas, corpusConfig),
+                    (ex) -> logImportWarn("This file should have contained OCRPage annotations, but selecting them caused an error.", ex, filePath));
 
             var duration = System.currentTimeMillis() - start;
             logImportInfo("Successfully extracted all annotations from " + filePath, LogStatus.FINISHED, filePath, duration);
