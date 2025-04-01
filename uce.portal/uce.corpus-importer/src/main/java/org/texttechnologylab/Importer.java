@@ -568,21 +568,29 @@ public class Importer {
 
     private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage) {
         // Set the pages for the different annotations
-        for (var anno : document.getBiofidTaxons().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
-            anno.setPage(page);
+        if (document.getBiofidTaxons() != null) {
+            for (var anno : document.getBiofidTaxons().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
         }
-        for (var anno : document.getTaxons().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
-            anno.setPage(page);
+        if (document.getTaxons() != null) {
+            for (var anno : document.getTaxons().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
         }
-        for (var anno : document.getNamedEntities().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
-            anno.setPage(page);
+        if (document.getNamedEntities() != null) {
+            for (var anno : document.getNamedEntities().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
         }
-        for (var anno : document.getTimes().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
-            anno.setPage(page);
+        if (document.getTimes() != null) {
+            for (var anno : document.getTimes().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
         }
     }
 
