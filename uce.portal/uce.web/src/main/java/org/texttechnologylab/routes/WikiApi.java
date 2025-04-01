@@ -101,6 +101,7 @@ public class WikiApi {
             var params = ExceptionUtils.tryCatchLog(() -> request.queryParams("params"), (ex) -> {
             });
 
+            // TODO: loggign
             if (wid == null || !wid.contains("-") || coveredText == null || coveredText.isEmpty()) {
                 model.put("information", languageResources.get("missingParameterError"));
                 return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
@@ -142,8 +143,7 @@ public class WikiApi {
                 // Then we have a Time annotation
                 model.put("vm", wikiService.buildTimeAnnotationWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/timeAnnotationPage.ftl";
-            }
-            else if (type.equals("D")) {
+            } else if (type.equals("D")) {
                 // Then we have a document
                 model.put("vm", wikiService.buildDocumentWikiPageViewModel(id));
                 renderView = "/wiki/pages/documentAnnotationPage.ftl";
@@ -151,6 +151,9 @@ public class WikiApi {
                 // Then we have a lemma
                 model.put("vm", wikiService.buildLemmaAnnotationWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/lemmaAnnotationPage.ftl";
+            } else if (type.startsWith("CU")) {
+                model.put("vm", wikiService.buildNegationAnnotationWikiPageViewModel(id, coveredText));
+                renderView = "/wiki/pages/negationAnnotationPage.ftl";
             } else {
                 // The type part of the wikiId was unknown. Throw an error.
                 logger.warn("Someone tried to query a wiki page of a type that does not exist in UCE. This shouldn't happen.");
