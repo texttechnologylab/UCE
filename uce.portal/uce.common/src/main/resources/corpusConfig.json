@@ -24,7 +24,9 @@
       "biofidOnthologyAnnotated": false
     },
     "time": false,
-    "wikipediaLink": false
+    "wikipediaLink": false,
+    "completeNegation": false
+
   },
   "other": {
     "//comment": "[Is this corpus also available on https://sammlungen.ub.uni-frankfurt.de/? Either true or false]",
