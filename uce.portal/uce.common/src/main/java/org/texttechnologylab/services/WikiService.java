@@ -4,6 +4,7 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.DocumentTopicDistribution;
 import org.texttechnologylab.models.corpus.PageTopicDistribution;
 import org.texttechnologylab.models.corpus.TopicDistribution;
+import org.texttechnologylab.models.negation.Cue;
 import org.texttechnologylab.models.viewModels.wiki.*;
 import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.utils.SystemStatus;
@@ -44,6 +45,30 @@ public class WikiService {
         var kwicState = new KeywordInContextState();
         kwicState.recalculate(List.of(viewModel.getDocument()), List.of(viewModel.getCoveredText()));
         viewModel.setKwicState(kwicState);
+
+        return viewModel;
+    }
+
+    /**
+     * Builds a view model to render a negation (cue basis) annotation wiki page
+     */
+    public NegationAnnotationWikiPageViewModel buildNegationAnnotationWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new NegationAnnotationWikiPageViewModel();
+        var negation = db.getCompleteNegationById(id);
+        var cue = negation.getCue();
+        viewModel.setWikiModel(cue);
+        viewModel.setDocument(db.getDocumentById(negation.getDocument().getId()));
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("Cue");
+
+        viewModel.setCue(cue);
+        viewModel.setEventList(negation.getEventList());
+        viewModel.setFocusList(negation.getFocusList());
+        viewModel.setScopeList(negation.getScopeList());
+        viewModel.setXscopeList(negation.getXscopeList());
+        viewModel.setNegType(negation.getNegType());
+
 
         return viewModel;
     }
