@@ -1,6 +1,7 @@
 package org.texttechnologylab.models;
 
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.Column;
@@ -30,6 +31,7 @@ public class UIMAAnnotation extends ModelBase {
         this.coveredText = coveredText.replaceAll("<", "")
                 .replaceAll("\n", " ")
                 .replaceAll("\r", " ");
+        this.coveredText = coveredText;
     }
 
     public UIMAAnnotation() {
@@ -168,7 +170,28 @@ public class UIMAAnnotation extends ModelBase {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu lemma' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
                     includeTitle ? lemma.getCoveredText() : "", lemma.getWikiId(), lemma.getCoveredText());
+        } else if (annotation instanceof Cue cue) {
+            return String.format(
+                    "<span class='open-wiki-page annotation custom-context-menu cue' title='%1$s'>",
+                    includeTitle ? cue.getCoveredText() : "");
+        } else if (annotation instanceof Event event) {
+            return String.format(
+                    "<span class='open-wiki-page annotation custom-context-menu event' title='%1$s'>",
+                    includeTitle ? event.getCoveredText() : "");
+        } else if (annotation instanceof Scope scope) {
+            return String.format(
+                    "<span class='open-wiki-page annotation custom-context-menu scope' title='%1$s'>",
+                    includeTitle ? scope.getCoveredText() : "");
+        } else if (annotation instanceof XScope xscope) {
+            return String.format(
+                    "<span class='open-wiki-page annotation custom-context-menu xscope' title='%1$s'>",
+                    includeTitle ? xscope.getCoveredText() : "");
+        } else if (annotation instanceof Focus focus) {
+            return String.format(
+                    "<span class='open-wiki-page annotation custom-context-menu focus' title='%1$s'>",
+                    includeTitle ? focus.getCoveredText() : "");
         }
+
         return "";
     }
 }
