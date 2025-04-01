@@ -23,7 +23,7 @@ public class UIMAAnnotation extends ModelBase {
 
     public String getCoveredText(String fullDocumentText) {
         var length = fullDocumentText.length();
-        return fullDocumentText.substring(getBegin(), Math.min(getEnd(), length));
+        return fullDocumentText.substring(Math.min(getBegin(), length), Math.min(getEnd(), length));
     }
 
     public void setCoveredText(String coveredText) {

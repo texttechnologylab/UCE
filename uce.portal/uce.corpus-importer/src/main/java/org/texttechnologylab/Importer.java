@@ -16,6 +16,7 @@ import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.AnnotationBase;
+import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
@@ -24,6 +25,7 @@ import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
@@ -31,12 +33,11 @@ import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.LogStatus;
 import org.texttechnologylab.models.imp.UCEImport;
+import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.services.*;
-import org.texttechnologylab.utils.EmbeddingUtils;
-import org.texttechnologylab.utils.ListUtils;
-import org.texttechnologylab.utils.RegexUtils;
-import org.texttechnologylab.utils.SystemStatus;
+import org.texttechnologylab.utils.*;
+import org.texttechnologylab.models.negation.CompleteNegation;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -47,6 +48,7 @@ import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.stream.Collectors;
 
 public class Importer {
 
@@ -162,6 +164,7 @@ public class Importer {
             throw new DatabaseOperationException("Postgresql DB is not alive - cancelling import.");
 
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
+        //fixed paths
         try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString())) {
 
             corpusConfig = gson.fromJson(reader, CorpusConfig.class);
@@ -402,6 +405,11 @@ public class Importer {
                 ExceptionUtils.tryCatchLog(
                         () -> setWikiLinks(document, jCas),
                         (ex) -> logImportWarn("This file should have contained wiki links annotations, but selecting them caused an error.", ex, filePath));
+            // negations
+            if (corpusConfig.getAnnotations().isCompleteNegation())
+                ExceptionUtils.tryCatchLog(
+                        () -> setCompleteNegations(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained negation annotations, but selecting them caused an error.", ex, filePath));
 
             ExceptionUtils.tryCatchLog(
                     () -> setPages(document, jCas, corpusConfig),
@@ -560,21 +568,29 @@ public class Importer {
 
     private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage) {
         // Set the pages for the different annotations
-        for (var anno : document.getBiofidTaxons().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
-            anno.setPage(page);
+        if (document.getBiofidTaxons() != null) {
+            for (var anno : document.getBiofidTaxons().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
         }
-        for (var anno : document.getTaxons().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
-            anno.setPage(page);
+        if (document.getTaxons() != null) {
+            for (var anno : document.getTaxons().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
         }
-        for (var anno : document.getNamedEntities().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
-            anno.setPage(page);
+        if (document.getNamedEntities() != null) {
+            for (var anno : document.getNamedEntities().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
         }
-        for (var anno : document.getTimes().stream().filter(t ->
-                (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
-            anno.setPage(page);
+        if (document.getTimes() != null) {
+            for (var anno : document.getTimes().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
         }
     }
 
@@ -807,6 +823,108 @@ public class Importer {
                 .map(s -> new org.texttechnologylab.models.corpus.Sentence(s.getBegin(), s.getEnd(), s.getCoveredText()))
                 .toList());
         logger.info("Setting sentences done.");
+    }
+
+    /**
+     * Selects and sets CompleteNegations and all their dependent annotations
+     */
+    public void setCompleteNegations(Document document, JCas jCas) {
+        // All Annotations
+        ArrayList<CompleteNegation> cNegationsTotal = new ArrayList<>();
+        ArrayList<Cue> cuesTotal = new ArrayList<>();
+        ArrayList<Scope> scopesTotal = new ArrayList<>();
+        ArrayList<XScope> xScopesTotal = new ArrayList<>();
+        ArrayList<Focus> focusesTotal = new ArrayList<>();
+        ArrayList<Event> eventsTotal = new ArrayList<>();
+
+        //iterate over each negation
+        for (org.texttechnologylab.annotation.negation.CompleteNegation negation: jCas.select(org.texttechnologylab.annotation.negation.CompleteNegation.class)) {
+            // All target tokens
+            Token cueT = negation.getCue();
+            FSArray<Token> eventTL = negation.getEvent();
+            FSArray<Token> scopeTL = negation.getScope();
+            FSArray<Token> xscopeTL = negation.getXscope();
+            FSArray<Token> focusTL = negation.getFocus();
+
+            // annotations for one negation
+            // -> partially set complete negation
+            CompleteNegation cNegation = new CompleteNegation();
+            // -> fully set cue
+            Cue cue = new Cue(cueT.getBegin(), cueT.getEnd());
+            cue.setNegation(cNegation);
+            cue.setDocument(document);
+            cue.setCoveredText(cue.getCoveredText(jCas.getDocumentText()));
+
+            // -> partially set scopes, xscopes, focuses and events
+            ArrayList<Scope> scopes = new ArrayList<>();
+            ArrayList<XScope> xScopes = new ArrayList<>();
+            ArrayList<Focus> focuses = new ArrayList<>();
+            ArrayList<Event> events = new ArrayList<>();
+            if (eventTL != null) {
+                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(eventTL.stream().collect(Collectors.toCollection(ArrayList::new)));
+                for (ArrayList<Token> span : spans) {
+                    // -> fully set event
+                    Event event = new Event(span.getFirst().getBegin(), span.getLast().getEnd());
+                    event.setDocument(document);
+                    event.setNegation(cNegation);
+                    event.setCoveredText(event.getCoveredText(jCas.getDocumentText()));
+                    events.add(event);
+                }
+            }
+            if (scopeTL != null) {
+                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(scopeTL.stream().collect(Collectors.toCollection(ArrayList::new)));
+                for (ArrayList<Token> span : spans) {
+                    // -> fully set scope
+                    Scope scope = new Scope(span.getFirst().getBegin(), span.getLast().getEnd());
+                    scope.setDocument(document);
+                    scope.setNegation(cNegation);
+                    scope.setCoveredText(scope.getCoveredText(jCas.getDocumentText()));
+                    scopes.add(scope);
+                }
+            }
+            if (xscopeTL != null) {
+                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(xscopeTL.stream().collect(Collectors.toCollection(ArrayList::new)));
+                for (ArrayList<Token> span : spans) {
+                    // -> fully set xscope
+                    XScope xscope = new XScope(span.getFirst().getBegin(), span.getLast().getEnd());
+                    xscope.setDocument(document);
+                    xscope.setNegation(cNegation);
+                    xscope.setCoveredText(xscope.getCoveredText(jCas.getDocumentText()));
+                    xScopes.add(xscope);
+                }
+            }
+            if (focusTL != null) {
+                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(focusTL.stream().collect(Collectors.toCollection(ArrayList::new)));
+                for (ArrayList<Token> span : spans) {
+                    // -> fully set focus
+                    Focus focus = new Focus(span.getFirst().getBegin(), span.getLast().getEnd());
+                    focus.setDocument(document);
+                    focus.setNegation(cNegation);
+                    focus.setCoveredText(focus.getCoveredText(jCas.getDocumentText()));
+                    focuses.add(focus);
+                }
+            }
+            // fully set Negation
+            cNegation.setDocument(document);
+            cNegation.setCue(cue);
+            cNegation.setEventList(events);
+            cNegation.setScopeList(scopes);
+            cNegation.setXscopeList(xScopes);
+            cNegation.setFocusList(focuses);
+
+            cNegationsTotal.add(cNegation);
+            cuesTotal.add(cue);
+            scopesTotal.addAll(scopes);
+            xScopesTotal.addAll(xScopes);
+            focusesTotal.addAll(focuses);
+            eventsTotal.addAll(events);
+        }
+        document.setCompleteNegations(cNegationsTotal);
+        document.setCues(cuesTotal);
+        document.setScopes(scopesTotal);
+        document.setXscopes(xScopesTotal);
+        document.setFocuses(focusesTotal);
+        document.setEvents(eventsTotal);
     }
 
     /**
