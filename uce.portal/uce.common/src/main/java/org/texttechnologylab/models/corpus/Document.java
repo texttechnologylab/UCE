@@ -9,6 +9,7 @@ import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
+import org.texttechnologylab.models.negation.*;
 
 import javax.persistence.*;
 import java.util.*;
@@ -87,6 +88,27 @@ public class Document extends ModelBase implements WikiModel {
     @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "document_id")
     private DocumentTopicDistribution documentTopicDistribution;
+
+    // Negations:
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL)
+    private List<CompleteNegation> completeNegations;
+
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL)
+    private List<Cue> cues;
+
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL)
+    private List<Event> events;
+
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL)
+    private List<Focus> focuses;
+
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL)
+    private List<Scope> scopes;
+
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL)
+    private List<XScope> xscopes;
+
+
 
     public Document() {
         metadataTitleInfo = new MetadataTitleInfo();
@@ -310,5 +332,53 @@ public class Document extends ModelBase implements WikiModel {
 
     public String getLanguage() {
         return language == null ? "-" : language;
+    }
+
+    public List<CompleteNegation> getCompleteNegations() {
+        return completeNegations;
+    }
+
+    public void setCompleteNegations(List<CompleteNegation> completeNegations) {
+        this.completeNegations = completeNegations;
+    }
+
+    public List<Cue> getCues() {
+        return cues;
+    }
+
+    public void setCues(List<Cue> cues) {
+        this.cues = cues;
+    }
+
+    public List<Event> getEvents() {
+        return events;
+    }
+
+    public void setEvents(List<Event> events) {
+        this.events = events;
+    }
+
+    public List<Focus> getFocuses() {
+        return focuses;
+    }
+
+    public void setFocuses(List<Focus> focuses) {
+        this.focuses = focuses;
+    }
+
+    public List<Scope> getScopes() {
+        return scopes;
+    }
+
+    public void setScopes(List<Scope> scopes) {
+        this.scopes = scopes;
+    }
+
+    public List<XScope> getXscopes() {
+        return xscopes;
+    }
+
+    public void setXscopes(List<XScope> xscopes) {
+        this.xscopes = xscopes;
     }
 }

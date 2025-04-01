@@ -11,6 +11,7 @@ import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
+import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.test.test;
 
 import java.util.HashMap;
@@ -52,6 +53,13 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(UCELog.class);
         metadataSources.addAnnotatedClass(UCEImport.class);
         metadataSources.addAnnotatedClass(ImportLog.class);
+        //negations
+        metadataSources.addAnnotatedClass(CompleteNegation.class);
+        metadataSources.addAnnotatedClass(Cue.class);
+        metadataSources.addAnnotatedClass(Event.class);
+        metadataSources.addAnnotatedClass(Focus.class);
+        metadataSources.addAnnotatedClass(Scope.class);
+        metadataSources.addAnnotatedClass(XScope.class);
 
         var metadata = metadataSources.buildMetadata();
 
