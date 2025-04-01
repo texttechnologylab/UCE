@@ -411,10 +411,10 @@ public class Importer {
                         () -> setCompleteNegations(document, jCas),
                         (ex) -> logImportWarn("This file should have contained negation annotations, but selecting them caused an error.", ex, filePath));
 
-
-            ExceptionUtils.tryCatchLog(
-                    () -> setPages(document, jCas, corpusConfig),
-                    (ex) -> logImportWarn("This file should have contained OCRPage annotations, but selecting them caused an error.", ex, filePath));
+            if (corpusConfig.getAnnotations().isOCRPage())
+                ExceptionUtils.tryCatchLog(
+                        () -> setPages(document, jCas, corpusConfig),
+                        (ex) -> logImportWarn("This file should have contained OCRPage annotations, but selecting them caused an error.", ex, filePath));
 
             var duration = System.currentTimeMillis() - start;
             logImportInfo("Successfully extracted all annotations from " + filePath, LogStatus.FINISHED, filePath, duration);
@@ -846,7 +846,7 @@ public class Importer {
             Cue cue = new Cue(cueT.getBegin(), cueT.getEnd());
             cue.setNegation(cNegation);
             cue.setDocument(document);
-            cue.setCoveredText(cueT.getCoveredText());
+            cue.setCoveredText(cue.getCoveredText(jCas.getDocumentText()));
 
             // -> partially set scopes, xscopes, focuses and events
             ArrayList<Scope> scopes = new ArrayList<>();
@@ -854,7 +854,7 @@ public class Importer {
             ArrayList<Focus> focuses = new ArrayList<>();
             ArrayList<Event> events = new ArrayList<>();
             if (eventTL != null) {
-                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(eventTL.stream().toList());
+                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(eventTL.stream().collect(Collectors.toCollection(ArrayList::new)));
                 for (ArrayList<Token> span : spans) {
                     // -> fully set event
                     Event event = new Event(span.getFirst().getBegin(), span.getLast().getEnd());
@@ -876,7 +876,7 @@ public class Importer {
                 }
             }
             if (xscopeTL != null) {
-                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(xscopeTL.stream().toList());
+                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(xscopeTL.stream().collect(Collectors.toCollection(ArrayList::new)));
                 for (ArrayList<Token> span : spans) {
                     // -> fully set xscope
                     XScope xscope = new XScope(span.getFirst().getBegin(), span.getLast().getEnd());
@@ -887,7 +887,7 @@ public class Importer {
                 }
             }
             if (focusTL != null) {
-                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(focusTL.stream().toList());
+                ArrayList<ArrayList<Token>> spans = TokenUtils.findMaximalSpans(focusTL.stream().collect(Collectors.toCollection(ArrayList::new)));
                 for (ArrayList<Token> span : spans) {
                     // -> fully set focus
                     Focus focus = new Focus(span.getFirst().getBegin(), span.getLast().getEnd());

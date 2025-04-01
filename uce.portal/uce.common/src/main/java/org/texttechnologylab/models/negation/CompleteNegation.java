@@ -29,8 +29,8 @@ public class CompleteNegation extends UIMAAnnotation {
     @JoinColumn(name = "cue_id")
     private Cue cue;
 
-    @ManyToOne
-    @JoinColumn(name = "document_id")
+    @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
+    @JoinColumn(name = "document_id", nullable = false)
     private Document document;
 
 
