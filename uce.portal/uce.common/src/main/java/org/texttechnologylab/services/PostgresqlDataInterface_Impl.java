@@ -15,6 +15,7 @@ import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
+import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
@@ -600,6 +601,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public Lemma getLemmaById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(Lemma.class, id));
+    }
+
+    public CompleteNegation getCompleteNegationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(CompleteNegation.class, id));
     }
 
     public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
