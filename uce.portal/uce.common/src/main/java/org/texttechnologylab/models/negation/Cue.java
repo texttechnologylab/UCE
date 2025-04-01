@@ -1,13 +1,14 @@
 package org.texttechnologylab.models.negation;
 
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
 
 import javax.persistence.*;
 
 @Entity
 @Table(name="cue")
-public class Cue extends UIMAAnnotation {
+public class Cue extends UIMAAnnotation implements WikiModel {
     @OneToOne(mappedBy = "cue") // Inverse side
     private CompleteNegation negation;
 
@@ -40,5 +41,10 @@ public class Cue extends UIMAAnnotation {
 
     public void setDocument(Document document) {
         this.document = document;
+    }
+
+    @Override
+    public String getWikiId() {
+        return "NEG" + "-" + this.getId();
     }
 }
