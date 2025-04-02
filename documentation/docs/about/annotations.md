@@ -24,6 +24,9 @@ Below you will find an ever-expanding list of importable and compatible annotati
 ??? success "Time"
     Extracts temporal expressions, including time and date formats, from a document, analogous to Named-Entity Recognition tasks.
 
+??? success "UceDynamicMetadata"
+    Offers a dynamic and easy way to annotate key-value filters, which are then imported and used within UCE for the creation of custom filters. <br/><br/>[Source](https://github.com/texttechnologylab/UIMATypeSystem/blob/uima-3/src/main/resources/desc/type/UceDynamicMetadata.xml)
+
 ??? success "Taxon"
     The recognition of unambiguous names of biological entities is referred to as a taxon.
 
