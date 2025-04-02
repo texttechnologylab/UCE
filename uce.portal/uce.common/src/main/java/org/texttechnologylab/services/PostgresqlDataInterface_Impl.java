@@ -15,6 +15,7 @@ import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
+import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
@@ -602,6 +603,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> session.get(Lemma.class, id));
     }
 
+    public CompleteNegation getCompleteNegationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var neg = session.get(CompleteNegation.class, id);
+            Hibernate.initialize(neg);
+            return neg;
+        });
+    }
+
     public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
@@ -829,6 +838,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getWikipediaLinks());
         Hibernate.initialize(doc.getLemmas());
         Hibernate.initialize(doc.getUceMetadata());
+        // init negations
+        Hibernate.initialize(doc.getCompleteNegations());
+        Hibernate.initialize(doc.getCues());
+        Hibernate.initialize(doc.getScopes());
+        Hibernate.initialize(doc.getFocuses());
+        Hibernate.initialize(doc.getXscopes());
+        Hibernate.initialize(doc.getEvents());
+
         for (var link : doc.getWikipediaLinks()) {
             Hibernate.initialize(link.getWikiDataHyponyms());
         }

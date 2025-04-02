@@ -1,6 +1,7 @@
 package org.texttechnologylab.models;
 
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.Column;
@@ -30,6 +31,7 @@ public class UIMAAnnotation extends ModelBase {
         this.coveredText = coveredText.replaceAll("<", "")
                 .replaceAll("\n", " ")
                 .replaceAll("\r", " ");
+        this.coveredText = coveredText;
     }
 
     public UIMAAnnotation() {
@@ -86,6 +88,10 @@ public class UIMAAnnotation extends ModelBase {
             // So sometimes, we have broken annotations have a supposed length of "1" but really,
             // they don't as they are empty. This screws up our begin and ends though! Hence, when we
             // meet an empty annotation, track it and substract a single value of the begins and ends!
+            if(annotation.getCoveredText() == null){
+                //errorOffset += 1;
+                continue;
+            }
             if(annotation.getCoveredText().isEmpty()){
                 errorOffset += 1;
                 continue;
@@ -168,7 +174,28 @@ public class UIMAAnnotation extends ModelBase {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu lemma' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
                     includeTitle ? lemma.getCoveredText() : "", lemma.getWikiId(), lemma.getCoveredText());
+        } else if (annotation instanceof Cue cue) {
+            return String.format(
+                    "<span class='open-wiki-page annotation custom-context-menu cue' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
+                    includeTitle ? cue.getCoveredText() : "", cue.getWikiId(), cue.getCoveredText());
+        } else if (annotation instanceof Event event) {
+            return String.format(
+                    "<span class='annotation custom-context-menu event' title='%1$s'>",
+                    includeTitle ? event.getCoveredText() : "");
+        } else if (annotation instanceof Scope scope) {
+            return String.format(
+                    "<span class='annotation custom-context-menu scope' title='%1$s'>",
+                    includeTitle ? scope.getCoveredText() : "");
+        } else if (annotation instanceof XScope xscope) {
+            return String.format(
+                    "<span class='annotation custom-context-menu xscope' title='%1$s'>",
+                    includeTitle ? xscope.getCoveredText() : "");
+        } else if (annotation instanceof Focus focus) {
+            return String.format(
+                    "<span class='annotation custom-context-menu focus' title='%1$s'>",
+                    includeTitle ? focus.getCoveredText() : "");
         }
+
         return "";
     }
 }

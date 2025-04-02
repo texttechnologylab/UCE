@@ -49,6 +49,30 @@ public class WikiService {
     }
 
     /**
+     * Builds a view model to render a negation (cue basis) annotation wiki page
+     */
+    public NegationAnnotationWikiPageViewModel buildNegationAnnotationWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new NegationAnnotationWikiPageViewModel();
+        var negation = db.getCompleteNegationById(id);
+        var cue = negation.getCue();
+        viewModel.setWikiModel(cue);
+        viewModel.setDocument(db.getDocumentById(negation.getDocument().getId()));
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("Cue");
+
+        viewModel.setCue(cue);
+        viewModel.setEventList(negation.getEventList());
+        viewModel.setFocusList(negation.getFocusList());
+        viewModel.setScopeList(negation.getScopeList());
+        viewModel.setXscopeList(negation.getXscopeList());
+        viewModel.setNegType(negation.getNegType());
+
+
+        return viewModel;
+    }
+
+    /**
      * Gets an DocumentAnnitationWikiPageViewmodel to render a Wikipage for this document.
      */
     public DocumentAnnotationWikiPageViewModel buildDocumentWikiPageViewModel(long id) throws DatabaseOperationException {
