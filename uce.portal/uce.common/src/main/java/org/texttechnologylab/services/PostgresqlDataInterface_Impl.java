@@ -604,7 +604,11 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public CompleteNegation getCompleteNegationById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(CompleteNegation.class, id));
+        return executeOperationSafely((session) -> {
+            var neg = session.get(CompleteNegation.class, id);
+            Hibernate.initialize(neg);
+            return neg;
+        });
     }
 
     public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
