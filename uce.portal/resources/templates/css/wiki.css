@@ -454,3 +454,32 @@
 .wiki-metadata-expanded-view .content-reader .content h6 {
     color: var(--dark);
 }
+
+/* Table styling */
+.wiki-page .nodes-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.wiki-page .nodes-table th,
+.wiki-page .nodes-table td {
+    padding: 8px;
+    text-align: left;
+}
+
+.wiki-page .nodes-table th {
+    background-color: #f5f5f5;
+    border-bottom: 2px solid lightgray;
+}
+
+/* Separator row styling */
+.wiki-page .list-separator {
+    background-color: #e0e0e0; /* Light gray background for separation */
+    font-weight: bold; /* Make the list name stand out */
+    border-top: 2px solid gray; /* Stronger top border */
+    border-bottom: 2px solid gray; /* Stronger bottom border */
+}
+
+.wiki-page .list-separator td {
+    padding: 10px; /* Extra padding for emphasis */
+}
