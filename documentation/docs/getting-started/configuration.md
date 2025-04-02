@@ -342,11 +342,11 @@ In the source code's `uce.common` module, you'll find a `common.conf` file. In i
   <tbody>
     <tr>
       <td>rag.webserver.base.url</td>
-      <td class="w-100">The base url to the RAG-service's webserver *(if setup)*, e.g.: http://localhost:5678/.</td>
+      <td class="w-100">The base url to the RAG-service's webserver (if setup), e.g.: http://localhost:5678/.</td>
     </tr>
     <tr>
       <td>sparql.host</td>
-      <td class="w-100">The base url to the Sparql-service's webserver *(if setup)*, e.g.: http://localhost:3030/</td>
+      <td class="w-100">The base url to the Sparql-service's webserver (if setup), e.g.: http://localhost:3030/</td>
     </tr>
     <tr>
       <td>sparql.endpoint</td>
