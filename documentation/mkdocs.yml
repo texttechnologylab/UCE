@@ -54,6 +54,7 @@ nav:
     - Web Portal: getting-started/webportal.md
     - Corpus Importer: getting-started/corpus-importer.md
     - Corpus Config: getting-started/corpus-config.md
+    - UIMA & DUUI: getting-started/uima-duui.md
   - Projects:
     - Projects: projects/index.md
 
