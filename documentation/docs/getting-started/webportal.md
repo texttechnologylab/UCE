@@ -74,7 +74,8 @@ If the PostgreSQL DB is running, start by opening IntelliJ **from within the `uc
 
 !!! note "Setup"
     - Add a new `Application` configuration  
-    - UCE is being developed in **Java 21**  
+    - UCE is being developed in **Java 21**
+        - Menu -> project Settings -> SDK dropdown öffnen  
     - Set `-cp web`  
     - Main class: `org.texttechnologylab.App`  
     - Program arguments can be left empty for now. For a list of potential CLI arguments, refer to the [documentation](#cli-arguments).
