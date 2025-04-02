@@ -22,8 +22,20 @@
   align-items: center;
 }
 
+.w-100{
+  width: 100% !important;
+}
+
 .p{
   padding: 12px;
+}
+
+.ml-2{
+  margin-left:12px !important;
+}
+
+.ml-1{
+  margin-left:6px !important;
 }
 
 .mb-0{
@@ -59,6 +71,11 @@
   border: 0;
 }
 
+.flexed{
+  display: flex;
+  align-items:baseline;
+}
+
 .dockpanel{
   display: flex;
   flex-wrap: wrap;
@@ -91,4 +108,13 @@
 
 .gapped-grid{
   grid-gap: 1rem !important;
+}
+
+/* I want full width tables always */
+.md-typeset__table{
+  display: block !important;
+}
+
+.md-typeset__table tbody, table, thead, tbody {
+  width: 100%;
 }

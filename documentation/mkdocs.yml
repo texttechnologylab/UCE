@@ -11,6 +11,7 @@ theme:
   #  logo: fontawesome/solid/book-atlas
   favicon: img/favicon.ico
   features:
+    - content.code.copy
     - navigation.footer
     - navigation.instant
     - navigation.instant.progress
@@ -53,7 +54,7 @@ nav:
     - Getting Started: getting-started/index.md
     - Web Portal: getting-started/webportal.md
     - Corpus Importer: getting-started/corpus-importer.md
-    - Corpus Config: getting-started/corpus-config.md
+    - Configurations: getting-started/configuration.md
     - UIMA & DUUI: getting-started/uima-duui.md
   - Projects:
     - Projects: projects/index.md
