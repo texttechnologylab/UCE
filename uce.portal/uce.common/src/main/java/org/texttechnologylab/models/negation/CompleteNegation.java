@@ -1,5 +1,7 @@
 package org.texttechnologylab.models.negation;
 
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Document;
 
@@ -13,16 +15,20 @@ public class CompleteNegation extends UIMAAnnotation {
     @Column(name = "negType", columnDefinition = "TEXT")
     private String negType;
 
-    @OneToMany(mappedBy = "negation", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "negation", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
     private List<Focus> focusList;
 
-    @OneToMany(mappedBy = "negation", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "negation", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
     private List<Event> eventList;
 
-    @OneToMany(mappedBy = "negation", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "negation", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
     private List<Scope> scopeList;
 
-    @OneToMany(mappedBy = "negation", cascade = CascadeType.ALL)
+    @OneToMany(mappedBy = "negation", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
     private List<XScope> xscopeList;
 
     @OneToOne
