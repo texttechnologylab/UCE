@@ -88,6 +88,10 @@ public class UIMAAnnotation extends ModelBase {
             // So sometimes, we have broken annotations have a supposed length of "1" but really,
             // they don't as they are empty. This screws up our begin and ends though! Hence, when we
             // meet an empty annotation, track it and substract a single value of the begins and ends!
+            if(annotation.getCoveredText() == null){
+                //errorOffset += 1;
+                continue;
+            }
             if(annotation.getCoveredText().isEmpty()){
                 errorOffset += 1;
                 continue;
