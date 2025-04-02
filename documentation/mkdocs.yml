@@ -50,10 +50,12 @@ nav:
   - About:
     - About: about/about.md
     - Annotations: about/annotations.md
+    - Ontologies: about/ontologies.md
   - Getting Started:
     - Getting Started: getting-started/index.md
     - Web Portal: getting-started/webportal.md
     - Corpus Importer: getting-started/corpus-importer.md
+    - Sparql Service: getting-started/fuseki-sparql.md
     - Configurations: getting-started/configuration.md
     - UIMA & DUUI: getting-started/uima-duui.md
   - Projects:

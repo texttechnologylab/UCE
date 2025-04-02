@@ -163,7 +163,7 @@ UCE is customizable in a variety of ways, including color scheme, corpora identi
       </tbody>
     </table>
 
-Within the source code, you also find a `defaultUceConfig.json` that you can mirror. This is also the configuration UCE uses if no explicit config is provided. Inject the `defaultUceConfig.json` into the UCE web portal by means of command line arguments, as outlined in [earlier sections](#TODO).
+Within the source code, you also find a `defaultUceConfig.json` that you can mirror. This is also the configuration UCE uses if no explicit config is provided. Inject the `uceConfig.json` into the UCE web portal by means of command line arguments, as outlined in [earlier sections](#TODO).
 
 <hr/>
 
@@ -342,19 +342,19 @@ In the source code's `uce.common` module, you'll find a `common.conf` file. In i
   <tbody>
     <tr>
       <td>rag.webserver.base.url</td>
-      <td class="w-100">The base url to the RAG-service's webserver (if setup), e.g.: http://localhost:5678/.</td>
+      <td class="w-100">The base url to the RAG-service's webserver (if setup), e.g.: <code>http://localhost:5678/.</code></td>
     </tr>
     <tr>
       <td>sparql.host</td>
-      <td class="w-100">The base url to the Sparql-service's webserver (if setup), e.g.: http://localhost:3030/</td>
+      <td class="w-100">The base url to the Sparql-service's webserver (if setup), e.g.: <code>http://localhost:3030/</code></td>
     </tr>
     <tr>
       <td>sparql.endpoint</td>
-      <td class="w-100">The endpoint of the Sparql-service's webserver, e.g.: my-ontology/sparql </td>
+      <td class="w-100">The endpoint of the Sparql-service's webserver, e.g.: <code>my-ontology/sparql</code> </td>
     </tr>
     <tr>
       <td>postgresql.hibernate.connection.url</td>
-      <td class="w-100">The connection string to the Postgresql-DB-service, e.g.: jdbc:postgresql://localhost:5433/uce </td>
+      <td class="w-100">The connection string to the Postgresql-DB-service, e.g.: <code>jdbc:postgresql://localhost:5433/uce</code></td>
     </tr>
   </tbody>
 </table>
