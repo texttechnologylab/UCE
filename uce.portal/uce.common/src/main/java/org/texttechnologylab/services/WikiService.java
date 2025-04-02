@@ -4,7 +4,6 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.DocumentTopicDistribution;
 import org.texttechnologylab.models.corpus.PageTopicDistribution;
 import org.texttechnologylab.models.corpus.TopicDistribution;
-import org.texttechnologylab.models.negation.Cue;
 import org.texttechnologylab.models.viewModels.wiki.*;
 import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.utils.SystemStatus;
