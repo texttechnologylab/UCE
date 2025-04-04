@@ -2,7 +2,7 @@
 
 UCE is compatible with a variety of annotations, provided they exist within the UIMA format. Within UCE, these annotations are used situationally for features or search enhancements, depending on the annotation.
 
-Below you will find an ever-expanding list of importable and compatible annotations within UCE, ranging from standard Named-Entity annotations to more situational taxon or time annotations. All of these annotations can be generated and annotated within the corpus through the [Docker Unified UIMA Interface](#TODO).
+Below you will find an ever-expanding list of importable and compatible annotations within UCE, ranging from standard Named-Entity annotations to more situational taxon or time annotations. All of these annotations can be generated and annotated within the corpus through the [Docker Unified UIMA Interface](./../getting-started/uima-duui.md).
 
 <hr/>
 

@@ -15,8 +15,16 @@ graph LR
 
 ## UIMA
 
+To be added.
+
 ## DUUI
+
+To be added.
 
 ## Tut 1
 
+To be added.
+
 ## Tut 2
+
+To be added.

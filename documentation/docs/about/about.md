@@ -33,7 +33,7 @@ graph LR
     D ---> C
 ```
 
-If not, the easiest and most efficient way to transform data into UIMA format while also annotating it is by using the [Docker Unified UIMA Interface (DUUI)](https://github.com/texttechnologylab/DockerUnifiedUIMAInterface). Refer to our documentation to learn how to utilize DUUI to annotate and transform your corpus before importing it into UCE. Also, check our [compatibility list of annotations](#TODO) to see which annotations UCE supports.
+If not, the easiest and most efficient way to transform data into UIMA format while also annotating it is by using the [Docker Unified UIMA Interface (DUUI)](./../getting-started/uima-duui.md). Refer to our documentation to learn how to utilize DUUI to annotate and transform your corpus before importing it into UCE. Also, check our [compatibility list of annotations](./annotations.md) to see which annotations UCE supports.
 
 <hr/>
 
@@ -157,4 +157,4 @@ Based on the outlined architecture, UCE provides the following features:
 
 Depending on the user configuration and the annotations of the corpora, these features are flexibly enabled or disabled. The most minimal configuration for UCE is to import a corpus without any annotations and disable all processing and features, leaving only document reading and basic search functionality.
 
-*Have a look yourself by referring to our [running instances](#TODO).*
+*Have a look yourself by referring to our [running instances](./../index.md).*

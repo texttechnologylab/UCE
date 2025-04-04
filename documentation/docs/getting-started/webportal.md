@@ -1,4 +1,4 @@
-The heart of UCE is its webportal, which, alongside the [Postgresql](#TODO) database, are the primary microservices we will setup first, as these services are obligatory.
+The heart of UCE is its webportal, which, alongside the [Postgresql](https://www.postgresql.org/) database, are the primary microservices we will setup first, as these services are obligatory.
 
 <hr/>
 
@@ -20,10 +20,10 @@ TDB2_ENDPOINT=tdb2-database-name
 IMPORTER_THREADS=1
 ```
 
-- <sup>`UCE_CONFIG_PATH`: The local path to the [UceConfig](#TODO) that injects personal customization into the UCE instance. If none is given, UCE will fallback to a default configuration.</sup>
-- <sup>`JVM_ARGS`: Only relevant if the [Sparql microservice](#TODO) is added. [Specifies the maximum size](https://docs.oracle.com/javase/7/docs/technotes/tools/solaris/java.html), in bytes, of the memory allocation pool for the service.</sup>
-- <sup>`TDB2_DATA/ENDPOINT`: Only relevant if the [Sparql microservice](#TODO) is added. The local path to a [TDB2 database](https://jena.apache.org/documentation/tdb2/) and the name of the endpoint, this database will be exposed to (e.g.: */uce-ontology*).</sup>
-- <sup>`IMPORTER_THREADS`: The amount of parallel threads used by the [Importer](#TODO) to import the corpora *(standard values are 4, 8 or 16, depending on your setup)*.</sup>
+- <sup>`UCE_CONFIG_PATH`: The local path to the [UceConfig](./configuration.md) that injects personal customization into the UCE instance. If none is given, UCE will fallback to a default configuration.</sup>
+- <sup>`JVM_ARGS`: Only relevant if the [Sparql microservice](./fuseki-sparql.md) is added. [Specifies the maximum size](https://docs.oracle.com/javase/7/docs/technotes/tools/solaris/java.html), in bytes, of the memory allocation pool for the service.</sup>
+- <sup>`TDB2_DATA/ENDPOINT`: Only relevant if the [Sparql microservice](./fuseki-sparql.md) is added. The local path to a [TDB2 database](https://jena.apache.org/documentation/tdb2/) and the name of the endpoint, this database will be exposed to (e.g.: */uce-ontology*).</sup>
+- <sup>`IMPORTER_THREADS`: The amount of parallel threads used by the [Importer](./corpus-importer.md) to import the corpora *(standard values are 4, 8 or 16, depending on your setup)*.</sup>
 
 
 Start the relevant docker containers:
@@ -42,7 +42,7 @@ The web instance, by default, is reachable under: `http://localhost:8008`.
 ## Developer Setup
 
 !!! note "Developer Code"
-    Please refer to the [Developer Code](#TODO) for details on how to correctly develop UCE.
+    Please refer to the [Developer Code](./../development/developer-code.md) for details on how to correctly develop UCE.
 
 Clone the UCE repo and switch to the `develop` branch:
 
@@ -95,7 +95,7 @@ Now start the web portal. The default URL is `http://localhost:4567` and, if don
 
 | <div style="width:100px">Argument</div> | Description |
 |---------|-------------|
-| `-cf` <br/> `--configFile` | The local path to the [uceConfig.json](#TODO). If started through a Docker container, remember to first mount the local path and then map the `-cf` path to the mounted Docker path. |
+| `-cf` <br/> `--configFile` | The local path to the [uceConfig.json](./configuration.md). If started through a Docker container, remember to first mount the local path and then map the `-cf` path to the mounted Docker path. |
 | `-cj` <br/> `--configJson` | Instead of passing the UCE configuration through a JSON **file**, you can also directly pass in the JSON. |
 
 

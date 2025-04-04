@@ -1,13 +1,13 @@
 The (Fuseki) Sparql service allows the integration of ontological hierarchies in RDF or OWL format into UCE's searches. It does so through a SPARQL graph database which stores RDF triplets.
 
 !!! info "Out-of-the-box Ontologies"
-    Please refer to our list of [plug-and-play Ontologies](#TODO) to see what ontologies have already been made accessible in UCE without you having to  develop anything. We are continuously expanding plug-and-play compatibility with other ontologies, and if you want to incorporate your own compatibility into UCE, feel free to make a [pull request](#TODO) or [get in touch](#TODO)!
+    Please refer to our list of [plug-and-play Ontologies](./../about/ontologies.md) to see what ontologies have already been made accessible in UCE without you having to  develop anything. We are continuously expanding plug-and-play compatibility with other ontologies, and if you want to incorporate your own compatibility into UCE, feel free to make a [pull request](./../development/developer-code.md) or [get in touch](./../about-us/about-us.md)!
 
 <hr/>
 
 ## User Setup
 
-For this, the following parameters in the [`.env` file](#TODO) need to be set correctly:
+For this, the following parameters in the [`.env` file](./webportal.md) need to be set correctly:
 
 ```ini
 TDB2_DATA=./../tdb2-database

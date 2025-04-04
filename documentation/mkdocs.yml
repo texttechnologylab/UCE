@@ -4,6 +4,7 @@ repo_url: https://github.com/texttechnologylab/UCE
 docs_dir: docs
 theme:
   name: material
+  custom_dir: overrides
   font:
     text: Merriweather
   #logo: /img/goethe-logo.png
@@ -55,11 +56,16 @@ nav:
     - Getting Started: getting-started/index.md
     - Web Portal: getting-started/webportal.md
     - Corpus Importer: getting-started/corpus-importer.md
+    - RAG Service: getting-started/rag-service.md
     - Sparql Service: getting-started/fuseki-sparql.md
     - Configurations: getting-started/configuration.md
     - UIMA & DUUI: getting-started/uima-duui.md
+  - Development:
+    - Developer Code: development/developer-code.md
   - Projects:
     - Projects: projects/index.md
+  - About Us:
+    - About Us: about-us/about-us.md
 
 plugins:
   - search
@@ -106,5 +112,7 @@ extra:
   social:
     - icon: fontawesome/brands/github
       link: https://github.com/texttechnologylab/UCE
+    - icon: fontawesome/solid/house
+      link: https://www.texttechnologylab.org/
   
-copyright: Copyright &copy; 2025 Text Technology Lab, Goethe-University Frankfurt
+#copyright: Copyright &copy; 2025 Text Technology Lab, Goethe-University Frankfurt

@@ -1,10 +1,10 @@
 !!! info "Prerequisites"  
-    This section requires that you have already set up the PostgreSQL DB and, preferably, the Web Portal. If not, refer to the respective [documentation](#TODO).
+    This section requires that you have already set up the PostgreSQL DB and, preferably, the Web Portal. If not, refer to the respective [documentation](./webportal.md).
 
 The **Corpus-Importer** is a Java application that transforms and imports UIMA-annotated data from a local path into the UCE environment. Depending on the configuration, it also performs post-processing of the data, such as the creation of embedding spaces.
 
 !!! tip "UIMA"  
-    If the data is not yet available in UIMA format, refer to the respective [documentation](#TODO), which also utilizes the [Docker Unified UIMA Interface](#TODO) to transform, process, and **annotate** the data in UIMA format the best way possible. After having transformed your data, proceed here.
+    If the data is not yet available in UIMA format, refer to the respective [documentation](./uima-duui.md), which also utilizes the [Docker Unified UIMA Interface](./uima-duui.md) to transform, process, and **annotate** the data in UIMA format the best way possible. After having transformed your data, proceed here.
 
 ## Folder Structure
 
@@ -22,14 +22,14 @@ For this, the importer **always** requires the following folder structure:
     │   📄 uima_doc_n.xmi
 ```
 
-where [`corpusConfig.json`](#TODO) holds metadata, and the `input` folder contains the actual UIMA files for a single corpus.
+where [`corpusConfig.json`](./configuration.md) holds metadata, and the `input` folder contains the actual UIMA files for a single corpus.
 
 !!! note "Input Structure"
      As of now, the importer will recursively walk through the `input` folder, so every `.xmi` file in any subfolder will be considered.
 
 ## User Setup
 
-Open the `docker-compose.yaml` file *(if you haven't created the `.env` file yet, see [here](#TODO))* and locate the `uce-importer` service. Within it, mount all local paths to the corpora you want to import using the structure described above, and map them like so: 
+Open the `docker-compose.yaml` file *(if you haven't created the `.env` file yet, see [here](./webportal.md))* and locate the `uce-importer` service. Within it, mount all local paths to the corpora you want to import using the structure described above, and map them like so: 
 
 ```yaml
 volumes:

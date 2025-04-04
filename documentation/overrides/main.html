@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+
+{% block footer %}
+  <!-- Add scripts that need to run before here -->
+  {{ super() }}
+  <!-- Add scripts that need to run afterwards here -->
+  <div class="md-footer-meta" style="background-color: rgb(22, 22, 22) !important;">
+    <div class="md-footer-meta__inner md-grid">
+        <p style="font-size:small !important; color: gray; text-align: center;">
+            Questions and issues related to development can be raised 
+            in the official GitHub repository. For other inquiries or 
+            to get in touch—such as regarding projects or integrations 
+            — please use the official 
+            <a style="color:var(--md-typeset-a-color) !important; text-decoration: underline;" href="https://www.texttechnologylab.org/appointments/">lab's contact page</a>.
+        </p>
+    </div>
+  </div> 
+{% endblock %}

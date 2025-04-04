@@ -163,7 +163,7 @@ UCE is customizable in a variety of ways, including color scheme, corpora identi
       </tbody>
     </table>
 
-Within the source code, you also find a `defaultUceConfig.json` that you can mirror. This is also the configuration UCE uses if no explicit config is provided. Inject the `uceConfig.json` into the UCE web portal by means of command line arguments, as outlined in [earlier sections](#TODO).
+Within the source code, you also find a `defaultUceConfig.json` that you can mirror. This is also the configuration UCE uses if no explicit config is provided. Inject the `uceConfig.json` into the UCE web portal by means of command line arguments, as outlined in [earlier sections](./webportal.md).
 
 <hr/>
 
