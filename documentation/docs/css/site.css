@@ -58,6 +58,7 @@
   display: block;
   height: 0;
   padding: 0;
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
   overflow: hidden;
   padding-bottom: 56.25%;
 }
@@ -119,5 +120,6 @@
   width: 100%;
 }
 
-footer .md-copyright{
+.md-tabs{
+  box-shadow: rgba(0, 0, 0, 0.24) 0px 3px 8px;
 }

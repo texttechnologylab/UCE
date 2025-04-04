@@ -64,6 +64,8 @@ nav:
     - Developer Code: development/developer-code.md
   - Projects:
     - Projects: projects/index.md
+    - BIOfid: projects/biofid.md
+    - PrismAI: projects/prismai.md
   - About Us:
     - About Us: about-us/about-us.md
 
