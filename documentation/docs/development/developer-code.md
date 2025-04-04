@@ -1,6 +1,8 @@
 Within UCE, we use several programming languages, including Java and Python, as well as multiple databases, each with its own query language, such as SQL and SPARQL. The core application, however, is written in Java, and thus the primary focus of development is on Java.
 
-Any developer who wishes to contribute to UCE **should** read the Code of (Development) Conduct.
+Any developer who wishes to contribute to UCE **should** read the Code of (Development) Conduct. 
+
+Also, feel free to ⭐ the repo and join our [Discord server](https://discord.gg/68bFC86JRT) to engage with the other developers and users of UCE.
 
 <hr/>
 

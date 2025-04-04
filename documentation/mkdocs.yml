@@ -110,6 +110,8 @@ markdown_extensions:
 
 extra:
   social:
+    - icon: fontawesome/brands/discord
+      link: https://discord.gg/68bFC86JRT
     - icon: fontawesome/brands/github
       link: https://github.com/texttechnologylab/UCE
     - icon: fontawesome/solid/house
