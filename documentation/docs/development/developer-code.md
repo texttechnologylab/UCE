@@ -1,6 +1,6 @@
 Within UCE, we use several programming languages, including Java and Python, as well as multiple databases, each with its own query language, such as SQL and SPARQL. The core application, however, is written in Java, and thus the primary focus of development is on Java.
 
-Any developer who wishes to contribute to UCE **is required** to read the Code of (Development) Conduct.
+Any developer who wishes to contribute to UCE **should** read the Code of (Development) Conduct.
 
 <hr/>
 
@@ -54,7 +54,34 @@ Comments like these show poor form and clutter the codebase with unnecessary noi
 !!! quote "Every Programmer"
     *“My methods don’t need comments, they speak for themselves.”* 
     
-No, they don't and yes, they need comments. Write small, precise, and concise comments that explain the flow of the code.
+No, they don't speak for themselves and yes, they need comments. Write small, precise, and concise comments that explain the flow of the code.
 
 However, don’t overdo the Javadoc. If a private class is 2,000 lines long and 1,600 of those are comments, you’re doing something wrong.
+
+## 8. Spring Framework
+
+UCE is built using the [Spring framework](https://spring.io/projects/spring-framework) and [Maven](https://maven.apache.org/index.html). As such, we use [Dependency Injection](https://www.baeldung.com/spring-dependency-injection) with services.
+
+These services are to be created in the `uce.common` submodule, then registered in `SpringConfig.java` for DI, and should encapsulate all logic related to their specific functionality. For example, you will never find a request to our PostgreSQL database outside of the designated database service *(as always, with exceptions)*.
+
+For those who haven’t worked with these patterns or frameworks before: familiarize yourself with the codebase and replicate the patterns from already existing services, logic classes, and other components.
+
+## 9. Models are Models
+
+Complementing point 8, we oppose the idea of coupling logic with models. E.g., each of the data classes associated with Hibernate—and thus the database—are purely data models, akin to structs. Through services, we fetch, modify, transform and save them.
+
+So remember:
+
+- Logic belongs in services.  
+- (Persistent) Data belongs in models.
+- Everything in between is utility, configs, routes or special cases.  
+
+**Keep them separated.**
+
+## 10. Have Fun
+
+This list sounds much stricter than it actually is, and it might give the impression that UCE was developed **perfectly** following these rules—which it wasn’t. We all work under time pressure, make mistakes, learn over time, write *"TODO: cleanup later"*, and then never get around to cleaning it up.
+
+So take this as a guideline—something to strive for—but remember: then the actual coding happens.
+ 
 
