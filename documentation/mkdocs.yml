@@ -68,6 +68,7 @@ nav:
     - PrismAI: projects/prismai.md
   - About Us:
     - About Us: about-us/about-us.md
+  - Publications: publications.md
 
 plugins:
   - search
