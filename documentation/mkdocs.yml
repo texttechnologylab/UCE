@@ -21,7 +21,7 @@ theme:
     - navigation.expand
     - navigation.path
     - navigation.indexes
-    - toc.integrate
+    #- toc.integrate
     - navigation.top
   palette: 
     # Palette toggle for automatic mode
