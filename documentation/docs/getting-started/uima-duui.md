@@ -4,14 +4,17 @@ In the following, we will first briefly outline the technologies, explain their 
 
 ```mermaid
 graph LR
-    A[Corpus] ---> B{Annotated?}
-    B --->|No| D[⚙ DUUI]
-    C[Importer] ---> E[🌍 UCE]
-    D ---> C
+    A[Corpus] ---> F{Format Supported?}
+    F --->|Yes| D[⚙ DUUI]
+    F --->|No| C[Converter]
+    C ---> D[⚙ DUUI]
+    T["Typesystem (optional)"] ---> D[⚙ DUUI]
+    I[Importer] ---> E[🌍 UCE]
+    D ---> I
 ```
 
-!!! note "Annotations"
-    It is not required to use DUUI to produce UIMA-annotated data. You can choose any technique you prefer—at the end of the day, UCE simply needs UIMA files and, if you want to use annotations, it utilizes the types outlined in our annotations list.
+It is not required to use DUUI to produce UIMA-annotated data. You can choose any technique you prefer—at the end of the day, UCE simply needs UIMA files.
+DUUI can read a wide variety of distinct corpus formats. You can check the list of available formats [here](https://github.com/texttechnologylab/duui-uima-reader). If your format is not supported, you will need to convert it yourself; the tutorial below explains how to create UIMA documents and add text and annotations to them. We have our own typesystem, which details a broad range of different annotations and should cover nearly all use cases. You can find the typesystem [here](https://github.com/texttechnologylab/UIMATypeSystem).
 
 ## UIMA
 
@@ -19,7 +22,7 @@ UIMA (Unstructured Information Management Architecture), is a framework designed
 
 ## DUUI
 
-DUUI (Docker Unified UIMA Interface) is a platform designed to efficiently process large media corpora (mainly text, but offers also support for other media types such as video, images, and audio). It builds on the UIMA framework, using it to manage annotations, and leverages container technologies to integrate a variety of NLP tools. DUUI supports both horizontal scaling (distributing processing across multiple machines) and vertical scaling (optimizing resource use on a single machine), making it highly scalable for handling big data. It accommodates diverse NLP tools and programming languages, abstracting their differences through a unified interface, and ensures reproducibility by tracking processing pipelines. Additionally, DUUI provides robust monitoring and error-reporting features to manage large-scale tasks and is designed for ease of use, making advanced NLP accessible to users with varying technical expertise, including non-experts in research fields like digital humanities, biodiversity etc.
+DUUI (Docker Unified UIMA Interface) is a platform designed to efficiently process large media corpora (mainly text, but offers also support for other media types such as video, images, and audio). It builds on the UIMA framework, using it to manage annotations, and leverages container technologies to integrate a variety of NLP tools. DUUI supports both horizontal scaling (distributing processing across multiple machines) and vertical scaling (optimizing resource use on a single machine), making it highly scalable for handling big data. It accommodates diverse NLP tools and programming languages, abstracting their differences through a unified interface, and ensures reproducibility by tracking processing pipelines. Additionally, DUUI provides robust monitoring and error-reporting features to manage large-scale tasks and is designed for ease of use, making advanced NLP accessible to users with varying technical expertise, including non-experts in research fields like digital humanities, biodiversity etc. For more information go to the github repository of the original [DUUI](https://github.com/texttechnologylab/DockerUnifiedUIMAInterface) project. For a list of all available components check the [DUUI-Components](https://github.com/texttechnologylab/duui-uima) repository.
 
 ## Tut 1
 
