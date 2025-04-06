@@ -1,6 +1,6 @@
 site_name: UCE Documentation
 repo_url: https://github.com/texttechnologylab/UCE
-#site_url: https://texttechnologylab.github.io/UCE/
+site_url: https://texttechnologylab.github.io/UCE/
 docs_dir: docs
 theme:
   name: material
@@ -12,15 +12,17 @@ theme:
   #  logo: fontawesome/solid/book-atlas
   favicon: img/favicon.ico
   features:
+    - content.tooltips
     - content.code.copy
     - navigation.footer
     - navigation.instant
     - navigation.instant.progress
     - navigation.tabs
+    - navigation.instant.prefetch
     - navigation.sections
     - navigation.expand
-    - navigation.path
     - navigation.indexes
+    - navigation.path
     #- toc.integrate
     - navigation.top
   palette: 
@@ -72,6 +74,7 @@ nav:
 
 plugins:
   - search
+  - git-revision-date-localized # For last modified date. ACTIVATE FOR RELEASE
   - glightbox:
       touchNavigation: true
       loop: false

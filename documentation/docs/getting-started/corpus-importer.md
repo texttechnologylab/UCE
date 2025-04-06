@@ -63,7 +63,7 @@ In the source code, identify the module `uce.corpus-importer` and set up your ID
         * `-t 1`
     - Maven should automatically download and index the dependencies. If, for some reason, it does not, you can force an update via `mvn clean install -U` *(in IntelliJ, open `Execute Maven Goal`, then enter the command)*.
 
-Open the `common.conf` file and adjust the database connection parameters to match your database (port, host, etc.). Now start the importer and import your corpus. Refer to [CLI Arguments](#cli-argumenhts) for a full list of possible parameters.
+Open the `common.conf` file and adjust the database connection parameters to match your database (port, host, etc.). Now start the importer and import your corpus. Refer to [CLI Arguments](#cli-arguments) for a full list of possible parameters.
 
 !!! info "Logs"
     The importer logs to both the PostgreSQL database *(tables `uceimport` and `importlog`)* and the local `logs` directory within the container. Both logs also appear in the standard output of the console.

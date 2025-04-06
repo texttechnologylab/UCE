@@ -5,7 +5,7 @@
     <img src="img/logo.png" style="width:200px; text-align:center"/>
 </div>
 
-The **Unified Corpus Explorer (UCE)** is a generic NLP application developed by the [Text Technology Lab](https://www.texttechnologylab.org/) that allows the automatic creation of a fully featured portal for your **annotated** corpora. UCE is standardized in the sense that it's dockerized, reusable, and follows strict schemata—one of which is the [UIMA format](https://uima.apache.org/). To import data and set up your own UCE instance, it is required that the data is annotated or at least exists in UIMA format.
+The **Unified Corpus Explorer (UCE)** is a generic NLP application developed by the [Text Technology Lab](https://www.texttechnologylab.org/) that allows the automatic creation of a fully featured portal for your **annotated** corpora. UCE is standardized in the sense that it's dockerized, reusable, and follows strict schemata—one of which is the [UIMA format](https://uima.apache.org/). To import data and set up your own UCE instance, it is required that the data is annotated or at least exists in UIMA format. 
 
 This documentation includes step-by-step tutorials for developers as well as users, and shows easy-to-follow instructions. The easiest scenario—one where the data already exists in UIMA format and simply needs to be set up and imported into the UCE instance—can be done with Docker knowledge only.
 
