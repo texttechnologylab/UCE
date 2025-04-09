@@ -60,6 +60,13 @@ Below you will find an ever-expanding list of importable and compatible annotati
     <br/>
     [More Details](#TODO)
 
+??? success "UnifiedTopic"
+    Extracts topics from a document in the form of a list of keywords or categories, which can be used to summarize the content or identify its main theme. The list of categories depends on the model used for annotation.
+    <br/>
+    <br/>
+    [More Details](https://github.com/texttechnologylab/UIMATypeSystem/blob/uima-3/src/main/resources/desc/type/TypeSystemUnifiedTopic.xml)
+
+
 ??? warning "GeoNames"
     The recognition of locations within texts and their annotation with hierarchical data, alternate and historical names, and tagging with unique identifiers. *(Under construction)*
     <br/>
