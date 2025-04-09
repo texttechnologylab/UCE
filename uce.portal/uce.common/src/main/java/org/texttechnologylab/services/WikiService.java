@@ -1,9 +1,11 @@
 package org.texttechnologylab.services;
 
+import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.DocumentTopicDistribution;
 import org.texttechnologylab.models.corpus.PageTopicDistribution;
 import org.texttechnologylab.models.corpus.TopicDistribution;
+import org.texttechnologylab.models.viewModels.CorpusViewModel;
 import org.texttechnologylab.models.viewModels.wiki.*;
 import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.utils.SystemStatus;
@@ -18,6 +20,18 @@ public class WikiService {
     public WikiService(PostgresqlDataInterface_Impl db, RAGService ragService, JenaSparqlService sparqlService) {
         this.db = db;
         this.sparqlService = sparqlService;
+    }
+
+    public CorpusWikiPageViewModel buildCorpusWikiPageViewModle(long corpusId, String coveredText) throws DatabaseOperationException {
+        var viewModel = new CorpusWikiPageViewModel();
+        var corpus = db.getCorpusById(corpusId);
+        viewModel.setWikiModel(corpus);
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("Corpus");
+        viewModel.setCorpus(corpus.getViewModel());
+        viewModel.setDocumentsCount(db.countDocumentsInCorpus(corpusId));
+
+        return viewModel;
     }
 
     /**
@@ -96,6 +110,7 @@ public class WikiService {
         var viewModel = new TaxonAnnotationWikiPageViewModel();
         viewModel.setCoveredText(coveredText);
         var taxon = db.getTaxonById(id);
+        viewModel.setAnnotationType("Taxon");
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(taxon.getBegin(), taxon.getEnd(), taxon.getDocumentId()));
         viewModel.setWikiModel(taxon);
         // We are not interested in the standard w3 XML triplets

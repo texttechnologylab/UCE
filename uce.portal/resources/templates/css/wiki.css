@@ -404,6 +404,11 @@
     max-height: 550px;
 }
 
+.wiki-page .corpus-config-json .json-display{
+    border-radius: 0px !important;
+    border-top:0 !important;
+}
+
 .wiki-metadata-expanded-view {
     position: fixed;
     background-color: rgba(0, 0, 0, 0.4);
@@ -474,12 +479,12 @@
 
 /* Separator row styling */
 .wiki-page .list-separator {
-    background-color: #e0e0e0; /* Light gray background for separation */
-    font-weight: bold; /* Make the list name stand out */
-    border-top: 2px solid gray; /* Stronger top border */
-    border-bottom: 2px solid gray; /* Stronger bottom border */
+    background-color: #e0e0e0;
+    font-weight: bold;
+    border-top: 2px solid gray;
+    border-bottom: 2px solid gray;
 }
 
 .wiki-page .list-separator td {
-    padding: 10px; /* Extra padding for emphasis */
+    padding: 10px;
 }

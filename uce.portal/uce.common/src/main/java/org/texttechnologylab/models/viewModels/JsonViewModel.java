@@ -3,14 +3,14 @@ package org.texttechnologylab.models.viewModels;
 import java.util.ArrayList;
 import java.util.List;
 
-public class UCEMetadataJsonViewModel {
+public class JsonViewModel {
 
     private String key;
     private String value;
     private String valueType;
-    private List<UCEMetadataJsonViewModel> children;
+    private List<JsonViewModel> children;
 
-    public UCEMetadataJsonViewModel() {
+    public JsonViewModel() {
         this.children = new ArrayList<>();
     }
 
@@ -38,11 +38,11 @@ public class UCEMetadataJsonViewModel {
         this.valueType = valueType;
     }
 
-    public List<UCEMetadataJsonViewModel> getChildren() {
+    public List<JsonViewModel> getChildren() {
         return children;
     }
 
-    public void setChildren(List<UCEMetadataJsonViewModel> children) {
+    public void setChildren(List<JsonViewModel> children) {
         this.children = children;
     }
 }

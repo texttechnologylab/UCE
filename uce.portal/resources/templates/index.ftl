@@ -351,7 +351,7 @@
 
     <#include "*/wiki/components/wikiPageModal.ftl">
 
-    <div class="corpus-inspector-include display-none">
+    <div class="corpus-inspector-include corpus-inspector display-none">
     </div>
 
     <div class="ragbot-chat-include">

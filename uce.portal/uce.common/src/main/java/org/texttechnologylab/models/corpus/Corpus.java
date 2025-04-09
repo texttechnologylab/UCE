@@ -2,6 +2,7 @@ package org.texttechnologylab.models.corpus;
 
 import org.joda.time.DateTime;
 import org.texttechnologylab.models.ModelBase;
+import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.viewModels.CorpusViewModel;
 
 import javax.persistence.*;
@@ -11,7 +12,7 @@ import java.util.List;
 
 @Entity
 @Table(name="corpus")
-public class Corpus extends ModelBase {
+public class Corpus extends ModelBase implements WikiModel {
     private String name;
     private String author;
     private String language;
@@ -103,4 +104,7 @@ public class Corpus extends ModelBase {
     public void setDocuments(List<Document> documents) {
         this.documents = documents;
     }
+
+    @Override
+    public String getWikiId() {return "C-" + this.getId(); }
 }

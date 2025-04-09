@@ -101,7 +101,7 @@ public class WikiApi {
             var params = ExceptionUtils.tryCatchLog(() -> request.queryParams("params"), (ex) -> {
             });
 
-            // TODO: loggign
+            // TODO: logging
             if (wid == null || !wid.contains("-") || coveredText == null || coveredText.isEmpty()) {
                 model.put("information", languageResources.get("missingParameterError"));
                 return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
@@ -143,6 +143,10 @@ public class WikiApi {
                 // Then we have a Time annotation
                 model.put("vm", wikiService.buildTimeAnnotationWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/timeAnnotationPage.ftl";
+            } else if (type.equals("C")) {
+                // Then we have a corpus
+                model.put("vm", wikiService.buildCorpusWikiPageViewModle(id, coveredText));
+                renderView = "/wiki/pages/corpusPage.ftl";
             } else if (type.equals("D")) {
                 // Then we have a document
                 model.put("vm", wikiService.buildDocumentWikiPageViewModel(id));
@@ -164,7 +168,8 @@ public class WikiApi {
             // cache and return the wiki page
             var view = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, renderView));
             var cachedWikiPage = new CachedWikiPage(view);
-            SessionManager.CachedWikiPages.put(cacheId, cachedWikiPage);
+            // TODO: UNCOMMENT THIS BELOW BEFORE PUSH
+            //SessionManager.CachedWikiPages.put(cacheId, cachedWikiPage);
             return view;
         } catch (Exception ex) {
             logger.error("Error getting a wiki page - best refer to the last logged API call " +
