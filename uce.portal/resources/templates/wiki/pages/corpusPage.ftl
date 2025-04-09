@@ -18,7 +18,7 @@
         <!-- corpusConfig raw -->
         <div class="corpus-config-json">
             <div class="group-box bg-ghost mb-0 flexed align-items-center justify-content-between rounded-0 pt-2 pb-2">
-                <h5 class="font-italic mr-1 mb-0">corpusConfig.json</h5>
+                <h6 class="mr-1 mb-0">corpusConfig.json</h6>
                 <a class="rounded-a ml-1 mb-0 p-0 mt-0 mr-0"
                    onclick="$(this).closest('.corpus-config-json').find('.expanded').toggle(75)">
                     <i class="fas fa-angle-down"></i>
@@ -33,7 +33,7 @@
         <!-- annotations and meta -->
         <div class="annotations-metadata-container">
             <div class="group-box border-top-0 bg-ghost mb-0 flexed align-items-center justify-content-between rounded-0 pt-2 pb-2">
-                <h5 class="mb-0 text-center">Annotations and Metadata</h5>
+                <h6 class="mb-0 text-center">Annotations and Metadata</h6>
                 <a class="rounded-a ml-1 mb-0 p-0 mt-0 mr-0"
                    onclick="$(this).closest('.annotations-metadata-container').find('.expanded').toggle(75)">
                     <i class="fas fa-angle-down"></i>
@@ -69,8 +69,6 @@
             </#if>
         </div>
     </div>
-
-
 
     <!-- Documents -->
     <!--<h5 class="text-center">Documents</h5>

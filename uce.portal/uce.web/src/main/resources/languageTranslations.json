@@ -11,6 +11,10 @@
     "de-DE": "Suche",
     "en-EN": "Search"
   },
+  "lexicon": {
+    "de-DE": "Lexikon",
+    "en-EN": "Lexicon"
+  },
   "contact": {
     "de-DE": "Kontakt",
     "en-EN": "Contact"
@@ -46,6 +50,10 @@
   "openCorpus": {
     "de-DE": "Öffnen der Korpus-Übersicht",
     "en-EN": "Open the corpus viewer"
+  },
+  "selectCorpus": {
+    "de-DE": "Wählen Sie den fokussierten Korpus, nach dem die UCE-Funktionen ausgerichtet sind.",
+    "en-EN": "Select the focused corpus according to which the UCE aligns its functions."
   },
   "openSrBuilder": {
     "de-DE": "Öffnen des Semantic-Role Query Builders",

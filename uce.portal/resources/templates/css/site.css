@@ -56,13 +56,20 @@ nav .nav-container {
 
 nav .nav-buttons {
     padding: 18px;
-    margin-left: 12px;
+    margin-left: 16px;
 }
 
 nav .nav-buttons a {
     margin: 6px;
+    white-space: nowrap;
+    border:lightgrey 1px solid;
     cursor: pointer;
     font-size: large;
+    border-radius: 0;
+}
+
+nav .nav-buttons a i{
+    margin-right: 2px;
 }
 
 nav .nav-buttons a:hover {
@@ -74,7 +81,7 @@ nav .selected-nav-btn {
     position: relative;
     background-color: ghostwhite;
     border: lightgray 1px solid;
-    border-radius: 8px;
+    border-radius: 8px !important;
     color: var(--prime) !important;
     transition: 0.25s;
 }
@@ -353,6 +360,33 @@ nav .selected-nav-btn.text::before {
         -webkit-transform: rotate(360deg);
         transform: rotate(360deg);
     }
+}
+
+.corpus-selection-div{
+    border-radius: 6px;
+    height: 100%;
+    margin-left: 3rem;
+    margin-right: 3rem;
+    align-self: center;
+}
+
+#corpus-select {
+    width: auto;
+    max-width: 225px;
+    min-width: 150px;
+    border-radius: 0;
+    color:rgba(0, 0, 0, 0.5);
+    border-right: 0;
+    height: 41px;
+    padding-left: 15px;
+    padding-right: 15px;
+    background-color: lightgray;
+    font-weight: bold;
+}
+
+.open-corpus-inspector-btn {
+    cursor: pointer;
+    border:lightgray 1px solid;
 }
 
 .open-corpus-universe-btn {

@@ -64,7 +64,7 @@
     <nav class="position-relative">
 
         <div class="container-fluid flexed align-items-center justify-content-around">
-            <div class="flexed h-100">
+            <div class="flexed h-100 pr-2">
                 <button class="btn switch-view-btn selected-nav-btn" data-id="landing">
                     <img class="mb-0 logo" src="${system.getCorporate().getLogo()}">
                 </button>
@@ -73,7 +73,7 @@
 
             <div class="flexed align-items-stretch">
                 <!-- system alive buttons -->
-                <div class="system-status-bar">
+                <div class="system-status-bar border-right">
                     <p class="mb-3 text-center text">System Status</p>
                     <div class="flexed align-items-center">
                         <i class="fas fa-project-diagram ml-3 mr-3"
@@ -85,11 +85,41 @@
                     </div>
                 </div>
 
+                <!-- select the current focused corpus -->
+                <div class="corpus-selection-div">
+                    <div class="flexed">
+                        <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover"
+                           data-toggle="popover" data-placement="left"
+                           data-content="${languageResource.get("openCorpus")}">
+                            <i class="fas fa-globe large-font mt-1 text-dark mr-1 ml-1"></i>
+                        </a>
+                        <select class="form-control" id="corpus-select" aria-label="Default select example" data-trigger="hover"
+                                data-toggle="popover" data-placement="right"
+                                data-content="${languageResource.get("selectCorpus")}">
+                            <#list corpora as corpusVm>
+                                <option data-id="${corpusVm.getCorpus().getId()}"
+                                        data-hasbiofid="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()?c}"
+                                        data-hasembeddings="${corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()?c}"
+                                        data-hastopicdist="${corpusVm.getCorpusConfig().getOther().isAvailableOnFrankfurtUniversityCollection()?c}"
+                                        data-hasragbot="${corpusVm.getCorpusConfig().getOther().isEnableRAGBot()?c}"
+                                        data-hastaxonannotations="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isAnnotated()?c}"
+                                        data-hastimeannotations="${corpusVm.getCorpusConfig().getAnnotations().isTime()?c}"
+                                        data-sparqlalive="${isSparqlAlive?c}"
+                                        data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
+                            </#list>
+                        </select>
+                    </div>
+                </div>
+
                 <!-- right side buttons -->
                 <div class="flexed align-items-center nav-container">
                     <div class="flexed align-items-center nav-buttons">
-                        <a class="switch-view-btn btn text" data-id="search">Portal</a>
-                        <a class="switch-view-btn btn text" data-id="team">${languageResource.get("team")}</a>
+                        <a class="switch-view-btn btn text" data-id="search"><i
+                                    class="fas fa-globe-europe color-prime"></i> Portal</a>
+                        <a class="switch-view-btn btn text" data-id="annotation-browser"><i
+                                    class="fas fa-atlas color-prime"></i> ${languageResource.get("lexicon")}</a>
+                        <a class="switch-view-btn btn text" data-id="team"><i
+                                    class="fas fa-users color-prime"></i> ${languageResource.get("team")}</a>
                     </div>
                     <select class="form-control bg-light rounded-0 color-prime border-right-0 large-font switch-language-select">
                         <option data-lang="en-EN">Englisch</option>
@@ -137,24 +167,6 @@
             <!-- actual content -->
             <div class="flexed align-items-stretch search-header container p-0">
                 <div class="flexed align-items-center h-100 position-relative" style="z-index: 2">
-                    <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover"
-                       data-toggle="popover" data-placement="top"
-                       data-content="${languageResource.get("openCorpus")}">
-                        <i class="fas fa-globe xlarge-font mr-2 ml-2 text-dark"></i>
-                    </a>
-                    <select class="form-control" id="corpus-select" aria-label="Default select example">
-                        <#list corpora as corpusVm>
-                            <option data-id="${corpusVm.getCorpus().getId()}"
-                                    data-hasbiofid="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()?c}"
-                                    data-hasembeddings="${corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()?c}"
-                                    data-hastopicdist="${corpusVm.getCorpusConfig().getOther().isAvailableOnFrankfurtUniversityCollection()?c}"
-                                    data-hasragbot="${corpusVm.getCorpusConfig().getOther().isEnableRAGBot()?c}"
-                                    data-hastaxonannotations="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isAnnotated()?c}"
-                                    data-hastimeannotations="${corpusVm.getCorpusConfig().getAnnotations().isTime()?c}"
-                                    data-sparqlalive="${isSparqlAlive?c}"
-                                    data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
-                        </#list>
-                    </select>
                     <!-- semantic role button -->
                     <button class="btn open-sr-builder-btn" data-trigger="hover" data-toggle="popover"
                             data-placement="top"
