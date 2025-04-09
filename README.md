@@ -36,7 +36,7 @@ UCE is used by different projects to visualize their corpora and to provide a ge
 # Quick Start
 
 > [!TIP]
-> Please consult the documentation page for a more detailled and customizable setup documentation. The `Quick Start` is just that: a short setup guide that sets up a default UCE instance.
+> Please consult the [documentation page](https://texttechnologylab.github.io/UCE/) for a more detailled and customizable setup documentation. The `Quick Start` is just that: a short setup guide that sets up a default UCE instance. **Chances are**, that you might want to customize UCE and need to understand its possiblities beyond this simple quick start.
 
 ## Usage
 
@@ -88,7 +88,7 @@ docker-compose up --build uce-importer
 
 ## Development
 
-**We are currently creating a dedicated Documentation Page which will be up soon to explain the configuration in more detail and how you can customize UCE.**
+For setting up UCE in an development environment, refer to our [documentation](https://texttechnologylab.github.io/UCE/). When trying to contribute to UCE, also read through our [Developer Code](https://texttechnologylab.github.io/UCE/development/developer-code/).
 
 # About
 
