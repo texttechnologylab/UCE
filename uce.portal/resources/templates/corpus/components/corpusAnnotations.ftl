@@ -1,6 +1,5 @@
 <div>
     <div class="row m-0 pl-0 pr-0">
-
         <div class="col-lg-4 annotation-entry">
             <#assign isChecked = "" />
             <#if corpusConfig.getAnnotations().isOCRPage() == true>

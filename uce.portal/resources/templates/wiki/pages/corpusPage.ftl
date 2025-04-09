@@ -38,15 +38,38 @@
     </div>
 
     <!-- corpus inspector -->
-    <div class="corpus-inspector">
-        <#assign corpus = vm.getCorpus().getCorpus()>
-        <#assign corpusConfig = vm.getCorpus().getCorpusConfig()>
-        <#assign documentsCount = vm.getDocumentsCount()>
-        <h5 class="text-center">Annotations</h5>
-        <div class="group-box bg-ghost card-shadow">
-            <#include "*/corpus/components/corpusAnnotations.ftl"/>
+    <div class="mb-4 mt-4">
+        <div class="corpus-inspector">
+            <#assign corpus = vm.getCorpus().getCorpus()>
+            <#assign corpusConfig = vm.getCorpus().getCorpusConfig()>
+            <#assign documentsCount = vm.getDocumentsCount()>
+
+            <h5 class="text-center">Annotations and Metadata</h5>
+
+            <div class="group-box rounded-0 bg-lightgray card-shadow mb-0 border-bottom-0">
+                <#include "*/corpus/components/corpusMetadata.ftl"/>
+            </div>
+
+            <div class="group-box bg-ghost rounded-0 card-shadow">
+                <#include "*/corpus/components/corpusAnnotations.ftl"/>
+            </div>
+        </div>
+    </div>
+
+    <!-- Documents -->
+    <h5 class="text-center">Documents</h5>
+    <div class="group-box card-shadow bg-lightgray">
+        <div class="corpus-documents-list-include h-100 w-100 position-relative pr-3">
+            <div class="simple-loader"></div>
         </div>
     </div>
 
 </div>
+
+<script>
+    $(document).ready(function () {
+        // After that, we load documentsListView
+        loadCorpusDocuments(${vm.getCorpus().getCorpus().getId()}, $('.wiki-page .corpus-documents-list-include'));
+    })
+</script>
 

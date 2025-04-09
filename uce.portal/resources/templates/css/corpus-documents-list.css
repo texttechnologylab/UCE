@@ -8,6 +8,7 @@
 .corpus-documents-list .load-more-documents-btn{
     width: 100%;
     max-width: 900px;
+    background-color: white;
     border:lightgrey 1px solid;
     border-radius: 0;
     margin-bottom: 32px;
