@@ -23,6 +23,8 @@ public class CorpusAnnotationConfig {
     private boolean scope;
     private boolean xscope;
 
+    private boolean unifiedTopic;
+
     public boolean isUceMetadata() {
         return uceMetadata;
     }
@@ -175,4 +177,10 @@ public class CorpusAnnotationConfig {
     public void setXscope(boolean xscope) {
         this.xscope = xscope;
     }
+
+    // UnifiedTopic
+    public boolean isUnifiedTopic() {
+        return unifiedTopic;
+    }
+
 }
