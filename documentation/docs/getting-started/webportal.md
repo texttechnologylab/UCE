@@ -1,5 +1,8 @@
 The heart of UCE is its webportal, which, alongside the [Postgresql](https://www.postgresql.org/) database, are the primary microservices we will setup first, as these services are obligatory.
 
+!!! warning "Webportal UI Bug"
+    Currently, there is an unresolved issue on **some** Linux distributions with **some** Firefox versions. The bug causes the page to reload in a loop, preventing any user interaction. If you encounter this issue, try switching to a browser other than Firefox. Again, this error has only been observed on certain Linux systems and firefox versions and we are working on resolving the issue.
+
 <hr/>
 
 ## User Setup
