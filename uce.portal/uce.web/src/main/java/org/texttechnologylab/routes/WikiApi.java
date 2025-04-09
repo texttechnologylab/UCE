@@ -168,8 +168,7 @@ public class WikiApi {
             // cache and return the wiki page
             var view = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, renderView));
             var cachedWikiPage = new CachedWikiPage(view);
-            // TODO: UNCOMMENT THIS BELOW BEFORE PUSH
-            //SessionManager.CachedWikiPages.put(cacheId, cachedWikiPage);
+            SessionManager.CachedWikiPages.put(cacheId, cachedWikiPage);
             return view;
         } catch (Exception ex) {
             logger.error("Error getting a wiki page - best refer to the last logged API call " +
