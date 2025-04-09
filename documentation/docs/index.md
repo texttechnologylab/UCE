@@ -19,6 +19,6 @@ UCE is used by different projects to visualize their corpora and to provide a ge
 
 | Url        | Project           | Description  |
 | ------------- |:-------------:| :-----|
-| [URL](http://biofid.uce.texttechnologylab.org/)      | [BIOfid](https://www.biofid.de/de/) | The Specialised Information Service Biodiversity Research (BIOfid) provides access to current and historical biodiversity literature. |
+| [URL](http://biofid.uce.texttechnologylab.org/)      | [![BIOfid](./img/projects/BIOfid.png){width="100"}](https://www.biofid.de/de/) | The Specialised Information Service Biodiversity Research (BIOfid) provides access to current and historical biodiversity literature. |
 | [URL](http://prismai.uce.texttechnologylab.org/)      | PrismAI      |  A dataset for the systematic detection of AI-generated text, containg both English and German texts from 8 domains, synthesized using state-of-the-art LLMs. |
 
