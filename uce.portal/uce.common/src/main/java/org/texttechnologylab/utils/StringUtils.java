@@ -110,6 +110,49 @@ public class StringUtils {
         };
     }
 
+    public static String replaceCharacterOutsideSpan(String input, char targetChar, String replacement) {
+        StringBuilder result = new StringBuilder();
+        boolean inSpan = false;
+        int i = 0;
+        while (i < input.length()) {
+            if (i <= input.length() - 6 && input.substring(i, i + 6).equals("<span ")) {
+                inSpan = true;
+                while (i < input.length() && input.charAt(i) != '>') {
+                    result.append(input.charAt(i));
+                    i++;
+                }
+                if (i < input.length()) {
+                    result.append(input.charAt(i));
+                    i++;
+                }
+            }
+
+            else if (i <= input.length() - 7 && input.substring(i, i + 7).equals("</span>")) {
+                inSpan = false;
+                result.append("</span>");
+                i += 7;
+            }
+
+            else {
+                char currentChar = input.charAt(i);
+                if (inSpan) {
+
+                    result.append(currentChar);
+                } else {
+
+                    if (currentChar == targetChar) {
+                        result.append(replacement);
+                    } else {
+                        result.append(currentChar);
+                    }
+                }
+                i++;
+            }
+        }
+
+        return result.toString();
+    }
+
     public static String ConvertSparqlQuery(String query) {
         // Regex pattern to match <https://www.biofid.de/bio-ontologies/gbif/123123>
         Pattern pattern = Pattern.compile("<https://www\\.biofid\\.de/bio-ontologies/gbif/(\\d+)>");
