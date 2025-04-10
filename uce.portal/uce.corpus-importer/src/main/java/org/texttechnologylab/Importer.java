@@ -70,6 +70,7 @@ public class Importer {
     private String importId;
     private Integer importerNumber;
     private List<UCEMetadataFilter> uceMetadataFilters = new CopyOnWriteArrayList<>(); // need thread safety.
+    private LexiconService lexiconService;
 
     public Importer(ApplicationContext serviceContext,
                     String foldername,
@@ -89,6 +90,7 @@ public class Importer {
         this.goetheUniversityService = serviceContext.getBean(GoetheUniversityService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.ragService = serviceContext.getBean(RAGService.class);
+        this.lexiconService = serviceContext.getBean(LexiconService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
         this.gbifService = serviceContext.getBean(GbifService.class);
     }
@@ -248,8 +250,20 @@ public class Importer {
 
                         int currentCount = counter.incrementAndGet();
 
-                        // Periodic corpus postprocessing
-                        if (currentCount % 100 == 0) {
+                        // Periodic processing of the imports such as lexicon refreshing and corpus postprocessing
+                        if (currentCount % 50 == 0) {
+
+                            // Lexicon
+                            CompletableFuture.runAsync(() -> {
+                                logImportInfo("=========== UPDATING THE LEXICON...", LogStatus.POST_PROCESSING, "LEXICON", 0);
+                                var result = ExceptionUtils.tryCatchLog(
+                                        () -> lexiconService.updateLexicon(),
+                                        (ex) -> logImportError("Unknown error updating the lexicon of corpus " + corpus1.getId(), ex, "LEXICON"));
+                                if(result != null)
+                                    logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + result + "\n\n", LogStatus.SAVED, "LEXICON", 0);
+                            }, executor);
+
+                            // Corpus
                             CompletableFuture.runAsync(() -> {
                                 ExceptionUtils.tryCatchLog(
                                         () -> postProccessCorpus(corpus1, corpusConfigFinal),

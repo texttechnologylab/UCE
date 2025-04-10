@@ -1,5 +1,5 @@
 -- We want to build a lexicon and for that, we need distinct values of all our annotations.
--- We do this by adding a trigger that, upon changing a list of tables, checks of that coveredtext 
+-- We do this by adding a procedure, that checks if that coveredtext 
 -- has already been added to our "lexicon" table and if not, we add it there.
 CREATE TABLE IF NOT EXISTS lexicon (
     coveredtext TEXT,
@@ -8,35 +8,49 @@ CREATE TABLE IF NOT EXISTS lexicon (
     PRIMARY KEY (coveredtext, typee)
 );
 
--- And create the trigger:
-CREATE OR REPLACE FUNCTION update_lexicon()
-RETURNS TRIGGER AS $$
+CREATE OR REPLACE FUNCTION refresh_lexicon(tables TEXT[])
+RETURNS INTEGER
+LANGUAGE plpgsql AS $$
+DECLARE
+    table_name TEXT;
+    dyn_sql TEXT;
+    total_new_entries INTEGER := 0;
+    inserted_count INTEGER;
 BEGIN
-    IF NEW.coveredtext IS NOT NULL THEN
-        INSERT INTO lexicon (coveredtext, typee, count)
-        VALUES (NEW.coveredtext, TG_TABLE_NAME, 1)
-        -- If a duplicate is being inserted, it conflicts. In that case, count up.
-        ON CONFLICT (coveredtext, typee)
-        DO UPDATE SET count = lexicon.count + 1;
-    END IF;
-    RETURN NEW;
-END;
-$$ LANGUAGE plpgsql;
+    FOREACH table_name IN ARRAY tables
+    LOOP
+        dyn_sql := format($f$
+            WITH new_lex AS (
+                SELECT coveredtext, COUNT(*) AS cnt
+                FROM %I
+                WHERE coveredtext IS NOT NULL AND NOT isLexicalized
+                GROUP BY coveredtext
+            ),
+            inserted AS (
+                INSERT INTO lexicon (coveredtext, typee, count)
+                SELECT nl.coveredtext, %L, nl.cnt
+                FROM new_lex nl
+                ON CONFLICT (coveredtext, typee) DO NOTHING
+                RETURNING 1
+            )
+            SELECT COUNT(*) FROM inserted;
+        $f$, table_name, table_name);
 
--- TRIGGER_TEMPLATE
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1
-        FROM pg_trigger
-        WHERE tgname = 'trg_update_lexicon_-TABLE-'
-    ) THEN
-        CREATE TRIGGER trg_update_lexicon_-TABLE-
-        AFTER INSERT OR UPDATE ON -TABLE-
-        FOR EACH ROW
-        EXECUTE FUNCTION update_lexicon();
-    END IF;
-END;
--- TRIGGER_TEMPLATE_END
+        EXECUTE dyn_sql INTO inserted_count;
+        total_new_entries := total_new_entries + COALESCE(inserted_count, 0);
 
--- This placeholder will be filled in programmatically by UCE when building the lexicon
-[TRIGGERS]
+        -- Now update isLexicalized flag
+        dyn_sql := format($f$
+            UPDATE %I
+            SET isLexicalized = TRUE
+            WHERE coveredtext IS NOT NULL AND NOT isLexicalized;
+        $f$, table_name);
+
+        EXECUTE dyn_sql;
+    END LOOP;
+
+    RETURN total_new_entries;
+END;
+$$;
+
+

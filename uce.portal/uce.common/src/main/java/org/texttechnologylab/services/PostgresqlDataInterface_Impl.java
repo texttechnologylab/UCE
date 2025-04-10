@@ -321,6 +321,20 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public int callLexiconRefresh(ArrayList<String> tables) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+            var insertedLex = 0;
+            try (var storedProcedure = connection.prepareCall("{call refresh_lexicon" + "(?)}")) {
+                storedProcedure.setArray(1, connection.createArrayOf("text", tables.toArray(new String[0])));
+                var result = storedProcedure.executeQuery();
+                while (result.next()) {
+                    insertedLex = result.getInt(1);
+                }
+            }
+            return insertedLex;
+        }));
+    }
+
     @Override
     public DocumentSearchResult semanticRoleSearchForDocuments(int skip,
                                                                int take,
@@ -532,7 +546,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var criteria = session.createCriteria(UCEImport.class);
             criteria.add(Restrictions.eq("importId", importId));
-            return (UCEImport)criteria.list().getFirst();
+            return (UCEImport) criteria.list().getFirst();
         });
     }
 
