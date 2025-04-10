@@ -11,6 +11,11 @@ import java.util.List;
 @Entity
 @Table(name = "unifiedtopic")
 public class UnifiedTopic extends UIMAAnnotation {
+    /***
+     * UnifiedTopic class can be used to represent the topics in a document. A topic can be represented by a list of
+     * words or category label. Each document can have multiple topics. Therefore, a unified topic creates a
+     * one-to-many relationship with TopicValueBase class.
+     */
 
 
 

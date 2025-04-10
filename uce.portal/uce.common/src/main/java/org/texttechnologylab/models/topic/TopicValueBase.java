@@ -9,6 +9,11 @@ import java.util.List;
 @Entity
 @Table(name = "topicvaluebase")
 public class TopicValueBase extends UIMAAnnotation {
+    /***
+     * TopicValueBase class can be used to represent a topic with a label in a document. It also allows to represent a
+     * topic with a list of word. Therefore, TopicValueBase class has one-to-many relationship with TopicWord class.
+     *
+     */
 
     @ManyToOne
     @JoinColumn(name = "unified_topic_id")

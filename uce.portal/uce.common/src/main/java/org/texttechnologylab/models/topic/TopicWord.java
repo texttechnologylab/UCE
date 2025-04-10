@@ -7,8 +7,10 @@ import javax.persistence.*;
 @Entity
 @Table(name = "topicword")
 public class TopicWord extends UIMAAnnotation {
-
-
+    /***
+     * TopicWord class can be used to represent a word in a topic with a probability value. Since each word belongs to
+     * a topic, TopicWord class has a many-to-one relationship with TopicValueBase class.
+     */
 
     @ManyToOne
     @JoinColumn(name = "topic_id")
