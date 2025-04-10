@@ -35,6 +35,10 @@ import org.texttechnologylab.models.imp.LogStatus;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
+import org.texttechnologylab.models.topic.TopicValueBase;
+import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
+import org.texttechnologylab.models.topic.TopicWord;
+import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.*;
 import org.texttechnologylab.models.negation.CompleteNegation;
@@ -410,6 +414,12 @@ public class Importer {
                 ExceptionUtils.tryCatchLog(
                         () -> setCompleteNegations(document, jCas),
                         (ex) -> logImportWarn("This file should have contained negation annotations, but selecting them caused an error.", ex, filePath));
+            // unifiedTopics
+            if (corpusConfig.getAnnotations().isUnifiedTopic())
+                ExceptionUtils.tryCatchLog(
+                        () -> setUnifiedTopic(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained UnifiedTopic annotations, but selecting them caused an error.", ex, filePath));
+
 
             ExceptionUtils.tryCatchLog(
                     () -> setPages(document, jCas, corpusConfig),
@@ -925,6 +935,72 @@ public class Importer {
         document.setXscopes(xScopesTotal);
         document.setFocuses(focusesTotal);
         document.setEvents(eventsTotal);
+    }
+
+
+    /**
+     * Selects and sets the topics to a document
+     */
+
+    private void setUnifiedTopic(Document document, JCas jCas) {
+
+        List<UnifiedTopic> unifiedTopics = new ArrayList<>();
+
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.UnifiedTopic.class).forEach(ut -> {
+            UnifiedTopic unifiedTopic = new UnifiedTopic(ut.getBegin(), ut.getEnd());
+            unifiedTopic.setDocument(document);
+
+            if (ut.getTopics() != null) {
+                List<TopicValueBase> topics = new ArrayList<>();
+                for (org.texttechnologylab.annotation.TopicValueBase tvb : ut.getTopics().toArray(new org.texttechnologylab.annotation.TopicValueBase[0])) {
+                    TopicValueBase topicValueBase;
+
+                    // Check if the topic is of type TopicValueBaseWithScore
+                    if (tvb instanceof org.texttechnologylab.annotation.TopicValueBaseWithScore) {
+                        org.texttechnologylab.annotation.TopicValueBaseWithScore tvbWithScore = (org.texttechnologylab.annotation.TopicValueBaseWithScore) tvb;
+                        TopicValueBaseWithScore topicValueBaseWithScore = new TopicValueBaseWithScore(ut.getBegin(), ut.getEnd());
+                        topicValueBaseWithScore.setDocument(document);
+                        topicValueBaseWithScore.setScore(tvbWithScore.getScore());
+                        topicValueBase = topicValueBaseWithScore;
+                    } else {
+                        topicValueBase = new TopicValueBase(ut.getBegin(), ut.getEnd());
+                        topicValueBase.setDocument(document);
+                    }
+
+                    topicValueBase.setValue(tvb.getValue());
+
+                    if (tvb.getWords() != null) {
+                        List<TopicWord> words = new ArrayList<>();
+                        for (org.texttechnologylab.annotation.TopicWord tw : tvb.getWords().toArray(new org.texttechnologylab.annotation.TopicWord[0])) {
+                            TopicWord topicWord = new TopicWord(tw.getBegin(), tw.getEnd());
+                            topicWord.setWord(tw.getWord());
+                            topicWord.setProbability(tw.getProbability());
+                            topicWord.setTopic(topicValueBase);
+                            topicWord.setCoveredText(topicWord.getCoveredText(jCas.getDocumentText()));
+                            words.add(topicWord);
+                        }
+                        topicValueBase.setWords(words);
+                    }
+                    topicValueBase.setCoveredText(topicValueBase.getCoveredText(jCas.getDocumentText()));
+                    topicValueBase.setUnifiedTopic(unifiedTopic);
+                    topics.add(topicValueBase);
+                }
+                unifiedTopic.setTopics(topics);
+            }
+//
+//            // Map metadata
+//            if (ut.getMetadata() != null) {
+//                MetaData metadata = new MetaData();
+//                metadata.setKey(ut.getMetadata().getKey());
+//                metadata.setValue(ut.getMetadata().getValue());
+//                unifiedTopic.setMetadata(metadata);
+//            }
+            unifiedTopic.setCoveredText(unifiedTopic.getCoveredText(jCas.getDocumentText()));
+
+            unifiedTopics.add(unifiedTopic);
+        });
+
+        document.setUnifiedTopics(unifiedTopics);
     }
 
     /**

@@ -10,6 +10,7 @@ import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.topic.UnifiedTopic;
 
 import javax.persistence.*;
 import java.util.*;
@@ -114,7 +115,10 @@ public class Document extends ModelBase implements WikiModel {
     @Fetch(value = FetchMode.SUBSELECT)
     private List<XScope> xscopes;
 
-
+    // Unified topics:
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
+    private List<UnifiedTopic> unifiedTopics;
 
     public Document() {
         metadataTitleInfo = new MetadataTitleInfo();
@@ -303,6 +307,8 @@ public class Document extends ModelBase implements WikiModel {
         annotations.addAll(scopes.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(xscopes.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(events.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        // unifiedTopics
+        annotations.addAll(unifiedTopics.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
 
         annotations.sort(Comparator.comparingInt(UIMAAnnotation::getBegin));
         return annotations;
@@ -393,5 +399,13 @@ public class Document extends ModelBase implements WikiModel {
 
     public void setXscopes(List<XScope> xscopes) {
         this.xscopes = xscopes;
+    }
+
+    public List<UnifiedTopic> getUnifiedTopics() {
+        return unifiedTopics;
+    }
+
+    public void setUnifiedTopics(List<UnifiedTopic> unifiedTopics) {
+        this.unifiedTopics = unifiedTopics;
     }
 }

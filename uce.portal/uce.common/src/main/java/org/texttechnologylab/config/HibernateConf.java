@@ -13,6 +13,10 @@ import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.test.test;
+import org.texttechnologylab.models.topic.TopicValueBase;
+import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
+import org.texttechnologylab.models.topic.TopicWord;
+import org.texttechnologylab.models.topic.UnifiedTopic;
 
 import java.util.HashMap;
 
@@ -60,6 +64,11 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Focus.class);
         metadataSources.addAnnotatedClass(Scope.class);
         metadataSources.addAnnotatedClass(XScope.class);
+        //topics
+        metadataSources.addAnnotatedClass(UnifiedTopic.class);
+        metadataSources.addAnnotatedClass(TopicWord.class);
+        metadataSources.addAnnotatedClass(TopicValueBase.class);
+        metadataSources.addAnnotatedClass(TopicValueBaseWithScore.class);
 
         var metadata = metadataSources.buildMetadata();
 

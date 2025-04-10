@@ -25,7 +25,8 @@
     },
     "time": false,
     "wikipediaLink": false,
-    "completeNegation": false
+    "completeNegation": false,
+    "unifiedTopic": false
 
   },
   "other": {
