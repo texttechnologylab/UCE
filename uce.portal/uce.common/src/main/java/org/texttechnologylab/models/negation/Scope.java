@@ -5,6 +5,9 @@ import org.texttechnologylab.models.corpus.Document;
 
 import javax.persistence.*;
 
+/**
+ * Scope consists of one span, ManyToOne relation to CompleteNegation (one negation can have multiple Scopes)
+ */
 @Entity
 @Table(name="scope")
 public class Scope extends UIMAAnnotation {

@@ -5,6 +5,9 @@ import org.texttechnologylab.models.corpus.Document;
 
 import javax.persistence.*;
 
+/**
+ * XScope consists of one span, ManyToOne relation to CompleteNegation (one negation can have multiple XScopes)
+ */
 @Entity
 @Table(name="xscope")
 public class XScope extends UIMAAnnotation {

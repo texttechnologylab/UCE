@@ -6,6 +6,9 @@ import org.texttechnologylab.models.corpus.Document;
 
 import javax.persistence.*;
 
+/**
+ * Class implements the Cue. Consists of one span. (OneToOne relation with CompleteNegation)
+ */
 @Entity
 @Table(name="cue")
 public class Cue extends UIMAAnnotation implements WikiModel {

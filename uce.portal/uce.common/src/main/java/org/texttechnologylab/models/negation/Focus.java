@@ -5,6 +5,9 @@ import org.texttechnologylab.models.corpus.Document;
 
 import javax.persistence.*;
 
+/**
+ * Focus consists of one span, ManyToOne relation to CompleteNegation (one negation can have multiple Foci)
+ */
 @Entity
 @Table(name="focus")
 public class Focus extends UIMAAnnotation {

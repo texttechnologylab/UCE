@@ -5,6 +5,9 @@ import org.texttechnologylab.models.corpus.Document;
 
 import javax.persistence.*;
 
+/**
+ * Event consists of one span, ManyToOne relation to CompleteNegation (one negation can have multiple Events)
+ */
 @Entity
 @Table(name="event")
 public class Event extends UIMAAnnotation {
