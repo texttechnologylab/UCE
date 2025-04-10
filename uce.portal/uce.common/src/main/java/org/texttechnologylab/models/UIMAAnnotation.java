@@ -17,7 +17,7 @@ public class UIMAAnnotation extends ModelBase {
     private int end;
     @Column(columnDefinition = "TEXT")
     private String coveredText;
-    private boolean isLexicalized;
+    private Boolean isLexicalized;
 
     public String getCoveredText() {
         return coveredText;

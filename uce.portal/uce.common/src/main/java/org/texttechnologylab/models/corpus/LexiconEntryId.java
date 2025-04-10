@@ -12,7 +12,7 @@ import java.util.Objects;
 @Embeddable
 public class LexiconEntryId implements Serializable {
 
-    @Column(name = "coveredtext")
+    @Column(name = "coveredtext", columnDefinition = "TEXT")
     private String coveredText;
 
     @Column(name = "typee")

@@ -23,7 +23,7 @@ BEGIN
             WITH new_lex AS (
                 SELECT coveredtext, COUNT(*) AS cnt
                 FROM %I
-                WHERE coveredtext IS NOT NULL AND NOT isLexicalized
+                WHERE coveredtext IS NOT NULL AND (NOT isLexicalized OR isLexicalized IS NULL)
                 GROUP BY coveredtext
             ),
             inserted AS (

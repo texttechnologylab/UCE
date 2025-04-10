@@ -20,6 +20,7 @@ import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.LexiconEntryId;
 import org.texttechnologylab.models.corpus.UCELog;
 import org.texttechnologylab.routes.*;
+import org.texttechnologylab.services.LexiconService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.ImageUtils;
 import org.texttechnologylab.utils.StringUtils;
@@ -97,6 +98,10 @@ public class App {
 
         SystemStatus.InitSystemStatus(commonConfig.getSystemJobInterval(), context);
         logger.info("Initialized the System Job.");
+
+        logger.info("Checking if we can update the lexicon... (this may take a moment depending on the time of the last update)");
+        var addedLexiconEntries = context.getBean(LexiconService.class).updateLexicon();
+        logger.info("Finished updating the lexicon. Added new entries: " + addedLexiconEntries);
 
         // Set the folder for our template files of freemarker
         try {
