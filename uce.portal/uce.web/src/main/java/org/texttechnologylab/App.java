@@ -17,10 +17,12 @@ import org.texttechnologylab.config.UceConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.corpus.Corpus;
+import org.texttechnologylab.models.corpus.LexiconEntryId;
 import org.texttechnologylab.models.corpus.UCELog;
 import org.texttechnologylab.routes.*;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.ImageUtils;
+import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 import spark.ExceptionHandler;
 import spark.ModelAndView;
@@ -243,6 +245,7 @@ public class App {
             model.put("isDbAlive", SystemStatus.PostgresqlDbStatus.isAlive());
             model.put("isRagAlive", SystemStatus.RagServiceStatus.isAlive());
             model.put("uceVersion", commonConfig.getUceVersion());
+            model.put("alphabetList", StringUtils.getAlphabetAsList());
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");
@@ -275,6 +278,9 @@ public class App {
 
             path("/wiki", () -> {
                 get("/page", wikiApi.getPage);
+                path("/lexicon", () -> {
+                    get("/entries", wikiApi.getLexicon);
+                });
                 post("/queryOntology", wikiApi.queryOntology);
             });
 

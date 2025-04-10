@@ -1,5 +1,7 @@
 package org.texttechnologylab.utils;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -25,6 +27,14 @@ public class StringUtils {
             return str; // Return empty string or null if input is null or empty
         }
         return Character.toLowerCase(str.charAt(0)) + str.substring(1);
+    }
+
+    public static List<Character> getAlphabetAsList() {
+        List<Character> alphabet = new ArrayList<>();
+        for (char c = 'A'; c <= 'Z'; c++) {
+            alphabet.add(c);
+        }
+        return alphabet;
     }
 
     public static String CleanText(String text) {

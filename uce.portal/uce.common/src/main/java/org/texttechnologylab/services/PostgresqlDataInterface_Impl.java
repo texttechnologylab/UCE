@@ -321,6 +321,24 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<LexiconEntry> getManyLexiconEntries(int skip, int take) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var builder = session.getCriteriaBuilder();
+            var criteriaQuery = builder.createQuery(LexiconEntry.class);
+            var root = criteriaQuery.from(LexiconEntry.class);
+            criteriaQuery.select(root)
+                    .orderBy(
+                            builder.asc(root.get("id").get("coveredText")),
+                            builder.asc(root.get("id").get("type"))
+                    );
+            var query = session.createQuery(criteriaQuery)
+                    .setFirstResult(skip)
+                    .setMaxResults(take);
+
+            return query.getResultList();
+        });
+    }
+
     public int callLexiconRefresh(ArrayList<String> tables) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
             var insertedLex = 0;
@@ -603,6 +621,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(Time.class, id));
+    }
+
+    public LexiconEntry getLexiconEntryId(LexiconEntryId id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(LexiconEntry.class, id));
     }
 
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException {

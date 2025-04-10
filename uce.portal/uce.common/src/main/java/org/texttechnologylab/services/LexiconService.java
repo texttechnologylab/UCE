@@ -4,13 +4,11 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.config.CommonConfig;
+import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
-import org.texttechnologylab.models.corpus.Lemma;
-import org.texttechnologylab.models.corpus.NamedEntity;
-import org.texttechnologylab.models.corpus.Taxon;
-import org.texttechnologylab.models.corpus.Time;
+import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.utils.SystemStatus;
 
 import javax.persistence.Table;
@@ -58,6 +56,11 @@ public class LexiconService {
         var insertedLex = ExceptionUtils.tryCatchLog(()->db.callLexiconRefresh(tables),
                 (ex) -> logger.error("Error updating the lexicon: ", ex));
         return insertedLex == null ? -1 : insertedLex;
+    }
+
+    public List<LexiconEntry> getEntries(int skip, int take) throws DatabaseOperationException {
+        var entries = db.getManyLexiconEntries(skip, take);
+        return entries;
     }
 
 }

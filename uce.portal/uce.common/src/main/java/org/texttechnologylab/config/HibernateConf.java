@@ -50,6 +50,7 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Time.class);
         metadataSources.addAnnotatedClass(WikiDataHyponym.class);
         metadataSources.addAnnotatedClass(WikipediaLink.class);
+        metadataSources.addAnnotatedClass(LexiconEntry.class);
         metadataSources.addAnnotatedClass(Page.class);
         metadataSources.addAnnotatedClass(Document.class);
         metadataSources.addAnnotatedClass(Corpus.class);
