@@ -1,0 +1,24 @@
+.lexicon-view{
+}
+
+.lexicon-view *{
+    font-family: "Times New Roman", serif;
+}
+
+.lexicon-view header{
+    width: 100%;
+    border-bottom: 1px lightgrey solid;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.lexicon-view header .search-lexicon-input{
+    max-width: 300px;
+}
+
+.lexicon-view header .search-lexicon-btn{
+    height: 100%;
+    color:var(--prime);
+    padding-right: 12px;
+    padding-left: 12px;
+}

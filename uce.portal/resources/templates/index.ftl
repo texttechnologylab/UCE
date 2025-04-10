@@ -17,6 +17,7 @@
         <#include "*/css/search-redesign.css">
         <#include "*/css/corpus-universe.css">
         <#include "*/css/wiki.css">
+        <#include "*/css/lexicon.css">
         <#include "*/css/layered-search-builder.css">
         <#include "*/css/kwic.css">
     </style>
@@ -116,12 +117,12 @@
                     <div class="flexed align-items-center nav-buttons">
                         <a class="switch-view-btn btn text" data-id="search"><i
                                     class="fas fa-globe-europe color-prime"></i> Portal</a>
-                        <a class="switch-view-btn btn text" data-id="annotation-browser"><i
-                                    class="fas fa-atlas color-prime"></i> ${languageResource.get("lexicon")}</a>
+                        <a class="switch-view-btn btn text" data-id="lexicon"><i
+                                    class="fab fa-wikipedia-w color-prime"></i> ${languageResource.get("lexicon")}</a>
                         <a class="switch-view-btn btn text" data-id="team"><i
                                     class="fas fa-users color-prime"></i> ${languageResource.get("team")}</a>
                     </div>
-                    <select class="form-control bg-light rounded-0 color-prime border-right-0 large-font switch-language-select">
+                    <select class="form-control bg-default rounded-0 color-prime border-right-0 large-font switch-language-select">
                         <option data-lang="en-EN">Englisch</option>
                         <option data-lang="de-DE">Deutsch</option>
                     </select>
@@ -141,7 +142,7 @@
     <div class="corpusUniverse-content-container main-content-container">
 
         <!-- landing page -->
-        <div class="view" data-id="landing">
+        <div class="view display-none" data-id="landing">
             <#include "*/landing-page.ftl" />
         </div>
 
@@ -300,10 +301,13 @@
             <div class="position-relative">
                 <#include "*/search/components/loader.ftl">
                 <div class="search-result-container container-fluid position-relative">
-
                 </div>
             </div>
+        </div>
 
+        <!-- Lexicon -->
+        <div class="view" data-id="lexicon">
+            <#include "*/wiki/lexicon.ftl" />
         </div>
 
         <!-- team -->

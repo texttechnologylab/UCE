@@ -14,7 +14,9 @@
                 <hr class="mt-0 mb-1 text"/>
                 <p class="text mb-0 font-italic">${languageResource.get("corpusInspector")}</p>
             </div>
-            <h4 class="m-0 color-secondary"><i class="fas fa-atlas mr-1"></i></h4>
+            <a class="w-rounded-btn open-wiki-page" data-wid="${corpus.getWikiId()}" data-wcovered="${corpus.getName()}">
+                <i class="fab fa-wikipedia-w m-0 color-prime large-font"></i>
+            </a>
         </div>
 
         <div class="ccontent">

@@ -4,6 +4,7 @@
     --secondary: rgba(35, 35, 35, 1);
     --gold: rgba(255, 165, 0, 1);
     --dark: rgba(38, 38, 38, 1);
+    --default: rgb(245, 245, 247, 1);
 }
 
 .site-container {
@@ -16,7 +17,7 @@
 }
 
 .bg-default {
-    background-color: rgb(245, 245, 247) !important;
+    background-color: var(--default) !important;
 }
 
 footer {
@@ -74,12 +75,12 @@ nav .nav-buttons a i{
 
 nav .nav-buttons a:hover {
     color: black !important;
-    background-color: ghostwhite;
+    background-color: var(--default);
 }
 
 nav .selected-nav-btn {
     position: relative;
-    background-color: ghostwhite;
+    background-color: var(--default);
     border: lightgray 1px solid;
     border-radius: 8px !important;
     color: var(--prime) !important;
@@ -375,13 +376,12 @@ nav .selected-nav-btn.text::before {
     max-width: 225px;
     min-width: 150px;
     border-radius: 0;
-    color:rgba(0, 0, 0, 0.5);
-    border-right: 0;
+    border-left: 0;
+    color:var(--prime);
     height: 41px;
     padding-left: 15px;
     padding-right: 15px;
-    background-color: lightgray;
-    font-weight: bold;
+    background-color: var(--default);
 }
 
 .open-corpus-inspector-btn {
