@@ -5,7 +5,7 @@ import org.texttechnologylab.models.UIMAAnnotation;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "topic_word")
+@Table(name = "topicword")
 public class TopicWord extends UIMAAnnotation {
 
 

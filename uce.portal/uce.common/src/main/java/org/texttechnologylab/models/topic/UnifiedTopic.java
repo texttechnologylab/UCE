@@ -9,7 +9,7 @@ import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name = "unified_topic")
+@Table(name = "unifiedtopic")
 public class UnifiedTopic extends UIMAAnnotation {
 
 

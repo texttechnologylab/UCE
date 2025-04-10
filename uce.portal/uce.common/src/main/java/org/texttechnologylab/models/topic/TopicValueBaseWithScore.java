@@ -5,7 +5,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "topic_value_base_with_score")
+@Table(name = "topicvaluebasewithscore")
 public class TopicValueBaseWithScore extends TopicValueBase {
 
     @Column(name = "score", nullable = false)

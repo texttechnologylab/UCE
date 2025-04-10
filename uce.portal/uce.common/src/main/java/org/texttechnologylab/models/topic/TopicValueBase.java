@@ -7,7 +7,7 @@ import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name = "topic_value_base")
+@Table(name = "topicvaluebase")
 public class TopicValueBase extends UIMAAnnotation {
 
     @ManyToOne
