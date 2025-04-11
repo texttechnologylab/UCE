@@ -11,6 +11,18 @@
     "de-DE": "Suche",
     "en-EN": "Search"
   },
+  "annotations": {
+    "de-DE": "Annotationen",
+    "en-EN": "Annotations"
+  },
+  "alphabet": {
+    "de-DE": "Alphabet",
+    "en-EN": "Alphabet"
+  },
+  "occurrence": {
+    "de-DE": "Vorkommen",
+    "en-EN": "Occurrence"
+  },
   "lexicon": {
     "de-DE": "Lexikon",
     "en-EN": "Lexicon"

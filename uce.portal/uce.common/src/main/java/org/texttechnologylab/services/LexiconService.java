@@ -69,6 +69,7 @@ public class LexiconService {
     public int updateLexicon(boolean forceRecalculate) {
         var tables = new ArrayList<String>();
 
+        // Here we gather all table names of the annotations we have lexiconized.
         for (var annotation : lexiconizableAnnotations) {
             if (annotation.isAnnotationPresent(Table.class)) {
                 tables.add(annotation.getAnnotation(Table.class).name().toLowerCase());
@@ -80,8 +81,13 @@ public class LexiconService {
         return insertedLex == null ? -1 : insertedLex;
     }
 
-    public List<LexiconEntry> getEntries(int skip, int take, List<String> alphabet) throws DatabaseOperationException {
-        var entries = db.getManyLexiconEntries(skip, take, alphabet);
+    public List<LexiconEntry> getEntries(int skip,
+                                         int take,
+                                         List<String> alphabet,
+                                         List<String> annotationFilters,
+                                         String sortColumn,
+                                         String sortOrder) throws DatabaseOperationException {
+        var entries = db.getManyLexiconEntries(skip, take, alphabet, annotationFilters, sortColumn, sortOrder);
         return entries;
     }
 

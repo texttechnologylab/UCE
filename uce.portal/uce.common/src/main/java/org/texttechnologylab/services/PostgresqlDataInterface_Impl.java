@@ -20,6 +20,8 @@ import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
 
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
@@ -321,22 +323,46 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<LexiconEntry> getManyLexiconEntries(int skip, int take, List<String> alphabet) throws DatabaseOperationException {
+    public List<LexiconEntry> getManyLexiconEntries(int skip, int take, List<String> alphabet, List<String> annotationFilters, String sortColumn, String sortOrder)
+            throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
             var criteriaQuery = builder.createQuery(LexiconEntry.class);
             var root = criteriaQuery.from(LexiconEntry.class);
             criteriaQuery.select(root);
 
-            // If an alphabet is given, we filter for that.
+            // Collect predicates for dynamic where clause
+            List<Predicate> predicates = new ArrayList<>();
+
             if (alphabet != null && !alphabet.isEmpty()) {
-                criteriaQuery.where(root.get("startCharacter").in(alphabet));
+                predicates.add(root.get("startCharacter").in(alphabet));
             }
 
-            criteriaQuery.orderBy(
-                    builder.asc(root.get("id").get("coveredText")),
-                    builder.asc(root.get("id").get("type"))
-            );
+            if (annotationFilters != null && !annotationFilters.isEmpty()) {
+                predicates.add(root.get("id").get("type").in(
+                        annotationFilters.stream().map(String::toLowerCase).toList()));
+            }
+
+            if (!predicates.isEmpty()) {
+                criteriaQuery.where(builder.and(predicates.toArray(new Predicate[0])));
+            }
+
+            // Determine sorting
+            Path<?> sortPath;
+            if ("occurrence".equalsIgnoreCase(sortColumn)) {
+                sortPath = root.get("count");
+            } else {
+                // Default to sorting by coveredText of ID
+                sortPath = root.get("id").get("coveredText");
+            }
+
+            Order order = "DESC".equalsIgnoreCase(sortOrder)
+                    ? builder.desc(sortPath)
+                    : builder.asc(sortPath);
+
+            // Secondary sort by type for stability
+            criteriaQuery.orderBy(order, builder.asc(root.get("id").get("type")));
+
             return session.createQuery(criteriaQuery)
                     .setFirstResult(skip)
                     .setMaxResults(take)

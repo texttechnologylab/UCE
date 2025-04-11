@@ -262,8 +262,10 @@ public class App {
             model.put("isDbAlive", SystemStatus.PostgresqlDbStatus.isAlive());
             model.put("isRagAlive", SystemStatus.RagServiceStatus.isAlive());
             model.put("isLexiconCalculating", SystemStatus.LexiconIsCalculating);
-            model.put("uceVersion", commonConfig.getUceVersion());
             model.put("alphabetList", StringUtils.getAlphabetAsList());
+            model.put("lexiconEntriesCount", context.getBean(LexiconService.class).countLexiconEntries());
+            model.put("lexiconizableAnnotations", LexiconService.lexiconizableAnnotations);
+            model.put("uceVersion", commonConfig.getUceVersion());
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");

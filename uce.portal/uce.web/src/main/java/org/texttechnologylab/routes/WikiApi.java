@@ -198,12 +198,15 @@ public class WikiApi {
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
         }
 
-        // Alphabet is optional. We can work without just fine.
+        // These parameters are optional. We can work without just fine.
         var alphabet = ExceptionUtils.tryCatchLog(() -> (List<String>) requestBody.get("alphabet"), (ex) -> {});
+        var annotationFilters = ExceptionUtils.tryCatchLog(() -> (List<String>) requestBody.get("annotationFilters"), (ex) -> {});
+        var sortColumn = ExceptionUtils.tryCatchLog(() -> requestBody.get("sortColumn").toString(), (ex) -> {});
+        var sortDirection = ExceptionUtils.tryCatchLog(() -> requestBody.get("sortDirection").toString(), (ex) -> {});
 
         try {
             var entries = ExceptionUtils.tryCatchLog(
-                    () -> lexiconService.getEntries(skip, take, alphabet),
+                    () -> lexiconService.getEntries(skip, take, alphabet, annotationFilters, sortColumn, sortDirection),
                     (ex) -> logger.error("Error fetching lexicon entries: ", ex));
             if(entries == null){
                 response.status(500);

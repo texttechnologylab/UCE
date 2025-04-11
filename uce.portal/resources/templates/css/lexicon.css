@@ -24,10 +24,6 @@
     padding-left: 12px;
 }
 
-.lexicon-view .filter-bar{
-    width: 100%;
-}
-
 .lexicon-view .alphabet .selected-char{
     background-color: var(--dark) !important;
     color:white;
@@ -54,7 +50,7 @@
 
 .lexicon-view .lexicon-entry{
     border-bottom: lightgrey 1px solid;
-    border-left:4px solid transparent;
+    border-left:8px solid transparent;
     background-color: rgba(125, 125, 125, 0.075);
     padding-left: 14px;
     padding-right: 14px;
@@ -76,6 +72,37 @@
     border-left-color: rgba(155, 0, 0, 0.65);
 }
 
+.lexicon-view .lexicon-entry[data-type="taxon"] {
+    border-left-color: darkgreen;
+}
+
+.lexicon-view .lexicon-entry[data-type="biofidtaxon"] {
+    border-left-color: darkgreen;
+}
+
 .lexicon-view .lexicon-entry[data-type="time"] {
     border-left-color: lightblue;
+}
+
+.lexicon-view .filter-container{
+    height: 100%;
+    width: 100%;
+    background-color: rgba(125, 125, 125, 0.15);
+    border:lightgrey 1px solid;
+}
+
+.lexicon-view .filter-container .annotation-filter{
+    display: flex;
+    justify-content: space-between;
+    border-radius: 3px;
+    align-items:center;
+    border:lightgray 1px solid;
+    padding: 6px;
+    flex-wrap: wrap;
+    word-break: break-all;
+}
+
+.lexicon-view .sortings .selected-sort{
+    background-color: var(--dark);
+    color:white;
 }

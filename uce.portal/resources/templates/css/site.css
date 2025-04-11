@@ -338,6 +338,11 @@ nav .selected-nav-btn.text::before {
     transition: 0.2s;
 }
 
+.turn-180{
+    transform: rotate(180deg);
+    transition: 0.075s;
+}
+
 .rotate {
     -webkit-animation: spin 4s linear infinite;
     -moz-animation: spin 4s linear infinite;
