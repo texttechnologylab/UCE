@@ -87,6 +87,22 @@ public class WikiService {
     }
 
     /**
+     * Gets an UnifiedTopicWikiPageViewModel to render a Wikipage for that annotation
+     */
+    public UnifiedTopicWikiPageViewModel buildUnifiedTopicWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new UnifiedTopicWikiPageViewModel();
+        var unifiedTopic = db.getUnifiedTopicById(id);
+        viewModel.setWikiModel(unifiedTopic);
+        viewModel.setDocument(db.getDocumentById(unifiedTopic.getDocument().getId()));
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("UnifiedTopic");
+        viewModel.setTopics(unifiedTopic.getTopics());
+
+        return viewModel;
+    }
+
+    /**
      * Gets an DocumentAnnitationWikiPageViewmodel to render a Wikipage for this document.
      */
     public DocumentAnnotationWikiPageViewModel buildDocumentWikiPageViewModel(long id) throws DatabaseOperationException {

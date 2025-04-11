@@ -3,6 +3,7 @@ package org.texttechnologylab.models.topic;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
 
 import javax.persistence.*;
@@ -10,7 +11,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "unifiedtopic")
-public class UnifiedTopic extends UIMAAnnotation {
+public class UnifiedTopic extends UIMAAnnotation implements WikiModel {
     /***
      * UnifiedTopic class can be used to represent the topics in a document. A topic can be represented by a list of
      * words or category label. Each document can have multiple topics. Therefore, a unified topic creates a
@@ -57,4 +58,8 @@ public class UnifiedTopic extends UIMAAnnotation {
         this.document = document;
     }
 
+    @Override
+    public String getWikiId() {
+        return "UT" + "-" + this.getId();
+    }
 }

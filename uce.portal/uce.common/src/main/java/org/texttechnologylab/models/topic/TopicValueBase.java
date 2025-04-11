@@ -16,13 +16,13 @@ public class TopicValueBase extends UIMAAnnotation {
      */
 
     @ManyToOne
-    @JoinColumn(name = "unified_topic_id")
+    @JoinColumn(name = "unifiedTopic_id")
     private UnifiedTopic unifiedTopic;
 
     @Column(name = "value", nullable = false)
     private String value;
 
-    @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     private List<TopicWord> words;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
