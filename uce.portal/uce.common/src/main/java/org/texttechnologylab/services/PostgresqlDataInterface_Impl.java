@@ -26,6 +26,7 @@ import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.sql.Array;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -366,6 +367,139 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 }
                 return search;
             }
+        }));
+    }
+
+    @Override
+    public DocumentSearchResult completeNegationSearchForDocuments(int skip,
+                                                                   int take,
+                                                                   List<String> cue,
+                                                                   List<String> event,
+                                                                   List<String> focus,
+                                                                   List<String> scope,
+                                                                   List<String> xscope,
+                                                                   boolean countAll,
+                                                                   SearchOrder order,
+                                                                   OrderByColumn orderedByColumn,
+                                                                   long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+            HashMap<String, List<String>> tableSubstrings = new HashMap<>();
+            tableSubstrings.put("cue", cue);
+            tableSubstrings.put("event", event);
+            tableSubstrings.put("focus", focus);
+            tableSubstrings.put("scope", scope);
+            tableSubstrings.put("xscope", xscope);
+
+            DocumentSearchResult search = null;
+
+            TreeMap<Long, List<int[]>> cuesByDocID = new TreeMap<>();
+            TreeMap<Long, List<int[]>> scopesByDocID = new TreeMap<>();
+            TreeMap<Long, List<int[]>> xscopesByDocID = new TreeMap<>();
+            TreeMap<Long, List<int[]>> eventsByDocID = new TreeMap<>();
+            TreeMap<Long, List<int[]>> fociByDocID = new TreeMap<>();
+            HashMap<String, TreeMap<Long, List<int[]>>> annoMap = new HashMap<>();
+            annoMap.put("cue", cuesByDocID);
+            annoMap.put("event", eventsByDocID);
+            annoMap.put("focus", fociByDocID);
+            annoMap.put("scope", scopesByDocID);
+            annoMap.put("xscope", xscopesByDocID);
+
+            for (Map.Entry<String, List<String>> entry : tableSubstrings.entrySet()) {
+                String table = entry.getKey();
+                List<String> substrings = entry.getValue();
+                if (substrings == null || substrings.isEmpty()) continue;
+
+                StringBuilder sql = new StringBuilder();
+                sql.append("SELECT * FROM ").append(table).append(" WHERE ");
+
+                // WHERE conditions (ANDed ILIKEs)
+                for (int i = 0; i < substrings.size(); i++) {
+                    if (i > 0) sql.append(" AND ");
+                    sql.append("coveredtext ILIKE ?");
+                }
+
+                // Group by document_id to get distinct ones
+                //sql.append(" GROUP BY document_id");
+                String trimmed = sql.toString().trim(); // Remove trailing whitespace
+                if (trimmed.endsWith("WHERE")) {
+                    trimmed = trimmed.substring(0, trimmed.length() - "WHERE".length()).trim();
+                }
+                try (PreparedStatement stmt = connection.prepareStatement(trimmed)) {
+                    int paramIndex = 1;
+
+                    // Set parameters for each substring in WHERE clause
+                    for (String s : substrings) {
+                        stmt.setString(paramIndex++, "%" + s + "%");
+                    }
+
+                    ResultSet rs = stmt.executeQuery();
+                    while (rs.next()) {
+                        Long docId = rs.getLong("document_id");
+                        int begin = rs.getInt("beginn");
+                        int end = rs.getInt("endd");
+                        if (annoMap.get(table).get(docId) == null) {
+                            List<int[]> offsets = new ArrayList<>();
+                            offsets.add(new int[]{begin, end});
+                            annoMap.get(table).put(docId, offsets);
+                        } else {
+                            annoMap.get(table).get(docId).add(new int[]{begin, end});
+                        }
+                    }
+                }
+            }
+            List<int[]> cues = new ArrayList<>();
+            List<int[]> scopes = new ArrayList<>();
+            List<int[]> xscopes = new ArrayList<>();
+            List<int[]> events = new ArrayList<>();
+            List<int[]> foci = new ArrayList<>();
+            List<Long> docIds = new ArrayList<>();
+            int docCount = 0;
+
+            int idx_off = 0;
+            int doc_found = 0;
+            for (Map.Entry<Long, List<int[]>> entry2 : annoMap.get("cue").entrySet()) {
+
+                Long docID = entry2.getKey();
+                List<int[]> offsets = entry2.getValue();
+                boolean present = true;
+                for (TreeMap<Long, List<int[]>> innerMap : annoMap.values()) {
+                    if (!innerMap.containsKey(docID)) {
+                        present = false;
+                        break;
+                    }
+                }
+                if (present) {
+                    if (idx_off >= skip && doc_found <= take) {
+                        cues.addAll(offsets);
+                        scopes.addAll(annoMap.get("scope").get(docID));
+                        xscopes.addAll(annoMap.get("xscope").get(docID));
+                        events.addAll(annoMap.get("event").get(docID));
+                        foci.addAll(annoMap.get("focus").get(docID));
+                        docIds.add(docID);
+                        doc_found++;
+                    }
+                    docCount ++;
+
+                }
+                idx_off++;
+            }
+
+            if (docIds.isEmpty()) {
+                return search;
+            } else {
+                var documentIds = new ArrayList<Integer>();
+                for (Long docId : docIds) {
+                    documentIds.add(docId.intValue()); // Convert Long to Integer
+                }
+                search = new DocumentSearchResult(docCount, documentIds);
+                // Also parse the found entities and all outputs the query returns.
+                // TODO add here annotations...
+//               search.setFoundNamedEntities(parseAnnotationOccurrences(result.getArray("named_entities_found").getResultSet()));
+//               search.setFoundTaxons(parseAnnotationOccurrences(result.getArray("taxons_found").getResultSet()));
+//               search.setFoundTimes(parseAnnotationOccurrences(result.getArray("time_found").getResultSet()));
+                return search;
+            }
+
         }));
     }
 

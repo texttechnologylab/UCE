@@ -91,6 +91,26 @@
     "de-DE": "Organisationen",
     "en-EN": "Organisations"
   },
+  "cue": {
+    "de-DE": "Stichwort",
+    "en-EN": "cue"
+  },
+  "scope": {
+    "de-DE": "Skopus",
+    "en-EN": "scope"
+  },
+  "xscope": {
+    "de-DE": "Erweitertes Skopus",
+    "en-EN": "extended scope"
+  },
+  "focus": {
+    "de-DE": "Fokus",
+    "en-EN": "focus"
+  },
+  "event": {
+    "de-DE": "Ereignis",
+    "en-EN": "event"
+  },
   "misc": {
     "de-DE": "Sonstiges",
     "en-EN": "Misc"

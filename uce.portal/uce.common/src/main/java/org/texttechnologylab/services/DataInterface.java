@@ -133,6 +133,21 @@ public interface DataInterface {
     ) throws DatabaseOperationException;
 
     /**
+     * Does a negation search and returns document hits
+     */
+    public DocumentSearchResult completeNegationSearchForDocuments(int skip,
+                                                                   int take,
+                                                                   List<String> cue,
+                                                                   List<String> event,
+                                                                   List<String> focus,
+                                                                   List<String> scope,
+                                                                   List<String> xscope,
+                                                                   boolean countAll,
+                                                                   SearchOrder order,
+                                                                   OrderByColumn orderedByColumn,
+                                                                   long corpusId)
+        throws DatabaseOperationException;
+    /**
      * Searches for documents with a variety of criterias. It's the main db search of the biofid portal
      * The function calls a variety of stored procedures in the database.
      *

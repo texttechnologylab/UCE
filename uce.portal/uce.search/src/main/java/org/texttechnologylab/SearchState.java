@@ -37,9 +37,9 @@ public class SearchState extends CacheItem {
     private Integer totalHits;
     private SearchOrder order = SearchOrder.DESC;
     private OrderByColumn orderBy = OrderByColumn.RANK;
-    private ArrayList<AnnotationSearchResult> foundNamedEntities;
-    private ArrayList<AnnotationSearchResult> foundTimes;
-    private ArrayList<AnnotationSearchResult> foundTaxons;
+    private ArrayList<AnnotationSearchResult> foundNamedEntities = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundTimes = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundTaxons = new ArrayList<>();
     private KeywordInContextState keywordInContextState;
 
     /**

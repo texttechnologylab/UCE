@@ -162,7 +162,7 @@ public class DocumentApi {
             if(searchId != null && SessionManager.ActiveSearches.containsKey(searchId)){
                 var activeSearchState = (SearchState)SessionManager.ActiveSearches.get(searchId);
                 // For SRL Search, there are no search tokens really. We will handle that exclusively later.
-                if(activeSearchState.getSearchType() != SearchType.SEMANTICROLE){
+                if(activeSearchState.getSearchType() != SearchType.SEMANTICROLE || activeSearchState.getSearchType() != SearchType.NEG){
                     model.put("searchTokens", String.join("[TOKEN]", activeSearchState.getSearchTokens()));
                 }
             }
