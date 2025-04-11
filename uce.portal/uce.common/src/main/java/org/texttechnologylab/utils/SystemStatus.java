@@ -7,8 +7,10 @@ import org.texttechnologylab.config.UceConfig;
 import org.texttechnologylab.cronjobs.SystemJob;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.util.HealthStatus;
+import org.texttechnologylab.services.LexiconService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 
+import javax.persistence.Table;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -22,6 +24,7 @@ public final class SystemStatus {
     public static HealthStatus PostgresqlDbStatus = new HealthStatus();
     public static HealthStatus RagServiceStatus = new HealthStatus();
     public static HealthStatus UIMAService = new HealthStatus();
+    public static boolean LexiconIsCalculating = false;
     public static UceConfig UceConfig = null;
     private static final Logger logger = LogManager.getLogger(SystemStatus.class);
 

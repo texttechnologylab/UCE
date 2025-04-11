@@ -73,7 +73,7 @@ public class DocumentApi {
         if(page == null) page = 1;
 
         try {
-            var take = 15;
+            var take = 10;
             var documents = db.getDocumentsByCorpusId(corpusId, (page - 1) * take, take);
 
             model.put("requestId", request.attribute("id"));

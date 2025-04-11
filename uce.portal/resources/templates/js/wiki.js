@@ -3,8 +3,62 @@ let WikiHandler = (function () {
     WikiHandler.prototype.history = [];
     WikiHandler.prototype.currentPage = undefined;
     WikiHandler.prototype.universeHandler = undefined;
+    WikiHandler.prototype.lexiconState = {
+        skip: 0,
+        take: 20,
+    }
 
     function WikiHandler() {
+    }
+
+    WikiHandler.prototype.updateLexiconPage = function(){
+        let curPage = this.lexiconState.skip / this.lexiconState.take + 1;
+        let start = 1;
+        if(curPage <= 3) start = 1;
+        else if(curPage > 4) start = curPage - 3;
+        const btnList = $('.lexicon-view .lexicon-navigation .pages-count');
+        btnList.html("");
+        for(let i = start; i < curPage + 4; i++){
+            const selected = i === curPage ? "cur-page" : "";
+            btnList.append(
+                "<a class='rounded-a SELECTED' onclick='window.wikiHandler.fetchPage(PAGE)'>PAGE</a>"
+                    .replaceAll("PAGE", i)
+                    .replace("SELECTED", selected)
+            );
+        }
+    }
+
+    WikiHandler.prototype.fetchPage = function(pageNum){
+        if(pageNum < 1) return;
+        this.lexiconState.skip = this.lexiconState.take * pageNum;
+        this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
+    }
+
+    WikiHandler.prototype.fetchPreviousLexiconEntries = function(){
+        if(this.lexiconState.skip < this.lexiconState.take) return;
+        this.lexiconState.skip -= this.lexiconState.take;
+        this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
+    }
+
+    WikiHandler.prototype.fetchNextLexiconEntries = function(){
+        this.lexiconState.skip += this.lexiconState.take;
+        this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
+    }
+
+    WikiHandler.prototype.fetchLexiconEntries = function(skip, take){
+        $.ajax({
+            url: "/api/wiki/lexicon/entries?skip=" + skip + "&take=" + take,
+            type: "GET",
+            success: (response) => {
+                activatePopovers();
+                $('.lexicon-content-include').html(response);
+                this.updateLexiconPage();
+            },
+            error: (xhr, status, error) => {
+                showMessageModal("Unknown Error", "There was an unknown error loading the lexicon entries.")
+            }
+        }).always(() => {
+        });
     }
 
     WikiHandler.prototype.addPageToHistory = function (wikiDto) {

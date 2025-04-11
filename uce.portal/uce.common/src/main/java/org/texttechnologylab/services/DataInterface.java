@@ -216,6 +216,16 @@ public interface DataInterface {
     public Time getTimeAnnotationById(long id) throws DatabaseOperationException;
 
     /**
+     * Counts the entries in the lexicon
+     */
+    public long countLexiconEntries() throws DatabaseOperationException;
+
+    /**
+     * Gets a Lexicon entry by its composite id.
+     */
+    public LexiconEntry getLexiconEntryId(LexiconEntryId id) throws DatabaseOperationException;
+
+    /**
      * Gets a named entity by its id
      */
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException;

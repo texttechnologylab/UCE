@@ -322,6 +322,39 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<LexiconEntry> getManyLexiconEntries(int skip, int take) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var builder = session.getCriteriaBuilder();
+            var criteriaQuery = builder.createQuery(LexiconEntry.class);
+            var root = criteriaQuery.from(LexiconEntry.class);
+            criteriaQuery.select(root)
+                    .orderBy(
+                            builder.asc(root.get("id").get("coveredText")),
+                            builder.asc(root.get("id").get("type"))
+                    );
+            var query = session.createQuery(criteriaQuery)
+                    .setFirstResult(skip)
+                    .setMaxResults(take);
+
+            return query.getResultList();
+        });
+    }
+
+    public int callLexiconRefresh(ArrayList<String> tables, boolean force) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+            var insertedLex = 0;
+            try (var storedProcedure = connection.prepareCall("{call refresh_lexicon" + "(?, ?)}")) {
+                storedProcedure.setArray(1, connection.createArrayOf("text", tables.toArray(new String[0])));
+                storedProcedure.setBoolean(2, force);
+                var result = storedProcedure.executeQuery();
+                while (result.next()) {
+                    insertedLex = result.getInt(1);
+                }
+            }
+            return insertedLex;
+        }));
+    }
+
     @Override
     public DocumentSearchResult semanticRoleSearchForDocuments(int skip,
                                                                int take,
@@ -533,7 +566,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var criteria = session.createCriteria(UCEImport.class);
             criteria.add(Restrictions.eq("importId", importId));
-            return (UCEImport)criteria.list().getFirst();
+            return (UCEImport) criteria.list().getFirst();
         });
     }
 
@@ -590,6 +623,20 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(Time.class, id));
+    }
+
+    public long countLexiconEntries() throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var builder = session.getCriteriaBuilder();
+            var criteria = builder.createQuery(Long.class);
+            var root = criteria.from(LexiconEntry.class);
+            criteria.select(builder.count(root));
+            return session.createQuery(criteria).getSingleResult();
+        });
+    }
+
+    public LexiconEntry getLexiconEntryId(LexiconEntryId id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(LexiconEntry.class, id));
     }
 
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException {

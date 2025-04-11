@@ -14,7 +14,9 @@
                 <hr class="mt-0 mb-1 text"/>
                 <p class="text mb-0 font-italic">${languageResource.get("corpusInspector")}</p>
             </div>
-            <h4 class="m-0 color-secondary"><i class="fas fa-atlas mr-1"></i></h4>
+            <a class="w-rounded-btn open-wiki-page" data-wid="${corpus.getWikiId()}" data-wcovered="${corpus.getName()}">
+                <i class="fab fa-wikipedia-w m-0 color-prime large-font"></i>
+            </a>
         </div>
 
         <div class="ccontent">
@@ -22,31 +24,8 @@
             <!-- Meta -->
             <h6 class="large-font mt-2 mb-2 text-center color-prime">Meta</h6>
             <div class="group-box">
-                <div class="row m-0 p-0">
-                    <div class="col-lg-6 entry">
-                        <label class="mb-0 pr-3 pl-3 text">Name</label>
-                        <input readonly type="text" class="form-control rounded-0" value="${corpus.getName()}"/>
-                    </div>
-
-                    <div class="col-lg-6 entry">
-                        <label class="mb-0 pr-3 pl-3 text">${languageResource.get("source")}</label>
-                        <input readonly type="text" class="form-control rounded-0" value="${corpus.getAuthor()}"/>
-                    </div>
-
-                    <div class="col-lg-6 entry">
-                        <label class="mb-0 pr-3 pl-3 text">${languageResource.get("language")}</label>
-                        <input readonly type="text" class="form-control rounded-0" value="${corpus.getLanguage()}"/>
-                    </div>
-
-                    <div class="col-lg-6 entry">
-                        <label class="mb-0 pr-3 pl-3 text">${languageResource.get("imported")}</label>
-                        <input readonly type="text" class="form-control rounded-0" value="${corpus.getCreated()}"/>
-                    </div>
-
-                    <div class="col-lg-6 entry">
-                        <label class="mb-0 pr-3 pl-3 text">${languageResource.get("documents")}</label>
-                        <input readonly type="text" class="form-control rounded-0" value="${documentsCount}"/>
-                    </div>
+                <div>
+                    <#include "*/corpus/components/corpusMetadata.ftl" />
                 </div>
             </div>
 
@@ -69,7 +48,7 @@
             </div>
         </div>
         <div class="corpus-documents-list-include h-100 w-100 position-relative pr-3">
-            <div class="simple-loader"></div>
+            <div class="simple-loader"><h5 class="mb-0 text">Loading...</h5></div>
         </div>
     </div>
 

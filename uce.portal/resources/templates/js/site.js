@@ -226,7 +226,6 @@ function openNewDocumentReadView(id, searchId) {
     if (id === undefined || id === '') {
         return;
     }
-    console.log('New Document Reader View for: ' + id);
     window.open("/documentReader?id=" + id + "&searchId=" + searchId, '_blank');
 }
 
@@ -245,4 +244,6 @@ $(document).ready(function () {
     console.log('Webpage loaded!');
     activatePopovers();
     reloadCorpusComponents();
+    // Init the lexicon
+    window.wikiHandler.fetchLexiconEntries(0, 20);
 })

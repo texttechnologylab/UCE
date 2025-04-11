@@ -13,6 +13,9 @@ public class SpringConfig {
     }
 
     @Bean
+    public LexiconService lexiconService() {return new LexiconService(databaseService());}
+
+    @Bean
     public WikiService wikiService(){
         return new WikiService(databaseService(), ragService(), jenaSparqlService());
     }

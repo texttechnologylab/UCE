@@ -9,6 +9,7 @@ import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.viewModels.wiki.CachedWikiPage;
 import org.texttechnologylab.services.JenaSparqlService;
+import org.texttechnologylab.services.LexiconService;
 import org.texttechnologylab.services.WikiService;
 import org.texttechnologylab.utils.SystemStatus;
 import spark.ModelAndView;
@@ -20,12 +21,14 @@ import java.util.Map;
 public class WikiApi {
 
     private static final Logger logger = LogManager.getLogger(WikiApi.class);
+    private LexiconService lexiconService;
     private Configuration freemarkerConfig;
     private JenaSparqlService jenaSparqlService;
     private WikiService wikiService;
 
     public WikiApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
         this.freemarkerConfig = freemarkerConfig;
+        this.lexiconService = serviceContext.getBean(LexiconService.class);
         this.wikiService = serviceContext.getBean(WikiService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
     }
@@ -181,4 +184,29 @@ public class WikiApi {
         }
     });
 
+    public Route getLexicon = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+
+        var skip = ExceptionUtils.tryCatchLog(() -> Integer.parseInt(request.queryParams("skip")),
+                (ex) -> logger.warn("Calling a lexicon without skip shouldn't happen. Operation continues though.", ex));
+        var take = ExceptionUtils.tryCatchLog(() -> Integer.parseInt(request.queryParams("take")),
+                (ex) -> logger.warn("Calling a lexicon without take shouldn't happen. Operation continues though.", ex));
+
+        try {
+            var entries = ExceptionUtils.tryCatchLog(
+                    () -> lexiconService.getEntries(skip, take),
+                    (ex) -> logger.error("Error fetching lexicon entries: ", ex));
+            if(entries == null){
+                response.status(500);
+                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            }
+
+            model.put("entries", entries);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/lexicon/entryList.ftl"));
+        } catch (Exception ex) {
+            logger.error("Error getting entries from the lexicon - best refer to the last logged API call " +
+                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
 }

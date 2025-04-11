@@ -18,6 +18,7 @@ public class UIMAAnnotation extends ModelBase {
     private int end;
     @Column(columnDefinition = "TEXT")
     private String coveredText;
+    private Boolean isLexicalized;
 
     public String getCoveredText() {
         return coveredText;
@@ -41,6 +42,14 @@ public class UIMAAnnotation extends ModelBase {
     public UIMAAnnotation(int begin, int end) {
         this.begin = begin;
         this.end = end;
+    }
+
+    public boolean isLexicalized() {
+        return isLexicalized;
+    }
+
+    public void setLexicalized(boolean lexicalized) {
+        isLexicalized = lexicalized;
     }
 
     public void setBegin(int begin) {
