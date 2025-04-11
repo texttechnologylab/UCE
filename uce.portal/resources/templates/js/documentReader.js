@@ -106,7 +106,7 @@ function handleFocusedPageChanged() {
  */
 $('body').on('change', '.font-size-range', function () {
     const fontSize = $(this).val();
-    $('.document-content p').each(function () {
+    $('.document-content *').each(function () {
         $(this).css('font-size', fontSize + 'px');
     });
 })

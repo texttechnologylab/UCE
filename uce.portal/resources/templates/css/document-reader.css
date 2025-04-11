@@ -1,11 +1,5 @@
 * {
-    /*
     font-family: Georgia;
-     */
-    /*
-    Monospaced Fonts: Courier
-     */
-    font-family: Courier;
 }
 
 /*.dot {
@@ -92,6 +86,10 @@ body {
 
 .document-content {
     padding: 2rem 4.5rem;
+}
+
+.document-content *{
+    font-family: Courier  !important;
 }
 
 .document-content p {
