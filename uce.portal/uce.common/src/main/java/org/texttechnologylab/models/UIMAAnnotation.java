@@ -1,5 +1,6 @@
 package org.texttechnologylab.models;
 
+import io.micrometer.common.lang.Nullable;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.utils.StringUtils;
@@ -17,7 +18,7 @@ public class UIMAAnnotation extends ModelBase {
     private int end;
     @Column(columnDefinition = "TEXT")
     private String coveredText;
-    private Boolean isLexicalized;
+    private Boolean isLexicalized = false;
 
     public String getCoveredText() {
         return coveredText;

@@ -23,6 +23,10 @@
     "de-DE": "Vorkommen",
     "en-EN": "Occurrence"
   },
+  "noEntriesFound": {
+    "de-DE": "Keine Einträge gefunden.",
+    "en-EN": "No entries found."
+  },
   "lexicon": {
     "de-DE": "Lexikon",
     "en-EN": "Lexicon"

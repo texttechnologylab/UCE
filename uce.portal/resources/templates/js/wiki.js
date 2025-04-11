@@ -6,7 +6,7 @@ let WikiHandler = (function () {
     WikiHandler.prototype.lexiconState = {
         skip: 0,
         take: 20,
-        selectedChar: 'A',
+        selectedChar: '',
         annotationFilters: [],
         sortColumn: 'alphabet',
         sortDirection: 'ASC',

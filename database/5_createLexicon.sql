@@ -30,7 +30,7 @@ BEGIN
             ),
             inserted AS (
                 INSERT INTO lexicon (coveredtext, typee, count, startcharacter)
-                SELECT nl.coveredtext, %L, nl.cnt, nl.startchar
+                SELECT nl.coveredtext, %L, nl.cnt, LOWER(nl.startchar)
                 FROM new_lex nl
                 ON CONFLICT (coveredtext, typee) DO NOTHING
                 RETURNING 1

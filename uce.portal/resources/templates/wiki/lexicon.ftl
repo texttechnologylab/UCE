@@ -39,7 +39,7 @@
                                 <#list alphabetList as char>
                                     <#assign clazz = "">
                                     <#if char?lower_case == "a">
-                                        <#assign clazz = "selected-char">
+                                        <#--<#assign clazz = "selected-char">-->
                                     </#if>
                                     <a class="rounded-a color-dark char ${clazz}"
                                        onclick="window.wikiHandler.handleLexiconAlphabetBtnClicked('${char}')">${char}</a>

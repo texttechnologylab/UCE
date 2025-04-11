@@ -10,6 +10,10 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.negation.CompleteNegation;
+import org.texttechnologylab.models.negation.Cue;
+import org.texttechnologylab.models.negation.Focus;
+import org.texttechnologylab.models.negation.Scope;
 import org.texttechnologylab.utils.SystemStatus;
 
 import javax.persistence.Table;
@@ -35,7 +39,11 @@ public class LexiconService {
                     Lemma.class,
                     Time.class,
                     Taxon.class,
-                    BiofidTaxon.class));
+                    BiofidTaxon.class,
+                    CompleteNegation.class,
+                    Focus.class,
+                    Cue.class,
+                    Scope.class));
 
     public LexiconService(PostgresqlDataInterface_Impl db) {
         this.db = db;
@@ -57,9 +65,10 @@ public class LexiconService {
      * Method that firstly checks if a lexicon update might be required and, if so determined, updates it.
      */
     public int checkForUpdates(){
+        updateLexicon(false);
         // The lexicon should be updated and calculated by the importer. This is more of a sanity check
         var entriesCount = countLexiconEntries();
-        if(entriesCount == 0) return updateLexicon(false);
+        if(entriesCount == 0) return updateLexicon(true);
         return 0;
     }
 

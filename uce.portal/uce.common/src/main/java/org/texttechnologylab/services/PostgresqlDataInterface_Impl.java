@@ -335,7 +335,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             List<Predicate> predicates = new ArrayList<>();
 
             if (alphabet != null && !alphabet.isEmpty()) {
-                predicates.add(root.get("startCharacter").in(alphabet));
+                predicates.add(root.get("startCharacter").in(alphabet.stream().map(String::toLowerCase).toList()));
             }
 
             if (annotationFilters != null && !annotationFilters.isEmpty()) {

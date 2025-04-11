@@ -279,6 +279,11 @@ public class Importer {
         // Wait for all tasks to complete
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
+        // Final lexion updating
+        ExceptionUtils.tryCatchLog(
+                () -> lexiconService.updateLexicon(false),
+                (ex) -> logger.error("Error in the final lexicon update of the current corpus with id " + corpus1.getId()));
+
         // Final corpus postprocessing
         ExceptionUtils.tryCatchLog(
                 () -> postProccessCorpus(corpus1, corpusConfigFinal),

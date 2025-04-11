@@ -1,4 +1,7 @@
 <div class="lexicon-entry-list card-shadow row m-0 p-0">
+    <#if entries?size == 0>
+        <p class="mt-4 mb-4 text-center w-100">${languageResource.get("noEntriesFound")}</p>
+    </#if>
     <#list entries as entry>
         <div class="lexicon-entry col-md-6" data-type="${entry.getId().getType()}">
             <div class="flexed align-items-center justify-content-between">
