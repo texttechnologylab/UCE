@@ -77,7 +77,7 @@ public class UIMAAnnotation extends ModelBase {
             }
             if(annotation.getBegin() < getBegin() && annotation.getEnd() < getBegin()){
                 if(annotation.getCoveredText().isEmpty()){
-                    // errorOffset += 1;
+                    errorOffset += 1;
                     continue;
                 }
             }
@@ -93,7 +93,7 @@ public class UIMAAnnotation extends ModelBase {
             // meet an empty annotation, track it and substract a single value of the begins and ends!
 
             if(annotation.getCoveredText().isEmpty()){
-                // errorOffset += 1;
+                errorOffset += 1;
                 continue;
             }
 
