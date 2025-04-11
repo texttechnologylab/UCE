@@ -7,6 +7,7 @@ let WikiHandler = (function () {
         skip: 0,
         take: 20,
         selectedChar: '',
+        searchInput: '',
         annotationFilters: [],
         sortColumn: 'alphabet',
         sortDirection: 'ASC',
@@ -27,10 +28,16 @@ let WikiHandler = (function () {
             const selected = i === curPage ? "cur-page" : "";
             btnList.append(
                 "<a class='rounded-a SELECTED' onclick='window.wikiHandler.fetchLexiconPage(PAGE)'>PAGE</a>"
-                    .replaceAll("PAGE", i - 1)
+                    .replaceAll("PAGE", i)
                     .replace("SELECTED", selected)
             );
         }
+    }
+
+    WikiHandler.prototype.handleLexiconSearchInputChanged = function($source){
+        const val = $source.val();
+        this.lexiconState.searchInput = val;
+        this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
     }
 
     WikiHandler.prototype.handleLexiconSortingChanged = function ($source) {
@@ -90,7 +97,7 @@ let WikiHandler = (function () {
 
     WikiHandler.prototype.fetchLexiconPage = function (pageNum) {
         if (pageNum < 1) return;
-        this.lexiconState.skip = this.lexiconState.take * pageNum;
+        this.lexiconState.skip = this.lexiconState.take * (pageNum - 1);
         this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
     }
 
@@ -113,6 +120,7 @@ let WikiHandler = (function () {
             data: JSON.stringify({
                 skip: skip,
                 take: take,
+                searchInput: this.lexiconState.searchInput,
                 sortColumn: this.lexiconState.sortColumn,
                 sortDirection: this.lexiconState.sortDirection,
                 alphabet: this.lexiconState.selectedChar === '' ? undefined : [this.lexiconState.selectedChar],

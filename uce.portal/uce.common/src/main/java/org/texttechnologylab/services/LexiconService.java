@@ -95,8 +95,9 @@ public class LexiconService {
                                          List<String> alphabet,
                                          List<String> annotationFilters,
                                          String sortColumn,
-                                         String sortOrder) throws DatabaseOperationException {
-        var entries = db.getManyLexiconEntries(skip, take, alphabet, annotationFilters, sortColumn, sortOrder);
+                                         String sortOrder,
+                                         String searchInput) throws DatabaseOperationException {
+        var entries = db.getManyLexiconEntries(skip, take, alphabet, annotationFilters, sortColumn, sortOrder, searchInput);
         return entries;
     }
 

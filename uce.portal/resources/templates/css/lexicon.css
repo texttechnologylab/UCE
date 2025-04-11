@@ -93,7 +93,6 @@
 }
 
 .lexicon-view .filter-container{
-    height: 100%;
     width: 100%;
     background-color: rgba(125, 125, 125, 0.15);
     border:lightgrey 1px solid;

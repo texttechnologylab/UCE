@@ -54,6 +54,9 @@ CREATE INDEX IF NOT EXISTS idx_srlink_document_id ON srlink(document_id);
 CREATE INDEX IF NOT EXISTS idx_srlink_figurecoveredtext ON srlink(LOWER(figurecoveredtext));
 CREATE INDEX IF NOT EXISTS idx_srlink_groundcoveredtext ON srlink(LOWER(groundcoveredtext));
 
+-- Create indexes on our lexicon.
+CREATE INDEX IF NOT EXISTS idx_lexicon_coveredtext_lower_trgm ON lexicon USING gin (lower(coveredtext) gin_trgm_ops);
+
 -- Create a Generated Column for the "taxon" value column that splits the values x|y|z into its own array
 DO $$
 BEGIN

@@ -9,9 +9,9 @@
                             class="fas fa-pen-nib"></i> ${lexiconEntriesCount}</label>
             </div>
             <div class="flexed align-items-center ml-1 w-100 justify-content-end">
-                <input class="form-control rounded-0 w-100 search-lexicon-input" type="text"
+                <input class="form-control rounded-0 w-100 search-lexicon-input" type="text" onchange="window.wikiHandler.handleLexiconSearchInputChanged($(this))"
                        placeholder="${languageResource.get("search")}"/>
-                <button class="btn rounded-0 bg-lightgray search-lexicon-btn"><i class="fas fa-search"></i></button>
+                <button class="btn rounded-0 bg-lightgray search-lexicon-btn" onclick="window.wikiHandler.handleLexiconSearchInputChanged($(this).prev())"><i class="fas fa-search"></i></button>
             </div>
         </div>
     </header>

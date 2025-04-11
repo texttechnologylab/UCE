@@ -323,7 +323,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<LexiconEntry> getManyLexiconEntries(int skip, int take, List<String> alphabet, List<String> annotationFilters, String sortColumn, String sortOrder)
+    public List<LexiconEntry> getManyLexiconEntries(int skip, int take, List<String> alphabet,
+                                                    List<String> annotationFilters, String sortColumn,
+                                                    String sortOrder, String searchInput)
             throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
@@ -341,6 +343,16 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             if (annotationFilters != null && !annotationFilters.isEmpty()) {
                 predicates.add(root.get("id").get("type").in(
                         annotationFilters.stream().map(String::toLowerCase).toList()));
+            }
+
+            // TODO: This is probably very slow. Gotta watch this.
+            if (searchInput != null && !searchInput.isBlank()) {
+                predicates.add(
+                        builder.like(
+                                builder.lower(root.get("id").get("coveredText")),
+                                "%" + searchInput.toLowerCase() + "%"
+                        )
+                );
             }
 
             if (!predicates.isEmpty()) {

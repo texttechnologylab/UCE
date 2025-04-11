@@ -203,10 +203,11 @@ public class WikiApi {
         var annotationFilters = ExceptionUtils.tryCatchLog(() -> (List<String>) requestBody.get("annotationFilters"), (ex) -> {});
         var sortColumn = ExceptionUtils.tryCatchLog(() -> requestBody.get("sortColumn").toString(), (ex) -> {});
         var sortDirection = ExceptionUtils.tryCatchLog(() -> requestBody.get("sortDirection").toString(), (ex) -> {});
+        var searchInput = ExceptionUtils.tryCatchLog(() -> requestBody.get("searchInput").toString(), (ex) -> {});
 
         try {
             var entries = ExceptionUtils.tryCatchLog(
-                    () -> lexiconService.getEntries(skip, take, alphabet, annotationFilters, sortColumn, sortDirection),
+                    () -> lexiconService.getEntries(skip, take, alphabet, annotationFilters, sortColumn, sortDirection, searchInput),
                     (ex) -> logger.error("Error fetching lexicon entries: ", ex));
             if(entries == null){
                 response.status(500);
