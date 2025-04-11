@@ -592,6 +592,37 @@ public class Importer {
                 anno.setPage(page);
             }
         }
+        // negations
+        if (document.getCues() != null) {
+            for (var anno : document.getCues().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getEvents() != null) {
+            for (var anno : document.getEvents().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getFocuses() != null) {
+            for (var anno : document.getFocuses().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getScopes() != null) {
+            for (var anno : document.getScopes().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getXscopes() != null) {
+            for (var anno : document.getXscopes().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
     }
 
     /**
