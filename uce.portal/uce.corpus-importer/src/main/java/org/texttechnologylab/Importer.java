@@ -257,7 +257,7 @@ public class Importer {
                             CompletableFuture.runAsync(() -> {
                                 logImportInfo("=========== UPDATING THE LEXICON...", LogStatus.POST_PROCESSING, "LEXICON", 0);
                                 var result = ExceptionUtils.tryCatchLog(
-                                        () -> lexiconService.updateLexicon(),
+                                        () -> lexiconService.updateLexicon(false),
                                         (ex) -> logImportError("Unknown error updating the lexicon of corpus " + corpus1.getId(), ex, "LEXICON"));
                                 if(result != null)
                                     logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + result + "\n\n", LogStatus.SAVED, "LEXICON", 0);

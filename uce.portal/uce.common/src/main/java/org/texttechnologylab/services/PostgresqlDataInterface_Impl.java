@@ -339,11 +339,12 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public int callLexiconRefresh(ArrayList<String> tables) throws DatabaseOperationException {
+    public int callLexiconRefresh(ArrayList<String> tables, boolean force) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
             var insertedLex = 0;
-            try (var storedProcedure = connection.prepareCall("{call refresh_lexicon" + "(?)}")) {
+            try (var storedProcedure = connection.prepareCall("{call refresh_lexicon" + "(?, ?)}")) {
                 storedProcedure.setArray(1, connection.createArrayOf("text", tables.toArray(new String[0])));
+                storedProcedure.setBoolean(2, force);
                 var result = storedProcedure.executeQuery();
                 while (result.next()) {
                     insertedLex = result.getInt(1);
@@ -621,6 +622,16 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(Time.class, id));
+    }
+
+    public long countLexiconEntries() throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var builder = session.getCriteriaBuilder();
+            var criteria = builder.createQuery(Long.class);
+            var root = criteria.from(LexiconEntry.class);
+            criteria.select(builder.count(root));
+            return session.createQuery(criteria).getSingleResult();
+        });
     }
 
     public LexiconEntry getLexiconEntryId(LexiconEntryId id) throws DatabaseOperationException {

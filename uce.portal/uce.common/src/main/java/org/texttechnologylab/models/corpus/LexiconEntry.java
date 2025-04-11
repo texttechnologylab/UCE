@@ -11,12 +11,21 @@ public class LexiconEntry {
     private LexiconEntryId id;
     @Column(name = "count")
     private int count;
+    private String startCharacter;
 
     public LexiconEntry() {}
 
     public LexiconEntry(LexiconEntryId id, int count) {
         this.id = id;
         this.count = count;
+    }
+
+    public String getStartCharacter() {
+        return startCharacter;
+    }
+
+    public void setStartCharacter(String startCharacter) {
+        this.startCharacter = startCharacter;
     }
 
     public LexiconEntryId getId() {

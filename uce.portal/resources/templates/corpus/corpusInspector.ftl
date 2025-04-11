@@ -48,7 +48,7 @@
             </div>
         </div>
         <div class="corpus-documents-list-include h-100 w-100 position-relative pr-3">
-            <div class="simple-loader"></div>
+            <div class="simple-loader"><h5 class="mb-0 text">Loading...</h5></div>
         </div>
     </div>
 

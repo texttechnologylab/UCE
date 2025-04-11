@@ -24,6 +24,7 @@ public final class SystemStatus {
     public static HealthStatus PostgresqlDbStatus = new HealthStatus();
     public static HealthStatus RagServiceStatus = new HealthStatus();
     public static HealthStatus UIMAService = new HealthStatus();
+    public static boolean LexiconIsCalculating = false;
     public static UceConfig UceConfig = null;
     private static final Logger logger = LogManager.getLogger(SystemStatus.class);
 

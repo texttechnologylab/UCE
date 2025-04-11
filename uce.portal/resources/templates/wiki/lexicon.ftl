@@ -23,7 +23,13 @@
                     </#list>
                 </div>
             </div>
-            <div class="container-fluid position-relative h-100">
+            <div class="container position-relative h-100">
+                <#if isLexiconCalculating>
+                    <div class="full-loader">
+                        <div class="simple-loader"><p class="m-0 text-center w-100 text">${languageResource.get("lexiconIsCalculating")}</p>
+                        </div>
+                    </div>
+                </#if>
                 <div class="lexicon-content-include p-3">
 
                 </div>
@@ -33,9 +39,11 @@
 
                         </div>
                         <div class="flexed align-items-center">
-                            <a class="rounded-a" onclick="window.wikiHandler.fetchPreviousLexiconEntries()" ><i class="fas fa-chevron-left"></i></a>
+                            <a class="rounded-a" onclick="window.wikiHandler.fetchPreviousLexiconEntries()"><i
+                                        class="fas fa-chevron-left"></i></a>
                             <i class="fas fa-compass color-prime xlarge-font ml-2 mr-2"></i>
-                            <a class="rounded-a" onclick="window.wikiHandler.fetchNextLexiconEntries()"><i class="fas fa-chevron-right"></i></a>
+                            <a class="rounded-a" onclick="window.wikiHandler.fetchNextLexiconEntries()"><i
+                                        class="fas fa-chevron-right"></i></a>
                         </div>
                     </div>
                 </div>

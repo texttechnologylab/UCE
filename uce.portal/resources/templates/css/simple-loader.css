@@ -4,12 +4,11 @@
     top: 50%;
     transform: translate(-50%, -50%);
     width: fit-content;
-    font-size: x-large;
     background: linear-gradient(135deg, #0000 calc(50% - 0.5em), #d3d3d3 0 calc(50% + 0.5em), #0000 0) right/300% 100%;
     animation: l22 2s infinite;
 }
 
-.simple-loader::before {
+/*.simple-loader::before {
     content: "Loading...";
     color: gray;
     padding: 0 5px;
@@ -17,7 +16,7 @@
     background-image: linear-gradient(135deg, #d3d3d3 calc(50% - 0.5em), #fff 0 calc(50% + 0.5em), #d3d3d3 0);
     -webkit-background-clip: text;
     background-clip: text;
-}
+}*/
 
 @keyframes l22 {
     100% {
