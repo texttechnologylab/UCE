@@ -8,9 +8,15 @@ import org.texttechnologylab.models.corpus.Document;
 import javax.persistence.*;
 import java.util.List;
 
-
+/**
+ * Class for complete-negation: One complete negation always contains a cue, but can also contain multiple:
+ *  - Scopes (XScopes)
+ *  - Foci
+ *  - Events
+ *  [optional: there can also be a negation type (syntactically, semantically, etc...)]
+ */
 @Entity
-@Table(name="complete_negation")
+@Table(name="completenegation")
 public class CompleteNegation extends UIMAAnnotation {
     @Column(name = "negType", columnDefinition = "TEXT")
     private String negType;
