@@ -1,5 +1,6 @@
 package org.texttechnologylab.routes;
 
+import com.amazonaws.auth.policy.Policy;
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
@@ -16,6 +17,7 @@ import spark.ModelAndView;
 import spark.Route;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class WikiApi {
@@ -25,6 +27,7 @@ public class WikiApi {
     private Configuration freemarkerConfig;
     private JenaSparqlService jenaSparqlService;
     private WikiService wikiService;
+    private final Gson gson = new Gson();
 
     public WikiApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
         this.freemarkerConfig = freemarkerConfig;
@@ -183,15 +186,24 @@ public class WikiApi {
 
     public Route getLexicon = ((request, response) -> {
         var model = new HashMap<String, Object>();
+        var requestBody = gson.fromJson(request.body(), Map.class);
+        var languageResources = LanguageResources.fromRequest(request);
 
-        var skip = ExceptionUtils.tryCatchLog(() -> Integer.parseInt(request.queryParams("skip")),
-                (ex) -> logger.warn("Calling a lexicon without skip shouldn't happen. Operation continues though.", ex));
-        var take = ExceptionUtils.tryCatchLog(() -> Integer.parseInt(request.queryParams("take")),
-                (ex) -> logger.warn("Calling a lexicon without take shouldn't happen. Operation continues though.", ex));
+        var skip = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("skip").toString()),
+                (ex) -> logger.error("Calling a lexicon without skip shouldn't happen.", ex));
+        var take = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("take").toString()),
+                (ex) -> logger.error("Calling a lexicon without take shouldn't happen.", ex));
+        if(skip == null || take == null){
+            model.put("information", languageResources.get("missingParameterError"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+        }
+
+        // Alphabet is optional. We can work without just fine.
+        var alphabet = ExceptionUtils.tryCatchLog(() -> (List<String>) requestBody.get("alphabet"), (ex) -> {});
 
         try {
             var entries = ExceptionUtils.tryCatchLog(
-                    () -> lexiconService.getEntries(skip, take),
+                    () -> lexiconService.getEntries(skip, take, alphabet),
                     (ex) -> logger.error("Error fetching lexicon entries: ", ex));
             if(entries == null){
                 response.status(500);

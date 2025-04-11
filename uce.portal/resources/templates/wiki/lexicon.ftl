@@ -17,9 +17,9 @@
         <div>
             <div class="container filter-bar mt-2 mb-1">
                 <!-- alphabet -->
-                <div class="flexed justify-content-around wrapped align-items-center">
+                <div class="flexed justify-content-around wrapped align-items-center alphabet">
                     <#list alphabetList as char>
-                        <a class="rounded-a color-dark">${char}</a>
+                        <a class="rounded-a color-dark char" onclick="$(this).toggleClass('selected-char')">${char}</a>
                     </#list>
                 </div>
             </div>
@@ -30,7 +30,7 @@
                         </div>
                     </div>
                 </#if>
-                <div class="lexicon-content-include p-3">
+                <div class="lexicon-content-include pl-3 pb-3 pr-3 mt-3">
 
                 </div>
                 <div class="lexicon-navigation container">

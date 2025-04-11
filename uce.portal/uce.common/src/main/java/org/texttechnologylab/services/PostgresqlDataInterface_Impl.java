@@ -321,23 +321,29 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<LexiconEntry> getManyLexiconEntries(int skip, int take) throws DatabaseOperationException {
+    public List<LexiconEntry> getManyLexiconEntries(int skip, int take, List<String> alphabet) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
             var criteriaQuery = builder.createQuery(LexiconEntry.class);
             var root = criteriaQuery.from(LexiconEntry.class);
-            criteriaQuery.select(root)
-                    .orderBy(
-                            builder.asc(root.get("id").get("coveredText")),
-                            builder.asc(root.get("id").get("type"))
-                    );
-            var query = session.createQuery(criteriaQuery)
-                    .setFirstResult(skip)
-                    .setMaxResults(take);
+            criteriaQuery.select(root);
 
-            return query.getResultList();
+            // If an alphabet is given, we filter for that.
+            if (alphabet != null && !alphabet.isEmpty()) {
+                criteriaQuery.where(root.get("startCharacter").in(alphabet));
+            }
+
+            criteriaQuery.orderBy(
+                    builder.asc(root.get("id").get("coveredText")),
+                    builder.asc(root.get("id").get("type"))
+            );
+            return session.createQuery(criteriaQuery)
+                    .setFirstResult(skip)
+                    .setMaxResults(take)
+                    .getResultList();
         });
     }
+
 
     public int callLexiconRefresh(ArrayList<String> tables, boolean force) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {

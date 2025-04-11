@@ -28,6 +28,11 @@
     width: 100%;
 }
 
+.lexicon-view .alphabet .selected-char{
+    background-color: var(--dark) !important;
+    color:white;
+}
+
 .lexicon-view .lexicon-navigation{
     position: sticky;
     bottom:0;

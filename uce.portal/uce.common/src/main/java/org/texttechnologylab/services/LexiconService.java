@@ -80,8 +80,8 @@ public class LexiconService {
         return insertedLex == null ? -1 : insertedLex;
     }
 
-    public List<LexiconEntry> getEntries(int skip, int take) throws DatabaseOperationException {
-        var entries = db.getManyLexiconEntries(skip, take);
+    public List<LexiconEntry> getEntries(int skip, int take, List<String> alphabet) throws DatabaseOperationException {
+        var entries = db.getManyLexiconEntries(skip, take, alphabet);
         return entries;
     }
 

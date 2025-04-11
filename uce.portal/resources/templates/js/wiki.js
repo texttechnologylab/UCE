@@ -21,14 +21,22 @@ let WikiHandler = (function () {
         for(let i = start; i < curPage + 4; i++){
             const selected = i === curPage ? "cur-page" : "";
             btnList.append(
-                "<a class='rounded-a SELECTED' onclick='window.wikiHandler.fetchPage(PAGE)'>PAGE</a>"
+                "<a class='rounded-a SELECTED' onclick='window.wikiHandler.fetchLexiconPage(PAGE)'>PAGE</a>"
                     .replaceAll("PAGE", i)
                     .replace("SELECTED", selected)
             );
         }
     }
 
-    WikiHandler.prototype.fetchPage = function(pageNum){
+    WikiHandler.prototype.getLexiconAlphabet = function(){
+        let alphabet = [];
+        $('.lexicon-view .alphabet .char').each(function(){
+            if($(this).hasClass('selected-char')) alphabet.push($(this).html());
+        });
+        return alphabet;
+    }
+
+    WikiHandler.prototype.fetchLexiconPage = function(pageNum){
         if(pageNum < 1) return;
         this.lexiconState.skip = this.lexiconState.take * pageNum;
         this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
@@ -46,9 +54,16 @@ let WikiHandler = (function () {
     }
 
     WikiHandler.prototype.fetchLexiconEntries = function(skip, take){
+        const alphabet = this.getLexiconAlphabet();
         $.ajax({
-            url: "/api/wiki/lexicon/entries?skip=" + skip + "&take=" + take,
-            type: "GET",
+            url: '/api/wiki/lexicon/entries',
+            type: "POST",
+            data: JSON.stringify({
+                skip: skip,
+                take: take,
+                alphabet: alphabet,
+            }),
+            contentType: "application/json",
             success: (response) => {
                 activatePopovers();
                 $('.lexicon-content-include').html(response);

@@ -297,7 +297,7 @@ public class App {
             path("/wiki", () -> {
                 get("/page", wikiApi.getPage);
                 path("/lexicon", () -> {
-                    get("/entries", wikiApi.getLexicon);
+                    post("/entries", wikiApi.getLexicon);
                 });
                 post("/queryOntology", wikiApi.queryOntology);
             });
