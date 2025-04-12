@@ -8,7 +8,7 @@
             <div class="flexed align-items-center justify-content-between">
                 <div class="flexed align-items-center">
                     <div class="">
-                        <p class="font-weight-bold color-secondary mb-0 mr-1">${entry.getId().getCoveredText()}</p>
+                        <p class="font-weight-bold text-dark mb-0 mr-1">${entry.getId().getCoveredText()}</p>
                         <label class="mb-0 mr-2 font-italic text small-font">${entry.getId().getType()}</label>
                     </div>
                 </div>
