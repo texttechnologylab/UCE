@@ -117,8 +117,9 @@
                     <!-- filtering options -->
                     <div class="col-lg-2 p-0 m-0">
                         <div class="filter-container card-shadow">
-                            <div class="p-2">
-                                <h5 class="mb-0 text-dark"><i class="fas fa-filter mr-1"></i> Filter</h5>
+                            <div class="p-2 flexed align-items-center justify-content-between">
+                                <h5 class="mb-0 text-dark mr-1">Filter</h5>
+                                <i class="fas fa-filter ml-1"></i>
                             </div>
                             <hr class="mt-1 mb-2"/>
                             <div class="p-3">
