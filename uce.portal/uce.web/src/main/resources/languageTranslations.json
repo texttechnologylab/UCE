@@ -77,7 +77,7 @@
   },
   "lexiconIsCalculating": {
     "de-DE": "Das Lexikon wird gerade berechnet. Bitte besuchen Sie diese Seite zu einem späteren Zeitpunkt erneut; sie wird nicht automatisch aktualisiert.",
-    "en-EN": "The lexicon is being calculated. Please visit this page again at a later date; it will not be updated automatically."
+    "en-EN": "The lexicon is being calculated. Please visit this page again at a later time; it will not be updated automatically."
   },
   "searchPlaceholder": {
     "de-DE": "Suche...",

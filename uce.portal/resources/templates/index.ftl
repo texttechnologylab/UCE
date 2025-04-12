@@ -142,7 +142,7 @@
     <div class="corpusUniverse-content-container main-content-container">
 
         <!-- landing page -->
-        <div class="view display-none" data-id="landing">
+        <div class="view" data-id="landing">
             <#include "*/landing-page.ftl" />
         </div>
 
@@ -306,7 +306,7 @@
         </div>
 
         <!-- Lexicon -->
-        <div class="view" data-id="lexicon">
+        <div class="view display-none" data-id="lexicon">
             <#include "*/wiki/lexicon.ftl" />
         </div>
 

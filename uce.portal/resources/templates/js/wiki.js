@@ -36,8 +36,8 @@ let WikiHandler = (function () {
     }
 
     WikiHandler.prototype.handleLexiconSearchInputChanged = function ($source) {
-        const val = $source.val();
-        this.lexiconState.searchInput = val;
+        this.lexiconState.searchInput = $source.val();
+        this.lexiconState.skip = 0;
         this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
     }
 
