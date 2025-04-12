@@ -116,6 +116,13 @@ public interface DataInterface {
     public List<Document> getManyDocumentsByIds(List<Integer> documentIds) throws DatabaseOperationException;
 
     /**
+     * Returns a list of lexicon entries depending on the parameters.
+     */
+    public List<LexiconEntry> getManyLexiconEntries(int skip, int take, List<String> alphabet,
+                                                    List<String> annotationFilters, String sortColumn,
+                                                    String sortOrder, String searchInput) throws DatabaseOperationException;
+
+    /**
      * Does a semantic role label search and returns document hits
      */
     public DocumentSearchResult semanticRoleSearchForDocuments(
@@ -192,6 +199,16 @@ public interface DataInterface {
      * Generic operation that fetches documents given the parameters
      */
     public Document getDocumentById(long id) throws DatabaseOperationException;
+
+    /**
+     * Gets a fully initialized page by its id.
+     */
+    public Page getPageById(long id) throws DatabaseOperationException;
+
+    /**
+     * Gets a page by its documentid and whether the begin and end is in the page's begin and end.
+     */
+    public Page getPageByDocumentIdAndBeginEnd(long documentId, int begin, int end, boolean initialize) throws DatabaseOperationException;
 
     /**
      * Gets the corresponding gbifOccurrences to a gbifTaxonId

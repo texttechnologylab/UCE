@@ -1,5 +1,8 @@
 package org.texttechnologylab.utils;
 
+import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.corpus.Page;
+
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -54,6 +57,35 @@ public class StringUtils {
         }
         return false;
     }
+
+    /**
+     * Builds a snippet from a given text, where left and right side of the begin and end are added.
+     */
+    public static String buildContextSnippet(String text, int begin, int end, int contextLength) {
+        if (text == null || text.isEmpty() || begin < 0 || end > text.length() || begin >= end) {
+            return "";
+        }
+
+        var contextBefore = Math.max(0, begin - contextLength);
+        var contextAfter = Math.min(text.length(), end + contextLength);
+
+        // Expand left context until we hit a whitespace or reach the start
+        while (contextBefore > 0 && !Character.isWhitespace(text.charAt(contextBefore))) {
+            contextBefore--;
+        }
+
+        // Expand right context until we hit a whitespace or reach the end
+        while (contextAfter < text.length() && !Character.isWhitespace(text.charAt(contextAfter - 1))) {
+            contextAfter++;
+        }
+
+        var before = text.substring(contextBefore, begin);
+        var word = text.substring(begin, end);
+        var after = text.substring(end, contextAfter);
+
+        return before + "<b>" + word + "</b>" + after;
+    }
+
 
     // Method to add line breaks at sensible points with deterministic randomness
     public static String AddLineBreaks(String text, long seed) {

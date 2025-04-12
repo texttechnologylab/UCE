@@ -19,9 +19,15 @@ public class UIMAAnnotation extends ModelBase {
     @Column(columnDefinition = "TEXT")
     private String coveredText;
     private Boolean isLexicalized = false;
+    @Column(name = "document_id", insertable = false, updatable = false)
+    private Long documentId;
 
     public String getCoveredText() {
         return coveredText;
+    }
+
+    public String getCoveredHtmlText(){
+        return coveredText.replaceAll(" ", "&nbsp;").replaceAll("\n", "<br/>");
     }
 
     public String getCoveredText(String fullDocumentText) {
@@ -44,12 +50,20 @@ public class UIMAAnnotation extends ModelBase {
         this.end = end;
     }
 
-    public boolean isLexicalized() {
+    public Boolean getLexicalized() {
         return isLexicalized;
     }
 
-    public void setLexicalized(boolean lexicalized) {
+    public void setLexicalized(Boolean lexicalized) {
         isLexicalized = lexicalized;
+    }
+
+    public Long getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(Long documentId) {
+        this.documentId = documentId;
     }
 
     public void setBegin(int begin) {
@@ -141,8 +155,6 @@ public class UIMAAnnotation extends ModelBase {
 
         // We apply some heuristic post-processing to make the text more readable.
         //return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
-        // insert break
-        //return StringUtils.CleanText(finalText.toString()).replaceAll("\n", "<br/>");
         return StringUtils.replaceCharacterOutsideSpan(StringUtils.replaceCharacterOutsideSpan(StringUtils.CleanText(finalText.toString()), '\n', "<br/>"), ' ', "&nbsp;");
     }
 

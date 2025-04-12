@@ -3,9 +3,10 @@ let WikiHandler = (function () {
     WikiHandler.prototype.history = [];
     WikiHandler.prototype.currentPage = undefined;
     WikiHandler.prototype.universeHandler = undefined;
+    WikiHandler.prototype.occurrencesTake = 20;
     WikiHandler.prototype.lexiconState = {
         skip: 0,
-        take: 20,
+        take: 24,
         selectedChar: '',
         searchInput: '',
         annotationFilters: [],
@@ -34,7 +35,7 @@ let WikiHandler = (function () {
         }
     }
 
-    WikiHandler.prototype.handleLexiconSearchInputChanged = function($source){
+    WikiHandler.prototype.handleLexiconSearchInputChanged = function ($source) {
         const val = $source.val();
         this.lexiconState.searchInput = val;
         this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
@@ -48,8 +49,8 @@ let WikiHandler = (function () {
         } else if (direction === 'DESC') {
             this.lexiconState.sortDirection = 'ASC';
         }
-        $('.lexicon-view .sortings a').each(function(){
-           if($(this).data('id') === $source.data('id')) $(this).addClass('selected-sort');
+        $('.lexicon-view .sortings a').each(function () {
+            if ($(this).data('id') === $source.data('id')) $(this).addClass('selected-sort');
             else $(this).removeClass('selected-sort');
         });
 
@@ -138,6 +139,50 @@ let WikiHandler = (function () {
         }).always(() => {
         });
     }
+
+    WikiHandler.prototype.handleLoadMoreOccurrences = function () {
+        const $target = $('.lexicon-view .lexicon-entry-inspector .occurrences-list');
+        let skip = $target.data('skip') + this.occurrencesTake;
+        $target.data('skip', skip);
+        this.fetchLexiconEntryOccurrences($target.data('covered'), $target.data('type'),
+            skip, $target);
+    }
+
+    WikiHandler.prototype.handleOccurrencesNavigationClicked = function ($source) {
+        const $lexiconEntry = $source.closest('.lexicon-entry');
+        const type = $lexiconEntry.data('type');
+        const covered = $lexiconEntry.data('covered');
+        const $target = $('.lexicon-view .lexicon-entry-inspector .occurrences-list');
+        // clean the inspector list
+        $target.html('');
+        $target.data('skip', 0);
+        $target.data('covered', covered);
+        $target.data('type', type);
+        this.fetchLexiconEntryOccurrences(covered, type, 0, $target);
+    }
+
+    WikiHandler.prototype.fetchLexiconEntryOccurrences = function (coveredText, type, skip, $target) {
+        $.ajax({
+            url: "/api/wiki/lexicon/occurrences",
+            type: "POST",
+            contentType: "application/json",
+            data: JSON.stringify({
+                coveredText: coveredText,
+                type: type,
+                skip: skip,
+                take: this.occurrencesTake
+            }),
+            success: (response) => {
+                activatePopovers();
+                $target.append(response);
+            },
+            error: (xhr, status, error) => {
+                showMessageModal("Unknown Error", "There was an unknown error loading your occurrences.")
+            }
+        }).always(() => {
+        });
+    };
+
     // =================== Lexicon Methods End ===================
 
     WikiHandler.prototype.addPageToHistory = function (wikiDto) {

@@ -440,6 +440,7 @@
 }
 
 .wiki-metadata-expanded-view .content-reader .content {
+    word-break: break-word;
     padding-left: 3.5rem;
     padding-right: 3.5rem;
     padding-bottom: 3.5rem;

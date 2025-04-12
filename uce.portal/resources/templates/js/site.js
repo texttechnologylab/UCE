@@ -109,8 +109,13 @@ $('body').on('change', '#corpus-select', function () {
     if(hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
     else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
 
-    if(hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false') $('.open-layered-search-builder-btn').hide();
-    else $('.open-layered-search-builder-btn').show();
+    if(hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false'){
+        $('.open-layered-search-builder-btn-badge').hide();
+        $('.open-layered-search-builder-btn').hide();
+    } else {
+        $('.open-layered-search-builder-btn-badge').show();
+        $('.open-layered-search-builder-btn').show();
+    }
 
     updateSearchHistoryUI();
 })
@@ -245,5 +250,5 @@ $(document).ready(function () {
     activatePopovers();
     reloadCorpusComponents();
     // Init the lexicon
-    window.wikiHandler.fetchLexiconEntries(0, 20);
+    window.wikiHandler.fetchLexiconEntries(0, 24);
 })

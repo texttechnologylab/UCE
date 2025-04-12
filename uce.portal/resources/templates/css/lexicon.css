@@ -33,6 +33,7 @@
     position: sticky;
     bottom:0;
     width: 100%;
+    margin-top: 24px;
     padding: 12px;
     border:lightgrey 1px solid;
     background-color: white;
@@ -55,6 +56,7 @@
     padding-left: 14px;
     padding-right: 14px;
     padding-top: 6px;
+    cursor: pointer;
     padding-bottom: 6px;
     transition: 0.25s;
 }
@@ -94,6 +96,8 @@
 
 .lexicon-view .filter-container{
     width: 100%;
+    position: sticky;
+    top:12px;
     background-color: rgba(125, 125, 125, 0.15);
     border:lightgrey 1px solid;
 }
@@ -112,4 +116,36 @@
 .lexicon-view .sortings .selected-sort{
     background-color: var(--dark);
     color:white;
+}
+
+.lexicon-view .lexicon-entry-inspector{
+    border:lightgrey 1px solid;
+}
+
+.lexicon-view .lexicon-entry-inspector .occurrences-list{
+    max-height: 60vh;
+    padding: 12px;
+    overflow-y: auto;
+}
+
+.lexicon-view .lexicon-entry-inspector .entry-occurrences{
+    background-color: rgba(125, 125, 125, 0.20);
+    padding: 6px;
+}
+
+.lexicon-view .lexicon-entry-inspector .occurrence{
+    background-color: var(--default);
+    padding: 6px !important;
+}
+
+.lexicon-view .lexicon-entry-inspector .occurrence a{
+    font-size: small;
+    width: 28px !important;
+    height: 28px !important;
+}
+
+.lexicon-view .lexicon-entry-inspector .occurrence b{
+    color:var(--prime);
+    font-weight: bold;
+    font-size: small;
 }

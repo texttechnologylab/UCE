@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
+import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
@@ -211,6 +213,22 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    @SuppressWarnings("unchecked")
+    public List<UIMAAnnotation> getManyUIMAAnnotationsByCoveredText(String coveredText, Class<? extends UIMAAnnotation> clazz, int skip, int take) throws DatabaseOperationException {
+        return (List<UIMAAnnotation>) executeOperationSafely((session -> {
+            String sql = String.format(
+                    "SELECT * FROM %s WHERE coveredtext = :coveredText ORDER BY id LIMIT :take OFFSET :skip",
+                    clazz.getSimpleName().toLowerCase()
+            );
+            var query = session.createNativeQuery(sql, clazz)
+                    .setParameter("coveredText", coveredText)
+                    .setParameter("take", take)
+                    .setParameter("skip", skip);
+            query.stream().forEach(Hibernate::initialize);
+            return query.getResultList();
+        }));
+    }
+
     public Corpus getCorpusById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             return session.get(Corpus.class, id);
@@ -345,7 +363,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         annotationFilters.stream().map(String::toLowerCase).toList()));
             }
 
-            // TODO: This is probably very slow. Gotta watch this.
+            // TODO: This is probably rather slow. Gotta watch this.
             if (searchInput != null && !searchInput.isBlank()) {
                 predicates.add(
                         builder.like(
@@ -621,6 +639,35 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return doc;
         });
     }
+
+    public Page getPageById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var page = session.get(Page.class, id);
+            Hibernate.initialize(page);
+            return page;
+        });
+    }
+
+    public Page getPageByDocumentIdAndBeginEnd(long documentId, int begin, int end, boolean initialize) throws DatabaseOperationException {
+        return executeOperationSafely(session -> {
+            var builder = session.getCriteriaBuilder();
+            var criteria = builder.createQuery(Page.class);
+            var root = criteria.from(Page.class);
+
+            criteria.select(root).where(
+                    builder.equal(root.get("documentId"), documentId),
+                    builder.lessThanOrEqualTo(root.get("begin"), begin),
+                    builder.greaterThanOrEqualTo(root.get("end"), end)
+            );
+
+            var page =  session.createQuery(criteria)
+                    .setMaxResults(1)
+                    .uniqueResult();
+            if(initialize) Hibernate.initialize(page);
+            return page;
+        });
+    }
+
 
     public Document getDocumentByCorpusAndDocumentId(long corpusId, String documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {

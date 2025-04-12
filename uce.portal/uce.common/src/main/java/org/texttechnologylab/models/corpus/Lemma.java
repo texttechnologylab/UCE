@@ -17,9 +17,6 @@ public class Lemma extends UIMAAnnotation implements WikiModel {
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
 
-    @Column(name = "document_id", insertable = false, updatable = false)
-    private Long documentId;
-
     @Presentation(name = "Value")
     private String value;
 
@@ -98,14 +95,6 @@ public class Lemma extends UIMAAnnotation implements WikiModel {
 
     public void setDocument(Document document) {
         this.document = document;
-    }
-
-    public Long getDocumentId() {
-        return documentId;
-    }
-
-    public void setDocumentId(Long documentId) {
-        this.documentId = documentId;
     }
 
     @Override

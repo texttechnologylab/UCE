@@ -174,11 +174,46 @@ public class WikiApi {
             // cache and return the wiki page
             var view = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, renderView));
             var cachedWikiPage = new CachedWikiPage(view);
-            // TODO: UNCOMMENT THIS BELOW BEFORE PUSH
-            //SessionManager.CachedWikiPages.put(cacheId, cachedWikiPage);
+            SessionManager.CachedWikiPages.put(cacheId, cachedWikiPage);
             return view;
         } catch (Exception ex) {
             logger.error("Error getting a wiki page - best refer to the last logged API call " +
+                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
+
+    public Route getOccurrencesOfLexiconEntry = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        var languageResources = LanguageResources.fromRequest(request);
+        var requestBody = gson.fromJson(request.body(), Map.class);
+
+        var coveredText = ExceptionUtils.tryCatchLog(() -> requestBody.get("coveredText").toString(),
+                (ex) -> logger.error("Couldn't fetch occurrences of lexicon entry - coveredText missing.", ex));
+        var type = ExceptionUtils.tryCatchLog(() -> requestBody.get("type").toString(),
+                (ex) -> logger.error("Couldn't fetch occurrences of lexicon entry - type missing.", ex));
+        var skip = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("skip").toString()),
+                (ex) -> logger.error("Calling a lexicon entry without skip shouldn't happen.", ex));
+        var take = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("take").toString()),
+                (ex) -> logger.error("Calling a lexicon entry without take shouldn't happen.", ex));
+        if(coveredText == null || type == null || skip == null || take == null){
+            model.put("information", languageResources.get("missingParameterError"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+        }
+
+        try {
+            var occurrences = ExceptionUtils.tryCatchLog(
+                    () -> lexiconService.getOccurrenceViewModelsOfEntry(coveredText, type, skip, take),
+                    (ex) -> logger.error("Error fetching lexicon entries: ", ex));
+            if(occurrences == null){
+                response.status(500);
+                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            }
+
+            model.put("occurrences", occurrences);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/lexicon/occurrencesList.ftl"));
+        } catch (Exception ex) {
+            logger.error("Error getting occurrences from a lexicon entry - best refer to the last logged API call " +
                     "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }

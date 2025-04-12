@@ -14,8 +14,6 @@ import java.util.stream.Stream;
 public class Page extends UIMAAnnotation {
     private int pageNumber;
     private String pageId;
-    @Column(name = "document_id", insertable = false, updatable = false)
-    private long document_id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
@@ -53,10 +51,6 @@ public class Page extends UIMAAnnotation {
 
     public void setDocument(Document document) {
         this.document = document;
-    }
-
-    public long getDocumentId() {
-        return this.document_id;
     }
 
     public void setPageNumber(int pageNumber) {

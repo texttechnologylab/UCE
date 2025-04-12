@@ -13,9 +13,6 @@ public class NamedEntity extends UIMAAnnotation implements WikiModel {
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
 
-    @Column(name = "document_id", insertable = false, updatable = false)
-    private Long documentId;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "page_id", nullable = false)
     private Page page;
@@ -57,8 +54,6 @@ public class NamedEntity extends UIMAAnnotation implements WikiModel {
     public void setDocument(Document document) {
         this.document = document;
     }
-
-    public Long getDocumentId(){return this.documentId;}
 
     public String getType() {
         return type;

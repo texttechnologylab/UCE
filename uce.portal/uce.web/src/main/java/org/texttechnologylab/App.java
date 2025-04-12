@@ -300,6 +300,7 @@ public class App {
                 get("/page", wikiApi.getPage);
                 path("/lexicon", () -> {
                     post("/entries", wikiApi.getLexicon);
+                    post("/occurrences", wikiApi.getOccurrencesOfLexiconEntry);
                 });
                 post("/queryOntology", wikiApi.queryOntology);
             });

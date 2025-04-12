@@ -10,10 +10,8 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
-import org.texttechnologylab.models.negation.CompleteNegation;
-import org.texttechnologylab.models.negation.Cue;
-import org.texttechnologylab.models.negation.Focus;
-import org.texttechnologylab.models.negation.Scope;
+import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.viewModels.lexicon.LexiconOccurrenceViewModel;
 import org.texttechnologylab.utils.SystemStatus;
 
 import javax.persistence.Table;
@@ -43,7 +41,8 @@ public class LexiconService {
                     CompleteNegation.class,
                     Focus.class,
                     Cue.class,
-                    Scope.class));
+                    Scope.class,
+                    XScope.class));
 
     public LexiconService(PostgresqlDataInterface_Impl db) {
         this.db = db;
@@ -90,6 +89,31 @@ public class LexiconService {
         return insertedLex == null ? -1 : insertedLex;
     }
 
+    /**
+     * Gets occurrences of a lexicon entry, meaning the respective annotations and where they occur.
+     */
+    public List<LexiconOccurrenceViewModel> getOccurrenceViewModelsOfEntry(String coveredText, String type, int skip, int take){
+        // Based on the simple class name in lower text, we get the actual clazz and get the occurrences generically that way.
+        var annotationClass = lexiconizableAnnotations.stream().filter(l -> l.getSimpleName().toLowerCase().equals(type)).findFirst();
+        var annotations = ExceptionUtils.tryCatchLog(
+                () ->db.getManyUIMAAnnotationsByCoveredText(coveredText, annotationClass.get(), skip, take),
+                (ex) -> logger.error("Couldn't fetch occurrences of a lexicon entry", ex));
+        if(annotations == null) annotations = new ArrayList<>();
+
+        // We build viewmodels from the UIMAAnnotations as these are used within a view/UI
+        var viewModels = new ArrayList<LexiconOccurrenceViewModel>();
+        for(var anno:annotations){
+            var page = ExceptionUtils.tryCatchLog(
+                    () -> db.getPageByDocumentIdAndBeginEnd(anno.getDocumentId(), anno.getBegin(), anno.getEnd(), false),
+                    (ex) -> logger.error("Error getting a page by its documentid, begin and end.", ex));
+            viewModels.add(new LexiconOccurrenceViewModel(anno, page));
+        }
+        return viewModels;
+    }
+
+    /**
+     * Gets a paginated list of lexicon entries depending on the parameters.
+     */
     public List<LexiconEntry> getEntries(int skip,
                                          int take,
                                          List<String> alphabet,
