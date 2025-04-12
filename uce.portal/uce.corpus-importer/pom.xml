@@ -83,16 +83,10 @@
 
         <!-- local reference -->
         <dependency>
-            <groupId>org.texttechnologylab.annotation</groupId>
-            <artifactId>typesystem</artifactId>
-            <version>3.0.5</version>
+            <groupId>com.github.TheItCrOw</groupId>
+            <artifactId>UIMATypeSystem</artifactId>
+            <version>3.0.6</version>
         </dependency>
-
-        <!--<dependency>
-            <groupId>com.github.texttechnologylab</groupId>
-            <artifactId>DockerUnifiedUIMAInterface</artifactId>
-            <version>1.4</version>
-        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-shade-plugin -->
         <dependency>
