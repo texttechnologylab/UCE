@@ -17,7 +17,7 @@ import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.Document;
-import org.texttechnologylab.models.corpus.TopicDistribution;
+import org.texttechnologylab.models.corpus.KeywordDistribution;
 import org.texttechnologylab.models.dto.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.DocumentEmbedding;
@@ -55,7 +55,7 @@ public class RAGService {
         }
     }
 
-    public <T extends TopicDistribution> T getTextTopicDistribution(Class<T> clazz, String text) throws
+    public <T extends KeywordDistribution> T getTextKeywordDistribution(Class<T> clazz, String text) throws
             URISyntaxException,
             IOException,
             InterruptedException,
@@ -93,23 +93,23 @@ public class RAGService {
                 "Webservice replied with an internally wrong status code, something went wrong there: " + result.getStatus(), statusCode, url);
 
         // Map the dto to our datastructures
-        T topicDistribution = clazz.getDeclaredConstructor().newInstance();
+        T KeywordDistribution = clazz.getDeclaredConstructor().newInstance();
 
         // This looks shit yikes. Happens.
         if (result.getRakeKeywords().size() > 2) {
-            topicDistribution.setRakeTopicOne(result.getRakeKeywords().get(0));
-            topicDistribution.setRakeTopicTwo(result.getRakeKeywords().get(1));
-            topicDistribution.setRakeTopicThree(result.getRakeKeywords().get(2));
+            KeywordDistribution.setRakeTopicOne(result.getRakeKeywords().get(0));
+            KeywordDistribution.setRakeTopicTwo(result.getRakeKeywords().get(1));
+            KeywordDistribution.setRakeTopicThree(result.getRakeKeywords().get(2));
         }
         if (result.getYakeKeywords().size() > 4) {
-            topicDistribution.setYakeTopicOne(result.getYakeKeywords().get(0));
-            topicDistribution.setYakeTopicTwo(result.getYakeKeywords().get(1));
-            topicDistribution.setYakeTopicThree(result.getYakeKeywords().get(2));
-            topicDistribution.setYakeTopicFour(result.getYakeKeywords().get(3));
-            topicDistribution.setYakeTopicFive(result.getYakeKeywords().get(4));
+            KeywordDistribution.setYakeTopicOne(result.getYakeKeywords().get(0));
+            KeywordDistribution.setYakeTopicTwo(result.getYakeKeywords().get(1));
+            KeywordDistribution.setYakeTopicThree(result.getYakeKeywords().get(2));
+            KeywordDistribution.setYakeTopicFour(result.getYakeKeywords().get(3));
+            KeywordDistribution.setYakeTopicFive(result.getYakeKeywords().get(4));
         }
 
-        return topicDistribution;
+        return KeywordDistribution;
     }
 
 
@@ -136,7 +136,7 @@ public class RAGService {
         var labels = new ArrayList<String>();
         var embeddings = new ArrayList<float[]>();
         for (var document : corpusDocuments) {
-            if (document.getDocumentTopicDistribution() == null) continue;
+            if (document.getDocumentKeywordDistribution() == null) continue;
                 /* Probably best to average the embeddings of each document paragraph to one embedding
                  > Update: yes, let's go with it. We mean pool the multiple embeddings of a document if needed
                 var pooledEmbedding = EmbeddingUtils.meanPooling(getDocumentChunkEmbeddingsOfDocument(document.getId())
@@ -151,7 +151,7 @@ public class RAGService {
             embeddings.add(documentEmbedding.getTsne2d());
 
             // The labels are the topics of that document
-            labels.add(document.getDocumentTopicDistribution().getYakeTopicOne());
+            labels.add(document.getDocumentKeywordDistribution().getYakeTopicOne());
         }
         params.put("labels", labels);
         params.put("embeddings", embeddings);

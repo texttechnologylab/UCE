@@ -1,6 +1,5 @@
 package org.texttechnologylab.models.corpus;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -10,6 +9,8 @@ import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.topic.TopicValueBase;
+import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 
 import javax.persistence.*;
@@ -88,7 +89,7 @@ public class Document extends ModelBase implements WikiModel {
 
     @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "document_id")
-    private DocumentTopicDistribution documentTopicDistribution;
+    private DocumentKeywordDistribution documentKeywordDistribution;
 
     // Negations:
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
@@ -165,12 +166,12 @@ public class Document extends ModelBase implements WikiModel {
         this.postProcessed = postProcessed;
     }
 
-    public DocumentTopicDistribution getDocumentTopicDistribution() {
-        return documentTopicDistribution;
+    public DocumentKeywordDistribution getDocumentKeywordDistribution() {
+        return documentKeywordDistribution;
     }
 
-    public void setDocumentTopicDistribution(DocumentTopicDistribution documentTopicDistribution) {
-        this.documentTopicDistribution = documentTopicDistribution;
+    public void setDocumentKeywordDistribution(DocumentKeywordDistribution documentKeywordDistribution) {
+        this.documentKeywordDistribution = documentKeywordDistribution;
     }
 
     public List<Lemma> getLemmas() {

@@ -21,10 +21,10 @@
                 </#if>
             </h6>
             <div class="keywords-container card-shadow mb-3">
-                <h6 class="color-prime ml-2 mr-1">${vm.getTopicDistribution().getYakeTopicOne()}</h6>
-                <h6 class="color-prime ml-2 mr-1">${vm.getTopicDistribution().getYakeTopicTwo()}</h6>
-                <h6 class="color-prime ml-2 mr-1">${vm.getTopicDistribution().getYakeTopicThree()}</h6>
-                <h6 class="color-prime ml-2 mr-1">${vm.getTopicDistribution().getYakeTopicFour()}</h6>
+                <h6 class="color-prime ml-2 mr-1">${vm.getKeywordDistribution().getYakeTopicOne()}</h6>
+                <h6 class="color-prime ml-2 mr-1">${vm.getKeywordDistribution().getYakeTopicTwo()}</h6>
+                <h6 class="color-prime ml-2 mr-1">${vm.getKeywordDistribution().getYakeTopicThree()}</h6>
+                <h6 class="color-prime ml-2 mr-1">${vm.getKeywordDistribution().getYakeTopicFour()}</h6>
                 <hr class="mt-2 mb-2"/>
                 <div class="mb-2">
                     <div onclick="$(this).next().toggle(100)"
@@ -34,9 +34,9 @@
                     </div>
                     <div class="display-none">
                         <hr class="mt-2 mb-2"/>
-                        <h6 class="text-dark ml-2 mr-1 small-font">${vm.getTopicDistribution().getRakeTopicOne()}</h6>
-                        <h6 class="text-dark small-font ml-2 mr-1">${vm.getTopicDistribution().getRakeTopicTwo()}</h6>
-                        <h6 class="text-dark small-font ml-2 mr-1">${vm.getTopicDistribution().getRakeTopicThree()}</h6>
+                        <h6 class="text-dark ml-2 mr-1 small-font">${vm.getKeywordDistribution().getRakeTopicOne()}</h6>
+                        <h6 class="text-dark small-font ml-2 mr-1">${vm.getKeywordDistribution().getRakeTopicTwo()}</h6>
+                        <h6 class="text-dark small-font ml-2 mr-1">${vm.getKeywordDistribution().getRakeTopicThree()}</h6>
                     </div>
                 </div>
             </div>
@@ -55,8 +55,8 @@
     <div>
         <h6 class="mb-2 text-center">${languageResource.get("similarAnnotations")}: </h6>
         <div class="flexed align-items-center justify-content-center wrapped similar-topics p-2">
-            <#if vm.getSimilarTopicDistributions()?has_content>
-                <#list vm.getSimilarTopicDistributions() as topic>
+            <#if vm.getSimilarKeywordDistributions()?has_content>
+                <#list vm.getSimilarKeywordDistributions() as topic>
                     <a class=" ml-0 mr-2 mb-0 mb-1 mt-1 small-font text-wrap open-wiki-page clickable"
                        data-wid="${topic.getWikiId()}"
                        data-wcovered="${topic.getYakeTopicOne()}">

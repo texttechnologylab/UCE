@@ -1,13 +1,10 @@
 package org.texttechnologylab.models.corpus;
 
-import org.texttechnologylab.models.ModelBase;
-import org.texttechnologylab.models.UIMAAnnotation;
-
 import javax.persistence.*;
 
 @Entity
-@Table(name="pagetopicdistribution")
-public class PageTopicDistribution extends TopicDistribution {
+@Table(name="pageKeywordDistribution")
+public class PageKeywordDistribution extends KeywordDistribution {
     @OneToOne()
     @JoinColumn(name="page_id", insertable = false, updatable = false)
     private Page page;

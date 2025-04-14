@@ -39,8 +39,8 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Line.class);
         metadataSources.addAnnotatedClass(SrLink.class);
         metadataSources.addAnnotatedClass(Lemma.class);
-        metadataSources.addAnnotatedClass(PageTopicDistribution.class);
-        metadataSources.addAnnotatedClass(DocumentTopicDistribution.class);
+        metadataSources.addAnnotatedClass(PageKeywordDistribution.class);
+        metadataSources.addAnnotatedClass(DocumentKeywordDistribution.class);
         metadataSources.addAnnotatedClass(NamedEntity.class);
         metadataSources.addAnnotatedClass(Paragraph.class);
         metadataSources.addAnnotatedClass(Sentence.class);

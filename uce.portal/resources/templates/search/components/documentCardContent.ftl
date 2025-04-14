@@ -64,21 +64,26 @@
                     class="fas fa-pen-nib mr-1"></i> ${document.getMetadataTitleInfo().getAuthor()}</label>
     </div>
     <div class="flexed align-items-center topic-list">
-        <#if document.getDocumentTopicDistribution()?has_content>
-            <label data-wid="${document.getDocumentTopicDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicOne()}"
+        <#if document.getDocumentKeywordDistribution()?has_content>
+            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicOne()}"
                    class="add-wiki-logo open-wiki-page">
-                #${document.getDocumentTopicDistribution().getYakeTopicOne()}
+                #${document.getDocumentKeywordDistribution().getYakeTopicOne()}
             </label>
-            <label data-wid="${document.getDocumentTopicDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicTwo()}"
+            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicTwo()}"
                    class="add-wiki-logo open-wiki-page">
-                #${document.getDocumentTopicDistribution().getYakeTopicTwo()}
+                #${document.getDocumentKeywordDistribution().getYakeTopicTwo()}
             </label>
-            <label data-wid="${document.getDocumentTopicDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicThree()}"
+            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
                    class="add-wiki-logo open-wiki-page">
-                #${document.getDocumentTopicDistribution().getYakeTopicThree()}
+                #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
+            </label>
+            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
+                   class="add-wiki-logo open-wiki-page">
+                #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
             </label>
         </#if>
     </div>
