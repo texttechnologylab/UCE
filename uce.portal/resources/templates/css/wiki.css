@@ -505,7 +505,6 @@
     color: #333;
     box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px;
     appearance: none; /* Removes default browser styling */
-    background-image: url('data:image/svg+xml;charset=US-ASCII,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 4 5"><path fill="%23333" d="M2 0L0 2h4z"/></svg>');
     background-repeat: no-repeat;
     background-position: right 10px center;
     background-size: 10px;
@@ -522,7 +521,7 @@
     box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
 }
 
-.word-labels {
+.wiki-page .word-labels {
     display: flex;
     flex-wrap: wrap;
     gap: 8px;
@@ -531,7 +530,7 @@
     margin: 10px;
 }
 
-.word-labels li {
+.wiki-page .word-labels li {
     padding: 6px 12px;
     background-color: ghostwhite;
     border: 1px solid lightgray;
@@ -541,7 +540,7 @@
     transition: 0.2s;
 }
 
-.word-labels li:hover {
+.wiki-page .word-labels li:hover {
     background-color: #f0f0f0;
     border-color: gray;
     cursor: pointer;

@@ -232,21 +232,21 @@ function openInExpandedTextView(title, content){
  */
 
 function showWords() {
-    var select = document.getElementById("topicSelect");
-    var wordsContainer = document.getElementById("wordsContainer");
-    var wordsList = document.getElementById("wordsList");
+    const select = document.getElementById("topicSelect");
+    let wordsContainer = document.getElementById("wordsContainer");
+    let wordsList = document.getElementById("wordsList");
 
-    var selectedOption = select.options[select.selectedIndex];
-    var wordsData = selectedOption.getAttribute("data-words");
+    let selectedOption = select.options[select.selectedIndex];
+    let wordsData = selectedOption.getAttribute("data-words");
 
     if (wordsData) {
         wordsContainer.style.display = "block";
         wordsList.innerHTML = "";
 
-        var wordsArray = wordsData.split(", ");
+        let wordsArray = wordsData.split(", ");
         wordsArray.forEach(function(word) {
             if (word.trim() !== "") {
-                var li = document.createElement("li");
+                let li = document.createElement("li");
                 li.textContent = word;
                 wordsList.appendChild(li);
             }
