@@ -191,6 +191,10 @@
     "de-DE": "Mehr dazu",
     "en-EN": "More"
   },
+  "less": {
+    "de-DE": "Weniger dazu",
+    "en-EN": "Less"
+  },
   "highlight": {
     "de-DE": "Hervorheben",
     "en-EN": "Highlight"
