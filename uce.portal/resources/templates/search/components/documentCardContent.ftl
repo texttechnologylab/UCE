@@ -85,7 +85,7 @@
 </div>
 
 <#if searchState??>
-    <#if searchState.getSearchType()?? && searchState.getSearchType() == "SEMANTICROLE">
+    <#if searchState.getSearchType()?? && searchState.getSearchType() == "DEFAULT">
         <div class="snippets-container">
             <#assign snippets = searchState.getPossibleSnippetsOfDocumentIdx(documentIdx)!>
             <#if snippets?has_content>
