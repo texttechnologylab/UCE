@@ -143,6 +143,15 @@ public class SearchCompleteNegation implements Search {
         searchState.setFoundXScopes(documentSearchResult.getFoundXscopes());
         searchState.setFoundEvents(documentSearchResult.getFoundEvents());
 
+        ArrayList<String> allSearchTokens = new ArrayList<>();
+        allSearchTokens.addAll(searchState.getCue());
+        allSearchTokens.addAll(searchState.getScope());
+        allSearchTokens.addAll(searchState.getXscope());
+        allSearchTokens.addAll(searchState.getEvent());
+        allSearchTokens.addAll(searchState.getFocus());
+
+        searchState.setSearchTokens(allSearchTokens);
+
         return searchState;
     }
 
