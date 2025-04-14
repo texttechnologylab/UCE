@@ -8,6 +8,8 @@ public class AnnotationSearchResult {
     private int occurrences;
     private String info;
     private long id;
+    private int begin;
+    private int end;
 
     public AnnotationSearchResult(long id,
                                   String coveredText,
@@ -19,6 +21,7 @@ public class AnnotationSearchResult {
         this.occurrences = occurrences;
         this.info = info;
         this.id = id;
+
     }
 
     public AnnotationSearchResult(){}
@@ -61,5 +64,21 @@ public class AnnotationSearchResult {
 
     public void setInfo(String info) {
         this.info = info;
+    }
+
+    public int getBegin() {
+        return begin;
+    }
+
+    public void setBegin(int begin) {
+        this.begin = begin;
+    }
+
+    public int getEnd() {
+        return end;
+    }
+
+    public void setEnd(int end) {
+        this.end = end;
     }
 }

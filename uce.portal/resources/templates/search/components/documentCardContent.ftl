@@ -124,7 +124,6 @@
                             <#if snippet?index != 0> style="display: none;" </#if>>
                         <div class="small-font text font-italic mr-2 block-text">
                             ${snippet.getSnippet()}
-
                             <#if snippet.getPage()?has_content>
                                 <label class="display-none page-html">
                                     ${snippet.getPage().getCoveredText()}
@@ -143,6 +142,12 @@
                         ${languageResource.get("more")} <i class="ml-1 fas fa-file-alt"></i>
                     </button>
                 </#if>
+            <#else>
+                <div class="snippet-content h-100 position-relative">
+                    <div class="mb-0 small-font text font-italic mr-2 block-text">
+                        ${document.getFullTextSnippet(85)}...
+                    </div>
+                </div>
             </#if>
         </div>
     <#else>

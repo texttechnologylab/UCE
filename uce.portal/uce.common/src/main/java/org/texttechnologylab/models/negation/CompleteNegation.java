@@ -38,7 +38,7 @@ public class CompleteNegation extends UIMAAnnotation {
     private List<XScope> xscopeList;
 
     @OneToOne
-    @JoinColumn(name = "cue_id")
+    @JoinColumn(name = "cue_id", unique = true)
     private Cue cue;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})

@@ -128,18 +128,20 @@ public class SearchCompleteNegation implements Search {
     public SearchState initSearch() {
         var documentSearchResult = executeSearchOnDatabases(true);
         if (documentSearchResult == null)
-            throw new NullPointerException("Semantic Role Init Search returned null - not empty.");
+            throw new NullPointerException("CompleteNegation Init Search returned null - not empty.");
 
         var documents = ExceptionUtils.tryCatchLog(
                 () -> db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()),
-                (ex) -> logger.error("Error initializing the semantic role search state - aborting creation and returning null.", ex));
+                (ex) -> logger.error("Error initializing the CompleteNegation search state - aborting creation and returning null.", ex));
         if (documents == null) return null;
         searchState.setCurrentDocuments(documents);
         searchState.setTotalHits(documentSearchResult.getDocumentCount());
-        //TODO: add annotations here
-//        searchState.setFoundNamedEntities(documentSearchResult.getFoundNamedEntities());
-//        searchState.setFoundTaxons(documentSearchResult.getFoundTaxons());
-//        searchState.setFoundTimes(documentSearchResult.getFoundTimes());
+
+        searchState.setFoundCues(documentSearchResult.getFoundCues());
+        searchState.setFoundFoci(documentSearchResult.getFoundFoci());
+        searchState.setFoundScopes(documentSearchResult.getFoundScopes());
+        searchState.setFoundXScopes(documentSearchResult.getFoundXscopes());
+        searchState.setFoundEvents(documentSearchResult.getFoundEvents());
 
         return searchState;
     }

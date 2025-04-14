@@ -37,10 +37,20 @@ public class SearchState extends CacheItem {
     private Integer totalHits;
     private SearchOrder order = SearchOrder.DESC;
     private OrderByColumn orderBy = OrderByColumn.RANK;
+    private KeywordInContextState keywordInContextState;
+
     private ArrayList<AnnotationSearchResult> foundNamedEntities = new ArrayList<>();
     private ArrayList<AnnotationSearchResult> foundTimes = new ArrayList<>();
     private ArrayList<AnnotationSearchResult> foundTaxons = new ArrayList<>();
-    private KeywordInContextState keywordInContextState;
+
+    // Negation
+    private ArrayList<AnnotationSearchResult> foundScopes = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundCues = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundXScopes = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundFoci = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundEvents = new ArrayList<>();
+
+
 
     /**
      * This is only filled when the search layer contains embeddings
@@ -284,6 +294,21 @@ public class SearchState extends CacheItem {
             case "Times":
                 currentAnnotations = foundTimes;
                 break;
+            case "Cues":
+                currentAnnotations = foundCues;
+                break;
+            case "Scopes":
+                currentAnnotations = foundScopes;
+                break;
+            case "xScopes":
+                currentAnnotations = foundXScopes;
+                break;
+            case "Events":
+                currentAnnotations = foundEvents;
+                break;
+            case "Foci":
+                currentAnnotations = foundFoci;
+                break;
         }
         currentAnnotations = currentAnnotations.stream().filter(a -> a.getDocumentId() == documentId).toList();
         currentAnnotations = currentAnnotations.stream().sorted(Comparator.comparingInt(AnnotationSearchResult::getOccurrences).reversed()).toList();
@@ -392,5 +417,45 @@ public class SearchState extends CacheItem {
 
     public void setTake(Integer take) {
         this.take = take;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundScopes(int skip, int take) {
+        return new ArrayList<>(foundScopes.stream().skip(skip).limit(take).toList());
+    }
+
+    public void setFoundScopes(ArrayList<AnnotationSearchResult> foundScopes) {
+        this.foundScopes = foundScopes;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundCues(int skip, int take) {
+        return new ArrayList<>(foundCues.stream().skip(skip).limit(take).toList());
+    }
+
+    public void setFoundCues(ArrayList<AnnotationSearchResult> foundCues) {
+        this.foundCues = foundCues;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundXScopes(int skip, int take) {
+        return new ArrayList<>(foundXScopes.stream().skip(skip).limit(take).toList());
+    }
+
+    public void setFoundXScopes(ArrayList<AnnotationSearchResult> foundXScopes) {
+        this.foundXScopes = foundXScopes;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundFoci(int skip, int take) {
+        return new ArrayList<>(foundFoci.stream().skip(skip).limit(take).toList());
+    }
+
+    public void setFoundFoci(ArrayList<AnnotationSearchResult> foundFoci) {
+        this.foundFoci = foundFoci;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundEvents(int skip, int take) {
+        return new ArrayList<>(foundEvents.stream().skip(skip).limit(take).toList());
+    }
+
+    public void setFoundEvents(ArrayList<AnnotationSearchResult> foundEvents) {
+        this.foundEvents = foundEvents;
     }
 }

@@ -91,25 +91,25 @@
     "de-DE": "Organisationen",
     "en-EN": "Organisations"
   },
-  "cue": {
-    "de-DE": "Stichwort",
-    "en-EN": "cue"
+  "cues": {
+    "de-DE": "Stichwörter",
+    "en-EN": "Cues"
   },
-  "scope": {
-    "de-DE": "Skopus",
-    "en-EN": "scope"
+  "scopes": {
+    "de-DE": "Skopi",
+    "en-EN": "Scopes"
   },
-  "xscope": {
-    "de-DE": "Erweitertes Skopus",
-    "en-EN": "extended scope"
+  "xscopes": {
+    "de-DE": "Erweiterte Skopi",
+    "en-EN": "Extended Scopes"
   },
-  "focus": {
-    "de-DE": "Fokus",
-    "en-EN": "focus"
+  "foci": {
+    "de-DE": "Fokusse",
+    "en-EN": "Foci"
   },
-  "event": {
-    "de-DE": "Ereignis",
-    "en-EN": "event"
+  "events": {
+    "de-DE": "Ereignisse",
+    "en-EN": "Events"
   },
   "misc": {
     "de-DE": "Sonstiges",

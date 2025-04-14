@@ -41,34 +41,37 @@
             <label class="text mb-0">${searchState.getFoundTimes(0, 9999999)?size}</label>
         </div>
     </div>
+
+    <hr/>
+
     <div class="entry">
         <div class="flexed align-items-center w-100 justify-content-between">
-            <p class="mb-0"><i class="fa-regular fa-bolt"></i> ${languageResource.get("cue")}</p>
-            <label class="text mb-0">${searchState.getFoundCue(0, 9999999)?size}</label>
+            <p class="mb-0"><i class="fas fa-exclamation"></i> ${languageResource.get("cues")}</p>
+            <label class="text mb-0">${searchState.getFoundCues(0, 9999999)?size}</label>
         </div>
     </div>
     <div class="entry">
         <div class="flexed align-items-center w-100 justify-content-between">
-            <p class="mb-0"><i class="fa-regular fa-bolt"></i> ${languageResource.get("event")}</p>
-            <label class="text mb-0">${searchState.getFoundEvent(0, 9999999)?size}</label>
+            <p class="mb-0"><i class="fas fa-calendar-check"></i> ${languageResource.get("events")}</p>
+            <label class="text mb-0">${searchState.getFoundEvents(0, 9999999)?size}</label>
         </div>
     </div>
     <div class="entry">
         <div class="flexed align-items-center w-100 justify-content-between">
-            <p class="mb-0"><i class="fa-regular fa-bolt"></i> ${languageResource.get("focus")}</p>
-            <label class="text mb-0">${searchState.getFoundFocus(0, 9999999)?size}</label>
+            <p class="mb-0"><i class="fas fa-crosshairs"></i> ${languageResource.get("foci")}</p>
+            <label class="text mb-0">${searchState.getFoundFoci(0, 9999999)?size}</label>
         </div>
     </div>
     <div class="entry">
         <div class="flexed align-items-center w-100 justify-content-between">
-            <p class="mb-0"><i class="fa-regular fa-bolt"></i> ${languageResource.get("scope")}</p>
-            <label class="text mb-0">${searchState.getFoundScope(0, 9999999)?size}</label>
+            <p class="mb-0"><i class="fas fa-circle"></i> ${languageResource.get("scopes")}</p>
+            <label class="text mb-0">${searchState.getFoundScopes(0, 9999999)?size}</label>
         </div>
     </div>
     <div class="entry">
         <div class="flexed align-items-center w-100 justify-content-between">
-            <p class="mb-0"><i class="fa-regular fa-bolt"></i> ${languageResource.get("xscope")}</p>
-            <label class="text mb-0">${searchState.getFoundXscope(0, 9999999)?size}</label>
+            <p class="mb-0"><i class="fas fa-circle-notch"></i> ${languageResource.get("xscopes")}</p>
+            <label class="text mb-0">${searchState.getFoundXScopes(0, 9999999)?size}</label>
         </div>
     </div>
 </div>

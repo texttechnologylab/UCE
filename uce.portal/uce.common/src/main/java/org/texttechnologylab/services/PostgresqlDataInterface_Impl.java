@@ -392,22 +392,32 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             DocumentSearchResult search = null;
 
-            TreeMap<Long, List<int[]>> cuesByDocID = new TreeMap<>();
-            TreeMap<Long, List<int[]>> scopesByDocID = new TreeMap<>();
-            TreeMap<Long, List<int[]>> xscopesByDocID = new TreeMap<>();
-            TreeMap<Long, List<int[]>> eventsByDocID = new TreeMap<>();
-            TreeMap<Long, List<int[]>> fociByDocID = new TreeMap<>();
-            HashMap<String, TreeMap<Long, List<int[]>>> annoMap = new HashMap<>();
+            TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>> cuesByDocID = new TreeMap<>();
+            TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>> scopesByDocID = new TreeMap<>();
+            TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>> xscopesByDocID = new TreeMap<>();
+            TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>> eventsByDocID = new TreeMap<>();
+            TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>> fociByDocID = new TreeMap<>();
+            HashMap<String, TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>>> annoMap = new HashMap<>();
             annoMap.put("cue", cuesByDocID);
             annoMap.put("event", eventsByDocID);
             annoMap.put("focus", fociByDocID);
             annoMap.put("scope", scopesByDocID);
             annoMap.put("xscope", xscopesByDocID);
 
+            TreeMap<String, Boolean> skipMap = new TreeMap<String, Boolean>();
+            skipMap.put("cue", false);
+            skipMap.put("event", false);
+            skipMap.put("focus", false);
+            skipMap.put("scope", false);
+            skipMap.put("xscope", false);
+
             for (Map.Entry<String, List<String>> entry : tableSubstrings.entrySet()) {
                 String table = entry.getKey();
                 List<String> substrings = entry.getValue();
-                if (substrings == null || substrings.isEmpty()) continue;
+                if (substrings == null || substrings.isEmpty()) {
+                    skipMap.put(table, true);
+                    continue;
+                }
 
                 StringBuilder sql = new StringBuilder();
                 sql.append("SELECT * FROM ").append(table).append(" WHERE ");
@@ -418,13 +428,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     sql.append("coveredtext ILIKE ?");
                 }
 
-                // Group by document_id to get distinct ones
-                //sql.append(" GROUP BY document_id");
-                String trimmed = sql.toString().trim(); // Remove trailing whitespace
-                if (trimmed.endsWith("WHERE")) {
-                    trimmed = trimmed.substring(0, trimmed.length() - "WHERE".length()).trim();
-                }
-                try (PreparedStatement stmt = connection.prepareStatement(trimmed)) {
+                try (PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
                     int paramIndex = 1;
 
                     // Set parameters for each substring in WHERE clause
@@ -435,55 +439,105 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     ResultSet rs = stmt.executeQuery();
                     while (rs.next()) {
                         Long docId = rs.getLong("document_id");
+                        Long negId = rs.getLong("negation_id");
+                        Long annoId = rs.getLong("id");
+                        String coveredText = rs.getString("coveredtext");
                         int begin = rs.getInt("beginn");
                         int end = rs.getInt("endd");
                         if (annoMap.get(table).get(docId) == null) {
-                            List<int[]> offsets = new ArrayList<>();
-                            offsets.add(new int[]{begin, end});
-                            annoMap.get(table).put(docId, offsets);
+                            List<AnnotationSearchResult> offsets = new ArrayList<>();
+                            offsets.add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue()));
+                            TreeMap<Long, List<AnnotationSearchResult>> negMap = new TreeMap<Long, List<AnnotationSearchResult>>();
+                            negMap.put(negId, offsets);
+                            annoMap.get(table).put(docId, negMap);
                         } else {
-                            annoMap.get(table).get(docId).add(new int[]{begin, end});
+                            if (annoMap.get(table).get(docId).get(negId) == null) {
+                                List<AnnotationSearchResult> offsets = new ArrayList<>();
+                                offsets.add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue()));
+                                annoMap.get(table).get(docId).put(negId, offsets);
+                            } else {
+                                annoMap.get(table).get(docId).get(negId).add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue()));
+                            }
+
                         }
                     }
                 }
             }
-            List<int[]> cues = new ArrayList<>();
-            List<int[]> scopes = new ArrayList<>();
-            List<int[]> xscopes = new ArrayList<>();
-            List<int[]> events = new ArrayList<>();
-            List<int[]> foci = new ArrayList<>();
+            ArrayList<AnnotationSearchResult> cues = new ArrayList<>();
+            ArrayList<AnnotationSearchResult> scopes = new ArrayList<>();
+            ArrayList<AnnotationSearchResult> xscopes = new ArrayList<>();
+            ArrayList<AnnotationSearchResult> events = new ArrayList<>();
+            ArrayList<AnnotationSearchResult> foci = new ArrayList<>();
             List<Long> docIds = new ArrayList<>();
+
             int docCount = 0;
-
-            int idx_off = 0;
             int doc_found = 0;
-            for (Map.Entry<Long, List<int[]>> entry2 : annoMap.get("cue").entrySet()) {
-
-                Long docID = entry2.getKey();
-                List<int[]> offsets = entry2.getValue();
-                boolean present = true;
-                for (TreeMap<Long, List<int[]>> innerMap : annoMap.values()) {
-                    if (!innerMap.containsKey(docID)) {
-                        present = false;
-                        break;
-                    }
+            String mainKey = "cue";
+            for (String possKey : skipMap.keySet()) {
+                if (!skipMap.get(possKey)) {
+                    mainKey = possKey;
+                    break;
                 }
-                if (present) {
-                    if (idx_off >= skip && doc_found <= take) {
-                        cues.addAll(offsets);
-                        scopes.addAll(annoMap.get("scope").get(docID));
-                        xscopes.addAll(annoMap.get("xscope").get(docID));
-                        events.addAll(annoMap.get("event").get(docID));
-                        foci.addAll(annoMap.get("focus").get(docID));
-                        docIds.add(docID);
-                        doc_found++;
-                    }
-                    docCount ++;
-
-                }
-                idx_off++;
             }
+            for (Map.Entry<Long, TreeMap<Long, List<AnnotationSearchResult>>> entry2 : annoMap.get(mainKey).entrySet()) {
+                Long docId = entry2.getKey();
+                TreeMap<Long, List<AnnotationSearchResult>> negMap = entry2.getValue();
+                boolean docPresent = true;
+                for (String table : annoMap.keySet()) {
+                    if (skipMap.get(table)) {
+                        continue;
+                    } else {
+                        if (!annoMap.get(table).containsKey(docId)) {
+                            docPresent = false;
+                            break;
+                        }
+                    }
+                }
+                if (docPresent) {
+                    boolean wasNegPresent = false;
+                    for (Long negId : negMap.keySet()) {
+                        boolean negPresent = true;
+                        for (String table : annoMap.keySet()) {
+                            if (skipMap.get(table)) {
+                                continue;
+                            } else {
+                                if (!annoMap.get(table).get(docId).containsKey(negId)) {
+                                    negPresent = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if (negPresent) {
+                            wasNegPresent = true;
+                            if ((docCount >= skip && doc_found < take)) {
+                                for (String table : annoMap.keySet()) {
+                                    if (!skipMap.get(table)) {
+                                        if (Objects.equals(table, "cue"))
+                                            cues.addAll(annoMap.get(table).get(docId).get(negId));
+                                        if (Objects.equals(table, "scope"))
+                                            scopes.addAll(annoMap.get(table).get(docId).get(negId));
+                                        if (Objects.equals(table, "xscope"))
+                                            xscopes.addAll(annoMap.get(table).get(docId).get(negId));
+                                        if (Objects.equals(table, "focus"))
+                                            foci.addAll(annoMap.get(table).get(docId).get(negId));
+                                        if (Objects.equals(table, "event"))
+                                            events.addAll(annoMap.get(table).get(docId).get(negId));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (wasNegPresent) {
+                        if ((docCount >= skip && doc_found <= take)) {
+                            doc_found++;
+                            docIds.add(docId);
+                        }
+                        docCount ++;
 
+
+                    }
+                }
+            }
             if (docIds.isEmpty()) {
                 return search;
             } else {
@@ -492,11 +546,11 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     documentIds.add(docId.intValue()); // Convert Long to Integer
                 }
                 search = new DocumentSearchResult(docCount, documentIds);
-                // Also parse the found entities and all outputs the query returns.
-                // TODO add here annotations...
-//               search.setFoundNamedEntities(parseAnnotationOccurrences(result.getArray("named_entities_found").getResultSet()));
-//               search.setFoundTaxons(parseAnnotationOccurrences(result.getArray("taxons_found").getResultSet()));
-//               search.setFoundTimes(parseAnnotationOccurrences(result.getArray("time_found").getResultSet()));
+                search.setFoundCues(cues);
+                search.setFoundEvents(events);
+                search.setFoundXscopes(xscopes);
+                search.setFoundFoci(foci);
+                search.setFoundScopes(scopes);
                 return search;
             }
 

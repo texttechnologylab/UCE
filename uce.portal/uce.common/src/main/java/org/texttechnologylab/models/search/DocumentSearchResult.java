@@ -9,16 +9,64 @@ public class DocumentSearchResult {
     private int documentCount;
     private ArrayList<Integer> documentIds;
     private ArrayList<Integer> documentHits;
-    private ArrayList<AnnotationSearchResult> foundNamedEntities;
-    private ArrayList<AnnotationSearchResult> foundTimes;
-    private ArrayList<AnnotationSearchResult> foundTaxons;
     private HashMap<Integer, ArrayList<PageSnippet>> searchSnippets;
     private HashMap<Integer, Float> searchRanks;
+
+    private ArrayList<AnnotationSearchResult> foundNamedEntities = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundTimes = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundTaxons = new ArrayList<>();
+
+    private ArrayList<AnnotationSearchResult> foundScopes = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundXscopes = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundEvents = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundFoci = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundCues = new ArrayList<>();
+
 
     public DocumentSearchResult(int documentCount,
                                 ArrayList<Integer> documentIds) {
         this.documentCount = documentCount;
         this.documentIds = documentIds;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundScopes() {
+        return foundScopes;
+    }
+
+    public void setFoundScopes(ArrayList<AnnotationSearchResult> foundScopes) {
+        this.foundScopes = foundScopes;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundXscopes() {
+        return foundXscopes;
+    }
+
+    public void setFoundXscopes(ArrayList<AnnotationSearchResult> foundXscopes) {
+        this.foundXscopes = foundXscopes;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundEvents() {
+        return foundEvents;
+    }
+
+    public void setFoundEvents(ArrayList<AnnotationSearchResult> foundEvents) {
+        this.foundEvents = foundEvents;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundFoci() {
+        return foundFoci;
+    }
+
+    public void setFoundFoci(ArrayList<AnnotationSearchResult> foundFoci) {
+        this.foundFoci = foundFoci;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundCues() {
+        return foundCues;
+    }
+
+    public void setFoundCues(ArrayList<AnnotationSearchResult> foundCues) {
+        this.foundCues = foundCues;
     }
 
     public HashMap<Integer, Float> getSearchRanks() {
