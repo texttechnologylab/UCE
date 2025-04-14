@@ -489,3 +489,60 @@
 .wiki-page .list-separator td {
     padding: 10px;
 }
+
+.wiki-page .topic-container{
+    background-color: rgba(125, 125, 125, 0.15);
+    border-radius: 20px;
+    padding: 20px;
+}
+
+.wiki-page #topicSelect {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid lightgray;
+    border-radius: 4px;
+    background-color: ghostwhite;
+    font-size: 14px;
+    color: #333;
+    box-shadow: rgba(0, 0, 0, 0.1) 0px 4px 6px;
+    appearance: none; /* Removes default browser styling */
+    background-repeat: no-repeat;
+    background-position: right 10px center;
+    background-size: 10px;
+}
+
+.wiki-page #topicSelect:hover {
+    border-color: gray;
+    background-color: #f9f9f9;
+}
+
+.wiki-page #topicSelect:focus {
+    outline: none;
+    border-color: var(--prime, #007bff);
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+.wiki-page .word-labels {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    padding: 0;
+    list-style: none;
+    margin: 10px;
+}
+
+.wiki-page .word-labels li {
+    padding: 6px 12px;
+    background-color: ghostwhite;
+    border: 1px solid lightgray;
+    border-radius: 4px;
+    font-size: 14px;
+    color: #333;
+    transition: 0.2s;
+}
+
+.wiki-page .word-labels li:hover {
+    background-color: #f0f0f0;
+    border-color: gray;
+    cursor: pointer;
+}

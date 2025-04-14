@@ -350,3 +350,32 @@ function openInExpandedTextView(title, content) {
     $('.wiki-metadata-expanded-view .title').html(title);
     $('.wiki-metadata-expanded-view').fadeIn(25);
 }
+
+/**
+ * retrieve and display the list of words for a selected topic
+ */
+
+function showWords() {
+    const select = document.getElementById("topicSelect");
+    let wordsContainer = document.getElementById("wordsContainer");
+    let wordsList = document.getElementById("wordsList");
+
+    let selectedOption = select.options[select.selectedIndex];
+    let wordsData = selectedOption.getAttribute("data-words");
+
+    if (wordsData) {
+        wordsContainer.style.display = "block";
+        wordsList.innerHTML = "";
+
+        let wordsArray = wordsData.split(", ");
+        wordsArray.forEach(function(word) {
+            if (word.trim() !== "") {
+                let li = document.createElement("li");
+                li.textContent = word;
+                wordsList.appendChild(li);
+            }
+        });
+    } else {
+        wordsContainer.style.display = "none";
+    }
+}

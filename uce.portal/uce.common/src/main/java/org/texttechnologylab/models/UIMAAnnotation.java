@@ -3,6 +3,7 @@ package org.texttechnologylab.models;
 import io.micrometer.common.lang.Nullable;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.Column;
@@ -218,6 +219,10 @@ public class UIMAAnnotation extends ModelBase {
             return String.format(
                     "<span class='annotation custom-context-menu focus' title='%1$s'>",
                     includeTitle ? focus.getCoveredText() : "");
+        } else if (annotation instanceof UnifiedTopic topic) {
+            return String.format(
+                    "<span class='open-wiki-page annotation custom-context-menu topic' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
+                    includeTitle ? topic.getWikiId() : "", topic.getWikiId(), topic.getCoveredText());
         }
 
         return "";

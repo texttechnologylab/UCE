@@ -19,6 +19,7 @@ import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
+import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
 
@@ -749,6 +750,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public UnifiedTopic getUnifiedTopicById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(UnifiedTopic.class, id));
+    }
+
     public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
@@ -983,6 +988,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getFocuses());
         Hibernate.initialize(doc.getXscopes());
         Hibernate.initialize(doc.getEvents());
+
+        // unified topic
+        Hibernate.initialize(doc.getUnifiedTopics());
 
         for (var link : doc.getWikipediaLinks()) {
             Hibernate.initialize(link.getWikiDataHyponyms());
