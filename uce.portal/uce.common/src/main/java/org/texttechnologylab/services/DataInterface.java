@@ -55,13 +55,13 @@ public interface DataInterface {
      * Stores a page topic distribution by a page.
      *
      */
-    public void savePageTopicDistribution(Page page) throws DatabaseOperationException;
+    public void savePageKeywordDistribution(Page page) throws DatabaseOperationException;
 
     /**
      * Stores a document topic distributions by a document.
      *
      */
-    public void saveDocumentTopicDistribution(Document document) throws DatabaseOperationException;
+    public void saveDocumentKeywordDistribution(Document document) throws DatabaseOperationException;
 
     /**
      * Returns a corpus by name. As they aren't unique, it returns the first match.
@@ -170,10 +170,10 @@ public interface DataInterface {
      * @return
      * @throws DatabaseOperationException
      */
-    public <T extends TopicDistribution> T getTopicDistributionById(Class<T> clazz, long id) throws DatabaseOperationException;
+    public <T extends KeywordDistribution> T getKeywordDistributionById(Class<T> clazz, long id) throws DatabaseOperationException;
 
     /**
-     * Get Topic Distributions by a topic. This is basically a search for annotated topics.
+     * Get Keyword Distributions by a keyword. This is basically a search for annotated keywords.
      *
      * @param clazz
      * @param topic
@@ -181,7 +181,7 @@ public interface DataInterface {
      * @return
      * @throws DatabaseOperationException
      */
-    public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException;
+    public <T extends KeywordDistribution> List<T> getKeywordDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException;
 
     /**
      * Gets a document by its corpusId and the documentId, which isn't its primary key identifier "id".

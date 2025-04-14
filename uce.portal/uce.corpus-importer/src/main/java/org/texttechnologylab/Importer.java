@@ -8,7 +8,6 @@ import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.morph.MorphologicalFeatur
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import org.apache.commons.logging.Log;
 import org.apache.http.annotation.Obsolete;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,14 +24,12 @@ import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
-import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.LogStatus;
-import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.topic.TopicValueBase;
@@ -1229,42 +1226,42 @@ public class Importer {
             }
         }
 
-        if (corpusConfig.getOther().isIncludeTopicDistribution()) {
-            logger.info("Topic Distribution...");
+        if (corpusConfig.getOther().isIncludeKeywordDistribution()) {
+            logger.info("Keyword Distribution...");
 
-            // Calculate the page topic distribution if activated
+            // Calculate the page keyword distribution if activated
             for (var page : document.getPages()) {
-                // If this page already has a topic dist, continue.
-                if (page.getPageTopicDistribution() != null) continue;
+                // If this page already has a keyword dist, continue.
+                if (page.getPageKeywordDistribution() != null) continue;
 
-                var topicDistribution = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getTextTopicDistribution(PageTopicDistribution.class, page.getCoveredText(document.getFullText())),
-                        (ex) -> logImportError("Error getting the PageTopicDistribution - the postprocessing continues. Document id: " + document.getId(), ex, filePath));
-                if (topicDistribution == null) continue;
+                var KeywordDistribution = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getTextKeywordDistribution(PageKeywordDistribution.class, page.getCoveredText(document.getFullText())),
+                        (ex) -> logImportError("Error getting the PageKeywordDistribution - the postprocessing continues. Document id: " + document.getId(), ex, filePath));
+                if (KeywordDistribution == null) continue;
 
-                topicDistribution.setBegin(page.getBegin());
-                topicDistribution.setEnd(page.getEnd());
-                topicDistribution.setPage(page);
-                topicDistribution.setPageId(page.getId());
-                page.setPageTopicDistribution(topicDistribution);
+                KeywordDistribution.setBegin(page.getBegin());
+                KeywordDistribution.setEnd(page.getEnd());
+                KeywordDistribution.setPage(page);
+                KeywordDistribution.setPageId(page.getId());
+                page.setPageKeywordDistribution(KeywordDistribution);
                 // Store it in the db
-                ExceptionUtils.tryCatchLog(() -> db.savePageTopicDistribution(page),
-                        (ex) -> logImportError("Error storing the page topic distribution - the postprocessing continues.", ex, filePath));
+                ExceptionUtils.tryCatchLog(() -> db.savePageKeywordDistribution(page),
+                        (ex) -> logImportError("Error storing the page keyword distribution - the postprocessing continues.", ex, filePath));
             }
 
             // And the document topic dist if this wasn't added before.
-            if (document.getDocumentTopicDistribution() == null) {
-                var documentTopicDistribution = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getTextTopicDistribution(DocumentTopicDistribution.class, document.getFullText()),
-                        (ex) -> logImportError("Error getting the DocumentTopicDistribution - the postprocessing ends now. Document id: " + document.getId(), ex, filePath));
-                if (documentTopicDistribution == null) return;
+            if (document.getDocumentKeywordDistribution() == null) {
+                var documentKeywordDistribution = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getTextKeywordDistribution(DocumentKeywordDistribution.class, document.getFullText()),
+                        (ex) -> logImportError("Error getting the DocumentKeywordDistribution - the postprocessing ends now. Document id: " + document.getId(), ex, filePath));
+                if (documentKeywordDistribution == null) return;
 
-                documentTopicDistribution.setDocument(document);
-                documentTopicDistribution.setDocumentId(document.getId());
-                document.setDocumentTopicDistribution(documentTopicDistribution);
+                documentKeywordDistribution.setDocument(document);
+                documentKeywordDistribution.setDocumentId(document.getId());
+                document.setDocumentKeywordDistribution(documentKeywordDistribution);
                 // Store it
-                ExceptionUtils.tryCatchLog(() -> db.saveDocumentTopicDistribution(document),
-                        (ex) -> logImportError("Error storing the document topic distribution - the postprocessing ends now.", ex, filePath));
+                ExceptionUtils.tryCatchLog(() -> db.saveDocumentKeywordDistribution(document),
+                        (ex) -> logImportError("Error storing the document keyword distribution - the postprocessing ends now.", ex, filePath));
             }
         }
 

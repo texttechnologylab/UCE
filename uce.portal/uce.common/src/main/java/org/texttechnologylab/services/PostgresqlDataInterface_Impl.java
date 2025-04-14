@@ -26,10 +26,6 @@ import org.texttechnologylab.utils.SystemStatus;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Array;
 import java.sql.ResultSet;
 import java.sql.SQLException;
@@ -754,7 +750,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> session.get(UnifiedTopic.class, id));
     }
 
-    public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
+    public <T extends KeywordDistribution> List<T> getKeywordDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
             var query = builder.createQuery(clazz);
@@ -793,10 +789,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             var results = finalQuery.getResultList();
 
-            // Initialize document pages if any result is an instance of DocumentTopicDistribution
+            // Initialize document pages if any result is an instance of DocumentKeywordDistribution
             for (T dist : results) {
-                if (dist instanceof DocumentTopicDistribution) {
-                    Hibernate.initialize(((DocumentTopicDistribution) dist).getDocument().getPages());
+                if (dist instanceof DocumentKeywordDistribution) {
+                    Hibernate.initialize(((DocumentKeywordDistribution) dist).getDocument().getPages());
                 }
             }
 
@@ -804,12 +800,12 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public <T extends TopicDistribution> T getTopicDistributionById(Class<T> clazz, long id) throws DatabaseOperationException {
+    public <T extends KeywordDistribution> T getKeywordDistributionById(Class<T> clazz, long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var dist = session.get(clazz, id);
-            // Check if the retrieved object is an instance of DocumentTopicDistribution
-            if (dist instanceof DocumentTopicDistribution) {
-                Hibernate.initialize(((DocumentTopicDistribution) dist).getDocument().getPages());
+            // Check if the retrieved object is an instance of DocumentKeywordDistribution
+            if (dist instanceof DocumentKeywordDistribution) {
+                Hibernate.initialize(((DocumentKeywordDistribution) dist).getDocument().getPages());
             }
             return dist;
         });
@@ -904,23 +900,23 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public void savePageTopicDistribution(Page page) throws DatabaseOperationException {
+    public void savePageKeywordDistribution(Page page) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.saveOrUpdate(page);
-            // Save or update the page's PageTopicDistribution
-            if (page.getPageTopicDistribution() != null) {
-                session.saveOrUpdate(page.getPageTopicDistribution());
+            // Save or update the page's PageKeywordDistribution
+            if (page.getPageKeywordDistribution() != null) {
+                session.saveOrUpdate(page.getPageKeywordDistribution());
             }
             return null;
         });
     }
 
-    public void saveDocumentTopicDistribution(Document document) throws DatabaseOperationException {
+    public void saveDocumentKeywordDistribution(Document document) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.saveOrUpdate(document);
-            // Save or update the page's PageTopicDistribution
-            if (document.getDocumentTopicDistribution() != null) {
-                session.saveOrUpdate(document.getDocumentTopicDistribution());
+            // Save or update the page's PageKeywordDistribution
+            if (document.getDocumentKeywordDistribution() != null) {
+                session.saveOrUpdate(document.getDocumentKeywordDistribution());
             }
             return null;
         });
@@ -970,10 +966,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             Hibernate.initialize(page.getBlocks());
             Hibernate.initialize(page.getParagraphs());
             Hibernate.initialize(page.getLines());
-            Hibernate.initialize(page.getPageTopicDistribution());
+            Hibernate.initialize(page.getPageKeywordDistribution());
         }
 
-        Hibernate.initialize(doc.getDocumentTopicDistribution());
+        Hibernate.initialize(doc.getDocumentKeywordDistribution());
         Hibernate.initialize(doc.getSentences());
         Hibernate.initialize(doc.getNamedEntities());
         Hibernate.initialize(doc.getTaxons());

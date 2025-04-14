@@ -3,8 +3,8 @@ package org.texttechnologylab.models.corpus;
 import javax.persistence.*;
 
 @Entity
-@Table(name="documenttopicdistribution")
-public class DocumentTopicDistribution extends TopicDistribution{
+@Table(name="documentKeywordDistribution")
+public class DocumentKeywordDistribution extends KeywordDistribution {
 
     @OneToOne()
     @JoinColumn(name="document_id", insertable = false, updatable = false)

@@ -762,42 +762,42 @@ public class UIMAService {
             }
         }
 
-        if (corpusConfig.getOther().isIncludeTopicDistribution()) {
-            logger.info("Topic Distribution...");
+        if (corpusConfig.getOther().isIncludeKeywordDistribution()) {
+            logger.info("Keyword Distribution...");
 
             // Calculate the page topic distribution if activated
             for (var page : document.getPages()) {
                 // If this page already has a topic dist, continue.
-                if(page.getPageTopicDistribution() != null) continue;
+                if(page.getPageKeywordDistribution() != null) continue;
 
-                var topicDistribution = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getTextTopicDistribution(PageTopicDistribution.class, page.getCoveredText(document.getFullText())),
-                        (ex) -> logger.error("Error getting the PageTopicDistribution - the postprocessing continues. Document id: " + document.getId(), ex));
-                if (topicDistribution == null) continue;
+                var keywordDistribution = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getTextKeywordDistribution(PageKeywordDistribution.class, page.getCoveredText(document.getFullText())),
+                        (ex) -> logger.error("Error getting the PageKeywordDistribution - the postprocessing continues. Document id: " + document.getId(), ex));
+                if (keywordDistribution == null) continue;
 
-                topicDistribution.setBegin(page.getBegin());
-                topicDistribution.setEnd(page.getEnd());
-                topicDistribution.setPage(page);
-                topicDistribution.setPageId(page.getId());
-                page.setPageTopicDistribution(topicDistribution);
+                keywordDistribution.setBegin(page.getBegin());
+                keywordDistribution.setEnd(page.getEnd());
+                keywordDistribution.setPage(page);
+                keywordDistribution.setPageId(page.getId());
+                page.setPageKeywordDistribution(keywordDistribution);
                 // Store it in the db
-                ExceptionUtils.tryCatchLog(() -> db.savePageTopicDistribution(page),
-                        (ex) -> logger.error("Error storing the page topic distribution - the postprocessing continues.", ex));
+                ExceptionUtils.tryCatchLog(() -> db.savePageKeywordDistribution(page),
+                        (ex) -> logger.error("Error storing the page keyword distribution - the postprocessing continues.", ex));
             }
 
             // And the document topic dist if this wasn't added before.
-            if(document.getDocumentTopicDistribution() == null){
-                var documentTopicDistribution = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getTextTopicDistribution(DocumentTopicDistribution.class, document.getFullText()),
-                        (ex) -> logger.error("Error getting the DocumentTopicDistribution - the postprocessing ends now. Document id: " + document.getId(), ex));
-                if (documentTopicDistribution == null) return;
+            if(document.getDocumentKeywordDistribution() == null){
+                var documentKeywordDistribution = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getTextKeywordDistribution(DocumentKeywordDistribution.class, document.getFullText()),
+                        (ex) -> logger.error("Error getting the DocumentKeywordDistribution - the postprocessing ends now. Document id: " + document.getId(), ex));
+                if (documentKeywordDistribution == null) return;
 
-                documentTopicDistribution.setDocument(document);
-                documentTopicDistribution.setDocumentId(document.getId());
-                document.setDocumentTopicDistribution(documentTopicDistribution);
+                documentKeywordDistribution.setDocument(document);
+                documentKeywordDistribution.setDocumentId(document.getId());
+                document.setDocumentKeywordDistribution(documentKeywordDistribution);
                 // Store it
-                ExceptionUtils.tryCatchLog(() -> db.saveDocumentTopicDistribution(document),
-                        (ex) -> logger.error("Error storing the document topic distribution - the postprocessing ends now.", ex));
+                ExceptionUtils.tryCatchLog(() -> db.saveDocumentKeywordDistribution(document),
+                        (ex) -> logger.error("Error storing the document keyword distribution - the postprocessing ends now.", ex));
             }
         }
     }

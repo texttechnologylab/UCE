@@ -3,11 +3,8 @@ package org.texttechnologylab.models.viewModels.wiki;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.corpus.Page;
-import org.texttechnologylab.models.corpus.TopicDistribution;
 import org.texttechnologylab.models.viewModels.CorpusViewModel;
 import org.texttechnologylab.states.KeywordInContextState;
-
-import java.util.List;
 
 public class AnnotationWikiPageViewModel extends ViewModelBase {
     private String coveredText;

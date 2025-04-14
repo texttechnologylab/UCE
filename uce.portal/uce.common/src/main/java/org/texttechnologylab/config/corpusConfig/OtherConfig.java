@@ -2,16 +2,16 @@ package org.texttechnologylab.config.corpusConfig;
 
 public class OtherConfig{
     private boolean availableOnFrankfurtUniversityCollection;
-    private boolean includeTopicDistribution;
+    private boolean includeKeywordDistribution;
     private boolean enableEmbeddings;
     private boolean enableRAGBot;
 
-    public boolean isIncludeTopicDistribution() {
-        return includeTopicDistribution;
+    public boolean isIncludeKeywordDistribution() {
+        return includeKeywordDistribution;
     }
 
-    public void setIncludeTopicDistribution(boolean includeTopicDistribution) {
-        this.includeTopicDistribution = includeTopicDistribution;
+    public void setIncludeKeywordDistribution(boolean includeKeywordDistribution) {
+        this.includeKeywordDistribution = includeKeywordDistribution;
     }
 
     public boolean isAvailableOnFrankfurtUniversityCollection() {
