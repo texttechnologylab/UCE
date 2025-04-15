@@ -86,6 +86,15 @@
                 #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
             </label>
         </#if>
+        <#if document.getDocumentUnifiedTopicDistribution(3)?has_content>
+            <#list document.getDocumentUnifiedTopicDistribution(3) as topic>
+                <label data-wid="${topic.getWikiId()}"
+                       data-wcovered="${topic.getValue()}"
+                       class="add-wiki-logo open-wiki-page">
+                    ${topic.getValue()}
+                </label>
+            </#list>
+        </#if>
     </div>
 </div>
 

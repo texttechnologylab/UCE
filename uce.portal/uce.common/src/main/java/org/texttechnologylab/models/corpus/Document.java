@@ -409,4 +409,36 @@ public class Document extends ModelBase implements WikiModel {
     public void setUnifiedTopics(List<UnifiedTopic> unifiedTopics) {
         this.unifiedTopics = unifiedTopics;
     }
+
+    public List<TopicValueBase> getDocumentUnifiedTopicDistribution(Integer topN) {
+        List<TopicValueBaseWithScore> scoredTopics = new ArrayList<>();
+        List<TopicValueBase> unscoredTopics = new ArrayList<>();
+
+        // Separate scored and unscored topics using getRepresentativeTopic()
+        for (UnifiedTopic unifiedTopic : unifiedTopics) {
+            TopicValueBase representativeTopic = unifiedTopic.getRepresentativeTopic();
+
+            if (representativeTopic != null) {
+                if (representativeTopic instanceof TopicValueBaseWithScore) {
+                    scoredTopics.add((TopicValueBaseWithScore) representativeTopic);
+                } else {
+                    unscoredTopics.add(representativeTopic);
+                }
+            }
+        }
+
+        // If scored topics exist, sort and return topN
+        if (!scoredTopics.isEmpty()) {
+            return scoredTopics.stream()
+                    .sorted(Comparator.comparingDouble(TopicValueBaseWithScore::getScore).reversed())
+                    .limit(topN)
+                    .collect(Collectors.toList());
+        }
+
+        // If no scored topics, return topN unscored topics
+        return unscoredTopics.stream()
+                .limit(topN)
+                .collect(Collectors.toList());
+    }
+
 }

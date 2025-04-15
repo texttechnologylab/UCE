@@ -167,6 +167,9 @@ public class WikiApi {
             } else if (type.startsWith("UT")) {
                 model.put("vm", wikiService.buildUnifiedTopicWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/unifiedTopicAnnotationPage.ftl";
+            } else if (type.startsWith("TVB")) {
+                model.put("vm", wikiService.buildTopicValueBaseWikiPageViewModel(id, coveredText));
+                renderView = "/wiki/pages/topicValueBaseAnnotationPage.ftl";
             } else {
                 // The type part of the wikiId was unknown. Throw an error.
                 logger.warn("Someone tried to query a wiki page of a type that does not exist in UCE. This shouldn't happen.");

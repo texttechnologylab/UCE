@@ -1,6 +1,7 @@
 package org.texttechnologylab.models.topic;
 
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
 
 import javax.persistence.*;
@@ -8,7 +9,8 @@ import java.util.List;
 
 @Entity
 @Table(name = "topicvaluebase")
-public class TopicValueBase extends UIMAAnnotation {
+@Inheritance(strategy = InheritanceType.JOINED)
+public class TopicValueBase extends UIMAAnnotation implements WikiModel {
     /***
      * TopicValueBase class can be used to represent a topic with a label in a document. It also allows to represent a
      * topic with a list of word. Therefore, TopicValueBase class has one-to-many relationship with TopicWord class.
@@ -76,4 +78,8 @@ public class TopicValueBase extends UIMAAnnotation {
         this.document = document;
     }
 
+    @Override
+    public String getWikiId() {
+        return "TVB" + "-" + this.getId();
+    }
 }
