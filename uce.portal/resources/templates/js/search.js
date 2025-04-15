@@ -327,7 +327,15 @@ $('body').on('click', '.document-card .snippets-container .toggle-snippets-btn',
     const $snippets = $(this).closest('.snippets-container').find('.snippet-content');
     $snippets.each(function(){
         if($(this).data('id') !== 0) $(this).toggle();
-    })
+    });
+    if ($(this).parent().find(".snippet-content").length > 1) {
+        var style = $(this).parent().find(".snippet-content[data-id='1']")[0].getAttribute("style");;
+        const regex =  /display: none;/;
+        var found = style.match(regex);
+        $(this).text((found ? "${languageResource.get('more')} " : "${languageResource.get('less')} " ));
+        $(this).append('<i class="ml-1 fas fa-file-alt" aria-hidden="true"></i>');
+    };
+
 })
 
 let currentFocusedDocumentId = -1;
