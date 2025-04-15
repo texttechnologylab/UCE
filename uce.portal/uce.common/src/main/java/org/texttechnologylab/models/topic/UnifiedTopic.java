@@ -47,6 +47,17 @@ public class UnifiedTopic extends UIMAAnnotation implements WikiModel {
         return topics;
     }
 
+    public List<TopicValueBase> getOrderedTopics(String order) {
+        if (topics != null) {
+            topics.sort((t1, t2) -> {
+                double score1 = (t1 instanceof TopicValueBaseWithScore) ? ((TopicValueBaseWithScore) t1).getScore() : 0;
+                double score2 = (t2 instanceof TopicValueBaseWithScore) ? ((TopicValueBaseWithScore) t2).getScore() : 0;
+                return order.equals("asc") ? Double.compare(score1, score2) : Double.compare(score2, score1);
+            });
+        }
+        return topics;
+    }
+
     public void setTopics(List<TopicValueBase> topics) {
         this.topics = topics;
     }
@@ -56,6 +67,16 @@ public class UnifiedTopic extends UIMAAnnotation implements WikiModel {
 
     public void setDocument(Document document) {
         this.document = document;
+    }
+
+    public TopicValueBase getRepresentativeTopic() {
+        if (topics == null || topics.isEmpty()) {
+            return null;
+        }
+
+        // Get topics ordered by score in descending order and return the first one
+        List<TopicValueBase> orderedTopics = getOrderedTopics("desc");
+        return orderedTopics.get(0);
     }
 
     @Override
