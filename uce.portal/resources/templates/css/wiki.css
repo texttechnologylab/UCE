@@ -550,7 +550,7 @@
 /* Topic Value Base Wiki Page */
 .wiki-page .topic-value-base-spans {
     line-height: 1.5;
-    background-color: #f4f4f4;
+    background-color: #fafafa;
     margin: 8px 0;
     padding: 10px;
     border-radius: 5px;
@@ -558,6 +558,24 @@
     transition: all 0.3s ease;
 }
 
+.wiki-page .topic-value-base-spans p {
+    font-size: 16px;
+    color: #27272a;
+    margin-bottom: 6px;
+}
+
+.wiki-page .topic-value-base-spans .topic-metadata {
+    font-size: 14px;
+    color: #71717a;
+    margin-top: 4px;
+}
+
+.wiki-page .highlighted-word {
+    background-color: rgba(255, 255, 0, 0.4);
+    padding: 2px 0;
+    border-radius: 3px;
+    font-weight: bold;
+}
 
 .wiki-page .topic-value-base-spans:hover {
     background-color: #e0e0e0;

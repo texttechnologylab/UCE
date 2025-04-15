@@ -22,12 +22,20 @@
         </div>
     </div>
 
-    <#list vm.getMatchingUnifiedTopics() as topic>
-        <div class="topic-value-base-spans">${topic.getCoveredText()}</div>
+    <#list vm.getMatchingTopics() as topic>
+        <div class="topic-value-base-spans">
+            <p>
+                ${vm.getHighlightedText(topic)}
+            </p>
+            <div class="topic-metadata">
+                Doc ID: ${topic.getDocument().getId()} |
+                <#if vm.hasScore()>
+                    Relevance: ${vm.getTopic().getScore()?string("0.00")}
+                <#else>
+                    Relevance: N/A
+                </#if>
+            </div>
+        </div>
     </#list>
-
-
-
-
 
 </div>
