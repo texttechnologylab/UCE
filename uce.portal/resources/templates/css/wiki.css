@@ -546,3 +546,29 @@
     border-color: gray;
     cursor: pointer;
 }
+
+/* Topic Value Base Wiki Page */
+.wiki-page .topic-value-base-spans {
+    line-height: 1.5;
+    background-color: #f4f4f4;
+    margin: 8px 0;
+    padding: 10px;
+    border-radius: 5px;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    transition: all 0.3s ease;
+}
+
+
+.wiki-page .topic-value-base-spans:hover {
+    background-color: #e0e0e0;
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+
+.wiki-page .topic-value-base-spans:nth-child(odd) {
+    border-left: 5px solid #007bff;
+}
+
+.wiki-page .topic-value-base-spans:nth-child(even) {
+    border-left: 5px solid #28a745;
+}

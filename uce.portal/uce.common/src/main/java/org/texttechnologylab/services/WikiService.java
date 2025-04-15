@@ -95,7 +95,25 @@ public class WikiService {
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
         viewModel.setCoveredText(coveredText);
         viewModel.setAnnotationType("UnifiedTopic");
-        viewModel.setTopics(unifiedTopic.getTopics());
+        viewModel.setTopics(unifiedTopic.getOrderedTopics("desc"));
+
+
+        return viewModel;
+    }
+
+    /**
+     * Gets a TopicValueBaseWikiPageViewModel to render a Wikipage for that annotation
+     */
+    public TopicValueBaseWikiPageViewModel buildTopicValueBaseWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new TopicValueBaseWikiPageViewModel();
+        var topicValueBase = db.getTopicValueBaseById(id);
+        viewModel.setWikiModel(topicValueBase);
+        viewModel.setDocument(db.getDocumentById(topicValueBase.getDocument().getId()));
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("TopicValueBase");
+        viewModel.setTopic(topicValueBase);
+
 
         return viewModel;
     }
