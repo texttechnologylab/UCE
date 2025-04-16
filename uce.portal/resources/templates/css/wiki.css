@@ -448,8 +448,8 @@
     height: 100%;
     overflow-y: auto;
     color: rgba(125, 125, 125, 1);
+    font-family: Courier, monospace !important;
     line-height: 1.5;
-    font-family: "Times New Roman", serif;
 }
 
 .wiki-metadata-expanded-view .content-reader .content h1,

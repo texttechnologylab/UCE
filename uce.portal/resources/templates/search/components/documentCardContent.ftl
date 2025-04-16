@@ -98,94 +98,61 @@
     </div>
 </div>
 
-<#if searchState??>
-    <#if searchState.getSearchType()?? && searchState.getSearchType() == "DEFAULT">
-        <div class="snippets-container">
-            <#assign snippets = searchState.getPossibleSnippetsOfDocumentIdx(documentIdx)!>
-            <#if snippets?has_content>
-                <#list snippets as snippet>
-                    <#assign displayStyle = (snippet?index != 0)?then('display: none;', '')>
-                    <div class="snippet-content mt-1 mb-2 h-100 position-relative"
-                         data-id="${snippet?index}" style="${displayStyle}">
-                        <div class="small-font text font-italic mr-2 block-text">
-                            ${snippet.getSnippet()}
-                            <#if snippet.getPage()?has_content>
-                                <label class="display-none page-html">
-                                    ${snippet.getPage().getCoveredHtmlText()}
-                                </label>
-                                <div class="inspect-page-btn hoverable clickable"
-                                     onclick="openInExpandedTextView('${languageResource.get('page')} ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('.page-html').html())">
-                                    ${snippet.getPage().getPageNumber()}.<i class="ml-1 fas fa-file-alt"></i>
-                                </div>
-                            </#if>
+<#macro renderSnippets snippets>
+    <#if snippets?has_content>
+        <#list snippets as snippet>
+            <#assign displayStyle = (snippet?index != 0)?then('display: none;', '')>
+            <div class="snippet-content mt-1 mb-2 h-100 position-relative"
+                 data-id="${snippet?index}" style="${displayStyle}">
+                <div class="small-font text font-italic mr-2 block-text">
+                    ${snippet.getSnippet()}
+                    <#if snippet.getPage()?has_content>
+                        <label class="display-none page-html">
+                            ${snippet.getPage().getCoveredHtmlText()}
+                        </label>
+                        <div class="inspect-page-btn hoverable clickable"
+                             onclick="openInExpandedTextView('${languageResource.get('page')} ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('.page-html').html())">
+                            ${snippet.getPage().getPageNumber()}.<i class="ml-1 fas fa-file-alt"></i>
                         </div>
-                    </div>
-                </#list>
-
-                <#if snippets?size gt 1>
-                    <button class="toggle-snippets-btn btn small-font light-border w-100 mt-1 mb-2 color-prime">
-                        ${languageResource.get("more")} <i class="ml-1 fas fa-file-alt"></i>
-                    </button>
-                </#if>
-            <#else>
-                <div class="snippet-content h-100 position-relative">
-                    <div class="mb-0 small-font text font-italic mr-2 block-text">
-                        ${document.getFullTextSnippet(85)}...
-                    </div>
+                    </#if>
                 </div>
-            </#if>
-        </div>
-
-    <#elseif searchState.getSearchType()?? && searchState.getSearchType() == "NEG">
-        <div class="snippets-container">
-            <#assign snippets = searchState.getPossibleSnippetsOfDocumentId(document.getId())!>
-            <#if snippets?has_content>
-                <#list snippets as snippet>
-                    <#assign displayStyle = (snippet?index != 0)?then('display: none;', '')>
-                    <div class="snippet-content mt-1 mb-2 h-100 position-relative"
-                         data-id="${snippet?index}" style="${displayStyle}">
-                        <div class="small-font text font-italic mr-2 block-text">
-                            ${snippet.getSnippet()}
-                            <#if snippet.getPage()?has_content>
-                                <label class="display-none page-html">
-                                    ${snippet.getPage().getCoveredText()}
-                                </label>
-                                <div class="inspect-page-btn hoverable clickable"
-                                     onclick="openInExpandedTextView('${languageResource.get('page')} ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('.page-html').html())">
-                                    ${snippet.getPage().getPageNumber()}.<i class="ml-1 fas fa-file-alt"></i>
-                                </div>
-                            </#if>
-                        </div>
-                    </div>
-                </#list>
-
-                <#if snippets?size gt 1>
-                    <button class="toggle-snippets-btn btn small-font light-border w-100 mt-1 mb-2 color-prime">
-                        ${languageResource.get("more")} <i class="ml-1 fas fa-file-alt"></i>
-                    </button>
-                </#if>
-            <#else>
-                <div class="snippet-content h-100 position-relative">
-                    <div class="mb-0 small-font text font-italic mr-2 block-text">
-                        ${document.getFullTextSnippet(85)}...
-                    </div>
-                </div>
-            </#if>
-        </div>
-
-    <#else>
-        <div class="snippet-content h-100 position-relative">
-            <div class="mb-0 small-font text font-italic mr-2 block-text">
-                ${document.getFullTextSnippet(85)}...
             </div>
-        </div>
+        </#list>
+
+        <#if snippets?size gt 1>
+            <button class="toggle-snippets-btn btn small-font light-border w-100 mt-1 mb-2 color-prime">
+                ${languageResource.get("more")} <i class="ml-1 fas fa-file-alt"></i>
+            </button>
+        </#if>
+    <#else>
+        <@renderFallback />
     </#if>
-<#else>
+</#macro>
+
+<#macro renderFallback>
     <div class="snippet-content h-100 position-relative">
         <div class="mb-0 small-font text font-italic mr-2 block-text">
             ${document.getFullTextSnippet(85)}...
         </div>
     </div>
+</#macro>
+
+<#if searchState?? && searchState.getSearchType()??>
+    <#if searchState.getSearchType() == "DEFAULT">
+        <div class="snippets-container">
+            <#assign snippets = searchState.getPossibleSnippetsOfDocumentIdx(documentIdx)!>
+            <@renderSnippets snippets />
+        </div>
+    <#elseif searchState.getSearchType() == "NEG">
+        <div class="snippets-container">
+            <#assign snippets = searchState.getPossibleSnippetsOfDocumentId(document.getId())!>
+            <@renderSnippets snippets />
+        </div>
+    <#else>
+        <@renderFallback />
+    </#if>
+<#else>
+    <@renderFallback />
 </#if>
 
 <!-- metadata if it exists -->
