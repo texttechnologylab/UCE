@@ -125,16 +125,18 @@
             </button>
         </#if>
     <#else>
-        <@renderFallback />
+        <@renderFallback document/>
     </#if>
 </#macro>
 
-<#macro renderFallback>
-    <div class="snippet-content h-100 position-relative">
-        <div class="mb-0 small-font text font-italic mr-2 block-text">
-            ${document.getFullTextSnippet(85)}...
+<#macro renderFallback document>
+    <#if document?has_content>
+        <div class="snippet-content h-100 position-relative">
+            <div class="mb-0 small-font text font-italic mr-2 block-text">
+                ${document.getFullTextSnippet(85)}...
+            </div>
         </div>
-    </div>
+    </#if>
 </#macro>
 
 <#if searchState?? && searchState.getSearchType()??>
@@ -149,10 +151,10 @@
             <@renderSnippets snippets />
         </div>
     <#else>
-        <@renderFallback />
+        <@renderFallback document/>
     </#if>
 <#else>
-    <@renderFallback />
+    <@renderFallback document/>
 </#if>
 
 <!-- metadata if it exists -->

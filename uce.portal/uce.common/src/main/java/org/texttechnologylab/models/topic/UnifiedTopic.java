@@ -9,26 +9,22 @@ import org.texttechnologylab.models.corpus.Document;
 import javax.persistence.*;
 import java.util.List;
 
+/***
+ * UnifiedTopic class can be used to represent the topics in a document. A topic can be represented by a list of
+ * words or category label. Each document can have multiple topics. Therefore, a unified topic creates a
+ * one-to-many relationship with TopicValueBase class.
+ */
 @Entity
 @Table(name = "unifiedtopic")
 public class UnifiedTopic extends UIMAAnnotation implements WikiModel {
-    /***
-     * UnifiedTopic class can be used to represent the topics in a document. A topic can be represented by a list of
-     * words or category label. Each document can have multiple topics. Therefore, a unified topic creates a
-     * one-to-many relationship with TopicValueBase class.
-     */
-
-
 
     @OneToMany(mappedBy = "unifiedTopic", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<TopicValueBase> topics;
 
-
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
-
 
     public UnifiedTopic() {
         super(-1, -1);

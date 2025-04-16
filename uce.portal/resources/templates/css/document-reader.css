@@ -172,6 +172,7 @@ body {
 
 .document-content .multi-annotation-popup .annotation {
     border-right: 1px lightgray solid;
+    word-break: keep-all !important;
     padding-left: 6px;
     padding-right: 6px;
 }

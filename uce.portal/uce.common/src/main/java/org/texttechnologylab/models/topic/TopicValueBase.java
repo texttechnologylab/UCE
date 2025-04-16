@@ -7,15 +7,15 @@ import org.texttechnologylab.models.corpus.Document;
 import javax.persistence.*;
 import java.util.List;
 
+/***
+ * TopicValueBase class can be used to represent a topic with a label in a document. It also allows to represent a
+ * topic with a list of word. Therefore, TopicValueBase class has one-to-many relationship with TopicWord class.
+ *
+ */
 @Entity
 @Table(name = "topicvaluebase")
 @Inheritance(strategy = InheritanceType.JOINED)
 public class TopicValueBase extends UIMAAnnotation implements WikiModel {
-    /***
-     * TopicValueBase class can be used to represent a topic with a label in a document. It also allows to represent a
-     * topic with a list of word. Therefore, TopicValueBase class has one-to-many relationship with TopicWord class.
-     *
-     */
 
     @ManyToOne
     @JoinColumn(name = "unifiedTopic_id")
@@ -30,9 +30,6 @@ public class TopicValueBase extends UIMAAnnotation implements WikiModel {
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
-
-
-
 
     public TopicValueBase() {
         super(-1, -1);

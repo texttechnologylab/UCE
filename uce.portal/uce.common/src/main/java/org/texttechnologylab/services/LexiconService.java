@@ -11,6 +11,7 @@ import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.viewModels.lexicon.LexiconOccurrenceViewModel;
 import org.texttechnologylab.utils.SystemStatus;
 
@@ -42,7 +43,8 @@ public class LexiconService {
                     Focus.class,
                     Cue.class,
                     Scope.class,
-                    XScope.class));
+                    XScope.class,
+                    UnifiedTopic.class));
 
     public LexiconService(PostgresqlDataInterface_Impl db) {
         this.db = db;
@@ -64,11 +66,11 @@ public class LexiconService {
      * Method that firstly checks if a lexicon update might be required and, if so determined, updates it.
      */
     public int checkForUpdates(){
-        updateLexicon(false);
+        var inserts = updateLexicon(false);
         // The lexicon should be updated and calculated by the importer. This is more of a sanity check
         var entriesCount = countLexiconEntries();
         if(entriesCount == 0) return updateLexicon(true);
-        return 0;
+        return inserts;
     }
 
     /**
