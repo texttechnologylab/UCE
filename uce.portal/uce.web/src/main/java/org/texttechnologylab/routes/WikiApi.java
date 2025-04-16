@@ -1,6 +1,5 @@
 package org.texttechnologylab.routes;
 
-import com.amazonaws.auth.policy.Policy;
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;

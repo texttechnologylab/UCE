@@ -1,7 +1,5 @@
 package org.texttechnologylab.models.dto.rdf;
 
-import com.fasterxml.jackson.annotation.JsonAlias;
-
 public class RDFNodeDto {
     private TripletDto subject;
     private TripletDto predicate;

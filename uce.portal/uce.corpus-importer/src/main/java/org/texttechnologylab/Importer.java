@@ -8,7 +8,7 @@ import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.morph.MorphologicalFeatur
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import org.apache.http.annotation.Obsolete;
+import org.apache.commons.compress.compressors.bzip2.BZip2CompressorInputStream;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.uima.fit.factory.JCasFactory;
@@ -26,6 +26,9 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.ocr.OCRPageAdapterImpl;
+import org.texttechnologylab.models.corpus.ocr.PageAdapter;
+import org.texttechnologylab.models.corpus.ocr.PageAdapterImpl;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.ImportStatus;
@@ -50,6 +53,9 @@ import java.util.concurrent.CopyOnWriteArrayList;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.stream.Collectors;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class Importer {
 
@@ -58,6 +64,7 @@ public class Importer {
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
+    private static final String[] COMATIBLE_CAS_FILE_ENDINGS = Arrays.asList("xmi", "bz2", "zip").toArray(new String[0]);
     private GoetheUniversityService goetheUniversityService;
     private PostgresqlDataInterface_Impl db;
     private GbifService gbifService;
@@ -216,7 +223,7 @@ public class Importer {
 
         try (var fileStream = Files.walk(inputFolderName)) {
             fileStream.filter(Files::isRegularFile)
-                    .filter(path -> path.toString().toLowerCase().endsWith(".xmi"))
+                    .filter(path -> StringUtils.checkIfFileHasExtension(path.toString().toLowerCase(), COMATIBLE_CAS_FILE_ENDINGS))
                     .forEach(filePath -> {
                         var docFuture = CompletableFuture.supplyAsync(
                                         () -> XMIToDocument(filePath.toString(), corpus1), executor) // Convert the XMI to a Document
@@ -256,7 +263,7 @@ public class Importer {
                                 var result = ExceptionUtils.tryCatchLog(
                                         () -> lexiconService.updateLexicon(false),
                                         (ex) -> logImportError("Unknown error updating the lexicon of corpus " + corpus1.getId(), ex, "LEXICON"));
-                                if(result != null)
+                                if (result != null)
                                     logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + result + "\n\n", LogStatus.SAVED, "LEXICON", 0);
                             }, executor);
 
@@ -315,18 +322,55 @@ public class Importer {
     public Document XMIToDocument(String filename, Corpus corpus) {
         try {
             var jCas = JCasFactory.createJCas();
-            // Read in the contents of a single xmi cas
-            //var file = new GZIPInputStream(new FileInputStream(filename));
-            var file = new FileInputStream(filename);
-            // https://uima.apache.org/d/uimaj-current/api/org/apache/uima/util/CasIOUtils.html
-            // tsiInputStream: Optional stream for typesystem - only used if not null. (which it currently is)
-            CasIOUtils.load(file, null, jCas.getCas(), CasLoadMode.LENIENT);
+            try (InputStream inputStream = openInputStreamBasedOnExtension(filename)) {
+                if (inputStream == null) {
+                    logImportError("Unsupported file type or failed to open stream: " + filename, new NullPointerException("Stream was null"), filename);
+                    return null;
+                }
+                // https://uima.apache.org/d/uimaj-current/api/org/apache/uima/util/CasIOUtils.html
+                // tsiInputStream: Optional stream for typesystem - only used if not null. (which it currently is)
+                CasIOUtils.load(inputStream, null, jCas.getCas(), CasLoadMode.LENIENT);
+            }
 
             return XMIToDocument(jCas, corpus, filename);
         } catch (Exception ex) {
             logger.error("Error while reading an annotated xmi file to a cas and transforming it into a document:", ex);
             return null;
         }
+    }
+
+    /**
+     * Loads and returns an Input stream for a cas depending on the compression
+     */
+    private InputStream openInputStreamBasedOnExtension(String filename) throws IOException {
+        var file = new File(filename);
+        var lowerName = filename.toLowerCase();
+
+        if (lowerName.endsWith(".xmi")) {
+            return new FileInputStream(file);
+
+        } else if (lowerName.endsWith(".gz")) {
+            return new GZIPInputStream(new FileInputStream(file));
+
+        } else if (lowerName.endsWith(".bz2")) {
+            return new BZip2CompressorInputStream(new FileInputStream(file));
+
+        } else if (lowerName.endsWith(".zip")) {
+            var zipStream = new ZipInputStream(new FileInputStream(file));
+            ZipEntry entry;
+
+            while ((entry = zipStream.getNextEntry()) != null) {
+                if (!entry.isDirectory() && entry.getName().toLowerCase().endsWith(".xmi")) {
+                    // ZipInputStream itself acts as the stream for the contained file
+                    return zipStream;
+                }
+            }
+
+            zipStream.close();
+            return null;
+        }
+
+        return null; // Unsupported
     }
 
     /**
@@ -539,28 +583,44 @@ public class Importer {
      * Selects and sets pages to a document.
      */
     private void setPages(Document document, JCas jCas, CorpusConfig corpusConfig) {
-        // Set the OCRpages
+        // Set the OCRPages
         if (corpusConfig.getAnnotations().isOCRPage()) {
             var pages = new ArrayList<Page>();
+
+            // We have multiple typesystems for "OCR extracted pages", which have pretty much the same properties
+            // To handle that, we use an adapter class and iterate through them the same way. Can't use abstractions with typesystems sadly.
+            var pageAdapters = new ArrayList<PageAdapter>();
+            JCasUtil.select(jCas, OCRPage.class)
+                    .forEach(p -> pageAdapters.add(new OCRPageAdapterImpl(p)));
+            // The ABBYY Pages have no pageNumber anymore, so we count up by hand...
+            var pageCount = new AtomicInteger(1);
+            JCasUtil.select(jCas, org.texttechnologylab.annotation.ocr.abbyy.Page.class)
+                    .forEach(p -> {
+                        pageAdapters.add(new PageAdapterImpl(p, pageCount.get()));
+                        pageCount.getAndIncrement();
+                    });
+
             // We go through each page
-            JCasUtil.select(jCas, OCRPage.class).forEach(p -> {
+            for (var p : pageAdapters) {
                 // New page
                 var page = new Page(p.getBegin(), p.getEnd(), p.getPageNumber(), p.getPageId());
                 page.setDocument(document);
                 page.setCoveredText(p.getCoveredText());
 
-                if (corpusConfig.getAnnotations().isOCRParagraph())
-                    page.setParagraphs(getCoveredParagraphs(p));
+                // TODO: For now, only the old OCRPage typesystems get their paragraphs blocks and lines. We dont really use them anyway.
+                if (corpusConfig.getAnnotations().isOCRParagraph() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
+                    page.setParagraphs(getCoveredParagraphs((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
 
-                if (corpusConfig.getAnnotations().isOCRBlock())
-                    page.setBlocks(getCoveredBlocks(p));
+                if (corpusConfig.getAnnotations().isOCRBlock() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
+                    page.setBlocks(getCoveredBlocks((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
 
-                if (corpusConfig.getAnnotations().isOCRLine())
-                    page.setLines(getCoveredLines(p));
+                if (corpusConfig.getAnnotations().isOCRLine() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
+                    page.setLines(getCoveredLines((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
 
                 updateAnnotationsWithPageId(document, page, false);
                 pages.add(page);
-            });
+            }
+
             document.setPages(pages);
             logger.info("Setting OCRPages done.");
         } else {
@@ -895,7 +955,7 @@ public class Importer {
         ArrayList<Event> eventsTotal = new ArrayList<>();
 
         //iterate over each negation
-        for (org.texttechnologylab.annotation.negation.CompleteNegation negation: jCas.select(org.texttechnologylab.annotation.negation.CompleteNegation.class)) {
+        for (org.texttechnologylab.annotation.negation.CompleteNegation negation : jCas.select(org.texttechnologylab.annotation.negation.CompleteNegation.class)) {
             // All target tokens
             Token cueT = negation.getCue();
             FSArray<Token> eventTL = negation.getEvent();
@@ -1052,9 +1112,8 @@ public class Importer {
 
     /**
      * Set the cleaned full text. That is the sum of all tokens except of all anomalies
-     * Update: Obsolete for now, as this takes forever and makes the OCR worse.
+     * Update: OBSOLETE for now, as this takes forever and makes the OCR worse.
      */
-    @Obsolete
     private void setCleanedFullText(Document document, JCas jCas) {
         var cleanedText = new StringJoiner(" ");
         JCasUtil.select(jCas, Token.class).forEach(t -> {
@@ -1271,7 +1330,7 @@ public class Importer {
     /**
      * Gets all covered lines from a OCR page in a cas
      */
-    private List<Line> getCoveredLines(OCRPage page) {
+    private List<Line> getCoveredLines(org.texttechnologylab.annotation.ocr.abbyy.Page page) {
         // Paragraphs
         var lines = new ArrayList<Line>();
         // Get all covered by this. This can probably be done in one go, but oh well
@@ -1291,7 +1350,7 @@ public class Importer {
     /**
      * Gets all covered blocks from a OCR page in a cas
      */
-    private List<Block> getCoveredBlocks(OCRPage page) {
+    private List<Block> getCoveredBlocks(org.texttechnologylab.annotation.ocr.abbyy.Page page) {
         // Paragraphs
         var blocks = new ArrayList<Block>();
         // Get all covered by this. This can probably be done in one go, but oh well
@@ -1306,7 +1365,7 @@ public class Importer {
     /**
      * Gets all covered paragraphs from a OCR page in a cas
      */
-    private List<Paragraph> getCoveredParagraphs(OCRPage page) {
+    private List<Paragraph> getCoveredParagraphs(org.texttechnologylab.annotation.ocr.abbyy.Page page) {
         // Paragraphs
         var paragraphs = new ArrayList<Paragraph>();
         // Get all covered by this. This can probably be done in one go, but oh well

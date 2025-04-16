@@ -3,7 +3,6 @@ package org.texttechnologylab.config;
 import org.hibernate.SessionFactory;
 import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
@@ -76,7 +75,6 @@ public class HibernateConf {
         return metadata.getSessionFactoryBuilder().build();
     }
 
-    @NotNull
     private static HashMap<Object, Object> getSettings() {
         var settings = new HashMap<>();
         var config = new CommonConfig();

@@ -1,6 +1,5 @@
 package org.texttechnologylab.models.imp;
 
-import org.apache.http.annotation.Obsolete;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.corpus.Taxon;
 

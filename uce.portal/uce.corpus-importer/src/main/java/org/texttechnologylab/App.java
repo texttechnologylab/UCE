@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.uima.fit.testing.util.DisableLogging;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.SpringConfig;
@@ -101,7 +100,6 @@ public class App {
 
     }
 
-    @NotNull
     private static Options getOptions() {
         var options = new Options();
         options.addOption("srcDir", "importDir", true, "Unlike '-src', '-srcDir' is the path to a directory that holds multiple importable 'src' paths. " +

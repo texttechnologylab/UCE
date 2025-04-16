@@ -3,7 +3,6 @@ package org.texttechnologylab;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.exception.SQLGrammarException;
-import org.jetbrains.annotations.Nullable;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
@@ -186,7 +185,6 @@ public class Search_DefaultImpl implements Search {
      * @param countAll determines whether we also count all search hits or just using pagination
      * @return
      */
-    @Nullable
     private DocumentSearchResult executeSearchOnDatabases(boolean countAll) throws SQLGrammarException {
         if (searchState.getSearchLayers().contains(SearchLayer.FULLTEXT)) {
             try {

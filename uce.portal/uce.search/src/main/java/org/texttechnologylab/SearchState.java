@@ -1,6 +1,5 @@
 package org.texttechnologylab;
 
-import org.apache.http.annotation.Obsolete;
 import org.joda.time.DateTime;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
@@ -57,7 +56,6 @@ public class SearchState extends CacheItem {
     /**
      * This is currently not used.
      */
-    @Obsolete
     private List<Integer> currentDocumentHits;
     private HashMap<Integer, ArrayList<PageSnippet>> documentIdxToSnippet;
     private HashMap<Integer, Float> documentIdxToRank;

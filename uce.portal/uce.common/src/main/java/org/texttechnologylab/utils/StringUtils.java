@@ -4,6 +4,7 @@ import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Page;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.regex.Matcher;
@@ -56,6 +57,13 @@ public class StringUtils {
             }
         }
         return false;
+    }
+
+    /**
+     * Checks if a given string has any of the listed file extensions
+     */
+    public static boolean checkIfFileHasExtension(String s, String[] extensions) {
+        return Arrays.stream(extensions).anyMatch(s::endsWith);
     }
 
     /**

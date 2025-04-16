@@ -1,7 +1,7 @@
 package org.texttechnologylab.utils;
 
-import io.kubernetes.client.util.SSLUtils;
-import org.simpleframework.xml.transform.InvalidFormatException;
+import org.apache.commons.compress.archivers.dump.InvalidFormatException;
+import org.apache.jena.datatypes.DatatypeFormatException;
 
 import javax.net.ssl.HttpsURLConnection;
 import java.io.File;
@@ -27,20 +27,20 @@ public class ImageUtils {
             try (var inputStream = new URL(imagePath).openStream()) {
                 bytes = inputStream.readAllBytes();
             } catch (Exception ex) {
-                throw new InvalidFormatException("Failed to download the image from the provided URL.");
+                throw new DatatypeFormatException("Failed to download the image from the provided URL.");
             }
         } else {
             imageFile = new File(imagePath);
 
             if (!imageFile.exists() || !IsImageFile(imageFile)) {
-                throw new InvalidFormatException("Given path was not an image.");
+                throw new DatatypeFormatException("Given path was not an image.");
             }
 
             try (FileInputStream fileInputStream = new FileInputStream(imageFile)) {
                 bytes = new byte[(int) imageFile.length()];
                 fileInputStream.read(bytes);
             } catch (Exception ex) {
-                throw new InvalidFormatException("Given image couldn't be parsed to Base64.");
+                throw new DatatypeFormatException("Given image couldn't be parsed to Base64.");
             }
         }
 

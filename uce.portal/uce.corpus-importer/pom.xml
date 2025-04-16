@@ -81,11 +81,18 @@
             <version>3.0.5</version>
         </dependency>-->
 
-        <!-- local reference -->
-        <dependency>
+        <!-- Own Fork reference -->
+        <!--<dependency>
             <groupId>com.github.TheItCrOw</groupId>
             <artifactId>UIMATypeSystem</artifactId>
             <version>3.0.6</version>
+        </dependency>-->
+
+        <!-- Local reference -->
+        <dependency>
+            <groupId>org.texttechnologylab.annotation</groupId>
+            <artifactId>typesystem</artifactId>
+            <version>3.0.5</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-shade-plugin -->

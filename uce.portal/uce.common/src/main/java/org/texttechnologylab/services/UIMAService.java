@@ -9,7 +9,6 @@ import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.ner.type.NamedEntity;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import org.apache.http.annotation.Obsolete;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.uima.jcas.cas.AnnotationBase;
@@ -42,7 +41,6 @@ import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-@Obsolete
 @Service
 /*
 Obsolete service, which was outsourced into a simple class uce.corpus-importer.org.texttechnologylab.Importer
@@ -590,7 +588,6 @@ public class UIMAService {
      * Set the cleaned full text. That is the sum of all tokens except of all anomalies
      *
      */
-    @Obsolete
     private void setCleanedFullText(Document document, JCas jCas) {
         var cleanedText = new StringJoiner(" ");
         JCasUtil.select(jCas, Token.class).forEach(t -> {

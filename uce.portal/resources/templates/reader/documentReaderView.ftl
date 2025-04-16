@@ -81,7 +81,7 @@
             <div class="w-100">
                 <div class="position-relative reader-container container"
                      data-id="${document.getId()?string?replace('.', '')?replace(',', '')}"
-                     data-pagescount="${document.getPages()?size}" data-searchtokens="${(searchTokens)!''}">
+                     data-pagescount="${document.getPages()?size?string?replace('.', '')?replace(',', '')}" data-searchtokens="${(searchTokens)!''}">
 
                     <div class="header ">
                         <div class="text-center flexed align-items-center justify-content-around w-100">

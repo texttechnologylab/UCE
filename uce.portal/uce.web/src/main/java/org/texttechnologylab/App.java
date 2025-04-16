@@ -8,7 +8,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.simpleframework.xml.transform.InvalidFormatException;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.CommonConfig;
@@ -157,7 +156,6 @@ public class App {
      * @param imgString
      * @return
      * @throws IOException
-     * @throws InvalidFormatException
      */
     private static String convertConfigImageString(String imgString) throws Exception {
         if (imgString.startsWith("BASE64::")) {

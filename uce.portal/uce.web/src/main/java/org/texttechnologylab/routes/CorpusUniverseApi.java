@@ -4,7 +4,6 @@ import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
@@ -178,7 +177,6 @@ public class CorpusUniverseApi {
         return gson.toJson(result);
     });
 
-    @NotNull
     private static CorpusUniverseNode getCorpusUniverseNode(Document doc, DocumentEmbedding docEmbedding) {
         var node = new CorpusUniverseNode();
         node.setDocumentId(doc.getId());

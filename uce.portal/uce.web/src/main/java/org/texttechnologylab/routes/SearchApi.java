@@ -3,7 +3,6 @@ package org.texttechnologylab.routes;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import freemarker.template.Configuration;
-import org.apache.http.annotation.Obsolete;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.exception.SQLGrammarException;
@@ -234,7 +233,6 @@ public class SearchApi {
     /**
      * Old route that is currently not being used. The default search route checks what kind of search it is now.
      */
-    @Obsolete
     public Route semanticRoleSearch = ((request, response) -> {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
