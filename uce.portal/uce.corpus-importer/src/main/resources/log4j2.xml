@@ -19,7 +19,6 @@
 
     <Loggers>
         <Logger name="org.apache.uima.jcas.impl.JCasImpl" level="ERROR" additivity="false" />
-        <Logger name="SLF4J" level="ERROR" additivity="false" />
         <Logger name="org.apache.uima.resource.metadata.TypeSystemDescription" level="ERROR" additivity="false" />
         <Root level="info">
             <AppenderRef ref="rolling" />

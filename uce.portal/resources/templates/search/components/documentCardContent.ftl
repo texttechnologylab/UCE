@@ -104,19 +104,21 @@
             <#assign snippets = searchState.getPossibleSnippetsOfDocumentIdx(documentIdx)!>
             <#if snippets?has_content>
                 <#list snippets as snippet>
-                    <div class="snippet-content mt-1 mb-2 h-100 position-relative" data-id="${snippet?index}"
-                            <#if snippet?index != 0> style="display: none;" </#if>>
+                    <#assign displayStyle = (snippet?index != 0)?then('display: none;', '')>
+                    <div class="snippet-content mt-1 mb-2 h-100 position-relative"
+                         data-id="${snippet?index}" style="${displayStyle}">
                         <div class="small-font text font-italic mr-2 block-text">
                             ${snippet.getSnippet()}
-                        <#if snippet.getPage()?has_content>
-                            <label class="display-none page-html">
-                                ${snippet.getPage().getCoveredHtmlText()}
-                            </label>
-                            <div class="inspect-page-btn hoverable clickable"
-                                 onclick="openInExpandedTextView('${languageResource.get('page')} ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('.page-html').html())">
-                                ${snippet.getPage().getPageNumber()}.<i class="ml-1 fas fa-file-alt"></i>
-                            </div>
-                        </#if>
+                            <#if snippet.getPage()?has_content>
+                                <label class="display-none page-html">
+                                    ${snippet.getPage().getCoveredHtmlText()}
+                                </label>
+                                <div class="inspect-page-btn hoverable clickable"
+                                     onclick="openInExpandedTextView('${languageResource.get('page')} ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('.page-html').html())">
+                                    ${snippet.getPage().getPageNumber()}.<i class="ml-1 fas fa-file-alt"></i>
+                                </div>
+                            </#if>
+                        </div>
                     </div>
                 </#list>
 
@@ -125,15 +127,23 @@
                         ${languageResource.get("more")} <i class="ml-1 fas fa-file-alt"></i>
                     </button>
                 </#if>
+            <#else>
+                <div class="snippet-content h-100 position-relative">
+                    <div class="mb-0 small-font text font-italic mr-2 block-text">
+                        ${document.getFullTextSnippet(85)}...
+                    </div>
+                </div>
             </#if>
         </div>
+
     <#elseif searchState.getSearchType()?? && searchState.getSearchType() == "NEG">
         <div class="snippets-container">
             <#assign snippets = searchState.getPossibleSnippetsOfDocumentId(document.getId())!>
             <#if snippets?has_content>
                 <#list snippets as snippet>
-                    <div class="snippet-content mt-1 mb-2 h-100 position-relative" data-id="${snippet?index}"
-                            <#if snippet?index != 0> style="display: none;" </#if>>
+                    <#assign displayStyle = (snippet?index != 0)?then('display: none;', '')>
+                    <div class="snippet-content mt-1 mb-2 h-100 position-relative"
+                         data-id="${snippet?index}" style="${displayStyle}">
                         <div class="small-font text font-italic mr-2 block-text">
                             ${snippet.getSnippet()}
                             <#if snippet.getPage()?has_content>
@@ -162,6 +172,7 @@
                 </div>
             </#if>
         </div>
+
     <#else>
         <div class="snippet-content h-100 position-relative">
             <div class="mb-0 small-font text font-italic mr-2 block-text">
@@ -169,7 +180,6 @@
             </div>
         </div>
     </#if>
-
 <#else>
     <div class="snippet-content h-100 position-relative">
         <div class="mb-0 small-font text font-italic mr-2 block-text">

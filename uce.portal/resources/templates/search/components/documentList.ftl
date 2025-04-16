@@ -10,7 +10,7 @@
 
                             <#assign corpusConfig = searchState.getCorpusConfig()>
                             <#assign searchId = searchState.getSearchId()>
-                            <#include '*/search/components/documentCardContent.ftl' >
+                            <#include '*/search/components/documentCardContent.ftl'>
 
                             <#assign foundLocations = searchState.getAnnotationsByTypeAndDocumentId("NamedEntities", document.getId(), "LOCATION")>
                             <#assign foundPersons = searchState.getAnnotationsByTypeAndDocumentId("NamedEntities", document.getId(), "PERSON")>
@@ -26,20 +26,13 @@
                             <#assign foundFoci = searchState.getAnnotationsByTypeAndDocumentId("Foci", document.getId(), "")>
 
                             <div class="flexed align-items-center justify-content-between small text mt-2 text-center">
-                                <style>
-                                    .separator {
-                                        border-right: 1px solid #ccc;
-                                        padding-right: 10px;
-                                        margin-right: 10px;
-                                    }
-                                </style>
                                 <span class="w-100 text-center"><i
                                                         class="fas fa-map-marker-alt mr-1"></i>${foundLocations?size}</span>
                                 <span class="w-100 text-center"><i
                                             class="fas fa-user-tag mr-1"></i>${foundPersons?size}</span>
                                 <span class="w-100 text-center"><i
                                             class="fas fa-sitemap mr-1"></i>${foundOrgas?size}</span>
-                                <span class="w-100 text-center separator"><i
+                                <span class="w-100 text-center border-right pr-2 mr-2"><i
                                             class="fas fa-th mr-1"></i>${foundMisc?size}</span>
                                 <!-- Taxon/Time Entities Group -->
                                 <span class="w-100 text-center"><i
@@ -207,8 +200,7 @@
                                         </#list>
                                     </div>
                                 <#else>
-                                    <!-- <p class="text small-font mb-0">${languageResource.get("noAnnotationsMatched")}</p> -->
-                                    <p class="text small-font mb-0"></p>
+                                    <p class="text small-font mb-0">${languageResource.get("noAnnotationsMatched")}</p>
                                 </#if>
                             </div>
                         </div>
