@@ -1001,14 +1001,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> session.get(TopicValueBase.class, id));
     }
 
-    public Page getPageById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> {
-            var page = session.get(Page.class, id);
-            Hibernate.initialize(page);
-            return page;
-        });
-    }
-
     public UnifiedTopic getUnifiedTopicById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(UnifiedTopic.class, id));
     }
