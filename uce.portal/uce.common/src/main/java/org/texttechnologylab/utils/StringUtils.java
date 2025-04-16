@@ -1,8 +1,8 @@
 package org.texttechnologylab.utils;
 
+
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Page;
-
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -213,6 +213,65 @@ public class StringUtils {
             case "S" -> "season";
             default -> null;
         };
+    }
+
+    public static String mergeBoldTags(String input) {
+        StringBuilder result = new StringBuilder();
+        boolean inBold = false;
+        StringBuilder boldBuffer = new StringBuilder();
+
+        int i = 0;
+        while (i < input.length()) {
+            if (input.startsWith("<b>", i)) {
+                int endTag = input.indexOf("</b>", i);
+                if (endTag != -1) {
+                    String content = input.substring(i + 3, endTag);
+
+                    if (!inBold) {
+                        inBold = true;
+                        boldBuffer.setLength(0); // Clear buffer
+                    }
+                    boldBuffer.append(content);
+                    i = endTag + 4; // Skip past </b>
+                    // Check if next tag is also <b> (i.e., adjacent bold)
+                    if (!input.startsWith("<b>", i)) {
+                        // No more adjacent bolds — flush
+                        result.append("<b>").append(boldBuffer).append("</b>");
+                        inBold = false;
+                    }
+                } else {
+                    break; // malformed HTML
+                }
+            } else {
+                // Just copy non-bold text (like spaces or punctuation)
+                result.append(input.charAt(i));
+                i++;
+            }
+        }
+
+        return result.toString();
+    }
+
+    public static String addBoldTags(String input, List<ArrayList<Integer>> offsets) {
+        StringBuilder result = new StringBuilder();
+        int idx = 0;
+        for (char c : input.toCharArray()) {
+            boolean inBold = false;
+            for (ArrayList<Integer> offset : offsets) {
+                if (idx < offset.getLast() && offset.getFirst() <= idx) {
+                    inBold = true;
+                    break;
+                }
+            }
+            if (inBold) {
+                result.append("<b>").append(c).append("</b>");
+            } else {
+                result.append(c);
+            }
+
+            idx ++;
+        }
+        return result.toString();
     }
 
 }

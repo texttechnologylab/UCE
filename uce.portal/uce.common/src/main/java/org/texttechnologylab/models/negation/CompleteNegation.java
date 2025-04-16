@@ -38,12 +38,15 @@ public class CompleteNegation extends UIMAAnnotation {
     private List<XScope> xscopeList;
 
     @OneToOne
-    @JoinColumn(name = "cue_id")
+    @JoinColumn(name = "cue_id", unique = true)
     private Cue cue;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
+
+    @Column(name = "document_id", insertable = false, updatable = false)
+    private Long documentId;
 
 
     public CompleteNegation(){
@@ -63,6 +66,14 @@ public class CompleteNegation extends UIMAAnnotation {
 
     public void setNegType(String negType) {
         this.negType = negType;
+    }
+
+    public Long getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(Long documentId) {
+        this.documentId = documentId;
     }
 
     public List<Focus> getFocusList() {

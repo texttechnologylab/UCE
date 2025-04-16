@@ -119,6 +119,26 @@
     "de-DE": "Organisationen",
     "en-EN": "Organisations"
   },
+  "cues": {
+    "de-DE": "Stichwörter",
+    "en-EN": "Cues"
+  },
+  "scopes": {
+    "de-DE": "Skopi",
+    "en-EN": "Scopes"
+  },
+  "xscopes": {
+    "de-DE": "Erweiterte Skopi",
+    "en-EN": "Extended Scopes"
+  },
+  "foci": {
+    "de-DE": "Fokusse",
+    "en-EN": "Foci"
+  },
+  "events": {
+    "de-DE": "Ereignisse",
+    "en-EN": "Events"
+  },
   "misc": {
     "de-DE": "Sonstiges",
     "en-EN": "Misc"

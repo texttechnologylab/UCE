@@ -19,19 +19,44 @@
                             <#assign foundTaxons = searchState.getAnnotationsByTypeAndDocumentId("Taxons", document.getId(), "")>
                             <#assign foundTimes = searchState.getAnnotationsByTypeAndDocumentId("Times", document.getId(), "")>
 
+                            <#assign foundCues = searchState.getAnnotationsByTypeAndDocumentId("Cues", document.getId(), "")>
+                            <#assign foundEvents = searchState.getAnnotationsByTypeAndDocumentId("Events", document.getId(), "")>
+                            <#assign foundScopes = searchState.getAnnotationsByTypeAndDocumentId("Scopes", document.getId(), "")>
+                            <#assign foundXscopes = searchState.getAnnotationsByTypeAndDocumentId("xScopes", document.getId(), "")>
+                            <#assign foundFoci = searchState.getAnnotationsByTypeAndDocumentId("Foci", document.getId(), "")>
+
                             <div class="flexed align-items-center justify-content-between small text mt-2 text-center">
+                                <style>
+                                    .separator {
+                                        border-right: 1px solid #ccc;
+                                        padding-right: 10px;
+                                        margin-right: 10px;
+                                    }
+                                </style>
                                 <span class="w-100 text-center"><i
                                                         class="fas fa-map-marker-alt mr-1"></i>${foundLocations?size}</span>
                                 <span class="w-100 text-center"><i
                                             class="fas fa-user-tag mr-1"></i>${foundPersons?size}</span>
                                 <span class="w-100 text-center"><i
                                             class="fas fa-sitemap mr-1"></i>${foundOrgas?size}</span>
-                                <span class="w-100 text-center"><i
+                                <span class="w-100 text-center separator"><i
                                             class="fas fa-th mr-1"></i>${foundMisc?size}</span>
+                                <!-- Taxon/Time Entities Group -->
                                 <span class="w-100 text-center"><i
                                             class="fas fa-tenge mr-1"></i>${foundTaxons?size}</span>
-                                <span class="w-100 text-center"><i
+                                <span class="w-100 text-center separator"><i
                                             class="fas fa-clock mr-1"></i>${foundTimes?size}</span>
+                                <!-- Negation Entities Group -->
+                                <span class="w-100 text-center"><i
+                                            class="fas fa-exclamation"></i>${foundCues?size}</span>
+                                <span class="w-100 text-center"><i
+                                            class="fas fa-circle"></i>${foundScopes?size}</span>
+                                <span class="w-100 text-center"><i
+                                            class="fas fa-circle-notch"></i>${foundXscopes?size}</span>
+                                <span class="w-100 text-center"><i
+                                            class="fas fa-calendar-check"></i>${foundEvents?size}</span>
+                                <span class="w-100 text-center"><i
+                                            class="fas fa-crosshairs"></i>${foundFoci?size}</span>
                                 <a class="btn annotation-hit-container-expander" data-expanded="false">
                                     <i class="fas fa-chevron-down"></i>
                                 </a>
@@ -118,6 +143,57 @@
                                             </span>
                                         </#list>
                                     </div>
+                                    <!-- Matched Tokens list -->
+                                    <div class="search-hits col-2">
+                                        <#list foundCues as annotation>
+                                            <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
+                                            <span class="${annotationClass} open-wiki-page"
+                                                  data-wid="CU-${annotation.getId()?string?replace('.', '')?replace(',', '')}"
+                                                  data-wcovered="${annotation.getCoveredText()}">
+                                                (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
+                                            </span>
+                                        </#list>
+                                    </div>
+                                    <div class="search-hits col-2">
+                                        <#list foundScopes as annotation>
+                                            <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
+                                            <span class="${annotationClass} open-wiki-page"
+                                                  data-wid="NE-${annotation.getId()?string?replace('.', '')?replace(',', '')}"
+                                                  data-wcovered="${annotation.getCoveredText()}">
+                                                (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
+                                            </span>
+                                        </#list>
+                                    </div>
+                                    <div class="search-hits col-2">
+                                        <#list foundXscopes as annotation>
+                                            <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
+                                            <span class="${annotationClass} open-wiki-page"
+                                                  data-wid="NE-${annotation.getId()?string?replace('.', '')?replace(',', '')}"
+                                                  data-wcovered="${annotation.getCoveredText()}">
+                                                (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
+                                            </span>
+                                        </#list>
+                                    </div>
+                                    <div class="search-hits col-2">
+                                        <#list foundEvents as annotation>
+                                            <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
+                                            <span class="${annotationClass} open-wiki-page"
+                                                  data-wid="NE-${annotation.getId()?string?replace('.', '')?replace(',', '')}"
+                                                  data-wcovered="${annotation.getCoveredText()}">
+                                                (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
+                                            </span>
+                                        </#list>
+                                    </div>
+                                    <div class="search-hits col-2">
+                                        <#list foundFoci as annotation>
+                                            <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
+                                            <span class="${annotationClass} open-wiki-page"
+                                                  data-wid="NE-${annotation.getId()?string?replace('.', '')?replace(',', '')}"
+                                                  data-wcovered="${annotation.getCoveredText()}">
+                                                (${annotation.getOccurrences()}) ${annotation.getCoveredText()}
+                                            </span>
+                                        </#list>
+                                    </div>
                                 </div>
                             </div>
 
@@ -131,7 +207,8 @@
                                         </#list>
                                     </div>
                                 <#else>
-                                    <p class="text small-font mb-0">${languageResource.get("noAnnotationsMatched")}</p>
+                                    <!-- <p class="text small-font mb-0">${languageResource.get("noAnnotationsMatched")}</p> -->
+                                    <p class="text small-font mb-0"></p>
                                 </#if>
                             </div>
                         </div>

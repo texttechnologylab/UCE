@@ -13,7 +13,8 @@ import javax.persistence.*;
 @Entity
 @Table(name="cue")
 public class Cue extends UIMAAnnotation implements WikiModel {
-    @OneToOne(mappedBy = "cue") // Inverse side
+    @OneToOne
+    @JoinColumn(name = "negation_id", unique = true)
     private CompleteNegation negation;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})

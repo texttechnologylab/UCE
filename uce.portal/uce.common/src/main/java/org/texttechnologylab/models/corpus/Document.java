@@ -285,6 +285,20 @@ public class Document extends ModelBase implements WikiModel {
         }
         return result.toString().trim();
     }
+    public String getFullTextSnippetCharOffset(int start, int end) {
+        StringBuilder result = new StringBuilder();
+        if (fullText != null) {
+            int idx = 0;
+            for (char c : fullText.toCharArray()) {
+                if (idx >= start && idx < end) {
+                    result.append(c);
+                }
+                idx ++;
+            }
+        }
+        return result.toString();
+    }
+
 
     /**
      * Gets all objects of type UIMAAnnotation of this document
