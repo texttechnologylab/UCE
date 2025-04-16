@@ -1,6 +1,5 @@
 package org.texttechnologylab.models.corpus;
 
-import org.hibernate.Hibernate;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -10,6 +9,9 @@ import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.topic.TopicValueBase;
+import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
+import org.texttechnologylab.models.topic.UnifiedTopic;
 
 import javax.persistence.*;
 import java.util.*;
@@ -87,7 +89,7 @@ public class Document extends ModelBase implements WikiModel {
 
     @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "document_id")
-    private DocumentTopicDistribution documentTopicDistribution;
+    private DocumentKeywordDistribution documentKeywordDistribution;
 
     // Negations:
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
@@ -114,7 +116,10 @@ public class Document extends ModelBase implements WikiModel {
     @Fetch(value = FetchMode.SUBSELECT)
     private List<XScope> xscopes;
 
-
+    // Unified topics:
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
+    private List<UnifiedTopic> unifiedTopics;
 
     public Document() {
         metadataTitleInfo = new MetadataTitleInfo();
@@ -161,12 +166,12 @@ public class Document extends ModelBase implements WikiModel {
         this.postProcessed = postProcessed;
     }
 
-    public DocumentTopicDistribution getDocumentTopicDistribution() {
-        return documentTopicDistribution;
+    public DocumentKeywordDistribution getDocumentKeywordDistribution() {
+        return documentKeywordDistribution;
     }
 
-    public void setDocumentTopicDistribution(DocumentTopicDistribution documentTopicDistribution) {
-        this.documentTopicDistribution = documentTopicDistribution;
+    public void setDocumentKeywordDistribution(DocumentKeywordDistribution documentKeywordDistribution) {
+        this.documentKeywordDistribution = documentKeywordDistribution;
     }
 
     public List<Lemma> getLemmas() {
@@ -317,6 +322,8 @@ public class Document extends ModelBase implements WikiModel {
         annotations.addAll(scopes.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(xscopes.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(events.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        // unifiedTopics
+        annotations.addAll(unifiedTopics.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
 
         annotations.sort(Comparator.comparingInt(UIMAAnnotation::getBegin));
         return annotations;
@@ -408,4 +415,44 @@ public class Document extends ModelBase implements WikiModel {
     public void setXscopes(List<XScope> xscopes) {
         this.xscopes = xscopes;
     }
+
+    public List<UnifiedTopic> getUnifiedTopics() {
+        return unifiedTopics;
+    }
+
+    public void setUnifiedTopics(List<UnifiedTopic> unifiedTopics) {
+        this.unifiedTopics = unifiedTopics;
+    }
+
+    public List<TopicValueBase> getDocumentUnifiedTopicDistribution(Integer topN) {
+        List<TopicValueBaseWithScore> scoredTopics = new ArrayList<>();
+        List<TopicValueBase> unscoredTopics = new ArrayList<>();
+
+        // Separate scored and unscored topics using getRepresentativeTopic()
+        for (UnifiedTopic unifiedTopic : unifiedTopics) {
+            TopicValueBase representativeTopic = unifiedTopic.getRepresentativeTopic();
+
+            if (representativeTopic != null) {
+                if (representativeTopic instanceof TopicValueBaseWithScore) {
+                    scoredTopics.add((TopicValueBaseWithScore) representativeTopic);
+                } else {
+                    unscoredTopics.add(representativeTopic);
+                }
+            }
+        }
+
+        // If scored topics exist, sort and return topN
+        if (!scoredTopics.isEmpty()) {
+            return scoredTopics.stream()
+                    .sorted(Comparator.comparingDouble(TopicValueBaseWithScore::getScore).reversed())
+                    .limit(topN)
+                    .collect(Collectors.toList());
+        }
+
+        // If no scored topics, return topN unscored topics
+        return unscoredTopics.stream()
+                .limit(topN)
+                .collect(Collectors.toList());
+    }
+
 }

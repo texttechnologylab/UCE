@@ -17,10 +17,13 @@ import org.texttechnologylab.config.UceConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.corpus.Corpus;
+import org.texttechnologylab.models.corpus.LexiconEntryId;
 import org.texttechnologylab.models.corpus.UCELog;
 import org.texttechnologylab.routes.*;
+import org.texttechnologylab.services.LexiconService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.ImageUtils;
+import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 import spark.ExceptionHandler;
 import spark.ModelAndView;
@@ -31,6 +34,7 @@ import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
 import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 
 import static spark.Spark.*;
 
@@ -38,6 +42,7 @@ public class App {
     private static final Configuration configuration = Configuration.getDefaultConfiguration();
     private static final Logger logger = LogManager.getLogger(App.class);
     private static CommonConfig commonConfig = null;
+    private static boolean forceLexicalization = false;
 
     public static void main(String[] args) throws IOException {
         logger.info("Starting the UCE web service...");
@@ -95,6 +100,17 @@ public class App {
 
         SystemStatus.InitSystemStatus(commonConfig.getSystemJobInterval(), context);
         logger.info("Initialized the System Job.");
+
+        logger.info("Checking if we can or should update the lexicon... (this may take a moment depending on the time of the last update. Runs asynchronous.)");
+        CompletableFuture.runAsync(() -> {
+            SystemStatus.LexiconIsCalculating = true;
+            var lexiconService = context.getBean(LexiconService.class);
+            var addedLexiconEntries = 0;
+            if(forceLexicalization) addedLexiconEntries = lexiconService.updateLexicon(true);
+            else addedLexiconEntries = lexiconService.checkForUpdates();
+            logger.info("Finished updating the lexicon. Added new entries: " + addedLexiconEntries);
+            SystemStatus.LexiconIsCalculating = false;
+        });
 
         // Set the folder for our template files of freemarker
         try {
@@ -162,11 +178,14 @@ public class App {
         var options = new Options();
         options.addOption("cf", "configFile", true, "The filepath to the UceConfig.json file.");
         options.addOption("cj", "configJson", true, "The json content of a UceConfig.json file.");
+        options.addOption("lex", "forceLexicalization", false, "Force the full lexicalization of all annotations. " +
+                "This process may take a while but will be executed asynchronous.");
 
         var parser = new DefaultParser();
         var gson = new Gson();
 
         var cmd = parser.parse(options, args);
+        forceLexicalization = cmd.hasOption("forceLexicalization");
         var configFile = cmd.getOptionValue("configFile");
         var configJson = cmd.getOptionValue("configJson");
         if (configFile != null && !configFile.isEmpty()) {
@@ -242,6 +261,10 @@ public class App {
             model.put("isSparqlAlive", SystemStatus.JenaSparqlStatus.isAlive());
             model.put("isDbAlive", SystemStatus.PostgresqlDbStatus.isAlive());
             model.put("isRagAlive", SystemStatus.RagServiceStatus.isAlive());
+            model.put("isLexiconCalculating", SystemStatus.LexiconIsCalculating);
+            model.put("alphabetList", StringUtils.getAlphabetAsList());
+            model.put("lexiconEntriesCount", context.getBean(LexiconService.class).countLexiconEntries());
+            model.put("lexiconizableAnnotations", LexiconService.lexiconizableAnnotations);
             model.put("uceVersion", commonConfig.getUceVersion());
 
             // The vm files are located under the resources directory
@@ -275,6 +298,10 @@ public class App {
 
             path("/wiki", () -> {
                 get("/page", wikiApi.getPage);
+                path("/lexicon", () -> {
+                    post("/entries", wikiApi.getLexicon);
+                    post("/occurrences", wikiApi.getOccurrencesOfLexiconEntry);
+                });
                 post("/queryOntology", wikiApi.queryOntology);
             });
 

@@ -17,21 +17,6 @@
     max-height: 99999vh !important;
 }
 
-#corpus-select {
-    width: auto;
-    max-width: 200px;
-    border-radius: 0;
-    border-right: 0;
-    height: 41px;
-    padding-left: 15px;
-    padding-right: 15px;
-    background-color: lightgray;
-    font-weight: bold;
-}
-
-.open-corpus-inspector-btn {
-    cursor: pointer;
-}
 
 .open-sr-builder-btn {
     border-radius: 0;

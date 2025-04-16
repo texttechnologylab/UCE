@@ -11,13 +11,17 @@
     background-color: white;
 }
 
-.corpus-inspector-include .cheader{
+.corpus-inspector{
+
+}
+
+.corpus-inspector .cheader{
     border-bottom: 1px lightgray solid;
     height: 90px;
     background-color: rgba(245, 245, 247, 1);
 }
 
-.corpus-inspector-include .cheader a{
+.corpus-inspector .cheader a{
     border-radius: 50%;
     display: flex;
     align-items: center;
@@ -28,7 +32,7 @@
     cursor: pointer;
 }
 
-.corpus-inspector-include .ccontent{
+.corpus-inspector .ccontent{
     padding-left: 18px;
     padding-right: 18px;
     padding-bottom: 48px;
@@ -37,12 +41,19 @@
     padding-top: 18px;
 }
 
-.corpus-inspector-include .ccontent .entry{
-    margin-bottom: 12px;
-    margin-top: 12px;
+.corpus-inspector .ccontent .entry{
+    margin-bottom: 8px;
+    margin-top: 8px;
 }
 
-.corpus-inspector-include .ccontent .entry label{
+.corpus-inspector .annotation-entry{
+    margin-bottom: 5px;
+    margin-top: 5px;
+    padding-left: 3px;
+    padding-right: 3px;
+}
+
+.corpus-inspector .ccontent .entry label{
     border-left:1px lightgray solid;
     border-right:1px lightgray solid;
     font-style: italic;
@@ -51,15 +62,15 @@
     padding-top: 4px;
 }
 
-.corpus-inspector-include .corpus-tsne-plot{
+.corpus-inspector .corpus-tsne-plot{
     height: 100vh !important;
 }
 
-.corpus-inspector-include .corpus-tsne-plot .plot-container{
+.corpus-inspector .corpus-tsne-plot .plot-container{
     height: 100vh !important;
 }
 
-.corpus-inspector-include .corpus-tsne-plot .error-msg{
+.corpus-inspector .corpus-tsne-plot .error-msg{
     position: absolute;
     left:50%;
     top:50%;
@@ -68,7 +79,7 @@
     text-align: center;
 }
 
-.corpus-inspector-include .documents-list-header{
+.corpus-inspector .documents-list-header{
     position: sticky;
     width: 100%;
     border-bottom: lightgray 1px solid;

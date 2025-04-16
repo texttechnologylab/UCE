@@ -1,7 +1,5 @@
 -- Whenever a new page entity is added. We need that column for faster fulltext searches.
-
 ALTER TABLE page ADD COLUMN IF NOT EXISTS textsearch tsvector;
-
 CREATE OR REPLACE FUNCTION update_textsearch()
 RETURNS TRIGGER AS $$
 BEGIN

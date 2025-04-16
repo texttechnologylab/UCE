@@ -1,21 +1,15 @@
 package org.texttechnologylab.models.corpus;
 
 import org.texttechnologylab.models.UIMAAnnotation;
-import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.*;
-import javax.transaction.Transactional;
 import java.util.*;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 @Entity
 @Table(name = "page")
 public class Page extends UIMAAnnotation {
     private int pageNumber;
     private String pageId;
-    @Column(name = "document_id", insertable = false, updatable = false)
-    private long document_id;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
@@ -35,7 +29,7 @@ public class Page extends UIMAAnnotation {
 
     @OneToOne(mappedBy = "page", cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "page_id")
-    private PageTopicDistribution pageTopicDistribution;
+    private PageKeywordDistribution pageKeywordDistribution;
 
     public Page(int begin, int end, int pageNumber, String pageId) {
         super(begin, end);
@@ -55,10 +49,6 @@ public class Page extends UIMAAnnotation {
         this.document = document;
     }
 
-    public long getDocumentId() {
-        return this.document_id;
-    }
-
     public void setPageNumber(int pageNumber) {
         this.pageNumber = pageNumber;
     }
@@ -67,12 +57,12 @@ public class Page extends UIMAAnnotation {
         this.pageId = pageId;
     }
 
-    public PageTopicDistribution getPageTopicDistribution() {
-        return pageTopicDistribution;
+    public PageKeywordDistribution getPageKeywordDistribution() {
+        return pageKeywordDistribution;
     }
 
-    public void setPageTopicDistribution(PageTopicDistribution pageTopicDistributions) {
-        this.pageTopicDistribution = pageTopicDistributions;
+    public void setPageKeywordDistribution(PageKeywordDistribution pageKeywordDistributions) {
+        this.pageKeywordDistribution = pageKeywordDistributions;
     }
 
     public List<Line> getLines() {

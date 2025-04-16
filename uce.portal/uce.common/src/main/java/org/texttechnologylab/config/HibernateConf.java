@@ -13,6 +13,10 @@ import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.test.test;
+import org.texttechnologylab.models.topic.TopicValueBase;
+import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
+import org.texttechnologylab.models.topic.TopicWord;
+import org.texttechnologylab.models.topic.UnifiedTopic;
 
 import java.util.HashMap;
 
@@ -35,8 +39,8 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Line.class);
         metadataSources.addAnnotatedClass(SrLink.class);
         metadataSources.addAnnotatedClass(Lemma.class);
-        metadataSources.addAnnotatedClass(PageTopicDistribution.class);
-        metadataSources.addAnnotatedClass(DocumentTopicDistribution.class);
+        metadataSources.addAnnotatedClass(PageKeywordDistribution.class);
+        metadataSources.addAnnotatedClass(DocumentKeywordDistribution.class);
         metadataSources.addAnnotatedClass(NamedEntity.class);
         metadataSources.addAnnotatedClass(Paragraph.class);
         metadataSources.addAnnotatedClass(Sentence.class);
@@ -46,6 +50,7 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Time.class);
         metadataSources.addAnnotatedClass(WikiDataHyponym.class);
         metadataSources.addAnnotatedClass(WikipediaLink.class);
+        metadataSources.addAnnotatedClass(LexiconEntry.class);
         metadataSources.addAnnotatedClass(Page.class);
         metadataSources.addAnnotatedClass(Document.class);
         metadataSources.addAnnotatedClass(Corpus.class);
@@ -60,6 +65,11 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Focus.class);
         metadataSources.addAnnotatedClass(Scope.class);
         metadataSources.addAnnotatedClass(XScope.class);
+        //topics
+        metadataSources.addAnnotatedClass(UnifiedTopic.class);
+        metadataSources.addAnnotatedClass(TopicWord.class);
+        metadataSources.addAnnotatedClass(TopicValueBase.class);
+        metadataSources.addAnnotatedClass(TopicValueBaseWithScore.class);
 
         var metadata = metadataSources.buildMetadata();
 

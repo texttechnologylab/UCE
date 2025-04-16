@@ -25,14 +25,15 @@
     },
     "time": false,
     "wikipediaLink": false,
-    "completeNegation": false
+    "completeNegation": false,
+    "unifiedTopic": false
 
   },
   "other": {
     "//comment": "[Is this corpus also available on https://sammlungen.ub.uni-frankfurt.de/? Either true or false]",
     "availableOnFrankfurtUniversityCollection": false,
 
-    "includeTopicDistribution": false,
+    "includeKeywordDistribution": false,
     "enableEmbeddings": false,
     "enableRAGBot": false
   }

@@ -9,6 +9,8 @@ import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
+import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
@@ -17,15 +19,15 @@ import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
+import org.texttechnologylab.models.topic.TopicValueBase;
+import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
+import javax.persistence.criteria.Order;
+import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
-import java.io.IOException;
-import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -211,6 +213,22 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    @SuppressWarnings("unchecked")
+    public List<UIMAAnnotation> getManyUIMAAnnotationsByCoveredText(String coveredText, Class<? extends UIMAAnnotation> clazz, int skip, int take) throws DatabaseOperationException {
+        return (List<UIMAAnnotation>) executeOperationSafely((session -> {
+            String sql = String.format(
+                    "SELECT * FROM %s WHERE coveredtext = :coveredText ORDER BY id LIMIT :take OFFSET :skip",
+                    clazz.getSimpleName().toLowerCase()
+            );
+            var query = session.createNativeQuery(sql, clazz)
+                    .setParameter("coveredText", coveredText)
+                    .setParameter("take", take)
+                    .setParameter("skip", skip);
+            query.stream().forEach(Hibernate::initialize);
+            return query.getResultList();
+        }));
+    }
+
     public Corpus getCorpusById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             return session.get(Corpus.class, id);
@@ -321,6 +339,81 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             return Arrays.stream(sortedDocs).filter(Objects::nonNull).toList();
         });
+    }
+
+    public List<LexiconEntry> getManyLexiconEntries(int skip, int take, List<String> alphabet,
+                                                    List<String> annotationFilters, String sortColumn,
+                                                    String sortOrder, String searchInput)
+            throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var builder = session.getCriteriaBuilder();
+            var criteriaQuery = builder.createQuery(LexiconEntry.class);
+            var root = criteriaQuery.from(LexiconEntry.class);
+            criteriaQuery.select(root);
+
+            // Collect predicates for dynamic where clause
+            List<Predicate> predicates = new ArrayList<>();
+
+            if (alphabet != null && !alphabet.isEmpty()) {
+                predicates.add(root.get("startCharacter").in(alphabet.stream().map(String::toLowerCase).toList()));
+            }
+
+            if (annotationFilters != null && !annotationFilters.isEmpty()) {
+                predicates.add(root.get("id").get("type").in(
+                        annotationFilters.stream().map(String::toLowerCase).toList()));
+            }
+
+            // TODO: This is probably rather slow. Gotta watch this.
+            if (searchInput != null && !searchInput.isBlank()) {
+                predicates.add(
+                        builder.like(
+                                builder.lower(root.get("id").get("coveredText")),
+                                "%" + searchInput.toLowerCase() + "%"
+                        )
+                );
+            }
+
+            if (!predicates.isEmpty()) {
+                criteriaQuery.where(builder.and(predicates.toArray(new Predicate[0])));
+            }
+
+            // Determine sorting
+            Path<?> sortPath;
+            if ("occurrence".equalsIgnoreCase(sortColumn)) {
+                sortPath = root.get("count");
+            } else {
+                // Default to sorting by coveredText of ID
+                sortPath = root.get("id").get("coveredText");
+            }
+
+            Order order = "DESC".equalsIgnoreCase(sortOrder)
+                    ? builder.desc(sortPath)
+                    : builder.asc(sortPath);
+
+            // Secondary sort by type for stability
+            criteriaQuery.orderBy(order, builder.asc(root.get("id").get("type")));
+
+            return session.createQuery(criteriaQuery)
+                    .setFirstResult(skip)
+                    .setMaxResults(take)
+                    .getResultList();
+        });
+    }
+
+
+    public int callLexiconRefresh(ArrayList<String> tables, boolean force) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+            var insertedLex = 0;
+            try (var storedProcedure = connection.prepareCall("{call refresh_lexicon" + "(?, ?)}")) {
+                storedProcedure.setArray(1, connection.createArrayOf("text", tables.toArray(new String[0])));
+                storedProcedure.setBoolean(2, force);
+                var result = storedProcedure.executeQuery();
+                while (result.next()) {
+                    insertedLex = result.getInt(1);
+                }
+            }
+            return insertedLex;
+        }));
     }
 
     @Override
@@ -783,7 +876,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var criteria = session.createCriteria(UCEImport.class);
             criteria.add(Restrictions.eq("importId", importId));
-            return (UCEImport)criteria.list().getFirst();
+            return (UCEImport) criteria.list().getFirst();
         });
     }
 
@@ -795,6 +888,35 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return doc;
         });
     }
+
+    public Page getPageById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var page = session.get(Page.class, id);
+            Hibernate.initialize(page);
+            return page;
+        });
+    }
+
+    public Page getPageByDocumentIdAndBeginEnd(long documentId, int begin, int end, boolean initialize) throws DatabaseOperationException {
+        return executeOperationSafely(session -> {
+            var builder = session.getCriteriaBuilder();
+            var criteria = builder.createQuery(Page.class);
+            var root = criteria.from(Page.class);
+
+            criteria.select(root).where(
+                    builder.equal(root.get("documentId"), documentId),
+                    builder.lessThanOrEqualTo(root.get("begin"), begin),
+                    builder.greaterThanOrEqualTo(root.get("end"), end)
+            );
+
+            var page =  session.createQuery(criteria)
+                    .setMaxResults(1)
+                    .uniqueResult();
+            if(initialize) Hibernate.initialize(page);
+            return page;
+        });
+    }
+
 
     public Document getDocumentByCorpusAndDocumentId(long corpusId, String documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
@@ -842,6 +964,20 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> session.get(Time.class, id));
     }
 
+    public long countLexiconEntries() throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var builder = session.getCriteriaBuilder();
+            var criteria = builder.createQuery(Long.class);
+            var root = criteria.from(LexiconEntry.class);
+            criteria.select(builder.count(root));
+            return session.createQuery(criteria).getSingleResult();
+        });
+    }
+
+    public LexiconEntry getLexiconEntryId(LexiconEntryId id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(LexiconEntry.class, id));
+    }
+
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(NamedEntity.class, id));
     }
@@ -861,6 +997,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return neg;
         });
     }
+    public TopicValueBase getTopicValueBaseById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(TopicValueBase.class, id));
+    }
 
     public Page getPageById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
@@ -870,7 +1009,11 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
+    public UnifiedTopic getUnifiedTopicById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(UnifiedTopic.class, id));
+    }
+
+    public <T extends KeywordDistribution> List<T> getKeywordDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
             var query = builder.createQuery(clazz);
@@ -909,10 +1052,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             var results = finalQuery.getResultList();
 
-            // Initialize document pages if any result is an instance of DocumentTopicDistribution
+            // Initialize document pages if any result is an instance of DocumentKeywordDistribution
             for (T dist : results) {
-                if (dist instanceof DocumentTopicDistribution) {
-                    Hibernate.initialize(((DocumentTopicDistribution) dist).getDocument().getPages());
+                if (dist instanceof DocumentKeywordDistribution) {
+                    Hibernate.initialize(((DocumentKeywordDistribution) dist).getDocument().getPages());
                 }
             }
 
@@ -920,12 +1063,12 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public <T extends TopicDistribution> T getTopicDistributionById(Class<T> clazz, long id) throws DatabaseOperationException {
+    public <T extends KeywordDistribution> T getKeywordDistributionById(Class<T> clazz, long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var dist = session.get(clazz, id);
-            // Check if the retrieved object is an instance of DocumentTopicDistribution
-            if (dist instanceof DocumentTopicDistribution) {
-                Hibernate.initialize(((DocumentTopicDistribution) dist).getDocument().getPages());
+            // Check if the retrieved object is an instance of DocumentKeywordDistribution
+            if (dist instanceof DocumentKeywordDistribution) {
+                Hibernate.initialize(((DocumentKeywordDistribution) dist).getDocument().getPages());
             }
             return dist;
         });
@@ -1020,23 +1163,23 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public void savePageTopicDistribution(Page page) throws DatabaseOperationException {
+    public void savePageKeywordDistribution(Page page) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.saveOrUpdate(page);
-            // Save or update the page's PageTopicDistribution
-            if (page.getPageTopicDistribution() != null) {
-                session.saveOrUpdate(page.getPageTopicDistribution());
+            // Save or update the page's PageKeywordDistribution
+            if (page.getPageKeywordDistribution() != null) {
+                session.saveOrUpdate(page.getPageKeywordDistribution());
             }
             return null;
         });
     }
 
-    public void saveDocumentTopicDistribution(Document document) throws DatabaseOperationException {
+    public void saveDocumentKeywordDistribution(Document document) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             session.saveOrUpdate(document);
-            // Save or update the page's PageTopicDistribution
-            if (document.getDocumentTopicDistribution() != null) {
-                session.saveOrUpdate(document.getDocumentTopicDistribution());
+            // Save or update the page's PageKeywordDistribution
+            if (document.getDocumentKeywordDistribution() != null) {
+                session.saveOrUpdate(document.getDocumentKeywordDistribution());
             }
             return null;
         });
@@ -1086,10 +1229,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             Hibernate.initialize(page.getBlocks());
             Hibernate.initialize(page.getParagraphs());
             Hibernate.initialize(page.getLines());
-            Hibernate.initialize(page.getPageTopicDistribution());
+            Hibernate.initialize(page.getPageKeywordDistribution());
         }
 
-        Hibernate.initialize(doc.getDocumentTopicDistribution());
+        Hibernate.initialize(doc.getDocumentKeywordDistribution());
         Hibernate.initialize(doc.getSentences());
         Hibernate.initialize(doc.getNamedEntities());
         Hibernate.initialize(doc.getTaxons());
@@ -1104,6 +1247,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getFocuses());
         Hibernate.initialize(doc.getXscopes());
         Hibernate.initialize(doc.getEvents());
+
+        // unified topic
+        Hibernate.initialize(doc.getUnifiedTopics());
 
         for (var link : doc.getWikipediaLinks()) {
             Hibernate.initialize(link.getWikiDataHyponyms());

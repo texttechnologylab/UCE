@@ -164,7 +164,7 @@
                         <p class="title">${languageResource.get("settings")}</p>
                         <div class="flexed align-items-center">
                             <i class="fas fa-text-height mr-2"></i>
-                            <input min="10" max="21" class="font-size-range w-100 hoverable" value="16" type="range"/>
+                            <input min="10" max="30" class="font-size-range w-100 hoverable" value="20" type="range"/>
                         </div>
                     </div>
 

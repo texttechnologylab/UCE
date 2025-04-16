@@ -1,9 +1,10 @@
 :root {
     /* Variables prime and secondary MUST ALWAYS be in line 3 and 4! */
-    --prime: #00618f;
-    --secondary: rgba(35, 35, 35, 1);
+    --prime: #5c7a17;
+    --secondary: darkgreen;
     --gold: rgba(255, 165, 0, 1);
     --dark: rgba(38, 38, 38, 1);
+    --default: rgb(245, 245, 247, 1);
 }
 
 .site-container {
@@ -16,7 +17,7 @@
 }
 
 .bg-default {
-    background-color: rgb(245, 245, 247) !important;
+    background-color: var(--default) !important;
 }
 
 footer {
@@ -56,25 +57,32 @@ nav .nav-container {
 
 nav .nav-buttons {
     padding: 18px;
-    margin-left: 12px;
+    margin-left: 16px;
 }
 
 nav .nav-buttons a {
     margin: 6px;
+    white-space: nowrap;
+    border:lightgrey 1px solid;
     cursor: pointer;
     font-size: large;
+    border-radius: 0;
+}
+
+nav .nav-buttons a i{
+    margin-right: 2px;
 }
 
 nav .nav-buttons a:hover {
     color: black !important;
-    background-color: ghostwhite;
+    background-color: var(--default);
 }
 
 nav .selected-nav-btn {
     position: relative;
-    background-color: ghostwhite;
+    background-color: var(--default);
     border: lightgray 1px solid;
-    border-radius: 8px;
+    border-radius: 8px !important;
     color: var(--prime) !important;
     transition: 0.25s;
 }
@@ -330,6 +338,11 @@ nav .selected-nav-btn.text::before {
     transition: 0.2s;
 }
 
+.turn-180{
+    transform: rotate(180deg);
+    transition: 0.075s;
+}
+
 .rotate {
     -webkit-animation: spin 4s linear infinite;
     -moz-animation: spin 4s linear infinite;
@@ -353,6 +366,32 @@ nav .selected-nav-btn.text::before {
         -webkit-transform: rotate(360deg);
         transform: rotate(360deg);
     }
+}
+
+.corpus-selection-div{
+    border-radius: 6px;
+    height: 100%;
+    margin-left: 3rem;
+    margin-right: 3rem;
+    align-self: center;
+}
+
+#corpus-select {
+    width: auto;
+    max-width: 225px;
+    min-width: 150px;
+    border-radius: 0;
+    border-left: 0;
+    color:var(--prime);
+    height: 41px;
+    padding-left: 15px;
+    padding-right: 15px;
+    background-color: var(--default);
+}
+
+.open-corpus-inspector-btn {
+    cursor: pointer;
+    border:lightgray 1px solid;
 }
 
 .open-corpus-universe-btn {
@@ -390,6 +429,16 @@ nav .selected-nav-btn.text::before {
 
 .ne-taxons {
     color: dodgerblue;
+}
+
+.full-loader{
+    position: absolute;
+    z-index: 3;
+    background-color: rgba(255, 255, 255, 0.95);
+    top:0;
+    left:0;
+    width: 100%;
+    height: 100%;
 }
 
 /* BG Anim */

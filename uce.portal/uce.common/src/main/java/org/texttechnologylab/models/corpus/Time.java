@@ -16,8 +16,6 @@ public class Time extends UIMAAnnotation implements WikiModel {
     private Page page;
     @Column(name = "page_id", insertable = false, updatable = false)
     private Long pageId;
-    @Column(name = "document_id", insertable = false, updatable = false)
-    private Long documentId;
     private Integer year;
     private String month;
     private String day;
@@ -30,14 +28,6 @@ public class Time extends UIMAAnnotation implements WikiModel {
 
     public Time(int begin, int end) {
         super(begin, end);
-    }
-
-    public Long getDocumentId() {
-        return documentId;
-    }
-
-    public void setDocumentId(Long documentId) {
-        this.documentId = documentId;
     }
 
     public String getSeason() {

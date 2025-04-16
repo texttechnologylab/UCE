@@ -6,11 +6,13 @@
         <span class="text">${vm.getWikiModel().getWikiId()}:</span>
         <span class="color-prime font-italic">${vm.getCoveredText()}</span>
     </p>
-    <#if vm.getAnnotationType() == "Document">
-        <p class="mb-0">${languageResource.get("annotatedInCorpus")}:
-            <span class="text">${vm.getCorpus().getCorpus().getName()}</span></p>
-    <#else>
-        <p class="mb-0">${languageResource.get("annotatedInDocument")}:
-            <span class="text">${vm.getDocument().getWikiId()}</span></p>
+    <#if vm.getAnnotationType() != "Corpus">
+        <#if vm.getAnnotationType() == "Document">
+            <p class="mb-0">${languageResource.get("annotatedInCorpus")}:
+                <span class="text">${vm.getCorpus().getCorpus().getName()}</span></p>
+        <#else>
+            <p class="mb-0">${languageResource.get("annotatedInDocument")}:
+                <span class="text">${vm.getDocument().getWikiId()}</span></p>
+        </#if>
     </#if>
 </div>

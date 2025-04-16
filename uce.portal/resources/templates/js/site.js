@@ -109,8 +109,13 @@ $('body').on('change', '#corpus-select', function () {
     if(hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
     else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
 
-    if(hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false') $('.open-layered-search-builder-btn').hide();
-    else $('.open-layered-search-builder-btn').show();
+    if(hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false'){
+        $('.open-layered-search-builder-btn-badge').hide();
+        $('.open-layered-search-builder-btn').hide();
+    } else {
+        $('.open-layered-search-builder-btn-badge').show();
+        $('.open-layered-search-builder-btn').show();
+    }
 
     updateSearchHistoryUI();
 })
@@ -226,7 +231,6 @@ function openNewDocumentReadView(id, searchId) {
     if (id === undefined || id === '') {
         return;
     }
-    console.log('New Document Reader View for: ' + id);
     window.open("/documentReader?id=" + id + "&searchId=" + searchId, '_blank');
 }
 
@@ -245,4 +249,6 @@ $(document).ready(function () {
     console.log('Webpage loaded!');
     activatePopovers();
     reloadCorpusComponents();
+    // Init the lexicon
+    window.wikiHandler.fetchLexiconEntries(0, 24);
 })

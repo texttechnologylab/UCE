@@ -64,22 +64,36 @@
                     class="fas fa-pen-nib mr-1"></i> ${document.getMetadataTitleInfo().getAuthor()}</label>
     </div>
     <div class="flexed align-items-center topic-list">
-        <#if document.getDocumentTopicDistribution()?has_content>
-            <label data-wid="${document.getDocumentTopicDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicOne()}"
+        <#if document.getDocumentKeywordDistribution()?has_content>
+            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicOne()}"
                    class="add-wiki-logo open-wiki-page">
-                #${document.getDocumentTopicDistribution().getYakeTopicOne()}
+                #${document.getDocumentKeywordDistribution().getYakeTopicOne()}
             </label>
-            <label data-wid="${document.getDocumentTopicDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicTwo()}"
+            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicTwo()}"
                    class="add-wiki-logo open-wiki-page">
-                #${document.getDocumentTopicDistribution().getYakeTopicTwo()}
+                #${document.getDocumentKeywordDistribution().getYakeTopicTwo()}
             </label>
-            <label data-wid="${document.getDocumentTopicDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentTopicDistribution().getYakeTopicThree()}"
+            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
                    class="add-wiki-logo open-wiki-page">
-                #${document.getDocumentTopicDistribution().getYakeTopicThree()}
+                #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
             </label>
+            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
+                   class="add-wiki-logo open-wiki-page">
+                #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
+            </label>
+        </#if>
+        <#if document.getDocumentUnifiedTopicDistribution(3)?has_content>
+            <#list document.getDocumentUnifiedTopicDistribution(3) as topic>
+                <label data-wid="${topic.getWikiId()}"
+                       data-wcovered="${topic.getValue()}"
+                       class="add-wiki-logo open-wiki-page">
+                    ${topic.getValue()}
+                </label>
+            </#list>
         </#if>
     </div>
 </div>
@@ -94,17 +108,15 @@
                             <#if snippet?index != 0> style="display: none;" </#if>>
                         <div class="small-font text font-italic mr-2 block-text">
                             ${snippet.getSnippet()}
-
-                            <#if snippet.getPage()?has_content>
-                                <label class="display-none page-html">
-                                    ${snippet.getPage().getCoveredText()}
-                                </label>
-                                <div class="inspect-page-btn hoverable clickable"
-                                     onclick="openInExpandedTextView('${languageResource.get('page')} ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('.page-html').html())">
-                                    ${snippet.getPage().getPageNumber()}.<i class="ml-1 fas fa-file-alt"></i>
-                                </div>
-                            </#if>
-                        </div>
+                        <#if snippet.getPage()?has_content>
+                            <label class="display-none page-html">
+                                ${snippet.getPage().getCoveredHtmlText()}
+                            </label>
+                            <div class="inspect-page-btn hoverable clickable"
+                                 onclick="openInExpandedTextView('${languageResource.get('page')} ${snippet.getPage().getPageNumber()}', $(this).closest('.snippet-content').find('.page-html').html())">
+                                ${snippet.getPage().getPageNumber()}.<i class="ml-1 fas fa-file-alt"></i>
+                            </div>
+                        </#if>
                     </div>
                 </#list>
 

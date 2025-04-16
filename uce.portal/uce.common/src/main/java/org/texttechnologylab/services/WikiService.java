@@ -1,9 +1,9 @@
 package org.texttechnologylab.services;
 
 import org.texttechnologylab.exceptions.DatabaseOperationException;
-import org.texttechnologylab.models.corpus.DocumentTopicDistribution;
-import org.texttechnologylab.models.corpus.PageTopicDistribution;
-import org.texttechnologylab.models.corpus.TopicDistribution;
+import org.texttechnologylab.models.corpus.DocumentKeywordDistribution;
+import org.texttechnologylab.models.corpus.PageKeywordDistribution;
+import org.texttechnologylab.models.corpus.KeywordDistribution;
 import org.texttechnologylab.models.viewModels.wiki.*;
 import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.utils.SystemStatus;
@@ -18,6 +18,18 @@ public class WikiService {
     public WikiService(PostgresqlDataInterface_Impl db, RAGService ragService, JenaSparqlService sparqlService) {
         this.db = db;
         this.sparqlService = sparqlService;
+    }
+
+    public CorpusWikiPageViewModel buildCorpusWikiPageViewModle(long corpusId, String coveredText) throws DatabaseOperationException {
+        var viewModel = new CorpusWikiPageViewModel();
+        var corpus = db.getCorpusById(corpusId);
+        viewModel.setWikiModel(corpus);
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("Corpus");
+        viewModel.setCorpus(corpus.getViewModel());
+        viewModel.setDocumentsCount(db.countDocumentsInCorpus(corpusId));
+
+        return viewModel;
     }
 
     /**
@@ -73,6 +85,40 @@ public class WikiService {
     }
 
     /**
+     * Gets an UnifiedTopicWikiPageViewModel to render a Wikipage for that annotation
+     */
+    public UnifiedTopicWikiPageViewModel buildUnifiedTopicWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new UnifiedTopicWikiPageViewModel();
+        var unifiedTopic = db.getUnifiedTopicById(id);
+        viewModel.setWikiModel(unifiedTopic);
+        viewModel.setDocument(db.getDocumentById(unifiedTopic.getDocument().getId()));
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("UnifiedTopic");
+        viewModel.setTopics(unifiedTopic.getOrderedTopics("desc"));
+
+
+        return viewModel;
+    }
+
+    /**
+     * Gets a TopicValueBaseWikiPageViewModel to render a Wikipage for that annotation
+     */
+    public TopicValueBaseWikiPageViewModel buildTopicValueBaseWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new TopicValueBaseWikiPageViewModel();
+        var topicValueBase = db.getTopicValueBaseById(id);
+        viewModel.setWikiModel(topicValueBase);
+        viewModel.setDocument(db.getDocumentById(topicValueBase.getDocument().getId()));
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("TopicValueBase");
+        viewModel.setTopic(topicValueBase);
+
+
+        return viewModel;
+    }
+
+    /**
      * Gets an DocumentAnnitationWikiPageViewmodel to render a Wikipage for this document.
      */
     public DocumentAnnotationWikiPageViewModel buildDocumentWikiPageViewModel(long id) throws DatabaseOperationException {
@@ -96,6 +142,7 @@ public class WikiService {
         var viewModel = new TaxonAnnotationWikiPageViewModel();
         viewModel.setCoveredText(coveredText);
         var taxon = db.getTaxonById(id);
+        viewModel.setAnnotationType("Taxon");
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(taxon.getBegin(), taxon.getEnd(), taxon.getDocumentId()));
         viewModel.setWikiModel(taxon);
         // We are not interested in the standard w3 XML triplets
@@ -174,33 +221,33 @@ public class WikiService {
     }
 
     /**
-     * Gets a TopicAnnotationWikiPageViewModel that can be used to render a Wikipage for a Topic annotation.
+     * Gets a KeywordAnnotationWikiPageViewModel that can be used to render a Wikipage for a Topic annotation.
      */
-    public TopicAnnotationWikiPageViewModel buildTopicAnnotationWikiPageViewModel(long id, String type, String coveredText) throws DatabaseOperationException {
-        var viewModel = new TopicAnnotationWikiPageViewModel();
+    public KeywordAnnotationWikiPageViewModel buildTopicAnnotationWikiPageViewModel(long id, String type, String coveredText) throws DatabaseOperationException {
+        var viewModel = new KeywordAnnotationWikiPageViewModel();
         viewModel.setCoveredText(coveredText);
-        Class<? extends TopicDistribution> clazz = null;
+        Class<? extends KeywordDistribution> clazz = null;
 
         // We have currently document level topics and page level topics.
         if (type.equals("TD")) {
-            clazz = DocumentTopicDistribution.class;
-            var docDist = db.getTopicDistributionById(DocumentTopicDistribution.class, id);
+            clazz = DocumentKeywordDistribution.class;
+            var docDist = db.getKeywordDistributionById(DocumentKeywordDistribution.class, id);
             viewModel.setWikiModel(docDist);
-            viewModel.setTopicDistribution(docDist);
+            viewModel.setKeywordDistribution(docDist);
             viewModel.setDocument(docDist.getDocument());
             viewModel.setAnnotationType("Document Keyword");
         } else if (type.equals("TP")) {
-            clazz = PageTopicDistribution.class;
-            var pageDist = db.getTopicDistributionById(PageTopicDistribution.class, id);
+            clazz = PageKeywordDistribution.class;
+            var pageDist = db.getKeywordDistributionById(PageKeywordDistribution.class, id);
             viewModel.setWikiModel(pageDist);
-            viewModel.setTopicDistribution(pageDist);
+            viewModel.setKeywordDistribution(pageDist);
             viewModel.setPage(pageDist.getPage());
             viewModel.setDocument(db.getDocumentById(pageDist.getPage().getDocumentId()));
             viewModel.setAnnotationType("Page Keyword");
         }
 
         // Search for similar topic annotations, get them and visualize those.
-        viewModel.setSimilarTopicDistributions(db.getTopicDistributionsByString(clazz, coveredText, 10).stream().filter(d -> d.getId() != id).toList());
+        viewModel.setSimilarKeywordDistributions(db.getKeywordDistributionsByString(clazz, coveredText, 10).stream().filter(d -> d.getId() != id).toList());
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
 
         // Search if this keyword is a lemma somewhere

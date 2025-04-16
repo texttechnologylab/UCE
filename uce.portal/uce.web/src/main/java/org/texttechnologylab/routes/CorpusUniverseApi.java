@@ -182,8 +182,8 @@ public class CorpusUniverseApi {
     private static CorpusUniverseNode getCorpusUniverseNode(Document doc, DocumentEmbedding docEmbedding) {
         var node = new CorpusUniverseNode();
         node.setDocumentId(doc.getId());
-        if (doc.getDocumentTopicDistribution() != null)
-            node.setPrimaryTopic(doc.getDocumentTopicDistribution().getYakeTopicOne());
+        if (doc.getDocumentKeywordDistribution() != null)
+            node.setPrimaryTopic(doc.getDocumentKeywordDistribution().getYakeTopicOne());
         node.setTsne2d(docEmbedding.getTsne2d());
         node.setTsne3d(docEmbedding.getTsne3d());
         node.setTitle(doc.getDocumentTitle());

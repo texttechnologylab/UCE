@@ -1,5 +1,6 @@
 package org.texttechnologylab.routes;
 
+import com.amazonaws.auth.policy.Policy;
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
@@ -9,23 +10,28 @@ import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.viewModels.wiki.CachedWikiPage;
 import org.texttechnologylab.services.JenaSparqlService;
+import org.texttechnologylab.services.LexiconService;
 import org.texttechnologylab.services.WikiService;
 import org.texttechnologylab.utils.SystemStatus;
 import spark.ModelAndView;
 import spark.Route;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class WikiApi {
 
     private static final Logger logger = LogManager.getLogger(WikiApi.class);
+    private LexiconService lexiconService;
     private Configuration freemarkerConfig;
     private JenaSparqlService jenaSparqlService;
     private WikiService wikiService;
+    private final Gson gson = new Gson();
 
     public WikiApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
         this.freemarkerConfig = freemarkerConfig;
+        this.lexiconService = serviceContext.getBean(LexiconService.class);
         this.wikiService = serviceContext.getBean(WikiService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
     }
@@ -101,7 +107,7 @@ public class WikiApi {
             var params = ExceptionUtils.tryCatchLog(() -> request.queryParams("params"), (ex) -> {
             });
 
-            // TODO: loggign
+            // TODO: logging
             if (wid == null || !wid.contains("-") || coveredText == null || coveredText.isEmpty()) {
                 model.put("information", languageResources.get("missingParameterError"));
                 return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
@@ -143,6 +149,10 @@ public class WikiApi {
                 // Then we have a Time annotation
                 model.put("vm", wikiService.buildTimeAnnotationWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/timeAnnotationPage.ftl";
+            } else if (type.equals("C")) {
+                // Then we have a corpus
+                model.put("vm", wikiService.buildCorpusWikiPageViewModle(id, coveredText));
+                renderView = "/wiki/pages/corpusPage.ftl";
             } else if (type.equals("D")) {
                 // Then we have a document
                 model.put("vm", wikiService.buildDocumentWikiPageViewModel(id));
@@ -154,6 +164,12 @@ public class WikiApi {
             } else if (type.startsWith("CU")) {
                 model.put("vm", wikiService.buildNegationAnnotationWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/negationAnnotationPage.ftl";
+            } else if (type.startsWith("UT")) {
+                model.put("vm", wikiService.buildUnifiedTopicWikiPageViewModel(id, coveredText));
+                renderView = "/wiki/pages/unifiedTopicAnnotationPage.ftl";
+            } else if (type.startsWith("TVB")) {
+                model.put("vm", wikiService.buildTopicValueBaseWikiPageViewModel(id, coveredText));
+                renderView = "/wiki/pages/topicValueBaseAnnotationPage.ftl";
             } else {
                 // The type part of the wikiId was unknown. Throw an error.
                 logger.warn("Someone tried to query a wiki page of a type that does not exist in UCE. This shouldn't happen.");
@@ -173,4 +189,78 @@ public class WikiApi {
         }
     });
 
+    public Route getOccurrencesOfLexiconEntry = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        var languageResources = LanguageResources.fromRequest(request);
+        var requestBody = gson.fromJson(request.body(), Map.class);
+
+        var coveredText = ExceptionUtils.tryCatchLog(() -> requestBody.get("coveredText").toString(),
+                (ex) -> logger.error("Couldn't fetch occurrences of lexicon entry - coveredText missing.", ex));
+        var type = ExceptionUtils.tryCatchLog(() -> requestBody.get("type").toString(),
+                (ex) -> logger.error("Couldn't fetch occurrences of lexicon entry - type missing.", ex));
+        var skip = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("skip").toString()),
+                (ex) -> logger.error("Calling a lexicon entry without skip shouldn't happen.", ex));
+        var take = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("take").toString()),
+                (ex) -> logger.error("Calling a lexicon entry without take shouldn't happen.", ex));
+        if(coveredText == null || type == null || skip == null || take == null){
+            model.put("information", languageResources.get("missingParameterError"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+        }
+
+        try {
+            var occurrences = ExceptionUtils.tryCatchLog(
+                    () -> lexiconService.getOccurrenceViewModelsOfEntry(coveredText, type, skip, take),
+                    (ex) -> logger.error("Error fetching lexicon entries: ", ex));
+            if(occurrences == null){
+                response.status(500);
+                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            }
+
+            model.put("occurrences", occurrences);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/lexicon/occurrencesList.ftl"));
+        } catch (Exception ex) {
+            logger.error("Error getting occurrences from a lexicon entry - best refer to the last logged API call " +
+                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
+
+    public Route getLexicon = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        var requestBody = gson.fromJson(request.body(), Map.class);
+        var languageResources = LanguageResources.fromRequest(request);
+
+        var skip = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("skip").toString()),
+                (ex) -> logger.error("Calling a lexicon without skip shouldn't happen.", ex));
+        var take = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("take").toString()),
+                (ex) -> logger.error("Calling a lexicon without take shouldn't happen.", ex));
+        if(skip == null || take == null){
+            model.put("information", languageResources.get("missingParameterError"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+        }
+
+        // These parameters are optional. We can work without just fine.
+        var alphabet = ExceptionUtils.tryCatchLog(() -> (List<String>) requestBody.get("alphabet"), (ex) -> {});
+        var annotationFilters = ExceptionUtils.tryCatchLog(() -> (List<String>) requestBody.get("annotationFilters"), (ex) -> {});
+        var sortColumn = ExceptionUtils.tryCatchLog(() -> requestBody.get("sortColumn").toString(), (ex) -> {});
+        var sortDirection = ExceptionUtils.tryCatchLog(() -> requestBody.get("sortDirection").toString(), (ex) -> {});
+        var searchInput = ExceptionUtils.tryCatchLog(() -> requestBody.get("searchInput").toString(), (ex) -> {});
+
+        try {
+            var entries = ExceptionUtils.tryCatchLog(
+                    () -> lexiconService.getEntries(skip, take, alphabet, annotationFilters, sortColumn, sortDirection, searchInput),
+                    (ex) -> logger.error("Error fetching lexicon entries: ", ex));
+            if(entries == null){
+                response.status(500);
+                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            }
+
+            model.put("entries", entries);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/lexicon/entryList.ftl"));
+        } catch (Exception ex) {
+            logger.error("Error getting entries from the lexicon - best refer to the last logged API call " +
+                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
 }

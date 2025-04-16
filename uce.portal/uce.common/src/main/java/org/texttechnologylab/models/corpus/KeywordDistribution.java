@@ -8,7 +8,7 @@ import javax.persistence.Column;
 import javax.persistence.MappedSuperclass;
 
 @MappedSuperclass
-public class TopicDistribution extends ModelBase implements WikiModel {
+public class KeywordDistribution extends ModelBase implements WikiModel {
 
     // The following properties aren't really "topics". They are quick and
     // easy ways to determine the keywords and sentences from a text.

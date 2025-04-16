@@ -8,7 +8,6 @@ import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.morph.MorphologicalFeatur
 import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import de.tudarmstadt.ukp.dkpro.core.api.metadata.type.DocumentMetaData;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Token;
-import org.apache.commons.logging.Log;
 import org.apache.http.annotation.Obsolete;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -25,16 +24,18 @@ import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
-import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.LogStatus;
-import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
+import org.texttechnologylab.models.topic.TopicValueBase;
+import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
+import org.texttechnologylab.models.topic.TopicWord;
+import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.*;
 import org.texttechnologylab.models.negation.CompleteNegation;
@@ -66,6 +67,7 @@ public class Importer {
     private String importId;
     private Integer importerNumber;
     private List<UCEMetadataFilter> uceMetadataFilters = new CopyOnWriteArrayList<>(); // need thread safety.
+    private LexiconService lexiconService;
 
     public Importer(ApplicationContext serviceContext,
                     String foldername,
@@ -85,6 +87,7 @@ public class Importer {
         this.goetheUniversityService = serviceContext.getBean(GoetheUniversityService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.ragService = serviceContext.getBean(RAGService.class);
+        this.lexiconService = serviceContext.getBean(LexiconService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
         this.gbifService = serviceContext.getBean(GbifService.class);
     }
@@ -244,8 +247,20 @@ public class Importer {
 
                         int currentCount = counter.incrementAndGet();
 
-                        // Periodic corpus postprocessing
-                        if (currentCount % 100 == 0) {
+                        // Periodic processing of the imports such as lexicon refreshing and corpus postprocessing
+                        if (currentCount % 50 == 0) {
+
+                            // Lexicon
+                            CompletableFuture.runAsync(() -> {
+                                logImportInfo("=========== UPDATING THE LEXICON...", LogStatus.POST_PROCESSING, "LEXICON", 0);
+                                var result = ExceptionUtils.tryCatchLog(
+                                        () -> lexiconService.updateLexicon(false),
+                                        (ex) -> logImportError("Unknown error updating the lexicon of corpus " + corpus1.getId(), ex, "LEXICON"));
+                                if(result != null)
+                                    logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + result + "\n\n", LogStatus.SAVED, "LEXICON", 0);
+                            }, executor);
+
+                            // Corpus
                             CompletableFuture.runAsync(() -> {
                                 ExceptionUtils.tryCatchLog(
                                         () -> postProccessCorpus(corpus1, corpusConfigFinal),
@@ -260,6 +275,11 @@ public class Importer {
 
         // Wait for all tasks to complete
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+
+        // Final lexion updating
+        ExceptionUtils.tryCatchLog(
+                () -> lexiconService.updateLexicon(false),
+                (ex) -> logger.error("Error in the final lexicon update of the current corpus with id " + corpus1.getId()));
 
         // Final corpus postprocessing
         ExceptionUtils.tryCatchLog(
@@ -410,6 +430,12 @@ public class Importer {
                 ExceptionUtils.tryCatchLog(
                         () -> setCompleteNegations(document, jCas),
                         (ex) -> logImportWarn("This file should have contained negation annotations, but selecting them caused an error.", ex, filePath));
+            // unifiedTopics
+            if (corpusConfig.getAnnotations().isUnifiedTopic())
+                ExceptionUtils.tryCatchLog(
+                        () -> setUnifiedTopic(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained UnifiedTopic annotations, but selecting them caused an error.", ex, filePath));
+
 
             ExceptionUtils.tryCatchLog(
                     () -> setPages(document, jCas, corpusConfig),
@@ -958,6 +984,72 @@ public class Importer {
         document.setEvents(eventsTotal);
     }
 
+
+    /**
+     * Selects and sets the topics to a document
+     */
+
+    private void setUnifiedTopic(Document document, JCas jCas) {
+
+        List<UnifiedTopic> unifiedTopics = new ArrayList<>();
+
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.UnifiedTopic.class).forEach(ut -> {
+            UnifiedTopic unifiedTopic = new UnifiedTopic(ut.getBegin(), ut.getEnd());
+            unifiedTopic.setDocument(document);
+
+            if (ut.getTopics() != null) {
+                List<TopicValueBase> topics = new ArrayList<>();
+                for (org.texttechnologylab.annotation.TopicValueBase tvb : ut.getTopics().toArray(new org.texttechnologylab.annotation.TopicValueBase[0])) {
+                    TopicValueBase topicValueBase;
+
+                    // Check if the topic is of type TopicValueBaseWithScore
+                    if (tvb instanceof org.texttechnologylab.annotation.TopicValueBaseWithScore) {
+                        org.texttechnologylab.annotation.TopicValueBaseWithScore tvbWithScore = (org.texttechnologylab.annotation.TopicValueBaseWithScore) tvb;
+                        TopicValueBaseWithScore topicValueBaseWithScore = new TopicValueBaseWithScore(ut.getBegin(), ut.getEnd());
+                        topicValueBaseWithScore.setDocument(document);
+                        topicValueBaseWithScore.setScore(tvbWithScore.getScore());
+                        topicValueBase = topicValueBaseWithScore;
+                    } else {
+                        topicValueBase = new TopicValueBase(ut.getBegin(), ut.getEnd());
+                        topicValueBase.setDocument(document);
+                    }
+
+                    topicValueBase.setValue(tvb.getValue());
+
+                    if (tvb.getWords() != null) {
+                        List<TopicWord> words = new ArrayList<>();
+                        for (org.texttechnologylab.annotation.TopicWord tw : tvb.getWords().toArray(new org.texttechnologylab.annotation.TopicWord[0])) {
+                            TopicWord topicWord = new TopicWord(tw.getBegin(), tw.getEnd());
+                            topicWord.setWord(tw.getWord());
+                            topicWord.setProbability(tw.getProbability());
+                            topicWord.setTopic(topicValueBase);
+                            topicWord.setCoveredText(topicWord.getCoveredText(jCas.getDocumentText()));
+                            words.add(topicWord);
+                        }
+                        topicValueBase.setWords(words);
+                    }
+                    topicValueBase.setCoveredText(topicValueBase.getCoveredText(jCas.getDocumentText()));
+                    topicValueBase.setUnifiedTopic(unifiedTopic);
+                    topics.add(topicValueBase);
+                }
+                unifiedTopic.setTopics(topics);
+            }
+//
+//            // Map metadata
+//            if (ut.getMetadata() != null) {
+//                MetaData metadata = new MetaData();
+//                metadata.setKey(ut.getMetadata().getKey());
+//                metadata.setValue(ut.getMetadata().getValue());
+//                unifiedTopic.setMetadata(metadata);
+//            }
+            unifiedTopic.setCoveredText(unifiedTopic.getCoveredText(jCas.getDocumentText()));
+
+            unifiedTopics.add(unifiedTopic);
+        });
+
+        document.setUnifiedTopics(unifiedTopics);
+    }
+
     /**
      * Set the cleaned full text. That is the sum of all tokens except of all anomalies
      * Update: Obsolete for now, as this takes forever and makes the OCR worse.
@@ -1134,42 +1226,42 @@ public class Importer {
             }
         }
 
-        if (corpusConfig.getOther().isIncludeTopicDistribution()) {
-            logger.info("Topic Distribution...");
+        if (corpusConfig.getOther().isIncludeKeywordDistribution()) {
+            logger.info("Keyword Distribution...");
 
-            // Calculate the page topic distribution if activated
+            // Calculate the page keyword distribution if activated
             for (var page : document.getPages()) {
-                // If this page already has a topic dist, continue.
-                if (page.getPageTopicDistribution() != null) continue;
+                // If this page already has a keyword dist, continue.
+                if (page.getPageKeywordDistribution() != null) continue;
 
-                var topicDistribution = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getTextTopicDistribution(PageTopicDistribution.class, page.getCoveredText(document.getFullText())),
-                        (ex) -> logImportError("Error getting the PageTopicDistribution - the postprocessing continues. Document id: " + document.getId(), ex, filePath));
-                if (topicDistribution == null) continue;
+                var KeywordDistribution = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getTextKeywordDistribution(PageKeywordDistribution.class, page.getCoveredText(document.getFullText())),
+                        (ex) -> logImportError("Error getting the PageKeywordDistribution - the postprocessing continues. Document id: " + document.getId(), ex, filePath));
+                if (KeywordDistribution == null) continue;
 
-                topicDistribution.setBegin(page.getBegin());
-                topicDistribution.setEnd(page.getEnd());
-                topicDistribution.setPage(page);
-                topicDistribution.setPageId(page.getId());
-                page.setPageTopicDistribution(topicDistribution);
+                KeywordDistribution.setBegin(page.getBegin());
+                KeywordDistribution.setEnd(page.getEnd());
+                KeywordDistribution.setPage(page);
+                KeywordDistribution.setPageId(page.getId());
+                page.setPageKeywordDistribution(KeywordDistribution);
                 // Store it in the db
-                ExceptionUtils.tryCatchLog(() -> db.savePageTopicDistribution(page),
-                        (ex) -> logImportError("Error storing the page topic distribution - the postprocessing continues.", ex, filePath));
+                ExceptionUtils.tryCatchLog(() -> db.savePageKeywordDistribution(page),
+                        (ex) -> logImportError("Error storing the page keyword distribution - the postprocessing continues.", ex, filePath));
             }
 
             // And the document topic dist if this wasn't added before.
-            if (document.getDocumentTopicDistribution() == null) {
-                var documentTopicDistribution = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getTextTopicDistribution(DocumentTopicDistribution.class, document.getFullText()),
-                        (ex) -> logImportError("Error getting the DocumentTopicDistribution - the postprocessing ends now. Document id: " + document.getId(), ex, filePath));
-                if (documentTopicDistribution == null) return;
+            if (document.getDocumentKeywordDistribution() == null) {
+                var documentKeywordDistribution = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getTextKeywordDistribution(DocumentKeywordDistribution.class, document.getFullText()),
+                        (ex) -> logImportError("Error getting the DocumentKeywordDistribution - the postprocessing ends now. Document id: " + document.getId(), ex, filePath));
+                if (documentKeywordDistribution == null) return;
 
-                documentTopicDistribution.setDocument(document);
-                documentTopicDistribution.setDocumentId(document.getId());
-                document.setDocumentTopicDistribution(documentTopicDistribution);
+                documentKeywordDistribution.setDocument(document);
+                documentKeywordDistribution.setDocumentId(document.getId());
+                document.setDocumentKeywordDistribution(documentKeywordDistribution);
                 // Store it
-                ExceptionUtils.tryCatchLog(() -> db.saveDocumentTopicDistribution(document),
-                        (ex) -> logImportError("Error storing the document topic distribution - the postprocessing ends now.", ex, filePath));
+                ExceptionUtils.tryCatchLog(() -> db.saveDocumentKeywordDistribution(document),
+                        (ex) -> logImportError("Error storing the document keyword distribution - the postprocessing ends now.", ex, filePath));
             }
         }
 

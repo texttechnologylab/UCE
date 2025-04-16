@@ -55,13 +55,13 @@ public interface DataInterface {
      * Stores a page topic distribution by a page.
      *
      */
-    public void savePageTopicDistribution(Page page) throws DatabaseOperationException;
+    public void savePageKeywordDistribution(Page page) throws DatabaseOperationException;
 
     /**
      * Stores a document topic distributions by a document.
      *
      */
-    public void saveDocumentTopicDistribution(Document document) throws DatabaseOperationException;
+    public void saveDocumentKeywordDistribution(Document document) throws DatabaseOperationException;
 
     /**
      * Returns a corpus by name. As they aren't unique, it returns the first match.
@@ -114,6 +114,13 @@ public interface DataInterface {
      * @return
      */
     public List<Document> getManyDocumentsByIds(List<Integer> documentIds) throws DatabaseOperationException;
+
+    /**
+     * Returns a list of lexicon entries depending on the parameters.
+     */
+    public List<LexiconEntry> getManyLexiconEntries(int skip, int take, List<String> alphabet,
+                                                    List<String> annotationFilters, String sortColumn,
+                                                    String sortOrder, String searchInput) throws DatabaseOperationException;
 
     /**
      * Does a semantic role label search and returns document hits
@@ -178,10 +185,10 @@ public interface DataInterface {
      * @return
      * @throws DatabaseOperationException
      */
-    public <T extends TopicDistribution> T getTopicDistributionById(Class<T> clazz, long id) throws DatabaseOperationException;
+    public <T extends KeywordDistribution> T getKeywordDistributionById(Class<T> clazz, long id) throws DatabaseOperationException;
 
     /**
-     * Get Topic Distributions by a topic. This is basically a search for annotated topics.
+     * Get Keyword Distributions by a keyword. This is basically a search for annotated keywords.
      *
      * @param clazz
      * @param topic
@@ -189,7 +196,7 @@ public interface DataInterface {
      * @return
      * @throws DatabaseOperationException
      */
-    public <T extends TopicDistribution> List<T> getTopicDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException;
+    public <T extends KeywordDistribution> List<T> getKeywordDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException;
 
     /**
      * Gets a document by its corpusId and the documentId, which isn't its primary key identifier "id".
@@ -207,6 +214,16 @@ public interface DataInterface {
      * Generic operation that fetches documents given the parameters
      */
     public Document getDocumentById(long id) throws DatabaseOperationException;
+
+    /**
+     * Gets a fully initialized page by its id.
+     */
+    public Page getPageById(long id) throws DatabaseOperationException;
+
+    /**
+     * Gets a page by its documentid and whether the begin and end is in the page's begin and end.
+     */
+    public Page getPageByDocumentIdAndBeginEnd(long documentId, int begin, int end, boolean initialize) throws DatabaseOperationException;
 
     /**
      * Gets the corresponding gbifOccurrences to a gbifTaxonId
@@ -229,6 +246,16 @@ public interface DataInterface {
      * Gets a time annotation by its id
      */
     public Time getTimeAnnotationById(long id) throws DatabaseOperationException;
+
+    /**
+     * Counts the entries in the lexicon
+     */
+    public long countLexiconEntries() throws DatabaseOperationException;
+
+    /**
+     * Gets a Lexicon entry by its composite id.
+     */
+    public LexiconEntry getLexiconEntryId(LexiconEntryId id) throws DatabaseOperationException;
 
     /**
      * Gets a named entity by its id

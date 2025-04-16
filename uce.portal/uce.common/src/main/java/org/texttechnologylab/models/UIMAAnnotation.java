@@ -1,7 +1,9 @@
 package org.texttechnologylab.models;
 
+import io.micrometer.common.lang.Nullable;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.Column;
@@ -17,9 +19,16 @@ public class UIMAAnnotation extends ModelBase {
     private int end;
     @Column(columnDefinition = "TEXT")
     private String coveredText;
+    private Boolean isLexicalized = false;
+    @Column(name = "document_id", insertable = false, updatable = false)
+    private Long documentId;
 
     public String getCoveredText() {
         return coveredText;
+    }
+
+    public String getCoveredHtmlText(){
+        return coveredText.replaceAll(" ", "&nbsp;").replaceAll("\n", "<br/>");
     }
 
     public String getCoveredText(String fullDocumentText) {
@@ -40,6 +49,22 @@ public class UIMAAnnotation extends ModelBase {
     public UIMAAnnotation(int begin, int end) {
         this.begin = begin;
         this.end = end;
+    }
+
+    public Boolean getLexicalized() {
+        return isLexicalized;
+    }
+
+    public void setLexicalized(Boolean lexicalized) {
+        isLexicalized = lexicalized;
+    }
+
+    public Long getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(Long documentId) {
+        this.documentId = documentId;
     }
 
     public void setBegin(int begin) {
@@ -131,8 +156,6 @@ public class UIMAAnnotation extends ModelBase {
 
         // We apply some heuristic post-processing to make the text more readable.
         //return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
-        // insert break
-        //return StringUtils.CleanText(finalText.toString()).replaceAll("\n", "<br/>");
         return StringUtils.replaceCharacterOutsideSpan(StringUtils.replaceCharacterOutsideSpan(StringUtils.CleanText(finalText.toString()), '\n', "<br/>"), ' ', "&nbsp;");
     }
 
@@ -196,6 +219,10 @@ public class UIMAAnnotation extends ModelBase {
             return String.format(
                     "<span class='annotation custom-context-menu focus' title='%1$s'>",
                     includeTitle ? focus.getCoveredText() : "");
+        } else if (annotation instanceof UnifiedTopic topic) {
+            return String.format(
+                    "<span class='open-wiki-page annotation custom-context-menu topic' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
+                    includeTitle ? topic.getWikiId() : "", topic.getWikiId(), topic.getCoveredText());
         }
 
         return "";
