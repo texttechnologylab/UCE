@@ -10,6 +10,7 @@ public class DocumentSearchResult {
     private ArrayList<Integer> documentIds;
     private ArrayList<Integer> documentHits;
     private HashMap<Integer, ArrayList<PageSnippet>> searchSnippets;
+    private HashMap<Long, ArrayList<PageSnippet>> searchSnippetsDocIdToSnippet;
     private HashMap<Integer, Float> searchRanks;
 
     private ArrayList<AnnotationSearchResult> foundNamedEntities = new ArrayList<>();
@@ -27,6 +28,14 @@ public class DocumentSearchResult {
                                 ArrayList<Integer> documentIds) {
         this.documentCount = documentCount;
         this.documentIds = documentIds;
+    }
+
+    public HashMap<Long, ArrayList<PageSnippet>> getSearchSnippetsDocIdToSnippet() {
+        return searchSnippetsDocIdToSnippet;
+    }
+
+    public void setSearchSnippetsDocIdToSnippet(HashMap<Long, ArrayList<PageSnippet>> searchSnippetsDocIdToSnippet) {
+        this.searchSnippetsDocIdToSnippet = searchSnippetsDocIdToSnippet;
     }
 
     public ArrayList<AnnotationSearchResult> getFoundScopes() {

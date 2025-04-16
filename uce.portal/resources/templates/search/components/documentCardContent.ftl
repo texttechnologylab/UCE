@@ -117,7 +117,7 @@
         </div>
     <#elseif searchState.getSearchType()?? && searchState.getSearchType() == "NEG">
         <div class="snippets-container">
-            <#assign snippets = searchState.getPossibleSnippetsOfDocumentIdx(documentIdx)!>
+            <#assign snippets = searchState.getPossibleSnippetsOfDocumentId(document.getId())!>
             <#if snippets?has_content>
                 <#list snippets as snippet>
                     <div class="snippet-content mt-1 mb-2 h-100 position-relative" data-id="${snippet?index}"

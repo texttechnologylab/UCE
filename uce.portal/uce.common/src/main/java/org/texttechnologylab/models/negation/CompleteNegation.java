@@ -45,6 +45,9 @@ public class CompleteNegation extends UIMAAnnotation {
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
 
+    @Column(name = "document_id", insertable = false, updatable = false)
+    private Long documentId;
+
 
     public CompleteNegation(){
         super(-1, -1);
@@ -63,6 +66,14 @@ public class CompleteNegation extends UIMAAnnotation {
 
     public void setNegType(String negType) {
         this.negType = negType;
+    }
+
+    public Long getDocumentId() {
+        return documentId;
+    }
+
+    public void setDocumentId(Long documentId) {
+        this.documentId = documentId;
     }
 
     public List<Focus> getFocusList() {

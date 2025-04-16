@@ -151,6 +151,8 @@ public class SearchCompleteNegation implements Search {
         allSearchTokens.addAll(searchState.getFocus());
 
         searchState.setSearchTokens(allSearchTokens);
+        //searchState.setDocumentIdxToSnippets(documentSearchResult.getSearchSnippets());
+        searchState.setDocumentIdToSnippets(documentSearchResult.getSearchSnippetsDocIdToSnippet());
 
         return searchState;
     }

@@ -70,6 +70,7 @@ public class SearchState extends CacheItem {
     @Obsolete
     private List<Integer> currentDocumentHits;
     private HashMap<Integer, ArrayList<PageSnippet>> documentIdxToSnippet;
+    private HashMap<Long, ArrayList<PageSnippet>> documentIdToSnippet;
     private HashMap<Integer, Float> documentIdxToRank;
 
     public SearchState(SearchType searchType) {
@@ -158,12 +159,36 @@ public class SearchState extends CacheItem {
         return null;
     }
 
+    public ArrayList<PageSnippet> getPossibleSnippetsOfDocumentId(long id) {
+        if (this.documentIdToSnippet != null && this.documentIdToSnippet.containsKey(id))
+            return this.documentIdToSnippet.get(id);
+        return null;
+    }
+
     public DateTime getCreated() {
         return this.created;
     }
 
     public void setDocumentIdxToSnippets(HashMap<Integer, ArrayList<PageSnippet>> map) {
         this.documentIdxToSnippet = map;
+
+        // Whenever we set documents within a fulltext search, we should have found snippets.
+        // In those are pageIds of the snippets. Let's fill them.
+        if(searchLayers != null && searchLayers.contains(SearchLayer.FULLTEXT)){
+            for(var i =0; i < this.currentDocuments.size(); i++){
+                var currentDoc = this.currentDocuments.get(i);
+                var pageSnippets = this.getPossibleSnippetsOfDocumentIdx(i);
+                if(pageSnippets == null) continue;
+                for(var page:pageSnippets){
+                    var potentialPage = currentDoc.getPages().stream().filter(p -> p.getId() == page.getPageId()).findFirst();
+                    potentialPage.ifPresent(page::setPage);
+                }
+            }
+        }
+    }
+
+    public void setDocumentIdToSnippets(HashMap<Long, ArrayList<PageSnippet>> map) {
+        this.documentIdToSnippet = map;
 
         // Whenever we set documents within a fulltext search, we should have found snippets.
         // In those are pageIds of the snippets. Let's fill them.

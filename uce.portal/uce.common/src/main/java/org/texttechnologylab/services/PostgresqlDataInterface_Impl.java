@@ -441,22 +441,23 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         Long docId = rs.getLong("document_id");
                         Long negId = rs.getLong("negation_id");
                         Long annoId = rs.getLong("id");
-                        String coveredText = rs.getString("coveredtext");
+                        Long pageId = rs.getLong("page_id");
                         int begin = rs.getInt("beginn");
                         int end = rs.getInt("endd");
+                        String coveredText = rs.getString("coveredtext");
                         if (annoMap.get(table).get(docId) == null) {
                             List<AnnotationSearchResult> offsets = new ArrayList<>();
-                            offsets.add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue()));
-                            TreeMap<Long, List<AnnotationSearchResult>> negMap = new TreeMap<Long, List<AnnotationSearchResult>>();
+                            offsets.add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue(), negId, begin, end, pageId));
+                            TreeMap<Long, List<AnnotationSearchResult>> negMap = new TreeMap<>();
                             negMap.put(negId, offsets);
                             annoMap.get(table).put(docId, negMap);
                         } else {
                             if (annoMap.get(table).get(docId).get(negId) == null) {
                                 List<AnnotationSearchResult> offsets = new ArrayList<>();
-                                offsets.add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue()));
+                                offsets.add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue(), negId, begin, end, pageId));
                                 annoMap.get(table).get(docId).put(negId, offsets);
                             } else {
-                                annoMap.get(table).get(docId).get(negId).add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue()));
+                                annoMap.get(table).get(docId).get(negId).add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue(), negId, begin, end, pageId));
                             }
 
                         }
@@ -551,6 +552,57 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 search.setFoundXscopes(xscopes);
                 search.setFoundFoci(foci);
                 search.setFoundScopes(scopes);
+
+                ArrayList<AnnotationSearchResult> allAnnos = new ArrayList<>();
+                allAnnos.addAll(cues);
+                allAnnos.addAll(foci);
+                allAnnos.addAll(events);
+                allAnnos.addAll(xscopes);
+                allAnnos.addAll(scopes);
+
+                HashMap<Long, ArrayList<PageSnippet>> foundSnippets = new HashMap<>();
+                TreeMap<Long, List<AnnotationSearchResult>> negSorted = new TreeMap<>();
+                for (AnnotationSearchResult anno : allAnnos) {
+                    if (negSorted.get(anno.getAdditionalId()) == null) {
+                        negSorted.put(anno.getAdditionalId(), new ArrayList<>());
+                        negSorted.get(anno.getAdditionalId()).add(anno);
+                    } else {
+                        negSorted.get(anno.getAdditionalId()).add(anno);
+                    }
+                }
+                for (Long negId : negSorted.keySet()) {
+                    int maxBegin = 0;
+                    int maxEnd = 0;
+                    for (AnnotationSearchResult anno : negSorted.get(negId)) {
+                        if (maxBegin < anno.getBegin()) {
+                            maxBegin = anno.getBegin();
+                        }
+                        if (maxEnd < anno.getEnd()) {
+                            maxEnd = anno.getEnd();
+                        }
+                    }
+                    try {
+                        CompleteNegation negComp = getCompleteNegationById(negId);
+                        //Document doc = getCompleteDocumentById((long) negSorted.get(negId).getFirst().getDocumentId(), 0, 9999999);
+                        Document doc = getCompleteDocumentById(negComp.getDocumentId(), 0, 9999999);
+                        PageSnippet pageSnippet = new PageSnippet();
+
+                        String snippet = doc.getFullTextSnippetCharOffset(maxBegin - 100, Math.min(maxEnd + 100, maxBegin + 500)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
+                        pageSnippet.setSnippet(snippet);
+                        pageSnippet.setPage(getPageById(negComp.getCue().getPage().getId()));
+                        pageSnippet.setPageId((int) negComp.getCue().getPage().getId());
+                        if (foundSnippets.containsKey(doc.getId())) {
+                            foundSnippets.get(doc.getId()).add(pageSnippet);
+                        } else {
+                            foundSnippets.put(doc.getId(), new ArrayList<>());
+                            foundSnippets.get(doc.getId()).add(pageSnippet);
+                        }
+                    } catch (DatabaseOperationException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                }
+                search.setSearchSnippetsDocIdToSnippet(foundSnippets);
                 return search;
             }
 
@@ -796,6 +848,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             var neg = session.get(CompleteNegation.class, id);
             Hibernate.initialize(neg);
             return neg;
+        });
+    }
+
+    public Page getPageById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var page = session.get(Page.class, id);
+            Hibernate.initialize(page);
+            return page;
         });
     }
 
