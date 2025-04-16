@@ -18,6 +18,7 @@ import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.util.HealthStatus;
+import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
 import javax.persistence.criteria.Predicate;
@@ -529,7 +530,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         }
                     }
                     if (wasNegPresent) {
-                        if ((docCount >= skip && doc_found <= take)) {
+                        if ((docCount >= skip && doc_found < take)) {
                             doc_found++;
                             docIds.add(docId);
                         }
@@ -571,24 +572,34 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     }
                 }
                 for (Long negId : negSorted.keySet()) {
-                    int maxBegin = 0;
+                    List<ArrayList<Integer>> offsetList = new ArrayList<>();
+                    int minBegin = 0;
                     int maxEnd = 0;
                     for (AnnotationSearchResult anno : negSorted.get(negId)) {
-                        if (maxBegin < anno.getBegin()) {
-                            maxBegin = anno.getBegin();
+                        if (minBegin > anno.getBegin()) {
+                            minBegin = anno.getBegin();
                         }
                         if (maxEnd < anno.getEnd()) {
                             maxEnd = anno.getEnd();
                         }
+                        ArrayList<Integer> offsetsTemp = new ArrayList<>();
+                        offsetsTemp.add(anno.getBegin());
+                        offsetsTemp.add(anno.getEnd());
+                        offsetList.add(offsetsTemp);
                     }
                     try {
+                        for (ArrayList<Integer> pair : offsetList) {
+                            for (int i = 0; i < pair.size(); i++) {
+                                pair.set(i, pair.get(i) - Math.max(minBegin - 100, 0));
+                            }
+                        }
                         CompleteNegation negComp = getCompleteNegationById(negId);
                         //Document doc = getCompleteDocumentById((long) negSorted.get(negId).getFirst().getDocumentId(), 0, 9999999);
                         Document doc = getCompleteDocumentById(negComp.getDocumentId(), 0, 9999999);
                         PageSnippet pageSnippet = new PageSnippet();
 
-                        String snippet = doc.getFullTextSnippetCharOffset(maxBegin - 100, Math.min(maxEnd + 100, maxBegin + 500)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
-                        pageSnippet.setSnippet(snippet);
+                        String snippet = doc.getFullTextSnippetCharOffset(Math.max(minBegin - 100, 0), Math.min(maxEnd + 100, minBegin + 500));
+                        pageSnippet.setSnippet(StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;"));
                         pageSnippet.setPage(getPageById(negComp.getCue().getPage().getId()));
                         pageSnippet.setPageId((int) negComp.getCue().getPage().getId());
                         if (foundSnippets.containsKey(doc.getId())) {

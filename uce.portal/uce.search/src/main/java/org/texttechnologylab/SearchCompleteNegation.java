@@ -180,6 +180,26 @@ public class SearchCompleteNegation implements Search {
                 (ex) -> logger.error("Error searching hits for page " + page + " in neg search - returning original search state.", ex));
         if (documents == null) return searchState;
         searchState.setCurrentDocuments(documents);
+
+        searchState.setTotalHits(documentSearchResult.getDocumentCount());
+
+        searchState.setFoundCues(documentSearchResult.getFoundCues());
+        searchState.setFoundFoci(documentSearchResult.getFoundFoci());
+        searchState.setFoundScopes(documentSearchResult.getFoundScopes());
+        searchState.setFoundXScopes(documentSearchResult.getFoundXscopes());
+        searchState.setFoundEvents(documentSearchResult.getFoundEvents());
+
+        ArrayList<String> allSearchTokens = new ArrayList<>();
+        allSearchTokens.addAll(searchState.getCue());
+        allSearchTokens.addAll(searchState.getScope());
+        allSearchTokens.addAll(searchState.getXscope());
+        allSearchTokens.addAll(searchState.getEvent());
+        allSearchTokens.addAll(searchState.getFocus());
+
+        searchState.setSearchTokens(allSearchTokens);
+        //searchState.setDocumentIdxToSnippets(documentSearchResult.getSearchSnippets());
+        searchState.setDocumentIdToSnippets(documentSearchResult.getSearchSnippetsDocIdToSnippet());
+
         return searchState;
     }
 }

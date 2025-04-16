@@ -285,7 +285,7 @@ public class Document extends ModelBase implements WikiModel {
         if (fullText != null) {
             int idx = 0;
             for (char c : fullText.toCharArray()) {
-                if (idx >= start && idx <= end) {
+                if (idx >= start && idx < end) {
                     result.append(c);
                 }
                 idx ++;
