@@ -54,7 +54,11 @@ public class SearchApi {
             activeSearchState.setOrder(SearchOrder.valueOf(order));
             activeSearchState.setOrderBy(OrderByColumn.valueOf(orderBy));
             Search search = new Search_DefaultImpl();
-            if (activeSearchState.getSearchType() == SearchType.SEMANTICROLE) search = new Search_SemanticRoleImpl();
+            if (activeSearchState.getSearchType() == SearchType.SEMANTICROLE) {
+                search = new Search_SemanticRoleImpl();
+            } else if (activeSearchState.getSearchType() == SearchType.NEG) {
+                search = new SearchCompleteNegation();
+            }
             search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
             activeSearchState = search.getSearchHitsForPage(activeSearchState.getCurrentPage());
 
@@ -86,7 +90,11 @@ public class SearchApi {
             // Get the next pages.
             var activeSearchState = (SearchState) SessionManager.ActiveSearches.get(searchId);
             Search search = new Search_DefaultImpl();
-            if (activeSearchState.getSearchType() == SearchType.SEMANTICROLE) search = new Search_SemanticRoleImpl();
+            if (activeSearchState.getSearchType() == SearchType.SEMANTICROLE) {
+                search = new Search_SemanticRoleImpl();
+            } else if (activeSearchState.getSearchType() == SearchType.NEG) {
+                search = new SearchCompleteNegation();
+            }
             search.fromSearchState(this.context, languageResources.getDefaultLanguage(), activeSearchState);
             activeSearchState = search.getSearchHitsForPage(page);
 
@@ -160,6 +168,9 @@ public class SearchApi {
             if (searchInput.startsWith("SR::")) {
                 var semanticRoleSearch = new Search_SemanticRoleImpl(context, corpusId, searchInput);
                 searchState = semanticRoleSearch.initSearch();
+            } else if (searchInput.startsWith("NEG::")) {
+                var negRoleSearch = new SearchCompleteNegation(context, corpusId, searchInput);
+                searchState = negRoleSearch.initSearch();
             } else {
                 // Define the search layers from the sent layers
                 var searchLayers = new ArrayList<SearchLayer>();

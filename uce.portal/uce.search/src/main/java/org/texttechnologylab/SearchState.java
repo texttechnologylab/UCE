@@ -36,10 +36,20 @@ public class SearchState extends CacheItem {
     private Integer totalHits;
     private SearchOrder order = SearchOrder.DESC;
     private OrderByColumn orderBy = OrderByColumn.RANK;
-    private ArrayList<AnnotationSearchResult> foundNamedEntities;
-    private ArrayList<AnnotationSearchResult> foundTimes;
-    private ArrayList<AnnotationSearchResult> foundTaxons;
     private KeywordInContextState keywordInContextState;
+
+    private ArrayList<AnnotationSearchResult> foundNamedEntities = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundTimes = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundTaxons = new ArrayList<>();
+
+    // Negation
+    private ArrayList<AnnotationSearchResult> foundScopes = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundCues = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundXScopes = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundFoci = new ArrayList<>();
+    private ArrayList<AnnotationSearchResult> foundEvents = new ArrayList<>();
+
+
 
     /**
      * This is only filled when the search layer contains embeddings
@@ -58,6 +68,7 @@ public class SearchState extends CacheItem {
      */
     private List<Integer> currentDocumentHits;
     private HashMap<Integer, ArrayList<PageSnippet>> documentIdxToSnippet;
+    private HashMap<Long, ArrayList<PageSnippet>> documentIdToSnippet;
     private HashMap<Integer, Float> documentIdxToRank;
 
     public SearchState(SearchType searchType) {
@@ -146,12 +157,36 @@ public class SearchState extends CacheItem {
         return null;
     }
 
+    public ArrayList<PageSnippet> getPossibleSnippetsOfDocumentId(long id) {
+        if (this.documentIdToSnippet != null && this.documentIdToSnippet.containsKey(id))
+            return this.documentIdToSnippet.get(id);
+        return null;
+    }
+
     public DateTime getCreated() {
         return this.created;
     }
 
     public void setDocumentIdxToSnippets(HashMap<Integer, ArrayList<PageSnippet>> map) {
         this.documentIdxToSnippet = map;
+
+        // Whenever we set documents within a fulltext search, we should have found snippets.
+        // In those are pageIds of the snippets. Let's fill them.
+        if(searchLayers != null && searchLayers.contains(SearchLayer.FULLTEXT)){
+            for(var i =0; i < this.currentDocuments.size(); i++){
+                var currentDoc = this.currentDocuments.get(i);
+                var pageSnippets = this.getPossibleSnippetsOfDocumentIdx(i);
+                if(pageSnippets == null) continue;
+                for(var page:pageSnippets){
+                    var potentialPage = currentDoc.getPages().stream().filter(p -> p.getId() == page.getPageId()).findFirst();
+                    potentialPage.ifPresent(page::setPage);
+                }
+            }
+        }
+    }
+
+    public void setDocumentIdToSnippets(HashMap<Long, ArrayList<PageSnippet>> map) {
+        this.documentIdToSnippet = map;
 
         // Whenever we set documents within a fulltext search, we should have found snippets.
         // In those are pageIds of the snippets. Let's fill them.
@@ -282,6 +317,21 @@ public class SearchState extends CacheItem {
             case "Times":
                 currentAnnotations = foundTimes;
                 break;
+            case "Cues":
+                currentAnnotations = foundCues;
+                break;
+            case "Scopes":
+                currentAnnotations = foundScopes;
+                break;
+            case "xScopes":
+                currentAnnotations = foundXScopes;
+                break;
+            case "Events":
+                currentAnnotations = foundEvents;
+                break;
+            case "Foci":
+                currentAnnotations = foundFoci;
+                break;
         }
         currentAnnotations = currentAnnotations.stream().filter(a -> a.getDocumentId() == documentId).toList();
         currentAnnotations = currentAnnotations.stream().sorted(Comparator.comparingInt(AnnotationSearchResult::getOccurrences).reversed()).toList();
@@ -390,5 +440,45 @@ public class SearchState extends CacheItem {
 
     public void setTake(Integer take) {
         this.take = take;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundScopes(int skip, int take) {
+        return new ArrayList<>(foundScopes.stream().skip(skip).limit(take).toList());
+    }
+
+    public void setFoundScopes(ArrayList<AnnotationSearchResult> foundScopes) {
+        this.foundScopes = foundScopes;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundCues(int skip, int take) {
+        return new ArrayList<>(foundCues.stream().skip(skip).limit(take).toList());
+    }
+
+    public void setFoundCues(ArrayList<AnnotationSearchResult> foundCues) {
+        this.foundCues = foundCues;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundXScopes(int skip, int take) {
+        return new ArrayList<>(foundXScopes.stream().skip(skip).limit(take).toList());
+    }
+
+    public void setFoundXScopes(ArrayList<AnnotationSearchResult> foundXScopes) {
+        this.foundXScopes = foundXScopes;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundFoci(int skip, int take) {
+        return new ArrayList<>(foundFoci.stream().skip(skip).limit(take).toList());
+    }
+
+    public void setFoundFoci(ArrayList<AnnotationSearchResult> foundFoci) {
+        this.foundFoci = foundFoci;
+    }
+
+    public ArrayList<AnnotationSearchResult> getFoundEvents(int skip, int take) {
+        return new ArrayList<>(foundEvents.stream().skip(skip).limit(take).toList());
+    }
+
+    public void setFoundEvents(ArrayList<AnnotationSearchResult> foundEvents) {
+        this.foundEvents = foundEvents;
     }
 }

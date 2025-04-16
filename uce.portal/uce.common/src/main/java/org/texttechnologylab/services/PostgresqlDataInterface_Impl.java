@@ -22,12 +22,14 @@ import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.util.HealthStatus;
+import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
 import java.sql.Array;
+import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
@@ -462,6 +464,255 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
+    @Override
+    public DocumentSearchResult completeNegationSearchForDocuments(int skip,
+                                                                   int take,
+                                                                   List<String> cue,
+                                                                   List<String> event,
+                                                                   List<String> focus,
+                                                                   List<String> scope,
+                                                                   List<String> xscope,
+                                                                   boolean countAll,
+                                                                   SearchOrder order,
+                                                                   OrderByColumn orderedByColumn,
+                                                                   long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+            HashMap<String, List<String>> tableSubstrings = new HashMap<>();
+            tableSubstrings.put("cue", cue);
+            tableSubstrings.put("event", event);
+            tableSubstrings.put("focus", focus);
+            tableSubstrings.put("scope", scope);
+            tableSubstrings.put("xscope", xscope);
+
+            DocumentSearchResult search = null;
+
+            TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>> cuesByDocID = new TreeMap<>();
+            TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>> scopesByDocID = new TreeMap<>();
+            TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>> xscopesByDocID = new TreeMap<>();
+            TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>> eventsByDocID = new TreeMap<>();
+            TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>> fociByDocID = new TreeMap<>();
+            HashMap<String, TreeMap<Long, TreeMap<Long, List<AnnotationSearchResult>>>> annoMap = new HashMap<>();
+            annoMap.put("cue", cuesByDocID);
+            annoMap.put("event", eventsByDocID);
+            annoMap.put("focus", fociByDocID);
+            annoMap.put("scope", scopesByDocID);
+            annoMap.put("xscope", xscopesByDocID);
+
+            TreeMap<String, Boolean> skipMap = new TreeMap<String, Boolean>();
+            skipMap.put("cue", false);
+            skipMap.put("event", false);
+            skipMap.put("focus", false);
+            skipMap.put("scope", false);
+            skipMap.put("xscope", false);
+
+            for (Map.Entry<String, List<String>> entry : tableSubstrings.entrySet()) {
+                String table = entry.getKey();
+                List<String> substrings = entry.getValue();
+                if (substrings == null || substrings.isEmpty()) {
+                    skipMap.put(table, true);
+                    continue;
+                }
+
+                StringBuilder sql = new StringBuilder();
+                sql.append("SELECT * FROM ").append(table).append(" WHERE ");
+
+                // WHERE conditions (ANDed ILIKEs)
+                for (int i = 0; i < substrings.size(); i++) {
+                    if (i > 0) sql.append(" AND ");
+                    sql.append("coveredtext ILIKE ?");
+                }
+
+                try (PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
+                    int paramIndex = 1;
+
+                    // Set parameters for each substring in WHERE clause
+                    for (String s : substrings) {
+                        stmt.setString(paramIndex++, "%" + s + "%");
+                    }
+
+                    ResultSet rs = stmt.executeQuery();
+                    while (rs.next()) {
+                        Long docId = rs.getLong("document_id");
+                        Long negId = rs.getLong("negation_id");
+                        Long annoId = rs.getLong("id");
+                        Long pageId = rs.getLong("page_id");
+                        int begin = rs.getInt("beginn");
+                        int end = rs.getInt("endd");
+                        String coveredText = rs.getString("coveredtext");
+                        if (annoMap.get(table).get(docId) == null) {
+                            List<AnnotationSearchResult> offsets = new ArrayList<>();
+                            offsets.add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue(), negId, begin, end, pageId));
+                            TreeMap<Long, List<AnnotationSearchResult>> negMap = new TreeMap<>();
+                            negMap.put(negId, offsets);
+                            annoMap.get(table).put(docId, negMap);
+                        } else {
+                            if (annoMap.get(table).get(docId).get(negId) == null) {
+                                List<AnnotationSearchResult> offsets = new ArrayList<>();
+                                offsets.add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue(), negId, begin, end, pageId));
+                                annoMap.get(table).get(docId).put(negId, offsets);
+                            } else {
+                                annoMap.get(table).get(docId).get(negId).add(new AnnotationSearchResult(annoId, coveredText, 1, String.join("@", substrings), docId.intValue(), negId, begin, end, pageId));
+                            }
+
+                        }
+                    }
+                }
+            }
+            ArrayList<AnnotationSearchResult> cues = new ArrayList<>();
+            ArrayList<AnnotationSearchResult> scopes = new ArrayList<>();
+            ArrayList<AnnotationSearchResult> xscopes = new ArrayList<>();
+            ArrayList<AnnotationSearchResult> events = new ArrayList<>();
+            ArrayList<AnnotationSearchResult> foci = new ArrayList<>();
+            List<Long> docIds = new ArrayList<>();
+
+            int docCount = 0;
+            int doc_found = 0;
+            String mainKey = "cue";
+            for (String possKey : skipMap.keySet()) {
+                if (!skipMap.get(possKey)) {
+                    mainKey = possKey;
+                    break;
+                }
+            }
+            for (Map.Entry<Long, TreeMap<Long, List<AnnotationSearchResult>>> entry2 : annoMap.get(mainKey).entrySet()) {
+                Long docId = entry2.getKey();
+                TreeMap<Long, List<AnnotationSearchResult>> negMap = entry2.getValue();
+                boolean docPresent = true;
+                for (String table : annoMap.keySet()) {
+                    if (skipMap.get(table)) {
+                        continue;
+                    } else {
+                        if (!annoMap.get(table).containsKey(docId)) {
+                            docPresent = false;
+                            break;
+                        }
+                    }
+                }
+                if (docPresent) {
+                    boolean wasNegPresent = false;
+                    for (Long negId : negMap.keySet()) {
+                        boolean negPresent = true;
+                        for (String table : annoMap.keySet()) {
+                            if (skipMap.get(table)) {
+                                continue;
+                            } else {
+                                if (!annoMap.get(table).get(docId).containsKey(negId)) {
+                                    negPresent = false;
+                                    break;
+                                }
+                            }
+                        }
+                        if (negPresent) {
+                            wasNegPresent = true;
+                            if ((docCount >= skip && doc_found < take)) {
+                                for (String table : annoMap.keySet()) {
+                                    if (!skipMap.get(table)) {
+                                        if (Objects.equals(table, "cue"))
+                                            cues.addAll(annoMap.get(table).get(docId).get(negId));
+                                        if (Objects.equals(table, "scope"))
+                                            scopes.addAll(annoMap.get(table).get(docId).get(negId));
+                                        if (Objects.equals(table, "xscope"))
+                                            xscopes.addAll(annoMap.get(table).get(docId).get(negId));
+                                        if (Objects.equals(table, "focus"))
+                                            foci.addAll(annoMap.get(table).get(docId).get(negId));
+                                        if (Objects.equals(table, "event"))
+                                            events.addAll(annoMap.get(table).get(docId).get(negId));
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if (wasNegPresent) {
+                        if ((docCount >= skip && doc_found < take)) {
+                            doc_found++;
+                            docIds.add(docId);
+                        }
+                        docCount ++;
+
+
+                    }
+                }
+            }
+            if (docIds.isEmpty()) {
+                return search;
+            } else {
+                var documentIds = new ArrayList<Integer>();
+                for (Long docId : docIds) {
+                    documentIds.add(docId.intValue()); // Convert Long to Integer
+                }
+                search = new DocumentSearchResult(docCount, documentIds);
+                search.setFoundCues(cues);
+                search.setFoundEvents(events);
+                search.setFoundXscopes(xscopes);
+                search.setFoundFoci(foci);
+                search.setFoundScopes(scopes);
+
+                ArrayList<AnnotationSearchResult> allAnnos = new ArrayList<>();
+                allAnnos.addAll(cues);
+                allAnnos.addAll(foci);
+                allAnnos.addAll(events);
+                allAnnos.addAll(xscopes);
+                allAnnos.addAll(scopes);
+
+                HashMap<Long, ArrayList<PageSnippet>> foundSnippets = new HashMap<>();
+                TreeMap<Long, List<AnnotationSearchResult>> negSorted = new TreeMap<>();
+                for (AnnotationSearchResult anno : allAnnos) {
+                    if (negSorted.get(anno.getAdditionalId()) == null) {
+                        negSorted.put(anno.getAdditionalId(), new ArrayList<>());
+                        negSorted.get(anno.getAdditionalId()).add(anno);
+                    } else {
+                        negSorted.get(anno.getAdditionalId()).add(anno);
+                    }
+                }
+                for (Long negId : negSorted.keySet()) {
+                    List<ArrayList<Integer>> offsetList = new ArrayList<>();
+                    int minBegin = 0;
+                    int maxEnd = 0;
+                    for (AnnotationSearchResult anno : negSorted.get(negId)) {
+                        if (minBegin > anno.getBegin()) {
+                            minBegin = anno.getBegin();
+                        }
+                        if (maxEnd < anno.getEnd()) {
+                            maxEnd = anno.getEnd();
+                        }
+                        ArrayList<Integer> offsetsTemp = new ArrayList<>();
+                        offsetsTemp.add(anno.getBegin());
+                        offsetsTemp.add(anno.getEnd());
+                        offsetList.add(offsetsTemp);
+                    }
+                    try {
+                        for (ArrayList<Integer> pair : offsetList) {
+                            for (int i = 0; i < pair.size(); i++) {
+                                pair.set(i, pair.get(i) - Math.max(minBegin - 100, 0));
+                            }
+                        }
+                        CompleteNegation negComp = getCompleteNegationById(negId);
+                        //Document doc = getCompleteDocumentById((long) negSorted.get(negId).getFirst().getDocumentId(), 0, 9999999);
+                        Document doc = getCompleteDocumentById(negComp.getDocumentId(), 0, 9999999);
+                        PageSnippet pageSnippet = new PageSnippet();
+
+                        String snippet = doc.getFullTextSnippetCharOffset(Math.max(minBegin - 100, 0), Math.min(maxEnd + 100, minBegin + 500));
+                        pageSnippet.setSnippet(StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;"));
+                        pageSnippet.setPage(getPageById(negComp.getCue().getPage().getId()));
+                        pageSnippet.setPageId((int) negComp.getCue().getPage().getId());
+                        if (foundSnippets.containsKey(doc.getId())) {
+                            foundSnippets.get(doc.getId()).add(pageSnippet);
+                        } else {
+                            foundSnippets.put(doc.getId(), new ArrayList<>());
+                            foundSnippets.get(doc.getId()).add(pageSnippet);
+                        }
+                    } catch (DatabaseOperationException e) {
+                        throw new RuntimeException(e);
+                    }
+
+                }
+                search.setSearchSnippetsDocIdToSnippet(foundSnippets);
+                return search;
+            }
+
+        }));
+    }
+
     public DocumentSearchResult defaultSearchForDocuments(int skip,
                                                           int take,
                                                           String ogSearchQuery,
@@ -748,6 +999,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
     public TopicValueBase getTopicValueBaseById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(TopicValueBase.class, id));
+    }
+
+    public Page getPageById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var page = session.get(Page.class, id);
+            Hibernate.initialize(page);
+            return page;
+        });
     }
 
     public UnifiedTopic getUnifiedTopicById(long id) throws DatabaseOperationException {
