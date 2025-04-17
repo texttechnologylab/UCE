@@ -72,6 +72,7 @@ public class WikiService {
         viewModel.setDocument(db.getDocumentById(negation.getDocument().getId()));
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
         viewModel.setCoveredText(coveredText);
+        //viewModel.setCoveredText("lol");
         viewModel.setAnnotationType("Cue");
 
         viewModel.setCue(cue);

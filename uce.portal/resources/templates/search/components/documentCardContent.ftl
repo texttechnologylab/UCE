@@ -131,11 +131,27 @@
 
 <#macro renderFallback document>
     <#if document?has_content>
-        <div class="snippet-content h-100 position-relative">
-            <div class="mb-0 small-font text font-italic mr-2 word-break-word">
-                ${document.getFullTextSnippet(85)}...
+        <#if mainAnno??>
+            <#if offsetList??>
+                <div class="snippet-content h-100 position-relative">
+                    <div class="mb-0 small-font text font-italic mr-2 word-break-word">
+                        ${document.getFullTextSnippetOffsetList(offsetList)}...
+                    </div>
+                </div>
+            <#else>
+                <div class="snippet-content h-100 position-relative">
+                    <div class="mb-0 small-font text font-italic mr-2 word-break-word">
+                        ${document.getFullTextSnippetAnnotationOffset(mainAnno)}...
+                    </div>
+                </div>
+            </#if>
+        <#else>
+            <div class="snippet-content h-100 position-relative">
+                <div class="mb-0 small-font text font-italic mr-2 word-break-word">
+                    ${document.getFullTextSnippet(85)}...
+                </div>
             </div>
-        </div>
+        </#if>
     </#if>
 </#macro>
 

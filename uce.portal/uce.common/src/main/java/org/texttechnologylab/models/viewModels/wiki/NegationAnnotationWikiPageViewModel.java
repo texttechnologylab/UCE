@@ -2,6 +2,8 @@ package org.texttechnologylab.models.viewModels.wiki;
 
 
 import org.texttechnologylab.models.negation.*;
+
+import java.util.ArrayList;
 import java.util.List;
 
 
@@ -66,5 +68,42 @@ public class NegationAnnotationWikiPageViewModel extends AnnotationWikiPageViewM
 
     public void setCue(Cue cue) {
         this.cue = cue;
+    }
+
+    public List<ArrayList<Integer>> getOffsetList() {
+        List<ArrayList<Integer>> offsetList = new ArrayList<>();
+        ArrayList<Integer> annoOffset = new ArrayList<>();
+        annoOffset.add(cue.getBegin());
+        annoOffset.add(cue.getEnd());
+        offsetList.add(annoOffset);
+
+        for (Focus anno : getFocusList()) {
+            annoOffset = new ArrayList<>();
+            annoOffset.add(anno.getBegin());
+            annoOffset.add(anno.getEnd());
+            offsetList.add(annoOffset);
+        }
+
+        for (Scope anno : getScopeList()) {
+            annoOffset = new ArrayList<>();
+            annoOffset.add(anno.getBegin());
+            annoOffset.add(anno.getEnd());
+            offsetList.add(annoOffset);
+        }
+
+        for (XScope anno : getXscopeList()) {
+            annoOffset = new ArrayList<>();
+            annoOffset.add(anno.getBegin());
+            annoOffset.add(anno.getEnd());
+            offsetList.add(annoOffset);
+        }
+
+        for (Event anno : getEventList()) {
+            annoOffset = new ArrayList<>();
+            annoOffset.add(anno.getBegin());
+            annoOffset.add(anno.getEnd());
+            offsetList.add(annoOffset);
+        }
+        return offsetList;
     }
 }

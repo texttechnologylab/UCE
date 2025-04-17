@@ -1,5 +1,8 @@
 package org.texttechnologylab.models.corpus;
 
+import freemarker.template.TemplateModel;
+import freemarker.template.TemplateModelException;
+import freemarker.template.TemplateSequenceModel;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -9,9 +12,13 @@ import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.search.AnnotationSearchResult;
+import org.texttechnologylab.models.search.PageSnippet;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.UnifiedTopic;
+import org.texttechnologylab.utils.FreemarkerUtils;
+import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.*;
 import java.util.*;
@@ -299,6 +306,43 @@ public class Document extends ModelBase implements WikiModel {
         return result.toString();
     }
 
+    public String getFullTextSnippetAnnotationOffset(UIMAAnnotation annotation) {
+        int offsetStart = Math.max(annotation.getBegin() - 150, 0);
+        int offsetEnd = Math.min(annotation.getEnd() + 150, annotation.getBegin() + 500);
+        String snippet = getFullTextSnippetCharOffset(offsetStart, offsetEnd);
+        List<ArrayList<Integer>> offsetList = new ArrayList<>();
+        ArrayList<Integer> offsetArray = new ArrayList<>();
+        offsetArray.add(annotation.getBegin());
+        offsetArray.add(annotation.getEnd());
+        offsetList.add(offsetArray);
+        return StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
+    }
+    // List<ArrayList<Integer>> offsetList
+    public String getFullTextSnippetOffsetList(TemplateModel model) throws TemplateModelException {
+        if (model instanceof TemplateSequenceModel) {
+            List<ArrayList<Integer>> offsetList = FreemarkerUtils.convertToNestedIntegerList((TemplateSequenceModel) model);
+
+
+            int minBegin = 999999999;
+            int maxEnd = 0;
+            for (ArrayList<Integer> offset : offsetList) {
+                if (minBegin > offset.getFirst()) {
+                    minBegin = offset.getFirst();
+                }
+                if (maxEnd < offset.getLast()) {
+                    maxEnd = offset.getLast();
+                }
+            }
+            for (ArrayList<Integer> pair : offsetList) {
+                for (int i = 0; i < pair.size(); i++) {
+                    pair.set(i, pair.get(i) - Math.max(minBegin - 100, 0));
+                }
+            }
+            String snippet = getFullTextSnippetCharOffset(Math.max(minBegin - 100, 0), Math.min(maxEnd + 100, minBegin + 500));
+            return StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
+        }
+        return null;
+    }
 
     /**
      * Gets all objects of type UIMAAnnotation of this document
