@@ -61,16 +61,18 @@ public class WikiService {
     }
 
     /**
-     * Builds a view model to render a negation (cue basis) annotation wiki page
+     * Builds a view model to render a negation (cue basis) annotation wiki page : id = cue_id
      */
     public NegationAnnotationWikiPageViewModel buildNegationAnnotationWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
         var viewModel = new NegationAnnotationWikiPageViewModel();
-        var negation = db.getCompleteNegationById(id);
+        //var negation = db.getCompleteNegationById(id);
+        var negation = db.getCompleteNegationByCueId(id);
         var cue = negation.getCue();
         viewModel.setWikiModel(cue);
         viewModel.setDocument(db.getDocumentById(negation.getDocument().getId()));
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
         viewModel.setCoveredText(coveredText);
+        //viewModel.setCoveredText("lol");
         viewModel.setAnnotationType("Cue");
 
         viewModel.setCue(cue);

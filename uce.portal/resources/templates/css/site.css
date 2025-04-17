@@ -1,7 +1,7 @@
 :root {
     /* Variables prime and secondary MUST ALWAYS be in line 3 and 4! */
-    --prime: #5c7a17;
-    --secondary: darkgreen;
+    --prime: #00618f;
+    --secondary: rgba(35, 35, 35, 1);
     --gold: rgba(255, 165, 0, 1);
     --dark: rgba(38, 38, 38, 1);
     --default: rgb(245, 245, 247, 1);
@@ -252,6 +252,10 @@ nav .selected-nav-btn.text::before {
 
 .word-break-all {
     word-break: break-all;
+}
+
+.word-break-word{
+    word-break: break-word;
 }
 
 .rounded-a {

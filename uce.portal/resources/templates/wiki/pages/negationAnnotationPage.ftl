@@ -18,6 +18,8 @@
         <div class="document-card w-100">
             <#assign document = vm.getDocument()>
             <#assign searchId = "">
+            <#assign mainAnno = vm.getCue()>
+            <#assign offsetList = vm.getOffsetList()>
             <#include '*/search/components/documentCardContent.ftl' >
         </div>
     </div>

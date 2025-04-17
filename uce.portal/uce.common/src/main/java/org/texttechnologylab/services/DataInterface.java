@@ -152,7 +152,8 @@ public interface DataInterface {
                                                                    boolean countAll,
                                                                    SearchOrder order,
                                                                    OrderByColumn orderedByColumn,
-                                                                   long corpusId)
+                                                                   long corpusId,
+                                                                   List<UCEMetadataFilterDto> filters)
         throws DatabaseOperationException;
     /**
      * Searches for documents with a variety of criterias. It's the main db search of the biofid portal
