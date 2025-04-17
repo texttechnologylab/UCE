@@ -209,7 +209,7 @@ As the name suggests, the `corpusConfig.json` holds metadata about a single corp
         "//comment": "[Is this corpus also available on https://sammlungen.ub.uni-frankfurt.de/? Either true or false]",
         "availableOnFrankfurtUniversityCollection": false,
 
-        "includeTopicDistribution": false,
+        "includeKeywordDistribution": false,
         "enableEmbeddings": false,
         "enableRAGBot": false
       }
@@ -309,8 +309,8 @@ As the name suggests, the `corpusConfig.json` holds metadata about a single corp
       <td class="w-100">Object containing additional properties related to the corpus. <b>The following flags require the setup of the RAG-Service.</b></td>
     </tr>
     <tr>
-      <td>other.includeTopicDistribution</td>
-      <td class="w-100">Boolean flag indicating if topic distribution data is included. If enabled, the Corpus-Importer will create and cache those upon import.</td>
+      <td>other.includeKeywordDistribution</td>
+      <td class="w-100">Boolean flag indicating if keyword distribution data is included. If enabled, the Corpus-Importer will create and cache those upon import.</td>
     </tr>
     <tr>
       <td>other.enableEmbeddings</td>
