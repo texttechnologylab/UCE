@@ -104,7 +104,7 @@
             <#assign displayStyle = (snippet?index != 0)?then('display: none;', '')>
             <div class="snippet-content mt-1 mb-2 h-100 position-relative"
                  data-id="${snippet?index}" style="${displayStyle}">
-                <div class="small-font text font-italic mr-2 block-text">
+                <div class="small-font text font-italic mr-2 word-break-word">
                     ${snippet.getSnippet()}
                     <#if snippet.getPage()?has_content>
                         <label class="display-none page-html">
@@ -132,7 +132,7 @@
 <#macro renderFallback document>
     <#if document?has_content>
         <div class="snippet-content h-100 position-relative">
-            <div class="mb-0 small-font text font-italic mr-2 block-text">
+            <div class="mb-0 small-font text font-italic mr-2 word-break-word">
                 ${document.getFullTextSnippet(85)}...
             </div>
         </div>

@@ -25,6 +25,7 @@ import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
+import javax.persistence.NoResultException;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
@@ -699,7 +700,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 }
                 for (Long negId : negSorted.keySet()) {
                     List<ArrayList<Integer>> offsetList = new ArrayList<>();
-                    int minBegin = 0;
+                    int minBegin = 999999999;
                     int maxEnd = 0;
                     for (AnnotationSearchResult anno : negSorted.get(negId)) {
                         if (minBegin > anno.getBegin()) {
@@ -1030,6 +1031,25 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return neg;
         });
     }
+
+    public CompleteNegation getCompleteNegationByCueId(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT * FROM completenegation WHERE cue_id = :id";
+
+            // Create a query with the native SQL
+            var query = session.createNativeQuery(sql, CompleteNegation.class);
+            query.setParameter("id", id);
+
+            try {
+                CompleteNegation neg = query.getSingleResult();
+                Hibernate.initialize(neg); // Ensure lazy-loaded properties are initialized
+                return neg;
+            } catch (NoResultException e) {
+                return null; // Or throw an exception if no result is an error case
+            }
+        });
+    }
+
     public TopicValueBase getTopicValueBaseById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(TopicValueBase.class, id));
     }
