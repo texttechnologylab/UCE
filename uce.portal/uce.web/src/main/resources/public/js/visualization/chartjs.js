@@ -3,8 +3,7 @@ class ChartJS {
         console.log('Created ChartJS object.');
     }
 
-    async drawChart() {
-        console.log('Drawing...')
+    async drawTestChart() {
         const data = [{year: 2010, count: 10}, {year: 2011, count: 20}, {year: 2012, count: 15}, {
             year: 2013,
             count: 25
