@@ -41,15 +41,15 @@
                                             class="fas fa-clock mr-1"></i>${foundTimes?size}</span>
                                 <!-- Negation Entities Group -->
                                 <span class="w-100 text-center"><i
-                                            class="fas fa-exclamation"></i>${foundCues?size}</span>
+                                            class="fas fa-exclamation mr-1"></i>${foundCues?size}</span>
                                 <span class="w-100 text-center"><i
-                                            class="fas fa-circle"></i>${foundScopes?size}</span>
+                                            class="fas fa-circle mr-1"></i>${foundScopes?size}</span>
                                 <span class="w-100 text-center"><i
-                                            class="fas fa-circle-notch"></i>${foundXscopes?size}</span>
+                                            class="fas fa-circle-notch mr-1"></i>${foundXscopes?size}</span>
                                 <span class="w-100 text-center"><i
-                                            class="fas fa-calendar-check"></i>${foundEvents?size}</span>
+                                            class="fas fa-calendar-check mr-1"></i>${foundEvents?size}</span>
                                 <span class="w-100 text-center"><i
-                                            class="fas fa-crosshairs"></i>${foundFoci?size}</span>
+                                            class="fas fa-crosshairs mr-1"></i>${foundFoci?size}</span>
                                 <a class="btn annotation-hit-container-expander" data-expanded="false">
                                     <i class="fas fa-chevron-down"></i>
                                 </a>

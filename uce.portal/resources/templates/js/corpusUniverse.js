@@ -1,4 +1,3 @@
-
 import { World } from '/js/corpusUniverse/world/world.js';
 
 var CorpusUniverseHandler = (function () {
