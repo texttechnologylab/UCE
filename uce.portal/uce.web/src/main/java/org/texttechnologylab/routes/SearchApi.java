@@ -169,7 +169,11 @@ public class SearchApi {
                 var semanticRoleSearch = new Search_SemanticRoleImpl(context, corpusId, searchInput);
                 searchState = semanticRoleSearch.initSearch();
             } else if (searchInput.startsWith("NEG::")) {
-                var negRoleSearch = new SearchCompleteNegation(context, corpusId, searchInput);
+                var negRoleSearch = new SearchCompleteNegation(
+                        context,
+                        corpusId,
+                        searchInput)
+                        .withUceMetadataFilters(uceMetadataFilters);
                 searchState = negRoleSearch.initSearch();
             } else {
                 // Define the search layers from the sent layers

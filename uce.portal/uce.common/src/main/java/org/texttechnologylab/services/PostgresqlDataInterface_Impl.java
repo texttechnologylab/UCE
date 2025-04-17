@@ -475,7 +475,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                                    boolean countAll,
                                                                    SearchOrder order,
                                                                    OrderByColumn orderedByColumn,
-                                                                   long corpusId) throws DatabaseOperationException {
+                                                                   long corpusId,
+                                                                   List<UCEMetadataFilterDto> filters) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
             HashMap<String, List<String>> tableSubstrings = new HashMap<>();
             tableSubstrings.put("cue", cue);
@@ -505,6 +506,21 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             skipMap.put("scope", false);
             skipMap.put("xscope", false);
 
+            boolean useFilters = true;
+            List<ArrayList<String>> kvList = new ArrayList<>();
+            if (filters == null || filters.isEmpty()) {
+                useFilters = false;
+            }
+            else {
+                var applicableFilters = filters.stream().filter(f -> !(f.getValue().isEmpty() || f.getValue().equals("{ANY}"))).toList();
+                if (applicableFilters.isEmpty()) {
+                    useFilters = false;
+                }
+                kvList = applicableFilters.stream()
+                        .map(o -> new ArrayList<>(Arrays.asList(o.getKey(), o.getValue())))
+                        .toList();
+            }
+
             for (Map.Entry<String, List<String>> entry : tableSubstrings.entrySet()) {
                 String table = entry.getKey();
                 List<String> substrings = entry.getValue();
@@ -514,13 +530,23 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 }
 
                 StringBuilder sql = new StringBuilder();
-                sql.append("SELECT * FROM ").append(table).append(" WHERE ");
+                sql.append("SELECT c.* FROM ").append(table).append(" c WHERE ");
 
                 // WHERE conditions (ANDed ILIKEs)
                 for (int i = 0; i < substrings.size(); i++) {
                     if (i > 0) sql.append(" AND ");
-                    sql.append("coveredtext ILIKE ?");
+                    sql.append("c.coveredtext ILIKE ?");
                 }
+                if (useFilters) {
+                    sql.append(" AND EXISTS (SELECT 1 FROM ucemetadata m WHERE m.document_id = c.document_id GROUP BY m.document_id HAVING COUNT(*) FILTER (WHERE (m.key, m.value) IN (");
+                    // Add placeholders for key-value pairs
+                    List<String> placeholders = new ArrayList<>();
+                    for (int i = 0; i < kvList.size(); i++) {
+                        placeholders.add("(?, ?)");
+                    }
+                    sql.append(String.join(", ", placeholders)).append(")) = ?)");
+                }
+
 
                 try (PreparedStatement stmt = connection.prepareStatement(sql.toString())) {
                     int paramIndex = 1;
@@ -528,6 +554,13 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     // Set parameters for each substring in WHERE clause
                     for (String s : substrings) {
                         stmt.setString(paramIndex++, "%" + s + "%");
+                    }
+                    if (useFilters) {
+                        for (ArrayList<String> filter : kvList) {
+                            stmt.setString(paramIndex++, filter.getFirst());
+                            stmt.setString(paramIndex++, filter.getLast());
+                        }
+                        stmt.setInt(paramIndex, kvList.size());
                     }
 
                     ResultSet rs = stmt.executeQuery();
