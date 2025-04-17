@@ -42,7 +42,8 @@
                 <#else>
                     <#list page.getParagraphs() as paragraph>
                         <p class="paragraph" style="
-                                text-align: ${paragraph.getAlign()};
+                                margin-bottom: 24px;
+                                text-align: ${paragraph.getAlign()!"left"};
                                 font-weight: ${paragraph.getFontWeight()};
                                 text-decoration: ${paragraph.getUnderlined()};">
                             ${paragraph.buildHTMLString(documentAnnotations, documentText)}

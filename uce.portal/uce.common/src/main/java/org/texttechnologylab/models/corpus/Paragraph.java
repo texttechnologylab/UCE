@@ -72,10 +72,12 @@ public class Paragraph extends UIMAAnnotation {
     }
 
     public String getFontWeight(){
+        if(getAlign() == null) return "inherit";
         return Objects.equals(getAlign().toLowerCase(), "center") ? "bold" : "inherit";
     }
 
     public String getUnderlined(){
+        if(getAlign() == null) return "inherit";
         return Objects.equals(getAlign().toLowerCase(), "center") ? "underline" : "inherit";
     }
 }

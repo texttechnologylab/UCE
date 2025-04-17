@@ -607,15 +607,16 @@ public class Importer {
                 page.setDocument(document);
                 page.setCoveredText(p.getCoveredText());
 
-                // TODO: For now, only the old OCRPage typesystems get their paragraphs blocks and lines. We dont really use them anyway.
+                // TODO: For now, only the new ABBYY typesystems get their paragraphs. We dont really use the others anymore.
+                // In the future, we can add back blocks and lines and whatnot for a more truer OCR page visualization
                 if (corpusConfig.getAnnotations().isOCRParagraph() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
                     page.setParagraphs(getCoveredParagraphs((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
 
-                if (corpusConfig.getAnnotations().isOCRBlock() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
-                    page.setBlocks(getCoveredBlocks((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
+                //if (corpusConfig.getAnnotations().isOCRBlock() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
+                //    page.setBlocks(getCoveredBlocks((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
 
-                if (corpusConfig.getAnnotations().isOCRLine() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
-                    page.setLines(getCoveredLines((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
+                //if (corpusConfig.getAnnotations().isOCRLine() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
+                //    page.setLines(getCoveredLines((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
 
                 updateAnnotationsWithPageId(document, page, false);
                 pages.add(page);
@@ -1369,9 +1370,9 @@ public class Importer {
         // Paragraphs
         var paragraphs = new ArrayList<Paragraph>();
         // Get all covered by this. This can probably be done in one go, but oh well
-        JCasUtil.selectCovered(OCRParagraph.class, page).forEach(pg -> {
+        JCasUtil.selectCovered(org.texttechnologylab.annotation.ocr.abbyy.Paragraph.class, page).forEach(pg -> {
             var paragraph = new Paragraph(pg.getBegin(), pg.getEnd());
-            paragraph.setAlign(pg.getAlign());
+            //paragraph.setAlign(pg.getAlign());
             paragraph.setLeftIndent(pg.getLeftIndent());
             paragraph.setLineSpacing(pg.getLineSpacing());
             paragraph.setRightIndent(pg.getRightIndent());
