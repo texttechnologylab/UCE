@@ -42,6 +42,7 @@
     </script>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+    <script src="js/utils.js"></script>
     <script type="module" src="js/md-block.js"></script>
 
     <title>${document.getDocumentTitle()}</title>

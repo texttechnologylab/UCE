@@ -12,6 +12,7 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
@@ -203,10 +204,21 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<DocumentLink> getDocumentLinksByDocumentId(String documentId, long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(DocumentLink.class);
+            criteria.add(Restrictions.eq("corpusId", corpusId));
+            criteria.add(Restrictions.or(
+                    Restrictions.eq("from", documentId),
+                    Restrictions.eq("to", documentId)
+            ));
+            return criteria.list();
+        });
+    }
 
     public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            Criteria criteria = session.createCriteria(Document.class);
+            var criteria = session.createCriteria(Document.class);
             criteria.add(Restrictions.eq("corpusId", corpusId));
             criteria.add(Restrictions.eq("postProcessed", false));
             return criteria.list();
@@ -333,7 +345,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 // We EAGERLY load those for now and see how that impacts performance.
                 // Hibernate.initialize(doc.getPages());
                 // Hibernate.initialize(doc.getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON));
-
                 sortedDocs[documentIds.indexOf(id)] = doc;
             }
 
@@ -400,13 +411,25 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-
     public int callLexiconRefresh(ArrayList<String> tables, boolean force) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
             var insertedLex = 0;
             try (var storedProcedure = connection.prepareCall("{call refresh_lexicon" + "(?, ?)}")) {
                 storedProcedure.setArray(1, connection.createArrayOf("text", tables.toArray(new String[0])));
                 storedProcedure.setBoolean(2, force);
+                var result = storedProcedure.executeQuery();
+                while (result.next()) {
+                    insertedLex = result.getInt(1);
+                }
+            }
+            return insertedLex;
+        }));
+    }
+
+    public int callLogicalLinksRefresh() throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+            var insertedLex = 0;
+            try (var storedProcedure = connection.prepareCall("{call refresh_links()}")) {
                 var result = storedProcedure.executeQuery();
                 while (result.next()) {
                     insertedLex = result.getInt(1);
@@ -627,7 +650,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                             doc_found++;
                             docIds.add(docId);
                         }
-                        docCount ++;
+                        docCount++;
 
 
                     }
@@ -909,10 +932,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     builder.greaterThanOrEqualTo(root.get("end"), end)
             );
 
-            var page =  session.createQuery(criteria)
+            var page = session.createQuery(criteria)
                     .setMaxResults(1)
                     .uniqueResult();
-            if(initialize) Hibernate.initialize(page);
+            if (initialize) Hibernate.initialize(page);
             return page;
         });
     }
@@ -997,6 +1020,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return neg;
         });
     }
+
     public TopicValueBase getTopicValueBaseById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(TopicValueBase.class, id));
     }
@@ -1097,6 +1121,15 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             }
             return null;
         });
+    }
+
+    public void saveOrUpdateManyDocumentLinks(List<DocumentLink> documentLinks) throws DatabaseOperationException {
+        executeOperationSafely((session -> {
+            for (var link : documentLinks) {
+                session.saveOrUpdate(link);
+            }
+            return null;
+        }));
     }
 
     public void saveOrUpdateUceImport(UCEImport uceImport) throws DatabaseOperationException {

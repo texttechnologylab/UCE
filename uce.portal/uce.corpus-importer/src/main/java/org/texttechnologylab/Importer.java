@@ -20,12 +20,14 @@ import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotation.DocumentAnnotation;
+import org.texttechnologylab.annotation.link.DLink;
 import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.ocr.OCRPageAdapterImpl;
 import org.texttechnologylab.models.corpus.ocr.PageAdapter;
 import org.texttechnologylab.models.corpus.ocr.PageAdapterImpl;
@@ -155,7 +157,7 @@ public class Importer {
         if (doc == null)
             throw new DatabaseOperationException("The document was already imported into the corpus according to its documentId.");
         db.saveDocument(doc);
-        postProccessDocument(doc, CorpusConfig.fromJson(corpus.getCorpusJsonConfig()), "TODO: CHANGE THIS FILEPATH");
+        postProccessDocument(doc, corpus, "TODO: CHANGE THIS FILEPATH");
 
         logger.info("Finished storing and uploaded UIMA file.");
     }
@@ -244,7 +246,7 @@ public class Importer {
 
                                         // Postprocess the document
                                         ExceptionUtils.tryCatchLog(
-                                                () -> postProccessDocument(doc, corpusConfigFinal, filePath.toString()),
+                                                () -> postProccessDocument(doc, corpus1, filePath.toString()),
                                                 (ex) -> logImportError("Error postprocessing a saved document with id " + doc.getId(), (ex), filePath.toString()));
                                         logImportInfo("Finished with import.", LogStatus.FINISHED, filePath.toString(), 0);
                                     }
@@ -256,6 +258,16 @@ public class Importer {
 
                         // Periodic processing of the imports such as lexicon refreshing and corpus postprocessing
                         if (currentCount % 50 == 0) {
+
+                            // Logical Links
+                            CompletableFuture.runAsync(() -> {
+                                logImportInfo("=========== UPDATING THE LOGICAL LINKS...", LogStatus.POST_PROCESSING, "LINKS", 0);
+                                var result = ExceptionUtils.tryCatchLog(
+                                        () -> db.callLogicalLinksRefresh(),
+                                        (ex) -> logImportError("Error refreshing the logical links of corpus " + corpus1.getId(), ex, "LINKS"));
+                                if(result != null)
+                                    logImportInfo("=========== Finished updating the lexicon. Inserted new links: " + result, LogStatus.SAVED, "LINKS", 0);
+                            }, executor);
 
                             // Lexicon
                             CompletableFuture.runAsync(() -> {
@@ -283,6 +295,11 @@ public class Importer {
         // Wait for all tasks to complete
         CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
+        // Final links updating
+        ExceptionUtils.tryCatchLog(
+                () -> db.callLogicalLinksRefresh(),
+                (ex) -> logger.error("Error in the final logical links update of the current corpus with id " + corpus1.getId()));
+
         // Final lexion updating
         ExceptionUtils.tryCatchLog(
                 () -> lexiconService.updateLexicon(false),
@@ -299,10 +316,6 @@ public class Importer {
 
     /**
      * Converts an XMI inputstream to a Document.
-     *
-     * @param inputStream
-     * @param corpus
-     * @return
      */
     public Document XMIToDocument(InputStream inputStream, Corpus corpus, String filePath) {
         try {
@@ -416,7 +429,7 @@ public class Importer {
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
                 if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
-                    postProccessDocument(existingDoc, corpusConfig, filePath);
+                    postProccessDocument(existingDoc, corpus, filePath);
                 }
                 logger.info("Done.");
                 return null;
@@ -469,17 +482,22 @@ public class Importer {
                 ExceptionUtils.tryCatchLog(
                         () -> setWikiLinks(document, jCas),
                         (ex) -> logImportWarn("This file should have contained wiki links annotations, but selecting them caused an error.", ex, filePath));
-            // negations
+
             if (corpusConfig.getAnnotations().isCompleteNegation())
                 ExceptionUtils.tryCatchLog(
                         () -> setCompleteNegations(document, jCas),
                         (ex) -> logImportWarn("This file should have contained negation annotations, but selecting them caused an error.", ex, filePath));
-            // unifiedTopics
+
             if (corpusConfig.getAnnotations().isUnifiedTopic())
                 ExceptionUtils.tryCatchLog(
                         () -> setUnifiedTopic(document, jCas),
                         (ex) -> logImportWarn("This file should have contained UnifiedTopic annotations, but selecting them caused an error.", ex, filePath));
 
+            // Keep this at the end of the annotation setting, as they might require previous annotations. Order matter here!
+            if (corpusConfig.getAnnotations().isLogicalLinks())
+                ExceptionUtils.tryCatchLog(
+                        () -> storeLogicLinks(jCas, corpus.getId()),
+                        (ex) -> logImportWarn("This file should have contained LinkTypesystem annotations, but selecting them caused an error.", ex, filePath));
 
             ExceptionUtils.tryCatchLog(
                     () -> setPages(document, jCas, corpusConfig),
@@ -495,6 +513,26 @@ public class Importer {
         } finally {
             logger.info("Finished with importing that CAS.\n\n\n");
         }
+    }
+
+    /**
+     * Selects and sets the logical links between documents, annotations and more.
+     */
+    private void storeLogicLinks(JCas jCas, long corpusId) throws DatabaseOperationException {
+        var documentLinks = new ArrayList<DocumentLink>();
+        JCasUtil.select(jCas, DLink.class).forEach(l -> {
+            var docLink = new DocumentLink();
+            docLink.setFrom(l.getFrom());
+            docLink.setTo(l.getTo());
+            docLink.setLinkId(String.valueOf(l.getLinkId()));
+            docLink.setType(l.getLinkType());
+            docLink.setCorpusId(corpusId);
+
+            documentLinks.add(docLink);
+        });
+        // We store the document links not to the Document class directly, as that doesn't fit the idea of the datastructure.
+        // Linking should happen *on top* of documents and clusters, not as a part of them. Keep that in mind.
+        db.saveOrUpdateManyDocumentLinks(documentLinks);
     }
 
     /**
@@ -1095,8 +1133,7 @@ public class Importer {
                 }
                 unifiedTopic.setTopics(topics);
             }
-//
-//            // Map metadata
+
 //            if (ut.getMetadata() != null) {
 //                MetaData metadata = new MetaData();
 //                metadata.setKey(ut.getMetadata().getKey());
@@ -1237,12 +1274,13 @@ public class Importer {
     }
 
     /**
-     * Here we apply any post processing of a document that isn't DUUI and needs the document to be stored once like
-     * the rag vector embeddings
+     * Here we apply any postprocessing of a document that isn't DUUI and needs the document to be stored once like
+     * the rag vector embeddings.
      */
-    private void postProccessDocument(Document document, CorpusConfig corpusConfig, String filePath) {
+    private void postProccessDocument(Document document, Corpus corpus, String filePath) {
         logImportInfo("Postprocessing " + filePath, LogStatus.POST_PROCESSING, filePath, 0);
         var start = System.currentTimeMillis();
+        var corpusConfig = corpus.getViewModel().getCorpusConfig();
 
         // Calculate embeddings if they are activated
         if (corpusConfig.getOther().isEnableEmbeddings()) {
