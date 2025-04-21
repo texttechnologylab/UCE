@@ -3,6 +3,7 @@ package org.texttechnologylab.config.corpusConfig;
 public class CorpusAnnotationConfig {
     private boolean annotatorMetadata;
     private boolean uceMetadata;
+    private boolean logicalLinks;
     private boolean OCRPage;
     private boolean OCRParagraph;
     private boolean OCRBlock;
@@ -14,7 +15,6 @@ public class CorpusAnnotationConfig {
     private boolean sentence;
     private boolean time;
     private boolean wikipediaLink;
-
     // negation annos
     private boolean completeNegation;
     private boolean cue;
@@ -22,8 +22,15 @@ public class CorpusAnnotationConfig {
     private boolean focus;
     private boolean scope;
     private boolean xscope;
-
     private boolean unifiedTopic;
+
+    public boolean isLogicalLinks() {
+        return logicalLinks;
+    }
+
+    public void setLogicalLinks(boolean logicalLinks) {
+        this.logicalLinks = logicalLinks;
+    }
 
     public boolean isUceMetadata() {
         return uceMetadata;
