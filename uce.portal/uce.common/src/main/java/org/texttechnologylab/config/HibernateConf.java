@@ -73,6 +73,7 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(TopicValueBase.class);
         metadataSources.addAnnotatedClass(TopicValueBaseWithScore.class);
 
+        metadataSources.addAnnotatedClass(DocumentTopThreeTopics.class);
         var metadata = metadataSources.buildMetadata();
 
         return metadata.getSessionFactoryBuilder().build();
