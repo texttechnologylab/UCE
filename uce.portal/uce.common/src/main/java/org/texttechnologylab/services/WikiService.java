@@ -4,6 +4,7 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.DocumentKeywordDistribution;
 import org.texttechnologylab.models.corpus.PageKeywordDistribution;
 import org.texttechnologylab.models.corpus.KeywordDistribution;
+import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.viewModels.wiki.*;
 import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.utils.SystemStatus;
@@ -101,19 +102,32 @@ public class WikiService {
         return viewModel;
     }
 
+
     /**
-     * Gets a TopicValueBaseWikiPageViewModel to render a Wikipage for that annotation
+     * Gets a DocumentTopicDistributionWikiPageViewModel to render a Wikipage for that topic distribution
      */
-    public TopicValueBaseWikiPageViewModel buildTopicValueBaseWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
-        var viewModel = new TopicValueBaseWikiPageViewModel();
-        var topicValueBase = db.getTopicValueBaseById(id);
-        viewModel.setWikiModel(topicValueBase);
-        viewModel.setDocument(db.getDocumentById(topicValueBase.getDocument().getId()));
+    public TopicWikiPageViewModel buildTopicWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new TopicWikiPageViewModel();
+        var documentTopThreeTopics = db.getDocumentTopThreeTopicsById(id);
+        viewModel.setWikiModel(documentTopThreeTopics);
+        viewModel.setDocument(db.getDocumentById(documentTopThreeTopics.getDocumentId()));
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
         viewModel.setCoveredText(coveredText);
-        viewModel.setAnnotationType("TopicValueBase");
-        viewModel.setTopic(topicValueBase);
+        viewModel.setAnnotationType("Topic");
+        viewModel.setDocumentTopicDistribution(documentTopThreeTopics);
 
+        if (coveredText != null && !coveredText.isEmpty()) {
+            List<TopicWord> topicWords = db.getTopicWordsByTopicLabel(
+                coveredText
+            );
+            viewModel.setTopicTerms(topicWords);
+
+            List<Object[]> topDocuments = db.getTopDocumentsByTopicLabel(coveredText, 10);
+            viewModel.setTopDocumentsForTopic(topDocuments);
+
+            List<Object[]> similarTopics = db.getSimilarTopicsbyTopicLabel(coveredText, 2, 8);
+            viewModel.setSimilarTopics(similarTopics);
+        }
 
         return viewModel;
     }
