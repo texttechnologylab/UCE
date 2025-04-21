@@ -116,6 +116,7 @@
 <script src="//unpkg.com/d3"></script>
 <script src="//unpkg.com/topojson-client"></script>
 <script src="//unpkg.com/globe.gl"></script>
+<script src="js/utils.js"></script>
 <script>
     <#include "*/js/site.js">
 </script>

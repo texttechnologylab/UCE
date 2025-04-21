@@ -1,5 +1,10 @@
 <div class="container">
 
+    <!--<div class="row m-0 p-0" style="height: 500px">
+        <div id="testDummy" class="col-6 m-0 p-2"></div>
+        <div id="testDummy2" class="col-6 m-0 p-2"></div>
+    </div>-->
+
     <!-- uce corporate data -->
     <div class="mt-5 uce-description">
         <div class="flexed align-items-center justify-content-between">
