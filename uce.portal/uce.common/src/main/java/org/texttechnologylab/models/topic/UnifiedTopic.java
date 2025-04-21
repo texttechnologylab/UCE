@@ -18,7 +18,7 @@ import java.util.List;
 @Table(name = "unifiedtopic")
 public class UnifiedTopic extends UIMAAnnotation implements WikiModel {
 
-    @OneToMany(mappedBy = "unifiedTopic", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @OneToMany(mappedBy = "unifiedTopic", cascade = CascadeType.ALL, fetch=FetchType.LAZY)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<TopicValueBase> topics;
 

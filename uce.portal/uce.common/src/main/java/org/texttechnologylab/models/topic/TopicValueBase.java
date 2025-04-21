@@ -24,7 +24,7 @@ public class TopicValueBase extends UIMAAnnotation implements WikiModel {
     @Column(name = "value", nullable = false)
     private String value;
 
-    @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @OneToMany(mappedBy = "topic", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<TopicWord> words;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
