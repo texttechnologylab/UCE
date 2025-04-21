@@ -37,19 +37,56 @@
         </div>
     </div>
 
-    <!-- corpus documents -->
+    <!-- corpus content with tabs -->
     <div class="col-md-8 w-100 m-0 p-0 border-left position-relative">
         <div class="documents-list-header card-shadow bg-default">
-            <div class="flexed w-100 justify-content-between pl-3 pr-3">
-                <h6 class="mb-0 mr-1">${languageResource.get("corpusDocuments")}</h6>
-                <a class="clickable color-prime mb-0 text small ml-1" onclick="navigateToView('search')">
+            <div class="flexed w-100 justify-content-end mb-2">
+                <a class="clickable color-prime mb-0 text small" onclick="navigateToView('search')">
                     <i class="fas fa-search mr-1"></i> ${languageResource.get("callForSearch")}
                 </a>
             </div>
+            <div class="mtabs">
+                <btn class="selected-tab color-prime" data-id="documents">${languageResource.get("corpusDocuments")}</btn>
+                <btn class="color-prime" data-id="thematic">Corpus Thematic Landscape</btn>
+            </div>
         </div>
-        <div class="corpus-documents-list-include h-100 w-100 position-relative pr-3">
-            <div class="simple-loader"><h5 class="mb-0 text">Loading...</h5></div>
+        <div class="views">
+            <!-- Documents tab content -->
+            <div class="mview" data-id="documents">
+                <div class="corpus-documents-list-include w-100 position-relative p-3">
+                    <div class="simple-loader"><h5 class="mb-0 text">Loading...</h5></div>
+                </div>
+            </div>
+            <!-- Thematic Landscape tab content -->
+            <div class="mview display-none" data-id="thematic">
+            </div>
         </div>
     </div>
 
 </div>
+
+
+<script>
+    // Tab switching functionality
+    $('body').on('click', '.documents-list-header .mtabs btn', function(){
+        const id = $(this).data('id');
+
+        $('.views .mview').each(function(){
+            if($(this).data('id') === id){
+                $(this).show();
+            } else{
+                $(this).hide();
+            }
+        });
+
+        $('.documents-list-header .mtabs btn').each(function(){
+            if($(this).data('id') === id){
+                $(this).addClass('selected-tab');
+            } else{
+                $(this).removeClass('selected-tab');
+            }
+        });
+    });
+
+
+</script>
