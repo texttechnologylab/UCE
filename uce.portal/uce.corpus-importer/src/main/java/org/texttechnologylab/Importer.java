@@ -22,6 +22,7 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.link.DLink;
 import org.texttechnologylab.annotation.ocr.*;
+import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
@@ -77,6 +78,7 @@ public class Importer {
     private Integer importerNumber;
     private List<UCEMetadataFilter> uceMetadataFilters = new CopyOnWriteArrayList<>(); // need thread safety.
     private LexiconService lexiconService;
+    private CommonConfig commonConfig = new CommonConfig();
 
     public Importer(ApplicationContext serviceContext,
                     String foldername,
@@ -1362,6 +1364,72 @@ public class Importer {
                         (ex) -> logImportError("Error storing the document keyword distribution - the postprocessing ends now.", ex, filePath));
             }
         }
+
+        if (corpusConfig.getAnnotations().isUnifiedTopic()) {
+
+            logger.info("Inserting Sentence and Document Topics...");
+
+            try {
+                Path insertSentenceTopicsFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/1_updateSentenceTopics.sql");
+                var insertSentenceTopicsScript = Files.readString(insertSentenceTopicsFilePath);
+
+                ExceptionUtils.tryCatchLog(
+                        () -> db.executeSqlWithoutReturn(insertSentenceTopicsScript),
+                        (ex) -> logger.error("Error executing SQL script to populate sentencetopics table", ex)
+                );
+
+                Path insertDocumentTopicsFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/2_updateDocumentTopics.sql");
+                var insertDocumentTopicsScript = Files.readString(insertDocumentTopicsFilePath);
+
+                ExceptionUtils.tryCatchLog(
+                        () -> db.executeSqlWithoutReturn(insertDocumentTopicsScript),
+                        (ex) -> logger.error("Error executing SQL script to populate documenttopicsraw table", ex)
+                );
+
+                logger.info("Successfully created and populated sentencetopics and documenttopicsraw tables");
+            } catch (Exception e) {
+                logger.error("Error reading or executing SQL script for topic distribution", e);
+            }
+
+            logger.info("Topic Three Topics...");
+
+            if (document.getDocumentTopThreeTopics() == null) {
+                var topTopics = ExceptionUtils.tryCatchLog(
+                        () -> db.getTopTopicsByDocument(document.getId(), 3),
+                        (ex) -> logImportError("Error getting top three topics for document: " + document.getId(), ex, filePath));
+
+                if (topTopics != null && !topTopics.isEmpty()) {
+                    var documentTopThreeTopics = new DocumentTopThreeTopics();
+                    documentTopThreeTopics.setDocument(document);
+                    documentTopThreeTopics.setDocumentId(document.getId());
+
+                    if (topTopics.size() >= 1) {
+                        Object[] topic1 = topTopics.get(0);
+                        documentTopThreeTopics.setTopicOne((String) topic1[0]);
+                        documentTopThreeTopics.setTopicOneScore((Double) topic1[1]);
+                    }
+                    if (topTopics.size() >= 2) {
+                        Object[] topic2 = topTopics.get(1);
+                        documentTopThreeTopics.setTopicTwo((String) topic2[0]);
+                        documentTopThreeTopics.setTopicTwoScore((Double) topic2[1]);
+                    }
+                    if (topTopics.size() >= 3) {
+                        Object[] topic3 = topTopics.get(2);
+                        documentTopThreeTopics.setTopicThree((String) topic3[0]);
+                        documentTopThreeTopics.setTopicThreeScore((Double) topic3[1]);
+                    }
+
+                    document.setDocumentTopThreeTopics(documentTopThreeTopics);
+
+                    ExceptionUtils.tryCatchLog(
+                            () -> db.saveDocumentTopThreeTopics(document),
+                            (ex) -> logImportError("Error storing document top three topics", ex, filePath));
+
+                    logger.info("Successfully added top three topics to document: " + document.getId());
+                }
+            }
+        }
+
 
         logImportInfo("Successfully post processed document " + filePath, LogStatus.SAVED, filePath, System.currentTimeMillis() - start);
     }
