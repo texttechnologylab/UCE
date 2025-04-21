@@ -4,7 +4,6 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Filter;
-import org.texttechnologylab.annotation.TopicValue;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
