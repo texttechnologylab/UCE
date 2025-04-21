@@ -45,6 +45,7 @@
         }
     </script>
     <!--<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>-->
+    <script src="js/utils.js"></script>
     <script src="js/visualization/cdns/chartjs-449.js"></script>
     <script src="js/visualization/cdns/d3js-790.js"></script>
 
@@ -433,6 +434,10 @@
 </script>-->
 <script type="module">
     <#include "js/graphViz.js">
+</script>
+
+<script>
+
 </script>
 
 <script>
