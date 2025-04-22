@@ -1267,7 +1267,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             String hql = "FROM TopicValueBase tvb WHERE tvb.value = :topicValue";
 
             var query = session.createQuery(hql, TopicValueBase.class)
-                    //.setParameter("documentId", documentId)
                     .setParameter("topicValue", topicValue);
 
             List<TopicValueBase> topicValueBases = query.getResultList();
@@ -1276,16 +1275,27 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 return new ArrayList<>();
             }
 
-            List<TopicWord> allTopicWords = new ArrayList<>();
+            Map<String, TopicWord> uniqueWordsMap = new HashMap<>();
+            
             for (TopicValueBase tvb : topicValueBases) {
                 Hibernate.initialize(tvb.getWords());
                 if (tvb.getWords() != null) {
-                    allTopicWords.addAll(tvb.getWords());
+                    for (TopicWord word : tvb.getWords()) {
+                        String wordText = word.getWord();
+                        if (uniqueWordsMap.containsKey(wordText)) {
+                            // If word already exists, add probabilities
+                            TopicWord existingWord = uniqueWordsMap.get(wordText);
+                            existingWord.setProbability(existingWord.getProbability() + word.getProbability());
+                        } else {
+                            uniqueWordsMap.put(wordText, word);
+                        }
+                    }
                 }
             }
 
-            allTopicWords.sort(Comparator.comparing(TopicWord::getProbability).reversed());
-            return allTopicWords.stream().limit(20).collect(Collectors.toList());
+            List<TopicWord> uniqueTopicWords = new ArrayList<>(uniqueWordsMap.values());
+            uniqueTopicWords.sort(Comparator.comparing(TopicWord::getProbability).reversed());
+            return uniqueTopicWords.stream().limit(20).collect(Collectors.toList());
         });
     }
 

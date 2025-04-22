@@ -174,7 +174,7 @@ public class WikiApi {
                 renderView = "/wiki/pages/unifiedTopicAnnotationPage.ftl";
             } else if (type.startsWith("DTR")) {
                 model.put("vm", wikiService.buildTopicWikiPageViewModel(id, coveredText));
-                renderView = "/wiki/pages/documentTopicDistributionPage.ftl";
+                renderView = "/wiki/pages/topicPage.ftl";
            }
             else {
                 // The type part of the wikiId was unknown. Throw an error.

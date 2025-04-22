@@ -122,7 +122,7 @@ public class WikiService {
             );
             viewModel.setTopicTerms(topicWords);
 
-            List<Object[]> topDocuments = db.getTopDocumentsByTopicLabel(coveredText, 10);
+            List<Object[]> topDocuments = db.getTopDocumentsByTopicLabel(coveredText, 20);
             viewModel.setTopDocumentsForTopic(topDocuments);
 
             List<Object[]> similarTopics = db.getSimilarTopicsbyTopicLabel(coveredText, 2, 8);
