@@ -15,7 +15,7 @@ var GraphVizHandler = (function () {
     /**
      * [CHARTJS] -> Creates a pie chart into the given $target (jquery object)
      */
-    GraphVizHandler.prototype.createBasicChart = async function (target, title) {
+    GraphVizHandler.prototype.createBasicChart = async function (target, title, data, type=null) {
         const chartId = generateUUID();
         let wrapper = document.createElement('div');
         wrapper.classList.add('chart-container');
@@ -45,16 +45,11 @@ var GraphVizHandler = (function () {
         target.appendChild(wrapper);
 
         const jsChart = new ChartJS(canvas, title);
-        const d = [
-            {year: 2010, count: 10},
-            {year: 2011, count: 20},
-            {year: 2012, count: 15},
-            {year: 2013, count: 25},
-            {year: 2014, count: 22},
-            {year: 2015, count: 30},
-            {year: 2016, count: 28},
-        ];
-        jsChart.setData(d);
+
+        jsChart.setData(data);
+        if (type){
+            jsChart.setType(type);
+        }
         this.activeCharts[chartId] = jsChart;
         return jsChart;
     }
