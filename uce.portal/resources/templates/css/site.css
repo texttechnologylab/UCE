@@ -400,6 +400,21 @@ nav .selected-nav-btn.text::before {
     transition: 0.075s;
 }
 
+.turn-135{
+    transform: rotate(135deg);
+    transition: 0.075s;
+}
+
+.turn-90{
+    transform: rotate(90deg);
+    transition: 0.075s;
+}
+
+.turn-270{
+    transform: rotate(270deg);
+    transition: 0.075s;
+}
+
 .rotate {
     -webkit-animation: spin 4s linear infinite;
     -moz-animation: spin 4s linear infinite;
@@ -684,17 +699,65 @@ nav .selected-nav-btn.text::before {
     width: 100%;
     border: lightgray 1px solid;
     background-color: ghostwhite;
-    padding: 16px;
-    border-radius: 6px;
+    border-radius: 3px;
     margin-bottom: 16px;
     transition: 0.15s;
-    box-shadow: rgba(149, 157, 165, 0.2) 0px 8px 24px;
+    box-shadow: rgba(149, 157, 165, 0.2) 0px 2px 6px;
 }
 
 .document-card:hover {
     border: 1px gray solid;
     transition: 0.15s;
 }
+
+.document-card .links-container{
+    width: 10px;
+    margin-top: 0px;
+    position: relative;
+    height: auto;
+}
+
+.document-card .links-container .links-div{
+    position: absolute;
+    height: 100%;
+    border-radius: 0 0 0 0%;
+    width: 200%;
+    top:0;
+    vertical-align: center;
+    margin-top: -1px;
+}
+
+.document-card .links-container .links-div[data-kind="incoming"]{
+    left:-15px;
+}
+.document-card .links-container .links-div[data-kind="outgoing"]{
+    right:-5px;
+}
+
+
+.document-card .links-container .links-div .link{
+    border-radius: 50%;
+    margin-bottom: 2px;
+    background-color: white;
+    width: 30px;
+    color:gray;
+    height: 30px;
+    display: flex;
+    position: relative;
+    align-items: center;
+    justify-content: center;
+    border: lightgrey 1px solid;
+}
+
+/*.document-card .links-container .links-div .lines::before{
+    content: '';
+    position: absolute;
+    top:50%;
+    width: 11px;
+    right:-12px;
+    background-color: lightgray;
+    height: 2px;
+}*/
 
 .document-card .highlighted-token {
     color: black;
@@ -709,8 +772,8 @@ nav .selected-nav-btn.text::before {
 
 .document-card .snippet-content .inspect-page-btn{
     position: absolute;
-    top:50%;
-    right:-15px;
+    top:-4px;
+    right:10px;
     transform: translate(50%, -50%);
     padding: 6px;
     border-radius: 6px;
@@ -761,13 +824,19 @@ nav .selected-nav-btn.text::before {
     background-color: lightgray;
 }
 
+
 .focused-document-card {
     margin-bottom: 4rem;
     position: relative;
     border: gray 1px solid;
     /*transform: scale(1.008);*/
     transition: transform 0.5s ease;
-    box-shadow: rgba(0, 0, 0, 0.25) 0px 25px 50px -12px;
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 12px 25px -12px;
+}
+
+.focused-document-card .links-container .links-div .link{
+    border-color: gray !important;
+    color:var(--prime);
 }
 
 .focused-document-card .snippet-content .inspect-page-btn{
@@ -849,7 +918,7 @@ nav .selected-nav-btn.text::before {
 
 .document-card .snippet-content {
     padding: 12px;
-    border:1px transparent solid;
+    border:1px solid lightgray;
     border-radius: 6px;
     background-color: rgba(125, 125, 125, 0.15);
 }
