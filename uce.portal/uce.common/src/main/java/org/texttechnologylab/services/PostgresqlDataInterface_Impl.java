@@ -1245,69 +1245,62 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Object[]> getTopDocumentsByTopicLabel(String topicValue, int limit) throws DatabaseOperationException {
+    public List<Object[]> getTopDocumentsByTopicLabel(String topicValue, long corpusId, int limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = "SELECT d.id, d.documentid, dtr.thetadt " +
                     "FROM document d " +
                     "JOIN documenttopicsraw dtr ON d.id = dtr.document_id " +
                     "WHERE dtr.topiclabel = :topicValue " +
+                    "AND d.corpusid = :corpusId " +
                     "ORDER BY dtr.thetadt DESC " +
                     "LIMIT :limit";
 
             var query = session.createNativeQuery(sql)
                     .setParameter("topicValue", topicValue)
+                    .setParameter("corpusId", corpusId)
                     .setParameter("limit", limit);
 
             return query.getResultList();
         });
     }
 
-    public List<TopicWord> getTopicWordsByTopicLabel(String topicValue) throws DatabaseOperationException {
+    public List<TopicWord> getTopicWordsByTopicLabel(String topicValue, long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            String hql = "FROM TopicValueBase tvb WHERE tvb.value = :topicValue";
+            String sql = "SELECT word, probability " +
+                    "FROM corpustopicwords " +
+                    "WHERE topiclabel = :topicValue AND corpus_id = :corpusId " +
+                    "ORDER BY probability DESC " +
+                    "LIMIT 20";
 
-            var query = session.createQuery(hql, TopicValueBase.class)
-                    .setParameter("topicValue", topicValue);
+            var query = session.createNativeQuery(sql);
+            query.setParameter("topicValue", topicValue);
+            query.setParameter("corpusId", corpusId);
 
-            List<TopicValueBase> topicValueBases = query.getResultList();
+            List<Object[]> results = query.getResultList();
 
-            if (topicValueBases.isEmpty()) {
-                return new ArrayList<>();
+            List<TopicWord> topicWords = new ArrayList<>();
+            for (Object[] row : results) {
+                TopicWord tw = new TopicWord();
+                tw.setWord((String) row[0]);
+                tw.setProbability((Double) row[1]);
+                topicWords.add(tw);
             }
 
-            Map<String, TopicWord> uniqueWordsMap = new HashMap<>();
-            
-            for (TopicValueBase tvb : topicValueBases) {
-                Hibernate.initialize(tvb.getWords());
-                if (tvb.getWords() != null) {
-                    for (TopicWord word : tvb.getWords()) {
-                        String wordText = word.getWord();
-                        if (uniqueWordsMap.containsKey(wordText)) {
-                            // If word already exists, add probabilities
-                            TopicWord existingWord = uniqueWordsMap.get(wordText);
-                            existingWord.setProbability(existingWord.getProbability() + word.getProbability());
-                        } else {
-                            uniqueWordsMap.put(wordText, word);
-                        }
-                    }
-                }
-            }
-
-            List<TopicWord> uniqueTopicWords = new ArrayList<>(uniqueWordsMap.values());
-            uniqueTopicWords.sort(Comparator.comparing(TopicWord::getProbability).reversed());
-            return uniqueTopicWords.stream().limit(20).collect(Collectors.toList());
+            return topicWords;
         });
     }
 
 
-    public List<Object[]> getSimilarTopicsbyTopicLabel(String topicValue, int minSharedWords, int result_limit) throws DatabaseOperationException {
+
+    public List<Object[]> getSimilarTopicsbyTopicLabel(String topicValue,long corpusId, int minSharedWords, int result_limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            String sql = "SELECT * FROM find_similar_topics(:topicValue, :minSharedWords, :result_limit)";
+            String sql = "SELECT * FROM find_similar_topics(:topicValue, :minSharedWords, :result_limit, :corpusId)";
 
             var query = session.createNativeQuery(sql)
                     .setParameter("topicValue", topicValue)
                     .setParameter("minSharedWords", minSharedWords)
-                    .setParameter("result_limit", result_limit);
+                    .setParameter("result_limit", result_limit)
+                    .setParameter("corpusId", corpusId);
 
             return query.getResultList();
         });

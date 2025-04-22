@@ -111,21 +111,22 @@ public class WikiService {
         var documentTopThreeTopics = db.getDocumentTopThreeTopicsById(id);
         viewModel.setWikiModel(documentTopThreeTopics);
         viewModel.setDocument(db.getDocumentById(documentTopThreeTopics.getDocumentId()));
-        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        var corpusId = viewModel.getDocument().getCorpusId();
+        viewModel.setCorpus(db.getCorpusById(corpusId).getViewModel());
         viewModel.setCoveredText(coveredText);
         viewModel.setAnnotationType("Topic");
         viewModel.setDocumentTopicDistribution(documentTopThreeTopics);
 
         if (coveredText != null && !coveredText.isEmpty()) {
             List<TopicWord> topicWords = db.getTopicWordsByTopicLabel(
-                coveredText
+                coveredText, corpusId
             );
             viewModel.setTopicTerms(topicWords);
 
-            List<Object[]> topDocuments = db.getTopDocumentsByTopicLabel(coveredText, 20);
+            List<Object[]> topDocuments = db.getTopDocumentsByTopicLabel(coveredText, corpusId, 20);
             viewModel.setTopDocumentsForTopic(topDocuments);
 
-            List<Object[]> similarTopics = db.getSimilarTopicsbyTopicLabel(coveredText, 2, 8);
+            List<Object[]> similarTopics = db.getSimilarTopicsbyTopicLabel(coveredText, corpusId, 2, 8);
             viewModel.setSimilarTopics(similarTopics);
         }
 
