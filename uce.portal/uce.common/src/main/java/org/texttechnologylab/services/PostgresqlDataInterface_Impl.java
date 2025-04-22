@@ -10,6 +10,7 @@ import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.Linkable;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
@@ -204,7 +205,18 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<DocumentLink> getDocumentLinksByDocumentId(String documentId, long corpusId) throws DatabaseOperationException {
+    public List<DocumentLink> getManyDocumentLinksOfDocument(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(DocumentLink.class);
+            criteria.add(Restrictions.or(
+                    Restrictions.eq("fromId", id),
+                    Restrictions.eq("toId", id)
+            ));
+            return criteria.list();
+        });
+    }
+
+    public List<DocumentLink> getManyDocumentLinksByDocumentId(String documentId, long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteria = session.createCriteria(DocumentLink.class);
             criteria.add(Restrictions.eq("corpusId", corpusId));
@@ -341,6 +353,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 // doc cannot be null.
                 var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
                 if (doc == null) continue;
+
+                // Init the links of the document
+                doc.initLinkableNode(this);
 
                 // We EAGERLY load those for now and see how that impacts performance.
                 // Hibernate.initialize(doc.getPages());

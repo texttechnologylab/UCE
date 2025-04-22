@@ -68,9 +68,14 @@ public interface DataInterface {
     public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException;
 
     /**
+     * Gets all DocumentLinks that belong to a document.
+     */
+    public List<DocumentLink> getManyDocumentLinksOfDocument(long id) throws DatabaseOperationException;
+
+    /**
      * Get all DocumentLinks of a corpus that have either 'from' or 'to' as its documentId
      */
-    public List<DocumentLink> getDocumentLinksByDocumentId(String documentId, long corpusId) throws DatabaseOperationException;
+    public List<DocumentLink> getManyDocumentLinksByDocumentId(String documentId, long corpusId) throws DatabaseOperationException;
 
     /**
      * Gets all documents of a corpus which aren't post-processed yet.
