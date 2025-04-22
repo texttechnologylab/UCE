@@ -590,3 +590,40 @@
 .wiki-page .topic-value-base-spans:nth-child(even) {
     border-left: 5px solid #28a745;
 }
+
+.wiki-page .word-cloud-container {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-height: 280px;
+    overflow: hidden;
+    padding: 10px;
+    border-radius: 5px;
+}
+
+.wiki-page .word-cloud-item {
+    padding: 5px 8px;
+    margin: 3px;
+    cursor: pointer;
+    transition: transform 0.2s ease, color 0.2s ease;
+    position: relative;
+}
+
+.word-cloud-item.hovered {
+    transform: scale(1.1);
+    color: #FF6384 !important;
+}
+
+.word-tooltip {
+    position: absolute;
+    background-color: rgba(0, 0, 0, 0.8);
+    color: #fff;
+    padding: 3px 6px;
+    border-radius: 3px;
+    font-size: 12px;
+    z-index: 1000;
+    pointer-events: none;
+    white-space: nowrap;
+}

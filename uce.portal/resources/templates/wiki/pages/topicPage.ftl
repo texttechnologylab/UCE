@@ -14,16 +14,11 @@
 
     <!-- Topic Summary -->
     <div class="text-center mb-3">
-        <h3 class="mb-2">Topic: "${vm.getCoveredText()}"</h3>
-        <p class="text-muted">
-            Top Keywords:
-            <#if vm.getTopicTerms()?has_content>
-                <#assign terms = vm.getTopicTerms()>
-                <#if terms?size gte 1>${terms[0].word}</#if><#if terms?size gte 2>, ${terms[1].word}</#if><#if terms?size gte 3>, ${terms[2].word}...</#if>
-            <#else>
-                No keywords available
-            </#if>
-        </p>
+        <h4 class="mb-3">Topic: ${vm.getCoveredText()}</h4>
+        <!-- Topic Word Cloud -->
+        <div class="col-md-6 mx-auto">
+            <div id="topicWordCloud"></div>
+        </div>
     </div>
     <hr class="mt-2 mb-4"/>
 
@@ -95,6 +90,76 @@
         'polarArea',
     );
 
+    drawTopicWordCloud('topicWordCloud', wordData);
+
+
+    function drawTopicWordCloud(elementId, wordData) {
+        console.log('Drawing topic word cloud:', elementId, wordData);
+
+        if (!wordData || !Array.isArray(wordData) || wordData.length === 0) {
+            console.error('Invalid data provided to drawTopicWordCloud:', wordData);
+            return;
+        }
+
+        const container = document.getElementById(elementId);
+        if (!container) {
+            console.error("Element with id " + elementId + " not found");
+            return;
+        }
+
+        container.innerHTML = '';
+
+        const cloudContainer = document.createElement('div');
+        cloudContainer.className = 'word-cloud-container';
+
+        const maxWeight = Math.max(...wordData.map(item => item.weight));
+        const minWeight = Math.min(...wordData.map(item => item.weight));
+        const weightRange = maxWeight - minWeight;
+
+        wordData.forEach(item => {
+            const word = document.createElement('div');
+            word.className = 'word-cloud-item';
+            word.textContent = item.term;
+
+            const normalizedWeight = weightRange === 0 ? 1 : (item.weight - minWeight) / weightRange;
+            const fontSize = 12 + (normalizedWeight * 24);
+            word.style.fontSize = fontSize + "px";
+            word.style.color = getColorForWeight(normalizedWeight);
+
+            word.addEventListener('mouseover', () => {
+                word.classList.add('hovered');
+                const tooltip = document.createElement('div');
+                tooltip.className = 'word-tooltip';
+                tooltip.textContent = "Weight: " + item.weight.toFixed(4);
+                document.body.appendChild(tooltip);
+
+                const rect = word.getBoundingClientRect();
+                tooltip.style.top = (rect.top + word.offsetHeight + 50) + "px";
+                tooltip.style.left = (rect.left + (word.offsetWidth / 5)) + "px";
+                tooltip.style.transform = 'translateX(-50%)';
+                word._tooltip = tooltip;
+            });
+
+            word.addEventListener('mouseout', () => {
+                word.classList.remove('hovered');
+                if (word._tooltip) {
+                    word._tooltip.remove();
+                    word._tooltip = null;
+                }
+            });
+
+            cloudContainer.appendChild(word);
+        });
+
+        container.appendChild(cloudContainer);
+    }
+
+    function getColorForWeight(weight) {
+        const r = Math.floor(50 + (weight * 205));
+        const g = Math.floor(50 + ((1 - weight) * 150));
+        const b = Math.floor(150 + ((1 - weight) * 105));
+        return "rgb(" + r + ", " + g + ", " + b + ")";
+    }
 
 </script>
 
