@@ -20,7 +20,7 @@ import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotation.DocumentAnnotation;
-import org.texttechnologylab.annotation.link.DLink;
+import org.texttechnologylab.annotation.link.*;
 import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.CorpusConfig;

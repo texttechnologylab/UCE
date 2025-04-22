@@ -4,10 +4,13 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Filter;
+import org.texttechnologylab.models.Linkable;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
+import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.Link;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
@@ -22,10 +25,20 @@ import java.util.stream.Collectors;
 /*
 The documents should be scanned and extracted via OCR. This is a base class for that.
  */
-public class Document extends ModelBase implements WikiModel {
+public class Document extends ModelBase implements WikiModel, Linkable {
     @Override
     public String getWikiId() {
         return "D" + "-" + this.getId();
+    }
+
+    @Override
+    public List<Class<? extends ModelBase>> getCompatibleLinkTypes() {
+        return List.of(DocumentLink.class);
+    }
+
+    @Override
+    public long getPrimaryDbIdentifier() {
+        return this.getId();
     }
 
     private String language;
@@ -76,8 +89,14 @@ public class Document extends ModelBase implements WikiModel {
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @BatchSize(size = 50)
     @JoinColumn(name = "document_Id")
-    @Filter(name="valueTypeFilter", condition = "valueType != 2") // Dont eagerly fetch the json metadata. That is way too costly probably.
+    @Filter(name = "valueTypeFilter", condition = "valueType != 2")
+    // Dont eagerly fetch the json metadata. That is way too costly probably.
     private List<UCEMetadata> uceMetadata;
+
+    @Transient
+    private List<Link> incomingLinks;
+    @Transient
+    private List<Link> outgoingLinks;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
@@ -94,32 +113,31 @@ public class Document extends ModelBase implements WikiModel {
     @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     private DocumentTopThreeTopics documentTopThreeTopics;
     // Negations:
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<CompleteNegation> completeNegations;
 
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<Cue> cues;
 
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<Event> events;
 
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<Focus> focuses;
 
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<Scope> scopes;
 
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<XScope> xscopes;
 
-    // Unified topics:
-    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch=FetchType.EAGER)
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<UnifiedTopic> unifiedTopics;
 
@@ -287,6 +305,7 @@ public class Document extends ModelBase implements WikiModel {
         }
         return result.toString().trim();
     }
+
     public String getFullTextSnippetCharOffset(int start, int end) {
         StringBuilder result = new StringBuilder();
         if (fullText != null) {
@@ -295,7 +314,7 @@ public class Document extends ModelBase implements WikiModel {
                 if (idx >= start && idx < end) {
                     result.append(c);
                 }
-                idx ++;
+                idx++;
             }
         }
         return result.toString();
