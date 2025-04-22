@@ -11,3 +11,15 @@ CREATE TABLE IF NOT EXISTS documenttopicsraw (
                                                    rawscore DOUBLE PRECISION,
                                                    thetadt DOUBLE PRECISION
 );
+CREATE TABLE IF NOT EXISTS documenttopicwords (
+                                                  document_id BIGINT,
+                                                  topiclabel VARCHAR(255),
+    word VARCHAR(255),
+    probability DOUBLE PRECISION
+    );
+CREATE TABLE IF NOT EXISTS corpustopicwords (
+                                                corpus_id BIGINT,
+                                                topiclabel VARCHAR(255),
+    word VARCHAR(255),
+    probability DOUBLE PRECISION
+    );
