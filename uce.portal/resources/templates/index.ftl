@@ -20,6 +20,7 @@
         <#include "*/css/lexicon.css">
         <#include "*/css/layered-search-builder.css">
         <#include "*/css/kwic.css">
+        <#include "*/css/drawflow.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
@@ -44,7 +45,11 @@
           }
         }
     </script>
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <!--<script src="https://cdn.plot.ly/plotly-latest.min.js"></script>-->
+    <script src="js/utils.js"></script>
+    <script src="js/visualization/cdns/chartjs-449.js"></script>
+    <script src="js/visualization/cdns/d3js-790.js"></script>
+    <script src="js/visualization/cdns/drawflow-last.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script type="module" src="js/md-block.js"></script>
@@ -52,13 +57,15 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.4.0/gsap.min.js"></script>
     <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
     <!--<script src="https://unpkg.com/@tweenjs/tween.js@^20.0.0/dist/tween.umd.js"></script>-->
-    <!-- For corpus universe three.js -->
 
     <title>${title}</title>
 </head>
 
 <body>
 <#include "*/messageModal.ftl">
+
+<div id="full-flow-container" style="visibility: hidden">
+</div>
 
 <div class="site-container">
 
@@ -430,6 +437,10 @@
 <#--<script type="module">
     <#include "js/corpusUniverse.js">
 </script>-->
+<script type="module">
+    <#include "js/graphViz.js">
+    <#include "js/flowViz.js">
+</script>
 
 <script>
     <#include "js/site.js">

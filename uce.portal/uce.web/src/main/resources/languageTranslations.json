@@ -15,6 +15,14 @@
     "de-DE": "Annotationen",
     "en-EN": "Annotations"
   },
+  "incomingLinks": {
+    "de-DE": "Eingehende Links",
+    "en-EN": "Incoming Links"
+  },
+  "outgoingLinks": {
+    "de-DE": "Ausgehende Links",
+    "en-EN": "Outgoing Links"
+  },
   "alphabet": {
     "de-DE": "Alphabet",
     "en-EN": "Alphabet"

@@ -1,13 +1,5 @@
 var selectedCorpus = -1;
 
-function generateUUID() {
-    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
-        var r = Math.random() * 16 | 0,
-            v = c == 'x' ? r : (r & 0x3 | 0x8);
-        return v.toString(16);
-    });
-}
-
 /**
  * Handles the clicking onto a navbar button
  */
@@ -82,7 +74,7 @@ $('body').on('change', '#corpus-select', function () {
     const hasTaxonAnnotations = selectedOption.getAttribute("data-hastaxonannotations");
     const oldCorpusId = selectedCorpus;
     selectedCorpus = parseInt(selectedOption.getAttribute("data-id"));
-    if(oldCorpusId !== selectedCorpus){
+    if (oldCorpusId !== selectedCorpus) {
         // We have switched corpora then, start a new empty search.
         startNewSearch("", false);
     }
@@ -97,19 +89,19 @@ $('body').on('change', '#corpus-select', function () {
     else $('.ragbot-chat-include').hide();
 
     // Change the UCE Metadata according to the corpus
-    $('.uce-corpus-search-filter').each(function(){
-        if($(this).data('id') === selectedCorpus) $(this).show();
+    $('.uce-corpus-search-filter').each(function () {
+        if ($(this).data('id') === selectedCorpus) $(this).show();
         else $(this).hide();
     })
 
     // Update the layered search. That requires annotations and without them, is useless.
-    if(hasTaxonAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').show();
+    if (hasTaxonAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').show();
     else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
 
-    if(hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
+    if (hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
     else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
 
-    if(hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false'){
+    if (hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false') {
         $('.open-layered-search-builder-btn-badge').hide();
         $('.open-layered-search-builder-btn').hide();
     } else {
@@ -251,4 +243,10 @@ $(document).ready(function () {
     reloadCorpusComponents();
     // Init the lexicon
     window.wikiHandler.fetchLexiconEntries(0, 24);
+
+    // TODO: JUST TESTING
+    //window.graphVizHandler.createBasicChart(document.getElementById('testDummy'), 'My Test Chart');
+    //window.graphVizHandler.createBasicChart(document.getElementById('testDummy2'), 'My Test Chart');
+    //window.flowVizHandler.createFlowChart(document.getElementById('full-flow-container'));
+    //window.flowVizHandler.createNewFromLinkableNode("org.texttechnologylab.models.corpus.Document-3515");
 })

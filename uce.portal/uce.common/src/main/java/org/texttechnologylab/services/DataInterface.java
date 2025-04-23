@@ -2,6 +2,7 @@ package org.texttechnologylab.services;
 
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
@@ -15,57 +16,42 @@ public interface DataInterface {
 
     /**
      * Fetches annotations (NE, Taxon, Time,...) of a given corpus.
-     *
-     * @return
      */
     public List<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) throws DatabaseOperationException;
 
     /**
      * Returns all taxons (if any) that match the given string values AND their identifier column is not empty.
-     *
-     * @return
-     * @throws DatabaseOperationException
      */
     public List<Taxon> getIdentifiableTaxonsByValues(List<String> tokens) throws DatabaseOperationException;
 
     /**
      * Counts all documents within a given corpus
-     *
-     * @return
      */
     public int countDocumentsInCorpus(long id) throws DatabaseOperationException;
 
     /**
      * Returns true if the document with the given documentId exists in
      * the given corpus
-     *
-     * @param corpusId
-     * @param documentId
-     * @return
      */
     public boolean documentExists(long corpusId, String documentId) throws DatabaseOperationException;
 
     /**
      * Gets a single corpus by its id.
-     *
      */
     public Corpus getCorpusById(long id) throws DatabaseOperationException;
 
     /**
      * Stores a page topic distribution by a page.
-     *
      */
     public void savePageKeywordDistribution(Page page) throws DatabaseOperationException;
 
     /**
      * Stores a document topic distributions by a document.
-     *
      */
     public void saveDocumentKeywordDistribution(Document document) throws DatabaseOperationException;
 
     /**
      * Returns a corpus by name. As they aren't unique, it returns the first match.
-     *
      */
     public Corpus getCorpusByName(String name) throws DatabaseOperationException;
 
@@ -82,36 +68,37 @@ public interface DataInterface {
     public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException;
 
     /**
-     * Gets all documents of a corpus which arent psotprocessed yet.
-     *
+     * Gets all DocumentLinks that belong to a document.
+     */
+    public List<DocumentLink> getManyDocumentLinksOfDocument(long id) throws DatabaseOperationException;
+
+    /**
+     * Get all DocumentLinks of a corpus that have either 'from' or 'to' as its documentId
+     */
+    public List<DocumentLink> getManyDocumentLinksByDocumentId(String documentId, long corpusId) throws DatabaseOperationException;
+
+    /**
+     * Gets all documents of a corpus which aren't post-processed yet.
      */
     public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId) throws DatabaseOperationException;
 
     /**
      * Returns a corpus tsne plot by the given corpusId
-     *
      */
     public CorpusTsnePlot getCorpusTsnePlotByCorpusId(long corpusId) throws DatabaseOperationException;
 
     /**
      * Gets all corpora from the database
-     *
-     * @return
      */
     public List<Corpus> getAllCorpora() throws DatabaseOperationException;
 
     /**
      * Gets the data required for the world globus to render correctly.
-     *
-     * @param documentId
-     * @return
      */
     public List<GlobeTaxon> getGlobeDataForDocument(long documentId) throws DatabaseOperationException;
 
     /**
      * Gets many documents by their ids
-     *
-     * @return
      */
     public List<Document> getManyDocumentsByIds(List<Integer> documentIds) throws DatabaseOperationException;
 
@@ -332,6 +319,11 @@ public interface DataInterface {
      * @param corpusTsnePlot
      */
     public void saveOrUpdateCorpusTsnePlot(CorpusTsnePlot corpusTsnePlot, Corpus corpus) throws DatabaseOperationException;
+
+    /**
+     * Saves or updates a list of documentLinks.
+     */
+    public void saveOrUpdateManyDocumentLinks(List<DocumentLink> documentLinks) throws DatabaseOperationException;
 
     /**
      * Stores a corpus in the database.

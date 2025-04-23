@@ -8,6 +8,7 @@
   "annotations": {
     "annotatorMetadata": false,
     "uceMetadata": false,
+    "logicalLinks": false,
 
     "OCRPage": false,
     "OCRParagraph": false,

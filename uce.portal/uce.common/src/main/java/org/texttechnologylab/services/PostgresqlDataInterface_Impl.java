@@ -10,8 +10,12 @@ import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.Linkable;
+import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.Link;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
@@ -22,6 +26,7 @@ import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.util.HealthStatus;
+import org.texttechnologylab.utils.ClassUtils;
 import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
@@ -204,14 +209,76 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<DocumentLink> getManyDocumentLinksOfDocument(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(DocumentLink.class);
+            criteria.add(Restrictions.or(
+                    Restrictions.eq("fromId", id),
+                    Restrictions.eq("toId", id)
+            ));
+            return criteria.list();
+        });
+    }
+
+    public List<DocumentLink> getManyDocumentLinksByDocumentId(String documentId, long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(DocumentLink.class);
+            criteria.add(Restrictions.eq("corpusId", corpusId));
+            criteria.add(Restrictions.or(
+                    Restrictions.eq("from", documentId),
+                    Restrictions.eq("to", documentId)
+            ));
+            return criteria.list();
+        });
+    }
 
     public List<Document> getNonePostprocessedDocumentsByCorpusId(long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            Criteria criteria = session.createCriteria(Document.class);
+            var criteria = session.createCriteria(Document.class);
             criteria.add(Restrictions.eq("corpusId", corpusId));
             criteria.add(Restrictions.eq("postProcessed", false));
             return criteria.list();
         });
+    }
+
+    public List<Link> getAllLinksOfLinkable(long id, List<Class<? extends ModelBase>> possibleLinkTypes) throws DatabaseOperationException {
+        // A linkable object can have multiple links that reference different tables (document, namedentity, token...)
+        var links = new ArrayList<Link>();
+
+        for(var type:possibleLinkTypes){
+            links.addAll(getLinksOfLinkableByType(id, type));
+        }
+        return links;
+    }
+
+    public List<Link> getLinksOfLinkableByType(long id, Class<? extends ModelBase> type) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(type);
+            criteria.add(Restrictions.or(
+                    Restrictions.eq("fromId", id),
+                    Restrictions.eq("toId", id)
+            ));
+            return criteria.list();
+        });
+    }
+
+    public Linkable getLinkableById(long id, Class<? extends Linkable> clazz) throws DatabaseOperationException {
+        return executeOperationSafely(session -> {
+            var linkable = session.get(clazz, id);
+            if(linkable instanceof Document doc) Hibernate.initialize(doc.getPages());
+            return linkable;
+        });
+    }
+
+    public Linkable getLinkable(long id, Class<? extends Linkable> clazz) throws DatabaseOperationException {
+        var linkable = getLinkableById(id, clazz);
+        linkable.initLinkableViewModel(this);
+        return linkable;
+    }
+
+    public Linkable getLinkable(long id, String className) throws ClassNotFoundException, DatabaseOperationException {
+        var clazz = ClassUtils.getClassFromClassName(className, Linkable.class);
+        return getLinkable(id, clazz);
     }
 
     @SuppressWarnings("unchecked")
@@ -330,11 +397,11 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 // doc cannot be null.
                 var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
                 if (doc == null) continue;
+                doc.initLinkableViewModel(this);
 
                 // We EAGERLY load those for now and see how that impacts performance.
                 // Hibernate.initialize(doc.getPages());
                 // Hibernate.initialize(doc.getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON));
-
                 sortedDocs[documentIds.indexOf(id)] = doc;
             }
 
@@ -401,13 +468,25 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-
     public int callLexiconRefresh(ArrayList<String> tables, boolean force) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
             var insertedLex = 0;
             try (var storedProcedure = connection.prepareCall("{call refresh_lexicon" + "(?, ?)}")) {
                 storedProcedure.setArray(1, connection.createArrayOf("text", tables.toArray(new String[0])));
                 storedProcedure.setBoolean(2, force);
+                var result = storedProcedure.executeQuery();
+                while (result.next()) {
+                    insertedLex = result.getInt(1);
+                }
+            }
+            return insertedLex;
+        }));
+    }
+
+    public int callLogicalLinksRefresh() throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+            var insertedLex = 0;
+            try (var storedProcedure = connection.prepareCall("{call refresh_links()}")) {
                 var result = storedProcedure.executeQuery();
                 while (result.next()) {
                     insertedLex = result.getInt(1);
@@ -661,7 +740,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                             doc_found++;
                             docIds.add(docId);
                         }
-                        docCount ++;
+                        docCount++;
 
 
                     }
@@ -943,10 +1022,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     builder.greaterThanOrEqualTo(root.get("end"), end)
             );
 
-            var page =  session.createQuery(criteria)
+            var page = session.createQuery(criteria)
                     .setMaxResults(1)
                     .uniqueResult();
-            if(initialize) Hibernate.initialize(page);
+            if (initialize) Hibernate.initialize(page);
             return page;
         });
     }
@@ -1150,6 +1229,15 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             }
             return null;
         });
+    }
+
+    public void saveOrUpdateManyDocumentLinks(List<DocumentLink> documentLinks) throws DatabaseOperationException {
+        executeOperationSafely((session -> {
+            for (var link : documentLinks) {
+                session.saveOrUpdate(link);
+            }
+            return null;
+        }));
     }
 
     public void saveOrUpdateUceImport(UCEImport uceImport) throws DatabaseOperationException {
