@@ -333,7 +333,7 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         offsetList.add(offsetArray);
         return StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
     }
-    // List<ArrayList<Integer>> offsetList
+
     public String getFullTextSnippetOffsetList(TemplateModel model) throws TemplateModelException {
         if (model instanceof TemplateSequenceModel) {
             List<ArrayList<Integer>> offsetList = FreemarkerUtils.convertToNestedIntegerList((TemplateSequenceModel) model);

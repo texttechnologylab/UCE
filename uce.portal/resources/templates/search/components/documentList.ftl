@@ -25,7 +25,7 @@
                             <#assign foundXscopes = searchState.getAnnotationsByTypeAndDocumentId("xScopes", document.getId(), "")>
                             <#assign foundFoci = searchState.getAnnotationsByTypeAndDocumentId("Foci", document.getId(), "")>
 
-                            <div class="flexed align-items-center justify-content-between small text mt-2 text-center">
+                            <div class="flexed align-items-center justify-content-between small text mt-0 text-center pl-0 ml-2 mr-2">
                                 <span class="w-100 text-center"><i
                                                         class="fas fa-map-marker-alt mr-1"></i>${foundLocations?size}</span>
                                 <span class="w-100 text-center"><i
@@ -41,15 +41,15 @@
                                             class="fas fa-clock mr-1"></i>${foundTimes?size}</span>
                                 <!-- Negation Entities Group -->
                                 <span class="w-100 text-center"><i
-                                            class="fas fa-exclamation"></i>${foundCues?size}</span>
+                                            class="fas fa-exclamation mr-1"></i>${foundCues?size}</span>
                                 <span class="w-100 text-center"><i
-                                            class="fas fa-circle"></i>${foundScopes?size}</span>
+                                            class="fas fa-circle mr-1"></i>${foundScopes?size}</span>
                                 <span class="w-100 text-center"><i
-                                            class="fas fa-circle-notch"></i>${foundXscopes?size}</span>
+                                            class="fas fa-circle-notch mr-1"></i>${foundXscopes?size}</span>
                                 <span class="w-100 text-center"><i
-                                            class="fas fa-calendar-check"></i>${foundEvents?size}</span>
+                                            class="fas fa-calendar-check mr-1"></i>${foundEvents?size}</span>
                                 <span class="w-100 text-center"><i
-                                            class="fas fa-crosshairs"></i>${foundFoci?size}</span>
+                                            class="fas fa-crosshairs mr-1"></i>${foundFoci?size}</span>
                                 <a class="btn annotation-hit-container-expander" data-expanded="false">
                                     <i class="fas fa-chevron-down"></i>
                                 </a>
@@ -62,7 +62,7 @@
                                 <#assign coveredTextLowerCase = coveredText?lower_case>
                                 <#if (searchState.getSearchTokens()?has_content) && (searchState.getSearchTokens()?size gt 0)>
                                     <#list searchState.getSearchTokens() as token>
-                                        <#if coveredTextLowerCase?contains(token?lower_case)>
+                                        <#if token != '' && coveredTextLowerCase?contains(token?lower_case)>
                                             <#assign class = "color-secondary font-weight-bold">
                                             <#if !(matchingTokens?seq_contains(token))>
                                                 <#assign matchingTokens += [token]>
@@ -75,7 +75,7 @@
                             </#function>
 
                             <div class="annotation-hit-container display-none">
-                                <div class="row m-0">
+                                <div class="row m-0 pl-2 pr-2">
                                     <div class="search-hits col-2">
                                         <#list foundLocations as annotation>
                                             <#assign annotationClass = getClassForAnnotation(annotation.getCoveredText())>
@@ -183,7 +183,7 @@
                             </div>
 
                             <!-- Matched Tokens list -->
-                            <div class="matched-tokens-list">
+                            <div class="matched-tokens-list mb-2 mr-2 ml-2 pl-2 pr-2">
                                 <#if matchingTokens?has_content>
                                     <div class="flexed align-items-center h-100">
                                         <i class="fas fa-binoculars color-secondary mr-2"></i>

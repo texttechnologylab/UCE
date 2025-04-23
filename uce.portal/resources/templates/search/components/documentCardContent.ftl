@@ -68,6 +68,7 @@
                 </div>
             </div>
 
+            <!-- name, title, author etc -->
             <div class="flexed align-items-center justify-content-end">
                 <p class="mb-0 text mr-3"> ${document.getLanguage()?upper_case}</p>
                 <div class="mb-0 flexed align-items-center text">
@@ -90,68 +91,65 @@
             </div>
         </div>
 
-        
+        <!-- topics -->
+        <div class="flexed align-items-center justify-content-between w-100">
+            <div class="flexed align-items-center">
+                <label class="text-secondary small-font mr-2"><i
+                            class="far fa-clock mr-1"></i> ${document.getMetadataTitleInfo().getPublished()}</label>
+                <label class="text-secondary small-font mr-2"><i
+                            class="fas fa-pen-nib mr-1"></i> ${document.getMetadataTitleInfo().getAuthor()}</label>
+            </div>
+            <div class="flexed align-items-center topic-list">
+                <#if document.getDocumentKeywordDistribution()?has_content>
+                    <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                           data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicOne()}"
+                           class="add-wiki-logo open-wiki-page">
+                        #${document.getDocumentKeywordDistribution().getYakeTopicOne()}
+                    </label>
+                    <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                           data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicTwo()}"
+                           class="add-wiki-logo open-wiki-page">
+                        #${document.getDocumentKeywordDistribution().getYakeTopicTwo()}
+                    </label>
+                    <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                           data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
+                           class="add-wiki-logo open-wiki-page">
+                        #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
+                    </label>
+                </#if>
 
-<!-- topics -->
-<div class="flexed align-items-center justify-content-between w-100">
-    <div class="flexed align-items-center">
-        <label class="text-secondary small-font mr-2"><i
-                    class="far fa-clock mr-1"></i> ${document.getMetadataTitleInfo().getPublished()}</label>
-        <label class="text-secondary small-font mr-2"><i
-                    class="fas fa-pen-nib mr-1"></i> ${document.getMetadataTitleInfo().getAuthor()}</label>
-    </div>
-    <div class="flexed align-items-center topic-list">
-        <#if document.getDocumentKeywordDistribution()?has_content>
-            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicOne()}"
-                   class="add-wiki-logo open-wiki-page">
-                #${document.getDocumentKeywordDistribution().getYakeTopicOne()}
-            </label>
-            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicTwo()}"
-                   class="add-wiki-logo open-wiki-page">
-                #${document.getDocumentKeywordDistribution().getYakeTopicTwo()}
-            </label>
-            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
-                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
-                   class="add-wiki-logo open-wiki-page">
-                #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
-            </label>
-        </#if>
-
-        <#assign documentTopThreeTopics = document.getDocumentTopThreeTopics()!>
-        <#assign documentTopThreeTopicsWikiId = document.getDocumentTopThreeTopics().getWikiId()!>
-        <#assign documentTopicOne = document.getDocumentTopThreeTopics().getTopicOne()!>
-        <#assign documentTopicTwo = document.getDocumentTopThreeTopics().getTopicTwo()!>
-        <#assign documentTopicThree = document.getDocumentTopThreeTopics().getTopicThree()!>
-        <#if documentTopThreeTopics?has_content>
-            <#if documentTopicOne?has_content>
-                <label data-wid="${documentTopThreeTopicsWikiId}"
-                       data-wcovered="${documentTopicOne}"
-                       class="add-wiki-logo open-wiki-page">
-                    ${documentTopicOne}
-                </label>
-            </#if>
-            <#if documentTopicTwo?has_content>
-                <label data-wid="${documentTopThreeTopicsWikiId}"
-                       data-wcovered="${documentTopicTwo}"
-                       class="add-wiki-logo open-wiki-page">
-                    ${documentTopicTwo}
-                </label>
-            </#if>
-            <#if documentTopicThree?has_content>
-                <label data-wid="${documentTopThreeTopicsWikiId}"
-                       data-wcovered="${documentTopicThree}"
-                       class="add-wiki-logo open-wiki-page">
-                    ${documentTopicThree}
-                </label>
-            </#if>
-        </#if>
-    </div>
-</div>
-
+                <#if document.getDocumentTopThreeTopics()?has_content>
+                    <#assign documentTopThreeTopics = document.getDocumentTopThreeTopics()!>
+                    <#assign documentTopThreeTopicsWikiId = document.getDocumentTopThreeTopics().getWikiId()!>
+                    <#assign documentTopicOne = document.getDocumentTopThreeTopics().getTopicOne()!>
+                    <#assign documentTopicTwo = document.getDocumentTopThreeTopics().getTopicTwo()!>
+                    <#assign documentTopicThree = document.getDocumentTopThreeTopics().getTopicThree()!>
+                    <#if documentTopThreeTopics?has_content>
+                        <#if documentTopicOne?has_content>
+                            <label data-wid="${documentTopThreeTopicsWikiId}"
+                                   data-wcovered="${documentTopicOne}"
+                                   class="add-wiki-logo open-wiki-page">
+                                ${documentTopicOne}
+                            </label>
+                        </#if>
+                        <#if documentTopicTwo?has_content>
+                            <label data-wid="${documentTopThreeTopicsWikiId}"
+                                   data-wcovered="${documentTopicTwo}"
+                                   class="add-wiki-logo open-wiki-page">
+                                ${documentTopicTwo}
+                            </label>
+                        </#if>
+                        <#if documentTopicThree?has_content>
+                            <label data-wid="${documentTopThreeTopicsWikiId}"
+                                   data-wcovered="${documentTopicThree}"
+                                   class="add-wiki-logo open-wiki-page">
+                                ${documentTopicThree}
+                            </label>
+                        </#if>
+                    </#if>
+                </#if>
+            </div>
         </div>
-
 
         <#macro renderSnippets snippets>
             <#if snippets?has_content>
