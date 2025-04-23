@@ -38,7 +38,7 @@
     </div>
 
     <!-- corpus content with tabs -->
-    <div class="col-md-8 w-100 m-0 p-0 border-left position-relative">
+    <div class="corpus-content col-md-8 w-100 m-0 p-0 border-left position-relative">
         <div class="documents-list-header card-shadow bg-default">
             <div class="flexed w-100 justify-content-end mb-2">
                 <a class="clickable color-prime mb-0 text small" onclick="navigateToView('search')">
@@ -71,7 +71,7 @@
     $('body').on('click', '.documents-list-header .mtabs btn', function(){
         const id = $(this).data('id');
 
-        $('.views .mview').each(function(){
+        $('.corpus-content .views .mview').each(function(){
             if($(this).data('id') === id){
                 $(this).show();
             } else{

@@ -1308,8 +1308,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
 
-
-    public List<Object[]> getSimilarTopicsbyTopicLabel(String topicValue,long corpusId, int minSharedWords, int result_limit) throws DatabaseOperationException {
+    public List<Object[]> getSimilarTopicsbyTopicLabel(String topicValue, long corpusId, int minSharedWords, int result_limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = "SELECT * FROM find_similar_topics(:topicValue, :minSharedWords, :result_limit, :corpusId)";
 

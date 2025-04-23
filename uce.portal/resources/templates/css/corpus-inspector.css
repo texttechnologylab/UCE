@@ -138,7 +138,7 @@
     bottom: -1px;
 }
 
-.views .mview {
+.corpus-content .views .mview {
     display: block;
     background-color: white;
     border-left: 1px solid lightgray;
@@ -149,6 +149,6 @@
     overflow-y: auto;
 }
 
-.views .display-none {
+.corpus-content .views .display-none {
     display: none;
 }

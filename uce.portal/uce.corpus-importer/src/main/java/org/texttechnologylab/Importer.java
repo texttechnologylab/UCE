@@ -1402,7 +1402,7 @@ public class Importer {
 
                 ExceptionUtils.tryCatchLog(
                         () -> db.executeSqlWithoutReturn(insertSentenceTopicsScript),
-                        (ex) -> logger.error("Error executing SQL script to populate sentencetopics table", ex)
+                        (ex) -> logImportError("Error executing SQL script to populate sentencetopics table", ex, filePath)
                 );
 
                 Path insertDocumentTopicsFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/2_updateDocumentTopics.sql");
@@ -1410,7 +1410,7 @@ public class Importer {
 
                 ExceptionUtils.tryCatchLog(
                         () -> db.executeSqlWithoutReturn(insertDocumentTopicsScript),
-                        (ex) -> logger.error("Error executing SQL script to populate documenttopicsraw table", ex)
+                        (ex) -> logImportError("Error executing SQL script to populate documenttopicsraw table", ex, filePath)
                 );
 
                 logger.info("Successfully created and populated sentencetopics and documenttopicsraw tables");
@@ -1452,7 +1452,7 @@ public class Importer {
                             () -> db.saveDocumentTopThreeTopics(document),
                             (ex) -> logImportError("Error storing document top three topics", ex, filePath));
 
-                    logger.info("Successfully added top three topics to document: " + document.getId());
+                    logImportInfo("Successfully added top three topics to document: " + document.getId(), LogStatus.SAVED, filePath, System.currentTimeMillis() - start);
                 }
             }
         }
