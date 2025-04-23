@@ -54,11 +54,72 @@ var GraphVizHandler = (function () {
         return jsChart;
     }
 
+    GraphVizHandler.prototype.createWordCloud = async function (target, title, data) {
+
+        if (!wordData || !Array.isArray(wordData) || wordData.length === 0) {
+            console.error('Invalid data provided to drawTopicWordCloud:', wordData);
+            return;
+        }
+
+        target.innerHTML = '';
+
+        const cloudContainer = document.createElement('div');
+        cloudContainer.className = 'word-cloud-container';
+
+        const maxWeight = Math.max(...wordData.map(item => item.weight));
+        const minWeight = Math.min(...wordData.map(item => item.weight));
+        const weightRange = maxWeight - minWeight;
+
+        wordData.forEach(item => {
+            const word = document.createElement('div');
+            word.className = 'word-cloud-item';
+            word.textContent = item.term;
+
+            const normalizedWeight = weightRange === 0 ? 1 : (item.weight - minWeight) / weightRange;
+            const fontSize = 12 + (normalizedWeight * 24);
+            word.style.fontSize = fontSize + "px";
+            word.style.color = getColorForWeight(normalizedWeight);
+
+            word.addEventListener('mouseover', () => {
+                word.classList.add('hovered');
+                const tooltip = document.createElement('div');
+                tooltip.className = 'word-tooltip';
+                tooltip.textContent = "Weight: " + item.weight.toFixed(4);
+                document.body.appendChild(tooltip);
+
+                const rect = word.getBoundingClientRect();
+                tooltip.style.top = (rect.top + word.offsetHeight + 50) + "px";
+                tooltip.style.left = (rect.left + (word.offsetWidth / 5)) + "px";
+                tooltip.style.transform = 'translateX(-50%)';
+                word._tooltip = tooltip;
+            });
+
+            word.addEventListener('mouseout', () => {
+                word.classList.remove('hovered');
+                if (word._tooltip) {
+                    word._tooltip.remove();
+                    word._tooltip = null;
+                }
+            });
+
+            cloudContainer.appendChild(word);
+        });
+
+        target.appendChild(cloudContainer);
+    }
+
     return GraphVizHandler;
 }());
 
 function getNewGraphVizHandler() {
     return new GraphVizHandler();
+}
+
+function getColorForWeight(weight) {
+    const r = Math.floor(50 + (weight * 205));
+    const g = Math.floor(50 + ((1 - weight) * 150));
+    const b = Math.floor(150 + ((1 - weight) * 105));
+    return "rgb(" + r + ", " + g + ", " + b + ")";
 }
 
 window.graphVizHandler = getNewGraphVizHandler();
