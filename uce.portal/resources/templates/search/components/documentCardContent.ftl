@@ -137,9 +137,9 @@
             <#if snippets?has_content>
                 <#list snippets as snippet>
                     <#assign displayStyle = (snippet?index != 0)?then('display: none;', '')>
-                    <div class="snippet-content mt-1 mb-2 position-relative"
+                    <div class="snippet-content mt-1 mb-2 h-100 position-relative"
                          data-id="${snippet?index}" style="${displayStyle}">
-                        <div class="small-font text font-italic mr-2 block-text">
+                        <div class="small-font text font-italic mr-2 word-break-word">
                             ${snippet.getSnippet()}
                             <#if snippet.getPage()?has_content>
                                 <label class="display-none page-html">
@@ -191,6 +191,32 @@
         <#else>
             <@renderFallback document/>
         </#if>
+
+        <#macro renderFallback document>
+            <#if document?has_content>
+                <#if mainAnno??>
+                    <#if offsetList??>
+                        <div class="snippet-content h-100 position-relative">
+                            <div class="mb-0 small-font text font-italic mr-2 word-break-word">
+                                ${document.getFullTextSnippetOffsetList(offsetList)}...
+                            </div>
+                        </div>
+                    <#else>
+                        <div class="snippet-content h-100 position-relative">
+                            <div class="mb-0 small-font text font-italic mr-2 word-break-word">
+                                ${document.getFullTextSnippetAnnotationOffset(mainAnno)}...
+                            </div>
+                        </div>
+                    </#if>
+                <#else>
+                    <div class="snippet-content h-100 position-relative">
+                        <div class="mb-0 small-font text font-italic mr-2 word-break-word">
+                            ${document.getFullTextSnippet(85)}...
+                        </div>
+                    </div>
+                </#if>
+            </#if>
+        </#macro>
 
         <!-- metadata if it exists (and its not reduced view) -->
         <#if !isReducedView && document.getUceMetadataWithoutJson()?size gt 0>

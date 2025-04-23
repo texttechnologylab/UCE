@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.search.DocumentSearchResult;
 import org.texttechnologylab.models.search.SearchType;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
@@ -14,6 +15,7 @@ import java.net.URISyntaxException;
 import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 public class SearchCompleteNegation implements Search {
     private static final Logger logger = LogManager.getLogger(SearchCompleteNegation.class);
@@ -31,6 +33,11 @@ public class SearchCompleteNegation implements Search {
     }
     public SearchCompleteNegation() {
 
+    }
+
+    public SearchCompleteNegation withUceMetadataFilters(List<UCEMetadataFilterDto> filters) {
+        this.searchState.setUceMetadataFilters(filters);
+        return this;
     }
 
     private void setDefaultSearchStateParameters(ApplicationContext serviceContext, long corpusId){
@@ -120,7 +127,8 @@ public class SearchCompleteNegation implements Search {
                         countAll,
                         searchState.getOrder(),
                         searchState.getOrderBy(),
-                        searchState.getCorpusId()),
+                        searchState.getCorpusId(),
+                        searchState.getUceMetadataFilters()),
                 (ex) -> logger.error("Error executing semantic search on database.", ex));
     }
 
