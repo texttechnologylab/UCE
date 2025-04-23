@@ -1272,6 +1272,33 @@ public class Importer {
             ExceptionUtils.tryCatchLog(() -> db.saveOrUpdateCorpusTsnePlot(finalCorpusTsnePlot, corpus),
                     (ex) -> logger.error("Error saving or updating the corpus tsne plot.", ex));*/
         }
+
+        if (corpusConfig.getAnnotations().isUnifiedTopic()) {
+            logger.info("Inserting into Document and Corpus Topic word tables...");
+
+            try {
+                Path insertDocumentTopicWordFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/3_updateDocumentTopicWord.sql");
+                var insertDocumentTopicWordScript = Files.readString(insertDocumentTopicWordFilePath);
+
+                ExceptionUtils.tryCatchLog(
+                        () -> db.executeSqlWithoutReturn(insertDocumentTopicWordScript),
+                        (ex) -> logger.error("Error executing SQL script to populate documenttopicword table", ex)
+                );
+
+                Path insertCorpusTopicWordFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/4_updateCorpusTopicWord.sql");
+                var insertCorpusTopicWordScript = Files.readString(insertCorpusTopicWordFilePath);
+
+                ExceptionUtils.tryCatchLog(
+                        () -> db.executeSqlWithoutReturn(insertCorpusTopicWordScript),
+                        (ex) -> logger.error("Error executing SQL script to populate corpustopicword table", ex)
+                );
+
+                logger.info("Successfully created and populated word based topic tables");
+            } catch (Exception e) {
+                logger.error("Error reading or executing SQL script for topic distribution", e);
+            }
+
+        }
         logger.info("Done with the corpus postprocessing.");
     }
 
