@@ -15,7 +15,7 @@ var GraphVizHandler = (function () {
     /**
      * [CHARTJS] -> Creates a pie chart into the given $target (jquery object)
      */
-    GraphVizHandler.prototype.createBasicChart = async function (target, title) {
+    GraphVizHandler.prototype.createBasicChart = async function (target, title, data, type=null) {
         const chartId = generateUUID();
         let wrapper = document.createElement('div');
         wrapper.classList.add('chart-container');
@@ -45,18 +45,67 @@ var GraphVizHandler = (function () {
         target.appendChild(wrapper);
 
         const jsChart = new ChartJS(canvas, title);
-        const d = [
-            {year: 2010, count: 10},
-            {year: 2011, count: 20},
-            {year: 2012, count: 15},
-            {year: 2013, count: 25},
-            {year: 2014, count: 22},
-            {year: 2015, count: 30},
-            {year: 2016, count: 28},
-        ];
-        jsChart.setData(d);
+
+        jsChart.setData(data);
+        if (type){
+            jsChart.setType(type);
+        }
         this.activeCharts[chartId] = jsChart;
         return jsChart;
+    }
+
+    GraphVizHandler.prototype.createWordCloud = async function (target, title, data) {
+
+        if (!wordData || !Array.isArray(wordData) || wordData.length === 0) {
+            console.error('Invalid data provided to drawTopicWordCloud:', wordData);
+            return;
+        }
+
+        target.innerHTML = '';
+
+        const cloudContainer = document.createElement('div');
+        cloudContainer.className = 'word-cloud-container';
+
+        const maxWeight = Math.max(...wordData.map(item => item.weight));
+        const minWeight = Math.min(...wordData.map(item => item.weight));
+        const weightRange = maxWeight - minWeight;
+
+        wordData.forEach(item => {
+            const word = document.createElement('div');
+            word.className = 'word-cloud-item';
+            word.textContent = item.term;
+
+            const normalizedWeight = weightRange === 0 ? 1 : (item.weight - minWeight) / weightRange;
+            const fontSize = 12 + (normalizedWeight * 24);
+            word.style.fontSize = fontSize + "px";
+            word.style.color = getColorForWeight(normalizedWeight);
+
+            word.addEventListener('mouseover', () => {
+                word.classList.add('hovered');
+                const tooltip = document.createElement('div');
+                tooltip.className = 'word-tooltip';
+                tooltip.textContent = "Weight: " + item.weight.toFixed(4);
+                document.body.appendChild(tooltip);
+
+                const rect = word.getBoundingClientRect();
+                tooltip.style.top = (rect.top + word.offsetHeight + 50) + "px";
+                tooltip.style.left = (rect.left + (word.offsetWidth / 5)) + "px";
+                tooltip.style.transform = 'translateX(-50%)';
+                word._tooltip = tooltip;
+            });
+
+            word.addEventListener('mouseout', () => {
+                word.classList.remove('hovered');
+                if (word._tooltip) {
+                    word._tooltip.remove();
+                    word._tooltip = null;
+                }
+            });
+
+            cloudContainer.appendChild(word);
+        });
+
+        target.appendChild(cloudContainer);
     }
 
     return GraphVizHandler;
@@ -64,6 +113,13 @@ var GraphVizHandler = (function () {
 
 function getNewGraphVizHandler() {
     return new GraphVizHandler();
+}
+
+function getColorForWeight(weight) {
+    const r = Math.floor(50 + (weight * 205));
+    const g = Math.floor(50 + ((1 - weight) * 150));
+    const b = Math.floor(150 + ((1 - weight) * 105));
+    return "rgb(" + r + ", " + g + ", " + b + ")";
 }
 
 window.graphVizHandler = getNewGraphVizHandler();

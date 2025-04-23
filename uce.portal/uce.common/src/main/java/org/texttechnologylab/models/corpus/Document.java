@@ -112,6 +112,8 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @JoinColumn(name = "document_id")
     private DocumentKeywordDistribution documentKeywordDistribution;
 
+    @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private DocumentTopThreeTopics documentTopThreeTopics;
     // Negations:
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
@@ -513,4 +515,11 @@ public class Document extends ModelBase implements WikiModel, Linkable {
                 .collect(Collectors.toList());
     }
 
+    public DocumentTopThreeTopics getDocumentTopThreeTopics() {
+        return documentTopThreeTopics;
+    }
+
+    public void setDocumentTopThreeTopics(DocumentTopThreeTopics documentTopThreeTopics) {
+        this.documentTopThreeTopics = documentTopThreeTopics;
+    }
 }

@@ -49,15 +49,15 @@ class ChartJS {
         // Derive the color pallete from our primary color of UCE
         const baseHex = this.primaryColor.startsWith('#') ? this.primaryColor : rgbToHex(this.primaryColor);
         const backgroundColor = isSegmentedChart
-            ? generateColorPalette(baseHex, values.length, 0.6)
+            ? generateColorPalette(baseHex, this.dataDict.labels.length, 0.6)
             : convertToRGBA(baseHex, 0.85);
 
         this.chartObj.data = {
-            labels: this.dataDict.map(row => row.year),
+            labels: this.dataDict.labels,
             datasets: [
                 {
-                    label: 'Acquisitions by year',
-                    data: this.dataDict.map(row => row.count),
+                    label: this.dataDict.labelName,
+                    data: this.dataDict.data,
                     backgroundColor,
                     borderColor: backgroundColor
                 }

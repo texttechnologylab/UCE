@@ -91,16 +91,22 @@ public class WikiApi {
                 return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
+            // Determine the type. A wikiID always has the following format: <type>-<model_id>
+            var split = wid.split("-");
+            var type = split[0];
+
             // Check if we have loaded, built and cached that wiki page before. We don't re-render it then.
             // BUT: We have different wiki views for different languages so the lang needs to be part of the key!
             var cacheId = wid + languageResources.getDefaultLanguage();
+
+            if (type.startsWith("DTR")) {
+                cacheId += coveredText;
+            }
+
             if (SessionManager.CachedWikiPages.containsKey(cacheId)) {
                 return ((CachedWikiPage)SessionManager.CachedWikiPages.get(cacheId)).getRenderedView();
             }
 
-            // Determine the type. A wikiID always has the following format: <type>-<model_id>
-            var split = wid.split("-");
-            var type = split[0];
             // A missing id isn't necessarily bad, as we also have documentation pages etc.
             var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(split[1]), (ex) -> {});
 
@@ -145,10 +151,11 @@ public class WikiApi {
             } else if (type.startsWith("UT")) {
                 model.put("vm", wikiService.buildUnifiedTopicWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/unifiedTopicAnnotationPage.ftl";
-            } else if (type.startsWith("TVB")) {
-                model.put("vm", wikiService.buildTopicValueBaseWikiPageViewModel(id, coveredText));
-                renderView = "/wiki/pages/topicValueBaseAnnotationPage.ftl";
-            } else {
+            } else if (type.startsWith("DTR")) {
+                model.put("vm", wikiService.buildTopicWikiPageViewModel(id, coveredText));
+                renderView = "/wiki/pages/topicPage.ftl";
+           }
+            else {
                 // The type part of the wikiId was unknown. Throw an error.
                 logger.warn("Someone tried to query a wiki page of a type that does not exist in UCE. This shouldn't happen.");
                 model.put("information", languageResources.get("missingParameterError"));

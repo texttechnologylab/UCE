@@ -24,6 +24,7 @@ import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
+import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.ClassUtils;
@@ -1317,6 +1318,102 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return null;
         });
     }
+
+    public void saveDocumentTopThreeTopics(Document document) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(document);
+            // Save or update the document's TopicDistribution
+            if (document.getDocumentTopThreeTopics() != null) {
+                session.saveOrUpdate(document.getDocumentTopThreeTopics());
+            }
+            return null;
+        });
+    }
+
+
+    public DocumentTopThreeTopics getDocumentTopThreeTopicsById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var dist = session.get(DocumentTopThreeTopics.class, id);
+            return dist;
+        });
+    }
+
+    public List<Object[]> getTopTopicsByDocument(long documentId, int limit) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            // Use native SQL to query the document_topics_raw table
+            String sql = "SELECT topiclabel, thetadt FROM documenttopicsraw " +
+                    "WHERE document_id = :documentId " +
+                    "ORDER BY thetadt DESC " +
+                    "LIMIT :limit";
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId)
+                    .setParameter("limit", limit);
+
+            return query.getResultList();
+        });
+    }
+
+    public List<Object[]> getTopDocumentsByTopicLabel(String topicValue, long corpusId, int limit) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT d.id, d.documentid, dtr.thetadt " +
+                    "FROM document d " +
+                    "JOIN documenttopicsraw dtr ON d.id = dtr.document_id " +
+                    "WHERE dtr.topiclabel = :topicValue " +
+                    "AND d.corpusid = :corpusId " +
+                    "ORDER BY dtr.thetadt DESC " +
+                    "LIMIT :limit";
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("topicValue", topicValue)
+                    .setParameter("corpusId", corpusId)
+                    .setParameter("limit", limit);
+
+            return query.getResultList();
+        });
+    }
+
+    public List<TopicWord> getTopicWordsByTopicLabel(String topicValue, long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT word, probability " +
+                    "FROM corpustopicwords " +
+                    "WHERE topiclabel = :topicValue AND corpus_id = :corpusId " +
+                    "ORDER BY probability DESC " +
+                    "LIMIT 20";
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("topicValue", topicValue);
+            query.setParameter("corpusId", corpusId);
+
+            List<Object[]> results = query.getResultList();
+
+            List<TopicWord> topicWords = new ArrayList<>();
+            for (Object[] row : results) {
+                TopicWord tw = new TopicWord();
+                tw.setWord((String) row[0]);
+                tw.setProbability((Double) row[1]);
+                topicWords.add(tw);
+            }
+
+            return topicWords;
+        });
+    }
+
+
+    public List<Object[]> getSimilarTopicsbyTopicLabel(String topicValue, long corpusId, int minSharedWords, int result_limit) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT * FROM find_similar_topics(:topicValue, :minSharedWords, :result_limit, :corpusId)";
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("topicValue", topicValue)
+                    .setParameter("minSharedWords", minSharedWords)
+                    .setParameter("result_limit", result_limit)
+                    .setParameter("corpusId", corpusId);
+
+            return query.getResultList();
+        });
+    }
+
 
     /**
      * Parses the annotation occurrences that our search query outputs. This is so scuffed because hibernate freaking sucks, it's so nested.

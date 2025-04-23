@@ -90,48 +90,68 @@
             </div>
         </div>
 
-        <!-- topics -->
-        <div class="flexed align-items-center justify-content-between w-100">
-            <div class="flexed align-items-center">
-                <label class="text-secondary small-font mr-2"><i
-                            class="far fa-clock mr-1"></i> ${document.getMetadataTitleInfo().getPublished()}</label>
-                <label class="text-secondary small-font mr-2"><i
-                            class="fas fa-pen-nib mr-1"></i> ${document.getMetadataTitleInfo().getAuthor()}</label>
-            </div>
-            <div class="flexed align-items-center topic-list">
-                <#if document.getDocumentKeywordDistribution()?has_content>
-                    <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
-                           data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicOne()}"
-                           class="add-wiki-logo open-wiki-page">
-                        #${document.getDocumentKeywordDistribution().getYakeTopicOne()}
-                    </label>
-                    <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
-                           data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicTwo()}"
-                           class="add-wiki-logo open-wiki-page">
-                        #${document.getDocumentKeywordDistribution().getYakeTopicTwo()}
-                    </label>
-                    <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
-                           data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
-                           class="add-wiki-logo open-wiki-page">
-                        #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
-                    </label>
-                    <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
-                           data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
-                           class="add-wiki-logo open-wiki-page">
-                        #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
-                    </label>
-                </#if>
-                <#if document.getDocumentUnifiedTopicDistribution(3)?has_content>
-                    <#list document.getDocumentUnifiedTopicDistribution(3) as topic>
-                        <label data-wid="${topic.getWikiId()}"
-                               data-wcovered="${topic.getValue()}"
-                               class="add-wiki-logo open-wiki-page">
-                            ${topic.getValue()}
-                        </label>
-                    </#list>
-                </#if>
-            </div>
+        
+
+<!-- topics -->
+<div class="flexed align-items-center justify-content-between w-100">
+    <div class="flexed align-items-center">
+        <label class="text-secondary small-font mr-2"><i
+                    class="far fa-clock mr-1"></i> ${document.getMetadataTitleInfo().getPublished()}</label>
+        <label class="text-secondary small-font mr-2"><i
+                    class="fas fa-pen-nib mr-1"></i> ${document.getMetadataTitleInfo().getAuthor()}</label>
+    </div>
+    <div class="flexed align-items-center topic-list">
+        <#if document.getDocumentKeywordDistribution()?has_content>
+            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicOne()}"
+                   class="add-wiki-logo open-wiki-page">
+                #${document.getDocumentKeywordDistribution().getYakeTopicOne()}
+            </label>
+            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicTwo()}"
+                   class="add-wiki-logo open-wiki-page">
+                #${document.getDocumentKeywordDistribution().getYakeTopicTwo()}
+            </label>
+            <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                   data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
+                   class="add-wiki-logo open-wiki-page">
+                #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
+            </label>
+        </#if>
+
+        <#assign documentTopThreeTopics = document.getDocumentTopThreeTopics()!>
+        <#assign documentTopThreeTopicsWikiId = document.getDocumentTopThreeTopics().getWikiId()!>
+        <#assign documentTopicOne = document.getDocumentTopThreeTopics().getTopicOne()!>
+        <#assign documentTopicTwo = document.getDocumentTopThreeTopics().getTopicTwo()!>
+        <#assign documentTopicThree = document.getDocumentTopThreeTopics().getTopicThree()!>
+        <#if documentTopThreeTopics?has_content>
+            <#if documentTopicOne?has_content>
+                <label data-wid="${documentTopThreeTopicsWikiId}"
+                       data-wcovered="${documentTopicOne}"
+                       class="add-wiki-logo open-wiki-page">
+                    ${documentTopicOne}
+                </label>
+            </#if>
+            <#if documentTopicTwo?has_content>
+                <label data-wid="${documentTopThreeTopicsWikiId}"
+                       data-wcovered="${documentTopicTwo}"
+                       class="add-wiki-logo open-wiki-page">
+                    ${documentTopicTwo}
+                </label>
+            </#if>
+            <#if documentTopicThree?has_content>
+                <label data-wid="${documentTopThreeTopicsWikiId}"
+                       data-wcovered="${documentTopicThree}"
+                       class="add-wiki-logo open-wiki-page">
+                    ${documentTopicThree}
+                </label>
+            </#if>
+        </#if>
+    </div>
+</div>
+
         </div>
+
 
         <#macro renderSnippets snippets>
             <#if snippets?has_content>
