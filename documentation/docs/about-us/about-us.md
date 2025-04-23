@@ -42,6 +42,12 @@ The Unified Corpus Explorer is being developed by the [Text Technology Lab](http
 
     Developer of UCE, specifically in the context of UCE's associated [BIOfid project](./../projects/index.md).
 
+-   [__Bhuvanesh Verma__](https://www.texttechnologylab.org/team/bhuvanesh-verma/)
+
+    ---
+
+    Member of the Text Technology Lab and Developer of UCE.
+
 </div>
 
 <hr/>
