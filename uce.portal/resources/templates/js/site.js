@@ -247,4 +247,6 @@ $(document).ready(function () {
     // TODO: JUST TESTING
     //window.graphVizHandler.createBasicChart(document.getElementById('testDummy'), 'My Test Chart');
     //window.graphVizHandler.createBasicChart(document.getElementById('testDummy2'), 'My Test Chart');
+    //window.flowVizHandler.createFlowChart(document.getElementById('full-flow-container'));
+    //window.flowVizHandler.createNewFromLinkableNode("org.texttechnologylab.models.corpus.Document-3515");
 })

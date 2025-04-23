@@ -7,14 +7,18 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.freeMarker.Renderer;
+import org.texttechnologylab.models.Linkable;
+import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.dto.LinkableNodeDto;
 import org.texttechnologylab.models.viewModels.wiki.CachedWikiPage;
-import org.texttechnologylab.services.JenaSparqlService;
-import org.texttechnologylab.services.LexiconService;
-import org.texttechnologylab.services.WikiService;
+import org.texttechnologylab.services.*;
+import org.texttechnologylab.utils.ClassUtils;
 import org.texttechnologylab.utils.SystemStatus;
 import spark.ModelAndView;
 import spark.Route;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -26,10 +30,12 @@ public class WikiApi {
     private Configuration freemarkerConfig;
     private JenaSparqlService jenaSparqlService;
     private WikiService wikiService;
+    private PostgresqlDataInterface_Impl db;
     private final Gson gson = new Gson();
 
     public WikiApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
         this.freemarkerConfig = freemarkerConfig;
+        this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.lexiconService = serviceContext.getBean(LexiconService.class);
         this.wikiService = serviceContext.getBean(WikiService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
@@ -60,33 +66,6 @@ public class WikiApi {
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/components/rdfNodeList.ftl"));
         } catch (Exception ex) {
             logger.error("Error querying the ontology in the graph database " +
-                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
-        }
-    });
-
-    public Route getDocumentationPage = ((request, response) -> {
-        var model = new HashMap<String, Object>();
-        var languageResources = LanguageResources.fromRequest(request);
-
-        var wid = ExceptionUtils.tryCatchLog(() -> request.queryParams("wid"),
-                (ex) -> logger.error("The WikiView couldn't be generated - id missing.", ex));
-        if (wid == null) {
-            model.put("information", languageResources.get("missingParameterError"));
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
-        }
-
-        try {
-            var viewModel = wikiService.buildDocumentationWikiPageViewModel();
-            model.put("vm", viewModel);
-
-            var renderView = "";
-            if(wid.equals("search")){
-                renderView = "/wiki/pages/searchDocumentation.ftl";
-            }
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, renderView));
-        } catch (Exception ex) {
-            logger.error("Error getting a wiki page for a documentation - best refer to the last logged API call " +
                     "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
@@ -258,6 +237,55 @@ public class WikiApi {
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/lexicon/entryList.ftl"));
         } catch (Exception ex) {
             logger.error("Error getting entries from the lexicon - best refer to the last logged API call " +
+                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
+
+    public Route getLinkableNode = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+        var requestBody = gson.fromJson(request.body(), Map.class);
+        var languageResources = LanguageResources.fromRequest(request);
+
+        var unique = ExceptionUtils.tryCatchLog(() -> requestBody.get("unique"),
+                (ex) -> logger.error("Error, getting a linkable node without unique identifier.", ex));
+        if(unique == null){
+            model.put("information", languageResources.get("missingParameterError"));
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+        }
+
+        try {
+            // Fetch the Linkable generically, no matter the original model type
+            var split = unique.toString().split("-");
+            var className = split[0];
+            var id = Long.parseLong(split[1]);
+            var linkable = db.getLinkable(id, className);
+
+            // Now create the DTO from it.
+            var linkableDto = new LinkableNodeDto(linkable);
+            linkableDto.setNodeHtml(Renderer.renderLinkable(linkable));
+            var linkableVm = linkable.getLinkableViewModel();
+
+            // Here we resolve the incoming and outgoing links into simply: to and from nodes
+            linkableDto.fromNodes = new ArrayList<>();
+            for(var incoming:linkableVm.getIncomingLinks()){
+                var newLinkableDto = new LinkableNodeDto(incoming.getFromLinkableViewModel().getBaseModel());
+                newLinkableDto.setNodeHtml(Renderer.renderLinkable(incoming.getFromLinkableViewModel().getBaseModel()));
+                newLinkableDto.setLink(incoming.getLink());
+                linkableDto.fromNodes.add(newLinkableDto);
+            }
+
+            linkableDto.toNodes = new ArrayList<>();
+            for(var outgoing:linkableVm.getOutgoingLinks()){
+                var newLinkableDto = new LinkableNodeDto(outgoing.getToLinkableViewModel().getBaseModel());
+                newLinkableDto.setNodeHtml(Renderer.renderLinkable(outgoing.getToLinkableViewModel().getBaseModel()));
+                newLinkableDto.setLink(outgoing.getLink());
+                linkableDto.toNodes.add(newLinkableDto);
+            }
+
+            return gson.toJson(linkableDto);
+        } catch (Exception ex) {
+            logger.error("Error getting linkable - best refer to the last logged API call " +
                     "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }

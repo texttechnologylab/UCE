@@ -11,9 +11,11 @@ import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.Linkable;
+import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.Link;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
@@ -24,6 +26,7 @@ import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.util.HealthStatus;
+import org.texttechnologylab.utils.ClassUtils;
 import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
@@ -237,6 +240,46 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<Link> getAllLinksOfLinkable(long id, List<Class<? extends ModelBase>> possibleLinkTypes) throws DatabaseOperationException {
+        // A linkable object can have multiple links that reference different tables (document, namedentity, token...)
+        var links = new ArrayList<Link>();
+
+        for(var type:possibleLinkTypes){
+            links.addAll(getLinksOfLinkableByType(id, type));
+        }
+        return links;
+    }
+
+    public List<Link> getLinksOfLinkableByType(long id, Class<? extends ModelBase> type) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(type);
+            criteria.add(Restrictions.or(
+                    Restrictions.eq("fromId", id),
+                    Restrictions.eq("toId", id)
+            ));
+            return criteria.list();
+        });
+    }
+
+    public Linkable getLinkableById(long id, Class<? extends Linkable> clazz) throws DatabaseOperationException {
+        return executeOperationSafely(session -> {
+            var linkable = session.get(clazz, id);
+            if(linkable instanceof Document doc) Hibernate.initialize(doc.getPages());
+            return linkable;
+        });
+    }
+
+    public Linkable getLinkable(long id, Class<? extends Linkable> clazz) throws DatabaseOperationException {
+        var linkable = getLinkableById(id, clazz);
+        linkable.initLinkableViewModel(this);
+        return linkable;
+    }
+
+    public Linkable getLinkable(long id, String className) throws ClassNotFoundException, DatabaseOperationException {
+        var clazz = ClassUtils.getClassFromClassName(className, Linkable.class);
+        return getLinkable(id, clazz);
+    }
+
     @SuppressWarnings("unchecked")
     public List<UIMAAnnotation> getManyUIMAAnnotationsByCoveredText(String coveredText, Class<? extends UIMAAnnotation> clazz, int skip, int take) throws DatabaseOperationException {
         return (List<UIMAAnnotation>) executeOperationSafely((session -> {
@@ -353,9 +396,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 // doc cannot be null.
                 var doc = docs.stream().filter(d -> d.getId() == id).findFirst().orElse(null);
                 if (doc == null) continue;
-
-                // Init the links of the document
-                doc.initLinkableNode(this);
+                doc.initLinkableViewModel(this);
 
                 // We EAGERLY load those for now and see how that impacts performance.
                 // Hibernate.initialize(doc.getPages());

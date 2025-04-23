@@ -14,6 +14,7 @@ import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.SpringConfig;
 import org.texttechnologylab.config.UceConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.freeMarker.Renderer;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.LexiconEntryId;
@@ -218,6 +219,7 @@ public class App {
         var corpusUniverseApi = new CorpusUniverseApi(context, configuration);
         var wikiApi = new WikiApi(context, configuration);
         var importExportApi = new ImportExportApi(context);
+        Renderer.freemarkerConfig = configuration;
 
         before((request, response) -> {
             // Setup and log all API calls with some information. We don't want to log file uploads, since it would
@@ -296,6 +298,9 @@ public class App {
 
             path("/wiki", () -> {
                 get("/page", wikiApi.getPage);
+                path("/linkable", () -> {
+                    post("/node", wikiApi.getLinkableNode);
+                });
                 path("/lexicon", () -> {
                     post("/entries", wikiApi.getLexicon);
                     post("/occurrences", wikiApi.getOccurrencesOfLexiconEntry);

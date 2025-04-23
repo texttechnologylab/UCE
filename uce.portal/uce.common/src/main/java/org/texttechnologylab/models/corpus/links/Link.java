@@ -18,6 +18,14 @@ public class Link extends ModelBase {
     @Column(columnDefinition = "TEXT")
     private String type;
     private String linkId;
+    /**
+     * This is the PK of the document in the db, so the 'id'. Not to be confused with 'documentid'
+     */
+    private long fromId;
+    /**
+     * This is the PK of the document in the db, so the 'id'. Not to be confused with 'documentid'
+     */
+    private long toId;
 
     public String getType() {
         return type;
@@ -33,5 +41,21 @@ public class Link extends ModelBase {
 
     public void setLinkId(String linkId) {
         this.linkId = linkId;
+    }
+
+    public long getFromId() {
+        return fromId;
+    }
+
+    public void setFromId(long fromId) {
+        this.fromId = fromId;
+    }
+
+    public long getToId() {
+        return toId;
+    }
+
+    public void setToId(long toId) {
+        this.toId = toId;
     }
 }

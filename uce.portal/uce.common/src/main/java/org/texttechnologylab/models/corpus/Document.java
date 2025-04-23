@@ -93,11 +93,6 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     // Dont eagerly fetch the json metadata. That is way too costly probably.
     private List<UCEMetadata> uceMetadata;
 
-    @Transient
-    private List<Link> incomingLinks;
-    @Transient
-    private List<Link> outgoingLinks;
-
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<WikipediaLink> wikipediaLinks;

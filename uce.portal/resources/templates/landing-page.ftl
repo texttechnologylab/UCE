@@ -22,7 +22,8 @@
     </div>
 
     <div class="corpora-list">
-        <h3 class="text-center font-weight-bold text-dark"><i class="color-prime fas fa-database mr-2"></i> ${languageResource.get("corpora")}</h3>
+        <h3 class="text-center font-weight-bold text-dark"><i
+                    class="color-prime fas fa-database mr-2"></i> ${languageResource.get("corpora")}</h3>
         <div class="row m-0 p-0 ">
             <#if corpora?size == 0>
                 <div class="group-box mt-2 bg-ghost">
@@ -47,7 +48,9 @@
                                    data-content="${languageResource.get("openCorpus")}">
                                     <i class="fas fa-globe color-prime"></i>
                                 </a>
-                                <a class="btn light-border flexed clickable align-items-center pl-1 pr-1 mt-1 justify-content-center" data-trigger="hover" onclick="$(this).closest('.corpus-card').find('.expanded-content').toggle(75)">
+                                <a class="btn light-border flexed clickable align-items-center pl-1 pr-1 mt-1 justify-content-center"
+                                   data-trigger="hover"
+                                   onclick="$(this).closest('.corpus-card').find('.expanded-content').toggle(75)">
                                     <i class="fas fa-info-circle color-prime"></i>
                                 </a>
                             </div>

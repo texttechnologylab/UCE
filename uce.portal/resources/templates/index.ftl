@@ -20,6 +20,7 @@
         <#include "*/css/lexicon.css">
         <#include "*/css/layered-search-builder.css">
         <#include "*/css/kwic.css">
+        <#include "*/css/drawflow.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
@@ -48,6 +49,7 @@
     <script src="js/utils.js"></script>
     <script src="js/visualization/cdns/chartjs-449.js"></script>
     <script src="js/visualization/cdns/d3js-790.js"></script>
+    <script src="js/visualization/cdns/drawflow-last.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script type="module" src="js/md-block.js"></script>
@@ -61,6 +63,9 @@
 
 <body>
 <#include "*/messageModal.ftl">
+
+<div id="full-flow-container" style="visibility: hidden">
+</div>
 
 <div class="site-container">
 
@@ -434,10 +439,7 @@
 </script>-->
 <script type="module">
     <#include "js/graphViz.js">
-</script>
-
-<script>
-
+    <#include "js/flowViz.js">
 </script>
 
 <script>
