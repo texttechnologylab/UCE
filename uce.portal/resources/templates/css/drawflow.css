@@ -14,7 +14,6 @@
     height: 100%;
     user-select: none;
     perspective: 0;
-    pointer-events: none;
 }
 
 .drawflow .drawflow-node {
@@ -29,9 +28,25 @@
     z-index: 2;
 }
 
+.drawflow .drawflow-node .node-title{
+    padding: 6px;
+    background-color: lightgrey;
+    width: 100%;
+    text-align: center;
+    margin: 0;
+}
+
 .drawflow .drawflow-node .document-card{
     margin: 0 !important;
-    max-width: 400px !important;
+    max-width: 500px !important;
+}
+
+.drawflow .drawflow-node .document-card .title{
+    font-weight: normal;
+}
+
+.drawflow .drawflow-node .document-card .document-header a{
+    display: none;
 }
 
 .drawflow .drawflow-node.selected {
@@ -55,18 +70,17 @@
     position: relative;
     width: 10px;
     height: 10px;
-    background: var(--secondary);
+    background: #fff;
     border-radius: 50%;
-    border: 1px solid gray;
+    border: 2px solid var(--prime);
     cursor: crosshair;
     z-index: 1;
     margin-bottom: 5px
 }
 
 .drawflow .drawflow-node .input {
-    left: -21px;
+    left: -20px;
     top: 2px;
-    background: var(--prime)
 }
 
 .drawflow .drawflow-node .output {

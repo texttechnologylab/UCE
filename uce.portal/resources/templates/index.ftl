@@ -64,7 +64,17 @@
 <body>
 <#include "*/messageModal.ftl">
 
-<div id="full-flow-container" style="visibility: hidden">
+<!-- The flow chart of the Linkable objects -->
+<div id="flow-chart-modal" class="display-none">
+    <div class="header">
+        <div class="container flexed align-items-center justify-content-between">
+            <h5 class="mb-0 text-dark"><i class="xlarge-font fab fa-hubspot mr-2"></i><span>Linkable Space</span></h5>
+            <a class="w-rounded-btn" onclick="$(this).closest('#flow-chart-modal').hide()"><i class="fas fa-times"></i></a>
+        </div>
+
+    </div>
+    <div id="full-flow-container">
+    </div>
 </div>
 
 <div class="site-container">

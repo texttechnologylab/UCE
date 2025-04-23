@@ -6,6 +6,7 @@ class DrawflowJS {
         this.editor.start();
         this.nodes = [];
         this.placedNodes = new Map(); // key: unique, value: node ID + position
+        this.connectionSet = new Set();  // in constructor
         //this.editor.editor_mode = 'view';
     }
 
@@ -13,14 +14,18 @@ class DrawflowJS {
         console.log(nodeDto);
         this.placedNodes = new Map();
         this.nodes = [];
-        this.placeNodeDto(nodeDto, 1, 1); // root starts at (0,0)
+        this.placeNodeDto(nodeDto, 1, 1); // root starts at (1,1)
         activatePopovers();
     }
 
     createNodeFromNodeDto(nodeDto){
         return {
             type: nodeDto.type,
-            html: nodeDto.nodeHtml,
+            html: `
+                <div>
+                    <p class="node-title">${nodeDto.type}</p>
+                    <div>${nodeDto.nodeHtml}</div>
+                </div>`,
             unique: nodeDto.unique,
             id: -1,
             posX: 0,
@@ -29,20 +34,17 @@ class DrawflowJS {
     }
 
     addLabelNode(labelText, depth, row) {
-        const spacingX = 300;
-        const spacingY = 150;
+        const spacingX = 100;
+        const spacingY = 300;
 
         const posX = depth * spacingX;
         const posY = row * spacingY;
 
         const html = `
-        <div>
-            <div class="p-2 color-secondary large-font">
+            <div class="p-2 label color-secondary large-font">
                 ${labelText}
             </div>
-        </div>
-    `;
-
+        `;
         const id = this.editor.addNode('label', 1, 1, posX, posY, 'html', {}, html);
         return id;
     }
@@ -52,7 +54,7 @@ class DrawflowJS {
             return this.placedNodes.get(nodeDto.unique).id;
         }
 
-        const spacingX = 500;
+        const spacingX = 600;
         const spacingY = 300;
 
         const node = this.createNodeFromNodeDto(nodeDto);
@@ -69,9 +71,16 @@ class DrawflowJS {
         if (Array.isArray(nodeDto.fromNodes)) {
             nodeDto.fromNodes.forEach((fromNodeDto, i) => {
                 const fromId = this.placeNodeDto(fromNodeDto, depth - 2, currentRow++);
-                const labelNodeId = this.addLabelNode(fromNodeDto.link.type, depth - 1, currentRow - 1);
-                this.editor.addConnection(fromId, labelNodeId, 'output_1', 'input_1');
-                this.editor.addConnection(labelNodeId, node.id, 'output_1', 'input_1');
+                const label = fromNodeDto.link.type;
+                const connectionKey = `${fromId}->${node.id}:${label}`;
+                const reverseKey = `${node.id}->${fromId}:${label}`;
+
+                if (!this.connectionSet.has(reverseKey)) {
+                    const labelNodeId = this.addLabelNode(label, depth - 1, currentRow - 1);
+                    this.editor.addConnection(fromId, labelNodeId, 'output_1', 'input_1');
+                    this.editor.addConnection(labelNodeId, node.id, 'output_1', 'input_1');
+                    this.connectionSet.add(connectionKey);
+                }
             });
         }
 
@@ -79,9 +88,16 @@ class DrawflowJS {
         if (Array.isArray(nodeDto.toNodes)) {
             nodeDto.toNodes.forEach((toNodeDto, i) => {
                 const toId = this.placeNodeDto(toNodeDto, depth + 2, currentRow++);
-                const labelNodeId = this.addLabelNode(toNodeDto.link.type, depth + 1, currentRow - 1);
-                this.editor.addConnection(node.id, labelNodeId, 'output_1', 'input_1');
-                this.editor.addConnection(labelNodeId, toId, 'output_1', 'input_1');
+                const label = toNodeDto.link.type;
+                const connectionKey = `${node.id}->${toId}:${label}`;
+                const reverseKey = `${toId}->${node.id}:${label}`;
+
+                if (!this.connectionSet.has(reverseKey)) {
+                    const labelNodeId = this.addLabelNode(label, depth + 1, currentRow - 1);
+                    this.editor.addConnection(node.id, labelNodeId, 'output_1', 'input_1');
+                    this.editor.addConnection(labelNodeId, toId, 'output_1', 'input_1');
+                    this.connectionSet.add(connectionKey);
+                }
             });
         }
 

@@ -15,7 +15,7 @@
                         <#list document.getLinkableViewModel().getIncomingLinks() as link>
                             <#assign popupText += "<i class='small-font fas fa-link mr-1 color-prime'></i>" + link.getLink().getType() + "<br/>">
                         </#list>
-                        <div class="link lines open-linkable-node"
+                        <div class="link lines open-linkable-node clickable"
                              data-unique="${document.getUnique()}"
                              data-trigger="hover"
                              data-placement="left"
@@ -34,6 +34,7 @@
     <div class="pl-3 pr-3 pb-2 pt-3 w-100">
         <div class="document-header">
             <div class="w-100">
+                <!-- name, title, author etc -->
                 <div class="flexed align-items-center">
                     <div class="flexed align-items-center">
                         <!-- We only show the 3d taxonomy dist if we have them annotated in the current corpus -->
@@ -68,7 +69,6 @@
                 </div>
             </div>
 
-            <!-- name, title, author etc -->
             <div class="flexed align-items-center justify-content-end">
                 <p class="mb-0 text mr-3"> ${document.getLanguage()?upper_case}</p>
                 <div class="mb-0 flexed align-items-center text">
@@ -257,7 +257,7 @@
                         <#list document.getLinkableViewModel().getOutgoingLinks() as link>
                             <#assign popupText += "<i class='small-font fas fa-link mr-1 color-prime'></i>" + link.getLink().getType() + "<br/>">
                         </#list>
-                        <div class="link lines open-linkable-node"
+                        <div class="link lines open-linkable-node clickable"
                              data-unique="${document.getUnique()}"
                              data-trigger="hover"
                              data-placement="right"
