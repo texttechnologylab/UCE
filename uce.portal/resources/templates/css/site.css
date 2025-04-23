@@ -483,6 +483,28 @@ nav .selected-nav-btn.text::before {
     border-radius: 50%;
 }
 
+#full-flow-container{
+    position: fixed;
+    top:0;
+    left:0;
+    border:lightgrey 1px solid;
+    border-radius: 6px;
+    background: rgba(255, 255, 255, 1);
+    backdrop-filter: blur(4px);
+    width: 100vw;
+    height: 100vh;
+    z-index: 100;
+}
+
+#full-flow-container .flow-chart{
+    border:gray 1px solid;
+    background-image: linear-gradient(rgba(125, 125, 125, .1) 0.5px, transparent 1px), linear-gradient(90deg, rgba(125, 125, 125, .15) 0.5px, transparent 1px);
+    background-size: 1.5em 1.5em;
+    height: 800px;
+    width: 800px;
+    position: relative;
+}
+
 .ne-MISC {
     color: rgba(125, 125, 125, 1);
 }

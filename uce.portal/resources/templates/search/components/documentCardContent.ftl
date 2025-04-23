@@ -1,14 +1,30 @@
 <div class="flexed align-items-stretch h-100">
 
+    <#assign isReducedView = reduced??>
+
     <!-- incoming links -->
-    <#if document.getLinkableNodeVm()?has_content && document.getLinkableNodeVm().getIncomingLinks()?size gt 0>
+    <#if !isReducedView && document.getLinkableViewModel()?has_content && document.getLinkableViewModel().getIncomingLinks()?size gt 0>
         <div class="links-container">
             <div class="links-div" data-kind="incoming">
-                <div class="link border-radius-0 mt-0 mb-4 "><i class="turn-135 large-font fab fa-hubspot"></i>
+                <div class="link border-radius-0 mt-0 mb-4 "><i class="large-font fab fa-hubspot"></i>
                 </div>
                 <div class="h-100 pb-1 flexed align-items-center">
                     <div class="position-relative pb-4">
-                        <div class="link lines">${document.getLinkableNodeVm().getIncomingLinks()?size}</div>
+                        <#assign popoverTitle = "<span class='text-center w-100 small-font'><i class='mr-2 small-font fas fa-long-arrow-alt-right'></i>" + languageResource.get("incomingLinks") + "</span>">
+                        <#assign popupText = "">
+                        <#list document.getLinkableViewModel().getIncomingLinks() as link>
+                            <#assign popupText += "<i class='small-font fas fa-link mr-1 color-prime'></i>" + link.getLink().getType() + "<br/>">
+                        </#list>
+                        <div class="link lines open-linkable-node"
+                             data-unique="${document.getUnique()}"
+                             data-trigger="hover"
+                             data-placement="left"
+                             data-toggle="popover"
+                             data-html="true"
+                             data-original-title="${popoverTitle}"
+                             data-content="${popupText}">
+                            ${document.getLinkableViewModel().getIncomingLinks()?size}
+                        </div>
                     </div>
                 </div>
             </div>
@@ -196,8 +212,8 @@
             <@renderFallback document/>
         </#if>
 
-        <!-- metadata if it exists -->
-        <#if document.getUceMetadataWithoutJson()?size gt 0>
+        <!-- metadata if it exists (and its not reduced view) -->
+        <#if !isReducedView && document.getUceMetadataWithoutJson()?size gt 0>
             <#assign uceMetadata = document.getUceMetadataWithoutJson()>
             <div class="metadata-div">
                 <#include "*/document/documentUceMetadata.ftl">
@@ -206,13 +222,27 @@
     </div>
 
     <!-- outgoing links -->
-    <#if document.getLinkableNodeVm()?has_content && document.getLinkableNodeVm().getOutgoingLinks()?size gt 0>
+    <#if !isReducedView && document.getLinkableViewModel()?has_content && document.getLinkableViewModel().getOutgoingLinks()?size gt 0>
         <div class="links-container">
             <div class="links-div" data-kind="outgoing">
                 <div class="link border-radius-0 mt-0 mb-4 "><i class="turn-135 large-font fab fa-hubspot"></i></div>
                 <div class="h-100 pb-1 flexed align-items-center">
                     <div class="position-relative pb-4">
-                        <div class="link lines">${document.getLinkableNodeVm().getOutgoingLinks()?size}</div>
+                        <#assign popoverTitle = "<span class='text-center w-100 small-font'>" + languageResource.get("outgoingLinks") + "<i class='ml-2 small-font fas fa-long-arrow-alt-right'></i></span>">
+                        <#assign popupText = "">
+                        <#list document.getLinkableViewModel().getOutgoingLinks() as link>
+                            <#assign popupText += "<i class='small-font fas fa-link mr-1 color-prime'></i>" + link.getLink().getType() + "<br/>">
+                        </#list>
+                        <div class="link lines open-linkable-node"
+                             data-unique="${document.getUnique()}"
+                             data-trigger="hover"
+                             data-placement="right"
+                             data-toggle="popover"
+                             data-html="true"
+                             data-original-title="${popoverTitle}"
+                             data-content="${popupText}">
+                            ${document.getLinkableViewModel().getOutgoingLinks()?size}
+                        </div>
                     </div>
                 </div>
             </div>
