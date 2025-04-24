@@ -182,6 +182,7 @@
             </#if>
         </#macro>
 
+        <#--
         <#macro renderFallback document>
             <#if document?has_content>
                 <div class="snippet-content position-relative">
@@ -189,6 +190,32 @@
                         ${document.getFullTextSnippet(85)}...
                     </div>
                 </div>
+            </#if>
+        </#macro>
+        -->
+        <#macro renderFallback document>
+            <#if document?has_content>
+                <#if mainAnno??>
+                    <#if offsetList??>
+                        <div class="snippet-content position-relative">
+                            <div class="small-font text font-italic mr-2 word-break-word">
+                                ${document.getFullTextSnippetOffsetList(offsetList)}...
+                            </div>
+                        </div>
+                    <#else>
+                        <div class="snippet-content position-relative">
+                            <div class="small-font text font-italic mr-2 word-break-word">
+                                ${document.getFullTextSnippetAnnotationOffset(mainAnno)}...
+                            </div>
+                        </div>
+                    </#if>
+                <#else>
+                    <div class="snippet-content position-relative">
+                        <div class="small-font text font-italic mr-2 word-break-word">
+                            ${document.getFullTextSnippet(85)}...
+                        </div>
+                    </div>
+                </#if>
             </#if>
         </#macro>
 
@@ -210,6 +237,8 @@
             <@renderFallback document/>
         </#if>
 
+
+        <#--
         <#macro renderFallback document>
             <#if document?has_content>
                 <#if mainAnno??>
@@ -235,6 +264,7 @@
                 </#if>
             </#if>
         </#macro>
+        -->
 
         <!-- metadata if it exists (and its not reduced view) -->
         <#if !isReducedView && document.getUceMetadataWithoutJson()?size gt 0>

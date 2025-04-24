@@ -1,7 +1,7 @@
 :root {
     /* Variables prime and secondary MUST ALWAYS be in line 3 and 4! */
-    --prime: #5c7a17;
-    --secondary: darkgreen;
+    --prime: #00618f;
+    --secondary: rgba(35, 35, 35, 1);
     --gold: rgba(255, 165, 0, 1);
     --dark: rgba(38, 38, 38, 1);
     --default: rgb(245, 245, 247, 1);
@@ -126,6 +126,11 @@ nav .selected-nav-btn.text::before {
 
 .small-font {
     font-size: small;
+}
+
+.small-font.text.font-italic.mr-2.word-break-word {
+    font-family: "Courier New", Courier, monospace;
+    font-style: normal;
 }
 
 .medium-font {

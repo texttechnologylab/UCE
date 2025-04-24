@@ -896,6 +896,12 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                     }.getType());
                             foundSnippets.put(idx, pageSnippet.getFirst());
                         }
+                        foundSnippets.forEach((key, snippetList) -> {
+                            for (PageSnippet snippet : snippetList) {
+                                // Modify the value (example: changing content)
+                                snippet.setSnippet(snippet.getSnippet().replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;"));
+                            }
+                        });
                         search.setSearchSnippets(foundSnippets);
 
                         // And the ranks of each document.
