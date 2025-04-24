@@ -67,7 +67,7 @@ public class Importer {
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
-    private static final String[] COMATIBLE_CAS_FILE_ENDINGS = Arrays.asList("xmi", "bz2", "zip").toArray(new String[0]);
+    private static final String[] COMATIBLE_CAS_FILE_ENDINGS = Arrays.asList("xmi", "bz2", "zip", "gz").toArray(new String[0]);
     private GoetheUniversityService goetheUniversityService;
     private PostgresqlDataInterface_Impl db;
     private GbifService gbifService;
@@ -111,7 +111,7 @@ public class Importer {
         try (var fileStream = Files.walk(Path.of(path))) {
             return (int) fileStream
                     .filter(Files::isRegularFile)
-                    .filter(path -> path.toString().toLowerCase().endsWith(".xmi"))
+                    .filter(path -> StringUtils.checkIfFileHasExtension(path.toString().toLowerCase(), COMATIBLE_CAS_FILE_ENDINGS))
                     .count();
         } catch (IOException e) {
             throw new RuntimeException(e);

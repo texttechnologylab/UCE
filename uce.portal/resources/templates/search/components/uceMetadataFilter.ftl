@@ -13,14 +13,18 @@
             </select>
         </#if>
 
+        <!-- TODO: Date needs better filering -->
         <#if filter.getValueType().name() == "DATE">
+            <input type="number" class="w-100 ml-1 small-font p-1 form-control h-auto" placeholder="{${filter.getValueType().name()}}"/>
         </#if>
 
         <#if filter.getValueType().name() == "STRING" || filter.getValueType().name() == "URL">
             <input type="text" class="w-100 ml-1 small-font p-1 form-control h-auto" placeholder="{${filter.getValueType().name()}}"/>
         </#if>
 
+        <!-- TODO: NUMBER needs better filtering option -->
         <#if filter.getValueType().name() == "NUMBER">
+            <input type="number" class="w-100 ml-1 small-font p-1 form-control h-auto" placeholder="{${filter.getValueType().name()}}"/>
         </#if>
     </div>
 </div>
