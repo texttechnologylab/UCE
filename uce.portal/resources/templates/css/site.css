@@ -571,6 +571,47 @@ nav .selected-nav-btn.text::before {
     height: 100%;
 }
 
+.expandable-container {
+    position: relative;
+    max-width: 100%;
+}
+
+.expandable-content {
+    max-height: 100px; /* collapsed height */
+    overflow: hidden;
+    position: relative;
+    transition: max-height 0.3s ease;
+}
+
+.expandable-content.expanded {
+    max-height: none;
+}
+
+.fade-out-overlay {
+    content: '';
+    position: absolute;
+    bottom: 40px;
+    left: 0;
+    right: 0;
+    height: 50px;
+    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+}
+
+.expandable-content.expanded + .fade-out-overlay {
+    opacity: 0;
+}
+
+.toggle-expand-btn {
+    background: none;
+    border: none;
+    color: #007bff;
+    cursor: pointer;
+    padding: 0.5em;
+    font-size: 0.9em;
+}
+
 /* BG Anim */
 .bg-anim {
     background: linear-gradient(90deg, rgba(125, 125, 125, 0.20) 0%, rgba(125, 125, 125, 0.15) 100%);
@@ -983,7 +1024,9 @@ nav .selected-nav-btn.text::before {
 
 .document-card .metadata-div{
     font-size: small;
-    margin-top: 14px;
+    padding-top: 14px;
+    max-height: 110px;
+    overflow-y: auto;
 }
 
 .document-card .metadata-div *{

@@ -12,13 +12,13 @@
 
     <hr class="mt-2 mb-4"/>
 
-
     <!-- the document this is from -->
     <div class="mt-4 mb-3 w-100 p-0 m-0 justify-content-center flexed align-items-start">
         <div class="document-card w-100">
             <#assign document = vm.getDocument()>
             <#assign searchId = "">
             <#assign mainAnno = vm.getCue()>
+            <#assign reduced = true>
             <#assign offsetList = vm.getOffsetList()>
             <#include '*/search/components/documentCardContent.ftl' >
         </div>

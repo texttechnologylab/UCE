@@ -9,6 +9,16 @@ $('body').on('click', 'nav .switch-view-btn', function () {
     navigateToView(id);
 })
 
+$('body').on('click', '.expandable-container .toggle-expand-btn', function() {
+    const $btn = $(this);
+    const $container = $btn.closest('.expandable-container');
+    const $content = $container.find('.expandable-content');
+
+    $content.toggleClass('expanded');
+
+    $btn.text($content.hasClass('expanded') ? 'Show less' : 'Show more');
+});
+
 function navigateToView(id) {
     // Close any potential modals:
     $('.corpus-inspector-include').hide(150)

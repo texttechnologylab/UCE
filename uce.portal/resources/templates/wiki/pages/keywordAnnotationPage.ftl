@@ -46,6 +46,7 @@
             <div class="document-card w-100">
                 <#assign document = vm.getDocument()>
                 <#assign searchId = "">
+                <#assign reduced = true>
                 <#include '*/search/components/documentCardContent.ftl' >
             </div>
         </div>

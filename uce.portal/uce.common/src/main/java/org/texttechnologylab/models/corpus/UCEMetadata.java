@@ -5,6 +5,7 @@ import com.google.gson.JsonParser;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.viewModels.JsonViewModel;
 import org.texttechnologylab.utils.JsonBeautifier;
+import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.Column;
 import javax.persistence.Entity;
@@ -43,6 +44,17 @@ public class UCEMetadata extends ModelBase {
 
     public void setKey(String key) {
         this.key = key;
+    }
+
+    /**
+     * Gets a potentially cleaner version of the value, e.g. decimal numbers are rounded and the likes.
+     */
+    public String getCleanValue(){
+        if(getValue() == null) return "";
+        if(valueType == UCEMetadataValueType.NUMBER){
+            return StringUtils.tryRoundToTwoDecimals(getValue());
+        }
+        return getValue();
     }
 
     public String getValue() {
