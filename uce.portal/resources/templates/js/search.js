@@ -1,5 +1,79 @@
 let currentCorpusUniverseHandler = undefined;
 
+function create_histogram_data(data, bins) {
+    // extract only the values, filter nan
+    const values = data.map(d => parseFloat(d.value)).filter(v => !isNaN(v))
+
+    // see https://github.com/texttechnologylab/TextAnnotatorReloaded/blob/main/src/components/BarChart.tsx
+    const min = Math.min(...values)
+    const max = Math.max(...values)
+    const range = max - min
+
+    const bucketSize = range / bins
+    const buckets = new Array(bins).fill(0)
+    for (const value of values) {
+        const bucketIndex = Math.min(
+            Math.floor((value - min) / bucketSize),
+            bins-1
+        )
+        buckets[bucketIndex]++
+    }
+
+    const labels = buckets.map((_, index) => {
+        const start = (min + index * bucketSize).toFixed(3)
+        const end = (min + (index + 1) * bucketSize).toFixed(3)
+        return start.toString() + " - " + end.toString()
+    })
+
+    return [buckets, labels]
+}
+
+function update_search_vizualization() {
+    // TODO global state?
+    const data = window.search_vizualization.viz_data["data"]
+    const current_page = window.search_vizualization.viz_data["current_page"]
+    const n_bins = window.search_vizualization.settings.n_bins
+    const selected_feature = window.search_vizualization.settings.selected_feature
+
+    // update features options based on current data
+    const select_elem = document.getElementById('search_viz_selected_feature')
+    while (select_elem.firstChild) {
+        select_elem.removeChild(select_elem.lastChild)
+    }
+    Object.keys(data).sort().forEach(category => {
+        const option = document.createElement('option')
+        option.value = category
+        option.textContent = category
+        if (category === selected_feature) {
+            option.selected = true
+        }
+        select_elem.appendChild(option)
+    })
+
+    let [chart_data, chart_labels] = create_histogram_data(data[selected_feature], n_bins)
+    console.log("chart_data", chart_data)
+    console.log("chart_labels", chart_labels)
+
+    const num_docs = data[selected_feature].length
+
+    const title = "Distribution of \"" + selected_feature + "\" in the current page (" + current_page.toString() + ") of the search results (" + num_docs.toString()  + " documents)"
+
+    const chart_elem = document.getElementById('search-results-visualization-graph')
+    while (chart_elem.firstChild) {
+        chart_elem.removeChild(chart_elem.lastChild)
+    }
+
+    window.graphVizHandler.createBasicChart(
+        chart_elem,
+        title,
+        {
+            "labels": chart_labels,
+            "data": chart_data,
+        },
+        'bar',
+    )
+}
+
 /**
  * Starts a new search with the given input
  */
@@ -240,6 +314,10 @@ async function handleSwitchingOfPage(page) {
             $('.view .search-result-container .document-list-include').html(response.documentsList);
             $('.view .search-result-container .navigation-include').html(response.navigationView);
             $('.view .search-result-container .keyword-in-context-include').html(response.keywordInContextView);
+
+            const viz_data = JSON.parse(response.searchVisualization)
+            window.search_vizualization.viz_data = viz_data
+            update_search_vizualization()
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);

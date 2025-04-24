@@ -9,6 +9,16 @@
         </div>
     </div>
 
+    <div class="row mr-3 ml-3 pb-5">
+        <div class="content" style="width: 100%;">
+            <h6>Search result visualizations</h6>
+
+            <div style="width: 100%;">
+                <#include "*/search/components/searchVisualization.ftl" >
+            </div>
+        </div>
+    </div>
+
     <div class="row mb-0 mr-0 ml-0 pb-5">
 
         <div class="col-lg-3 position-relative search-row" data-type="left">
