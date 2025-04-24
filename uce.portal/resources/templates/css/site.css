@@ -128,11 +128,6 @@ nav .selected-nav-btn.text::before {
     font-size: small;
 }
 
-.small-font.text.font-italic.mr-2.word-break-word {
-    font-family: "Courier New", Courier, monospace;
-    font-style: normal;
-}
-
 .medium-font {
     font-size: medium;
 }
@@ -865,6 +860,11 @@ nav .selected-nav-btn.text::before {
     text-decoration-thickness: 3px;
 }
 
+.document-card .snippet-content{
+    font-family: "Courier New", Courier, monospace;
+    font-style: normal;
+}
+
 .document-card .snippet-content b {
     color: var(--prime);
 }
@@ -1025,7 +1025,7 @@ nav .selected-nav-btn.text::before {
 .document-card .metadata-div{
     font-size: small;
     padding-top: 14px;
-    max-height: 110px;
+    max-height: 160px;
     overflow-y: auto;
 }
 
