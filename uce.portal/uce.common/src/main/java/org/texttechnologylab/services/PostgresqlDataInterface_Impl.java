@@ -1354,6 +1354,22 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<Object[]> getTopTopicsBySentence(long sentenceId, int limit) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            // Direct query using sentence_id
+            String sql = "SELECT topiclabel, thetast FROM sentencetopics " +
+                    "WHERE sentence_id = :sentenceId " +
+                    "ORDER BY thetast DESC " +
+                    "LIMIT :limit";
+            
+            var query = session.createNativeQuery(sql)
+                    .setParameter("sentenceId", sentenceId)
+                    .setParameter("limit", limit);
+
+            return query.getResultList();
+        });
+    }
+
     public List<Object[]> getTopDocumentsByTopicLabel(String topicValue, long corpusId, int limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = "SELECT d.id, d.documentid, dtr.thetadt " +
