@@ -91,7 +91,7 @@
         <dependency>
             <groupId>com.github.TheItCrOw</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>3.0.6</version>
+            <version>3.0.7</version>
         </dependency>
 
         <!-- Local reference -->
