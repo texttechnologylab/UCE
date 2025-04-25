@@ -38,6 +38,7 @@ import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.LogStatus;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
+import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -1188,6 +1189,33 @@ public class Importer {
             var chunked = ListUtils.partitionList(corpusDocuments, 100);
 
             for (var documents : chunked) {
+                // Get the complete list of document sentence embeddings of all documents
+                var docSentenceEmbeddings = documents.stream()
+                        .flatMap(d -> ExceptionUtils.tryCatchLog(
+                                () -> ragService.getDocumentSentenceEmbeddingsOfDocument(d.getId()).stream(),
+                                (ex) -> logger.error("Error getting the document sentence embeddings of document " + d.getId(), ex)))
+                        .filter(Objects::nonNull)
+                        .toList();
+
+                // Now, from these sentences - generate a 2D and 3D tsne reduction embedding and store it
+                // with the single document embedding
+                var reducedSEmbeddingDto = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getEmbeddingDimensionReductions(
+                                docSentenceEmbeddings.stream().map(DocumentSentenceEmbedding::getEmbedding).toList()),
+                        (ex) -> logger.error("Error getting embedding dimension reductions in post processing a corpus.", ex));
+
+                if (reducedSEmbeddingDto == null || reducedSEmbeddingDto.getTsne2D() == null) continue;
+                // Store the tsne reduction in each sentence - this is basically now a 2D and 3D coordinate
+                for (var i = 0; i < reducedSEmbeddingDto.getTsne2D().length; i++) {
+                    docSentenceEmbeddings.get(i).setTsne2d(reducedSEmbeddingDto.getTsne2D()[i]);
+                    docSentenceEmbeddings.get(i).setTsne3d(reducedSEmbeddingDto.getTsne3D()[i]);
+                }
+                // Update the changes (Could be a bulk Update... let's see :-)
+                docSentenceEmbeddings.forEach(de -> ExceptionUtils.tryCatchLog(
+                        () -> ragService.updateDocumentSentenceEmbedding(de),
+                        (ex) -> logger.error("Error updating and saving a document sentence embedding.", ex)));
+
+
                 // Get the complete list of document chunk embeddings of all documents
                 var docChunkEmbeddings = documents.stream()
                         .flatMap(d -> ExceptionUtils.tryCatchLog(
@@ -1314,6 +1342,26 @@ public class Importer {
         // Calculate embeddings if they are activated
         if (corpusConfig.getOther().isEnableEmbeddings()) {
             logger.info("Embeddings...");
+
+            // Sentence Embeddings
+            var docHasSentenceEmbeddings = ExceptionUtils.tryCatchLog(
+                    () -> ragService.documentHasDocumentSentenceEmbeddings(document.getId()),
+                    (ex) -> logImportError("Error while checking if a document already has DocumentSentenceEmbeddings.", ex, filePath));
+            if (docHasSentenceEmbeddings != null && !docHasSentenceEmbeddings) {
+                // Build the sentences, which are the most crucial embeddings
+                var documentSentenceEmbeddings = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getSentenceEmbeddingFromDocument(document),
+                        (ex) -> logImportError("Error getting the complete embedding sentences for document: " + document.getId(), ex, filePath));
+
+                // Store the sentences
+                if (documentSentenceEmbeddings != null)
+                    for (var docEmbedding : documentSentenceEmbeddings) {
+                        ExceptionUtils.tryCatchLog(
+                                () -> ragService.saveDocumentSentenceEmbedding(docEmbedding),
+                                (ex) -> logImportError("Error saving a document sentence embeddings.", ex, filePath)
+                        );
+                    }
+            }
 
             // Chunk Embeddings
             var docHasChunkEmbeddings = ExceptionUtils.tryCatchLog(
