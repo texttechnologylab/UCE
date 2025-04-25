@@ -1,6 +1,7 @@
 CREATE TABLE IF NOT EXISTS sentencetopics (
-                                               sentence_id BIGINT,
+                                               unifiedtopic_id BIGINT,
                                                document_id BIGINT,
+                                               sentence_id BIGINT,
                                                topicinstance_id BIGINT, -- refers to topicvaluebase.id
                                                topiclabel VARCHAR(255), -- refers to topicvaluebase.value
                                                thetast DOUBLE PRECISION
