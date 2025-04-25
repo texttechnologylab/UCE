@@ -89,9 +89,9 @@
 
         <!-- Own Fork reference -->
         <dependency>
-            <groupId>com.github.TheItCrOw</groupId>
-            <artifactId>UIMATypeSystem</artifactId>
-            <version>3.0.6</version>
+            <groupId>org.texttechnologylab.annotation</groupId>
+            <artifactId>typesystem</artifactId>
+            <version>3.0.7</version>
         </dependency>
 
         <!-- Local reference -->

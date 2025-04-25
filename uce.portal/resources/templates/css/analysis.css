@@ -1,0 +1,125 @@
+.analysis-view{
+    padding-bottom: 2rem;
+}
+
+.analysis-view *{
+    font-family: "Times New Roman", serif;
+}
+
+.analysis-view header{
+    width: 100%;
+    border-bottom: 1px lightgrey solid;
+    padding-top: 2rem;
+    padding-bottom: 2rem;
+}
+
+.analysis-view .search-analysis-input{
+    max-width: 300px;
+    flex-grow: 1;
+    padding: 8px;
+}
+
+.analysis-view .search-analysis-btn{
+    height: 100%;
+    color:var(--prime);
+    padding-right: 12px;
+    padding-left: 12px;
+}
+
+.analysis-view .search-block {
+    flex-grow: 1;
+}
+
+.analysis-view .search-block .flexed {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    gap: 5px;
+}
+
+.analysis-view-tree {
+    list-style: none;
+    padding-left: 0;
+    margin: 0;
+    font-family: sans-serif;
+}
+
+.tree-toggle {
+    display: flex;
+    align-items: center;
+    cursor: pointer;
+    margin-bottom: 0.4em;
+}
+
+.tree-toggle .toggle-icon {
+    margin-right: 0.5em;
+    transition: transform 0.2s ease;
+}
+
+ul, #myUL {
+    list-style-type: none;
+}
+
+#myUL {
+    margin: 0;
+    padding: 0;
+}
+
+.tree-caret {
+    cursor: pointer;
+    -webkit-user-select: none; /* Safari 3.1+ */
+    -moz-user-select: none;    /* Firefox 2+ */
+    -ms-user-select: none;     /* IE 10+ */
+    user-select: none;
+}
+
+.tree-caret::before {
+    content: "\25B6"; /* ▶ */
+    color: black;
+    display: inline-block;
+    margin-right: 6px;
+}
+
+.tree-caret-down::before {
+    -ms-transform: rotate(90deg); /* IE 9 */
+    -webkit-transform: rotate(90deg); /* Safari */
+    transform: rotate(90deg);
+}
+
+.tree-nested {
+    display: none !important;
+}
+
+.tree-active {
+    display: block !important;
+}
+
+label,
+textarea {
+    font-size: 0.8rem;
+    letter-spacing: 1px;
+}
+
+textarea {
+    padding: 10px;
+    width: 500px;
+    line-height: 1.5;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    box-shadow: 1px 1px 1px #999;
+}
+
+
+textarea {
+    margin: 0 auto;
+    display: block;
+    width: 100%;
+    max-width: 600px;
+}
+
+label {
+    display: block;
+    margin-bottom: 10px;
+}
+
+

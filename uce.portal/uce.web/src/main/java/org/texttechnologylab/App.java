@@ -33,6 +33,8 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -93,6 +95,9 @@ public class App {
         logger.info("Testing the language resources:");
         var languageResource = new LanguageResources("en-EN");
         logger.info(languageResource.get("search"));
+
+        var modelResources = new ModelResources();
+        logger.info("Testing the model resources:");
 
         // Start the different cronjobs in the background
         SessionManager.InitSessionManager(commonConfig.getSessionJobInterval());
@@ -212,7 +217,7 @@ public class App {
         }
     }
 
-    private static void initSparkRoutes(ApplicationContext context) {
+    private static void initSparkRoutes(ApplicationContext context) throws IOException {
         var searchApi = new SearchApi(context, configuration);
         var documentApi = new DocumentApi(context, configuration);
         var ragApi = new RAGApi(context, configuration);
@@ -249,6 +254,8 @@ public class App {
             RequestContextHolder.setLanguageResources(languageResources);
         });
 
+        ModelResources modelResources = new ModelResources();
+        List<ModelGroup> groups = modelResources.getGroupedModelObjects();
         // Landing page
         get("/", (request, response) -> {
             var model = new HashMap<String, Object>();
@@ -266,6 +273,7 @@ public class App {
             model.put("lexiconEntriesCount", context.getBean(LexiconService.class).countLexiconEntries());
             model.put("lexiconizableAnnotations", LexiconService.lexiconizableAnnotations);
             model.put("uceVersion", commonConfig.getUceVersion());
+            model.put("modelGroups", groups);
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");

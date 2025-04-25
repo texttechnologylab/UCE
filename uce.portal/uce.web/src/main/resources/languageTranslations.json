@@ -7,6 +7,14 @@
     "de-DE": "Team",
     "en-EN": "Team"
   },
+  "analysis": {
+    "de-DE": "Analyse",
+    "en-EN": "Analysis"
+  },
+  "input": {
+    "de-DE": "Eingabe",
+    "en-EN": "Input"
+  },
   "search": {
     "de-DE": "Suche",
     "en-EN": "Search"
