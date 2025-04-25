@@ -11,7 +11,7 @@ function generateUUID() {
  * @returns {{primaryColor: string}}
  */
 function getCustomUCEColors() {
-    const langSelect = document.querySelector('.switch-language-select');
+    const langSelect = document.querySelector('#prime-color-container');
     const styles = window.getComputedStyle(langSelect);
     return {primaryColor: styles.color};
 }

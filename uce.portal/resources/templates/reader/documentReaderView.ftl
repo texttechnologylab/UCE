@@ -62,6 +62,8 @@
     <div class="corpus-inspector-include display-none">
     </div>
 
+    <div id="prime-color-container" class="color-prime"></div>
+
     <div class="pages-loader-popup">
         <div class="flexed align-items-center justify-content-center h-100 w-100">
             <p class="mb-0 text">

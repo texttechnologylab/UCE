@@ -79,6 +79,8 @@
 
 <div class="site-container">
 
+    <div id="prime-color-container" class="color-prime"></div>
+
     <nav class="position-relative">
 
         <div class="container-fluid flexed align-items-center justify-content-around">
