@@ -2,6 +2,8 @@ package org.texttechnologylab.models;
 
 import io.micrometer.common.lang.Nullable;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.utils.StringUtils;
@@ -12,7 +14,18 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @MappedSuperclass
-public class UIMAAnnotation extends ModelBase {
+public class UIMAAnnotation extends ModelBase implements Linkable {
+
+    @Override
+    public List<Class<? extends ModelBase>> getCompatibleLinkTypes() {
+        return List.of(DocumentToAnnotationLink.class);
+    }
+
+    @Override
+    public long getPrimaryDbIdentifier() {
+        return this.getId();
+    }
+
     @Column(name = "\"beginn\"")
     private int begin;
     @Column(name = "\"endd\"")

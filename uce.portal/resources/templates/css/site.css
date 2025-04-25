@@ -923,7 +923,6 @@ nav .selected-nav-btn.text::before {
     background-color: lightgray;
 }
 
-
 .focused-document-card {
     margin-bottom: 4rem;
     position: relative;
@@ -1015,7 +1014,7 @@ nav .selected-nav-btn.text::before {
     width: 100%;
 }
 
-.document-card .snippet-content {
+.snippet-content {
     padding: 12px;
     border:1px solid lightgray;
     border-radius: 6px;

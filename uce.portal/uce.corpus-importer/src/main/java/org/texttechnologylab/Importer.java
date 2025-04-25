@@ -269,7 +269,7 @@ public class Importer {
                                         () -> db.callLogicalLinksRefresh(),
                                         (ex) -> logImportError("Error refreshing the logical links of corpus " + corpus1.getId(), ex, "LINKS"));
                                 if(result != null)
-                                    logImportInfo("=========== Finished updating the lexicon. Inserted new links: " + result, LogStatus.SAVED, "LINKS", 0);
+                                    logImportInfo("=========== Finished updating the logical links. Inserted new links: " + result, LogStatus.SAVED, "LINKS", 0);
                             }, executor);
 
                             // Lexicon
@@ -499,7 +499,7 @@ public class Importer {
             // Keep this at the end of the annotation setting, as they might require previous annotations. Order matter here!
             if (corpusConfig.getAnnotations().isLogicalLinks())
                 ExceptionUtils.tryCatchLog(
-                        () -> setLogicLinks(jCas, corpus.getId(), filePath),
+                        () -> setLogicLinks(document, jCas, corpus.getId(), filePath),
                         (ex) -> logImportWarn("This file should have contained LinkTypesystem annotations, but selecting them caused an error.", ex, filePath));
 
             ExceptionUtils.tryCatchLog(
@@ -521,7 +521,7 @@ public class Importer {
     /**
      * Selects and sets the logical links between documents, annotations and more.
      */
-    private void setLogicLinks(JCas jCas, long corpusId, String filePath) throws DatabaseOperationException {
+    private void setLogicLinks(Document document, JCas jCas, long corpusId, String filePath) throws DatabaseOperationException {
         // Document -> Document Links
         var documentLinks = new ArrayList<DocumentLink>();
         JCasUtil.select(jCas, DLink.class).forEach(l -> {
@@ -543,11 +543,15 @@ public class Importer {
         JCasUtil.select(jCas, DALink.class).forEach(l -> {
             var docToAnnoLink = new DocumentToAnnotationLink();
             docToAnnoLink.setCorpusId(corpusId);
-            docToAnnoLink.setFrom(l.getFrom()); // from is a documentId, but doesn't have to be *this* document.
+            docToAnnoLink.setFrom(l.getFrom()); // from is a documentId, but not of *this* document.
             docToAnnoLink.setLinkId(String.valueOf(l.getLinkId()));
             docToAnnoLink.setType(l.getLinkType());
+            // In the case of a Document -> Annotation, the "to" in the typesystem points to the current document
+            docToAnnoLink.setTo(document.getDocumentId());
 
             var toAnnotation = l.getTo();
+            docToAnnoLink.setToBegin(toAnnotation.getBegin());
+            docToAnnoLink.setToEnd(toAnnotation.getEnd());
             docToAnnoLink.setToCoveredText(toAnnotation.getCoveredText());
             // The toAnnotation points to any kind of annotation *within* the cas. We have to translate that information
             // to UCE's model classes and we do that through Reflection Utils... Reflection is very costly ressourcewise,
@@ -558,9 +562,13 @@ public class Importer {
                         new InvalidClassException(toAnnotation.getType().getName() + " annotation not supported by UCE."), filePath);
                 return;
             }
+            docToAnnoLink.setToAnnotationType(modelClass.getName());
             var tableName = ReflectionUtils.getTableAnnotationName(modelClass);
             docToAnnoLink.setToAnnotationTypeTable(tableName);
+
+            documentToAnnotationLinks.add(docToAnnoLink);
         });
+        db.saveOrUpdateManyDocumentToAnnotationLinks(documentToAnnotationLinks);
     }
 
     /**

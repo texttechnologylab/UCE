@@ -14,6 +14,7 @@ import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.corpus.links.Link;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
@@ -1235,6 +1236,15 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             }
             return null;
         });
+    }
+
+    public void saveOrUpdateManyDocumentToAnnotationLinks(List<DocumentToAnnotationLink> links) throws DatabaseOperationException {
+        executeOperationSafely((session -> {
+            for (var link : links) {
+                session.saveOrUpdate(link);
+            }
+            return null;
+        }));
     }
 
     public void saveOrUpdateManyDocumentLinks(List<DocumentLink> documentLinks) throws DatabaseOperationException {

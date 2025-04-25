@@ -22,6 +22,7 @@
     position: absolute;
     background: white;
     min-height: 40px;
+    min-width: 225px;
     box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
     /*border-radius: 3px;*/
     border: 1px solid gray;
@@ -50,7 +51,7 @@
 }
 
 .drawflow .drawflow-node.selected {
-    background: red
+    border-color: var(--prime);
 }
 
 .drawflow .drawflow-node:hover {
