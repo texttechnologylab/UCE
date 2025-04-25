@@ -43,6 +43,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/visualization/cdns/chartjs-449.js"></script>
+    <script src="js/visualization/cdns/d3js-790.js"></script>
+    <script src="js/visualization/cdns/drawflow-last.js"></script>
     <script type="module" src="js/md-block.js"></script>
 
     <title>${document.getDocumentTitle()}</title>
@@ -215,6 +218,10 @@
 <#--<script type="module">
     <#include "*/js/corpusUniverse.js">
 </script>-->
+<script type="module">
+    <#include "*/js/graphViz.js">
+    <#include "*/js/flowViz.js">
+</script>
 
 <script>
     <#include "*/js/site.js">
