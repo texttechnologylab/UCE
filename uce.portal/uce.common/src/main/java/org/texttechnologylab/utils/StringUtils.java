@@ -88,6 +88,15 @@ public class StringUtils {
     }
 
     /**
+     * replace special characters with html variant, to persist appearance
+     * @param text
+     * @return
+     */
+    public static String getHtmlText(String text){
+        return text.replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
+    }
+
+    /**
      * Builds a snippet from a given text, where left and right side of the begin and end are added.
      */
     public static String buildContextSnippet(String text, int begin, int end, int contextLength) {

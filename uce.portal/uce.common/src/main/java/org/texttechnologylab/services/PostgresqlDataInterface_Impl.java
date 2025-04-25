@@ -806,7 +806,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         PageSnippet pageSnippet = new PageSnippet();
 
                         String snippet = doc.getFullTextSnippetCharOffset(Math.max(minBegin - 100, 0), Math.min(maxEnd + 100, minBegin + 500));
-                        pageSnippet.setSnippet(StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;"));
+                        pageSnippet.setSnippet(StringUtils.getHtmlText(StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList))));
                         pageSnippet.setPage(getPageById(negComp.getCue().getPage().getId()));
                         pageSnippet.setPageId((int) negComp.getCue().getPage().getId());
                         if (foundSnippets.containsKey(doc.getId())) {
@@ -899,7 +899,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         foundSnippets.forEach((key, snippetList) -> {
                             for (PageSnippet snippet : snippetList) {
                                 // Modify the value (example: changing content)
-                                snippet.setSnippet(snippet.getSnippet().replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;"));
+                                snippet.setSnippet(StringUtils.getHtmlText(snippet.getSnippet()));
                             }
                         });
                         search.setSearchSnippets(foundSnippets);

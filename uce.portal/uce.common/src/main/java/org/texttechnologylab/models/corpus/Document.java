@@ -331,7 +331,7 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         offsetArray.add(annotation.getBegin());
         offsetArray.add(annotation.getEnd());
         offsetList.add(offsetArray);
-        return StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
+        return StringUtils.getHtmlText(StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)));
     }
 
     public String getFullTextSnippetOffsetList(TemplateModel model) throws TemplateModelException {
@@ -355,7 +355,7 @@ public class Document extends ModelBase implements WikiModel, Linkable {
                 }
             }
             String snippet = getFullTextSnippetCharOffset(Math.max(minBegin - 100, 0), Math.min(maxEnd + 100, minBegin + 500));
-            return StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
+            return StringUtils.getHtmlText(StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)));
         }
         return null;
     }
