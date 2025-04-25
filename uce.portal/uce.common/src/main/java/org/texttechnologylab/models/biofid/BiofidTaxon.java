@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.biofid;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.corpus.Page;
@@ -12,6 +13,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "biofidtaxon")
+@Typesystem(types = {org.texttechnologylab.annotation.type.Taxon.class})
 public class BiofidTaxon extends UIMAAnnotation implements Cloneable {
 
     @Override

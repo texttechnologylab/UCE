@@ -9,7 +9,6 @@ import javax.persistence.Table;
 @Entity
 @Table(name = "documenttoannotationlink")
 public class DocumentToAnnotationLink extends Link{
-
     /*
     Interesting info concerning supertypes. We don't know what kind of annotation this link points to.
     We could use Hibernates @Inheritance and @Distcriminator logic, but that leaves things to Hibernate
@@ -18,6 +17,35 @@ public class DocumentToAnnotationLink extends Link{
     Makes things much easier and from what I read, the outcome is pretty similar.
      */
     @Column(columnDefinition = "TEXT")
-    private String toAnnotationType;
+    private String toAnnotationTypeTable;
+    @Column(name = "\"fromm\"", columnDefinition = "TEXT")
+    private String from;
+    @Column(name = "\"tocoveredtext\"", columnDefinition = "TEXT")
+    private String toCoveredText;
 
+    public DocumentToAnnotationLink(){}
+
+    public String getToAnnotationTypeTable() {
+        return toAnnotationTypeTable;
+    }
+
+    public void setToAnnotationTypeTable(String toAnnotationTypeTable) {
+        this.toAnnotationTypeTable = toAnnotationTypeTable;
+    }
+
+    public String getFrom() {
+        return from;
+    }
+
+    public void setFrom(String from) {
+        this.from = from;
+    }
+
+    public String getToCoveredText() {
+        return toCoveredText;
+    }
+
+    public void setToCoveredText(String to) {
+        this.toCoveredText = to;
+    }
 }

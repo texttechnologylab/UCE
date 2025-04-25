@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.corpus;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 
 import javax.persistence.Entity;
@@ -7,6 +8,7 @@ import javax.persistence.Table;
 
 @Entity
 @Table(name="sentence")
+@Typesystem(types = {de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence.class})
 public class Sentence extends UIMAAnnotation {
 
     public Sentence(){

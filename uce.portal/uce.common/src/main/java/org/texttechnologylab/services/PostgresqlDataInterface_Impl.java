@@ -9,7 +9,6 @@ import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
-import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.Linkable;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
@@ -27,7 +26,7 @@ import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.util.HealthStatus;
-import org.texttechnologylab.utils.ClassUtils;
+import org.texttechnologylab.utils.ReflectionUtils;
 import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
@@ -278,7 +277,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public Linkable getLinkable(long id, String className) throws ClassNotFoundException, DatabaseOperationException {
-        var clazz = ClassUtils.getClassFromClassName(className, Linkable.class);
+        var clazz = ReflectionUtils.getClassFromClassName(className, Linkable.class);
         return getLinkable(id, clazz);
     }
 

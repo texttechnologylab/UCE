@@ -1,5 +1,7 @@
 package org.texttechnologylab.models.topic;
 
+import org.texttechnologylab.annotations.Typesystem;
+
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
@@ -10,6 +12,7 @@ import javax.persistence.Table;
  */
 @Entity
 @Table(name = "topicvaluebasewithscore")
+@Typesystem(types = {org.texttechnologylab.annotation.TopicValueBaseWithScore.class})
 public class TopicValueBaseWithScore extends TopicValueBase {
 
     @Column(name = "score", nullable = false)

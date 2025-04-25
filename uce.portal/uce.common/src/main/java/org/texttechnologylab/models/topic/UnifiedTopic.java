@@ -2,6 +2,7 @@ package org.texttechnologylab.models.topic;
 
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
@@ -16,9 +17,10 @@ import java.util.List;
  */
 @Entity
 @Table(name = "unifiedtopic")
+@Typesystem(types = {org.texttechnologylab.annotation.UnifiedTopic.class})
 public class UnifiedTopic extends UIMAAnnotation implements WikiModel {
 
-    @OneToMany(mappedBy = "unifiedTopic", cascade = CascadeType.ALL, fetch=FetchType.LAZY)
+    @OneToMany(mappedBy = "unifiedTopic", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<TopicValueBase> topics;
 
@@ -57,6 +59,7 @@ public class UnifiedTopic extends UIMAAnnotation implements WikiModel {
     public void setTopics(List<TopicValueBase> topics) {
         this.topics = topics;
     }
+
     public Document getDocument() {
         return document;
     }

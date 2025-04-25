@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.corpus;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 
 import javax.persistence.*;
@@ -7,6 +8,7 @@ import java.util.*;
 
 @Entity
 @Table(name = "page")
+@Typesystem(types = {org.texttechnologylab.annotation.ocr.abbyy.Page.class}, optional = true)
 public class Page extends UIMAAnnotation {
     private int pageNumber;
     private String pageId;

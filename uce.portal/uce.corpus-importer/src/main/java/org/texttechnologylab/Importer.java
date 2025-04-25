@@ -29,6 +29,7 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.corpus.ocr.OCRPageAdapterImpl;
 import org.texttechnologylab.models.corpus.ocr.PageAdapter;
 import org.texttechnologylab.models.corpus.ocr.PageAdapterImpl;
@@ -498,7 +499,7 @@ public class Importer {
             // Keep this at the end of the annotation setting, as they might require previous annotations. Order matter here!
             if (corpusConfig.getAnnotations().isLogicalLinks())
                 ExceptionUtils.tryCatchLog(
-                        () -> storeLogicLinks(jCas, corpus.getId()),
+                        () -> setLogicLinks(jCas, corpus.getId(), filePath),
                         (ex) -> logImportWarn("This file should have contained LinkTypesystem annotations, but selecting them caused an error.", ex, filePath));
 
             ExceptionUtils.tryCatchLog(
@@ -520,7 +521,8 @@ public class Importer {
     /**
      * Selects and sets the logical links between documents, annotations and more.
      */
-    private void storeLogicLinks(JCas jCas, long corpusId) throws DatabaseOperationException {
+    private void setLogicLinks(JCas jCas, long corpusId, String filePath) throws DatabaseOperationException {
+        // Document -> Document Links
         var documentLinks = new ArrayList<DocumentLink>();
         JCasUtil.select(jCas, DLink.class).forEach(l -> {
             var docLink = new DocumentLink();
@@ -535,6 +537,30 @@ public class Importer {
         // We store the document links not to the Document class directly, as that doesn't fit the idea of the datastructure.
         // Linking should happen *on top* of documents and clusters, not as a part of them. Keep that in mind.
         db.saveOrUpdateManyDocumentLinks(documentLinks);
+
+        // Document -> Annotation Link
+        var documentToAnnotationLinks = new ArrayList<DocumentToAnnotationLink>();
+        JCasUtil.select(jCas, DALink.class).forEach(l -> {
+            var docToAnnoLink = new DocumentToAnnotationLink();
+            docToAnnoLink.setCorpusId(corpusId);
+            docToAnnoLink.setFrom(l.getFrom()); // from is a documentId, but doesn't have to be *this* document.
+            docToAnnoLink.setLinkId(String.valueOf(l.getLinkId()));
+            docToAnnoLink.setType(l.getLinkType());
+
+            var toAnnotation = l.getTo();
+            docToAnnoLink.setToCoveredText(toAnnotation.getCoveredText());
+            // The toAnnotation points to any kind of annotation *within* the cas. We have to translate that information
+            // to UCE's model classes and we do that through Reflection Utils... Reflection is very costly ressourcewise,
+            // so we cached a lot upon start, but this may still slow down the process - we have to investigate by how much.
+            Class<?> modelClass = ReflectionUtils.findModelClassForCASAnnotation(toAnnotation);
+            if(modelClass == null) {
+                logImportWarn("A logical Link annotation tried to point to an annotation that UCE doesn't support yet, hence skipped the link.",
+                        new InvalidClassException(toAnnotation.getType().getName() + " annotation not supported by UCE."), filePath);
+                return;
+            }
+            var tableName = ReflectionUtils.getTableAnnotationName(modelClass);
+            docToAnnoLink.setToAnnotationTypeTable(tableName);
+        });
     }
 
     /**

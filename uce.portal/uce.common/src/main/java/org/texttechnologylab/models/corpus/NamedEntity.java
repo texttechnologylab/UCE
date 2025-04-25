@@ -1,12 +1,14 @@
 package org.texttechnologylab.models.corpus;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 
 import javax.persistence.*;
 
 @Entity
-@Table(name="namedEntity")
+@Table(name = "namedEntity")
+@Typesystem(types = {org.texttechnologylab.models.corpus.NamedEntity.class})
 public class NamedEntity extends UIMAAnnotation implements WikiModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
@@ -23,7 +25,7 @@ public class NamedEntity extends UIMAAnnotation implements WikiModel {
     @Column(name = "\"typee\"")
     private String type;
 
-    public NamedEntity(){
+    public NamedEntity() {
         super(-1, -1);
     }
 
@@ -58,6 +60,7 @@ public class NamedEntity extends UIMAAnnotation implements WikiModel {
     public String getType() {
         return type;
     }
+
     public void setType(String type) {
         this.type = type;
     }

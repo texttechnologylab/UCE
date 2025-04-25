@@ -88,6 +88,13 @@
             <scope>compile</scope>
         </dependency>
 
+        <!-- https://mvnrepository.com/artifact/org.reflections/reflections -->
+        <dependency>
+            <groupId>org.reflections</groupId>
+            <artifactId>reflections</artifactId>
+            <version>0.10.2</version>
+        </dependency>
+
         <!-- https://mvnrepository.com/artifact/org.postgresql/postgresql -->
         <dependency>
             <groupId>org.postgresql</groupId>
@@ -167,18 +174,18 @@
         </dependency>-->
 
         <!-- Own Fork reference -->
-        <!--<dependency>
+        <dependency>
             <groupId>com.github.TheItCrOw</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>3.0.6</version>
-        </dependency>-->
+            <version>3.0.7</version>
+        </dependency>
 
         <!-- Local reference -->
-        <dependency>
+        <!--<dependency>
             <groupId>org.texttechnologylab.annotation</groupId>
             <artifactId>typesystem</artifactId>
             <version>3.0.5</version>
-        </dependency>
+        </dependency>-->
 
     </dependencies>
 </project>

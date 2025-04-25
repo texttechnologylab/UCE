@@ -14,7 +14,7 @@ import javax.persistence.MappedSuperclass;
  */
 @MappedSuperclass
 public class Link extends ModelBase {
-
+    private long corpusId;
     @Column(columnDefinition = "TEXT")
     private String type;
     private String linkId;
@@ -57,5 +57,12 @@ public class Link extends ModelBase {
 
     public void setToId(long toId) {
         this.toId = toId;
+    }
+    public long getCorpusId() {
+        return corpusId;
+    }
+
+    public void setCorpusId(long corpusId) {
+        this.corpusId = corpusId;
     }
 }

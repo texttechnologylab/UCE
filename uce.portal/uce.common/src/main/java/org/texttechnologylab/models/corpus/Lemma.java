@@ -1,6 +1,9 @@
 package org.texttechnologylab.models.corpus;
 
+import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.morph.MorphologicalFeatures;
+import de.tudarmstadt.ukp.dkpro.core.api.lexmorph.type.pos.POS;
 import org.texttechnologylab.annotations.Presentation;
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.utils.Pair;
@@ -11,6 +14,9 @@ import java.util.List;
 
 @Entity
 @Table(name = "lemma")
+@Typesystem(types = {
+        de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Lemma.class, POS.class, MorphologicalFeatures.class
+})
 public class Lemma extends UIMAAnnotation implements WikiModel {
 
     @ManyToOne(fetch = FetchType.LAZY)
