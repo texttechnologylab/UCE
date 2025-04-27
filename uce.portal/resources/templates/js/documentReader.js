@@ -292,6 +292,11 @@ async function lazyLoadPages() {
                     $('.reader-container .document-content').append(response);
                     activatePopovers();
                     for (let k = i + 1; k < Math.max(i + 10, pagesCount); k++) searchPotentialSearchTokensInPage(k);
+
+                    const $activeTopic = $('.topic-tag.active-topic');
+                    if ($activeTopic.length > 0) {
+                        colorUnifiedTopics($activeTopic.data('topic'));
+                    }
                 },
                 error: function (xhr, status, error) {
                     console.error(xhr.responseText);
@@ -345,4 +350,140 @@ function searchPotentialSearchTokensInPage(page) {
             }
         }
     });
+}
+
+function colorUnifiedTopics(selectedTopic) {
+    clearTopicColoring();
+
+    if (!selectedTopic) {
+        return;
+    }
+
+    const $selectedTopicTag = $('.topic-tag').filter(function() {
+        return $(this).data('topic') === selectedTopic;
+    });
+
+    if ($selectedTopicTag.length === 0) {
+        return;
+    }
+
+    const color = $selectedTopicTag.css('background-color');
+
+    let finalColor = color;
+
+    if (color.startsWith('rgb(') && !color.startsWith('rgba(')) {
+        finalColor = color.replace('rgb(', 'rgba(').replace(')', ', 0.3)');
+    }
+
+    $('.colorable-topic').each(function() {
+        const topicValue = $(this).data('topic-value');
+
+        if (topicValue === selectedTopic) {
+            $(this).css({
+                'background-color': finalColor,
+                'border-radius': '3px',
+                'padding': '0 2px'
+            });
+        }
+    });
+}
+
+function clearTopicColoring() {
+    $('.colorable-topic').css({
+        'background-color': '',
+        'border-radius': '',
+        'padding': ''
+    });
+}
+
+
+function isElementInViewport($element) {
+    if ($element.length === 0) return false;
+
+    const elementTop = $element.offset().top;
+    const elementBottom = elementTop + $element.outerHeight();
+    const viewportTop = $(window).scrollTop();
+    const viewportBottom = viewportTop + $(window).height();
+
+    return (elementTop >= viewportTop && elementTop <= viewportBottom) ||
+           (elementBottom >= viewportTop && elementBottom <= viewportBottom) ||
+           (elementTop <= viewportTop && elementBottom >= viewportBottom);
+}
+
+let currentSelectedTopic = null;
+
+let currentTopicIndex = -1;
+
+let matchingTopics = [];
+
+
+function scrollToFirstMatchingTopic(topicValue) {
+    currentSelectedTopic = topicValue;
+
+    matchingTopics = $('.colorable-topic').filter(function() {
+        return $(this).data('topic-value') === topicValue;
+    }).toArray();
+
+    if (matchingTopics.length === 0) {
+        console.log('No matching unified topics found for: ' + topicValue);
+        hideTopicNavButtons();
+        return false;
+    }
+
+    currentTopicIndex = 0;
+
+    showTopicNavButtons();
+    updateTopicNavButtonStates();
+
+    const $firstMatchingTopic = $(matchingTopics[currentTopicIndex]);
+
+    if (isElementInViewport($firstMatchingTopic)) {
+        console.log('First matching topic is already visible in viewport');
+        return false;
+    }
+    scrollToTopicElement($firstMatchingTopic);
+
+    return true;
+}
+
+function scrollToTopicElement($topicElement) {
+
+    const windowHeight = $(window).height();
+    const elementHeight = $topicElement.outerHeight();
+    const scrollToPosition = $topicElement.offset().top - (windowHeight / 2) + (elementHeight / 2);
+
+    $('html, body').animate({
+        scrollTop: Math.max(0, scrollToPosition)
+    }, 800, function() {
+        $topicElement.css('transition', 'box-shadow 0.3s ease-in-out');
+        $topicElement.css('box-shadow', '0 0 10px 5px rgba(255, 255, 0, 0.5)');
+
+        setTimeout(function() {
+            $topicElement.css('box-shadow', '');
+            setTimeout(function() {
+                $topicElement.css('transition', '');
+            }, 300);
+        }, 1500);
+    });
+}
+
+function showTopicNavButtons() {
+    $('.topic-navigation-buttons').addClass('visible');
+}
+
+function hideTopicNavButtons() {
+    $('.topic-navigation-buttons').removeClass('visible');
+}
+
+function updateTopicNavButtonStates() {
+    if (currentTopicIndex <= 0) {
+        $('.prev-topic-button').addClass('disabled');
+    } else {
+        $('.prev-topic-button').removeClass('disabled');
+    }
+    if (currentTopicIndex >= matchingTopics.length - 1) {
+        $('.next-topic-button').addClass('disabled');
+    } else {
+        $('.next-topic-button').removeClass('disabled');
+    }
 }

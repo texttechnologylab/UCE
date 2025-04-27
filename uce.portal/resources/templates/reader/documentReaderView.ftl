@@ -89,6 +89,16 @@
                      data-id="${document.getId()?string?replace('.', '')?replace(',', '')}"
                      data-pagescount="${document.getPages()?size?string?replace('.', '')?replace(',', '')}" data-searchtokens="${(searchTokens)!''}">
 
+                    <!-- Topic navigation buttons (hidden by default) -->
+                    <div class="topic-navigation-buttons">
+                        <button class="topic-nav-button prev-topic-button" title="Previous occurrence">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <button class="topic-nav-button next-topic-button" title="Next occurrence">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+
                     <div class="header ">
                         <div class="text-center flexed align-items-center justify-content-around w-100">
                             <div class="flexed align-items-center">
