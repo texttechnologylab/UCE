@@ -137,13 +137,126 @@ $(document).ready(function () {
     // Enable popovers
     activatePopovers();
 
+    // Load document topics
+    loadDocumentTopics();
+
     let possibleSearchTokens = $('.reader-container').data('searchtokens');
     if (possibleSearchTokens === undefined || possibleSearchTokens === '') return;
     searchTokens = possibleSearchTokens.split('[TOKEN]');
 
     // Highlight potential search terms for the first 10 pages
     for (let i = 1; i < 11; i++) searchPotentialSearchTokensInPage(i);
-})
+
+});
+
+function loadDocumentTopics() {
+    const documentId = $('.document-topics-list').data('document-id');
+
+    if (!documentId) {
+        console.error("No document ID found for topics");
+        $('.topics-loading').hide();
+        $('.document-topics-list').html('<p>No document ID available.</p>');
+        return;
+    }
+
+    $.ajax({
+        url: '/api/document/topics',
+        method: 'GET',
+        data: {
+            documentId: documentId,
+            limit: 10
+        },
+        success: function(data) {
+            $('.topics-loading').hide();
+
+            if (data && data.length > 0) {
+                let html = '';
+
+                data.sort((a, b) => parseFloat(b.probability) - parseFloat(a.probability));
+
+                const maxProb = parseFloat(data[0].probability);
+                const minProb = parseFloat(data[data.length - 1].probability);
+                const probRange = maxProb - minProb;
+
+                // Generate HTML for each topic
+                data.forEach(function(topic) {
+                    const probability = parseFloat(topic.probability);
+
+                    // Normalize probability to 0-1 range
+                    const normalizedProb = probRange > 0 ?
+                        (probability - minProb) / probRange : 1;
+                    const hue = Math.round(normalizedProb * 120);
+                    const bgColor = "hsla("+hue+", 70%, 50%, 0.3)";
+
+                    html += '<div class="topic-item">' +
+                           '<div class="topic-tag" data-topic="'+topic.label+'" data-probability="'+probability+'" style="background-color: '+bgColor+'">' +
+                           '<span>'+topic.label+'</span>' +
+                           '</div>' +
+                           '</div>';
+                });
+
+                $('.document-topics-list').html(html);
+
+                attachTopicClickHandlers();
+            } else {
+                $('.document-topics-list').html('<p>No topics available for this document.</p>');
+            }
+        },
+        error: function(xhr, status, error) {
+            console.error("Error loading topics:", status, error);
+            console.error("Response:", xhr.responseText);
+
+            $('.topics-loading').hide();
+
+            $('.document-topics-list').html('<p>Failed to load document topics.</p>');
+        },
+        complete: function() {
+            $('.topics-loading').hide();
+        }
+    });
+}
+
+function attachTopicClickHandlers() {
+    $('.topic-tag').off('click');
+
+    $('.topic-tag').on('click', function() {
+        const topic = $(this).data('topic');
+        const wasActive = $(this).hasClass('active-topic');
+        $('.topic-tag').removeClass('active-topic');
+
+        if (wasActive) {
+            clearTopicColoring();
+
+            hideTopicNavButtons();
+            currentSelectedTopic = null;
+        } else {
+            $(this).addClass('active-topic');
+
+            colorUnifiedTopics(topic);
+            setTimeout(function() {
+                scrollToFirstMatchingTopic(topic);
+            }, 100);
+        }
+    });
+
+    // Attach click handlers to the navigation buttons
+    $('.next-topic-button').off('click').on('click', function() {
+        if ($(this).hasClass('disabled') || !currentSelectedTopic) return;
+
+        currentTopicIndex++;
+        updateTopicNavButtonStates();
+        scrollToTopicElement($(matchingTopics[currentTopicIndex]));
+    });
+
+    $('.prev-topic-button').off('click').on('click', function() {
+        if ($(this).hasClass('disabled') || !currentSelectedTopic) return;
+        currentTopicIndex--;
+        updateTopicNavButtonStates();
+        scrollToTopicElement($(matchingTopics[currentTopicIndex]));
+    });
+}
+
+
 
 /**
  * Handle the custom cursor

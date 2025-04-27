@@ -362,5 +362,9 @@
   "noKWIC": {
     "de-DE": "Die Suche wurde ohne das Keyword-on-context feature gestartet.",
     "en-EN": "Search has been started without the Keyword-in-context feature."
+  },
+  "topics": {
+    "de-DE": "Thema",
+    "en-EN": "Top 10 Topics"
   }
 }

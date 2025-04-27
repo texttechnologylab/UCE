@@ -208,6 +208,16 @@
                             </div>
                         </div>
                     </#if>
+
+                    <!-- Document Topics Section -->
+                    <div class="group-box topics-box">
+                        <p class="title">
+                            <span>${languageResource.get("topics")}</span>
+                            <i class="ml-2 topics-loading rotate fas fa-spinner"></i>
+                        </p>
+                        <div class="document-topics-list" data-document-id="${document.id}">
+                        </div>
+                    </div>
                 </div>
 
             </div>

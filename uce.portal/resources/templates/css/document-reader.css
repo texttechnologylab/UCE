@@ -360,3 +360,54 @@ body {
 .side-bar .found-searchtokens-list .found-search-token:hover {
     background-color: lightgray;
 }
+
+/* Topic tags styling */
+.side-bar-content .document-topics-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 10px;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+.side-bar-content .document-topics-list .topic-item {
+    margin-bottom: 8px;
+    display: inline-block;
+    width: calc(50% - 4px);
+    box-sizing: border-box;
+}
+
+.side-bar-content .document-topics-list .topic-tag {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius: 18px;
+    padding: 6px 12px;
+    font-size: 0.7rem;
+    color: #333;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+    text-align: center;
+    width: 100%;
+    white-space: normal;
+    word-wrap: break-word;
+    hyphens: auto;
+    border: 1px solid rgba(0,0,0,0.1);
+    min-height: 32px;
+}
+
+.side-bar-content .document-topics-list .topic-tag:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+    cursor: pointer;
+}
+
+.side-bar-content .document-topics-list .topic-tag.active-topic {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    border: 2px solid rgba(0,0,0,0.3);
+    font-weight: 700;
+    opacity: 1.2;
+}
