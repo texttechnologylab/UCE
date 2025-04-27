@@ -18,7 +18,9 @@ import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import spark.ModelAndView;
 import spark.Route;
 
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.Map;
 
 public class DocumentApi {
     private PostgresqlDataInterface_Impl db;
@@ -195,5 +197,36 @@ public class DocumentApi {
         }
 
         return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "reader/components/pagesList.ftl"));
+    });
+
+    public Route getDocumentTopics = ((request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for topics. ", ex));
+
+        if(documentId == null){
+            response.status(400);
+            return "Missing documentId parameter";
+        }
+
+        try {
+            var limit = Integer.parseInt(request.queryParams("limit"));
+
+            var topTopics = db.getTopTopicsByDocument(documentId, limit);
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] topic : topTopics) {
+                var topicMap = new HashMap<String, Object>();
+                topicMap.put("label", topic[0]);
+                topicMap.put("probability", topic[1]);
+                result.add(topicMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+        } catch (Exception ex) {
+            logger.error("Error getting document topics.", ex);
+            response.status(500);
+            return "Error retrieving document topics";
+        }
     });
 }
