@@ -96,6 +96,33 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         return end;
     }
 
+    private String generateTopicMarker(UnifiedTopic topic) {
+        String repTopicValue = "";
+        if (topic.getTopics() != null && !topic.getTopics().isEmpty()) {
+            var repTopic = topic.getRepresentativeTopic();
+            if (repTopic != null) {
+                repTopicValue = repTopic.getValue();
+            }
+        }
+        return String.format(
+                "<span class='open-wiki-page annotation custom-context-menu topic-marker' title='%1$s' data-wid='%2$s' data-wcovered='%3$s' data-topic-value='%4$s'>t</span>",
+                topic.getWikiId(), topic.getWikiId(), topic.getCoveredText(), repTopicValue);
+    }
+
+    private String generateTopicCoveredStartSpan(UnifiedTopic topic) {
+        String repTopicValue = "";
+        if (topic.getTopics() != null && !topic.getTopics().isEmpty()) {
+            var repTopic = topic.getRepresentativeTopic();
+            if (repTopic != null) {
+                repTopicValue = repTopic.getValue();
+            }
+        }
+        return String.format(
+                "<span class='unifiedtopic-covered topic colorable-topic' id='utopic-%2$s' data-wcovered='%3$s' data-topic-value='%4$s'>",
+                UUID.randomUUID(), topic.getWikiId(), topic.getCoveredText(), repTopicValue);
+    }
+
+
     /**
      * Given a list of annotations and a coveredtext, it builds a html view with the annotations being highlighted.
      */
@@ -107,6 +134,10 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         // We build start and end of the annotations and store them in the TreeMap
         Map<Integer, List<UIMAAnnotation>> startTags = new TreeMap<>();
         Map<Integer, List<String>> endTags = new TreeMap<>();
+        Map<Integer, String> topicMarkers = new TreeMap<>();
+        Map<Integer, String> topicCoverWrappersStart = new TreeMap<>();
+        Map<Integer, String> topicCoverWrappersEnd = new TreeMap<>();
+
 
         for (var annotation : annotations) {
             if(annotation.getCoveredText() == null){
@@ -135,6 +166,18 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 continue;
             }
 
+            if (annotation instanceof UnifiedTopic topic) {
+                var start = topic.getBegin() - offset - errorOffset;
+                var end = topic.getEnd() - offset - errorOffset; // marker after last char
+
+                topicCoverWrappersStart.put(start, generateTopicCoveredStartSpan(topic));
+                topicCoverWrappersEnd.put(end, "</span>");
+
+                topicMarkers.put(end, generateTopicMarker(topic));
+                continue;
+            }
+
+
             var start = annotation.getBegin() - offset - errorOffset;
             var end = annotation.getEnd() - offset - errorOffset;
 
@@ -150,7 +193,10 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         var finalText = new StringBuilder();
 
         for (int i = 0; i < coveredText.length(); i++) {
-            // Add closing tags at this index. Add the END tags before OPENING NEW ones
+            // Insert end spans first
+            if (topicCoverWrappersEnd.containsKey(i)) {
+                finalText.append(topicCoverWrappersEnd.get(i));
+            }
             if (endTags.containsKey(i)) {
                 //finalText.append(endTags.get(i).getFirst());
                 for (var tag : endTags.get(i)) {
@@ -158,7 +204,15 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 }
             }
 
-            // Add opening tags at this index
+            // Insert start spans
+            if (topicCoverWrappersStart.containsKey(i)) {
+                finalText.append(topicCoverWrappersStart.get(i));
+            }
+
+            // Insert marker after character
+            if (topicMarkers.containsKey(i)) {
+                finalText.append(topicMarkers.get(i));
+            }
             if (startTags.containsKey(i)) {
                 finalText.append(generateMultiHTMLTag(startTags.get(i)));
             }
@@ -233,9 +287,20 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                     "<span class='annotation custom-context-menu focus' title='%1$s'>",
                     includeTitle ? focus.getCoveredText() : "");
         } else if (annotation instanceof UnifiedTopic topic) {
+            // Get the representative topic if available
+            String repTopicValue = "";
+            if (topic.getTopics() != null && !topic.getTopics().isEmpty()) {
+                var repTopic = topic.getRepresentativeTopic();
+                if (repTopic != null) {
+                    repTopicValue = repTopic.getValue();
+                }
+            }
+
+            // Instead of wrapping the entire text, we'll just add a marker at the end
+            // The actual text will be rendered normally, and only the indicator will be clickable
             return String.format(
-                    "<span class='open-wiki-page annotation custom-context-menu topic' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
-                    includeTitle ? topic.getWikiId() : "", topic.getWikiId(), topic.getCoveredText());
+                    "<span class='open-wiki-page annotation custom-context-menu topic colorable-topic' title='%1$s' data-wid='%2$s' data-wcovered='%3$s' data-topic-value='%4$s'>",
+                    includeTitle ? repTopicValue : "", topic.getWikiId(), topic.getCoveredText(), repTopicValue);
         }
 
         return "";

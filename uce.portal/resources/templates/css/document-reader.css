@@ -257,6 +257,28 @@ body {
     color: var(--dark);
 }
 
+.document-content .colorable-topic {
+    transition: background-color 0.3s ease;
+    position: relative;
+}
+
+.document-content .topic-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px;         /* minimum size */
+    height: 20px;
+    padding: 0 4px;          /* horizontal padding */
+    border-radius: 50%;
+    border: 1px solid #333;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: white;
+    color: #333;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
 .side-bar {
     width: 500px;
     transition: 0.5s;
