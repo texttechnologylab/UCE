@@ -224,6 +224,7 @@ public class App {
         var corpusUniverseApi = new CorpusUniverseApi(context, configuration);
         var wikiApi = new WikiApi(context, configuration);
         var importExportApi = new ImportExportApi(context);
+        var analysisApi = new AnalysisApi(context, configuration);
         Renderer.freemarkerConfig = configuration;
 
         before((request, response) -> {
@@ -328,6 +329,11 @@ public class App {
                 get("/active/page", searchApi.activeSearchPage);
                 get("/active/sort", searchApi.activeSearchSort);
                 get("/semanticRole/builder", searchApi.getSemanticRoleBuilderView);
+            });
+
+            path("/analysis", () -> {
+                post("/runPipeline", analysisApi.runPipeline);
+//                get("/runPipeline", analysisApi.runPipeline);
             });
 
             path("/corpusUniverse", () -> {

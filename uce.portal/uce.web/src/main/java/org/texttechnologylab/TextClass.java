@@ -22,6 +22,9 @@ public class TextClass {
         this.topics.get(model).add(topic);
     }
     public ArrayList<TopicClass> getTopic(ModelInfo model) {
+        if (!this.topics.containsKey(model)) {
+            return new ArrayList<>();
+        }
         return this.topics.get(model);
     }
     public void deleteTopic(ModelInfo model) {
@@ -107,9 +110,36 @@ public class TextClass {
         return topicAVG;
     }
 
+    public HateClass getHateAVG(ModelInfo model) {
+        if (!this.hateAVG.containsKey(model)) {
+            return new HateClass();
+        }
+        return this.hateAVG.get(model);
+    }
+
+    public SentimentClass getSentimentAVG(ModelInfo model) {
+        if (!this.sentimentAVG.containsKey(model)) {
+            return new SentimentClass();
+        }
+        return this.sentimentAVG.get(model);
+    }
+
+    public TopicClass getTopicAVG(ModelInfo model) {
+        if (!this.topicAVG.containsKey(model)) {
+            return new TopicClass();
+        }
+        return this.topicAVG.get(model);
+    }
+
+
+
     public ArrayList<HateClass> getHate(ModelInfo model) {
+        if (!this.hate.containsKey(model)) {
+            return new ArrayList<>();
+        }
         return this.hate.get(model);
     }
+
     public void deleteHate(ModelInfo model) {
         this.hate.remove(model);
     }
@@ -120,6 +150,9 @@ public class TextClass {
         this.sentiment.get(model).add(sentiment);
     }
     public ArrayList<SentimentClass> getSentiment(ModelInfo model) {
+        if (!this.sentiment.containsKey(model)) {
+            return new ArrayList<>();
+        }
         return this.sentiment.get(model);
     }
     public void deleteSentiment(ModelInfo model) {

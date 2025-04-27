@@ -15,6 +15,22 @@
     "de-DE": "Eingabe",
     "en-EN": "Input"
   },
+  "inputField": {
+    "de-DE": "Eingabefeld",
+    "en-EN": "Inputfield"
+  },
+  "upload": {
+    "de-DE": "Datei Hochladen",
+    "en-EN": "Upload File"
+  },
+  "RunPipeline": {
+    "de-DE": "Pipeline Ausführen",
+    "en-EN": "Run Pipeline"
+  },
+  "models": {
+    "de-DE": "Modelle",
+    "en-EN": "Models"
+  },
   "search": {
     "de-DE": "Suche",
     "en-EN": "Search"

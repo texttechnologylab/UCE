@@ -12,6 +12,7 @@ public class ModelInfo {
     private String map;
 
     private String variant;
+    private String mainTool;
 
     // Getter & Setter
     public String getKey() {
@@ -77,4 +78,13 @@ public class ModelInfo {
     public void setVariant(String variant) {
         this.variant = variant;
     }
+
+    public String getMainTool() {
+        return mainTool;
+    }
+
+    public void setMainTool(String mainTool) {
+        this.mainTool = mainTool;
+    }
+
 }

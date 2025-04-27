@@ -458,5 +458,6 @@
     <#include "js/layeredSearch.js">
     <#include "js/keywordInContext.js">
     <#include "js/analysis.js">
+    <#include "js/analysisAPI.js">
 </script>
 </html>
