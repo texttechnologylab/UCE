@@ -1,24 +1,54 @@
 {
-    "TweetTopic": {
+    "Topic Tweet": {
       "url": "http://tweentopic.service.component.duui.texttechnologylab.org",
       "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
       "huggingface": "https://huggingface.co/cardiffnlp/tweet-topic-large-multilingual",
       "paper": "https://arxiv.org/abs/2410.03075",
       "map": "cardiffnlp/tweet-topic-large-multilingual",
-      "Name": "Tweet Topic",
+      "Name": "Topic Tweet",
       "Main Tool": "Topic Annotation",
       "Variant": "Topic"
     },
-    "IPTCTopic": {
+    "Topic IPTC ": {
       "url": "http://iptc.service.component.duui.texttechnologylab.org",
       "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
       "huggingface": "https://huggingface.co/classla/multilingual-IPTC-news-topic-classifier",
       "paper": "",
       "map": "classla/multilingual-IPTC-news-topic-classifier",
-        "Name": "IPTC Topic",
+        "Name": "Topic IPTC",
         "Main Tool": "Topic Annotation",
         "Variant": "Topic"
     },
+    "Topic Manifesto": {
+    "url": "http://topic-manifestoberta-xlm-roberta.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
+    "huggingface": "https://huggingface.co/manifesto-project/manifestoberta-xlm-roberta-56policy-topics-context-2023-1-1",
+    "paper": "https://doi.org/10.25522/manifesto.manifestoberta.56topics.context.2023.1.1",
+    "map": "manifesto-project/manifestoberta-xlm-roberta-56policy-topics-context-2023-1-1",
+    "Name": "Topic Manifesto",
+    "Main Tool": "Topic Annotation",
+    "Variant": "Topic"
+    },
+  "Topic Cardiffnlp (EN)": {
+    "url": "http://topic-cardiffnlp-roberta-large-tweet-topic-single-all.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
+    "huggingface": "https://huggingface.co/cardiffnlp/roberta-large-tweet-topic-single-all",
+    "paper": "https://aclanthology.org/2022.coling-1.299/",
+    "map": "cardiffnlp/roberta-large-tweet-topic-single-all",
+    "Name": "Topic Cardiffnlp (EN)",
+    "Main Tool": "Topic Annotation",
+    "Variant": "Topic"
+  },
+  "Topic WebOrganizer (EN)": {
+    "url": "http://topic-organize-web.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
+    "huggingface": "https://huggingface.co/WebOrganizer/TopicClassifier",
+    "paper": "https://arxiv.org/abs/2502.10341",
+    "map": "WebOrganizer/TopicClassifier",
+    "Name": "Topic WebOrganizer (EN)",
+    "Main Tool": "Topic Annotation",
+    "Variant": "Topic"
+  },
     "Sentiment Cardiffnlp": {
       "url": "http://sentiment-cardiffnlp.service.component.duui.texttechnologylab.org",
       "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
@@ -58,5 +88,185 @@
       "Name": "Hate MeHate-RoBERTa",
       "Main Tool": "Hate Annotation",
         "Variant": "Hate"
-    }
+    },
+    "Hate Andrazp": {
+      "url": "http://hate-andrazp.service.component.duui.texttechnologylab.org",
+      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+      "huggingface": "https://huggingface.co/Andrazp/multilingual-hate-speech-robacofi",
+      "paper": "",
+      "map": "Andrazp/multilingual-hate-speech-robacofi",
+      "Name": "Hate Andrazp",
+      "Main Tool": "Hate Annotation",
+      "Variant": "Hate"
+    },
+  "HateBERT GroNLP (EN)": {
+    "url": "http://hate-groNLP.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/GroNLP/hateBERT",
+    "paper": "https://aclanthology.org/2021.woah-1.3/",
+    "map": "GroNLP/hateBERT",
+    "Name": "HateBERT GroNLP (EN)",
+    "Main Tool": "Hate Annotation",
+    "Variant": "Hate"
+  },
+  "Hate-speech-CNERG (EN)": {
+    "url": "http://hate-cnerg.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/Hate-speech-CNERG/dehatebert-mono-english",
+    "paper": "https://arxiv.org/abs/2004.06465",
+    "map": "Hate-speech-CNERG/dehatebert-mono-english",
+    "Name": "Hate-speech-CNERG (EN)",
+    "Main Tool": "Hate Annotation",
+    "Variant": "Hate"
+  },
+  "Hate-speech-CNERG (DE)": {
+    "url": "http://hate-cnergde.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/Hate-speech-CNERG/dehatebert-mono-german",
+    "paper": "https://arxiv.org/abs/2004.06465",
+    "map": "Hate-speech-CNERG/dehatebert-mono-german",
+    "Name": "Hate-speech-CNERG (DE)",
+    "Main Tool": "Hate Annotation",
+    "Variant": "Hate"
+  },
+  "Hate Deepset GermanBert (DE)": {
+    "url": "http://hate-deepset.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/deepset/bert-base-german-cased-hatespeech-GermEval18Coarse",
+    "paper": "",
+    "map": "deepset/bert-base-german-cased-hatespeech-GermEval18Coarse",
+    "Name": "Hate Deepset GermanBert (DE)",
+    "Main Tool": "Hate Annotation",
+    "Variant": "Hate"
+  },
+  "Detoxify": {
+    "url": "http://toxic-detoxify.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-toxic",
+    "huggingface": "https://github.com/unitaryai/detoxify",
+    "paper": "",
+    "map": "Detoxify",
+    "Name": "Detoxify",
+    "Main Tool": "Toxic Annotation",
+    "Variant": "Toxic"
+  },
+  "ToxiGen (EN)": {
+    "url": "http://toxic-toxigen.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-toxic",
+    "huggingface": "https://huggingface.co/tomh/toxigen_roberta",
+    "paper": "https://aclanthology.org/2022.acl-long.234/",
+    "map": "tomh/toxigen_roberta",
+    "Name": "ToxiGen (EN)",
+    "Main Tool": "Toxic Annotation",
+    "Variant": "Toxic"
+  },
+  "Toxicity German (DE)": {
+    "url": "http://toxic-german_toxicity_classifier_plus_v2.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-toxic",
+    "huggingface": "https://huggingface.co/EIStakovskii/german_toxicity_classifier_plus_v2",
+    "paper": "",
+    "map": "EIStakovskii/german_toxicity_classifier_plus_v2",
+    "Name": "Toxicity German (DE)",
+    "Main Tool": "Toxic Annotation",
+    "Variant": "Toxic"
+  },
+  "Emotion Twitter": {
+    "url": "http://emotion-finetuned-twitter-xlm-roberta-base-emotion.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://huggingface.co/02shanky/finetuned-twitter-xlm-roberta-base-emotion",
+    "paper": "",
+    "map": "02shanky/finetuned-twitter-xlm-roberta-base-emotion",
+    "Name": "Emotion Twitter",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  },
+  "Emotion DReAMy": {
+    "url": "http://emotion-dreamy-xlm-roberta-emotion.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://huggingface.co/DReAMy-lib/xlm-roberta-large-DreamBank-emotion-presence",
+    "paper": "https://www.sciencedirect.com/science/article/pii/S1389945723015186",
+    "map": "DReAMy-lib/xlm-roberta-large-DreamBank-emotion-presence",
+    "Name": "Emotion DReAMy",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  },
+  "Emotion XLM-EMO": {
+    "url": "http://emotion-xlm-emo-t.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://huggingface.co/DReAMy-lib/xlm-roberta-large-DreamBank-emotion-presence",
+    "paper": "https://aclanthology.org/2022.wassa-1.18/",
+    "map": "MilaNLProc/xlm-emo-t",
+    "Name": "Emotion XLM-EMO",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  },
+  "Emotion DistilRoBERTa-base (EN)": {
+    "url": "http://emotion-emotion-english-distilroberta-base.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://huggingface.co/DReAMy-lib/xlm-roberta-large-DreamBank-emotion-presence",
+    "paper": "",
+    "map": "j-hartmann/emotion-english-distilroberta-base",
+    "Name": "Emotion DistilRoBERTa-base (EN)",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  },
+  "Emotion Cardiffnlp (EN)": {
+    "url": "http://emotion-cardiffnlp-twitter-roberta-base-emotion.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://huggingface.co/cardiffnlp/twitter-roberta-base-emotion",
+    "paper": "https://aclanthology.org/2020.findings-emnlp.148/",
+    "map": "cardiffnlp/twitter-roberta-base-emotion",
+    "Name": "Emotion Cardiffnlp (EN)",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  },
+  "Emotion BerTweet (EN)": {
+    "url": "http://emotion-bertweet-base-emotion-analysis.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://huggingface.co/finiteautomata/bertweet-base-emotion-analysis",
+    "paper": "https://arxiv.org/abs/2106.09462",
+    "map": "finiteautomata/bertweet-base-emotion-analysis",
+    "Name": "Emotion BerTweet (EN)",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  },
+  "Emotion DistilBert-base (EN)": {
+    "url": "http://emotion-distilbert-base-uncased-finetuned-emotion.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://huggingface.co/ActivationAI/distilbert-base-uncased-finetuned-emotion",
+    "paper": "",
+    "map": "ActivationAI/distilbert-base-uncased-finetuned-emotion",
+    "Name": "Emotion DistilBert-base (EN)",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  },
+  "Emotion T5-base (EN)": {
+    "url": "http://emotion-t5-base-finetuned-emotion.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://huggingface.co/mrm8488/t5-base-finetuned-emotion",
+    "paper": "",
+    "map": "mrm8488/t5-base-finetuned-emotion",
+    "Name": "Emotion T5-base (EN)",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  },
+  "Emotion EmoAtlas (EN)": {
+    "url": "http://emotion-emoatlas.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://github.com/massimostel/emoatlas",
+    "paper": "",
+    "map": "EmoAtlas",
+    "Name": "Emotion EmoAtlas (EN)",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  },
+  "Emotion pysentimiento (EN,ES,IT,PT)": {
+    "url": "http://emotion-pysentimiento.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://github.com/pysentimiento/pysentimiento/",
+    "paper": "https://arxiv.org/abs/2106.09462",
+    "map": "pysentimiento",
+    "Name": "Emotion EmoAtlas (EN,ES,IT,PT)",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  }
 }

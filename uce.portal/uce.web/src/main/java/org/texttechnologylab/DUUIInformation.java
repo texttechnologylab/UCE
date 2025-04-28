@@ -18,6 +18,10 @@ public class DUUIInformation {
 
     private Boolean isTopic = false;
 
+    private Boolean isToxic = false;
+
+    private Boolean isEmotion = false;
+
     public DUUIInformation(Sentences sentence, TextClass textInformation, List<ModelGroup> modelGroups, HashMap<String, ModelInfo> modelInfos) {
         this.sentence = sentence;
         this.textInformation = textInformation;
@@ -81,6 +85,22 @@ public class DUUIInformation {
 
     public void setIsTopic(Boolean isTopic) {
         this.isTopic = isTopic;
+    }
+
+    public Boolean getIsToxic() {
+        return isToxic;
+    }
+
+    public void setIsToxic(Boolean isToxic) {
+        this.isToxic = isToxic;
+    }
+
+    public Boolean getIsEmotion() {
+        return isEmotion;
+    }
+
+    public void setIsEmotion(Boolean isEmotion) {
+        this.isEmotion = isEmotion;
     }
 
 }

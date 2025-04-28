@@ -18,6 +18,10 @@ public class SentenceClass {
 
     private ArrayList<SentimentClass> allSentiments = new ArrayList<>();
 
+    private ArrayList<ToxicClass> allToxics = new ArrayList<>();
+
+    private ArrayList<EmotionClass> allEmotions = new ArrayList<>();
+
     public String getText() {
         return text;
     }
@@ -76,5 +80,28 @@ public class SentenceClass {
 
     public ArrayList<SentimentClass> getAllSentiments() {
         return allSentiments;
+    }
+
+    public void addToxic(ToxicClass toxic) {
+        this.allToxics.add(toxic);
+    }
+    public ArrayList<ToxicClass> getAllToxics() {
+        return allToxics;
+    }
+    public void setAllSentiments(ArrayList<SentimentClass> allSentiments) {
+        this.allSentiments = allSentiments;
+    }
+    public void setAllToxics(ArrayList<ToxicClass> allToxics) {
+        this.allToxics = allToxics;
+    }
+
+    public void addEmotion(EmotionClass emotion) {
+        this.allEmotions.add(emotion);
+    }
+    public ArrayList<EmotionClass> getAllEmotions() {
+        return allEmotions;
+    }
+    public void setAllEmotions(ArrayList<EmotionClass> allEmotions) {
+        this.allEmotions = allEmotions;
     }
 }

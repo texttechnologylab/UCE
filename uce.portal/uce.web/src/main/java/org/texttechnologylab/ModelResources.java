@@ -60,7 +60,7 @@ public final class ModelResources {
             model.setMap(modelData.get("map"));
             model.setVariant(modelData.get("Variant"));
             model.setMainTool(mainTool);
-            String modelkeyName = mainTool.replace(" ", "_")+"_"+modelKey;
+            String modelkeyName = mainTool.replace(" ", "_")+"_"+modelKey.replace(" ", "_");
             groupMap2.put(modelkeyName, model);
             groupMap.computeIfAbsent(mainTool, ModelGroup::new).addModel(model);
         }

@@ -16,6 +16,8 @@ public class RunDUUIPipeline {
         boolean isHateSpeech = false;
         boolean isSentiment = false;
         boolean isTopic = false;
+        boolean isToxic = false;
+        boolean isEmotion = false;
         for (String modelKey : modelGroups) {
             if (modelInfos.containsKey(modelKey)) {
                 ModelInfo modelInfo = modelInfos.get(modelKey);
@@ -33,6 +35,12 @@ public class RunDUUIPipeline {
                         break;
                     case "Topic":
                         isTopic = true;
+                        break;
+                    case "Toxic":
+                        isToxic = true;
+                        break;
+                    case "Emotion":
+                        isEmotion = true;
                         break;
                 }
             }
@@ -58,6 +66,10 @@ public class RunDUUIPipeline {
         duuiInformation.setIsSentiment(isSentiment);
         // set topic
         duuiInformation.setIsTopic(isTopic);
+        // set toxic
+        duuiInformation.setIsToxic(isToxic);
+        // set emotion
+        duuiInformation.setIsEmotion(isEmotion);
         return duuiInformation;
     }
 

@@ -1,0 +1,86 @@
+package org.texttechnologylab;
+
+import java.util.HashMap;
+import java.util.List;
+
+public class History {
+    private HashMap<String, DUUIInformation> duuiInformationHashMap = new HashMap<>();
+    private HashMap<String, ModelGroup> modelGroupHashMap = new HashMap<>();
+    private HashMap<String, String>  inputTextHashMap = new HashMap<>();
+    private HashMap<String, List<String>> selectedModelsHashMap = new HashMap<>();
+
+    public HashMap<String, DUUIInformation> getDuuiInformationHashMap() {
+        return duuiInformationHashMap;
+    }
+
+    public void setDuuiInformationHashMap(HashMap<String, DUUIInformation> duuiInformationHashMap) {
+        this.duuiInformationHashMap = duuiInformationHashMap;
+    }
+    public HashMap<String, ModelGroup> getModelGroupHashMap() {
+        return modelGroupHashMap;
+    }
+    public void setModelGroupHashMap(HashMap<String, ModelGroup> modelGroupHashMap) {
+        this.modelGroupHashMap = modelGroupHashMap;
+    }
+    public HashMap<String, String> getInputTextHashMap() {
+        return inputTextHashMap;
+    }
+    public void setInputTextHashMap(HashMap<String, String> inputTextHashMap) {
+        this.inputTextHashMap = inputTextHashMap;
+    }
+    public HashMap<String, List<String>> getSelectedModelsHashMap() {
+        return selectedModelsHashMap;
+    }
+    public void setSelectedModelsHashMap(HashMap<String, List<String>> selectedModelsHashMap) {
+        this.selectedModelsHashMap = selectedModelsHashMap;
+    }
+
+    public void addDuuiInformation(String id, DUUIInformation duuiInformation) {
+        this.duuiInformationHashMap.put(id, duuiInformation);
+    }
+
+    public void addModelGroup(String id, ModelGroup modelGroup) {
+        this.modelGroupHashMap.put(id, modelGroup);
+    }
+
+    public void addInputText(String id, String inputText) {
+        this.inputTextHashMap.put(id, inputText);
+    }
+    public void addSelectedModels(String id, List<String> selectedModels) {
+        this.selectedModelsHashMap.put(id, selectedModels);
+    }
+    public DUUIInformation getDuuiInformation(String id) {
+        return this.duuiInformationHashMap.get(id);
+    }
+    public ModelGroup getModelGroup(String id) {
+        return this.modelGroupHashMap.get(id);
+    }
+    public String getInputText(String id) {
+        return this.inputTextHashMap.get(id);
+    }
+
+    public List<String> getSelectedModels(String id) {
+        return this.selectedModelsHashMap.get(id);
+    }
+
+    public void removeDuuiInformation(String id) {
+        this.duuiInformationHashMap.remove(id);
+    }
+
+    public void removeModelGroup(String id) {
+        this.modelGroupHashMap.remove(id);
+    }
+
+    public void removeInputText(String id) {
+        this.inputTextHashMap.remove(id);
+    }
+
+    public void removeSelectedModels(String id) {
+        this.selectedModelsHashMap.remove(id);
+    }
+
+    public List<String> getAllKeys() {
+        return this.selectedModelsHashMap.keySet().stream().toList();
+    }
+
+}

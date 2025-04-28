@@ -6,7 +6,7 @@
 </div>
 <div class="mt-4">
     <div class="row m-0 p-0">
-        <div class="col-3">
+        <div class="col-2">
             <div class="group-box card-shadow bg-light">
                 <h5 class="mb-0 mr-1 color-prime">DUUI-${languageResource.get("models")}</h5>
                 <ul class="analysis-treeview">
@@ -42,8 +42,14 @@
                     </li>
                 </ul>
             </div>
+            <div class="group-box card-shadow bg-light">
+                <h5 class="mb-0 mr-1 color-prime">${languageResource.get("history")}</h5>
+            </div>
+            <div id="analysis-result-history">
+
+            </div>
         </div>
-        <div class="col-6">
+        <div class="col-5">
             <div class="group-box card-shadow bg-light">
                 <h5 class="mb-0 mr-1 color-prime">${languageResource.get("inputField")}</h5>
                 <div class="grow-text">
@@ -57,29 +63,36 @@
                 </div>
             </div>
         </div>
-        <div class="col-3">
+        <div class="col-5">
             <div class="group-box card-shadow bg-light">
-                <h5>Analyse-Resultat</h5>
-                <p><strong>Eingabetext:</strong></p>
-                <#if DUUI??>
-                    <#if DUUI.modelGroups?has_content>
-                        <div class="border p-2 mb-2 bg-light">$</div>
-                        <#if DUUI.isTopic>
-                            <p><strong>Topic</strong></p>
-                        </#if>
-                        <#if DUUI.isHateSpeech>
-                            <p><strong>Hate</strong></p>
-                        </#if>
-                        <#if DUUI.isSentiment>
-                            <p><strong>Sentiment</strong></p>
-                        </#if>
-                    <#else>
-                        <p><strong>Kein Model</strong></p>
-                    </#if>
-                <#else>
-                    <p><em>Keine Ausgabe</em></p>
-                </#if>
+                <h5 class="mb-0 mr-1 color-prime">${languageResource.get("output")}</h5>
             </div>
+            <div id="analysis-result-container">
+            </div>
+<#--            <div class="group-box card-shadow bg-light">-->
+<#--                <h5>Analyse-Resultat</h5>-->
+<#--                <div id="analysis-result-container">-->
+<#--                    <p><strong>Eingabetext:</strong></p>-->
+<#--                    <#if DUUI??>-->
+<#--                        <#if DUUI.modelGroups?has_content>-->
+<#--                            <div class="border p-2 mb-2 bg-light">$</div>-->
+<#--                            <#if DUUI.isTopic>-->
+<#--                                <p><strong>Topic</strong></p>-->
+<#--                            </#if>-->
+<#--                            <#if DUUI.isHateSpeech>-->
+<#--                                <p><strong>Hate</strong></p>-->
+<#--                            </#if>-->
+<#--                            <#if DUUI.isSentiment>-->
+<#--                                <p><strong>Sentiment</strong></p>-->
+<#--                            </#if>-->
+<#--                        <#else>-->
+<#--                            <p><strong>Kein Model</strong></p>-->
+<#--                        </#if>-->
+<#--                    <#else>-->
+<#--                        <p><em>Keine Ausgabe</em></p>-->
+<#--                    </#if>-->
+<#--                </div>-->
+<#--            </div>-->
         </div>
     </div>
 </div>

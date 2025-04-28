@@ -44,7 +44,7 @@ public class AnalysisApi {
             model.put("modelGroups", DataRequest.getModelGroups());
 
             return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(model, "wiki/analysis.ftl"));
+                    .render(new ModelAndView(model, "wiki/analysis-result-fragment.ftl"));
 
         } catch (Exception ex) {
             logger.error("Error running analysis pipeline with request body: " + request.body(), ex);

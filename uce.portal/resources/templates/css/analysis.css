@@ -173,3 +173,337 @@ label {
 }
 
 
+.topics-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.topic-card {
+    flex: 1 1 100%;
+    background: #f8f9fa;
+    border: 2px solid #007bff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.topic-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.topic-card-title {
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    color: #343a40;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.topics-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.topic-entry {
+    flex: 1 1 calc(33.333% - 16px);
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s, transform 0.3s;
+}
+
+.topic-entry:hover {
+    transform: translateY(-3px);
+}
+
+.topic-name {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe */
+    margin-bottom: 8px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+}
+
+.topic-score {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe für den Score */
+}
+
+.sentiment-entry {
+    display: inline-block;
+    width: calc(32.333% - 16px);
+    margin-right: 16px;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s, transform 0.3s;
+    margin-bottom: 16px; /* Abstand nach unten */
+}
+
+.sentiment-entry:hover {
+    transform: translateY(-3px);
+}
+
+.sentiment-name {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe */
+    margin-bottom: 8px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+}
+
+.sentiment-score {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe für den Score */
+}
+
+.sentiment-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.sentiment-card {
+    flex: 1 1 100%;
+    background: #f8f9fa;
+    border: 2px solid #007bff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.sentiment-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.sentiment-card-title {
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    color: #343a40;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+
+.hate-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.hate-card {
+    flex: 1 1 100%;
+    background: #f8f9fa;
+    border: 2px solid #007bff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.hate-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.hate-card-title {
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    color: #343a40;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.hate-entry {
+    display: inline-block;
+    width: calc(49.333% - 16px);
+    margin-right: 16px;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s, transform 0.3s;
+    margin-bottom: 16px; /* Abstand nach unten */
+}
+
+.hate-entry:hover {
+    transform: translateY(-3px);
+}
+
+.hate-name {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe */
+    margin-bottom: 8px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+}
+
+.hate-score {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe für den Score */
+}
+
+
+.toxic-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.toxic-card {
+    flex: 1 1 100%;
+    background: #f8f9fa;
+    border: 2px solid #007bff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.toxic-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.toxic-card-title {
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    color: #343a40;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.toxic-entry {
+    display: inline-block;
+    width: calc(49.333% - 16px);
+    margin-right: 16px;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s, transform 0.3s;
+    margin-bottom: 16px; /* Abstand nach unten */
+}
+
+.toxic-entry:hover {
+    transform: translateY(-3px);
+}
+
+.toxic-name {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe */
+    margin-bottom: 8px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+}
+
+.toxic-score {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe für den Score */
+}
+
+.emotions-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.emotion-card {
+    flex: 1 1 100%;
+    background: #f8f9fa;
+    border: 2px solid #007bff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.emotion-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.emotion-card-title {
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    color: #343a40;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.emotions-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.emotion-entry {
+    flex: 1 1 calc(33.333% - 16px);
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s, transform 0.3s;
+    background-color: rgba(var(--emotion-color), 1); /* Fallback ohne JS */
+}
+
+.emotion-entry:hover {
+    transform: translateY(-3px);
+}
+
+.emotion-name {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe */
+    margin-bottom: 8px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+}
+
+.emotion-score {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe für den Score */
+}
+
+/* Emotionen-spezifische Farben */
+.emotion-love { --emotion-color: 255, 105, 180; }       /* Rosa */
+.emotion-joy { --emotion-color: 255, 223, 0; }           /* Gelb */
+.emotion-surprise { --emotion-color: 138, 43, 226; }     /* Violett */
+.emotion-anger { --emotion-color: 255, 0, 0; }           /* Rot */
+.emotion-sadness { --emotion-color: 0, 0, 255; }         /* Blau */
+.emotion-fear { --emotion-color: 0, 128, 128; }          /* Türkis */
+.emotion-disgust { --emotion-color: 85, 107, 47; }       /* Dunkles Olivgrün */
+.emotion-others { --emotion-color: 128, 128, 128; }      /* Grau */
+.emotion-anticipation { --emotion-color: 255, 165, 0; }  /* Orange */
+.emotion-apprehension { --emotion-color: 75, 0, 130; }   /* Indigoblau */
+.emotion-happiness { --emotion-color: 255, 255, 0; }     /* Helles Gelb */
+.emotion-confusion { --emotion-color: 199, 21, 133; }    /* Violett-Rosa */
+.emotion-default { --emotion-color: 200, 200, 200; }     /* Hellgrau */
+
+

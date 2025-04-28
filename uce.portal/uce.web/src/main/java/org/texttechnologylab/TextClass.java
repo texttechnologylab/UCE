@@ -8,27 +8,63 @@ public class TextClass {
     private HashMap<ModelInfo, ArrayList<TopicClass>> topics = new HashMap<>();
     private HashMap<ModelInfo, ArrayList<HateClass>> hate = new HashMap<>();
     private HashMap<ModelInfo, ArrayList<SentimentClass>> sentiment = new HashMap<>();
+    private HashMap<ModelInfo, ArrayList<ToxicClass>> toxic = new HashMap<>();
+    private HashMap<ModelInfo, ArrayList<EmotionClass>> emotions = new HashMap<>();
 
-    private HashMap<ModelInfo, HateClass> hateAVG = new HashMap<>();
+    private ArrayList<HateClass> hateAVG = new ArrayList<>();
+    private ArrayList<SentimentClass> sentimentAVG = new ArrayList<>();
+    private ArrayList<TopicClass> topicAVG = new ArrayList<>();
+    private ArrayList<ToxicClass> toxicAVG = new ArrayList<>();
+    private ArrayList<EmotionClass> emotionAVG = new ArrayList<>();
 
-    private HashMap<ModelInfo, SentimentClass> sentimentAVG = new HashMap<>();
-
-    private HashMap<ModelInfo, TopicClass> topicAVG = new HashMap<>();
+    private ArrayList<ModelInfo> topicsModels = new ArrayList<>();
+    private ArrayList<ModelInfo> hateModels = new ArrayList<>();
+    private ArrayList<ModelInfo> sentimentModels = new ArrayList<>();
+    private ArrayList<ModelInfo> toxicModels = new ArrayList<>();
+    private ArrayList<ModelInfo> emotionModels = new ArrayList<>();
 
     public void addTopic(ModelInfo model, TopicClass topic) {
         if (!this.topics.containsKey(model)) {
             this.topics.put(model, new ArrayList<>());
         }
         this.topics.get(model).add(topic);
+        if (!this.topicsModels.contains(model)) {
+            this.topicsModels.add(model);
+        }
     }
+
+    public void addEmotion(ModelInfo model, EmotionClass emotion) {
+        if (!this.emotions.containsKey(model)) {
+            this.emotions.put(model, new ArrayList<>());
+        }
+        this.emotions.get(model).add(emotion);
+        if (!this.emotionModels.contains(model)) {
+            this.emotionModels.add(model);
+        }
+    }
+
     public ArrayList<TopicClass> getTopic(ModelInfo model) {
         if (!this.topics.containsKey(model)) {
             return new ArrayList<>();
         }
         return this.topics.get(model);
     }
+
+    public ArrayList<EmotionClass> getEmotion(ModelInfo model) {
+        if (!this.emotions.containsKey(model)) {
+            return new ArrayList<>();
+        }
+        return this.emotions.get(model);
+    }
+
     public void deleteTopic(ModelInfo model) {
         this.topics.remove(model);
+        this.topicsModels.remove(model);
+    }
+
+    public void deleteEmotion(ModelInfo model) {
+        this.emotions.remove(model);
+        this.emotionModels.remove(model);
     }
 
     public void addHate(ModelInfo model, HateClass hate) {
@@ -36,6 +72,66 @@ public class TextClass {
             this.hate.put(model, new ArrayList<>());
         }
         this.hate.get(model).add(hate);
+        if (!this.hateModels.contains(model)) {
+            this.hateModels.add(model);
+        }
+    }
+
+    public ArrayList<HateClass> getHate(ModelInfo model) {
+        if (!this.hate.containsKey(model)) {
+            return new ArrayList<>();
+        }
+        return this.hate.get(model);
+    }
+
+    public void deleteHate(ModelInfo model) {
+        this.hate.remove(model);
+        this.hateModels.remove(model);
+    }
+    public void addSentiment(ModelInfo model, SentimentClass sentiment) {
+        if (!this.sentiment.containsKey(model)) {
+            this.sentiment.put(model, new ArrayList<>());
+        }
+        this.sentiment.get(model).add(sentiment);
+        if (!this.sentimentModels.contains(model)) {
+            this.sentimentModels.add(model);
+        }
+    }
+    public ArrayList<SentimentClass> getSentiment(ModelInfo model) {
+        if (!this.sentiment.containsKey(model)) {
+            return new ArrayList<>();
+        }
+        return this.sentiment.get(model);
+    }
+    public void deleteSentiment(ModelInfo model) {
+        this.sentiment.remove(model);
+        this.sentimentModels.remove(model);
+    }
+
+    public void addToxic(ModelInfo model, ToxicClass toxic) {
+        if (!this.toxic.containsKey(model)) {
+            this.toxic.put(model, new ArrayList<>());
+        }
+        this.toxic.get(model).add(toxic);
+        if (!this.toxicModels.contains(model)) {
+            this.toxicModels.add(model);
+        }
+    }
+
+    public ArrayList<ToxicClass> getToxic(ModelInfo model) {
+        if (!this.toxic.containsKey(model)) {
+            return new ArrayList<>();
+        }
+        return this.toxic.get(model);
+    }
+
+    public void deleteToxic(ModelInfo model) {
+        this.toxic.remove(model);
+        this.toxicModels.remove(model);
+    }
+
+    public HashMap<ModelInfo, ArrayList<TopicClass>> getTopics() {
+        return topics;
     }
 
     public void computeAVGHate(){
@@ -50,7 +146,8 @@ public class TextClass {
             HateClass avgHate = new HateClass();
             avgHate.setHate(totalHate / hateList.size());
             avgHate.setNonHate(totalNonHate / hateList.size());
-            this.hateAVG.put(model, avgHate);
+            avgHate.setModelInfo(model);
+            this.hateAVG.add(avgHate);
         }
     }
 
@@ -69,7 +166,8 @@ public class TextClass {
             avgSentiment.setNegative(totalNegative / sentimentList.size());
             avgSentiment.setPositive(totalPositive / sentimentList.size());
             avgSentiment.setNeutral(totalNeutral / sentimentList.size());
-            this.sentimentAVG.put(model, avgSentiment);
+            avgSentiment.setModelInfo(model);
+            this.sentimentAVG.add(avgSentiment);
         }
     }
 
@@ -94,74 +192,72 @@ public class TextClass {
                 avgTopics.add(topicInput);
             }
             avgTopic.setTopics(avgTopics);
-            this.topicAVG.put(model, avgTopic);
+            avgTopic.setModelInfo(model);
+            this.topicAVG.add(avgTopic);
         }
     }
 
-    public HashMap<ModelInfo, HateClass> getHateAVG() {
+    public void computeAVGEmotion(){
+        for (ModelInfo model : this.emotions.keySet()) {
+            HashMap<String, Double> emotionScores = new HashMap<>();
+            ArrayList<EmotionClass> emotionList = this.emotions.get(model);
+            for (EmotionClass emotion : emotionList) {
+                ArrayList<EmotionInput> emotions = emotion.getEmotions();
+                for (EmotionInput emotionInput : emotions) {
+                    String key = emotionInput.getKey();
+                    double score = emotionInput.getScore();
+                    emotionScores.put(key, emotionScores.getOrDefault(key, 0.0) + score);
+                }
+            }
+            EmotionClass avgEmotion = new EmotionClass();
+            ArrayList<EmotionInput> avgEmotions = new ArrayList<>();
+            for (String key : emotionScores.keySet()) {
+                EmotionInput emotionInput = new EmotionInput();
+                emotionInput.setKey(key);
+                emotionInput.setScore(emotionScores.get(key) / emotionList.size());
+                avgEmotions.add(emotionInput);
+            }
+            avgEmotion.setEmotions(avgEmotions);
+            avgEmotion.setModelInfo(model);
+            this.emotionAVG.add(avgEmotion);
+        }
+    }
+
+    public void computeAVGToxic(){
+        for (ModelInfo model : this.toxic.keySet()) {
+            ArrayList<ToxicClass> toxicList = this.toxic.get(model);
+            double totalToxic = 0;
+            double totalNonToxic = 0;
+            for (ToxicClass toxic : toxicList) {
+                totalToxic += toxic.getToxic();
+                totalNonToxic += toxic.getNonToxic();
+            }
+            ToxicClass avgToxic = new ToxicClass();
+            avgToxic.setToxic(totalToxic / toxicList.size());
+            avgToxic.setNonToxic(totalNonToxic / toxicList.size());
+            avgToxic.setModelInfo(model);
+            this.toxicAVG.add(avgToxic);
+        }
+    }
+
+    public ArrayList<HateClass> getHateAVG() {
         return hateAVG;
     }
 
-    public HashMap<ModelInfo, SentimentClass> getSentimentAVG() {
+    public ArrayList<SentimentClass> getSentimentAVG() {
         return sentimentAVG;
     }
 
-    public HashMap<ModelInfo, TopicClass> getTopicAVG() {
+    public ArrayList<TopicClass> getTopicAVG() {
         return topicAVG;
     }
 
-    public HateClass getHateAVG(ModelInfo model) {
-        if (!this.hateAVG.containsKey(model)) {
-            return new HateClass();
-        }
-        return this.hateAVG.get(model);
+    public ArrayList<ToxicClass> getToxicAVG() {
+        return toxicAVG;
     }
 
-    public SentimentClass getSentimentAVG(ModelInfo model) {
-        if (!this.sentimentAVG.containsKey(model)) {
-            return new SentimentClass();
-        }
-        return this.sentimentAVG.get(model);
+    public ArrayList<EmotionClass> getEmotionAVG() {
+        return emotionAVG;
     }
-
-    public TopicClass getTopicAVG(ModelInfo model) {
-        if (!this.topicAVG.containsKey(model)) {
-            return new TopicClass();
-        }
-        return this.topicAVG.get(model);
-    }
-
-
-
-    public ArrayList<HateClass> getHate(ModelInfo model) {
-        if (!this.hate.containsKey(model)) {
-            return new ArrayList<>();
-        }
-        return this.hate.get(model);
-    }
-
-    public void deleteHate(ModelInfo model) {
-        this.hate.remove(model);
-    }
-    public void addSentiment(ModelInfo model, SentimentClass sentiment) {
-        if (!this.sentiment.containsKey(model)) {
-            this.sentiment.put(model, new ArrayList<>());
-        }
-        this.sentiment.get(model).add(sentiment);
-    }
-    public ArrayList<SentimentClass> getSentiment(ModelInfo model) {
-        if (!this.sentiment.containsKey(model)) {
-            return new ArrayList<>();
-        }
-        return this.sentiment.get(model);
-    }
-    public void deleteSentiment(ModelInfo model) {
-        this.sentiment.remove(model);
-    }
-    public HashMap<ModelInfo, ArrayList<TopicClass>> getTopics() {
-        return topics;
-    }
-
-
 
 }

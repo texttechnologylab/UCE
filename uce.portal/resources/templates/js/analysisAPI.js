@@ -60,7 +60,7 @@ async function runAnalysisPipeline() {
         contentType: "application/json",
         success: function(response) {
             console.log(response);
-            $('.view .analysis-result-container').html(response);
+            $('#analysis-result-container').html(response);
         },
         error: function(xhr, status, error) {
             console.error(xhr.responseText);

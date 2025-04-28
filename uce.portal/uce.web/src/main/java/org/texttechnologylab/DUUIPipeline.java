@@ -33,8 +33,6 @@ public class DUUIPipeline {
 
         DUUIRemoteDriver remoteDriver = new DUUIRemoteDriver();
         composer.addDriver(remoteDriver);
-//        DUUIDockerDriver docker_driver = new DUUIDockerDriver();
-//        composer.addDriver(docker_driver);
         for (Map.Entry<String, String> url : urls.entrySet()) {
             composer.add(
                     new DUUIRemoteDriver.Component(url.getValue())
@@ -120,6 +118,8 @@ public class DUUIPipeline {
         textClass.computeAVGHate();
         textClass.computeAVGSentiment();
         textClass.computeAVGTopic();
+        textClass.computeAVGToxic();
+        textClass.computeAVGEmotion();
         return new Object[]{sentences, textClass};
     }
 
@@ -148,6 +148,31 @@ public class DUUIPipeline {
                     }
                     sentences.getSentence(Integer.toString(begin), Integer.toString(end)).addTopic(topicClass);
                     textClass.addTopic(modelInfo, topicClass);
+                }
+                break;
+            case "Emotion":
+                Collection<Emotion> allEmotions = JCasUtil.select(cas, Emotion.class);
+                for (Emotion emotion : allEmotions) {
+                    EmotionClass emotionClass = new EmotionClass();
+                    int begin = emotion.getBegin();
+                    int end = emotion.getEnd();
+                    FSArray<AnnotationComment> emotions_all = emotion.getEmotions();
+                    String model_name = emotion.getModel().getModelName();
+                    emotionClass.setModelInfo(modelInfo);
+                    // model_name must be the same as modelInfo.getmap
+                    if (!model_name.equals(modelInfo.getMap())) {
+                        continue;
+                    }
+                    for (AnnotationComment annotationComment: emotions_all) {
+                        String keyEmotion = annotationComment.getKey();
+                        String valueEmotion = annotationComment.getValue();
+                        EmotionInput emotionInput = new EmotionInput();
+                        emotionInput.setKey(keyEmotion);
+                        emotionInput.setScore(Double.parseDouble(valueEmotion));
+                        emotionClass.addEmotion(emotionInput);
+                    }
+                    sentences.getSentence(Integer.toString(begin), Integer.toString(end)).addEmotion(emotionClass);
+                    textClass.addEmotion(modelInfo, emotionClass);
                 }
                 break;
             case "Hate":
@@ -189,6 +214,26 @@ public class DUUIPipeline {
                     sentences.getSentence(Integer.toString(begin), Integer.toString(end)).addSentiment(sentimentClass);
                     textClass.addSentiment(modelInfo, sentimentClass);
                 }
+                break;
+            case "Toxic":
+                Collection<Toxic> allToxic = JCasUtil.select(cas, Toxic.class);
+                for (Toxic toxicResult: allToxic){
+                    String model_name = toxicResult.getModel().getModelName();
+                    if (!model_name.equals(modelInfo.getMap())) {
+                        continue;
+                    }
+                    int begin = toxicResult.getBegin();
+                    int end = toxicResult.getEnd();
+                    Double toxicScore = toxicResult.getToxic();
+                    Double nonToxicScore = toxicResult.getNonToxic();
+                    ToxicClass toxicClass = new ToxicClass();
+                    toxicClass.setModelInfo(modelInfo);
+                    toxicClass.setToxic(toxicScore);
+                    toxicClass.setNonToxic(nonToxicScore);
+                    sentences.getSentence(Integer.toString(begin), Integer.toString(end)).addToxic(toxicClass);
+                    textClass.addToxic(modelInfo, toxicClass);
+                }
+                break;
         }
         return new Object[]{sentences, textClass};
     }
@@ -201,10 +246,11 @@ public class DUUIPipeline {
         JCas cas = pipeline.getLanguage(inputText);
         cas = pipeline.getSentences(cas);
         HashMap<String, String> urls = new HashMap<>();
-        urls.put("Model1", "http://model1.service.component.duui.texttechnologylab.org");
-        urls.put("Model2", "http://model2.service.component.duui.texttechnologylab.org");
+        urls.put("Model1", "http://emotion-pysentimiento.service.component.duui.texttechnologylab.org");
+//        urls.put("Model2", "http://model2.service.component.duui.texttechnologylab.org");
         DUUIComposer composer = pipeline.setListComposer(urls);
         JCas result = pipeline.runPipeline(cas, composer);
+        System.out.println("Pipeline finished successfully.");
     }
 
 }

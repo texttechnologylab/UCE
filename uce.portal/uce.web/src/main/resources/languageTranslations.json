@@ -27,6 +27,14 @@
     "de-DE": "Pipeline Ausführen",
     "en-EN": "Run Pipeline"
   },
+  "output": {
+    "de-DE": "Ausgabe",
+    "en-EN": "Output"
+  },
+  "history": {
+    "de-DE": "Historie",
+    "en-EN": "History"
+  },
   "models": {
     "de-DE": "Modelle",
     "en-EN": "Models"
