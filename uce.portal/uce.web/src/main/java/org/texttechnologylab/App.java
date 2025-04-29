@@ -45,6 +45,7 @@ public class App {
     private static final Logger logger = LogManager.getLogger(App.class);
     private static CommonConfig commonConfig = null;
     private static boolean forceLexicalization = false;
+    private static int DUUIInputCounter = 0;
 
     public static void main(String[] args) throws IOException {
         logger.info("Starting the UCE web service...");
@@ -224,7 +225,7 @@ public class App {
         var corpusUniverseApi = new CorpusUniverseApi(context, configuration);
         var wikiApi = new WikiApi(context, configuration);
         var importExportApi = new ImportExportApi(context);
-        var analysisApi = new AnalysisApi(context, configuration);
+        var analysisApi = new AnalysisApi(context, configuration, DUUIInputCounter);
         Renderer.freemarkerConfig = configuration;
 
         before((request, response) -> {
@@ -333,6 +334,9 @@ public class App {
 
             path("/analysis", () -> {
                 post("/runPipeline", analysisApi.runPipeline);
+                get("/setHistory", analysisApi.setHistory);
+                post("/callHistory", analysisApi.callHistory);
+                post("/callHistoryText", analysisApi.callHistoryText);
 //                get("/runPipeline", analysisApi.runPipeline);
             });
 

@@ -83,4 +83,10 @@ public class History {
         return this.selectedModelsHashMap.keySet().stream().toList();
     }
 
+    public void setModelGroupHashMap(String id, List<ModelGroup> modelGroups) {
+        for (ModelGroup modelGroup : modelGroups) {
+            this.modelGroupHashMap.put(id, modelGroup);
+        }
+    }
+
 }

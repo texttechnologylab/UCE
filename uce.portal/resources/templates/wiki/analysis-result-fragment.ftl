@@ -88,10 +88,10 @@
                                     <#assign hateOpacity = model.getHate()?string?replace(",", ".")>
                                     <#assign nonHateOpacity = model.getNonHate()?string?replace(",", ".")>
 
-                                    <div class="hate-entry" style="background-color: rgba(255, 65, 0, ${hateOpacity});">
+                                    <div class="hate-entry" style="background-color: rgba(255, 100, 0, ${hateOpacity});">
                                         <div class="hate-score">AVG Hate: ${model.getHate()}</div>
                                     </div>
-                                    <div class="hate-entry" style="background-color: rgba(0, 65, 255, ${nonHateOpacity});">
+                                    <div class="hate-entry" style="background-color: rgba(0, 150, 255, ${nonHateOpacity});">
                                         <div class="hate-score">AVG Not Hate: ${model.getNonHate()}</div>
                                     </div>
                                 </div>
@@ -114,7 +114,7 @@
                                     <div class="toxic-entry" style="background-color: rgba(255, 65, 0, ${toxicOpacity});">
                                         <div class="toxic-score">AVG Toxic: ${model.getToxic()}</div>
                                     </div>
-                                    <div class="toxic-entry" style="background-color: rgba(0, 65, 255, ${nontoxicOpacity});">
+                                    <div class="toxic-entry" style="background-color: rgba(0, 150, 255, ${nontoxicOpacity});">
                                         <div class="toxic-score">AVG Not Toxic: ${model.getNonToxic()}</div>
                                     </div>
                                 </div>

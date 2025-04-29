@@ -143,6 +143,11 @@
     margin-top: 0.5rem;  /* Abstand zwischen Textarea und Button */
 }
 
+.history-buttons button {
+    display: block;
+    margin-bottom: 10px;
+}
+
 
 label,
 textarea {
