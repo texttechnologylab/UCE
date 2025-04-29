@@ -49,13 +49,13 @@
     "Main Tool": "Topic Annotation",
     "Variant": "Topic"
   },
-    "Sentiment Cardiffnlp": {
+    "Sentiment CardiffNLP": {
       "url": "http://sentiment-cardiffnlp.service.component.duui.texttechnologylab.org",
       "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
       "huggingface": "https://huggingface.co/cardiffnlp/twitter-xlm-roberta-base-sentiment",
       "paper": "https://arxiv.org/abs/2104.12250",
       "map": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
-      "Name": "Sentiment Cardiffnlp",
+      "Name": "Sentiment CardiffNLP",
       "Main Tool": "Sentiment Annotation",
         "Variant": "Sentiment"
     },
@@ -68,6 +68,56 @@
       "Name": "Sentiment CitizenLab",
       "Main Tool": "Sentiment Annotation",
         "Variant": "Sentiment"
+    },
+    "Sentiment Multilingual DistilBert Students": {
+      "url": "http://duui-transformers-sentiment-atomar-distilbert-student.service.component.duui.texttechnologylab.org",
+      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+      "huggingface": "https://huggingface.co/lxyuan/distilbert-base-multilingual-cased-sentiments-student",
+      "paper": "",
+      "map": "lxyuan/distilbert-base-multilingual-cased-sentiments-student",
+      "Name": "Sentiment Multilingual DistilBert Students",
+      "Main Tool": "Sentiment Annotation",
+      "Variant": "Sentiment"
+    },
+    "Sentiment Multilingual DistilBert": {
+      "url": "http://duui-transformers-sentiment-atomar-distilbert-multilingual.service.component.duui.texttechnologylab.org",
+      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+      "huggingface": "https://huggingface.co/philschmid/distilbert-base-multilingual-cased-sentiment",
+      "paper": "",
+      "map": "philschmid/distilbert-base-multilingual-cased-sentiment",
+      "Name": "Sentiment Multilingual DistilBert",
+      "Main Tool": "Sentiment Annotation",
+      "Variant": "Sentiment"
+    },
+    "Sentiment CardiffNLP (EN)": {
+      "url": "http://duui-transformers-sentiment-atomar-cardiffnlp-sentiment-en.service.component.duui.texttechnologylab.org",
+      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+      "huggingface": "https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest",
+      "paper": "",
+      "map": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+      "Name": "Sentiment CardiffNLP (EN)",
+      "Main Tool": "Sentiment Annotation",
+      "Variant": "Sentiment"
+    },
+    "Sentiment RoBERTa based (EN)": {
+      "url": "http://duui-transformers-sentiment-atomar-roberta-based-en.service.component.duui.texttechnologylab.org/",
+      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+      "huggingface": "https://huggingface.co/j-hartmann/sentiment-roberta-large-english-3-classes",
+      "paper": "",
+      "map": "j-hartmann/sentiment-roberta-large-english-3-classes",
+      "Name": "Sentiment RoBERTa based (EN)",
+      "Main Tool": "Sentiment Annotation",
+      "Variant": "Sentiment"
+    },
+    "Sentiment Finance (DE)": {
+      "url": "http://duui-transformers-sentiment-atomar-finance-sentiment-de.service.component.duui.texttechnologylab.org",
+      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+      "huggingface": "https://huggingface.co/bardsai/finance-sentiment-de-base",
+      "paper": "",
+      "map": "bardsai/finance-sentiment-de-base",
+      "Name": "Sentiment Finance (DE)",
+      "Main Tool": "Sentiment Annotation",
+      "Variant": "Sentiment"
     },
     "Hate Cardiffnlp": {
       "url": "http://cardiffnlp.service.component.duui.texttechnologylab.org",
@@ -149,6 +199,46 @@
     "Main Tool": "Toxic Annotation",
     "Variant": "Toxic"
   },
+  "One for all Toxicity": {
+    "url": "http://toxic-one-for-all-toxicity-v3.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-toxic",
+    "huggingface": "https://huggingface.co/FredZhang7/one-for-all-toxicity-v3",
+    "paper": "",
+    "map": "FredZhang7/one-for-all-toxicity-v3",
+    "Name": "One for all Toxicity",
+    "Main Tool": "Toxic Annotation",
+    "Variant": "Toxic"
+  },
+  "Toxic Multilingual Distil-Bert": {
+    "url": "http://toxic-distilbert-base-multilingual-cased-toxicity.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-toxic",
+    "huggingface": "citizenlab/distilbert-base-multilingual-cased-toxicity",
+    "paper": "",
+    "map": "citizenlab/distilbert-base-multilingual-cased-toxicity",
+    "Name": "Toxic Multilingual Distil-Bert",
+    "Main Tool": "Toxic Annotation",
+    "Variant": "Toxic"
+  },
+  "Toxic Comment (EN)": {
+    "url": "http://toxic-toxic-comment-model.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-toxic",
+    "huggingface": "citizenlab/distilbert-base-multilingual-cased-toxicity",
+    "paper": "",
+    "map": "martin-ha/toxic-comment-model",
+    "Name": "Toxic Comment (EN)",
+    "Main Tool": "Toxic Annotation",
+    "Variant": "Toxic"
+  },
+  "Roberta Toxicity Classifier (EN)": {
+    "url": "http://toxic-roberta-toxicity-classifier.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-toxic",
+    "huggingface": "https://huggingface.co/s-nlp/roberta_toxicity_classifier",
+    "paper": "https://aclanthology.org/2022.acl-long.469",
+    "map": "s-nlp/roberta_toxicity_classifier",
+    "Name": "Roberta Toxicity Classifier (EN)",
+    "Main Tool": "Toxic Annotation",
+    "Variant": "Toxic"
+  },
   "ToxiGen (EN)": {
     "url": "http://toxic-toxigen.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-toxic",
@@ -160,7 +250,7 @@
     "Variant": "Toxic"
   },
   "Toxicity German (DE)": {
-    "url": "http://toxic-german_toxicity_classifier_plus_v2.service.component.duui.texttechnologylab.org",
+    "url": "http://toxic-german-toxicity-classifier-plus-v2.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-toxic",
     "huggingface": "https://huggingface.co/EIStakovskii/german_toxicity_classifier_plus_v2",
     "paper": "",
@@ -199,6 +289,16 @@
     "Main Tool": "Emotion Annotation",
     "Variant": "Emotion"
   },
+  "Emotion pol emo mDeBERTa": {
+    "url": "http://duui-transformers-emotion-pol-emo-mdeberta.service.component.duui.texttechnologylab.org/",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://github.com/tweedmann/pol_emo_mDeBERTa2 ",
+    "paper": "",
+    "map": "pol_emo_mDeBERTa",
+    "Name": "Emotion pol emo mDeBERTa",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  },
   "Emotion DistilRoBERTa-base (EN)": {
     "url": "http://emotion-emotion-english-distilroberta-base.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
@@ -206,16 +306,6 @@
     "paper": "",
     "map": "j-hartmann/emotion-english-distilroberta-base",
     "Name": "Emotion DistilRoBERTa-base (EN)",
-    "Main Tool": "Emotion Annotation",
-    "Variant": "Emotion"
-  },
-  "Emotion Cardiffnlp (EN)": {
-    "url": "http://emotion-cardiffnlp-twitter-roberta-base-emotion.service.component.duui.texttechnologylab.org",
-    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
-    "huggingface": "https://huggingface.co/cardiffnlp/twitter-roberta-base-emotion",
-    "paper": "https://aclanthology.org/2020.findings-emnlp.148/",
-    "map": "cardiffnlp/twitter-roberta-base-emotion",
-    "Name": "Emotion Cardiffnlp (EN)",
     "Main Tool": "Emotion Annotation",
     "Variant": "Emotion"
   },
@@ -256,6 +346,16 @@
     "paper": "",
     "map": "EmoAtlas",
     "Name": "Emotion EmoAtlas (EN)",
+    "Main Tool": "Emotion Annotation",
+    "Variant": "Emotion"
+  },
+  "Emotion Text Classifier (EN)": {
+    "url": "http://emotion-emotion-text-classifier.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
+    "huggingface": "https://huggingface.co/michellejieli/emotion_text_classifier",
+    "paper": "",
+    "map": "michellejieli/emotion_text_classifier",
+    "Name": "Emotion Text Classifier (EN)",
     "Main Tool": "Emotion Annotation",
     "Variant": "Emotion"
   },
