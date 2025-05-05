@@ -498,7 +498,7 @@ public class SearchState extends CacheItem {
 
         Map<String, Object> data = new HashMap<>();
         data.put("data", visualizationData);
-        data.put("current_page", this.getCurrentPage());
+        data.put("currentPage", this.getCurrentPage());
         return new Gson().toJson(data);
     }
 }

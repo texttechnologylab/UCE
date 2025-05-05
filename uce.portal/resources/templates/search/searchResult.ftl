@@ -10,12 +10,13 @@
     </div>
 
     <div class="row mr-3 ml-3 pb-5">
-        <div class="content" style="width: 100%;">
-            <h6>Search result visualizations</h6>
-
-            <div style="width: 100%;">
-                <#include "*/search/components/searchVisualization.ftl" >
-            </div>
+        <div class="content w-100">
+            <details>
+                <summary>Search result visualizations</summary>
+                <div class="w-100">
+                    <#include "*/search/components/searchVisualization.ftl" >
+                </div>
+            </details>
         </div>
     </div>
 

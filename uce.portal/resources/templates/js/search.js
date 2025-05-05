@@ -1,6 +1,19 @@
 let currentCorpusUniverseHandler = undefined;
 
-function create_histogram_data(data, bins) {
+$('body').on('click', '#search-viz-update-button', function (e) {
+    // TODO more error handling
+    const nBins = parseInt($('#search-viz-n-bins').val())
+    window.searchVizualization.settings.nBins = nBins
+
+    const selectedFeature = $('#search-viz-selected-feature').val()
+    window.searchVizualization.settings.selectedFeature = selectedFeature
+
+    updateSearchVizualization()
+
+    e.preventDefault()
+})
+
+function createHistogramData(data, bins) {
     // extract only the values, filter nan
     const values = data.map(d => parseFloat(d.value)).filter(v => !isNaN(v))
 
@@ -28,47 +41,56 @@ function create_histogram_data(data, bins) {
     return [buckets, labels]
 }
 
-function update_search_vizualization() {
+function updateSearchVizualization() {
     // TODO global state?
-    const data = window.search_vizualization.viz_data["data"]
-    const current_page = window.search_vizualization.viz_data["current_page"]
-    const n_bins = window.search_vizualization.settings.n_bins
-    const selected_feature = window.search_vizualization.settings.selected_feature
+    const data = window.searchVizualization.vizData["data"]
+    const currentPage = window.searchVizualization.vizData["currentPage"]
+    const nBins = window.searchVizualization.settings.nBins
+
+    // set the selected feature to the first one if not set
+    const firstFeature = Object.keys(data).sort().shift()
+    const selectedFeature = window.searchVizualization.settings.selectedFeature || firstFeature
+
+    console.log('selectedFeature', selectedFeature)
+    console.log("currentPage", currentPage)
+    console.log("nBins", nBins)
+    console.log("data", data)
 
     // update features options based on current data
-    const select_elem = document.getElementById('search_viz_selected_feature')
-    while (select_elem.firstChild) {
-        select_elem.removeChild(select_elem.lastChild)
+    const selectElem = document.getElementById('search-viz-selected-feature')
+    while (selectElem.firstChild) {
+        selectElem.removeChild(selectElem.lastChild)
     }
     Object.keys(data).sort().forEach(category => {
         const option = document.createElement('option')
         option.value = category
         option.textContent = category
-        if (category === selected_feature) {
+        if (category === selectedFeature) {
             option.selected = true
         }
-        select_elem.appendChild(option)
+        selectElem.appendChild(option)
     })
 
-    let [chart_data, chart_labels] = create_histogram_data(data[selected_feature], n_bins)
-    console.log("chart_data", chart_data)
-    console.log("chart_labels", chart_labels)
+    let [chartData, chartLabels] = createHistogramData(data[selectedFeature], nBins)
+    console.log("chart_data", chartData)
+    console.log("chart_labels", chartLabels)
 
-    const num_docs = data[selected_feature].length
+    const numDocs = data[selectedFeature].length
 
-    const title = "Distribution of \"" + selected_feature + "\" in the current page (" + current_page.toString() + ") of the search results (" + num_docs.toString()  + " documents)"
+    // TODO localisation in js
+    const title = "Distribution of \"" + selectedFeature + "\" in the current page (" + currentPage.toString() + ") of the search results (" + numDocs.toString()  + " documents)"
 
-    const chart_elem = document.getElementById('search-results-visualization-graph')
-    while (chart_elem.firstChild) {
-        chart_elem.removeChild(chart_elem.lastChild)
+    const chartElem = document.getElementById('search-results-visualization-graph')
+    while (chartElem.firstChild) {
+        chartElem.removeChild(chartElem.lastChild)
     }
 
     window.graphVizHandler.createBasicChart(
-        chart_elem,
+        chartElem,
         title,
         {
-            "labels": chart_labels,
-            "data": chart_data,
+            "labels": chartLabels,
+            "data": chartData,
         },
         'bar',
     )
@@ -315,9 +337,9 @@ async function handleSwitchingOfPage(page) {
             $('.view .search-result-container .navigation-include').html(response.navigationView);
             $('.view .search-result-container .keyword-in-context-include').html(response.keywordInContextView);
 
-            const viz_data = JSON.parse(response.searchVisualization)
-            window.search_vizualization.viz_data = viz_data
-            update_search_vizualization()
+            const vizData = JSON.parse(response.searchVisualization)
+            window.searchVizualization.vizData = vizData
+            updateSearchVizualization()
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);
