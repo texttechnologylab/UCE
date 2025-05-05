@@ -128,11 +128,26 @@ function startNewSearch(searchInput, reloadCorpus = true) {
     // Get possible uce metadata filters of this selectec corpus
     let metadataFilters = [];
     $('.uce-corpus-search-filter[data-id="' + corpusId + '"]').find('.filter-div').each(function () {
-        metadataFilters.push({
-            'key': $(this).find('label').html(),
-            'valueType': $(this).data('type'),
-            'value': $(this).find('input').val(),
-        })
+        const key = $(this).find('label').html()
+        const valueType = $(this).data('type')
+        if (valueType === 'NUMBER') {
+            // NUMBER type is a range
+            const min = parseFloat($(this).find('input[data-range="min"]').val())
+            const max = parseFloat($(this).find('input[data-range="max"]').val())
+            metadataFilters.push({
+                'key': key,
+                'valueType': valueType,
+                'min': min,
+                'max': max,
+            })
+        }
+        else {
+            metadataFilters.push({
+                'key': key,
+                'valueType': valueType,
+                'value': $(this).find('input').val(),
+            })
+        }
     })
 
     // Start a new search TODO: Outsource this into new prototype maybe

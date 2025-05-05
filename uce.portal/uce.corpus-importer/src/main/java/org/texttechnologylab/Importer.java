@@ -560,7 +560,19 @@ public class Importer {
             // If it's empty, we don't have that metadata cached as a filter yet. So do it.
             if (possibleFilter.isEmpty()) {
                 var newFilter = new UCEMetadataFilter(corpusId, metadata.getKey(), metadata.getValueType());
-                newFilter.addPossibleCategory(metadata.getValue());
+                if (metadata.getValueType() == UCEMetadataValueType.NUMBER) {
+                    // We assume, that a number can actually be parsed to a number
+                    // TODO should this be configurable? What about integers?
+                    var number = StringUtils.tryParseFloat(metadata.getValue());
+                    // do not setup a filter if we cant parse the number
+                    if (!Float.isNaN(number)) {
+                        newFilter.setMin(number);
+                        newFilter.setMax(number);
+                    }
+                }
+                else {
+                    newFilter.addPossibleCategory(metadata.getValue());
+                }
                 synchronized (newFilter) {
                     this.uceMetadataFilters.add(newFilter);
                 }
@@ -571,15 +583,33 @@ public class Importer {
                 // If this filter already exists, then we need to check if it's an Enum filter. If yes, there is a chance
                 // that a new category to that enum must be added and stored. Let's check.
                 var existingFilter = possibleFilter.get();
-                if (existingFilter.getValueType() != UCEMetadataValueType.ENUM)
-                    return; // There is nothing to update for none enums.
-                // Again, thread safety. If this worker updates a filter category, we need the other to know.
-                synchronized (existingFilter) {
-                    if (existingFilter.getPossibleCategories().stream().noneMatch(c -> c.equals(metadata.getValue()))) {
-                        existingFilter.addPossibleCategory(metadata.getValue());
-                        ExceptionUtils.tryCatchLog(
-                                () -> db.saveOrUpdateUCEMetadataFilter(existingFilter),
-                                (ex) -> logger.error("Tried updating an existing UCEMetadataFilter, but got an error: ", ex));
+                if (existingFilter.getValueType() == UCEMetadataValueType.ENUM) {
+                    // Again, thread safety. If this worker updates a filter category, we need the other to know.
+                    synchronized (existingFilter) {
+                        if (existingFilter.getPossibleCategories().stream().noneMatch(c -> c.equals(metadata.getValue()))) {
+                            existingFilter.addPossibleCategory(metadata.getValue());
+                            ExceptionUtils.tryCatchLog(
+                                    () -> db.saveOrUpdateUCEMetadataFilter(existingFilter),
+                                    (ex) -> logger.error("Tried updating an existing UCEMetadataFilter, but got an error: ", ex));
+                        }
+                    }
+                }
+                else if (existingFilter.getValueType() == UCEMetadataValueType.NUMBER) {
+                    // We assume, that a number can actually be parsed to a number
+                    // TODO should this be configurable? What about integers?
+                    var number = StringUtils.tryParseFloat(metadata.getValue());
+                    if (!Float.isNaN(number)) {
+                        synchronized (existingFilter) {
+                            if (number < existingFilter.getMin()) {
+                                existingFilter.setMin(number);
+                            }
+                            if (number > existingFilter.getMax()) {
+                                existingFilter.setMax(number);
+                            }
+                            ExceptionUtils.tryCatchLog(
+                                    () -> db.saveOrUpdateUCEMetadataFilter(existingFilter),
+                                    (ex) -> logger.error("Tried updating an existing UCEMetadataFilter for type NUMBER, but got an error: ", ex));
+                        }
                     }
                 }
             }

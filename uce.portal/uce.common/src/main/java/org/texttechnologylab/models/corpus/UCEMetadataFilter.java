@@ -20,6 +20,24 @@ public class UCEMetadataFilter extends ModelBase {
     private long corpusId;
     private String key;
     private UCEMetadataValueType valueType;
+    private Float min;
+    private Float max;
+
+    public Float getMax() {
+        return max;
+    }
+
+    public void setMax(Float max) {
+        this.max = max;
+    }
+
+    public Float getMin() {
+        return min;
+    }
+
+    public void setMin(Float min) {
+        this.min = min;
+    }
 
     /**
      * This is only relevant if the UCEMetadataValueType is of Type Enum, since then we have set categories as a filter
