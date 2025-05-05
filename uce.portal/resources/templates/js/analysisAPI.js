@@ -5,6 +5,10 @@ async function runAnalysisPipeline() {
     const selectedModels = [];
     const inputText = $('#input').val().trim();
     const $runButton = $('.run-pipeline-btn');
+    const inputClaim = $('#claim-text').val().trim();
+    const inputCoherence = $('#coherence-text').val().trim();
+    let checkboxClaim = false;
+    let checkboxCoherence = false;
 
     // Get only the *lowest* selected checkboxes (no partially selected parents)
     $('.model-checkbox:checked').each(function() {
@@ -12,6 +16,14 @@ async function runAnalysisPipeline() {
         const $childCheckboxes = $checkbox.closest('li').find('ul input[type="checkbox"]');
         if ($childCheckboxes.length === 0) {
             selectedModels.push($checkbox[0]["id"]);
+            const isFactChecking = $checkbox[0]["id"].toLowerCase().includes('factchecking');
+            if (isFactChecking) {
+                checkboxClaim = true;
+            }
+            const isCoherence = $checkbox[0]["id"].toLowerCase().includes('coherence');
+            if (isCoherence) {
+                checkboxCoherence = true;
+            }
         }
     });
 
@@ -27,6 +39,18 @@ async function runAnalysisPipeline() {
         return;
     }
 
+    // Validation: if FactChecking is selected, the claim field must not be empty
+    if (checkboxClaim && inputClaim.length === 0) {
+        showMessageModal("Claim Error", "Please enter a claim to analyze.");
+        return;
+    }
+
+    // Validation: if Coherence is selected, the coherence field must not be empty
+    if (checkboxCoherence && inputCoherence.length === 0) {
+        showMessageModal("Coherence Error", "Please enter a coherence text to analyze.");
+        return;
+    }
+
     // Disable the button and show loading spinner
     $runButton.prop('disabled', true);
     $('.analysis-result-container .loader-container').fadeIn(150);
@@ -39,6 +63,8 @@ async function runAnalysisPipeline() {
         data: JSON.stringify({
             selectedModels: selectedModels,
             inputText: inputText,
+            inputClaim: inputClaim,
+            inputCoherence: inputCoherence,
         }),
         contentType: "application/json",
         success: function(firstResponse) {

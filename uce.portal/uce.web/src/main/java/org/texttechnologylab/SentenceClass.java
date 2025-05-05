@@ -22,6 +22,10 @@ public class SentenceClass {
 
     private ArrayList<EmotionClass> allEmotions = new ArrayList<>();
 
+    private ArrayList<FactClass> allFacts = new ArrayList<>();
+
+    private ArrayList<CoherenceClass> allCoherences = new ArrayList<>();
+
     public String getText() {
         return text;
     }
@@ -104,4 +108,21 @@ public class SentenceClass {
     public void setAllEmotions(ArrayList<EmotionClass> allEmotions) {
         this.allEmotions = allEmotions;
     }
+
+    public void addFact(FactClass fact) {
+        this.allFacts.add(fact);
+    }
+
+    public ArrayList<FactClass> getAllFacts() {
+        return allFacts;
+    }
+
+    public void addCoherence(CoherenceClass coherence) {
+        this.allCoherences.add(coherence);
+    }
+    public ArrayList<CoherenceClass> getAllCoherences() {
+        return allCoherences;
+    }
+
+
 }

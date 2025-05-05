@@ -59,6 +59,7 @@ public final class ModelResources {
             model.setPaper(modelData.get("paper"));
             model.setMap(modelData.get("map"));
             model.setVariant(modelData.get("Variant"));
+            model.setModelType(modelData.get("type"));
             model.setMainTool(mainTool);
             String modelkeyName = mainTool.replace(" ", "_")+"_"+modelKey.replace(" ", "_");
             groupMap2.put(modelkeyName, model);

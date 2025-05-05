@@ -152,6 +152,62 @@
                         </div>
                     </div>
                 </#if>
+                <#-- Fact -->
+                <#if DUUI.isFact>
+                    <div class="border p-2 mb-2 bg-light">
+                        <h6 class="mb-0 mr-1 color-prime">Fact Checking</h6>
+                        <div class="fact-container">
+                            <#list DUUI.textInformation.factAVG as model>
+                                <div class="fact-card">
+                                    <div class="fact-card-title">${model.getModelInfo().getName()}</div>
+
+                                    <#assign factOpacity = model.getFact()?string?replace(",", ".")>
+                                    <#assign nonfactOpacity = model.getNonFact()?string?replace(",", ".")>
+
+                                    <div class="fact-entry" style="background-color: rgba(255, 65, 0, ${factOpacity});">
+                                        <div class="fact-score">AVG Fact: ${model.getFact()}</div>
+                                    </div>
+                                    <div class="fact-entry" style="background-color: rgba(0, 150, 255, ${nonfactOpacity});">
+                                        <div class="fact-score">AVG Not Fact: ${model.getNonFact()}</div>
+                                    </div>
+                                </div>
+                            </#list>
+                        </div>
+                    </div>
+                </#if>
+                <#-- Coherence -->
+                <#if DUUI.isCoherence>
+                    <div class="border p-2 mb-2 bg-light">
+                        <h6 class="mb-0 mr-1 color-prime">Coherence</h6>
+                        <div class="coherences-container">
+                            <#list DUUI.textInformation.coherenceAVG as model>
+                                <div class="coherence-card">
+                                    <div class="coherence-card-title">${model.getModelInfo().getName()}</div>
+                                    <div class="coherences-grid">
+                                        <div class="coherence-entry coherence-euclidean" style="background-color: rgba(var(--coherence-color), 0.5);">
+                                            <div class="coherence-score">AVG Euclidean: ${model.getEuclidean()}</div>
+                                        </div>
+                                        <div class="coherence-entry coherence-cosine" style="background-color: rgba(var(--coherence-color), 0.5);">
+                                            <div class="coherence-score">AVG Cosine: ${1-model.getCosine()}</div>
+                                        </div>
+                                        <div class="coherence-entry coherence-distanceCorrelation" style="background-color: rgba(var(--coherence-color), 0.5);">
+                                            <div class="coherence-score">AVG Distance Correlation: ${model.getDistanceCorrelation()}</div>
+                                        </div>
+                                        <div class="coherence-entry coherence-wasserstein" style="background-color: rgba(var(--coherence-color), 0.5);">
+                                            <div class="coherence-score">AVG Wasserstein: ${model.getWasserstein()}</div>
+                                        </div>
+                                        <div class="coherence-entry coherence-jensenshannon" style="background-color: rgba(var(--coherence-color), 0.5);">
+                                            <div class="coherence-score">AVG Jensenshannon: ${model.getJensenshannon()}</div>
+                                        </div>
+                                        <div class="coherence-entry coherence-bhattacharyya" style="background-color: rgba(var(--coherence-color), 0.5);">
+                                            <div class="coherence-score">AVG Bhattacharyya: ${model.getBhattacharyya()}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </#list>
+                        </div>
+                    </div>
+                </#if>
             <#else>
                 <p><strong>Kein Model</strong></p>
             </#if>

@@ -38,12 +38,16 @@ public class AnalysisApi {
 
             var selectedModels = requestDto.getSelectedModels(); // Liste der IDs
             var inputText = requestDto.getInputText();           // Eingabetext
+            var inputClaim = requestDto.getInputClaim();                 // Eingabewort
+            var inputCoherence = requestDto.getInputCoherence(); // Eingabewort
 
             model.put("inputText", inputText);
             model.put("selectedModels", selectedModels);
+            model.put("inputClaim", inputClaim);
+            model.put("inputCoherence", inputCoherence);
 
             RunDUUIPipeline pipeline = new RunDUUIPipeline();
-            DUUIInformation  DataRequest = pipeline.getModelResources(selectedModels, inputText);
+            DUUIInformation  DataRequest = pipeline.getModelResources(selectedModels, inputText, inputClaim, inputCoherence);
             model.put("DUUI", DataRequest);
             model.put("SuccessRequest", true);
             model.put("modelGroups", DataRequest.getModelGroups());
@@ -53,6 +57,8 @@ public class AnalysisApi {
             history.setModelGroupHashMap(String.valueOf(counter), DataRequest.getModelGroups());
             history.addInputText(String.valueOf(counter), inputText);
             history.addSelectedModels(String.valueOf(counter), selectedModels);
+            history.addInputClaim(String.valueOf(counter),inputClaim);
+            history.addInputCoherence(String.valueOf(counter), inputCoherence);
             counter++;
 
             return new CustomFreeMarkerEngine(this.freemarkerConfig)
@@ -96,6 +102,8 @@ public class AnalysisApi {
             DUUIInformation duuiInformation = history.getDuuiInformation(historyID);
             String inputText = history.getInputText(historyID);
             List<String> selectedModels = history.getSelectedModels(historyID);;
+            String inputClaim = history.getInputClaim(historyID);
+            String inputCoherence = history.getInputCoherence(historyID);
 
             model.put("DUUI", duuiInformation);
             model.put("SuccessRequest", true);
@@ -103,6 +111,8 @@ public class AnalysisApi {
             model.put("inputText", inputText);
             model.put("selectedModels", selectedModels);
             model.put("historyID", historyID);
+            model.put("inputClaim", inputClaim);
+            model.put("inputCoherence", inputCoherence);
             // set history
 
             return new CustomFreeMarkerEngine(this.freemarkerConfig)
@@ -134,6 +144,8 @@ public class AnalysisApi {
             model.put("inputText", inputText);
             model.put("selectedModels", selectedModels);
             model.put("historyID", historyID);
+            model.put("inputClaim", history.getInputClaim(historyID));
+            model.put("inputCoherence", history.getInputCoherence(historyID));
             // set history
 
             return new CustomFreeMarkerEngine(this.freemarkerConfig)

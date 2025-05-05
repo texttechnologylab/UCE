@@ -10,6 +10,10 @@ public class AnalysisRequestDto {
     private List<String> selectedModels;
     private String inputText;
 
+    private String inputClaim;
+
+    private String inputCoherence;
+
     public AnalysisRequestDto() {
         // Empty constructor for Gson
     }
@@ -28,5 +32,21 @@ public class AnalysisRequestDto {
 
     public void setInputText(String inputText) {
         this.inputText = inputText;
+    }
+
+    public String getInputClaim() {
+        return inputClaim;
+    }
+
+    public void setInputClaim(String inputClaim) {
+        this.inputClaim = inputClaim;
+    }
+
+    public String getInputCoherence() {
+        return inputCoherence;
+    }
+
+    public void setInputCoherence(String inputCoherence) {
+        this.inputCoherence = inputCoherence;
     }
 }

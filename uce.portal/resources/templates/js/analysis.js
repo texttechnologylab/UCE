@@ -43,6 +43,37 @@ document.querySelectorAll('.group-checkbox').forEach(groupCheckbox => {
     });
 });
 
+document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
+    modelCheckbox.addEventListener('change', function () {
+        const isFactChecking = this.id.toLowerCase().includes('factchecking');
+        if (isFactChecking) {
+            const wrapper = document.getElementById('claim-field-wrapper');
+            if (this.checked) {
+                wrapper.style.display = 'block';
+            } else {
+                wrapper.style.display = 'none';
+                document.getElementById('claim-text').value = ''; // optional: reset field
+            }
+        }
+    });
+});
+
+document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
+    modelCheckbox.addEventListener('change', function () {
+        const isFactChecking = this.id.toLowerCase().includes('coherence');
+        if (isFactChecking) {
+            const wrapper = document.getElementById('text-field-wrapper');
+            if (this.checked) {
+                wrapper.style.display = 'block';
+            } else {
+                wrapper.style.display = 'none';
+                document.getElementById('input-text').value = ''; // optional: reset field
+            }
+        }
+    });
+});
+
+
 // Wenn eine Modell-Checkbox geändert wird
 document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
     modelCheckbox.addEventListener('change', function(e) {

@@ -9,6 +9,10 @@ public class History {
     private HashMap<String, String>  inputTextHashMap = new HashMap<>();
     private HashMap<String, List<String>> selectedModelsHashMap = new HashMap<>();
 
+    private HashMap<String, String> inputClaimHashMap = new HashMap<>();
+
+    private HashMap<String, String> inputCoherenceHashMap = new HashMap<>();
+
     public HashMap<String, DUUIInformation> getDuuiInformationHashMap() {
         return duuiInformationHashMap;
     }
@@ -28,6 +32,12 @@ public class History {
     public void setInputTextHashMap(HashMap<String, String> inputTextHashMap) {
         this.inputTextHashMap = inputTextHashMap;
     }
+    public HashMap<String, String> getInputClaimHashMap() {
+        return inputClaimHashMap;
+    }
+    public void setInputClaimHashMap(HashMap<String, String> inputClaimHashMap) {
+        this.inputClaimHashMap = inputClaimHashMap;
+    }
     public HashMap<String, List<String>> getSelectedModelsHashMap() {
         return selectedModelsHashMap;
     }
@@ -46,8 +56,15 @@ public class History {
     public void addInputText(String id, String inputText) {
         this.inputTextHashMap.put(id, inputText);
     }
+
+    public void addInputClaim(String id, String inputClaim) {
+        this.inputClaimHashMap.put(id, inputClaim);
+    }
     public void addSelectedModels(String id, List<String> selectedModels) {
         this.selectedModelsHashMap.put(id, selectedModels);
+    }
+    public void addInputCoherence(String id, String inputCoherence) {
+        this.inputCoherenceHashMap.put(id, inputCoherence);
     }
     public DUUIInformation getDuuiInformation(String id) {
         return this.duuiInformationHashMap.get(id);
@@ -59,8 +76,16 @@ public class History {
         return this.inputTextHashMap.get(id);
     }
 
+    public String getInputClaim(String id) {
+        return this.inputClaimHashMap.get(id);
+    }
+
     public List<String> getSelectedModels(String id) {
         return this.selectedModelsHashMap.get(id);
+    }
+
+    public String getInputCoherence(String id) {
+        return this.inputCoherenceHashMap.get(id);
     }
 
     public void removeDuuiInformation(String id) {
@@ -88,5 +113,4 @@ public class History {
             this.modelGroupHashMap.put(id, modelGroup);
         }
     }
-
 }

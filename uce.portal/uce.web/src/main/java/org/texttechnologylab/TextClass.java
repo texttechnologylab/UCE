@@ -11,17 +11,31 @@ public class TextClass {
     private HashMap<ModelInfo, ArrayList<ToxicClass>> toxic = new HashMap<>();
     private HashMap<ModelInfo, ArrayList<EmotionClass>> emotions = new HashMap<>();
 
+    private HashMap<ModelInfo, ArrayList<FactClass>> facts = new HashMap<>();
+
+    private HashMap<ModelInfo, ArrayList<CoherenceClass>> coherence = new HashMap<>();
+
     private ArrayList<HateClass> hateAVG = new ArrayList<>();
     private ArrayList<SentimentClass> sentimentAVG = new ArrayList<>();
     private ArrayList<TopicClass> topicAVG = new ArrayList<>();
     private ArrayList<ToxicClass> toxicAVG = new ArrayList<>();
     private ArrayList<EmotionClass> emotionAVG = new ArrayList<>();
+    private ArrayList<FactClass> factAVG = new ArrayList<>();
+
+    private ArrayList<CoherenceClass> coherenceAVG = new ArrayList<>();
 
     private ArrayList<ModelInfo> topicsModels = new ArrayList<>();
     private ArrayList<ModelInfo> hateModels = new ArrayList<>();
     private ArrayList<ModelInfo> sentimentModels = new ArrayList<>();
     private ArrayList<ModelInfo> toxicModels = new ArrayList<>();
     private ArrayList<ModelInfo> emotionModels = new ArrayList<>();
+
+    private ArrayList<ModelInfo> factModels = new ArrayList<>();
+
+    private ArrayList<ModelInfo> coherenceModels = new ArrayList<>();
+    private ClaimClass claim = new ClaimClass();
+
+    private CoherenceSentence coherenceSentence = new CoherenceSentence();
 
     public void addTopic(ModelInfo model, TopicClass topic) {
         if (!this.topics.containsKey(model)) {
@@ -40,6 +54,26 @@ public class TextClass {
         this.emotions.get(model).add(emotion);
         if (!this.emotionModels.contains(model)) {
             this.emotionModels.add(model);
+        }
+    }
+
+    public void addFact(ModelInfo model, FactClass fact) {
+        if (!this.facts.containsKey(model)) {
+            this.facts.put(model, new ArrayList<>());
+        }
+        this.facts.get(model).add(fact);
+        if (!this.factModels.contains(model)) {
+            this.factModels.add(model);
+        }
+    }
+
+    public void addCoherence(ModelInfo model, CoherenceClass coherence) {
+        if (!this.coherence.containsKey(model)) {
+            this.coherence.put(model, new ArrayList<>());
+        }
+        this.coherence.get(model).add(coherence);
+        if (!this.coherenceModels.contains(model)) {
+            this.coherenceModels.add(model);
         }
     }
 
@@ -65,6 +99,29 @@ public class TextClass {
     public void deleteEmotion(ModelInfo model) {
         this.emotions.remove(model);
         this.emotionModels.remove(model);
+    }
+
+    public void deleteFact(ModelInfo model) {
+        this.facts.remove(model);
+        this.factModels.remove(model);
+    }
+
+    public ArrayList<FactClass> getFact(ModelInfo model) {
+        if (!this.facts.containsKey(model)) {
+            return new ArrayList<>();
+        }
+        return this.facts.get(model);
+    }
+
+    public ArrayList<CoherenceClass> getCoherence(ModelInfo model) {
+        if (!this.coherence.containsKey(model)) {
+            return new ArrayList<>();
+        }
+        return this.coherence.get(model);
+    }
+    public void deleteCoherence(ModelInfo model) {
+        this.coherence.remove(model);
+        this.coherenceModels.remove(model);
     }
 
     public void addHate(ModelInfo model, HateClass hate) {
@@ -240,6 +297,49 @@ public class TextClass {
         }
     }
 
+    public void computeAVGFact(){
+        for (ModelInfo model : this.facts.keySet()) {
+            ArrayList<FactClass> factList = this.facts.get(model);
+            double totalFact = 0;
+            double totalNonFact = 0;
+            for (FactClass fact : factList) {
+                totalFact += fact.getFact();
+                totalNonFact += fact.getNonFact();
+            }
+            FactClass avgFact = new FactClass();
+            avgFact.setFact(totalFact / factList.size());
+            avgFact.setNonFact(totalNonFact / factList.size());
+            avgFact.setModelInfo(model);
+            this.factAVG.add(avgFact);
+        }
+    }
+
+    public void computeAVGCoherence(){
+        for (ModelInfo model : this.coherence.keySet()) {
+            ArrayList<CoherenceClass> coherenceList = this.coherence.get(model);
+            float euclidean = 0;
+            float cosine = 0;
+            float distanceCorrelation = 0;
+            float jensenshannon = 0;
+            float bhattacharyya = 0;
+            for (CoherenceClass coherence : coherenceList) {
+                euclidean += coherence.getEuclidean();
+                cosine += coherence.getCosine();
+                distanceCorrelation += coherence.getDistanceCorrelation();
+                jensenshannon += coherence.getJensenshannon();
+                bhattacharyya += coherence.getBhattacharyya();
+            }
+            CoherenceClass avgCoherence = new CoherenceClass();
+            avgCoherence.setEuclidean(euclidean / coherenceList.size());
+            avgCoherence.setCosine(cosine / coherenceList.size());
+            avgCoherence.setDistanceCorrelation(distanceCorrelation / coherenceList.size());
+            avgCoherence.setJensenshannon(jensenshannon / coherenceList.size());
+            avgCoherence.setBhattacharyya(bhattacharyya / coherenceList.size());
+            avgCoherence.setModelInfo(model);
+            this.coherenceAVG.add(avgCoherence);
+        }
+    }
+
     public ArrayList<HateClass> getHateAVG() {
         return hateAVG;
     }
@@ -258,6 +358,30 @@ public class TextClass {
 
     public ArrayList<EmotionClass> getEmotionAVG() {
         return emotionAVG;
+    }
+
+    public ArrayList<FactClass> getFactAVG() {
+        return factAVG;
+    }
+
+    public ArrayList<CoherenceClass> getCoherenceAVG() {
+        return coherenceAVG;
+    }
+
+    public ClaimClass getClaim() {
+        return claim;
+    }
+
+    public void setClaim(ClaimClass claim) {
+        this.claim = claim;
+    }
+
+    public CoherenceSentence getCoherenceSentence() {
+        return coherenceSentence;
+    }
+
+    public void setCoherenceSentence(CoherenceSentence coherenceSentence) {
+        this.coherenceSentence = coherenceSentence;
     }
 
 }

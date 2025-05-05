@@ -14,6 +14,8 @@ public class ModelInfo {
     private String variant;
     private String mainTool;
 
+    private String modelType;
+
     // Getter & Setter
     public String getKey() {
         return key;
@@ -85,6 +87,14 @@ public class ModelInfo {
 
     public void setMainTool(String mainTool) {
         this.mainTool = mainTool;
+    }
+
+    public String getModelType() {
+        return modelType;
+    }
+
+    public void setModelType(String modelType) {
+        this.modelType = modelType;
     }
 
 }

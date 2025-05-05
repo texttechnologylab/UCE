@@ -9,6 +9,7 @@ import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSArray;
+import org.apache.uima.jcas.tcas.Annotation;
 import org.apache.uima.resource.ResourceInitializationException;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIRemoteDriver;
@@ -39,6 +40,39 @@ public class DUUIPipeline {
                             .withParameter("selection", "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence")
 //                          .withTargetView(url.getKey())
             );
+        }
+        return composer;
+    }
+
+    public DUUIComposer setComposer(HashMap<String, ModelInfo> urls) throws URISyntaxException, IOException, UIMAException, SAXException, CompressorException {
+        DUUIComposer composer;
+        composer = new DUUIComposer()
+                .withSkipVerification(true)
+                .withLuaContext(new DUUILuaContext().withJsonLibrary());
+
+        DUUIRemoteDriver remoteDriver = new DUUIRemoteDriver();
+        composer.addDriver(remoteDriver);
+        for (Map.Entry<String, ModelInfo> url : urls.entrySet()) {
+            String Variant = url.getValue().getVariant();
+            switch (Variant){
+                case "Coherence":
+                    composer.add(
+                            new DUUIRemoteDriver.Component(url.getValue().getUrl())
+                                    .withParameter("selection", "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence")
+                                    .withParameter("model_name", url.getValue().getMap())
+                                    .withParameter("complexity_compute", "euclidean,cosine,wasserstein,distance,jensenshannon,bhattacharyya")
+                                    .withParameter("model_art", url.getValue().getModelType())
+                                    .withParameter("embeddings_keep", "0")
+                    );
+                    break;
+                default:
+                    composer.add(
+                            new DUUIRemoteDriver.Component(url.getValue().getUrl())
+                                    .withParameter("selection", "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence")
+//                          .withTargetView(url.getKey())
+                    );
+            }
+
         }
         return composer;
     }
@@ -94,6 +128,92 @@ public class DUUIPipeline {
         return cas;
     }
 
+    public JCas setClaimFact(JCas cas, String claim) throws UIMAException {
+        JCas newCas = JCasFactory.createJCas();
+        StringBuilder sb = new StringBuilder();
+        String text = cas.getDocumentText();
+        sb.append(text).append(" ");
+        Claim claimAnnotation = new Claim(newCas, sb.length(), sb.length()+claim.length());
+        sb.append(claim).append(" ");
+        newCas.setDocumentText(sb.toString());
+        String language = cas.getDocumentLanguage();
+        newCas.setDocumentLanguage(language);
+        Collection<Sentence> sentences = JCasUtil.select(cas, Sentence.class);
+        int length = sentences.size();
+        claimAnnotation.setFacts(new FSArray(newCas, length));
+        int counter = 0;
+
+        for (Sentence sentence : sentences) {
+            // Create a new Fact annotation for each sentence
+            int begin = sentence.getBegin();
+            int end = sentence.getEnd();
+            Sentence sentenceAnnotation = new Sentence(newCas, begin, end);
+            sentenceAnnotation.addToIndexes();
+            Fact factAnnotation = new Fact(newCas, begin, end);
+            factAnnotation.setClaims(new FSArray(newCas, 1));
+            factAnnotation.setClaims(0, claimAnnotation);
+            factAnnotation.addToIndexes();
+            claimAnnotation.setFacts(counter, factAnnotation);
+            counter++;
+        }
+        claimAnnotation.addToIndexes();
+        return newCas;
+    }
+
+    public JCas setSentenceComparisons(JCas cas, String sentence1) throws UIMAException {
+        JCas newCas = JCasFactory.createJCas();
+        StringBuilder sb = new StringBuilder();
+        String text = cas.getDocumentText();
+        sb.append(text).append(" ");
+        Annotation sentenceAnnotation1 = new Annotation(newCas, sb.length(), sb.length()+sentence1.length());
+        sb.append(sentence1).append(" ");
+        newCas.setDocumentText(sb.toString());
+        String language = cas.getDocumentLanguage();
+        newCas.setDocumentLanguage(language);
+        sentenceAnnotation1.addToIndexes();
+        Collection<Sentence> sentences = JCasUtil.select(cas, Sentence.class);
+        for (Sentence sentence : sentences) {
+            // Create a new Sentence annotation for each sentence
+            int begin = sentence.getBegin();
+            int end = sentence.getEnd();
+            Sentence sentenceAnnotation = new Sentence(newCas, begin, end);
+            sentenceAnnotation.addToIndexes();
+            SentenceComparison sentenceComparison = new SentenceComparison(newCas);
+            sentenceComparison.setSentenceI(sentenceAnnotation1);
+            sentenceComparison.setSentenceJ(sentenceAnnotation);
+            sentenceComparison.addToIndexes();
+        }
+        Collection<Fact> facts = JCasUtil.select(cas, Fact.class);
+        for (Fact fact : facts) {
+            // Create a new Fact annotation for each fact
+            int begin = fact.getBegin();
+            int end = fact.getEnd();
+            FSArray<Claim> claims = fact.getClaims();
+            Fact factAnnotation = new Fact(newCas, begin, end);
+            factAnnotation.setClaims(new FSArray(newCas, claims.size()));
+            for (int i = 0; i < claims.size(); i++) {
+                Claim claim = claims.get(i);
+                factAnnotation.setClaims(i, claim);
+            }
+            factAnnotation.addToIndexes();
+        }
+        Collection<Claim> claims = JCasUtil.select(cas, Claim.class);
+        for (Claim claim : claims) {
+            // Create a new Claim annotation for each claim
+            int begin = claim.getBegin();
+            int end = claim.getEnd();
+            FSArray<Fact> factsClaim = claim.getFacts();
+            Claim claimAnnotation = new Claim(newCas, begin, end);
+            claimAnnotation.setFacts(new FSArray(newCas, factsClaim.size()));
+            for (int i = 0; i < factsClaim.size(); i++) {
+                Fact fact = factsClaim.get(i);
+                claimAnnotation.setFacts(i, fact);
+            }
+            claimAnnotation.addToIndexes();
+        }
+        return newCas;
+    }
+
     public Object[] getJCasResults(JCas cas, List<ModelInfo> modelGroups) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
         Sentences sentences = new Sentences();
         // set sentences
@@ -120,6 +240,8 @@ public class DUUIPipeline {
         textClass.computeAVGTopic();
         textClass.computeAVGToxic();
         textClass.computeAVGEmotion();
+        textClass.computeAVGFact();
+        textClass.computeAVGCoherence();
         return new Object[]{sentences, textClass};
     }
 
@@ -234,6 +356,97 @@ public class DUUIPipeline {
                     textClass.addToxic(modelInfo, toxicClass);
                 }
                 break;
+            case "Factchecking":
+                Collection<FactChecking> factChecks = JCasUtil.select(cas, FactChecking.class);
+                for(FactChecking factCheck : factChecks) {
+                    Claim claim = factCheck.getClaim();
+                    Fact fact = factCheck.getFact();
+                    String model_name = factCheck.getModel().getModelName();
+                    if (!model_name.equals(modelInfo.getMap())) {
+                        continue;
+                    }
+                    int beginClaim = claim.getBegin();
+                    int endClaim = claim.getEnd();
+                    String claimText = claim.getCoveredText();
+                    ClaimClass claimClass = new ClaimClass();
+                    claimClass.setBegin(beginClaim);
+                    claimClass.setEnd(endClaim);
+                    claimClass.setClaim(claimText);
+                    int beginFact = fact.getBegin();
+                    int endFact = fact.getEnd();
+                    FactClass factClass = new FactClass();
+                    factClass.setModelInfo(modelInfo);
+                    factClass.setFact(factCheck.getConsistency());
+                    factClass.setNonFact(1 - factCheck.getConsistency());
+                    factClass.setClaim(claimClass);
+                    sentences.getSentence(Integer.toString(beginFact), Integer.toString(endFact)).addFact(factClass);
+                    textClass.addFact(modelInfo, factClass);
+                    textClass.setClaim(claimClass);
+                }
+                break;
+            case "Coherence":
+                HashMap<String, CoherenceClass> coherenceMap = new HashMap<>();
+                Collection<Complexity> allcomplex = JCasUtil.select(cas, Complexity.class);
+                for (Complexity complexity : allcomplex) {
+                    String model_name = complexity.getModel().getModelName();
+                    if (!model_name.equals(modelInfo.getMap())) {
+                        continue;
+                    }
+                    Annotation sentenceI = complexity.getSentenceI();
+                    Annotation sentenceJ = complexity.getSentenceJ();
+                    int beginI = sentenceI.getBegin();
+                    int endI = sentenceI.getEnd();
+                    int beginJ = sentenceJ.getBegin();
+                    int endJ = sentenceJ.getEnd();
+                    String sentenceIText = sentenceI.getCoveredText();
+                    String specKey = beginI + "_" + endI + "_" + beginJ + "_" + endJ + "_" + model_name;
+                    // speckey not in CoherenceMap
+                    if (!(coherenceMap.containsKey(specKey))){
+                        CoherenceClass coherenceClass = new CoherenceClass();
+                        coherenceClass.setModelInfo(modelInfo);
+                        coherenceMap.put(specKey, coherenceClass);
+                        CoherenceSentence coherenceSentence = new CoherenceSentence();
+                        coherenceSentence.setSentence(sentenceIText);
+                        coherenceSentence.setBegin(beginI);
+                        coherenceSentence.setEnd(endI);
+                        coherenceClass.setCoherenceSentence(coherenceSentence);
+                        coherenceClass.setBegin(beginJ);
+                        coherenceClass.setEnd(endJ);
+                    }
+                    CoherenceClass coherenceClass = coherenceMap.get(specKey);
+                    String kind = complexity.getKind();
+                    double value = complexity.getOutput();
+                    switch (kind){
+                        case "euclidean":
+                            coherenceClass.setEuclidean(Float.parseFloat(String.valueOf(value)));
+                            break;
+                        case "cosine":
+                            coherenceClass.setCosine(Float.parseFloat(String.valueOf(value)));
+                            break;
+                        case "wasserstein":
+                            coherenceClass.setWasserstein(Float.parseFloat(String.valueOf(value)));
+                            break;
+                        case "distance":
+                            coherenceClass.setDistanceCorrelation(Float.parseFloat(String.valueOf(value)));
+                            break;
+                        case "jensenshannon":
+                            coherenceClass.setJensenshannon(Float.parseFloat(String.valueOf(value)));
+                            break;
+                        case "bhattacharyya":
+                            coherenceClass.setBhattacharyya(Float.parseFloat(String.valueOf(value)));
+                            break;
+                    }
+                }
+                for (Map.Entry<String, CoherenceClass> entry : coherenceMap.entrySet()) {
+                    CoherenceClass coherenceClass = entry.getValue();
+                    int beginJ = coherenceClass.getBegin();
+                    int endJ = coherenceClass.getEnd();
+                    sentences.getSentence(Integer.toString(beginJ), Integer.toString(endJ)).addCoherence(coherenceClass);
+                    textClass.addCoherence(modelInfo, coherenceClass);
+                    textClass.setCoherenceSentence(coherenceClass.getCoherenceSentence());
+                }
+                break;
+
         }
         return new Object[]{sentences, textClass};
     }

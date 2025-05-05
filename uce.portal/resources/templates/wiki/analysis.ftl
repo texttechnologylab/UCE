@@ -61,8 +61,23 @@
                     </button>
                 </div>
             </div>
-            <div id="analysis-InputText-container">
+            <div id="claim-field-wrapper" style="display: none;">
+                <div class="group-box card-shadow bg-light">
+                    <h5 class="mb-0 mr-1 color-prime">Claim</h5>
+                    <div class="grow-text">
+                        <textarea name="claim-text" id="claim-text" rows="10" placeholder="Claim" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                    </div>
+                </div>
             </div>
+            <div id="text-field-wrapper" style="display: none;">
+                <div class="group-box card-shadow bg-light">
+                    <h5 class="mb-0 mr-1 color-prime">Coherence Text</h5>
+                    <div class="grow-text">
+                        <textarea name="coherence-text" id="coherence-text" rows="10" placeholder="Text" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div id="analysis-InputText-container"></div>
         </div>
         <div class="col-5">
             <div class="group-box card-shadow bg-light">

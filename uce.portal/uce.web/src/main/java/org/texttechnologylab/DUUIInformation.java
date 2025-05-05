@@ -22,6 +22,10 @@ public class DUUIInformation {
 
     private Boolean isEmotion = false;
 
+    private Boolean isFact = false;
+
+    private Boolean isCoherence = false;
+
     public DUUIInformation(Sentences sentence, TextClass textInformation, List<ModelGroup> modelGroups, HashMap<String, ModelInfo> modelInfos) {
         this.sentence = sentence;
         this.textInformation = textInformation;
@@ -101,6 +105,22 @@ public class DUUIInformation {
 
     public void setIsEmotion(Boolean isEmotion) {
         this.isEmotion = isEmotion;
+    }
+
+    public Boolean getIsFact() {
+        return isFact;
+    }
+
+    public void setIsFact(Boolean isFact) {
+        this.isFact = isFact;
+    }
+
+    public Boolean getIsCoherence() {
+        return isCoherence;
+    }
+
+    public void setIsCoherence(Boolean isCoherence) {
+        this.isCoherence = isCoherence;
     }
 
 }
