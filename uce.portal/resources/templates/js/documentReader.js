@@ -1,6 +1,9 @@
 let currentFocusedPage = 0;
 let searchTokens = "";
 
+// Global variable to store topic color mapping
+let topicColorMap = {};
+
 /**
  * Handles the expanding and de-expanding of the side bar
  */
@@ -150,70 +153,59 @@ $(document).ready(function () {
 });
 
 function loadDocumentTopics() {
-    const documentId = $('.document-topics-list').data('document-id');
+    $('.topics-loading').hide();
 
-    if (!documentId) {
-        console.error("No document ID found for topics");
-        $('.topics-loading').hide();
-        $('.document-topics-list').html('<p>No document ID available.</p>');
-        return;
-    }
-
-    $.ajax({
-        url: '/api/document/topics',
-        method: 'GET',
-        data: {
-            documentId: documentId,
-            limit: 10
-        },
-        success: function(data) {
-            $('.topics-loading').hide();
-
-            if (data && data.length > 0) {
-                let html = '';
-
-                data.sort((a, b) => parseFloat(b.probability) - parseFloat(a.probability));
-
-                const maxProb = parseFloat(data[0].probability);
-                const minProb = parseFloat(data[data.length - 1].probability);
-                const probRange = maxProb - minProb;
-
-                // Generate HTML for each topic
-                data.forEach(function(topic) {
-                    const probability = parseFloat(topic.probability);
-
-                    // Normalize probability to 0-1 range
-                    const normalizedProb = probRange > 0 ?
-                        (probability - minProb) / probRange : 1;
-                    const hue = Math.round(normalizedProb * 120);
-                    const bgColor = "hsla("+hue+", 70%, 50%, 0.3)";
-
-                    html += '<div class="topic-item">' +
-                           '<div class="topic-tag" data-topic="'+topic.label+'" data-probability="'+probability+'" style="background-color: '+bgColor+'">' +
-                           '<span>'+topic.label+'</span>' +
-                           '</div>' +
-                           '</div>';
-                });
-
-                $('.document-topics-list').html(html);
-
-                attachTopicClickHandlers();
-            } else {
-                $('.document-topics-list').html('<p>No topics available for this document.</p>');
-            }
-        },
-        error: function(xhr, status, error) {
-            console.error("Error loading topics:", status, error);
-            console.error("Response:", xhr.responseText);
-
-            $('.topics-loading').hide();
-
-            $('.document-topics-list').html('<p>Failed to load document topics.</p>');
-        },
-        complete: function() {
-            $('.topics-loading').hide();
+    // Extract topics from colorable-topic spans in the document
+    const topicFrequency = {};
+    $('.colorable-topic').each(function() {
+        const topic = $(this).data('topic-value');
+        if (topic) {
+            topicFrequency[topic] = (topicFrequency[topic] || 0) + 1;
         }
     });
+
+    // Convert to array and sort by frequency
+    const topicArray = Object.keys(topicFrequency).map(topic => ({
+        label: topic,
+        frequency: topicFrequency[topic]
+    }));
+
+    topicArray.sort((a, b) => b.frequency - a.frequency);
+
+    // Find max and min for normalization across ALL topics
+    const maxFreq = topicArray.length > 0 ? topicArray[0].frequency : 1;
+    const minFreq = topicArray.length > 0 ? topicArray[topicArray.length - 1].frequency : 0;
+    const freqRange = maxFreq - minFreq;
+
+    // Create color mapping for ALL topics
+    topicArray.forEach(function(topic) {
+        const normalizedFreq = freqRange > 0 ?
+            (topic.frequency - minFreq) / freqRange : 1;
+        topicColorMap[topic.label] = window.graphVizHandler.getColorForWeight(normalizedFreq);
+    });
+
+    // Take top 10 topics for display
+    const topTopics = topicArray.slice(0, 10);
+
+    if (topTopics.length > 0) {
+        let html = '';
+
+        // Generate HTML for each top topic
+        topTopics.forEach(function(topic) {
+            html += '<div class="topic-item">' +
+                   '<div class="topic-tag" data-topic="'+topic.label+'" data-frequency="'+topic.frequency+'" style="background-color: '+topicColorMap[topic.label]+'">' +
+                   '<span>'+topic.label+'</span>' +
+                   '</div>' +
+                   '</div>';
+        });
+
+        $('.document-topics-list').html(html);
+        attachTopicClickHandlers();
+
+        
+    } else {
+        $('.document-topics-list').html('<p>No topics found in this document.</p>');
+    }
 }
 
 function attachTopicClickHandlers() {

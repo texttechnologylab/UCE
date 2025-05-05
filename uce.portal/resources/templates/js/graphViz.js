@@ -108,6 +108,11 @@ var GraphVizHandler = (function () {
         target.appendChild(cloudContainer);
     }
 
+
+    GraphVizHandler.prototype.getColorForWeight = function(weight) {
+        return getColorForWeight(weight);
+    }
+
     return GraphVizHandler;
 }());
 
