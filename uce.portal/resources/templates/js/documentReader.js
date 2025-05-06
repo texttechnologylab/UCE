@@ -1,8 +1,9 @@
 let currentFocusedPage = 0;
 let searchTokens = "";
-
-// Global variable to store topic color mapping
 let topicColorMap = {};
+let currentSelectedTopic = null;
+let currentTopicIndex = -1;
+let matchingTopics = [];
 
 /**
  * Handles the expanding and de-expanding of the side bar
@@ -53,8 +54,8 @@ $('body').on('click', '.side-bar .toggle-highlighting-btn', function () {
     let highlight = $(this).data('highlighted');
     highlight = !highlight;
 
-    $('.document-content .annotation, .multi-annotation').each(function(){
-        if(highlight) $(this).removeClass('no-highlighting');
+    $('.document-content .annotation, .multi-annotation').each(function () {
+        if (highlight) $(this).removeClass('no-highlighting');
         else $(this).addClass('no-highlighting');
     })
 
@@ -157,7 +158,7 @@ function loadDocumentTopics() {
 
     // Extract topics from colorable-topic spans in the document
     const topicFrequency = {};
-    $('.colorable-topic').each(function() {
+    $('.colorable-topic').each(function () {
         const topic = $(this).data('topic-value');
         if (topic) {
             topicFrequency[topic] = (topicFrequency[topic] || 0) + 1;
@@ -178,7 +179,7 @@ function loadDocumentTopics() {
     const freqRange = maxFreq - minFreq;
 
     // Create color mapping for ALL topics
-    topicArray.forEach(function(topic) {
+    topicArray.forEach(function (topic) {
         const normalizedFreq = freqRange > 0 ?
             (topic.frequency - minFreq) / freqRange : 1;
         topicColorMap[topic.label] = window.graphVizHandler.getColorForWeight(normalizedFreq);
@@ -191,18 +192,18 @@ function loadDocumentTopics() {
         let html = '';
 
         // Generate HTML for each top topic
-        topTopics.forEach(function(topic) {
+        topTopics.forEach(function (topic) {
             html += '<div class="topic-item">' +
-                   '<div class="topic-tag" data-topic="'+topic.label+'" data-frequency="'+topic.frequency+'" style="background-color: '+topicColorMap[topic.label]+'">' +
-                   '<span>'+topic.label+'</span>' +
-                   '</div>' +
-                   '</div>';
+                '<div class="topic-tag" data-topic="' + topic.label + '" data-frequency="' + topic.frequency + '" style="background-color: ' + topicColorMap[topic.label] + '">' +
+                '<span>' + topic.label + '</span>' +
+                '</div>' +
+                '</div>';
         });
 
         $('.document-topics-list').html(html);
         attachTopicClickHandlers();
 
-        
+
     } else {
         $('.document-topics-list').html('<p>No topics found in this document.</p>');
     }
@@ -211,7 +212,7 @@ function loadDocumentTopics() {
 function attachTopicClickHandlers() {
     $('.topic-tag').off('click');
 
-    $('.topic-tag').on('click', function() {
+    $('.topic-tag').on('click', function () {
         const topic = $(this).data('topic');
         const wasActive = $(this).hasClass('active-topic');
         $('.topic-tag').removeClass('active-topic');
@@ -225,14 +226,14 @@ function attachTopicClickHandlers() {
             $(this).addClass('active-topic');
 
             colorUnifiedTopics(topic);
-            setTimeout(function() {
+            setTimeout(function () {
                 scrollToFirstMatchingTopic(topic);
             }, 100);
         }
     });
 
     // Attach click handlers to the navigation buttons
-    $('.next-topic-button').off('click').on('click', function() {
+    $('.next-topic-button').off('click').on('click', function () {
         if ($(this).hasClass('disabled') || !currentSelectedTopic) return;
 
         currentTopicIndex++;
@@ -240,14 +241,13 @@ function attachTopicClickHandlers() {
         scrollToTopicElement($(matchingTopics[currentTopicIndex]));
     });
 
-    $('.prev-topic-button').off('click').on('click', function() {
+    $('.prev-topic-button').off('click').on('click', function () {
         if ($(this).hasClass('disabled') || !currentSelectedTopic) return;
         currentTopicIndex--;
         updateTopicNavButtonStates();
         scrollToTopicElement($(matchingTopics[currentTopicIndex]));
     });
 }
-
 
 
 /**
@@ -319,9 +319,9 @@ function searchPotentialSearchTokensInPage(page) {
             if ($el.attr('title').toLowerCase().includes(toHighlight.toLowerCase())) {
 
                 // If this annotation is within a multi-annotation, we need to highlight the multi-anno.
-                if($el.parent().hasClass('multi-annotation-popup')){
+                if ($el.parent().hasClass('multi-annotation-popup')) {
                     $el = $el.closest('.multi-annotation');
-                    if(highlightedAnnos.includes($el.attr('title'))) continue;
+                    if (highlightedAnnos.includes($el.attr('title'))) continue;
                     else highlightedAnnos.push($el.attr('title'))
                 }
 
@@ -351,7 +351,7 @@ function colorUnifiedTopics(selectedTopic) {
         return;
     }
 
-    const $selectedTopicTag = $('.topic-tag').filter(function() {
+    const $selectedTopicTag = $('.topic-tag').filter(function () {
         return $(this).data('topic') === selectedTopic;
     });
 
@@ -367,7 +367,7 @@ function colorUnifiedTopics(selectedTopic) {
         finalColor = color.replace('rgb(', 'rgba(').replace(')', ', 0.3)');
     }
 
-    $('.colorable-topic').each(function() {
+    $('.colorable-topic').each(function () {
         const topicValue = $(this).data('topic-value');
 
         if (topicValue === selectedTopic) {
@@ -389,30 +389,10 @@ function clearTopicColoring() {
 }
 
 
-function isElementInViewport($element) {
-    if ($element.length === 0) return false;
-
-    const elementTop = $element.offset().top;
-    const elementBottom = elementTop + $element.outerHeight();
-    const viewportTop = $(window).scrollTop();
-    const viewportBottom = viewportTop + $(window).height();
-
-    return (elementTop >= viewportTop && elementTop <= viewportBottom) ||
-           (elementBottom >= viewportTop && elementBottom <= viewportBottom) ||
-           (elementTop <= viewportTop && elementBottom >= viewportBottom);
-}
-
-let currentSelectedTopic = null;
-
-let currentTopicIndex = -1;
-
-let matchingTopics = [];
-
-
 function scrollToFirstMatchingTopic(topicValue) {
     currentSelectedTopic = topicValue;
 
-    matchingTopics = $('.colorable-topic').filter(function() {
+    matchingTopics = $('.colorable-topic').filter(function () {
         return $(this).data('topic-value') === topicValue;
     }).toArray();
 
@@ -446,15 +426,11 @@ function scrollToTopicElement($topicElement) {
 
     $('html, body').animate({
         scrollTop: Math.max(0, scrollToPosition)
-    }, 800, function() {
-        $topicElement.css('transition', 'box-shadow 0.3s ease-in-out');
-        $topicElement.css('box-shadow', '0 0 10px 5px rgba(255, 255, 0, 0.5)');
+    }, 800, function () {
+        $topicElement.addClass('animated-topic-scroll');
 
-        setTimeout(function() {
-            $topicElement.css('box-shadow', '');
-            setTimeout(function() {
-                $topicElement.css('transition', '');
-            }, 300);
+        setTimeout(function () {
+            $topicElement.removeClass('animated-topic-scroll');
         }, 1500);
     });
 }

@@ -96,31 +96,7 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         return end;
     }
 
-    private String generateTopicMarker(UnifiedTopic topic) {
-        String repTopicValue = "";
-        if (topic.getTopics() != null && !topic.getTopics().isEmpty()) {
-            var repTopic = topic.getRepresentativeTopic();
-            if (repTopic != null) {
-                repTopicValue = repTopic.getValue();
-            }
-        }
-        return String.format(
-                "<span class='open-wiki-page annotation custom-context-menu topic-marker' title='%1$s' data-wid='%2$s' data-wcovered='%3$s' data-topic-value='%4$s'>t</span>",
-                topic.getWikiId(), topic.getWikiId(), topic.getCoveredText(), repTopicValue);
-    }
 
-    private String generateTopicCoveredStartSpan(UnifiedTopic topic) {
-        String repTopicValue = "";
-        if (topic.getTopics() != null && !topic.getTopics().isEmpty()) {
-            var repTopic = topic.getRepresentativeTopic();
-            if (repTopic != null) {
-                repTopicValue = repTopic.getValue();
-            }
-        }
-        return String.format(
-                "<span class='unifiedtopic-covered topic colorable-topic' id='utopic-%2$s' data-wcovered='%3$s' data-topic-value='%4$s'>",
-                UUID.randomUUID(), topic.getWikiId(), topic.getCoveredText(), repTopicValue);
-    }
 
 
     /**
@@ -170,10 +146,10 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 var start = topic.getBegin() - offset - errorOffset;
                 var end = topic.getEnd() - offset - errorOffset; // marker after last char
 
-                topicCoverWrappersStart.put(start, generateTopicCoveredStartSpan(topic));
+                topicCoverWrappersStart.put(start, topic.generateTopicCoveredStartSpan());
                 topicCoverWrappersEnd.put(end, "</span>");
 
-                topicMarkers.put(end, generateTopicMarker(topic));
+                topicMarkers.put(end, topic.generateTopicMarker());
                 continue;
             }
 

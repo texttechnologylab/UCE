@@ -205,7 +205,7 @@ public class DocumentApi {
 
         if(documentId == null){
             response.status(400);
-            return "Missing documentId parameter";
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
         }
 
         try {
@@ -226,7 +226,7 @@ public class DocumentApi {
         } catch (Exception ex) {
             logger.error("Error getting document topics.", ex);
             response.status(500);
-            return "Error retrieving document topics";
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(Map.of("information", "Error retrieving document topics."), "defaultError.ftl"));
         }
     });
 }

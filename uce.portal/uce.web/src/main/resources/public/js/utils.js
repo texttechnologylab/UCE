@@ -75,3 +75,16 @@ function hexToHSL(hex) {
     };
 }
 
+function isElementInViewport($element) {
+    if ($element.length === 0) return false;
+
+    const elementTop = $element.offset().top;
+    const elementBottom = elementTop + $element.outerHeight();
+    const viewportTop = $(window).scrollTop();
+    const viewportBottom = viewportTop + $(window).height();
+
+    return (elementTop >= viewportTop && elementTop <= viewportBottom) ||
+        (elementBottom >= viewportTop && elementBottom <= viewportBottom) ||
+        (elementTop <= viewportTop && elementBottom >= viewportBottom);
+}
+

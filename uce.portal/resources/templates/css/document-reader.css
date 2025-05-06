@@ -322,6 +322,11 @@ body {
     position: relative;
 }
 
+.document-content .animated-topic-scroll {
+    transition: box-shadow 0.3s ease-in-out;
+    box-shadow: 0 0 10px 5px rgba(255, 255, 0, 0.5);
+}
+
 .document-content .topic-marker {
     display: inline-flex;
     align-items: center;
