@@ -1512,6 +1512,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         // unified topic
         Hibernate.initialize(doc.getUnifiedTopics());
 
+        for (var topic : doc.getUnifiedTopics()) {
+            Hibernate.initialize(topic.getTopics());
+        }
+
         for (var link : doc.getWikipediaLinks()) {
             Hibernate.initialize(link.getWikiDataHyponyms());
         }

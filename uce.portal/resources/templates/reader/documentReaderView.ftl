@@ -89,6 +89,16 @@
                      data-id="${document.getId()?string?replace('.', '')?replace(',', '')}"
                      data-pagescount="${document.getPages()?size?string?replace('.', '')?replace(',', '')}" data-searchtokens="${(searchTokens)!''}">
 
+                    <!-- Topic navigation buttons (hidden by default) -->
+                    <div class="topic-navigation-buttons">
+                        <button class="topic-nav-button prev-topic-button" title="Previous occurrence">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <button class="topic-nav-button next-topic-button" title="Next occurrence">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+
                     <div class="header ">
                         <div class="text-center flexed align-items-center justify-content-around w-100">
                             <div class="flexed align-items-center">
@@ -208,6 +218,16 @@
                             </div>
                         </div>
                     </#if>
+
+                    <!-- Document Topics Section -->
+                    <div class="group-box topics-box">
+                        <p class="title">
+                            <span>${languageResource.get("topics")}</span>
+                            <i class="ml-2 topics-loading rotate fas fa-spinner"></i>
+                        </p>
+                        <div class="document-topics-list" data-document-id="${document.id}">
+                        </div>
+                    </div>
                 </div>
 
             </div>
