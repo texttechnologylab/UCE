@@ -26,6 +26,7 @@ public class RunDUUIPipeline {
         boolean isCoherence = false;
         boolean specialModel = false;
         boolean isStance = false;
+        boolean isReadability = false;
         for (String modelKey : modelGroups) {
             if (modelInfos.containsKey(modelKey)) {
                 ModelInfo modelInfo = modelInfos.get(modelKey);
@@ -62,6 +63,9 @@ public class RunDUUIPipeline {
                     case "Stance":
                         isStance = true;
                         specialModel = true;
+                        break;
+                    case "Readability":
+                        isReadability = true;
                         break;
                 }
             }
@@ -138,6 +142,8 @@ public class RunDUUIPipeline {
         duuiInformation.setIsCoherence(isCoherence);
         // set stance
         duuiInformation.setIsStance(isStance);
+        // set readability
+        duuiInformation.setIsReadability(isReadability);
         return duuiInformation;
     }
 

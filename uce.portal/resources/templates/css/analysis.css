@@ -700,3 +700,82 @@ label {
     border-bottom: 2px solid #007bff;
     padding-bottom: 8px;
 }
+
+
+.readabilitys-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.readability-card {
+    flex: 1 1 100%;
+    background: #f8f9fa;
+    border: 2px solid #007bff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.readability-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.readability-card-title {
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    color: #343a40;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.readabilitys-grid {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 16px;
+}
+
+.readability-entry {
+    flex: 1 1 calc(33.333% - 16px);
+    border: 1px solid #dee2e6;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s, transform 0.3s;
+    background-color: rgba(var(--readability-color), 0.5);
+}
+
+.readability-entry:hover {
+    transform: translateY(-3px);
+}
+
+.readability-name {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe */
+    margin-bottom: 8px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+}
+
+.readability-score {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe für den Score */
+}
+
+
+.readability-fleschkincaid { --readability-color: 255, 105, 180; }
+.readability-flesch         { --readability-color: 255, 223, 0; }
+.readability-gunningfog     { --readability-color: 138, 43, 226; }
+.readability-colemanliau    { --readability-color: 255, 0, 0; }
+.readability-ari            { --readability-color: 0, 0, 255; }
+.readability-linsearwrite   { --readability-color: 0, 128, 128; }
+.readability-smog           { --readability-color: 85, 107, 47; }
+.readability-spache         { --readability-color: 255, 165, 0; }
+.readability-dalechall      { --readability-color: 75, 0, 130; }

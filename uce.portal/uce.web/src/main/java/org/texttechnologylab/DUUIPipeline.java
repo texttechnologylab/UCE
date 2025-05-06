@@ -11,6 +11,7 @@ import org.apache.uima.jcas.JCas;
 import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.jcas.tcas.Annotation;
 import org.apache.uima.resource.ResourceInitializationException;
+import org.hucompute.textimager.uima.type.category.CategoryCoveredTagged;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIRemoteDriver;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
@@ -534,7 +535,49 @@ public class DUUIPipeline {
                     sentences.getSentence(Integer.toString(beginStance), Integer.toString(endStance)).addStance(stanceClass);
                     textClass.addStance(modelInfo, stanceClass);
                 }
-
+                break;
+            case "Readability":
+                ReadabilityClass readabilityClass = new ReadabilityClass();
+                for (CategoryCoveredTagged category : JCasUtil.select(cas, CategoryCoveredTagged.class)) {
+                    String model_name = "Readability";
+                    if (!model_name.equals(modelInfo.getMap())) {
+                        continue;
+                    }
+                    String categoryName = category.getValue();
+                    double categoryScore = category.getScore();
+                    switch (categoryName) {
+                        case "flesch_kincaid":
+                            readabilityClass.setFleschKincaid(categoryScore);
+                            break;
+                        case "flesch":
+                            readabilityClass.setFlesch(categoryScore);
+                            break;
+                        case "smog":
+                            readabilityClass.setSMOG(categoryScore);
+                            break;
+                        case "dale_chall":
+                            readabilityClass.setDaleChall(categoryScore);
+                            break;
+                        case "gunning_fog":
+                            readabilityClass.setGunningFog(categoryScore);
+                            break;
+                        case "coleman_liau":
+                            readabilityClass.setColemanLiau(categoryScore);
+                            break;
+                        case "ari":
+                            readabilityClass.setARI(categoryScore);
+                            break;
+                        case "linsear_write":
+                            readabilityClass.setLinsearWrite(categoryScore);
+                            break;
+                        case "spache":
+                            readabilityClass.setSpache(categoryScore);
+                            break;
+                    }
+                }
+                readabilityClass.setModelInfo(modelInfo);
+                textClass.addReadability(readabilityClass);
+                break;
         }
         return new Object[]{sentences, textClass};
     }

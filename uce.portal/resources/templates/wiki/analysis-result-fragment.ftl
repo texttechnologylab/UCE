@@ -236,6 +236,48 @@
                         </div>
                     </div>
                 </#if>
+                <#-- Readability -->
+                <#if DUUI.isReadability>
+                    <div class="border p-2 mb-2 bg-light">
+                        <h6 class="mb-0 mr-1 color-prime">Readability</h6>
+                        <div class="readabilitys-container">
+                            <#list DUUI.textInformation.readabilityAVG as model>
+                                <div class="readability-card">
+                                    <div class="readability-card-title">${model.getModelInfo().getName()}</div>
+                                    <div class="readabilitys-grid">
+                                        <div class="readability-entry readability-fleschkincaid">
+                                            <div class="readability-score">Flesch Kincaid: ${model.getFleschKincaid()}</div>
+                                        </div>
+                                        <div class="readability-entry readability-flesch">
+                                            <div class="readability-score">Flesch: ${model.getFlesch()}</div>
+                                        </div>
+                                        <div class="readability-entry readability-gunningfog">
+                                            <div class="readability-score">Gunning Fog: ${model.getGunningFog()}</div>
+                                        </div>
+                                        <div class="readability-entry readability-colemanliau">
+                                            <div class="readability-score">Coleman Liau: ${model.getColemanLiau()}</div>
+                                        </div>
+                                        <div class="readability-entry readability-dalechall">
+                                            <div class="readability-score">Dale Chall: ${model.getDaleChall()}</div>
+                                        </div>
+                                        <div class="readability-entry readability-ari">
+                                            <div class="readability-score">ARI: ${model.getARI()}</div>
+                                        </div>
+                                        <div class="readability-entry readability-linsearwrite">
+                                            <div class="readability-score">Linsear Write: ${model.getLinsearWrite()}</div>
+                                        </div>
+                                        <div class="readability-entry readability-smog">
+                                            <div class="readability-score">SMOG: ${model.getSMOG()}</div>
+                                        </div>
+                                        <div class="readability-entry readability-spache">
+                                            <div class="readability-score">Spache: ${model.getSpache()}</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </#list>
+                        </div>
+                    </div>
+                </#if>
             <#else>
                 <p><strong>Kein Model</strong></p>
             </#if>

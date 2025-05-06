@@ -28,6 +28,8 @@ public class DUUIInformation {
 
     private Boolean isStance = false;
 
+    private Boolean isReadability = false;
+
     public DUUIInformation(Sentences sentence, TextClass textInformation, List<ModelGroup> modelGroups, HashMap<String, ModelInfo> modelInfos) {
         this.sentence = sentence;
         this.textInformation = textInformation;
@@ -131,6 +133,14 @@ public class DUUIInformation {
 
     public void setIsStance(Boolean isStance) {
         this.isStance = isStance;
+    }
+
+    public Boolean getIsReadability() {
+        return isReadability;
+    }
+
+    public void setIsReadability(Boolean isReadability) {
+        this.isReadability = isReadability;
     }
 
 }

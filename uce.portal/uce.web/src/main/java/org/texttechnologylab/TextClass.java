@@ -25,6 +25,7 @@ public class TextClass {
 
     private ArrayList<CoherenceClass> coherenceAVG = new ArrayList<>();
     private ArrayList<StanceClass> stanceAVG = new ArrayList<>();
+    private ArrayList<ReadabilityClass> readabilityAVG = new ArrayList<>();
 
     private ArrayList<ModelInfo> topicsModels = new ArrayList<>();
     private ArrayList<ModelInfo> hateModels = new ArrayList<>();
@@ -36,6 +37,8 @@ public class TextClass {
     private ArrayList<ModelInfo> stanceModels = new ArrayList<>();
 
     private ArrayList<ModelInfo> coherenceModels = new ArrayList<>();
+    private ArrayList<ModelInfo> readabilityModels = new ArrayList<>();
+
     private ClaimClass claim = new ClaimClass();
 
     private CoherenceSentence coherenceSentence = new CoherenceSentence();
@@ -200,6 +203,12 @@ public class TextClass {
             this.toxicModels.add(model);
         }
     }
+    public void addReadability(ReadabilityClass readability) {
+        this.readabilityAVG.add(readability);
+    }
+    public ArrayList<ReadabilityClass> getReadabilityAVG() {
+        return readabilityAVG;
+    }
 
     public ArrayList<ToxicClass> getToxic(ModelInfo model) {
         if (!this.toxic.containsKey(model)) {
@@ -212,6 +221,8 @@ public class TextClass {
         this.toxic.remove(model);
         this.toxicModels.remove(model);
     }
+
+
 
     public HashMap<ModelInfo, ArrayList<TopicClass>> getTopics() {
         return topics;
@@ -442,4 +453,11 @@ public class TextClass {
         this.hypothesis = hypothesis;
     }
 
+    public ArrayList<ModelInfo> getReadabilityModels() {
+        return readabilityModels;
+    }
+
+    public void setReadabilityModels(ArrayList<ModelInfo> readabilityModels) {
+        this.readabilityModels = readabilityModels;
+    }
 }
