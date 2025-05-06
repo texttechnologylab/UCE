@@ -14,6 +14,7 @@ public class TextClass {
     private HashMap<ModelInfo, ArrayList<FactClass>> facts = new HashMap<>();
 
     private HashMap<ModelInfo, ArrayList<CoherenceClass>> coherence = new HashMap<>();
+    private HashMap<ModelInfo, ArrayList<StanceClass>> stance = new HashMap<>();
 
     private ArrayList<HateClass> hateAVG = new ArrayList<>();
     private ArrayList<SentimentClass> sentimentAVG = new ArrayList<>();
@@ -23,6 +24,7 @@ public class TextClass {
     private ArrayList<FactClass> factAVG = new ArrayList<>();
 
     private ArrayList<CoherenceClass> coherenceAVG = new ArrayList<>();
+    private ArrayList<StanceClass> stanceAVG = new ArrayList<>();
 
     private ArrayList<ModelInfo> topicsModels = new ArrayList<>();
     private ArrayList<ModelInfo> hateModels = new ArrayList<>();
@@ -31,11 +33,13 @@ public class TextClass {
     private ArrayList<ModelInfo> emotionModels = new ArrayList<>();
 
     private ArrayList<ModelInfo> factModels = new ArrayList<>();
+    private ArrayList<ModelInfo> stanceModels = new ArrayList<>();
 
     private ArrayList<ModelInfo> coherenceModels = new ArrayList<>();
     private ClaimClass claim = new ClaimClass();
 
     private CoherenceSentence coherenceSentence = new CoherenceSentence();
+    private HypothesisClass hypothesis = new HypothesisClass();
 
     public void addTopic(ModelInfo model, TopicClass topic) {
         if (!this.topics.containsKey(model)) {
@@ -77,6 +81,16 @@ public class TextClass {
         }
     }
 
+    public void addStance(ModelInfo model, StanceClass stance) {
+        if (!this.stance.containsKey(model)) {
+            this.stance.put(model, new ArrayList<>());
+        }
+        this.stance.get(model).add(stance);
+        if (!this.stanceModels.contains(model)) {
+            this.stanceModels.add(model);
+        }
+    }
+
     public ArrayList<TopicClass> getTopic(ModelInfo model) {
         if (!this.topics.containsKey(model)) {
             return new ArrayList<>();
@@ -113,6 +127,17 @@ public class TextClass {
         return this.facts.get(model);
     }
 
+    public ArrayList<StanceClass> getStance(ModelInfo model) {
+        if (!this.stance.containsKey(model)) {
+            return new ArrayList<>();
+        }
+        return this.stance.get(model);
+    }
+    public void deleteStance(ModelInfo model) {
+        this.stance.remove(model);
+        this.stanceModels.remove(model);
+    }
+
     public ArrayList<CoherenceClass> getCoherence(ModelInfo model) {
         if (!this.coherence.containsKey(model)) {
             return new ArrayList<>();
@@ -123,6 +148,7 @@ public class TextClass {
         this.coherence.remove(model);
         this.coherenceModels.remove(model);
     }
+
 
     public void addHate(ModelInfo model, HateClass hate) {
         if (!this.hate.containsKey(model)) {
@@ -297,6 +323,26 @@ public class TextClass {
         }
     }
 
+    public void computeAVGStance(){
+        for (ModelInfo model : this.stance.keySet()) {
+            ArrayList<StanceClass> stanceList = this.stance.get(model);
+            double oppose = 0;
+            double support = 0;
+            double neutral = 0;
+            for (StanceClass stance : stanceList) {
+                oppose += stance.getOppose();
+                support += stance.getSupport();
+                neutral += stance.getNeutral();
+            }
+            StanceClass avgStance = new StanceClass();
+            avgStance.setOppose(oppose / stanceList.size());
+            avgStance.setSupport(support / stanceList.size());
+            avgStance.setNeutral(neutral / stanceList.size());
+            avgStance.setModelInfo(model);
+            this.stanceAVG.add(avgStance);
+        }
+    }
+
     public void computeAVGFact(){
         for (ModelInfo model : this.facts.keySet()) {
             ArrayList<FactClass> factList = this.facts.get(model);
@@ -368,6 +414,10 @@ public class TextClass {
         return coherenceAVG;
     }
 
+    public ArrayList<StanceClass> getStanceAVG() {
+        return stanceAVG;
+    }
+
     public ClaimClass getClaim() {
         return claim;
     }
@@ -382,6 +432,14 @@ public class TextClass {
 
     public void setCoherenceSentence(CoherenceSentence coherenceSentence) {
         this.coherenceSentence = coherenceSentence;
+    }
+
+    public HypothesisClass getHypothesis() {
+        return hypothesis;
+    }
+
+    public void setHypothesis(HypothesisClass hypothesis) {
+        this.hypothesis = hypothesis;
     }
 
 }

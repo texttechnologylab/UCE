@@ -18,6 +18,7 @@ import org.texttechnologylab.annotation.*;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
+import java.lang.ref.Reference;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashMap;
@@ -65,12 +66,20 @@ public class DUUIPipeline {
                                     .withParameter("embeddings_keep", "0")
                     );
                     break;
+                case "Stance":
+                    composer.add(
+                            new DUUIRemoteDriver.Component(url.getValue().getUrl())
+//                                    .withParameter("selection", "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence")
+                                    .withParameter("chatgpt_key", "")
+//                          .withTargetView(url.getKey())
+                    );
                 default:
                     composer.add(
                             new DUUIRemoteDriver.Component(url.getValue().getUrl())
                                     .withParameter("selection", "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence")
 //                          .withTargetView(url.getKey())
                     );
+                    break;
             }
 
         }
@@ -128,90 +137,147 @@ public class DUUIPipeline {
         return cas;
     }
 
-    public JCas setClaimFact(JCas cas, String claim) throws UIMAException {
-        JCas newCas = JCasFactory.createJCas();
-        StringBuilder sb = new StringBuilder();
-        String text = cas.getDocumentText();
-        sb.append(text).append(" ");
-        Claim claimAnnotation = new Claim(newCas, sb.length(), sb.length()+claim.length());
+//    public JCas setClaimFact(JCas cas, String claim) throws UIMAException {
+//        JCas newCas = JCasFactory.createJCas();
+//        StringBuilder sb = new StringBuilder();
+//        String text = cas.getDocumentText();
+//        sb.append(text).append(" ");
+//        Claim claimAnnotation = new Claim(newCas, sb.length(), sb.length()+claim.length());
+//        sb.append(claim).append(" ");
+//        newCas.setDocumentText(sb.toString());
+//        String language = cas.getDocumentLanguage();
+//        newCas.setDocumentLanguage(language);
+//        Collection<Sentence> sentences = JCasUtil.select(cas, Sentence.class);
+//        int length = sentences.size();
+//        claimAnnotation.setFacts(new FSArray(newCas, length));
+//        int counter = 0;
+//
+//        for (Sentence sentence : sentences) {
+//            // Create a new Fact annotation for each sentence
+//            int begin = sentence.getBegin();
+//            int end = sentence.getEnd();
+//            Sentence sentenceAnnotation = new Sentence(newCas, begin, end);
+//            sentenceAnnotation.addToIndexes();
+//            Fact factAnnotation = new Fact(newCas, begin, end);
+//            factAnnotation.setClaims(new FSArray(newCas, 1));
+//            factAnnotation.setClaims(0, claimAnnotation);
+//            factAnnotation.addToIndexes();
+//            claimAnnotation.setFacts(counter, factAnnotation);
+//            counter++;
+//        }
+//        claimAnnotation.addToIndexes();
+//        return newCas;
+//    }
+
+    public Object[] setClaimFact(JCas cas, String claim, StringBuilder sb) throws UIMAException {
+        Claim claimAnnotation = new Claim(cas, sb.length(), sb.length()+claim.length());
         sb.append(claim).append(" ");
-        newCas.setDocumentText(sb.toString());
-        String language = cas.getDocumentLanguage();
-        newCas.setDocumentLanguage(language);
         Collection<Sentence> sentences = JCasUtil.select(cas, Sentence.class);
         int length = sentences.size();
-        claimAnnotation.setFacts(new FSArray(newCas, length));
+        claimAnnotation.setFacts(new FSArray(cas, length));
         int counter = 0;
-
         for (Sentence sentence : sentences) {
             // Create a new Fact annotation for each sentence
             int begin = sentence.getBegin();
             int end = sentence.getEnd();
-            Sentence sentenceAnnotation = new Sentence(newCas, begin, end);
-            sentenceAnnotation.addToIndexes();
-            Fact factAnnotation = new Fact(newCas, begin, end);
-            factAnnotation.setClaims(new FSArray(newCas, 1));
+            Fact factAnnotation = new Fact(cas, begin, end);
+            factAnnotation.setClaims(new FSArray(cas, 1));
             factAnnotation.setClaims(0, claimAnnotation);
             factAnnotation.addToIndexes();
             claimAnnotation.setFacts(counter, factAnnotation);
             counter++;
         }
         claimAnnotation.addToIndexes();
-        return newCas;
+        return new Object[]{cas, sb};
     }
 
-    public JCas setSentenceComparisons(JCas cas, String sentence1) throws UIMAException {
-        JCas newCas = JCasFactory.createJCas();
-        StringBuilder sb = new StringBuilder();
-        String text = cas.getDocumentText();
-        sb.append(text).append(" ");
-        Annotation sentenceAnnotation1 = new Annotation(newCas, sb.length(), sb.length()+sentence1.length());
+//    public JCas setSentenceComparisons(JCas cas, String sentence1) throws UIMAException {
+//        JCas newCas = JCasFactory.createJCas();
+//        StringBuilder sb = new StringBuilder();
+//        String text = cas.getDocumentText();
+//        sb.append(text).append(" ");
+//        Annotation sentenceAnnotation1 = new Annotation(newCas, sb.length(), sb.length()+sentence1.length());
+//        sb.append(sentence1).append(" ");
+//        newCas.setDocumentText(sb.toString());
+//        String language = cas.getDocumentLanguage();
+//        newCas.setDocumentLanguage(language);
+//        sentenceAnnotation1.addToIndexes();
+//        Collection<Sentence> sentences = JCasUtil.select(cas, Sentence.class);
+//        for (Sentence sentence : sentences) {
+//            // Create a new Sentence annotation for each sentence
+//            int begin = sentence.getBegin();
+//            int end = sentence.getEnd();
+//            Sentence sentenceAnnotation = new Sentence(newCas, begin, end);
+//            sentenceAnnotation.addToIndexes();
+//            SentenceComparison sentenceComparison = new SentenceComparison(newCas);
+//            sentenceComparison.setSentenceI(sentenceAnnotation1);
+//            sentenceComparison.setSentenceJ(sentenceAnnotation);
+//            sentenceComparison.addToIndexes();
+//        }
+//        Collection<Fact> facts = JCasUtil.select(cas, Fact.class);
+//        for (Fact fact : facts) {
+//            // Create a new Fact annotation for each fact
+//            int begin = fact.getBegin();
+//            int end = fact.getEnd();
+//            FSArray<Claim> claims = fact.getClaims();
+//            Fact factAnnotation = new Fact(newCas, begin, end);
+//            factAnnotation.setClaims(new FSArray(newCas, claims.size()));
+//            for (int i = 0; i < claims.size(); i++) {
+//                Claim claim = claims.get(i);
+//                factAnnotation.setClaims(i, claim);
+//            }
+//            factAnnotation.addToIndexes();
+//        }
+//        Collection<Claim> claims = JCasUtil.select(cas, Claim.class);
+//        for (Claim claim : claims) {
+//            // Create a new Claim annotation for each claim
+//            int begin = claim.getBegin();
+//            int end = claim.getEnd();
+//            FSArray<Fact> factsClaim = claim.getFacts();
+//            Claim claimAnnotation = new Claim(newCas, begin, end);
+//            claimAnnotation.setFacts(new FSArray(newCas, factsClaim.size()));
+//            for (int i = 0; i < factsClaim.size(); i++) {
+//                Fact fact = factsClaim.get(i);
+//                claimAnnotation.setFacts(i, fact);
+//            }
+//            claimAnnotation.addToIndexes();
+//        }
+//        return newCas;
+//    }
+
+    public Object[] setSentenceComparisons(JCas cas, String sentence1, StringBuilder sb) throws UIMAException {
+        Annotation sentenceAnnotation1 = new Annotation(cas, sb.length(), sb.length()+sentence1.length());
         sb.append(sentence1).append(" ");
-        newCas.setDocumentText(sb.toString());
-        String language = cas.getDocumentLanguage();
-        newCas.setDocumentLanguage(language);
         sentenceAnnotation1.addToIndexes();
         Collection<Sentence> sentences = JCasUtil.select(cas, Sentence.class);
         for (Sentence sentence : sentences) {
             // Create a new Sentence annotation for each sentence
-            int begin = sentence.getBegin();
-            int end = sentence.getEnd();
-            Sentence sentenceAnnotation = new Sentence(newCas, begin, end);
-            sentenceAnnotation.addToIndexes();
-            SentenceComparison sentenceComparison = new SentenceComparison(newCas);
+            SentenceComparison sentenceComparison = new SentenceComparison(cas);
             sentenceComparison.setSentenceI(sentenceAnnotation1);
-            sentenceComparison.setSentenceJ(sentenceAnnotation);
+            sentenceComparison.setSentenceJ(sentence);
             sentenceComparison.addToIndexes();
         }
-        Collection<Fact> facts = JCasUtil.select(cas, Fact.class);
-        for (Fact fact : facts) {
-            // Create a new Fact annotation for each fact
-            int begin = fact.getBegin();
-            int end = fact.getEnd();
-            FSArray<Claim> claims = fact.getClaims();
-            Fact factAnnotation = new Fact(newCas, begin, end);
-            factAnnotation.setClaims(new FSArray(newCas, claims.size()));
-            for (int i = 0; i < claims.size(); i++) {
-                Claim claim = claims.get(i);
-                factAnnotation.setClaims(i, claim);
-            }
-            factAnnotation.addToIndexes();
+        return new Object[]{cas, sb};
+    }
+
+    public Object[] setStance(JCas cas, String hypothesis, StringBuilder sb) throws UIMAException{
+        Hypothesis hypothesisAnnotation = new Hypothesis(cas, sb.length(), sb.length()+hypothesis.length());
+        sb.append(hypothesis).append(" ");
+        Collection<Sentence> sentences = JCasUtil.select(cas, Sentence.class);
+        int length = sentences.size();
+        hypothesisAnnotation.setStances(new FSArray(cas, length));
+        int counter = 0;
+        for (Sentence sentence : sentences) {
+            // Create a new Stance annotation for each sentence
+            int begin = sentence.getBegin();
+            int end = sentence.getEnd();
+            StanceSentence stanceSentence = new StanceSentence(cas, begin, end);
+            stanceSentence.addToIndexes();
+            hypothesisAnnotation.setStances(counter, stanceSentence);
+            counter++;
         }
-        Collection<Claim> claims = JCasUtil.select(cas, Claim.class);
-        for (Claim claim : claims) {
-            // Create a new Claim annotation for each claim
-            int begin = claim.getBegin();
-            int end = claim.getEnd();
-            FSArray<Fact> factsClaim = claim.getFacts();
-            Claim claimAnnotation = new Claim(newCas, begin, end);
-            claimAnnotation.setFacts(new FSArray(newCas, factsClaim.size()));
-            for (int i = 0; i < factsClaim.size(); i++) {
-                Fact fact = factsClaim.get(i);
-                claimAnnotation.setFacts(i, fact);
-            }
-            claimAnnotation.addToIndexes();
-        }
-        return newCas;
+        hypothesisAnnotation.addToIndexes();
+        return new Object[]{cas, sb};
     }
 
     public Object[] getJCasResults(JCas cas, List<ModelInfo> modelGroups) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
@@ -242,6 +308,7 @@ public class DUUIPipeline {
         textClass.computeAVGEmotion();
         textClass.computeAVGFact();
         textClass.computeAVGCoherence();
+        textClass.computeAVGStance();
         return new Object[]{sentences, textClass};
     }
 
@@ -446,6 +513,27 @@ public class DUUIPipeline {
                     textClass.setCoherenceSentence(coherenceClass.getCoherenceSentence());
                 }
                 break;
+            case "Stance":
+                Collection<Stance> stances_out = JCasUtil.select(cas, Stance.class);
+                for (Stance stanceResult: stances_out) {
+                    String model_name = stanceResult.getModel().getModelName();
+                    if (!model_name.equals(modelInfo.getMap())) {
+                        continue;
+                    }
+                    StanceSentence stanceSentence =(StanceSentence) stanceResult.getReference();
+                    int beginStance = stanceSentence.getBegin();
+                    int endStance = stanceSentence.getEnd();
+                    StanceClass stanceClass = new StanceClass();
+                    double oppose = stanceResult.getOppose();
+                    double support = stanceResult.getSupport();
+                    double neutral = stanceResult.getNeutral();
+                    stanceClass.setModelInfo(modelInfo);
+                    stanceClass.setOppose(oppose);
+                    stanceClass.setSupport(support);
+                    stanceClass.setNeutral(neutral);
+                    sentences.getSentence(Integer.toString(beginStance), Integer.toString(endStance)).addStance(stanceClass);
+                    textClass.addStance(modelInfo, stanceClass);
+                }
 
         }
         return new Object[]{sentences, textClass};

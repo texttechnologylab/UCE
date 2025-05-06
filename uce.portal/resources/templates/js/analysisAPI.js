@@ -7,8 +7,10 @@ async function runAnalysisPipeline() {
     const $runButton = $('.run-pipeline-btn');
     const inputClaim = $('#claim-text').val().trim();
     const inputCoherence = $('#coherence-text').val().trim();
+    const inputStance = $('#stance-text').val().trim();
     let checkboxClaim = false;
     let checkboxCoherence = false;
+    let checkboxStance = false;
 
     // Get only the *lowest* selected checkboxes (no partially selected parents)
     $('.model-checkbox:checked').each(function() {
@@ -20,9 +22,13 @@ async function runAnalysisPipeline() {
             if (isFactChecking) {
                 checkboxClaim = true;
             }
-            const isCoherence = $checkbox[0]["id"].toLowerCase().includes('coherence');
+            const isCoherence = $checkbox[0]["id"].toLowerCase().includes('cohesion');
             if (isCoherence) {
                 checkboxCoherence = true;
+            }
+            const isStance = $checkbox[0]["id"].toLowerCase().includes('stance');
+            if (isStance) {
+                checkboxStance = true;
             }
         }
     });
@@ -51,6 +57,12 @@ async function runAnalysisPipeline() {
         return;
     }
 
+    // Validation: if Stance is selected, the stance field must not be empty
+    if (checkboxStance && inputStance.length === 0) {
+        showMessageModal("Stance Error", "Please enter a Hypothesis text to analyze.");
+        return;
+    }
+
     // Disable the button and show loading spinner
     $runButton.prop('disabled', true);
     $('.analysis-result-container .loader-container').fadeIn(150);
@@ -65,6 +77,7 @@ async function runAnalysisPipeline() {
             inputText: inputText,
             inputClaim: inputClaim,
             inputCoherence: inputCoherence,
+            inputStance: inputStance,
         }),
         contentType: "application/json",
         success: function(firstResponse) {

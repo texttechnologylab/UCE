@@ -13,9 +13,16 @@
             </div>
         </#if>
         <#if inputCoherence?? && inputCoherence?has_content>
-            <h5 class="mb-0 mr-1 color-prime">Coherence</h5>
+            <h5 class="mb-0 mr-1 color-prime">Cohesion</h5>
             <div class="grow-text">
                 <textarea name="analysis-text" id="analysis-text" rows="10" onInput="this.parentNode.dataset.replicatedValue = this.value" readonly>${inputCoherence}
+                </textarea>
+            </div>
+        </#if>
+        <#if inputStance?? && inputStance?has_content>
+            <h5 class="mb-0 mr-1 color-prime">Hypothesis</h5>
+            <div class="grow-text">
+                <textarea name="analysis-text" id="analysis-text" rows="10" onInput="this.parentNode.dataset.replicatedValue = this.value" readonly>${inputStance}
                 </textarea>
             </div>
         </#if>

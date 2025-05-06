@@ -26,6 +26,8 @@ public class SentenceClass {
 
     private ArrayList<CoherenceClass> allCoherences = new ArrayList<>();
 
+    private ArrayList<StanceClass> allStances = new ArrayList<>();
+
     public String getText() {
         return text;
     }
@@ -58,6 +60,16 @@ public class SentenceClass {
 
     public void addTopic(TopicClass topic) {
         this.allTopics.add(topic);
+    }
+
+    public void addStance(StanceClass stance) {
+        this.allStances.add(stance);
+    }
+    public ArrayList<StanceClass> getAllStances() {
+        return allStances;
+    }
+    public void setAllStances(ArrayList<StanceClass> allStances) {
+        this.allStances = allStances;
     }
 
     public ArrayList<TopicClass> getAllTopics() {

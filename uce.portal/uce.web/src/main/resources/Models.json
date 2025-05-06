@@ -428,37 +428,59 @@
     "Variant": "Factchecking",
     "type": ""
   },
-  "Coherence Intfloat": {
+  "Cohesion Intfloat": {
     "url": "http://transformers-complexity.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Complexity",
     "huggingface": "",
     "paper": "",
     "map": "intfloat/multilingual-e5-base",
-    "Name": "Coherence Intfloat",
+    "Name": "Cohesion Intfloat",
     "Main Tool": "Text Cohesion Analysis",
     "Variant": "Coherence",
     "type": "BertSentence"
   },
-  "Coherence BERT": {
+  "Cohesion BERT": {
     "url": "http://transformers-complexity.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Complexity",
     "huggingface": "",
     "paper": "",
     "map": "google-bert/bert-base-multilingual-cased",
-    "Name": "Coherence BERT",
+    "Name": "Cohesion BERT",
     "Main Tool": "Text Cohesion Analysis",
     "Variant": "Coherence",
     "type": "BERT"
   },
-  "Coherence LABSE": {
+  "Cohesion LABSE": {
     "url": "http://transformers-complexity.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Complexity",
     "huggingface": "",
     "paper": "",
     "map": "sentence-transformers/LaBSE",
-    "Name": "Coherence BERT",
+    "Name": "Cohesion LABSE",
     "Main Tool": "Text Cohesion Analysis",
     "Variant": "Coherence",
     "type": "Sentence"
+  },
+  "Stance Trump Twitter US Election 2020 (EN)": {
+    "url": "http://stance-kornosk.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Stance",
+    "huggingface": "https://huggingface.co/kornosk/bert-election2020-twitter-stance-trump-KE-MLM",
+    "paper": "https://www.aclweb.org/anthology/2021.naacl-main.376",
+    "map": "kornosk",
+    "Name": "Stance Trump Twitter US Election 2020 (EN)",
+    "Main Tool": "Stance detection",
+    "Variant": "Stance",
+    "type": "Stance"
+  },
+  "Stance ZeroShot PoliStance (EN)": {
+    "url": "http://stance-mlburnham.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Stance",
+    "huggingface": "https://huggingface.co/mlburnham/deberta-v3-base-polistance-affect-v1.0",
+    "paper": "https://arxiv.org/abs/2409.02078",
+    "map": "mlburnham",
+    "Name": "Stance ZeroShot PoliStance (EN)",
+    "Main Tool": "Stance detection",
+    "Variant": "Stance",
+    "type": "Stance"
   }
 }

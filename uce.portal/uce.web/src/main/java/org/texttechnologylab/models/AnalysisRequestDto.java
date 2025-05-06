@@ -14,6 +14,8 @@ public class AnalysisRequestDto {
 
     private String inputCoherence;
 
+    private String inputStance;
+
     public AnalysisRequestDto() {
         // Empty constructor for Gson
     }
@@ -48,5 +50,13 @@ public class AnalysisRequestDto {
 
     public void setInputCoherence(String inputCoherence) {
         this.inputCoherence = inputCoherence;
+    }
+
+    public String getInputStance() {
+        return inputStance;
+    }
+
+    public void setInputStance(String inputStance) {
+        this.inputStance = inputStance;
     }
 }

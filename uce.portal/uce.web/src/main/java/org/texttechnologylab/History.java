@@ -13,6 +13,8 @@ public class History {
 
     private HashMap<String, String> inputCoherenceHashMap = new HashMap<>();
 
+    private HashMap<String, String> inputStanceHashMap = new HashMap<>();
+
     public HashMap<String, DUUIInformation> getDuuiInformationHashMap() {
         return duuiInformationHashMap;
     }
@@ -45,8 +47,27 @@ public class History {
         this.selectedModelsHashMap = selectedModelsHashMap;
     }
 
+    public HashMap<String, String> getInputCoherenceHashMap() {
+        return inputCoherenceHashMap;
+    }
+    public void setInputCoherenceHashMap(HashMap<String, String> inputCoherenceHashMap) {
+        this.inputCoherenceHashMap = inputCoherenceHashMap;
+    }
+    public HashMap<String, String> getInputStanceHashMap() {
+        return inputStanceHashMap;
+    }
+    public void setInputStanceHashMap(HashMap<String, String> inputStanceHashMap) {
+        this.inputStanceHashMap = inputStanceHashMap;
+    }
+
+
+
     public void addDuuiInformation(String id, DUUIInformation duuiInformation) {
         this.duuiInformationHashMap.put(id, duuiInformation);
+    }
+
+    public void addInputStance(String id, String inputStance) {
+        this.inputStanceHashMap.put(id, inputStance);
     }
 
     public void addModelGroup(String id, ModelGroup modelGroup) {
@@ -86,6 +107,10 @@ public class History {
 
     public String getInputCoherence(String id) {
         return this.inputCoherenceHashMap.get(id);
+    }
+
+    public String getInputStance(String id) {
+        return this.inputStanceHashMap.get(id);
     }
 
     public void removeDuuiInformation(String id) {

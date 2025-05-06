@@ -46,6 +46,8 @@ document.querySelectorAll('.group-checkbox').forEach(groupCheckbox => {
 document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
     modelCheckbox.addEventListener('change', function () {
         const isFactChecking = this.id.toLowerCase().includes('factchecking');
+        const isCoherence = this.id.toLowerCase().includes('cohesion');
+        const isStance = this.id.toLowerCase().includes('stance');
         if (isFactChecking) {
             const wrapper = document.getElementById('claim-field-wrapper');
             if (this.checked) {
@@ -55,13 +57,7 @@ document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
                 document.getElementById('claim-text').value = ''; // optional: reset field
             }
         }
-    });
-});
-
-document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
-    modelCheckbox.addEventListener('change', function () {
-        const isFactChecking = this.id.toLowerCase().includes('coherence');
-        if (isFactChecking) {
+        if (isCoherence) {
             const wrapper = document.getElementById('text-field-wrapper');
             if (this.checked) {
                 wrapper.style.display = 'block';
@@ -70,8 +66,32 @@ document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
                 document.getElementById('input-text').value = ''; // optional: reset field
             }
         }
+        if (isStance) {
+            const wrapper = document.getElementById('stance-field-wrapper');
+            if (this.checked) {
+                wrapper.style.display = 'block';
+            } else {
+                wrapper.style.display = 'none';
+                document.getElementById('stance-text').value = ''; // optional: reset field
+            }
+        }
     });
 });
+
+// document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
+//     modelCheckbox.addEventListener('change', function () {
+//         const isFactChecking = this.id.toLowerCase().includes('cohesion');
+//         if (isFactChecking) {
+//             const wrapper = document.getElementById('text-field-wrapper');
+//             if (this.checked) {
+//                 wrapper.style.display = 'block';
+//             } else {
+//                 wrapper.style.display = 'none';
+//                 document.getElementById('input-text').value = ''; // optional: reset field
+//             }
+//         }
+//     });
+// });
 
 
 // Wenn eine Modell-Checkbox geändert wird

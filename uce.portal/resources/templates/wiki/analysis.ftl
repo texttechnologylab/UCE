@@ -71,9 +71,17 @@
             </div>
             <div id="text-field-wrapper" style="display: none;">
                 <div class="group-box card-shadow bg-light">
-                    <h5 class="mb-0 mr-1 color-prime">Coherence Text</h5>
+                    <h5 class="mb-0 mr-1 color-prime">Cohesion Text</h5>
                     <div class="grow-text">
                         <textarea name="coherence-text" id="coherence-text" rows="10" placeholder="Text" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                    </div>
+                </div>
+            </div>
+            <div id="stance-field-wrapper" style="display: none;">
+                <div class="group-box card-shadow bg-light">
+                    <h5 class="mb-0 mr-1 color-prime">Hypothesis</h5>
+                    <div class="grow-text">
+                        <textarea name="stance-text" id="stance-text" rows="10" placeholder="Text" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
                     </div>
                 </div>
             </div>

@@ -640,4 +640,63 @@ label {
 .coherence-jensenshannon { --coherence-color: 0, 0, 255; }         /* Blau */
 .coherence-bhattacharyya { --coherence-color: 0, 128, 128; }          /* Türkis */
 
+.stance-entry {
+    display: inline-block;
+    width: calc(32.333% - 16px);
+    margin-right: 16px;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s, transform 0.3s;
+    margin-bottom: 16px; /* Abstand nach unten */
+}
 
+.stance-entry:hover {
+    transform: translateY(-3px);
+}
+
+.stance-name {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe */
+    margin-bottom: 8px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+}
+
+.stance-score {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #343a40; /* Dunklere Textfarbe für den Score */
+}
+
+.stance-container {
+    display: flex;
+    justify-content: space-between;
+    flex-wrap: wrap;
+}
+
+.stance-card {
+    flex: 1 1 100%;
+    background: #f8f9fa;
+    border: 2px solid #007bff;
+    border-radius: 12px;
+    padding: 20px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.stance-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.stance-card-title {
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    color: #343a40;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}

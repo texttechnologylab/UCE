@@ -26,6 +26,8 @@ public class DUUIInformation {
 
     private Boolean isCoherence = false;
 
+    private Boolean isStance = false;
+
     public DUUIInformation(Sentences sentence, TextClass textInformation, List<ModelGroup> modelGroups, HashMap<String, ModelInfo> modelInfos) {
         this.sentence = sentence;
         this.textInformation = textInformation;
@@ -121,6 +123,14 @@ public class DUUIInformation {
 
     public void setIsCoherence(Boolean isCoherence) {
         this.isCoherence = isCoherence;
+    }
+
+    public Boolean getIsStance() {
+        return isStance;
+    }
+
+    public void setIsStance(Boolean isStance) {
+        this.isStance = isStance;
     }
 
 }

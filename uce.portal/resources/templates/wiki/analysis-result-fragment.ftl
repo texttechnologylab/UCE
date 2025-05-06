@@ -178,7 +178,7 @@
                 <#-- Coherence -->
                 <#if DUUI.isCoherence>
                     <div class="border p-2 mb-2 bg-light">
-                        <h6 class="mb-0 mr-1 color-prime">Coherence</h6>
+                        <h6 class="mb-0 mr-1 color-prime">Cohesion</h6>
                         <div class="coherences-container">
                             <#list DUUI.textInformation.coherenceAVG as model>
                                 <div class="coherence-card">
@@ -202,6 +202,34 @@
                                         <div class="coherence-entry coherence-bhattacharyya" style="background-color: rgba(var(--coherence-color), 0.5);">
                                             <div class="coherence-score">AVG Bhattacharyya: ${model.getBhattacharyya()}</div>
                                         </div>
+                                    </div>
+                                </div>
+                            </#list>
+                        </div>
+                    </div>
+                </#if>
+                <#-- Stance -->
+                <#if DUUI.isStance>
+                    <div class="border p-2 mb-2 bg-light">
+                        <h6 class="mb-0 mr-1 color-prime">Stance</h6>
+                        <div class="stance-container">
+                            <#list DUUI.textInformation.stanceAVG as model>
+                                <div class="stance-card">
+                                    <div class="stance-card-title">${model.getModelInfo().getName()}</div>
+                                    <#--                            <p><strong>${model.getModelInfo().getName()}</strong></p>-->
+                                    <#assign supportOpacity = model.getSupport()?string?replace(",", ".")>
+                                    <#assign oppoaseOpacity = model.getOppose()?string?replace(",", ".")>
+                                    <#assign neutralOpacity = model.getNeutral()?string?replace(",", ".")>
+
+                                    <!-- Anzeige der verschiedenen Sentiment-Werte -->
+                                    <div class="stance-entry" style="background-color: rgba(0, 255, 0, ${supportOpacity});">
+                                        <div class="stance-score">AVG Support: ${model.getSupport()}</div>
+                                    </div>
+                                    <div class="stance-entry" style="background-color: rgba(255, 165, 0, ${oppoaseOpacity});">
+                                        <div class="stance-score">AVG Oppose: ${model.getOppose()}</div>
+                                    </div>
+                                    <div class="stance-entry" style="background-color: rgba(255, 0, 0, ${neutralOpacity});">
+                                        <div class="stance-score">AVG Neutral: ${model.getNeutral()}</div>
                                     </div>
                                 </div>
                             </#list>
