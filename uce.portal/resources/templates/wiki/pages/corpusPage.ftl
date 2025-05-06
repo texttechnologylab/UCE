@@ -70,6 +70,17 @@
         </div>
     </div>
 
+    <div class="text-center mb-3">
+        <h6 class="mb-3">Top 20 words from Corpus</h6>
+        <!-- Topic Word Cloud -->
+        <div class="col-md-6 mx-auto">
+            <div id="topicWordCloud"></div>
+        </div>
+    </div>
+
+    <div id="topic-distribution-container" style="height: 500px; width:100%"></div>
+
+
     <!-- Documents -->
     <!--<h5 class="text-center">Documents</h5>
     <div class="group-box card-shadow bg-lightgray">
@@ -84,6 +95,51 @@
     $(document).ready(function () {
         // After that, we load documentsListView
         //loadCorpusDocuments(${vm.getCorpus().getCorpus().getId()}, $('.wiki-page .corpus-documents-list-include'));
+
+        var wordData = [
+            <#if vm.getNormalizedTopicWords()?? && vm.getNormalizedTopicWords()?has_content>
+            <#list vm.getNormalizedTopicWords() as term>
+            {
+                "term": "${term.getWord()?js_string}",
+                "weight": ${term.getProbability()?c}
+            }<#if term_has_next>, </#if>
+            </#list>
+            </#if>
+        ];
+
+        var topicDistData = {
+            "labels": [
+                <#if vm.getTopicDistributions()?? && vm.getTopicDistributions()?has_content>
+                <#list vm.getTopicDistributions()?keys as topicLabel>
+                "${topicLabel?js_string}"<#if topicLabel_has_next>, </#if>
+                </#list>
+                </#if>
+            ],
+            "data": [
+                <#if vm.getTopicDistributions()?? && vm.getTopicDistributions()?has_content>
+                <#list vm.getTopicDistributions()?values as weight>
+                ${weight?c}<#if weight_has_next>, </#if>
+                </#list>
+                </#if>
+            ],
+            "labelName": "Topic Distribution"
+        };
+
+        window.graphVizHandler.createWordCloud(document.getElementById('topicWordCloud'), wordData);
+
+        window.graphVizHandler.createBasicChart(document.getElementById('topic-distribution-container'),
+            'Topic Distribution in Corpus',
+            topicDistData,
+            'pie'
+        );
+
+        window.graphVizHandler.createWordCloud(document.getElementById('topicWordCloud'), 'Word Cloud', wordData);
+
+        window.graphVizHandler.createBasicChart(document.getElementById('topic-distribution-container'),
+            'Top 20 topics from Corpus',
+            topicDistData,
+            'bar',
+        );
     })
 </script>
 

@@ -11,6 +11,7 @@ import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public class WikiService {
     private final PostgresqlDataInterface_Impl db;
@@ -29,6 +30,12 @@ public class WikiService {
         viewModel.setAnnotationType("Corpus");
         viewModel.setCorpus(corpus.getViewModel());
         viewModel.setDocumentsCount(db.countDocumentsInCorpus(corpusId));
+
+        List<TopicWord> normalizedTopicWords = db.getNormalizedTopicWordsForCorpus(corpusId);
+        viewModel.setNormalizedTopicWords(normalizedTopicWords);
+
+        Map<String, Double> topicDistributions = db.getTopNormalizedTopicsByCorpusId(corpusId);
+        viewModel.setTopicDistributions(topicDistributions);
 
         return viewModel;
     }
