@@ -91,7 +91,7 @@
         'polarArea',
     );
 
-    window.graphVizHandler.createWordCloud(document.getElementById('topicWordCloud'), wordData);
+    window.graphVizHandler.createWordCloud(document.getElementById('topicWordCloud'), 'Word Cloud', wordData);
 
 
 

@@ -125,20 +125,12 @@
             "labelName": "Topic Distribution"
         };
 
-        window.graphVizHandler.createWordCloud(document.getElementById('topicWordCloud'), wordData);
+        window.graphVizHandler.createWordCloud(document.getElementById('topicWordCloud'), 'Word Cloud', wordData);
 
         window.graphVizHandler.createBasicChart(document.getElementById('topic-distribution-container'),
             'Topic Distribution in Corpus',
             topicDistData,
             'pie'
-        );
-
-        window.graphVizHandler.createWordCloud(document.getElementById('topicWordCloud'), 'Word Cloud', wordData);
-
-        window.graphVizHandler.createBasicChart(document.getElementById('topic-distribution-container'),
-            'Top 20 topics from Corpus',
-            topicDistData,
-            'bar',
         );
     })
 </script>
