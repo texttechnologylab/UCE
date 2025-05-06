@@ -1,6 +1,6 @@
 <div class="filter-div flex-grow-1 col-md-auto m-0 pt-1 pb-1 pl-1 pr-1 small-font" data-type="${filter.getValueType()}">
     <div class="flexed align-items-center justify-content-between group-box bg-lightgray p-2 mb-0">
-        <label class="mb-0 mr-1 color-secondary">${filter.getKey()}:</label>
+        <label class="mb-0 mr-1 color-secondary">${filter.getKey()}</label>
 
         <#if filter.getValueType().name() == "ENUM">
             <input type="hidden" value="{ANY}"/>
