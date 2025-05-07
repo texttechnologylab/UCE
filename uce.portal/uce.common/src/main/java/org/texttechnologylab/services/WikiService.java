@@ -152,6 +152,10 @@ public class WikiService {
         if(viewModel.getCorpus().getCorpusConfig().getAnnotations().isUceMetadata())
             viewModel.setUceMetadata(db.getUCEMetadataByDocumentId(doc.getId()));
 
+        viewModel.setTopicDistribution(db.getTopTopicsByDocument(doc.getId(), 10));
+        viewModel.setTopicWords(db.getDocumentWordDistribution(doc.getId()));
+        viewModel.setSimilarDocuments(db.getSimilarDocumentbyDocumentId(doc.getId()));
+
         return viewModel;
     }
 

@@ -1497,6 +1497,71 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<TopicWord> getDocumentWordDistribution(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT word, AVG(probability) AS avg_probability " +
+                    "FROM documenttopicwords " +
+                    "WHERE document_id = :documentId " +
+                    "GROUP BY word " +
+                    "ORDER BY avg_probability DESC " +
+                    "LIMIT 20";
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("documentId", documentId);
+
+            List<Object[]> results = query.getResultList();
+
+            List<TopicWord> topicWords = new ArrayList<>();
+            double totalProbability = results.stream()
+                    .mapToDouble(row -> (Double) row[1])
+                    .sum();
+
+            if (totalProbability > 0) {
+                for (Object[] row : results) {
+                    String word = (String) row[0];
+                    Double avgProbability = (Double) row[1];
+                    TopicWord topicWord = new TopicWord();
+                    topicWord.setWord(word);
+                    topicWord.setProbability(avgProbability / totalProbability);
+                    topicWords.add(topicWord);
+                }
+            }
+
+            return topicWords;
+        });
+    }
+
+    // Similar documents based on the shared topic words
+    public List<Object[]> getSimilarDocumentbyDocumentId(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "WITH sourcewords AS (" +
+                    "    SELECT word " +
+                    "    FROM documenttopicwords " +
+                    "    WHERE document_id = :documentId " +
+                    "    GROUP BY word" +
+                    "), " +
+                    "similardocs AS (" +
+                    "    SELECT " +
+                    "        dtw.document_id, " +
+                    "        COUNT(DISTINCT dtw.word) AS sharedwords " +
+                    "    FROM documenttopicwords dtw " +
+                    "    JOIN sourcewords sw ON sw.word = dtw.word " +
+                    "    WHERE dtw.document_id != :documentId " +
+                    "    GROUP BY dtw.document_id " +
+                    "    ORDER BY sharedwords DESC" +
+                    ") " +
+                    "SELECT d.documentid, s.sharedwords " +
+                    "FROM similardocs s " +
+                    "JOIN document d ON s.document_id = d.id " +
+                    "LIMIT 20";
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId);
+
+            return query.getResultList();
+        });
+    }
+
 
     /**
      * Parses the annotation occurrences that our search query outputs. This is so scuffed because hibernate freaking sucks, it's so nested.

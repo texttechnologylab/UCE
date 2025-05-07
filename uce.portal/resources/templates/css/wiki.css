@@ -631,3 +631,14 @@
     height:500px;
     width:100%
 }
+
+#document-topic-distribution-container {
+    height:500px;
+    width:100%;
+    margin-bottom: 10px
+}
+
+#document-similar-documents-container {
+    height:500px;
+    width:100%
+}
