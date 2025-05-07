@@ -366,5 +366,9 @@
   "topics": {
     "de-DE": "Wichtige Themen",
     "en-EN": "Key Topics"
+  },
+  "corpusWords": {
+    "de-DE": "Top 20 Wörter aus dem Korpus",
+    "en-EN": "Top 20 words from Corpus"
   }
 }

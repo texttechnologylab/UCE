@@ -30,12 +30,8 @@ public class WikiService {
         viewModel.setAnnotationType("Corpus");
         viewModel.setCorpus(corpus.getViewModel());
         viewModel.setDocumentsCount(db.countDocumentsInCorpus(corpusId));
-
-        List<TopicWord> normalizedTopicWords = db.getNormalizedTopicWordsForCorpus(corpusId);
-        viewModel.setNormalizedTopicWords(normalizedTopicWords);
-
-        Map<String, Double> topicDistributions = db.getTopNormalizedTopicsByCorpusId(corpusId);
-        viewModel.setTopicDistributions(topicDistributions);
+        viewModel.setNormalizedTopicWords(db.getNormalizedTopicWordsForCorpus(corpusId));
+        viewModel.setTopicDistributions(db.getTopNormalizedTopicsByCorpusId(corpusId));
 
         return viewModel;
     }

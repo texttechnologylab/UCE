@@ -627,3 +627,7 @@
     pointer-events: none;
     white-space: nowrap;
 }
+#corpus-topic-distribution-container {
+    height:500px;
+    width:100%
+}

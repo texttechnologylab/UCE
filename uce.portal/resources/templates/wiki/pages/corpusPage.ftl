@@ -71,14 +71,14 @@
     </div>
 
     <div class="text-center mb-3">
-        <h6 class="mb-3">Top 20 words from Corpus</h6>
+        <h6 class="mb-3">${languageResource.get("corpusWords")}</h6>
         <!-- Topic Word Cloud -->
         <div class="col-md-6 mx-auto">
             <div id="topicWordCloud"></div>
         </div>
     </div>
 
-    <div id="topic-distribution-container" style="height: 500px; width:100%"></div>
+    <div id="corpus-topic-distribution-container"></div>
 
 
     <!-- Documents -->
@@ -127,7 +127,7 @@
 
         window.graphVizHandler.createWordCloud(document.getElementById('topicWordCloud'), 'Word Cloud', wordData);
 
-        window.graphVizHandler.createBasicChart(document.getElementById('topic-distribution-container'),
+        window.graphVizHandler.createBasicChart(document.getElementById('corpus-topic-distribution-container'),
             'Topic Distribution in Corpus',
             topicDistData,
             'pie'
