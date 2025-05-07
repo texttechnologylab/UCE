@@ -246,7 +246,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         // A linkable object can have multiple links that reference different tables (document, namedentity, token...)
         var links = new ArrayList<Link>();
 
-        for(var type:possibleLinkTypes){
+        for (var type : possibleLinkTypes) {
             links.addAll(getLinksOfLinkableByType(id, type));
         }
         return links;
@@ -266,7 +266,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     public Linkable getLinkableById(long id, Class<? extends Linkable> clazz) throws DatabaseOperationException {
         return executeOperationSafely(session -> {
             var linkable = session.get(clazz, id);
-            if(linkable instanceof Document doc) Hibernate.initialize(doc.getPages());
+            if (linkable instanceof Document doc) Hibernate.initialize(doc.getPages());
             return linkable;
         });
     }
@@ -591,8 +591,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             List<ArrayList<String>> kvList = new ArrayList<>();
             if (filters == null || filters.isEmpty()) {
                 useFilters = false;
-            }
-            else {
+            } else {
                 var applicableFilters = filters.stream().filter(f -> !(f.getValue().isEmpty() || f.getValue().equals("{ANY}"))).toList();
                 if (applicableFilters.isEmpty()) {
                     useFilters = false;
@@ -1376,7 +1375,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     "WHERE sentence_id = :sentenceId " +
                     "ORDER BY thetast DESC " +
                     "LIMIT :limit";
-            
+
             var query = session.createNativeQuery(sql)
                     .setParameter("sentenceId", sentenceId)
                     .setParameter("limit", limit);
@@ -1442,6 +1441,59 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     .setParameter("corpusId", corpusId);
 
             return query.getResultList();
+        });
+    }
+
+    public List<TopicWord> getNormalizedTopicWordsForCorpus(long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT word, " +
+                    "AVG(probability) AS avg_probability, " +
+                    "AVG(probability) / SUM(AVG(probability)) OVER () AS normalized_probability " +
+                    "FROM corpustopicwords " +
+                    "WHERE corpus_id = :corpusId " +
+                    "GROUP BY word " +
+                    "ORDER BY normalized_probability DESC";
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("corpusId", corpusId);
+
+            List<Object[]> results = query.getResultList();
+
+            List<TopicWord> topicWords = new ArrayList<>();
+            for (Object[] row : results) {
+                TopicWord tw = new TopicWord();
+                tw.setWord((String) row[0]);
+                tw.setProbability((Double) row[2]); // Use normalized probability
+                topicWords.add(tw);
+            }
+
+            return topicWords.size() > 20 ? topicWords.subList(0, 20) : topicWords;
+        });
+    }
+
+
+    public Map<String, Double> getTopNormalizedTopicsByCorpusId(long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = """
+                        SELECT topic, normalized_score
+                        FROM get_normalized_topic_scores(:corpusId)
+                        ORDER BY normalized_score DESC
+                        LIMIT 20
+                    """;
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("corpusId", corpusId);
+
+            List<Object[]> results = query.getResultList();
+
+            Map<String, Double> topicDistributions = new HashMap<>();
+            for (Object[] row : results) {
+                String topicLabel = (String) row[0];
+                Double probability = (Double) row[1];
+                topicDistributions.put(topicLabel, probability);
+            }
+
+            return topicDistributions;
         });
     }
 
