@@ -2,6 +2,7 @@ package org.texttechnologylab.models;
 
 import io.micrometer.common.lang.Nullable;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.negation.*;
@@ -18,7 +19,7 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
 
     @Override
     public List<Class<? extends ModelBase>> getCompatibleLinkTypes() {
-        return List.of(DocumentToAnnotationLink.class);
+        return List.of(DocumentToAnnotationLink.class, AnnotationToDocumentLink.class);
     }
 
     @Override

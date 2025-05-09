@@ -19,11 +19,11 @@ public class Link extends ModelBase {
     private String type;
     private String linkId;
     /**
-     * This is the PK of the document in the db, so the 'id'.
+     * This is the PK of the document or annotation in the db, so the 'id'.
      */
     private long fromId;
     /**
-     * This is the PK of the document in the db, so the 'id'.
+     * This is the PK of the document or annotation in the db, so the 'id'.
      */
     private long toId;
 

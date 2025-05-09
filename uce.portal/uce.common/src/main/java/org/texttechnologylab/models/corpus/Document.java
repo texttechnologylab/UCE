@@ -12,6 +12,7 @@ import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.corpus.links.Link;
@@ -41,7 +42,7 @@ public class Document extends ModelBase implements WikiModel, Linkable {
 
     @Override
     public List<Class<? extends ModelBase>> getCompatibleLinkTypes() {
-        return List.of(DocumentLink.class, DocumentToAnnotationLink.class);
+        return List.of(DocumentLink.class, DocumentToAnnotationLink.class, AnnotationToDocumentLink.class);
     }
 
     @Override

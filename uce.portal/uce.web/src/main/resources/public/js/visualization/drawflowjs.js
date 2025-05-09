@@ -6,7 +6,7 @@ class DrawflowJS {
         this.editor.start();
         this.nodes = [];
         this.placedNodes = new Map(); // key: unique, value: node ID + position
-        this.connectionSet = new Set();
+        this.placedConnections = new Map();
         this.rowPerDepth = new Map();
         //this.editor.editor_mode = 'view';
     }
@@ -19,7 +19,7 @@ class DrawflowJS {
         activatePopovers();
     }
 
-    createNodeFromNodeDto(nodeDto){
+    createNodeFromNodeDto(nodeDto) {
         return {
             type: nodeDto.type,
             html: `
@@ -35,7 +35,7 @@ class DrawflowJS {
     }
 
     addLabelNode(labelText, depth, toNodeUnique) {
-        const spacingX = 600;
+        const spacingX = 1000;
 
         const posX = depth > 0 ? depth * spacingX : 150;
         const toNode = this.placedNodes.get(toNodeUnique);
@@ -56,7 +56,7 @@ class DrawflowJS {
             return this.placedNodes.get(nodeDto.unique).id;
         }
 
-        const spacingX = 500;
+        const spacingX = 650;
         const spacingY = 225;
 
         // Get and increment row for this depth
@@ -69,7 +69,7 @@ class DrawflowJS {
         const node = this.createNodeFromNodeDto(nodeDto);
         node.id = this.editor.addNode(node.type, 1, 1, posX, posY, 'html', node, node.html);
         this.nodes.push(node);
-        this.placedNodes.set(nodeDto.unique, { id: node.id, posX, posY });
+        this.placedNodes.set(nodeDto.unique, {id: node.id, posX, posY});
 
         // === Handle fromNodes ===
         if (Array.isArray(nodeDto.fromNodes)) {
@@ -79,11 +79,25 @@ class DrawflowJS {
                 const connectionKey = `${fromId}->${node.id}:${label}`;
                 const reverseKey = `${node.id}->${fromId}:${label}`;
 
-                if (!this.connectionSet.has(reverseKey)) {
+                if (!this.placedConnections.has(reverseKey)) {
                     const labelNodeId = this.addLabelNode(label, depth - 1, fromNodeDto.unique);
                     this.editor.addConnection(fromId, labelNodeId, 'output_1', 'input_1');
                     this.editor.addConnection(labelNodeId, node.id, 'output_1', 'input_1');
-                    this.connectionSet.add(connectionKey);
+                    this.placedConnections.set(connectionKey, {from: fromId, label: labelNodeId, to: node.id});
+                    // Add arrow direction
+                    this.target.querySelector(
+                        `.drawflow .connection.node_in_node-${node.id}.node_out_node-${labelNodeId} path`)
+                        .classList.add('arrow-right');
+                } else {
+                    // If this connection already exists, then we have a bidirectional. In this case
+                    // show it in the UI appropriately.
+                    const existingConnection = this.placedConnections.get(reverseKey);
+                    this.target.querySelector(
+                        `.drawflow .connection.node_in_node-${existingConnection.label}.node_out_node-${existingConnection.from} path`)
+                        .classList.add('arrow-left');
+                    this.target.querySelector(
+                        `.drawflow .connection.node_in_node-${existingConnection.to}.node_out_node-${existingConnection.label} path`)
+                        .classList.add('arrow-right');
                 }
             });
         }
@@ -96,11 +110,25 @@ class DrawflowJS {
                 const connectionKey = `${node.id}->${toId}:${label}`;
                 const reverseKey = `${toId}->${node.id}:${label}`;
 
-                if (!this.connectionSet.has(reverseKey)) {
+                if (!this.placedConnections.has(reverseKey)) {
                     const labelNodeId = this.addLabelNode(label, depth + 1, toNodeDto.unique);
                     this.editor.addConnection(node.id, labelNodeId, 'output_1', 'input_1');
                     this.editor.addConnection(labelNodeId, toId, 'output_1', 'input_1');
-                    this.connectionSet.add(connectionKey);
+                    this.placedConnections.set(connectionKey, {from: node.id, label: labelNodeId, to: toId});
+                    // Add arrow direction
+                    this.target.querySelector(
+                        `.drawflow .connection.node_in_node-${toId}.node_out_node-${labelNodeId} path`)
+                        .classList.add('arrow-right');
+                } else {
+                    // If this connection already exists, then we have a bidirectional. In this case
+                    // show it in the UI appropriately.
+                    const existingConnection = this.placedConnections.get(reverseKey);
+                    this.target.querySelector(
+                        `.drawflow .connection.node_in_node-${existingConnection.label}.node_out_node-${existingConnection.from} path`)
+                        .classList.add('arrow-left');
+                    this.target.querySelector(
+                        `.drawflow .connection.node_in_node-${existingConnection.to}.node_out_node-${existingConnection.label} path`)
+                        .classList.add('arrow-right');
                 }
             });
         }

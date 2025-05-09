@@ -7,6 +7,7 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
@@ -40,6 +41,7 @@ public class HibernateConf {
         // Links
         metadataSources.addAnnotatedClass(DocumentLink.class);
         metadataSources.addAnnotatedClass(DocumentToAnnotationLink.class);
+        metadataSources.addAnnotatedClass(AnnotationToDocumentLink.class);
         metadataSources.addAnnotatedClass(Line.class);
         metadataSources.addAnnotatedClass(SrLink.class);
         metadataSources.addAnnotatedClass(Lemma.class);

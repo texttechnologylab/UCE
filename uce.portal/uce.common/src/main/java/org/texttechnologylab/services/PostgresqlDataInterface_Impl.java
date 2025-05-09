@@ -13,6 +13,7 @@ import org.texttechnologylab.models.Linkable;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.corpus.links.Link;
@@ -1238,6 +1239,15 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public void saveOrUpdateManyDocumentToAnnotationLinks(List<DocumentToAnnotationLink> links) throws DatabaseOperationException {
+        executeOperationSafely((session -> {
+            for (var link : links) {
+                session.saveOrUpdate(link);
+            }
+            return null;
+        }));
+    }
+
+    public void saveOrUpdateManyAnnotationToDocumentLinks(List<AnnotationToDocumentLink> links) throws DatabaseOperationException {
         executeOperationSafely((session -> {
             for (var link : links) {
                 session.saveOrUpdate(link);

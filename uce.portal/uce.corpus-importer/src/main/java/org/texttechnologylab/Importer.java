@@ -28,6 +28,7 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.corpus.ocr.OCRPageAdapterImpl;
@@ -570,6 +571,36 @@ public class Importer {
             documentToAnnotationLinks.add(docToAnnoLink);
         });
         db.saveOrUpdateManyDocumentToAnnotationLinks(documentToAnnotationLinks);
+
+        // Annotation -> Document Link
+        var annotationToDocumentLinks = new ArrayList<AnnotationToDocumentLink>();
+        JCasUtil.select(jCas, ADLink.class).forEach(l -> {
+            var annoToDocLink = new AnnotationToDocumentLink();
+            annoToDocLink.setCorpusId(corpusId);
+            annoToDocLink.setTo(l.getTo()); // to is a documentId, but not of *this* document.
+            annoToDocLink.setLinkId(String.valueOf(l.getLinkId()));
+            annoToDocLink.setType(l.getLinkType());
+            // In the case of a Annotation -> Document, the "from" in the typesystem points to the current document
+            annoToDocLink.setFrom(document.getDocumentId());
+
+            var fromAnnotation = l.getFrom();
+            annoToDocLink.setFromBegin(fromAnnotation.getBegin());
+            annoToDocLink.setFromEnd(fromAnnotation.getEnd());
+            annoToDocLink.setFromCoveredText(fromAnnotation.getCoveredText());
+            // Same procedure as in DocumentToAnnotation above; read that comment.
+            Class<?> modelClass = ReflectionUtils.findModelClassForCASAnnotation(fromAnnotation);
+            if(modelClass == null) {
+                logImportWarn("A logical Link annotation tried to point to an annotation that UCE doesn't support yet, hence skipped the link.",
+                        new InvalidClassException(fromAnnotation.getType().getName() + " annotation not supported by UCE."), filePath);
+                return;
+            }
+            annoToDocLink.setFromAnnotationType(modelClass.getName());
+            var tableName = ReflectionUtils.getTableAnnotationName(modelClass);
+            annoToDocLink.setFromAnnotationTypeTable(tableName);
+
+            annotationToDocumentLinks.add(annoToDocLink);
+        });
+        db.saveOrUpdateManyAnnotationToDocumentLinks(annotationToDocumentLinks);
     }
 
     /**

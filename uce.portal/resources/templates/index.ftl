@@ -75,6 +75,22 @@
     </div>
     <div id="full-flow-container">
     </div>
+    <svg style="height: 0;">
+        <defs>
+            <!-- Right-pointing arrow with white border -->
+            <marker id="arrow-right" markerWidth="10" markerHeight="7" refX="5" refY="3.5"
+                    orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,7 L10,3.5 z" fill="var(--prime)" />
+            </marker>
+
+            <!-- Left-pointing arrow with white border -->
+            <marker id="arrow-left" markerWidth="10" markerHeight="7" refX="5" refY="3.5"
+                    orient="auto" markerUnits="strokeWidth">
+                <path d="M10,0 L10,7 L0,3.5 z" fill="var(--prime)" />
+            </marker>
+        </defs>
+    </svg>
+
 </div>
 
 <div class="site-container">
