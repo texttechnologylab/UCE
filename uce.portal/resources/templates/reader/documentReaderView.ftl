@@ -62,6 +62,7 @@
     <div class="corpus-inspector-include display-none">
     </div>
 
+    <!-- this object must be set on any site we use within UCE -->
     <div id="prime-color-container" class="color-prime"></div>
 
     <div class="pages-loader-popup">

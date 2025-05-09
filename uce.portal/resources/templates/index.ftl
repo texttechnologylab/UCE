@@ -79,6 +79,7 @@
 
 <div class="site-container">
 
+    <!-- this object must be set on any site we use within UCE -->
     <div id="prime-color-container" class="color-prime"></div>
 
     <nav class="position-relative">
