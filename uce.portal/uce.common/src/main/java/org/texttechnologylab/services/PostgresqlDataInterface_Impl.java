@@ -246,7 +246,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         // A linkable object can have multiple links that reference different tables (document, namedentity, token...)
         var links = new ArrayList<Link>();
 
-        for(var type:possibleLinkTypes){
+        for (var type : possibleLinkTypes) {
             links.addAll(getLinksOfLinkableByType(id, type));
         }
         return links;
@@ -266,7 +266,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     public Linkable getLinkableById(long id, Class<? extends Linkable> clazz) throws DatabaseOperationException {
         return executeOperationSafely(session -> {
             var linkable = session.get(clazz, id);
-            if(linkable instanceof Document doc) Hibernate.initialize(doc.getPages());
+            if (linkable instanceof Document doc) Hibernate.initialize(doc.getPages());
             return linkable;
         });
     }
@@ -591,8 +591,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             List<ArrayList<String>> kvList = new ArrayList<>();
             if (filters == null || filters.isEmpty()) {
                 useFilters = false;
-            }
-            else {
+            } else {
                 var applicableFilters = filters.stream().filter(f -> !(f.getValue().isEmpty() || f.getValue().equals("{ANY}"))).toList();
                 if (applicableFilters.isEmpty()) {
                     useFilters = false;
@@ -1376,7 +1375,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     "WHERE sentence_id = :sentenceId " +
                     "ORDER BY thetast DESC " +
                     "LIMIT :limit";
-            
+
             var query = session.createNativeQuery(sql)
                     .setParameter("sentenceId", sentenceId)
                     .setParameter("limit", limit);
@@ -1440,6 +1439,124 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     .setParameter("minSharedWords", minSharedWords)
                     .setParameter("result_limit", result_limit)
                     .setParameter("corpusId", corpusId);
+
+            return query.getResultList();
+        });
+    }
+
+    public List<TopicWord> getNormalizedTopicWordsForCorpus(long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT word, " +
+                    "AVG(probability) AS avg_probability, " +
+                    "AVG(probability) / SUM(AVG(probability)) OVER () AS normalized_probability " +
+                    "FROM corpustopicwords " +
+                    "WHERE corpus_id = :corpusId " +
+                    "GROUP BY word " +
+                    "ORDER BY normalized_probability DESC";
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("corpusId", corpusId);
+
+            List<Object[]> results = query.getResultList();
+
+            List<TopicWord> topicWords = new ArrayList<>();
+            for (Object[] row : results) {
+                TopicWord tw = new TopicWord();
+                tw.setWord((String) row[0]);
+                tw.setProbability((Double) row[2]); // Use normalized probability
+                topicWords.add(tw);
+            }
+
+            return topicWords.size() > 20 ? topicWords.subList(0, 20) : topicWords;
+        });
+    }
+
+
+    public Map<String, Double> getTopNormalizedTopicsByCorpusId(long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = """
+                        SELECT topic, normalized_score
+                        FROM get_normalized_topic_scores(:corpusId)
+                        ORDER BY normalized_score DESC
+                        LIMIT 20
+                    """;
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("corpusId", corpusId);
+
+            List<Object[]> results = query.getResultList();
+
+            Map<String, Double> topicDistributions = new HashMap<>();
+            for (Object[] row : results) {
+                String topicLabel = (String) row[0];
+                Double probability = (Double) row[1];
+                topicDistributions.put(topicLabel, probability);
+            }
+
+            return topicDistributions;
+        });
+    }
+
+    public List<TopicWord> getDocumentWordDistribution(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT word, AVG(probability) AS avg_probability " +
+                    "FROM documenttopicwords " +
+                    "WHERE document_id = :documentId " +
+                    "GROUP BY word " +
+                    "ORDER BY avg_probability DESC " +
+                    "LIMIT 20";
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("documentId", documentId);
+
+            List<Object[]> results = query.getResultList();
+
+            List<TopicWord> topicWords = new ArrayList<>();
+            double totalProbability = results.stream()
+                    .mapToDouble(row -> (Double) row[1])
+                    .sum();
+
+            if (totalProbability > 0) {
+                for (Object[] row : results) {
+                    String word = (String) row[0];
+                    Double avgProbability = (Double) row[1];
+                    TopicWord topicWord = new TopicWord();
+                    topicWord.setWord(word);
+                    topicWord.setProbability(avgProbability / totalProbability);
+                    topicWords.add(topicWord);
+                }
+            }
+
+            return topicWords;
+        });
+    }
+
+    // Similar documents based on the shared topic words
+    public List<Object[]> getSimilarDocumentbyDocumentId(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "WITH sourcewords AS (" +
+                    "    SELECT word " +
+                    "    FROM documenttopicwords " +
+                    "    WHERE document_id = :documentId " +
+                    "    GROUP BY word" +
+                    "), " +
+                    "similardocs AS (" +
+                    "    SELECT " +
+                    "        dtw.document_id, " +
+                    "        COUNT(DISTINCT dtw.word) AS sharedwords " +
+                    "    FROM documenttopicwords dtw " +
+                    "    JOIN sourcewords sw ON sw.word = dtw.word " +
+                    "    WHERE dtw.document_id != :documentId " +
+                    "    GROUP BY dtw.document_id " +
+                    "    ORDER BY sharedwords DESC" +
+                    ") " +
+                    "SELECT d.documentid, s.sharedwords " +
+                    "FROM similardocs s " +
+                    "JOIN document d ON s.document_id = d.id " +
+                    "LIMIT 20";
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId);
 
             return query.getResultList();
         });
@@ -1511,6 +1628,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
         // unified topic
         Hibernate.initialize(doc.getUnifiedTopics());
+
+        for (var topic : doc.getUnifiedTopics()) {
+            Hibernate.initialize(topic.getTopics());
+        }
 
         for (var link : doc.getWikipediaLinks()) {
             Hibernate.initialize(link.getWikiDataHyponyms());

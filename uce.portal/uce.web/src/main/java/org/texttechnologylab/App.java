@@ -333,6 +333,7 @@ public class App {
             path("/document", () -> {
                 get("/reader/pagesList", documentApi.getPagesListView);
                 get("/uceMetadata", documentApi.getUceMetadataOfDocument);
+                get("/topics", documentApi.getDocumentTopics);
             });
 
             path("/rag", () -> {

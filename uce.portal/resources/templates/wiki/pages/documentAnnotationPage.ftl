@@ -13,6 +13,16 @@
 
     <hr class="mt-2 mb-4"/>
 
+    <div class="mt-3 mb-4">
+        <h6 class="text-dark text-center w-100 mb-2">
+            ${languageResource.get('documentWords')}
+        </h6>
+        <div id="topic-word-cloud" class="col-md-8 mx-auto"></div>
+    </div>
+    <div id="document-topic-distribution-container"></div>
+    <div id="document-similar-documents-container"></div>
+
+
     <!-- the document this is from -->
     <div class="mt-4 mb-2 w-100 p-0 m-0 justify-content-center flexed align-items-start">
         <div class="document-card w-100">
@@ -56,5 +66,62 @@
         const center = $('.wiki-page').data('center');
         const corpusId = $('.wiki-page').data('corpusid');
         window.wikiHandler.addUniverseToDocumentWikiPage(corpusId, center);
+
+        var topicsData = {
+            "labels": [
+                <#list vm.getTopicDistribution() as topic>
+                "${topic[0]?js_string}"<#if topic_has_next>,</#if>
+                </#list>
+            ],
+            "data": [
+                <#list vm.getTopicDistribution() as topic>
+                ${topic[1]?c}<#if topic_has_next>,</#if>
+                </#list>
+            ],
+            "labelName": "Topic Weights"
+        };
+
+        var wordData = [
+            <#list vm.getTopicWords() as wordItem>
+            {
+                "term": "${wordItem.getWord()?js_string}",
+                "weight": ${wordItem.getProbability()?c}
+            }<#if wordItem_has_next>,</#if>
+            </#list>
+        ];
+
+        var similarDocumentsData = {
+            "labels": [
+                <#list vm.getSimilarDocuments() as item>
+                "${item[0]?js_string}"<#if item_has_next>,</#if>
+                </#list>
+            ],
+            "data": [
+                <#list vm.getSimilarDocuments() as item>
+                ${item[1]?c}<#if item_has_next>,</#if>
+                </#list>
+            ],
+            "labelName": "Shared Words"
+        };
+
+        window.graphVizHandler.createBasicChart(
+            document.getElementById('document-topic-distribution-container'),
+            'Topic Distribution',
+            topicsData,
+            'pie'
+        );
+
+        window.graphVizHandler.createWordCloud(
+            document.getElementById('topic-word-cloud'),
+            'Top 20 Topic Words',
+            wordData
+        );
+
+        window.graphVizHandler.createBasicChart(document.getElementById('document-similar-documents-container'),
+            'Similar documents based on shared words',
+            similarDocumentsData,
+            'polarArea',
+        );
+
     })
 </script>

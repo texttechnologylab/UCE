@@ -11,6 +11,7 @@ import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.IOException;
 import java.util.List;
+import java.util.Map;
 
 public class WikiService {
     private final PostgresqlDataInterface_Impl db;
@@ -29,6 +30,8 @@ public class WikiService {
         viewModel.setAnnotationType("Corpus");
         viewModel.setCorpus(corpus.getViewModel());
         viewModel.setDocumentsCount(db.countDocumentsInCorpus(corpusId));
+        viewModel.setNormalizedTopicWords(db.getNormalizedTopicWordsForCorpus(corpusId));
+        viewModel.setTopicDistributions(db.getTopNormalizedTopicsByCorpusId(corpusId));
 
         return viewModel;
     }
@@ -148,6 +151,10 @@ public class WikiService {
         viewModel.setAnnotationType("Document");
         if(viewModel.getCorpus().getCorpusConfig().getAnnotations().isUceMetadata())
             viewModel.setUceMetadata(db.getUCEMetadataByDocumentId(doc.getId()));
+
+        viewModel.setTopicDistribution(db.getTopTopicsByDocument(doc.getId(), 10));
+        viewModel.setTopicWords(db.getDocumentWordDistribution(doc.getId()));
+        viewModel.setSimilarDocuments(db.getSimilarDocumentbyDocumentId(doc.getId()));
 
         return viewModel;
     }
