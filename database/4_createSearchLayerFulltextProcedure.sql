@@ -138,6 +138,8 @@ BEGIN
 			SELECT 
 				(filter->>''key'')::text AS key,
 				(filter->>''value'')::text AS value,
+				(filter->>''min'')::numeric AS min,
+				(filter->>''max'')::numeric AS max,
 				(filter->>''valueType'')::text AS value_type
 			FROM jsonb_array_elements($1) AS filter
 		),
@@ -151,8 +153,17 @@ BEGIN
 			FROM expanded_filters ef
 			JOIN filtered_ucemetadata um ON 
 				(ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
-				AND (ef.key IS NULL OR um.key = ef.key) 
-				AND (ef.value IS NULL OR um.value = ef.value)
+				AND (ef.key IS NULL OR um.key = ef.key)
+				AND (
+				    ef.value IS NULL OR um.value = ef.value
+				    OR (
+					ef.value_type = '1'
+					AND (
+					    (ef.min IS NULL OR um.value::numeric >= ef.min)
+					    AND (ef.max IS NULL OR um.value::numeric <= ef.max)
+					)
+				    )
+				)
 			JOIN document d ON um.document_id = d.id AND d.corpusid = $2
 			%s
 			GROUP BY um.document_id

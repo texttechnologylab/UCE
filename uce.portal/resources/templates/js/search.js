@@ -139,6 +139,7 @@ function startNewSearch(searchInput, reloadCorpus = true) {
                 'valueType': valueType,
                 'min': min,
                 'max': max,
+                'value': "",  // TODO value must not be null in the backend, change later?
             })
         }
         else {
