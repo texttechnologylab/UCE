@@ -856,10 +856,11 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 if (uceMetadataFilters == null || uceMetadataFilters.isEmpty())
                     storedProcedure.setString(9, null);
                 else {
-                    var applicableFilters = uceMetadataFilters.stream().filter(f -> !(f.getValue().isEmpty() || f.getValue().equals("{ANY}"))).toList();
+                    var applicableFilters = uceMetadataFilters.stream().filter(f -> (!(f.getValue().isEmpty() || f.getValue().equals("{ANY}"))) || (f.getMax() != null || f.getMin() != null)).toList();
                     if (applicableFilters.isEmpty()) storedProcedure.setString(9, null);
                     else storedProcedure.setString(9, gson.toJson(applicableFilters)
-                            .replaceAll("\"valueType\"", "\"valueType::text\""));
+                            .replaceAll("NUMBER", "1"));  // TODO this should be NUMBER, but in the database we are directly comparing to the id?
+//                            .replaceAll("\"valueType\"", "\"valueType::text\"");
                 }
                 storedProcedure.setBoolean(10, useTsVectorSearch);
                 storedProcedure.setString(11, sourceTable);
