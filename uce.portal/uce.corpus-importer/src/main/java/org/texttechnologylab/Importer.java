@@ -20,6 +20,7 @@ import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotation.DocumentAnnotation;
+import org.texttechnologylab.annotation.geonames.GeoNamesEntity;
 import org.texttechnologylab.annotation.link.*;
 import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CommonConfig;
@@ -463,6 +464,12 @@ public class Importer {
                         () -> setNamedEntities(document, jCas),
                         (ex) -> logImportWarn("This file should have contained ner annotations, but selecting them caused an error.", ex, filePath));
 
+            // GeoNames requires both GeoName and NamedEntity annotations.
+            if (corpusConfig.getAnnotations().isNamedEntity() && corpusConfig.getAnnotations().isGeoNames())
+                ExceptionUtils.tryCatchLog(
+                        () -> setGeoNames(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained GeoNames annotations, but selecting them caused an error.", ex, filePath));
+
             if (corpusConfig.getAnnotations().isLemma())
                 ExceptionUtils.tryCatchLog(
                         () -> setLemmata(document, jCas),
@@ -518,6 +525,41 @@ public class Importer {
         } finally {
             logger.info("Finished with importing that CAS.\n\n\n");
         }
+    }
+
+    /**
+     * Selects and set the geoNames of a document.
+     */
+    private void setGeoNames(Document document, JCas jCas){
+        var geoNames = new ArrayList<GeoName>();
+        JCasUtil.select(jCas, GeoNamesEntity.class).forEach(g -> {
+            var geoName = new GeoName(g.getBegin(), g.getEnd());
+            geoName.setCoveredText(g.getCoveredText());
+            geoName.setName(g.getName());
+            geoName.setFeatureClass(g.getFeatureClass());
+            geoName.setFeatureCode(g.getFeatureCode());
+            geoName.setCountryCode(g.getCountryCode());
+            geoName.setAdm1(g.getAdm1());
+            geoName.setAdm2(g.getAdm2());
+            geoName.setAdm3(g.getAdm3());
+            geoName.setAdm4(g.getAdm4());
+            geoName.setLatitude(g.getLatitude());
+            geoName.setLongitude(g.getLongitude());
+            geoName.setElevation(g.getElevation());
+            var referenceNE = g.getReferenceAnnotation();
+            if(referenceNE != null){
+                // The NE should have already been extracted and added to the document
+                var ne = document.getNamedEntities().stream().filter(
+                        n -> n.getBegin() == referenceNE.getBegin() && n.getEnd() == referenceNE.getEnd() && n.getType().equals("LOCATION")).findFirst();
+                if(ne.isPresent()){
+                    geoName.setRefNamedEntity(ne.get());
+                    ne.get().setGeoName(geoName);
+                }
+            }
+            geoNames.add(geoName);
+        });
+        document.setGeoNames(geoNames);
+        logger.info("Setting GeoNames done.");
     }
 
     /**
@@ -775,6 +817,12 @@ public class Importer {
         }
         if (document.getNamedEntities() != null) {
             for (var anno : document.getNamedEntities().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getGeoNames() != null) {
+            for (var anno : document.getGeoNames().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
                 anno.setPage(page);
             }

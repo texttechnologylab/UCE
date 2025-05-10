@@ -97,9 +97,6 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         return end;
     }
 
-
-
-
     /**
      * Given a list of annotations and a coveredtext, it builds a html view with the annotations being highlighted.
      */

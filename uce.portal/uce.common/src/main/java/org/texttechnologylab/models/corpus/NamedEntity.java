@@ -22,6 +22,13 @@ public class NamedEntity extends UIMAAnnotation implements WikiModel {
     @Column(name = "page_id", insertable = false, updatable = false)
     private Long pageId;
 
+    @OneToOne
+    @JoinColumn(name = "geoname_id")
+    private GeoName geoName;
+
+    @Column(name = "geoname_id", insertable = false, updatable = false)
+    private Long geoNameId;
+
     @Column(name = "\"typee\"")
     private String type;
 
@@ -31,6 +38,22 @@ public class NamedEntity extends UIMAAnnotation implements WikiModel {
 
     public NamedEntity(int begin, int end) {
         super(begin, end);
+    }
+
+    public GeoName getGeoName() {
+        return geoName;
+    }
+
+    public void setGeoName(GeoName geoName) {
+        this.geoName = geoName;
+    }
+
+    public Long getGeoNameId() {
+        return geoNameId;
+    }
+
+    public void setGeoNameId(Long geoNameId) {
+        this.geoNameId = geoNameId;
     }
 
     public Page getPage() {

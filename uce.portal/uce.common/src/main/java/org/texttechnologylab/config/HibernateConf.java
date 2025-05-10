@@ -48,6 +48,7 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(PageKeywordDistribution.class);
         metadataSources.addAnnotatedClass(DocumentKeywordDistribution.class);
         metadataSources.addAnnotatedClass(NamedEntity.class);
+        metadataSources.addAnnotatedClass(GeoName.class);
         metadataSources.addAnnotatedClass(Paragraph.class);
         metadataSources.addAnnotatedClass(Sentence.class);
         metadataSources.addAnnotatedClass(GbifOccurrence.class);

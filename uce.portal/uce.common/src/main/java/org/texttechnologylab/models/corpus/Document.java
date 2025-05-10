@@ -77,6 +77,10 @@ public class Document extends ModelBase implements WikiModel, Linkable {
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
+    private List<GeoName> geoNames;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
     private List<Lemma> lemmas;
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -154,6 +158,14 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         this.documentTitle = documentTitle;
         this.documentId = documentId;
         this.corpusId = corpusId;
+    }
+
+    public List<GeoName> getGeoNames() {
+        return geoNames;
+    }
+
+    public void setGeoNames(List<GeoName> geoNames) {
+        this.geoNames = geoNames;
     }
 
     public List<BiofidTaxon> getBiofidTaxons() {

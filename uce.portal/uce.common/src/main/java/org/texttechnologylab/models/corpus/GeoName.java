@@ -1,0 +1,142 @@
+package org.texttechnologylab.models.corpus;
+
+import org.texttechnologylab.models.UIMAAnnotation;
+
+import javax.persistence.*;
+
+@Entity
+@Table(name = "geoname")
+public class GeoName extends UIMAAnnotation {
+
+    @Column(columnDefinition = "TEXT")
+    private String name;
+
+    private String featureClass;
+    private String featureCode;
+    private String countryCode;
+    private String adm1;
+    private String adm2;
+    private String adm3;
+    private String adm4;
+    private double latitude;
+    private double longitude;
+    private double elevation;
+
+    @OneToOne(mappedBy = "geoName", cascade = CascadeType.ALL, orphanRemoval = true)
+    private NamedEntity refNamedEntity;
+
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "page_id", nullable = false)
+    private Page page;
+    @Column(name = "page_id", insertable = false, updatable = false)
+    private Long pageId;
+
+    public GeoName(){}
+    public GeoName(int begin, int end){
+        super(begin, end);
+    }
+
+    public Page getPage() {
+        return page;
+    }
+
+    public void setPage(Page page) {
+        this.page = page;
+    }
+
+    public String getName() {
+        return name;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public String getFeatureClass() {
+        return featureClass;
+    }
+
+    public void setFeatureClass(String featureClass) {
+        this.featureClass = featureClass;
+    }
+
+    public String getFeatureCode() {
+        return featureCode;
+    }
+
+    public void setFeatureCode(String featureCode) {
+        this.featureCode = featureCode;
+    }
+
+    public String getCountryCode() {
+        return countryCode;
+    }
+
+    public void setCountryCode(String countryCode) {
+        this.countryCode = countryCode;
+    }
+
+    public String getAdm1() {
+        return adm1;
+    }
+
+    public void setAdm1(String adm1) {
+        this.adm1 = adm1;
+    }
+
+    public String getAdm2() {
+        return adm2;
+    }
+
+    public void setAdm2(String adm2) {
+        this.adm2 = adm2;
+    }
+
+    public String getAdm3() {
+        return adm3;
+    }
+
+    public void setAdm3(String adm3) {
+        this.adm3 = adm3;
+    }
+
+    public String getAdm4() {
+        return adm4;
+    }
+
+    public void setAdm4(String adm4) {
+        this.adm4 = adm4;
+    }
+
+    public double getLatitude() {
+        return latitude;
+    }
+
+    public void setLatitude(double latitude) {
+        this.latitude = latitude;
+    }
+
+    public double getLongitude() {
+        return longitude;
+    }
+
+    public void setLongitude(double longitude) {
+        this.longitude = longitude;
+    }
+
+    public double getElevation() {
+        return elevation;
+    }
+
+    public void setElevation(double elevation) {
+        this.elevation = elevation;
+    }
+
+    public NamedEntity getRefNamedEntity() {
+        return refNamedEntity;
+    }
+
+    public void setRefNamedEntity(NamedEntity refNamedEntity) {
+        this.refNamedEntity = refNamedEntity;
+    }
+}
