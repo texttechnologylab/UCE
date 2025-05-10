@@ -35,7 +35,7 @@ class DrawflowJS {
     }
 
     addLabelNode(labelText, depth, toNodeUnique) {
-        const spacingX = 1000;
+        const spacingX = 650;
 
         const posX = depth > 0 ? depth * spacingX : 150;
         const toNode = this.placedNodes.get(toNodeUnique);
