@@ -85,6 +85,7 @@ var GraphVizHandler = (function () {
             const normalizedWeight = weightRange === 0 ? 1 : (item.weight - minWeight) / weightRange;
             const fontSize = 12 + (normalizedWeight * 24);
             word.style.fontSize = fontSize + "px";
+            word.style.cursor = 'default';
             word.style.color = getColorForWeight(normalizedWeight);
 
             word.addEventListener('mouseover', () => {
