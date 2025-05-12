@@ -128,12 +128,16 @@
                         <hr class="mb-0"/>
                     </#if>
 
-                    <div class="document-content">
-                        <#assign documentPages = document.getPages(10, 0)>
-                        <#assign documentText = document.getFullText()>
-                        <#assign documentAnnotations = document.getAllAnnotations(0, 10)>
-                        <#include '*/reader/components/pagesList.ftl' />
-                    </div>
+                    <#if document.getMimeType() == "application/pdf" ||  document.getMimeType() == "pdf">
+                        <#include '*/reader/components/viewerPdf.ftl' />
+                    <#else>
+                        <div class="document-content">
+                            <#assign documentPages = document.getPages(10, 0)>
+                            <#assign documentText = document.getFullText()>
+                            <#assign documentAnnotations = document.getAllAnnotations(0, 10)>
+                            <#include '*/reader/components/pagesList.ftl' />
+                        </div>
+                    </#if>
 
                 </div>
             </div>

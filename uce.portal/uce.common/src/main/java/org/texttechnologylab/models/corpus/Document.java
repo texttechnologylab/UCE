@@ -60,6 +60,12 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @Column(columnDefinition = "TEXT")
     private String fullTextCleaned;
 
+    private String mimeType;
+
+    // Binary data for mime types that are not text, e.g. PDFs and images
+    @Lob
+    private byte[] documentData;
+
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     @JoinColumn(name = "document_Id")
@@ -152,6 +158,30 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         this.documentTitle = documentTitle;
         this.documentId = documentId;
         this.corpusId = corpusId;
+    }
+
+    public String getMimeType() {
+        // default to "text/plain" if no mime type is set, this prevents errors in the template comparisons
+        if (mimeType == null) {
+            return "text/plain";
+        }
+        return mimeType;
+    }
+
+    public void setMimeType(String mimeType) {
+        this.mimeType = mimeType;
+    }
+
+    public byte[] getDocumentData() {
+        return documentData;
+    }
+
+    public String getDocumentDataBase64() {
+        return Base64.getEncoder().encodeToString(documentData);
+    }
+
+    public void setDocumentData(byte[] documentData) {
+        this.documentData = documentData;
     }
 
     public List<BiofidTaxon> getBiofidTaxons() {

@@ -68,6 +68,7 @@ public class Importer {
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
     private static final String[] COMATIBLE_CAS_FILE_ENDINGS = Arrays.asList("xmi", "bz2", "zip", "gz").toArray(new String[0]);
+    private static final Set<String> MIME_TYPES_PDF = Set.of("application/pdf", "pdf");
     private GoetheUniversityService goetheUniversityService;
     private PostgresqlDataInterface_Impl db;
     private GbifService gbifService;
@@ -79,15 +80,18 @@ public class Importer {
     private List<UCEMetadataFilter> uceMetadataFilters = new CopyOnWriteArrayList<>(); // need thread safety.
     private LexiconService lexiconService;
     private CommonConfig commonConfig = new CommonConfig();
+    private String casView;
 
     public Importer(ApplicationContext serviceContext,
                     String foldername,
                     int importerNumber,
-                    String importId) {
+                    String importId,
+                    String casView) {
         initServices(serviceContext);
         this.importerNumber = importerNumber;
         this.importId = importId;
         this.path = foldername;
+        this.casView = casView;
     }
 
     public Importer(ApplicationContext serviceContext) {
@@ -137,7 +141,8 @@ public class Importer {
         logger.info("===========> Global Import Id: " + importId);
         logger.info("===========> Importer Number: " + importerNumber);
         logger.info("===========> Used Threads: " + numThreads);
-        logger.info("===========> Importing from path: " + path + "\n\n");
+        logger.info("===========> Importing from path: " + path);
+        logger.info("===========> Reading view: " + casView + "\n\n");
 
         storeCorpusFromFolderAsync(path, numThreads);
     }
@@ -345,6 +350,11 @@ public class Importer {
                 // https://uima.apache.org/d/uimaj-current/api/org/apache/uima/util/CasIOUtils.html
                 // tsiInputStream: Optional stream for typesystem - only used if not null. (which it currently is)
                 CasIOUtils.load(inputStream, null, jCas.getCas(), CasLoadMode.LENIENT);
+
+                // Import from a specific view, if given
+                if (casView != null) {
+                    jCas = jCas.getView(casView);
+                }
             }
 
             return XMIToDocument(jCas, corpus, filename);
@@ -437,9 +447,24 @@ public class Importer {
                 return null;
             }
 
+            // set the mime type
+            document.setMimeType(jCas.getSofaMimeType());
+
             // Set the full text
-            document.setFullText(jCas.getDocumentText());
-            logger.info("Setting full text done.");
+            if (MIME_TYPES_PDF.contains(document.getMimeType())) {
+                document.setFullText("");
+
+                // PDF is just bytes in the SofA
+                // TODO support different ways of storing the PDF?
+                byte[] pdfBytes = jCas.getSofaDataStream().readAllBytes();
+                document.setDocumentData(pdfBytes);
+                logger.info("Document is a PDF: " + document.getMimeType() + " of length " + pdfBytes.length);
+            }
+            else {
+                // by default, we assume text as before
+                document.setFullText(jCas.getDocumentText());
+                logger.info("Setting full text done.");
+            }
 
             setMetadataTitleInfo(document, jCas, corpusConfig);
 
