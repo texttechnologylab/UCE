@@ -66,6 +66,13 @@ var GraphVizHandler = (function () {
         const cloudContainer = document.createElement('div');
         cloudContainer.className = 'word-cloud-container';
 
+        if (title) {
+            const titleElement = document.createElement('h5');
+            titleElement.className = 'word-cloud-title text-center';
+            titleElement.textContent = title;
+            target.insertBefore(titleElement, target.firstChild);
+        }
+
         const maxWeight = Math.max(...wordData.map(item => item.weight));
         const minWeight = Math.min(...wordData.map(item => item.weight));
         const weightRange = maxWeight - minWeight;
@@ -78,6 +85,7 @@ var GraphVizHandler = (function () {
             const normalizedWeight = weightRange === 0 ? 1 : (item.weight - minWeight) / weightRange;
             const fontSize = 12 + (normalizedWeight * 24);
             word.style.fontSize = fontSize + "px";
+            word.style.cursor = 'default';
             word.style.color = getColorForWeight(normalizedWeight);
 
             word.addEventListener('mouseover', () => {
@@ -124,7 +132,7 @@ function getColorForWeight(weight) {
     const r = Math.floor(255 * (1 - weight));
     const g = Math.floor(200 * weight);
     const b = 0;
-    return "rgb(" + r + ", " + g + ", " + b + ")";
+    return "rgba(" + r + ", " + g + ", " + b + ", 0.5)";
 }
 
 window.graphVizHandler = getNewGraphVizHandler();
