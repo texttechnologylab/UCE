@@ -71,31 +71,33 @@ function updateSearchVizualization() {
         selectElem.appendChild(option)
     })
 
-    let [chartData, chartLabels] = createHistogramData(data[selectedFeature], nBins)
-    console.log("chart_data", chartData)
-    console.log("chart_labels", chartLabels)
-
-    const numDocs = data[selectedFeature].length
-
-    const title = `${languageResource.get("searchVisualizationPlotTitleTemplate")}`
-        .replace("{selectedFeature}", selectedFeature)
-        .replace("{currentPage}", currentPage.toString())
-        .replace("{numDocs}", numDocs.toString())
-
     const chartElem = document.getElementById('search-results-visualization-graph')
     while (chartElem.firstChild) {
         chartElem.removeChild(chartElem.lastChild)
     }
 
-    window.graphVizHandler.createBasicChart(
-        chartElem,
-        title,
-        {
-            "labels": chartLabels,
-            "data": chartData,
-        },
-        'bar',
-    )
+    if (data && Object.keys(data).length > 0 && selectedFeature in data) {
+        let [chartData, chartLabels] = createHistogramData(data[selectedFeature], nBins)
+        console.log("chart_data", chartData)
+        console.log("chart_labels", chartLabels)
+
+        const numDocs = data[selectedFeature].length
+
+        const title = `${languageResource.get("searchVisualizationPlotTitleTemplate")}`
+            .replace("{selectedFeature}", selectedFeature)
+            .replace("{currentPage}", currentPage.toString())
+            .replace("{numDocs}", numDocs.toString())
+
+        window.graphVizHandler.createBasicChart(
+            chartElem,
+            title,
+            {
+                "labels": chartLabels,
+                "data": chartData,
+            },
+            'bar',
+        )
+    }
 }
 
 /**
