@@ -1,6 +1,7 @@
 package org.texttechnologylab.services;
 
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import org.hibernate.*;
 import org.hibernate.criterion.Projections;
@@ -48,7 +49,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     private final SessionFactory sessionFactory;
 
-    private final Gson gson = new Gson();
+    private final Gson gson = new GsonBuilder()
+            .registerTypeAdapter(UCEMetadataValueType.class, new UCEMetadataValueTypeOrdinalAdapter())
+            .create();
 
     private Session getCurrentSession() {
         return sessionFactory.openSession();
@@ -858,9 +861,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 else {
                     var applicableFilters = uceMetadataFilters.stream().filter(f -> (!(f.getValue().isEmpty() || f.getValue().equals("{ANY}"))) || (f.getMax() != null || f.getMin() != null)).toList();
                     if (applicableFilters.isEmpty()) storedProcedure.setString(9, null);
-                    else storedProcedure.setString(9, gson.toJson(applicableFilters)
-                            .replaceAll("NUMBER", "1"));  // TODO this should be NUMBER, but in the database we are directly comparing to the id?
-//                            .replaceAll("\"valueType\"", "\"valueType::text\"");
+                    else storedProcedure.setString(9, gson.toJson(applicableFilters));
                 }
                 storedProcedure.setBoolean(10, useTsVectorSearch);
                 storedProcedure.setString(11, sourceTable);
