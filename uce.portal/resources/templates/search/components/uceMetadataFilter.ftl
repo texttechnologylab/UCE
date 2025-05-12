@@ -23,7 +23,7 @@
         </#if>
 
         <!-- TODO: NUMBER needs better filtering option -->
-        <#if filter.getValueType().name() == "NUMBER">
+        <#if filter.getValueType().name() == "NUMBER" && filter.getMin()?has_content && filter.getMax()?has_content>
             Min:
             <input type="number" data-range="min" class="w-100 ml-1 small-font p-1 form-control h-auto" placeholder="${filter.getMin()}"/>
             Max:

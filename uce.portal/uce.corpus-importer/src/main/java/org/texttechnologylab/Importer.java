@@ -476,8 +476,7 @@ public class Importer {
                 byte[] pdfBytes = jCas.getSofaDataStream().readAllBytes();
                 document.setDocumentData(pdfBytes);
                 logger.info("Document is a PDF: " + document.getMimeType() + " of length " + pdfBytes.length);
-            }
-            else {
+            } else {
                 // by default, we assume text as before
                 document.setFullText(jCas.getDocumentText());
                 logger.info("Setting full text done.");
@@ -715,8 +714,7 @@ public class Importer {
                         newFilter.setMin(number);
                         newFilter.setMax(number);
                     }
-                }
-                else {
+                } else {
                     newFilter.addPossibleCategory(metadata.getValue());
                 }
                 synchronized (newFilter) {
@@ -739,17 +737,18 @@ public class Importer {
                                     (ex) -> logger.error("Tried updating an existing UCEMetadataFilter, but got an error: ", ex));
                         }
                     }
-                }
-                else if (existingFilter.getValueType() == UCEMetadataValueType.NUMBER) {
+                } else if (existingFilter.getValueType() == UCEMetadataValueType.NUMBER) {
                     // We assume, that a number can actually be parsed to a number
                     // TODO should this be configurable? What about integers?
                     var number = StringUtils.tryParseFloat(metadata.getValue());
                     if (!Float.isNaN(number)) {
                         synchronized (existingFilter) {
-                            if (number < existingFilter.getMin()) {
+                            if (existingFilter.getMin() == null) existingFilter.setMin(number);
+                            else if (number < existingFilter.getMin()) {
                                 existingFilter.setMin(number);
                             }
-                            if (number > existingFilter.getMax()) {
+                            if (existingFilter.getMax() == null) existingFilter.setMax(number);
+                            else if (number > existingFilter.getMax()) {
                                 existingFilter.setMax(number);
                             }
                             ExceptionUtils.tryCatchLog(
