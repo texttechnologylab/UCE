@@ -3,6 +3,7 @@ let LayeredSearchHandler = (function () {
     LayeredSearchHandler.prototype.layers = {};
     LayeredSearchHandler.prototype.searchId = "";
     LayeredSearchHandler.prototype.submitStatus = false;
+    LayeredSearchHandler.prototype.locationMap = undefined;
 
     function LayeredSearchHandler() {
     }
@@ -101,11 +102,23 @@ let LayeredSearchHandler = (function () {
 
         // Clone the template, set it up with ids and whatnot and add it to UI and our layers dictionary
         const $htmlTemplate = $('.layered-search-builder-container .slot-templates .template-' + type).clone();
-        $htmlTemplate.attr('data-id', generateUUID());
-        $btn.closest('.layer').prepend($htmlTemplate);
+        const id = generateUUID();
+        $htmlTemplate.attr('data-id', id);
+        const $layer = $btn.closest('.layer');
+        $layer.prepend($htmlTemplate);
         this.layers[depth].push($htmlTemplate);
         $btn.closest('.choose-layer-popup').toggle(50);
         this.markLayersAsDirty(depth, false);
+
+        // If the type is a location, we need to setup the leaflet map
+        if(type === "GEONAME"){
+            // Setup the GeoNames leaflet map
+            const mapContainer = $layer.find('.slot[data-id="[ID]"] .location-map'.replace('[ID]', id)).get(0);
+            this.locationMap = L.map(mapContainer).setView([0, 0], 100);
+            const tiles = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
+                maxZoom: 19,
+            }).addTo(this.locationMap);
+        }
     }
 
     LayeredSearchHandler.prototype.buildApplicableLayers = function(applicableDepths){

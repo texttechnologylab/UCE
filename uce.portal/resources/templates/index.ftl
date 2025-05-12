@@ -141,6 +141,7 @@
                                         data-hasragbot="${corpusVm.getCorpusConfig().getOther().isEnableRAGBot()?c}"
                                         data-hastaxonannotations="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isAnnotated()?c}"
                                         data-hastimeannotations="${corpusVm.getCorpusConfig().getAnnotations().isTime()?c}"
+                                        data-hasgeonameannotations="${corpusVm.getCorpusConfig().getAnnotations().isGeoNames()?c}"
                                         data-sparqlalive="${isSparqlAlive?c}"
                                         data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
                             </#list>

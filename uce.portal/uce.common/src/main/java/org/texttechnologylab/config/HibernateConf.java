@@ -14,7 +14,6 @@ import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.*;
-import org.texttechnologylab.models.test.test;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -33,7 +32,6 @@ public class HibernateConf {
                 .applySettings(settings).build();
 
         var metadataSources = new MetadataSources(serviceRegistry);
-        metadataSources.addAnnotatedClass(test.class);
         metadataSources.addAnnotatedClass(Block.class);
         metadataSources.addAnnotatedClass(MetadataTitleInfo.class);
         metadataSources.addAnnotatedClass(UCEMetadata.class);

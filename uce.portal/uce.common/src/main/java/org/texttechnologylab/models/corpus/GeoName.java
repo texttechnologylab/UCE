@@ -11,7 +11,7 @@ public class GeoName extends UIMAAnnotation {
     @Column(columnDefinition = "TEXT")
     private String name;
 
-    private String featureClass;
+    private GeoNameFeatureClass featureClass;
     private String featureCode;
     private String countryCode;
     private String adm1;
@@ -52,11 +52,11 @@ public class GeoName extends UIMAAnnotation {
         this.name = name;
     }
 
-    public String getFeatureClass() {
+    public GeoNameFeatureClass getFeatureClass() {
         return featureClass;
     }
 
-    public void setFeatureClass(String featureClass) {
+    public void setFeatureClass(GeoNameFeatureClass featureClass) {
         this.featureClass = featureClass;
     }
 

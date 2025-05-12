@@ -56,6 +56,13 @@
     border: lightgrey 1px solid;
 }
 
+.layered-search-builder-container .slot .location-map{
+    height: 400px;
+    border-right: lightgrey 1px solid;
+    border-bottom: lightgrey 1px solid;
+    border-left: lightgrey 1px solid;
+}
+
 .layered-search-builder-container .layers-container{
     border-left:1px lightgray solid;
 }
