@@ -12,20 +12,9 @@
 
     <hr class="mt-2 mb-4"/>
 
-    <!-- Topic Summary -->
-    <div class="text-center mb-3">
-        <h4 class="mb-3">Topic: ${vm.getCoveredText()}</h4>
-        <!-- Topic Word Cloud -->
-        <div class="col-md-6 mx-auto">
-            <div id="topicWordCloud"></div>
-        </div>
-    </div>
-    <hr class="mt-2 mb-4"/>
-
-    <div class="row m-0 p-0" style="height: 500px; width:100%">
-        <div id="document-distribution-container" class="col-6 m-0 p-2"></div>
-        <div id="similar-topics-container" class="col-6 m-0 p-2"></div>
-    </div>
+    <div id="topic-word-cloud-container" class="col-md-8 mx-auto"></div>
+    <div id="topic-document-distribution-container"></div>
+    <div id="topic-similar-topics-container"></div>
 
     <!-- the document this is from -->
     <div class="mt-4 mb-3 w-100 p-0 m-0 justify-content-center flexed align-items-start">
@@ -79,20 +68,31 @@
         "labelName": "Shared Words"
     };
 
-    window.graphVizHandler.createBasicChart(document.getElementById('document-distribution-container'),
-        'Document Distribution of the topic',
-        documentDistData,
-        'bar',
-    );
+    if (documentDistData.data.length > 0) {
+        window.graphVizHandler.createBasicChart(document.getElementById('topic-document-distribution-container'),
+            'Document Distribution of the topic',
+            documentDistData,
+            'bar',
+        );
+    } else {
+        document.getElementById('topic-document-distribution-container').style.display = 'none';
+    }
 
-    window.graphVizHandler.createBasicChart(document.getElementById('similar-topics-container'),
-        'Similar topic based on shared words',
-        similarTopicsData,
-        'polarArea',
-    );
+    if (similarTopicsData.data.length > 0) {
+        window.graphVizHandler.createBasicChart(document.getElementById('topic-similar-topics-container'),
+            'Similar topic based on shared words',
+            similarTopicsData,
+            'polarArea',
+        );
+    } else {
+        document.getElementById('topic-similar-topics-container').style.display = 'none';
+    }
 
-    window.graphVizHandler.createWordCloud(document.getElementById('topicWordCloud'), 'Word Cloud', wordData);
-
+    if (wordData.length > 0) {
+        window.graphVizHandler.createWordCloud(document.getElementById('topic-word-cloud-container'), "${languageResource.get("topicWords")}", wordData);
+    } else {
+        document.getElementById('topic-word-cloud-container').style.display = 'none';
+    }
 
 
 

@@ -13,12 +13,7 @@
 
     <hr class="mt-2 mb-4"/>
 
-    <div class="mt-3 mb-4">
-        <h6 class="text-dark text-center w-100 mb-2">
-            ${languageResource.get('documentWords')}
-        </h6>
-        <div id="topic-word-cloud" class="col-md-8 mx-auto"></div>
-    </div>
+    <div id="document-topic-word-cloud-container" class="col-md-8 mx-auto"></div>
     <div id="document-topic-distribution-container"></div>
     <div id="document-similar-documents-container"></div>
 
@@ -104,24 +99,37 @@
             "labelName": "Shared Words"
         };
 
-        window.graphVizHandler.createBasicChart(
-            document.getElementById('document-topic-distribution-container'),
-            'Topic Distribution',
-            topicsData,
-            'pie'
-        );
+        if (topicsData.data.length > 0) {
+            window.graphVizHandler.createBasicChart(
+                document.getElementById('document-topic-distribution-container'),
+                'Topic Distribution',
+                topicsData,
+                'pie'
+            );
+        } else {
+            document.getElementById('document-topic-distribution-container').style.display = 'none';
+        }
 
-        window.graphVizHandler.createWordCloud(
-            document.getElementById('topic-word-cloud'),
-            'Top 20 Topic Words',
-            wordData
-        );
+        if (wordData.length > 0) {
+            window.graphVizHandler.createWordCloud(
+                document.getElementById('document-topic-word-cloud-container'),
+                "${languageResource.get("documentWords")}",
+                wordData
+            );
+        } else {
+            document.getElementById('document-topic-word-cloud-container').style.display = 'none';
+        }
 
-        window.graphVizHandler.createBasicChart(document.getElementById('document-similar-documents-container'),
-            'Similar documents based on shared words',
-            similarDocumentsData,
-            'polarArea',
-        );
+        if (similarDocumentsData.data.length > 0) {
+            window.graphVizHandler.createBasicChart(
+                document.getElementById('document-similar-documents-container'),
+                'Similar documents based on shared words',
+                similarDocumentsData,
+                'polarArea'
+            );
+        } else {
+            document.getElementById('document-similar-documents-container').style.display = 'none';
+        }
 
     })
 </script>
