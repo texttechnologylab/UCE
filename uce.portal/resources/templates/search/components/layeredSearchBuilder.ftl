@@ -40,7 +40,9 @@
             </div>
             <!-- leafmap map for location choosing -->
             <div class="location-map">
+                <div class="map">
 
+                </div>
             </div>
         </div>
 

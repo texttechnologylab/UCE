@@ -2,6 +2,7 @@
 // THIS NEEDS TO IMPORT THE LOCAL CHARTJS LIB IN THE HEADER:
 // <!--<script src="js/visualization/cdns/chartjs-449.js"></script>-->
 import {ChartJS} from '/js/visualization/chartjs.js';
+import {UCEMap} from '/js/visualization/uceMap.js';
 import {D3JS} from '/js/visualization/d3js.js';
 
 var GraphVizHandler = (function () {
@@ -10,6 +11,14 @@ var GraphVizHandler = (function () {
 
     function GraphVizHandler() {
         console.log('Created GraphViz Handler.');
+    }
+
+    GraphVizHandler.prototype.createUceMap = async function(target){
+        const chartId = generateUUID();
+        const uceMap = new UCEMap(target);
+
+        this.activeCharts[chartId] = uceMap;
+        activatePopovers();
     }
 
     /**

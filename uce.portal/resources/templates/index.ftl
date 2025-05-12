@@ -64,6 +64,10 @@
 <body>
 <#include "*/messageModal.ftl">
 
+<!--<div id="leaflet-map-modal">
+
+</div>-->
+
 <!-- The flow chart of the Linkable objects -->
 <div id="flow-chart-modal" class="display-none">
     <div class="header">
