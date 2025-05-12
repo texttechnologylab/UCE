@@ -2,12 +2,14 @@ package org.texttechnologylab.models.topic;
 
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
 
 import javax.persistence.*;
 import java.util.List;
+import java.util.UUID;
 
 /***
  * UnifiedTopic class can be used to represent the topics in a document. A topic can be represented by a list of
@@ -16,9 +18,10 @@ import java.util.List;
  */
 @Entity
 @Table(name = "unifiedtopic")
+@Typesystem(types = {org.texttechnologylab.annotation.UnifiedTopic.class})
 public class UnifiedTopic extends UIMAAnnotation implements WikiModel {
 
-    @OneToMany(mappedBy = "unifiedTopic", cascade = CascadeType.ALL, fetch=FetchType.LAZY)
+    @OneToMany(mappedBy = "unifiedTopic", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<TopicValueBase> topics;
 
@@ -57,6 +60,7 @@ public class UnifiedTopic extends UIMAAnnotation implements WikiModel {
     public void setTopics(List<TopicValueBase> topics) {
         this.topics = topics;
     }
+
     public Document getDocument() {
         return document;
     }
@@ -73,6 +77,32 @@ public class UnifiedTopic extends UIMAAnnotation implements WikiModel {
         // Get topics ordered by score in descending order and return the first one
         List<TopicValueBase> orderedTopics = getOrderedTopics("desc");
         return orderedTopics.get(0);
+    }
+
+    public String generateTopicMarker() {
+        String repTopicValue = "";
+        if (this.getTopics() != null && !this.getTopics().isEmpty()) {
+            var repTopic = this.getRepresentativeTopic();
+            if (repTopic != null) {
+                repTopicValue = repTopic.getValue();
+            }
+        }
+        return String.format(
+                "<span class='open-wiki-page annotation custom-context-menu topic-marker' title='%1$s' data-wid='%2$s' data-wcovered='%3$s' data-topic-value='%4$s'>t</span>",
+                this.getWikiId(), this.getWikiId(), this.getCoveredText(), repTopicValue);
+    }
+
+    public String generateTopicCoveredStartSpan() {
+        String repTopicValue = "";
+        if (this.getTopics() != null && !this.getTopics().isEmpty()) {
+            var repTopic = this.getRepresentativeTopic();
+            if (repTopic != null) {
+                repTopicValue = repTopic.getValue();
+            }
+        }
+        return String.format(
+                "<span class='unifiedtopic-covered topic colorable-topic' id='utopic-%2$s' data-wcovered='%3$s' data-topic-value='%4$s'>",
+                UUID.randomUUID(), this.getWikiId(), this.getCoveredText(), repTopicValue);
     }
 
     @Override

@@ -22,6 +22,7 @@
     position: absolute;
     background: white;
     min-height: 40px;
+    min-width: 225px;
     box-shadow: rgba(50, 50, 93, 0.25) 0px 6px 12px -2px, rgba(0, 0, 0, 0.3) 0px 3px 7px -3px;
     /*border-radius: 3px;*/
     border: 1px solid gray;
@@ -50,7 +51,7 @@
 }
 
 .drawflow .drawflow-node.selected {
-    background: red
+    border-color: var(--prime);
 }
 
 .drawflow .drawflow-node:hover {
@@ -66,9 +67,14 @@
     display: block
 }
 
+.drawflow .drawflow-node .drawflow_content_node .label{
+    text-align: center;
+}
+
 .drawflow .drawflow-node .input, .drawflow .drawflow-node .output {
     position: relative;
     width: 10px;
+    visibility: hidden;
     height: 10px;
     background: #fff;
     border-radius: 50%;
@@ -94,17 +100,33 @@
     overflow: visible !important
 }
 
+
 .drawflow .connection {
     position: absolute;
     pointer-events: none;
     aspect-ratio: 1/1
 }
 
+.drawflow .connection path.arrow-right {
+    marker-end: url(#arrow-right);
+}
+
+.drawflow .connection path.arrow-left {
+    marker-start: url(#arrow-left);
+}
+
+.drawflow .connection path.arrow-both {
+    marker-start: url(#arrow);
+    marker-end: url(#arrow);
+    stroke: #444;
+    stroke-width: 2px;
+}
+
 .drawflow .connection .main-path {
     fill: none;
     stroke-width: 2px;
     stroke: var(--prime);
-    pointer-events: all
+    pointer-events: all;
 }
 
 .drawflow .connection .main-path:hover {

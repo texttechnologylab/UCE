@@ -1,12 +1,14 @@
 package org.texttechnologylab.models.corpus;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 
 import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name="wikipediaLink")
+@Table(name = "wikipediaLink")
+@Typesystem(types = {org.hucompute.textimager.uima.type.wikipedia.WikipediaLink.class})
 public class WikipediaLink extends UIMAAnnotation {
 
     private String target;
@@ -14,12 +16,14 @@ public class WikipediaLink extends UIMAAnnotation {
     private String linkType;
 
     @OneToMany(cascade = CascadeType.ALL)
-    @JoinColumn(name="wikipediaLink_Id")
+    @JoinColumn(name = "wikipediaLink_Id")
     private List<WikiDataHyponym> wikiDataHyponyms;
     private String coveredText;
-    public WikipediaLink(){
+
+    public WikipediaLink() {
         super(-1, -1);
     }
+
     public WikipediaLink(int begin, int end) {
         super(begin, end);
     }

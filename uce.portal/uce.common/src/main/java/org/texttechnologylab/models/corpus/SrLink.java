@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.corpus;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 
@@ -7,7 +8,8 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name="srLink")
+@Table(name = "srLink")
+@Typesystem(types = {org.texttechnologylab.annotation.semaf.semafsr.SrLink.class})
 public class SrLink extends ModelBase {
     private int figureBegin;
     private int figureEnd;
@@ -17,7 +19,8 @@ public class SrLink extends ModelBase {
     private String groundCoveredText;
     private String relationType;
 
-    public SrLink(){}
+    public SrLink() {
+    }
 
     public int getFigureBegin() {
         return figureBegin;

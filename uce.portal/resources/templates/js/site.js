@@ -9,16 +9,6 @@ $('body').on('click', 'nav .switch-view-btn', function () {
     navigateToView(id);
 })
 
-$('body').on('click', '.expandable-container .toggle-expand-btn', function() {
-    const $btn = $(this);
-    const $container = $btn.closest('.expandable-container');
-    const $content = $container.find('.expandable-content');
-
-    $content.toggleClass('expanded');
-
-    $btn.text($content.hasClass('expanded') ? 'Show less' : 'Show more');
-});
-
 function navigateToView(id) {
     // Close any potential modals:
     $('.corpus-inspector-include').hide(150)
@@ -82,6 +72,7 @@ $('body').on('change', '#corpus-select', function () {
     const hasTopicDist = selectedOption.getAttribute("data-hastopicdist");
     const hasTimeAnnotations = selectedOption.getAttribute("data-hastimeannotations");
     const hasTaxonAnnotations = selectedOption.getAttribute("data-hastaxonannotations");
+    const hasGeoNameAnnotations = selectedOption.getAttribute("data-hasgeonameannotations");
     const oldCorpusId = selectedCorpus;
     selectedCorpus = parseInt(selectedOption.getAttribute("data-id"));
     if (oldCorpusId !== selectedCorpus) {
@@ -111,7 +102,10 @@ $('body').on('change', '#corpus-select', function () {
     if (hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
     else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
 
-    if (hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false') {
+    if (hasGeoNameAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="GEONAME"]').show();
+    else $('.layered-search-builder-container .choose-layer-popup a[data-type="GEONAME"]').hide();
+
+    if (hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false' && hasGeoNameAnnotations === 'false') {
         $('.open-layered-search-builder-btn-badge').hide();
         $('.open-layered-search-builder-btn').hide();
     } else {

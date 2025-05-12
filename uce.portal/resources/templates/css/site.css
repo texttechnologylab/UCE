@@ -1,7 +1,7 @@
 :root {
     /* Variables prime and secondary MUST ALWAYS be in line 3 and 4! */
-    --prime: #5c7a17;
-    --secondary: darkgreen;
+    --prime: #00618f;
+    --secondary: rgba(35, 35, 35, 1);
     --gold: rgba(255, 165, 0, 1);
     --dark: rgba(38, 38, 38, 1);
     --default: rgb(245, 245, 247, 1);
@@ -126,11 +126,6 @@ nav .selected-nav-btn.text::before {
 
 .small-font {
     font-size: small;
-}
-
-.small-font.text.font-italic.mr-2.word-break-word {
-    font-family: "Courier New", Courier, monospace;
-    font-style: normal;
 }
 
 .medium-font {
@@ -587,6 +582,18 @@ nav .selected-nav-btn.text::before {
     max-height: none;
 }
 
+#leaflet-map-modal{
+    position: fixed;
+    left:0;
+    width: 70vw;
+    min-width: 300px;
+    height: 100vh;
+    background-color: white;
+    border-right: 1px lightgrey solid;
+    z-index: 1001;
+    box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
+}
+
 .fade-out-overlay {
     content: '';
     position: absolute;
@@ -865,6 +872,11 @@ nav .selected-nav-btn.text::before {
     text-decoration-thickness: 3px;
 }
 
+.document-card .snippet-content{
+    font-family: "Courier New", Courier, monospace;
+    font-style: normal;
+}
+
 .document-card .snippet-content b {
     color: var(--prime);
 }
@@ -922,7 +934,6 @@ nav .selected-nav-btn.text::before {
     cursor: pointer;
     background-color: lightgray;
 }
-
 
 .focused-document-card {
     margin-bottom: 4rem;
@@ -1015,7 +1026,7 @@ nav .selected-nav-btn.text::before {
     width: 100%;
 }
 
-.document-card .snippet-content {
+.snippet-content {
     padding: 12px;
     border:1px solid lightgray;
     border-radius: 6px;
@@ -1025,7 +1036,7 @@ nav .selected-nav-btn.text::before {
 .document-card .metadata-div{
     font-size: small;
     padding-top: 14px;
-    max-height: 110px;
+    max-height: 160px;
     overflow-y: auto;
 }
 
@@ -1077,3 +1088,23 @@ nav .selected-nav-btn.text::before {
 }
 
 /*Custom button switches */
+
+/* UCE Map styles */
+.uce-map{
+    position: relative;
+}
+
+.uce-map .map-ui-container{
+    position: absolute;
+    bottom: 0;
+    left:0;
+    border-top:1px lightgrey solid;
+    z-index: 1002;
+    background-color: white;
+    width: 100%;
+}
+
+.uce-map a[href="https://leafletjs.com"]{
+    display: none;
+}
+/* UCE Map styles end */

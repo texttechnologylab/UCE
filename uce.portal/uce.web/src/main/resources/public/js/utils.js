@@ -11,7 +11,7 @@ function generateUUID() {
  * @returns {{primaryColor: string}}
  */
 function getCustomUCEColors() {
-    const langSelect = document.querySelector('.switch-language-select');
+    const langSelect = document.querySelector('#prime-color-container');
     const styles = window.getComputedStyle(langSelect);
     return {primaryColor: styles.color};
 }
@@ -73,5 +73,18 @@ function hexToHSL(hex) {
         s: Math.round(s * 100),
         l: Math.round(l * 100)
     };
+}
+
+function isElementInViewport($element) {
+    if ($element.length === 0) return false;
+
+    const elementTop = $element.offset().top;
+    const elementBottom = elementTop + $element.outerHeight();
+    const viewportTop = $(window).scrollTop();
+    const viewportBottom = viewportTop + $(window).height();
+
+    return (elementTop >= viewportTop && elementTop <= viewportBottom) ||
+        (elementBottom >= viewportTop && elementBottom <= viewportBottom) ||
+        (elementTop <= viewportTop && elementBottom >= viewportBottom);
 }
 

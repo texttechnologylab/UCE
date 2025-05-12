@@ -70,6 +70,11 @@
         </div>
     </div>
 
+
+    <div id="corpus-topic-word-cloud-container" class="col-md-8 mx-auto"></div>
+    <div id="corpus-topic-distribution-container"></div>
+
+
     <!-- Documents -->
     <!--<h5 class="text-center">Documents</h5>
     <div class="group-box card-shadow bg-lightgray">
@@ -84,6 +89,48 @@
     $(document).ready(function () {
         // After that, we load documentsListView
         //loadCorpusDocuments(${vm.getCorpus().getCorpus().getId()}, $('.wiki-page .corpus-documents-list-include'));
+
+        var wordData = [
+            <#if vm.getNormalizedTopicWords()?? && vm.getNormalizedTopicWords()?has_content>
+            <#list vm.getNormalizedTopicWords() as term>
+            {
+                "term": "${term.getWord()?js_string}",
+                "weight": ${term.getProbability()?c}
+            }<#if term_has_next>, </#if>
+            </#list>
+            </#if>
+        ];
+
+        var topicDistData = {
+            "labels": [
+                <#if vm.getTopicDistributions()?? && vm.getTopicDistributions()?has_content>
+                <#list vm.getTopicDistributions()?keys as topicLabel>
+                "${topicLabel?js_string}"<#if topicLabel_has_next>, </#if>
+                </#list>
+                </#if>
+            ],
+            "data": [
+                <#if vm.getTopicDistributions()?? && vm.getTopicDistributions()?has_content>
+                <#list vm.getTopicDistributions()?values as weight>
+                ${weight?c}<#if weight_has_next>, </#if>
+                </#list>
+                </#if>
+            ],
+            "labelName": "Topic Distribution"
+        };
+
+        if (wordData.length > 0) {
+
+            window.graphVizHandler.createWordCloud(document.getElementById('corpus-topic-word-cloud-container'), "${languageResource.get("corpusWords")}", wordData);
+        }
+
+        if (topicDistData.labels.length > 0 && topicDistData.data.length > 0) {
+            window.graphVizHandler.createBasicChart(document.getElementById('corpus-topic-distribution-container'),
+                'Topic Distribution in Corpus',
+                topicDistData,
+                'pie'
+            );
+        }
     })
 </script>
 

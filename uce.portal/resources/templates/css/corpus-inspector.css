@@ -19,10 +19,6 @@
     border-bottom: 1px lightgray solid;
     height: 90px;
     background-color: rgba(245, 245, 247, 1);
-    padding: 0 16px;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
 }
 
 .corpus-inspector .cheader a{
@@ -87,68 +83,5 @@
     position: sticky;
     width: 100%;
     border-bottom: lightgray 1px solid;
-    padding: 16px 16px 0 16px;
-    background-color: rgba(245, 245, 247, 1);
-    height: 90px;
-    display: flex;
-    flex-direction: column;
-}
-
-/* Tab styles */
-.documents-list-header .mtabs {
-    height: 40px;
-    display: flex;
-    align-items: flex-end;
-    justify-content: flex-start;
-    margin-top: auto;
-    padding-left: 0;
-    padding-bottom: 1px;
-
-}
-
-.documents-list-header .mtabs btn {
-    padding: 8px 20px;
-    height: 38px;
-    display: flex;
-    background-color: rgba(235, 235, 237, 1);
-    align-items: center;
-    justify-content: center;
-    border: 1px solid lightgray;
-    border-bottom: none;
-    cursor: pointer;
-    border-radius: 4px 4px 0 0;
-    font-weight: normal;
-    transition: all 0.2s ease;
-    position: relative;
-    bottom: -1px;
-}
-
-.documents-list-header .mtabs btn:hover {
-    background-color: white;
-}
-
-.documents-list-header .mtabs .selected-tab {
-    background-color: white;
-    height: 40px;
-    position: relative;
-    z-index: 1;
-    border-bottom: 1px solid white;
-    margin-bottom: -1px;
-    font-weight: bold;
-    bottom: -1px;
-}
-
-.corpus-content .views .mview {
-    display: block;
-    background-color: white;
-    border-left: 1px solid lightgray;
-    border-right: 1px solid lightgray;
-    border-bottom: 1px solid lightgray;
-    min-height: 300px;
-    max-height: calc(100vh - 90px);
-    overflow-y: auto;
-}
-
-.corpus-content .views .display-none {
-    display: none;
+    padding:16px;
 }

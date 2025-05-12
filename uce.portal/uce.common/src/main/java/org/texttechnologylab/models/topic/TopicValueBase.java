@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.topic;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
@@ -15,6 +16,7 @@ import java.util.List;
 @Entity
 @Table(name = "topicvaluebase")
 @Inheritance(strategy = InheritanceType.JOINED)
+@Typesystem(types = {org.texttechnologylab.annotation.TopicValueBase.class})
 public class TopicValueBase extends UIMAAnnotation implements WikiModel {
 
     @ManyToOne

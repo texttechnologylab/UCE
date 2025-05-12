@@ -35,6 +35,7 @@ public class LexiconService {
     public static List<Class<? extends UIMAAnnotation>> lexiconizableAnnotations =
             new ArrayList<>(List.of(
                     NamedEntity.class,
+                    GeoName.class,
                     Lemma.class,
                     Time.class,
                     Taxon.class,

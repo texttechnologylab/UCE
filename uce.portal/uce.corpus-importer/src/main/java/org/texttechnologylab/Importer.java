@@ -20,6 +20,7 @@ import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotation.DocumentAnnotation;
+import org.texttechnologylab.annotation.geonames.GeoNamesEntity;
 import org.texttechnologylab.annotation.link.*;
 import org.texttechnologylab.annotation.ocr.*;
 import org.texttechnologylab.config.CommonConfig;
@@ -28,7 +29,9 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.corpus.ocr.OCRPageAdapterImpl;
 import org.texttechnologylab.models.corpus.ocr.PageAdapter;
 import org.texttechnologylab.models.corpus.ocr.PageAdapterImpl;
@@ -38,6 +41,7 @@ import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.LogStatus;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
+import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -53,8 +57,10 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -64,6 +70,7 @@ public class Importer {
 
     private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger(Importer.class);
+    private static final int BATCH_SIZE = 250;
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
@@ -227,15 +234,26 @@ public class Importer {
 
         var inputFolderName = Path.of(folderName, "input");
         final var corpusConfigFinal = corpusConfig;
-        final var counter = new AtomicInteger(0); // To handle mutation in lambdas
         final var corpus1 = corpus;
+
+        // Needed for parallel processing
+        var docInBatch = new AtomicInteger(0);
+        var lock = new Object();
+        var batchLatch = new AtomicReference<>(new CountDownLatch(0));
 
         try (var fileStream = Files.walk(inputFolderName)) {
             fileStream.filter(Files::isRegularFile)
                     .filter(path -> StringUtils.checkIfFileHasExtension(path.toString().toLowerCase(), COMATIBLE_CAS_FILE_ENDINGS))
                     .forEach(filePath -> {
-                        var docFuture = CompletableFuture.supplyAsync(
-                                        () -> XMIToDocument(filePath.toString(), corpus1), executor) // Convert the XMI to a Document
+                        var docFuture = CompletableFuture.supplyAsync(() -> {
+                                    try {
+                                        batchLatch.get().await(); // wait if a batch is being postprocessed
+                                    } catch (InterruptedException e) {
+                                        Thread.currentThread().interrupt();
+                                    }
+
+                                    return XMIToDocument(filePath.toString(), corpus1);
+                                }, executor)
                                 .thenApply(doc -> {
                                     if (doc == null) return null;
 
@@ -247,52 +265,51 @@ public class Importer {
                                 })
                                 .thenAcceptAsync(doc -> {
                                     if (doc != null) {
-                                        // Log and try to postprocess the document
                                         logImportInfo("Stored document " + filePath.getFileName(), LogStatus.SAVED, filePath.toString(), 0);
                                         logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
 
-                                        // Postprocess the document
                                         ExceptionUtils.tryCatchLog(
                                                 () -> postProccessDocument(doc, corpus1, filePath.toString()),
-                                                (ex) -> logImportError("Error postprocessing a saved document with id " + doc.getId(), (ex), filePath.toString()));
+                                                (ex) -> logImportError("Error postprocessing a saved document with id " + doc.getId(), ex, filePath.toString()));
                                         logImportInfo("Finished with import.", LogStatus.FINISHED, filePath.toString(), 0);
+                                    }
+
+                                    int local = docInBatch.incrementAndGet();
+                                    if (local == BATCH_SIZE) {
+                                        synchronized (lock) {
+                                            // Double-check to avoid race
+                                            if (docInBatch.get() == BATCH_SIZE) {
+                                                docInBatch.set(0);
+                                                batchLatch.set(new CountDownLatch(1));
+                                            }
+                                        }
+
+                                        // Block other threads by not releasing the latch yet. We want the postprocessing being done by a single thread,
+                                        // while all the others wait.
+                                        logImportInfo("=========== UPDATING THE LOGICAL LINKS...", LogStatus.POST_PROCESSING, "LINKS", 0);
+                                        var result = ExceptionUtils.tryCatchLog(
+                                                () -> db.callLogicalLinksRefresh(),
+                                                (ex) -> logImportError("Error updating the logical links while postprocessing a batch.", ex, filePath.toString()));
+                                        if (result != null)
+                                            logImportInfo("=========== Finished updating the logical links. Inserted new links: " + result, LogStatus.SAVED, "LINKS", 0);
+
+                                        logImportInfo("=========== UPDATING THE LEXICON...", LogStatus.POST_PROCESSING, "LEXICON", 0);
+                                        var result2 = ExceptionUtils.tryCatchLog(
+                                                () -> lexiconService.updateLexicon(false),
+                                                (ex) -> logImportError("Error updating the lexicon while postprocessing a batch.", ex, filePath.toString()));
+                                        if (result2 != null)
+                                            logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + result2, LogStatus.SAVED, "LEXICON", 0);
+
+                                        logImportInfo("=========== POSTPROCESSING THE CORPUS...", LogStatus.POST_PROCESSING, "CORPUS", 0);
+                                        postProccessCorpus(corpus1, corpusConfigFinal);
+                                        logImportInfo("=========== FINISHED POSTPROCESSING THE CORPUS...", LogStatus.POST_PROCESSING, "CORPUS", 0);
+
+                                        // Allow all others to continue
+                                        batchLatch.get().countDown();
                                     }
                                 });
 
                         futures.add(docFuture);
-
-                        int currentCount = counter.incrementAndGet();
-
-                        // Periodic processing of the imports such as lexicon refreshing and corpus postprocessing
-                        if (currentCount % 50 == 0) {
-
-                            // Logical Links
-                            CompletableFuture.runAsync(() -> {
-                                logImportInfo("=========== UPDATING THE LOGICAL LINKS...", LogStatus.POST_PROCESSING, "LINKS", 0);
-                                var result = ExceptionUtils.tryCatchLog(
-                                        () -> db.callLogicalLinksRefresh(),
-                                        (ex) -> logImportError("Error refreshing the logical links of corpus " + corpus1.getId(), ex, "LINKS"));
-                                if(result != null)
-                                    logImportInfo("=========== Finished updating the lexicon. Inserted new links: " + result, LogStatus.SAVED, "LINKS", 0);
-                            }, executor);
-
-                            // Lexicon
-                            CompletableFuture.runAsync(() -> {
-                                logImportInfo("=========== UPDATING THE LEXICON...", LogStatus.POST_PROCESSING, "LEXICON", 0);
-                                var result = ExceptionUtils.tryCatchLog(
-                                        () -> lexiconService.updateLexicon(false),
-                                        (ex) -> logImportError("Unknown error updating the lexicon of corpus " + corpus1.getId(), ex, "LEXICON"));
-                                if (result != null)
-                                    logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + result + "\n\n", LogStatus.SAVED, "LEXICON", 0);
-                            }, executor);
-
-                            // Corpus
-                            CompletableFuture.runAsync(() -> {
-                                ExceptionUtils.tryCatchLog(
-                                        () -> postProccessCorpus(corpus1, corpusConfigFinal),
-                                        (ex) -> logger.error("Error postprocessing the current corpus with id " + corpus1.getId()));
-                            }, executor);
-                        }
                     });
 
         } catch (IOException ex) {
@@ -307,7 +324,7 @@ public class Importer {
                 () -> db.callLogicalLinksRefresh(),
                 (ex) -> logger.error("Error in the final logical links update of the current corpus with id " + corpus1.getId()));
 
-        // Final lexion updating
+        // Final lexicon updating
         ExceptionUtils.tryCatchLog(
                 () -> lexiconService.updateLexicon(false),
                 (ex) -> logger.error("Error in the final lexicon update of the current corpus with id " + corpus1.getId()));
@@ -485,6 +502,12 @@ public class Importer {
                         () -> setNamedEntities(document, jCas),
                         (ex) -> logImportWarn("This file should have contained ner annotations, but selecting them caused an error.", ex, filePath));
 
+            // GeoNames requires both GeoName and NamedEntity annotations.
+            if (corpusConfig.getAnnotations().isNamedEntity() && corpusConfig.getAnnotations().isGeoNames())
+                ExceptionUtils.tryCatchLog(
+                        () -> setGeoNames(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained GeoNames annotations, but selecting them caused an error.", ex, filePath));
+
             if (corpusConfig.getAnnotations().isLemma())
                 ExceptionUtils.tryCatchLog(
                         () -> setLemmata(document, jCas),
@@ -523,7 +546,7 @@ public class Importer {
             // Keep this at the end of the annotation setting, as they might require previous annotations. Order matter here!
             if (corpusConfig.getAnnotations().isLogicalLinks())
                 ExceptionUtils.tryCatchLog(
-                        () -> storeLogicLinks(jCas, corpus.getId()),
+                        () -> setLogicLinks(document, jCas, corpus.getId(), filePath),
                         (ex) -> logImportWarn("This file should have contained LinkTypesystem annotations, but selecting them caused an error.", ex, filePath));
 
             ExceptionUtils.tryCatchLog(
@@ -543,9 +566,45 @@ public class Importer {
     }
 
     /**
+     * Selects and set the geoNames of a document.
+     */
+    private void setGeoNames(Document document, JCas jCas) {
+        var geoNames = new ArrayList<GeoName>();
+        JCasUtil.select(jCas, GeoNamesEntity.class).forEach(g -> {
+            var geoName = new GeoName(g.getBegin(), g.getEnd());
+            geoName.setCoveredText(g.getCoveredText());
+            geoName.setName(g.getName());
+            geoName.setFeatureClass(GeoNameFeatureClass.valueOf(g.getFeatureClass()));
+            geoName.setFeatureCode(g.getFeatureCode());
+            geoName.setCountryCode(g.getCountryCode());
+            geoName.setAdm1(g.getAdm1());
+            geoName.setAdm2(g.getAdm2());
+            geoName.setAdm3(g.getAdm3());
+            geoName.setAdm4(g.getAdm4());
+            geoName.setLatitude(g.getLatitude());
+            geoName.setLongitude(g.getLongitude());
+            geoName.setElevation(g.getElevation());
+            var referenceNE = g.getReferenceAnnotation();
+            if (referenceNE != null) {
+                // The NE should have already been extracted and added to the document
+                var ne = document.getNamedEntities().stream().filter(
+                        n -> n.getBegin() == referenceNE.getBegin() && n.getEnd() == referenceNE.getEnd() && n.getType().equals("LOCATION")).findFirst();
+                if (ne.isPresent()) {
+                    geoName.setRefNamedEntity(ne.get());
+                    ne.get().setGeoName(geoName);
+                }
+            }
+            geoNames.add(geoName);
+        });
+        document.setGeoNames(geoNames);
+        logger.info("Setting GeoNames done.");
+    }
+
+    /**
      * Selects and sets the logical links between documents, annotations and more.
      */
-    private void storeLogicLinks(JCas jCas, long corpusId) throws DatabaseOperationException {
+    private void setLogicLinks(Document document, JCas jCas, long corpusId, String filePath) throws DatabaseOperationException {
+        // Document -> Document Links
         var documentLinks = new ArrayList<DocumentLink>();
         JCasUtil.select(jCas, DLink.class).forEach(l -> {
             var docLink = new DocumentLink();
@@ -560,6 +619,68 @@ public class Importer {
         // We store the document links not to the Document class directly, as that doesn't fit the idea of the datastructure.
         // Linking should happen *on top* of documents and clusters, not as a part of them. Keep that in mind.
         db.saveOrUpdateManyDocumentLinks(documentLinks);
+
+        // Document -> Annotation Link
+        var documentToAnnotationLinks = new ArrayList<DocumentToAnnotationLink>();
+        JCasUtil.select(jCas, DALink.class).forEach(l -> {
+            var docToAnnoLink = new DocumentToAnnotationLink();
+            docToAnnoLink.setCorpusId(corpusId);
+            docToAnnoLink.setFrom(l.getFrom()); // from is a documentId, but not of *this* document.
+            docToAnnoLink.setLinkId(String.valueOf(l.getLinkId()));
+            docToAnnoLink.setType(l.getLinkType());
+            // In the case of a Document -> Annotation, the "to" in the typesystem points to the current document
+            docToAnnoLink.setTo(document.getDocumentId());
+
+            var toAnnotation = l.getTo();
+            docToAnnoLink.setToBegin(toAnnotation.getBegin());
+            docToAnnoLink.setToEnd(toAnnotation.getEnd());
+            docToAnnoLink.setToCoveredText(toAnnotation.getCoveredText());
+            // The toAnnotation points to any kind of annotation *within* the cas. We have to translate that information
+            // to UCE's model classes and we do that through Reflection Utils... Reflection is very costly ressourcewise,
+            // so we cached a lot upon start, but this may still slow down the process - we have to investigate by how much.
+            Class<?> modelClass = ReflectionUtils.findModelClassForCASAnnotation(toAnnotation);
+            if (modelClass == null) {
+                logImportWarn("A logical Link annotation tried to point to an annotation that UCE doesn't support yet, hence skipped the link.",
+                        new InvalidClassException(toAnnotation.getType().getName() + " annotation not supported by UCE."), filePath);
+                return;
+            }
+            docToAnnoLink.setToAnnotationType(modelClass.getName());
+            var tableName = ReflectionUtils.getTableAnnotationName(modelClass);
+            docToAnnoLink.setToAnnotationTypeTable(tableName);
+
+            documentToAnnotationLinks.add(docToAnnoLink);
+        });
+        db.saveOrUpdateManyDocumentToAnnotationLinks(documentToAnnotationLinks);
+
+        // Annotation -> Document Link
+        var annotationToDocumentLinks = new ArrayList<AnnotationToDocumentLink>();
+        JCasUtil.select(jCas, ADLink.class).forEach(l -> {
+            var annoToDocLink = new AnnotationToDocumentLink();
+            annoToDocLink.setCorpusId(corpusId);
+            annoToDocLink.setTo(l.getTo()); // to is a documentId, but not of *this* document.
+            annoToDocLink.setLinkId(String.valueOf(l.getLinkId()));
+            annoToDocLink.setType(l.getLinkType());
+            // In the case of a Annotation -> Document, the "from" in the typesystem points to the current document
+            annoToDocLink.setFrom(document.getDocumentId());
+
+            var fromAnnotation = l.getFrom();
+            annoToDocLink.setFromBegin(fromAnnotation.getBegin());
+            annoToDocLink.setFromEnd(fromAnnotation.getEnd());
+            annoToDocLink.setFromCoveredText(fromAnnotation.getCoveredText());
+            // Same procedure as in DocumentToAnnotation above; read that comment.
+            Class<?> modelClass = ReflectionUtils.findModelClassForCASAnnotation(fromAnnotation);
+            if (modelClass == null) {
+                logImportWarn("A logical Link annotation tried to point to an annotation that UCE doesn't support yet, hence skipped the link.",
+                        new InvalidClassException(fromAnnotation.getType().getName() + " annotation not supported by UCE."), filePath);
+                return;
+            }
+            annoToDocLink.setFromAnnotationType(modelClass.getName());
+            var tableName = ReflectionUtils.getTableAnnotationName(modelClass);
+            annoToDocLink.setFromAnnotationTypeTable(tableName);
+
+            annotationToDocumentLinks.add(annoToDocLink);
+        });
+        db.saveOrUpdateManyAnnotationToDocumentLinks(annotationToDocumentLinks);
     }
 
     /**
@@ -764,6 +885,12 @@ public class Importer {
         }
         if (document.getNamedEntities() != null) {
             for (var anno : document.getNamedEntities().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getGeoNames() != null) {
+            for (var anno : document.getGeoNames().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
                 anno.setPage(page);
             }
@@ -1243,6 +1370,33 @@ public class Importer {
             var chunked = ListUtils.partitionList(corpusDocuments, 100);
 
             for (var documents : chunked) {
+                // Get the complete list of document sentence embeddings of all documents
+                var docSentenceEmbeddings = documents.stream()
+                        .flatMap(d -> ExceptionUtils.tryCatchLog(
+                                () -> ragService.getDocumentSentenceEmbeddingsOfDocument(d.getId()).stream(),
+                                (ex) -> logger.error("Error getting the document sentence embeddings of document " + d.getId(), ex)))
+                        .filter(Objects::nonNull)
+                        .toList();
+
+                // Now, from these sentences - generate a 2D and 3D tsne reduction embedding and store it
+                // with the single document embedding
+                var reducedSEmbeddingDto = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getEmbeddingDimensionReductions(
+                                docSentenceEmbeddings.stream().map(DocumentSentenceEmbedding::getEmbedding).toList()),
+                        (ex) -> logger.error("Error getting embedding dimension reductions in post processing a corpus.", ex));
+
+                if (reducedSEmbeddingDto == null || reducedSEmbeddingDto.getTsne2D() == null) continue;
+                // Store the tsne reduction in each sentence - this is basically now a 2D and 3D coordinate
+                for (var i = 0; i < reducedSEmbeddingDto.getTsne2D().length; i++) {
+                    docSentenceEmbeddings.get(i).setTsne2d(reducedSEmbeddingDto.getTsne2D()[i]);
+                    docSentenceEmbeddings.get(i).setTsne3d(reducedSEmbeddingDto.getTsne3D()[i]);
+                }
+                // Update the changes (Could be a bulk Update... let's see :-)
+                docSentenceEmbeddings.forEach(de -> ExceptionUtils.tryCatchLog(
+                        () -> ragService.updateDocumentSentenceEmbedding(de),
+                        (ex) -> logger.error("Error updating and saving a document sentence embedding.", ex)));
+
+
                 // Get the complete list of document chunk embeddings of all documents
                 var docChunkEmbeddings = documents.stream()
                         .flatMap(d -> ExceptionUtils.tryCatchLog(
@@ -1369,6 +1523,26 @@ public class Importer {
         // Calculate embeddings if they are activated
         if (corpusConfig.getOther().isEnableEmbeddings()) {
             logger.info("Embeddings...");
+
+            // Sentence Embeddings
+            var docHasSentenceEmbeddings = ExceptionUtils.tryCatchLog(
+                    () -> ragService.documentHasDocumentSentenceEmbeddings(document.getId()),
+                    (ex) -> logImportError("Error while checking if a document already has DocumentSentenceEmbeddings.", ex, filePath));
+            if (docHasSentenceEmbeddings != null && !docHasSentenceEmbeddings) {
+                // Build the sentences, which are the most crucial embeddings
+                var documentSentenceEmbeddings = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getSentenceEmbeddingFromDocument(document),
+                        (ex) -> logImportError("Error getting the complete embedding sentences for document: " + document.getId(), ex, filePath));
+
+                // Store the sentences
+                if (documentSentenceEmbeddings != null)
+                    for (var docEmbedding : documentSentenceEmbeddings) {
+                        ExceptionUtils.tryCatchLog(
+                                () -> ragService.saveDocumentSentenceEmbedding(docEmbedding),
+                                (ex) -> logImportError("Error saving a document sentence embeddings.", ex, filePath)
+                        );
+                    }
+            }
 
             // Chunk Embeddings
             var docHasChunkEmbeddings = ExceptionUtils.tryCatchLog(

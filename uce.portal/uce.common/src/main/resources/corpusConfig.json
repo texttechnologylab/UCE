@@ -17,6 +17,7 @@
 
     "srLink": false,
     "namedEntity": false,
+    "geoNames": false,
     "lemma": false,
     "sentence": false,
     "taxon": {

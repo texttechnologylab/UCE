@@ -627,3 +627,28 @@
     pointer-events: none;
     white-space: nowrap;
 }
+#corpus-topic-distribution-container {
+    height:500px;
+    width:100%
+}
+
+#document-topic-distribution-container {
+    height:500px;
+    width:100%;
+    margin-bottom: 10px
+}
+
+#document-similar-documents-container {
+    height:500px;
+    width:100%
+}
+
+#topic-similar-topics-container {
+    height:500px;
+    width:100%
+}
+
+#topic-document-distribution-container {
+    height:500px;
+    width:100%
+}

@@ -2,6 +2,7 @@ package org.texttechnologylab.models.negation;
 
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Document;
 
@@ -17,6 +18,7 @@ import java.util.List;
  */
 @Entity
 @Table(name="completenegation")
+@Typesystem(types={org.texttechnologylab.annotation.negation.CompleteNegation.class})
 public class CompleteNegation extends UIMAAnnotation {
     @Column(name = "negType", columnDefinition = "TEXT")
     private String negType;

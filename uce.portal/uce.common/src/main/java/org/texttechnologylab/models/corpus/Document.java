@@ -12,7 +12,9 @@ import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.corpus.links.Link;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.search.AnnotationSearchResult;
@@ -40,7 +42,7 @@ public class Document extends ModelBase implements WikiModel, Linkable {
 
     @Override
     public List<Class<? extends ModelBase>> getCompatibleLinkTypes() {
-        return List.of(DocumentLink.class);
+        return List.of(DocumentLink.class, DocumentToAnnotationLink.class, AnnotationToDocumentLink.class);
     }
 
     @Override
@@ -78,6 +80,10 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<NamedEntity> namedEntities;
+
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
+    private List<GeoName> geoNames;
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
@@ -182,6 +188,14 @@ public class Document extends ModelBase implements WikiModel, Linkable {
 
     public void setDocumentData(byte[] documentData) {
         this.documentData = documentData;
+    }
+
+    public List<GeoName> getGeoNames() {
+        return geoNames;
+    }
+
+    public void setGeoNames(List<GeoName> geoNames) {
+        this.geoNames = geoNames;
     }
 
     public List<BiofidTaxon> getBiofidTaxons() {
@@ -361,7 +375,7 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         offsetArray.add(annotation.getBegin());
         offsetArray.add(annotation.getEnd());
         offsetList.add(offsetArray);
-        return StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
+        return StringUtils.getHtmlText(StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)));
     }
 
     public String getFullTextSnippetOffsetList(TemplateModel model) throws TemplateModelException {
@@ -385,7 +399,7 @@ public class Document extends ModelBase implements WikiModel, Linkable {
                 }
             }
             String snippet = getFullTextSnippetCharOffset(Math.max(minBegin - 100, 0), Math.min(maxEnd + 100, minBegin + 500));
-            return StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)).replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
+            return StringUtils.getHtmlText(StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)));
         }
         return null;
     }

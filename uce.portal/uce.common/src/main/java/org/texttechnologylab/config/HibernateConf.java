@@ -7,12 +7,13 @@ import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.*;
-import org.texttechnologylab.models.test.test;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -31,19 +32,21 @@ public class HibernateConf {
                 .applySettings(settings).build();
 
         var metadataSources = new MetadataSources(serviceRegistry);
-        metadataSources.addAnnotatedClass(test.class);
         metadataSources.addAnnotatedClass(Block.class);
         metadataSources.addAnnotatedClass(MetadataTitleInfo.class);
         metadataSources.addAnnotatedClass(UCEMetadata.class);
         metadataSources.addAnnotatedClass(UCEMetadataFilter.class);
         // Links
         metadataSources.addAnnotatedClass(DocumentLink.class);
+        metadataSources.addAnnotatedClass(DocumentToAnnotationLink.class);
+        metadataSources.addAnnotatedClass(AnnotationToDocumentLink.class);
         metadataSources.addAnnotatedClass(Line.class);
         metadataSources.addAnnotatedClass(SrLink.class);
         metadataSources.addAnnotatedClass(Lemma.class);
         metadataSources.addAnnotatedClass(PageKeywordDistribution.class);
         metadataSources.addAnnotatedClass(DocumentKeywordDistribution.class);
         metadataSources.addAnnotatedClass(NamedEntity.class);
+        metadataSources.addAnnotatedClass(GeoName.class);
         metadataSources.addAnnotatedClass(Paragraph.class);
         metadataSources.addAnnotatedClass(Sentence.class);
         metadataSources.addAnnotatedClass(GbifOccurrence.class);

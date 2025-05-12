@@ -121,10 +121,15 @@
     z-index: -1;
 }
 
+.search-menu-div .uce-search-filters .list{
+    max-height: 200px;
+    overflow-y: auto;
+}
+
 .search-history-div {
     overflow-y: auto;
     min-height: 125px;
-    max-height: 300px;
+    max-height: 250px;
 }
 
 .search-history-div div {

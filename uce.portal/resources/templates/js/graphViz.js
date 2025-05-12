@@ -2,6 +2,7 @@
 // THIS NEEDS TO IMPORT THE LOCAL CHARTJS LIB IN THE HEADER:
 // <!--<script src="js/visualization/cdns/chartjs-449.js"></script>-->
 import {ChartJS} from '/js/visualization/chartjs.js';
+import {UCEMap} from '/js/visualization/uceMap.js';
 import {D3JS} from '/js/visualization/d3js.js';
 
 var GraphVizHandler = (function () {
@@ -10,6 +11,14 @@ var GraphVizHandler = (function () {
 
     function GraphVizHandler() {
         console.log('Created GraphViz Handler.');
+    }
+
+    GraphVizHandler.prototype.createUceMap = async function(target){
+        const chartId = generateUUID();
+        const uceMap = new UCEMap(target);
+
+        this.activeCharts[chartId] = uceMap;
+        activatePopovers();
     }
 
     /**
@@ -54,7 +63,7 @@ var GraphVizHandler = (function () {
         return jsChart;
     }
 
-    GraphVizHandler.prototype.createWordCloud = async function (target, title, data) {
+    GraphVizHandler.prototype.createWordCloud = async function (target, title, wordData) {
 
         if (!wordData || !Array.isArray(wordData) || wordData.length === 0) {
             console.error('Invalid data provided to drawTopicWordCloud:', wordData);
@@ -65,6 +74,13 @@ var GraphVizHandler = (function () {
 
         const cloudContainer = document.createElement('div');
         cloudContainer.className = 'word-cloud-container';
+
+        if (title) {
+            const titleElement = document.createElement('h5');
+            titleElement.className = 'word-cloud-title text-center';
+            titleElement.textContent = title;
+            target.insertBefore(titleElement, target.firstChild);
+        }
 
         const maxWeight = Math.max(...wordData.map(item => item.weight));
         const minWeight = Math.min(...wordData.map(item => item.weight));
@@ -78,6 +94,7 @@ var GraphVizHandler = (function () {
             const normalizedWeight = weightRange === 0 ? 1 : (item.weight - minWeight) / weightRange;
             const fontSize = 12 + (normalizedWeight * 24);
             word.style.fontSize = fontSize + "px";
+            word.style.cursor = 'default';
             word.style.color = getColorForWeight(normalizedWeight);
 
             word.addEventListener('mouseover', () => {
@@ -108,6 +125,11 @@ var GraphVizHandler = (function () {
         target.appendChild(cloudContainer);
     }
 
+
+    GraphVizHandler.prototype.getColorForWeight = function(weight) {
+        return getColorForWeight(weight);
+    }
+
     return GraphVizHandler;
 }());
 
@@ -116,10 +138,10 @@ function getNewGraphVizHandler() {
 }
 
 function getColorForWeight(weight) {
-    const r = Math.floor(50 + (weight * 205));
-    const g = Math.floor(50 + ((1 - weight) * 150));
-    const b = Math.floor(150 + ((1 - weight) * 105));
-    return "rgb(" + r + ", " + g + ", " + b + ")";
+    const r = Math.floor(255 * (1 - weight));
+    const g = Math.floor(200 * weight);
+    const b = 0;
+    return "rgba(" + r + ", " + g + ", " + b + ", 0.5)";
 }
 
 window.graphVizHandler = getNewGraphVizHandler();

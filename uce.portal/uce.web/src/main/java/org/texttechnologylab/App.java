@@ -112,6 +112,16 @@ public class App {
             SystemStatus.LexiconIsCalculating = false;
         });
 
+        logger.info("Checking if we can or should update any linkables... (this may take a moment depending on the time of the last update. Runs asynchronous.)");
+        CompletableFuture.runAsync(() -> {
+            try{
+                var result = context.getBean(PostgresqlDataInterface_Impl.class).callLogicalLinksRefresh();
+                logger.info("Finished updating the linkables. Updated linkables: " + result);
+            } catch (Exception ex){
+                logger.error("There was an error trying to refresh linkables in the startup of the web app. App starts normally though.");
+            }
+        });
+
         // Set the folder for our template files of freemarker
         try {
             configuration.setDirectoryForTemplateLoading(new File(commonConfig.getTemplatesLocation()));
@@ -333,6 +343,7 @@ public class App {
             path("/document", () -> {
                 get("/reader/pagesList", documentApi.getPagesListView);
                 get("/uceMetadata", documentApi.getUceMetadataOfDocument);
+                get("/topics", documentApi.getDocumentTopics);
             });
 
             path("/rag", () -> {

@@ -43,6 +43,9 @@
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="js/utils.js"></script>
+    <script src="js/visualization/cdns/chartjs-449.js"></script>
+    <script src="js/visualization/cdns/d3js-790.js"></script>
+    <script src="js/visualization/cdns/drawflow-last.js"></script>
     <script type="module" src="js/md-block.js"></script>
 
     <title>${document.getDocumentTitle()}</title>
@@ -58,6 +61,9 @@
 
     <div class="corpus-inspector-include display-none">
     </div>
+
+    <!-- this object must be set on any site we use within UCE -->
+    <div id="prime-color-container" class="color-prime"></div>
 
     <div class="pages-loader-popup">
         <div class="flexed align-items-center justify-content-center h-100 w-100">
@@ -83,6 +89,16 @@
                 <div class="position-relative reader-container container"
                      data-id="${document.getId()?string?replace('.', '')?replace(',', '')}"
                      data-pagescount="${document.getPages()?size?string?replace('.', '')?replace(',', '')}" data-searchtokens="${(searchTokens)!''}">
+
+                    <!-- Topic navigation buttons (hidden by default) -->
+                    <div class="topic-navigation-buttons">
+                        <button class="topic-nav-button prev-topic-button" title="Previous occurrence">
+                            <i class="fas fa-chevron-up"></i>
+                        </button>
+                        <button class="topic-nav-button next-topic-button" title="Next occurrence">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
 
                     <div class="header ">
                         <div class="text-center flexed align-items-center justify-content-around w-100">
@@ -207,6 +223,16 @@
                             </div>
                         </div>
                     </#if>
+
+                    <!-- Document Topics Section -->
+                    <div class="group-box topics-box">
+                        <p class="title">
+                            <span>${languageResource.get("topics")}</span>
+                            <i class="ml-2 topics-loading rotate fas fa-spinner"></i>
+                        </p>
+                        <div class="document-topics-list" data-document-id="${document.id}">
+                        </div>
+                    </div>
                 </div>
 
             </div>
@@ -219,6 +245,10 @@
 <#--<script type="module">
     <#include "*/js/corpusUniverse.js">
 </script>-->
+<script type="module">
+    <#include "*/js/graphViz.js">
+    <#include "*/js/flowViz.js">
+</script>
 
 <script>
     <#include "*/js/site.js">

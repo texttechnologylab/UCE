@@ -64,6 +64,10 @@
 <body>
 <#include "*/messageModal.ftl">
 
+<!--<div id="leaflet-map-modal">
+
+</div>-->
+
 <!-- The flow chart of the Linkable objects -->
 <div id="flow-chart-modal" class="display-none">
     <div class="header">
@@ -75,9 +79,28 @@
     </div>
     <div id="full-flow-container">
     </div>
+    <svg style="height: 0;">
+        <defs>
+            <!-- Right-pointing arrow with white border -->
+            <marker id="arrow-right" markerWidth="10" markerHeight="7" refX="5" refY="3.5"
+                    orient="auto" markerUnits="strokeWidth">
+                <path d="M0,0 L0,7 L10,3.5 z" fill="var(--prime)" />
+            </marker>
+
+            <!-- Left-pointing arrow with white border -->
+            <marker id="arrow-left" markerWidth="10" markerHeight="7" refX="5" refY="3.5"
+                    orient="auto" markerUnits="strokeWidth">
+                <path d="M10,0 L10,7 L0,3.5 z" fill="var(--prime)" />
+            </marker>
+        </defs>
+    </svg>
+
 </div>
 
 <div class="site-container">
+
+    <!-- this object must be set on any site we use within UCE -->
+    <div id="prime-color-container" class="color-prime"></div>
 
     <nav class="position-relative">
 
@@ -122,6 +145,7 @@
                                         data-hasragbot="${corpusVm.getCorpusConfig().getOther().isEnableRAGBot()?c}"
                                         data-hastaxonannotations="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isAnnotated()?c}"
                                         data-hastimeannotations="${corpusVm.getCorpusConfig().getAnnotations().isTime()?c}"
+                                        data-hasgeonameannotations="${corpusVm.getCorpusConfig().getAnnotations().isGeoNames()?c}"
                                         data-sparqlalive="${isSparqlAlive?c}"
                                         data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
                             </#list>
@@ -235,16 +259,20 @@
                             </div>
 
                             <!-- these are the UCEMetadata annotations that can act as a filter if they exist -->
-                            <div class="uce-search-filters mb-3 mt-3">
+                            <div class="uce-search-filters border-top-1 mb-3 mt-3">
                                 <#list corpora as corpusVm>
                                     <#if corpusVm.getCorpusConfig().getAnnotations().isUceMetadata()
                                     && corpusVm.getCorpus().getUceMetadataFilters()?has_content
                                     && corpusVm.getCorpus().getUceMetadataFilters()?size gt 0>
                                         <div class="uce-corpus-search-filter display-none"
                                              data-id="${corpusVm.getCorpus().getId()}">
+                                            <div class="flexed align-items-center bg-lightgray p-2 justify-content-between card-shadow light-border rounded">
+                                                <p class="text-center w-100 mb-0 text-dark">Filters</p>
+                                                <i class="fas fa-filter"></i>
+                                            </div>
                                             <div class="flexed align-items-center text-secondary w-100">
-                                                <i class="fas fa-filter mr-2"></i>
-                                                <div class="m-0 pl-0 pr-0 rounded pt-2 pb-2 row w-100 light-border bg-lightgray">
+                                                <!--<i class="fas fa-filter mr-2"></i>-->
+                                                <div class="m-0 pl-0 pr-0 pt-2 pb-2 row w-100 border-top-1 list">
                                                     <#list corpusVm.getCorpus().getUceMetadataFilters() as filter>
                                                         <#include "*/search/components/uceMetadataFilter.ftl">
                                                     </#list>

@@ -18,7 +18,8 @@ public class LexiconOccurrenceViewModel {
         this.page = page;
         this.documentId = uimaAnnotation.getDocumentId();
         // Calculate the snippetHTML for the UI
-        this.occurrenceSnippetHtml = StringUtils.buildContextSnippet(page.getCoveredText(),
+        if(page == null) this.occurrenceSnippetHtml = uimaAnnotation.getCoveredHtmlText();
+        else this.occurrenceSnippetHtml = StringUtils.buildContextSnippet(page.getCoveredText(),
                 uimaAnnotation.getBegin() - page.getBegin(), uimaAnnotation.getEnd() - page.getBegin(), 100);
     }
 

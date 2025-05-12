@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.corpus;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
@@ -10,7 +11,8 @@ import java.util.Arrays;
 import java.util.List;
 
 @Entity
-@Table(name="taxon")
+@Table(name = "taxon")
+@Typesystem(types = {org.texttechnologylab.annotation.type.Taxon.class})
 public class Taxon extends UIMAAnnotation implements WikiModel {
     @Override
     public String getWikiId() {
@@ -49,7 +51,7 @@ public class Taxon extends UIMAAnnotation implements WikiModel {
 
     private String primaryBiofidOntologyIdentifier;
 
-    public Taxon(){
+    public Taxon() {
         super(-1, -1);
     }
 
@@ -82,7 +84,7 @@ public class Taxon extends UIMAAnnotation implements WikiModel {
     }
 
     public String getPrimaryBiofidOntologyIdentifier() {
-        if(this.primaryBiofidOntologyIdentifier == null || this.primaryBiofidOntologyIdentifier.isEmpty())
+        if (this.primaryBiofidOntologyIdentifier == null || this.primaryBiofidOntologyIdentifier.isEmpty())
             return this.getIdentifierAsList().getFirst();
         return primaryBiofidOntologyIdentifier;
     }
@@ -110,11 +112,13 @@ public class Taxon extends UIMAAnnotation implements WikiModel {
     public String getIdentifier() {
         return identifier;
     }
-    public List<String> getIdentifierAsList(){
-        if(this.getIdentifier() == null || this.getIdentifier().isEmpty()) return new ArrayList<>();
+
+    public List<String> getIdentifierAsList() {
+        if (this.getIdentifier() == null || this.getIdentifier().isEmpty()) return new ArrayList<>();
         // Split by | or SPACE
         return Arrays.stream(this.getIdentifier().split("[|\\s]+")).toList();
     }
+
     public void setIdentifier(String identifier) {
         this.identifier = identifier;
     }
@@ -122,6 +126,7 @@ public class Taxon extends UIMAAnnotation implements WikiModel {
     public void setValue(String value) {
         this.value = value;
     }
+
     public String getValue() {
         return value;
     }

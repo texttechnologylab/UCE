@@ -14,16 +14,16 @@ import javax.persistence.MappedSuperclass;
  */
 @MappedSuperclass
 public class Link extends ModelBase {
-
+    private long corpusId;
     @Column(columnDefinition = "TEXT")
     private String type;
     private String linkId;
     /**
-     * This is the PK of the document in the db, so the 'id'.
+     * This is the PK of the document or annotation in the db, so the 'id'.
      */
     private long fromId;
     /**
-     * This is the PK of the document in the db, so the 'id'.
+     * This is the PK of the document or annotation in the db, so the 'id'.
      */
     private long toId;
 
@@ -57,5 +57,12 @@ public class Link extends ModelBase {
 
     public void setToId(long toId) {
         this.toId = toId;
+    }
+    public long getCorpusId() {
+        return corpusId;
+    }
+
+    public void setCorpusId(long corpusId) {
+        this.corpusId = corpusId;
     }
 }
