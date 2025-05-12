@@ -9,6 +9,17 @@
         </div>
     </div>
 
+    <div class="row mr-3 ml-3 pb-5">
+        <div class="content w-100">
+            <details>
+                <summary>${languageResource.get("searchVisualizationSummaryTitle")}</summary>
+                <div class="w-100">
+                    <#include "*/search/components/searchVisualization.ftl" >
+                </div>
+            </details>
+        </div>
+    </div>
+
     <div class="row mb-0 mr-0 ml-0 pb-5">
 
         <div class="col-lg-3 position-relative search-row" data-type="left">

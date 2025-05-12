@@ -6,6 +6,8 @@ public class UCEMetadataFilterDto {
     private String key;
     private UCEMetadataValueType valueType;
     private String value;
+    private Float min;
+    private Float max;
 
     public UCEMetadataFilterDto(){}
 
@@ -31,5 +33,21 @@ public class UCEMetadataFilterDto {
 
     public void setValue(String value) {
         this.value = value;
+    }
+
+    public Float getMin() {
+        return min;
+    }
+
+    public void setMin(Float min) {
+        this.min = min;
+    }
+
+    public Float getMax() {
+        return max;
+    }
+
+    public void setMax(Float max) {
+        this.max = max;
     }
 }

@@ -138,7 +138,9 @@ BEGIN
 			SELECT 
 				(filter->>''key'')::text AS key,
 				(filter->>''value'')::text AS value,
-				(filter->>''valueType'')::text AS value_type
+				(filter->>''min'')::decimal AS min,
+				(filter->>''max'')::decimal AS max,
+				(filter->>''valueType'')::int AS value_type
 			FROM jsonb_array_elements($1) AS filter
 		),
 		filtered_ucemetadata AS (
@@ -150,9 +152,20 @@ BEGIN
 			SELECT um.document_id
 			FROM expanded_filters ef
 			JOIN filtered_ucemetadata um ON 
-				(ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
-				AND (ef.key IS NULL OR um.key = ef.key) 
-				AND (ef.value IS NULL OR um.value = ef.value)
+				(ef.value_type IS NULL OR um.valueType = ef.value_type) 
+				AND (ef.key IS NULL OR um.key = ef.key)
+				AND (
+				    ef.value IS NULL OR um.value = ef.value
+				    OR (
+                        -- range search for NUMBER meta fields
+                        ef.value_type = 1
+                        AND (
+                            (ef.min IS NULL OR um.value::decimal >= ef.min)
+                            AND
+                            (ef.max IS NULL OR um.value::decimal <= ef.max)
+                        )
+				    )
+				)
 			JOIN document d ON um.document_id = d.id AND d.corpusid = $2
 			%s
 			GROUP BY um.document_id
