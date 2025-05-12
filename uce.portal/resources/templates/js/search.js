@@ -77,8 +77,10 @@ function updateSearchVizualization() {
 
     const numDocs = data[selectedFeature].length
 
-    // TODO localisation in js
-    const title = "Distribution of \"" + selectedFeature + "\" in the current page (" + currentPage.toString() + ") of the search results (" + numDocs.toString()  + " documents)"
+    const title = `${languageResource.get("searchVisualizationPlotTitleTemplate")}`
+        .replace("{selectedFeature}", selectedFeature)
+        .replace("{currentPage}", currentPage.toString())
+        .replace("{numDocs}", numDocs.toString())
 
     const chartElem = document.getElementById('search-results-visualization-graph')
     while (chartElem.firstChild) {

@@ -11,12 +11,12 @@
         <div class="row mt-2 mb-0 mx-0">
             <div class="col-md-4 mb-0">
                 <div class="form-group">
-                    <label for="search-viz-n-bins">Number of bins:</label>
+                    <label for="search-viz-n-bins">${languageResource.get("searchVisualizationPlotNBinsLabel")}</label>
                 </div>
             </div>
             <div class="col-md-4 mb-0">
                 <div class="form-group">
-                    <label for="search-viz-selected-feature">Feature:</label>
+                    <label for="search-viz-selected-feature">${languageResource.get("searchVisualizationPlotFeatureLabel")}</label>
                 </div>
             </div>
             <div class="col-md-4 mb-0">
@@ -46,7 +46,7 @@
             </div>
             <div class="col-md-4 mt-0">
                 <div class="form-group">
-                    <button type="submit" id="search-viz-update-button" class="form-control btn btn-primary">Update histogram</button>
+                    <button type="submit" id="search-viz-update-button" class="form-control btn btn-primary">${languageResource.get("searchVisualizationPlotUpdateButton")}</button>
                 </div>
             </div>
         </div>

@@ -12,7 +12,7 @@
     <div class="row mr-3 ml-3 pb-5">
         <div class="content w-100">
             <details>
-                <summary>Search result visualizations</summary>
+                <summary>${languageResource.get("searchVisualizationSummaryTitle")}</summary>
                 <div class="w-100">
                     <#include "*/search/components/searchVisualization.ftl" >
                 </div>
