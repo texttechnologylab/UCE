@@ -368,11 +368,19 @@
     "en-EN": "Key Topics"
   },
   "corpusWords": {
-    "de-DE": "Top 20 Wörter aus dem Korpus",
-    "en-EN": "Top 20 words from Corpus"
+    "de-DE": "Top Wörter aus dem Korpus",
+    "en-EN": "Top words from Corpus"
   },
   "documentWords": {
-    "de-DE": "Top 20 Wörter aus dem Dokument",
-    "en-EN": "Top 20 words from document"
+    "de-DE": "Top Wörter aus dem Dokument",
+    "en-EN": "Top words from document"
+  },
+  "topicWords": {
+    "de-DE": "Top Wörter aus dem Thema",
+    "en-EN": "Top words from Topic"
+  },
+  "topicDistribution": {
+    "de-DE": "Thema Verteilung",
+    "en-EN": "Topic Distribution"
   }
 }

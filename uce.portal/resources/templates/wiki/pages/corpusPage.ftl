@@ -70,14 +70,8 @@
         </div>
     </div>
 
-    <div class="text-center mb-3">
-        <h6 class="mb-3">${languageResource.get("corpusWords")}</h6>
-        <!-- Topic Word Cloud -->
-        <div class="col-md-6 mx-auto">
-            <div id="topicWordCloud"></div>
-        </div>
-    </div>
 
+    <div id="corpus-topic-word-cloud-container" class="col-md-8 mx-auto"></div>
     <div id="corpus-topic-distribution-container"></div>
 
 
@@ -125,13 +119,18 @@
             "labelName": "Topic Distribution"
         };
 
-        window.graphVizHandler.createWordCloud(document.getElementById('topicWordCloud'), 'Word Cloud', wordData);
+        if (wordData.length > 0) {
 
-        window.graphVizHandler.createBasicChart(document.getElementById('corpus-topic-distribution-container'),
-            'Topic Distribution in Corpus',
-            topicDistData,
-            'pie'
-        );
+            window.graphVizHandler.createWordCloud(document.getElementById('corpus-topic-word-cloud-container'), "${languageResource.get("corpusWords")}", wordData);
+        }
+
+        if (topicDistData.labels.length > 0 && topicDistData.data.length > 0) {
+            window.graphVizHandler.createBasicChart(document.getElementById('corpus-topic-distribution-container'),
+                'Topic Distribution in Corpus',
+                topicDistData,
+                'pie'
+            );
+        }
     })
 </script>
 
