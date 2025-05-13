@@ -112,12 +112,7 @@ let LayeredSearchHandler = (function () {
 
         // If the type is a location, we need to setup the leaflet map
         if(type === "GEONAME"){
-            // Setup the GeoNames leaflet map
-            const mapContainer = $layer.find('.slot[data-id="[ID]"] .location-map'.replace('[ID]', id)).get(0);
-            this.locationMap = L.map(mapContainer).setView([0, 0], 100);
-            const tiles = L.tileLayer('https://{s}.tile.openstreetmap.fr/hot/{z}/{x}/{y}.png', {
-                maxZoom: 19,
-            }).addTo(this.locationMap);
+            graphVizHandler.createUceMap($layer.find('.slot[data-id="[ID]"] .location-map'.replace('[ID]', id)).get(0));
         }
     }
 
@@ -224,7 +219,7 @@ $('body').on('click', '.layered-search-builder-container .apply-layer-btn', asyn
 /**
  * Triggers when we change any slot of a layer.
  */
-$('body').on('change', '.layered-search-builder-container .layer .slot input', async function () {
+$('body').on('change', '.layered-search-builder-container .layer .slot .slot-value', async function () {
     const depth = $(this).closest('.layer-container').attr('data-depth');
     window.layeredSearchHandler.markLayersAsDirty(parseInt(depth));
 })

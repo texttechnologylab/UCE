@@ -62,6 +62,7 @@ public class App {
         var importId = UUID.randomUUID().toString();
         var importerNumber = Integer.parseInt(cmd.getOptionValue("importerNumber"));
         var numThreadsStr = cmd.getOptionValue("numThreads");
+        var casView = cmd.getOptionValue("casView");
         var numThreads = 1;
         if (numThreadsStr != null) numThreads = Integer.parseInt(numThreadsStr);
 
@@ -81,7 +82,7 @@ public class App {
         }
 
         for (var path : importablePaths) {
-            var importer = new Importer(context, path, importerNumber, importId);
+            var importer = new Importer(context, path, importerNumber, importId, casView);
 
             // If this is the number 1 importer, he will create a Database entry for this import. The other importers will wait for that db entry.
             if (importerNumber == 1) {
@@ -107,6 +108,7 @@ public class App {
         options.addOption("src", "importSrc", true, "The path to the import source where the UIMA-annotated files are stored.");
         options.addOption("num", "importerNumber", true, "When starting multiple importers, assign an id to each instance by counting up from 1 to n.");
         options.addOption("t", "numThreads", true, "We do the import asynchronous. Decide with how many threads, e.g. 4-8. By default, this is single threaded.");
+        options.addOption("view", "casView", true, "Name of the CAS view to import from. If not set, the default view (initial view) is used.");
         return options;
     }
 }

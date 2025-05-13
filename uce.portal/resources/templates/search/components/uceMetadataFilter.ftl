@@ -23,8 +23,11 @@
         </#if>
 
         <!-- TODO: NUMBER needs better filtering option -->
-        <#if filter.getValueType().name() == "NUMBER">
-            <input type="number" class="w-100 ml-1 small-font p-1 form-control h-auto" placeholder="{${filter.getValueType().name()}}"/>
+        <#if filter.getValueType().name() == "NUMBER" && filter.getMin()?has_content && filter.getMax()?has_content>
+            Min:
+            <input type="number" data-range="min" class="w-100 ml-1 small-font p-1 form-control h-auto" placeholder="${filter.getMin()}"/>
+            Max:
+            <input type="number" data-range="max" class="w-100 ml-1 small-font p-1 form-control h-auto" placeholder="${filter.getMax()}"/>
         </#if>
     </div>
 </div>

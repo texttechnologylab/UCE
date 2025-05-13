@@ -144,19 +144,24 @@
                         <hr class="mb-0"/>
                     </#if>
 
-                    <div class="document-content">
-                        <#assign documentPages = document.getPages(10, 0)>
-                        <#assign documentText = document.getFullText()>
-                        <#assign documentAnnotations = document.getAllAnnotations(0, 10)>
-                        <#include '*/reader/components/pagesList.ftl' />
-                    </div>
-                    <!-- Scrollbar Minimap -->
-                    <div class="scrollbar-minimap">
-                        <div class="minimap-markers"></div>
-                        <div class="minimap-preview">
-                            <div class="preview-content"></div>
+                    <#if document.getMimeType() == "application/pdf" ||  document.getMimeType() == "pdf">
+                        <#include '*/reader/components/viewerPdf.ftl' />
+                    <#else>
+                        <div class="document-content">
+                            <#assign documentPages = document.getPages(10, 0)>
+                            <#assign documentText = document.getFullText()>
+                            <#assign documentAnnotations = document.getAllAnnotations(0, 10)>
+                            <#include '*/reader/components/pagesList.ftl' />
                         </div>
-                    </div>
+                        <!-- Scrollbar Minimap -->
+                        <div class="scrollbar-minimap">
+                          <div class="minimap-markers"></div>
+                          <div class="minimap-preview">
+                            <div class="preview-content"></div>
+                          </div>
+                        </div>
+                    </#if>
+
 
                 </div>
             </div>

@@ -17,6 +17,14 @@ public class StringUtils {
     // List of common abbreviations to exclude from splitting
     public static final String[] ABBREVIATIONS = {"Dr.", "Mr.", "Ms.", "Prof.", "Jr.", "Sr.", "zB.", "V.", "B.", "A.", "C", "M", "etc.", "S.", "ab."};
 
+    public static float tryParseFloat(String value) {
+        try {
+            return Float.parseFloat(value);
+        } catch (NumberFormatException e) {
+            return Float.NaN;
+        }
+    }
+
     /**
      * Removes special characters only at beginning and end.
      *
