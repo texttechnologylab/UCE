@@ -150,6 +150,13 @@
                         <#assign documentAnnotations = document.getAllAnnotations(0, 10)>
                         <#include '*/reader/components/pagesList.ftl' />
                     </div>
+                    <!-- Scrollbar Minimap -->
+                    <div class="scrollbar-minimap">
+                        <div class="minimap-markers"></div>
+                        <div class="minimap-preview">
+                            <div class="preview-content"></div>
+                        </div>
+                    </div>
 
                 </div>
             </div>
