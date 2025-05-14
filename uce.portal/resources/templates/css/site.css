@@ -109,11 +109,12 @@ nav .selected-nav-btn.text::before {
     background-color: rgba(125, 125, 125, 0.15);
 }
 
+.bg-ghost{
+    background-color: ghostwhite;
+}
+
 .clickable:hover {
     cursor: pointer;
-    text-decoration: underline !important;
-    text-decoration-thickness: 2px !important;
-    text-decoration-color: var(--prime) !important;
 }
 
 .text {
@@ -150,6 +151,10 @@ nav .selected-nav-btn.text::before {
 
 .card-shadow {
     box-shadow: rgba(0, 0, 0, 0.1) -2px 4px 12px -6px;
+}
+
+.no-underline{
+    text-decoration: none;
 }
 
 .no-pointer-events {
@@ -566,22 +571,6 @@ nav .selected-nav-btn.text::before {
     height: 100%;
 }
 
-.expandable-container {
-    position: relative;
-    max-width: 100%;
-}
-
-.expandable-content {
-    max-height: 100px; /* collapsed height */
-    overflow: hidden;
-    position: relative;
-    transition: max-height 0.3s ease;
-}
-
-.expandable-content.expanded {
-    max-height: none;
-}
-
 #leaflet-map-modal{
     position: fixed;
     left:0;
@@ -592,22 +581,6 @@ nav .selected-nav-btn.text::before {
     border-right: 1px lightgrey solid;
     z-index: 1001;
     box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
-}
-
-.fade-out-overlay {
-    content: '';
-    position: absolute;
-    bottom: 40px;
-    left: 0;
-    right: 0;
-    height: 50px;
-    background: linear-gradient(to bottom, rgba(255,255,255,0), rgba(255,255,255,1));
-    pointer-events: none;
-    transition: opacity 0.3s ease;
-}
-
-.expandable-content.expanded + .fade-out-overlay {
-    opacity: 0;
 }
 
 .toggle-expand-btn {

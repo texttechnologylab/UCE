@@ -69,7 +69,6 @@ $('body').on('change', '#corpus-select', function () {
     const sparqlAlive = selectedOption.getAttribute("data-sparqlalive");
     const hasEmbeddings = selectedOption.getAttribute("data-hasembeddings");
     const hasRagBot = selectedOption.getAttribute("data-hasragbot");
-    const hasTopicDist = selectedOption.getAttribute("data-hastopicdist");
     const hasTimeAnnotations = selectedOption.getAttribute("data-hastimeannotations");
     const hasTaxonAnnotations = selectedOption.getAttribute("data-hastaxonannotations");
     const hasGeoNameAnnotations = selectedOption.getAttribute("data-hasgeonameannotations");
