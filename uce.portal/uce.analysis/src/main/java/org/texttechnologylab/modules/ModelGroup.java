@@ -1,5 +1,4 @@
-package org.texttechnologylab;
-import org.texttechnologylab.ModelInfo;
+package org.texttechnologylab.modules;
 import java.util.ArrayList;
 import java.util.List;
 

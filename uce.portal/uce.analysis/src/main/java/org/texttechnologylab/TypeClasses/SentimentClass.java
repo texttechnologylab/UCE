@@ -1,4 +1,6 @@
-package org.texttechnologylab;
+package org.texttechnologylab.TypeClasses;
+
+import org.texttechnologylab.modules.ModelInfo;
 
 public class SentimentClass {
 

@@ -5,13 +5,14 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.models.AnalysisRequestDto;
 import org.texttechnologylab.models.HistoryRequestDto;
-import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import spark.Route;
 import com.google.gson.Gson;
 import org.texttechnologylab.*;
 import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
+
+import org.texttechnologylab.modules.DUUIInformation;
+
 
 import spark.ModelAndView;
 
@@ -49,7 +50,7 @@ public class AnalysisApi {
             model.put("inputStance", inputStance);
 
             RunDUUIPipeline pipeline = new RunDUUIPipeline();
-            DUUIInformation  DataRequest = pipeline.getModelResources(selectedModels, inputText, inputClaim, inputCoherence, inputStance);
+            DUUIInformation DataRequest = pipeline.getModelResources(selectedModels, inputText, inputClaim, inputCoherence, inputStance);
             model.put("DUUI", DataRequest);
             model.put("SuccessRequest", true);
             model.put("modelGroups", DataRequest.getModelGroups());

@@ -14,6 +14,7 @@
         <module>uce.corpus-importer</module>
         <module>uce.web</module>
         <module>uce.search</module>
+        <module>uce.analysis</module>
     </modules>
 
     <properties>

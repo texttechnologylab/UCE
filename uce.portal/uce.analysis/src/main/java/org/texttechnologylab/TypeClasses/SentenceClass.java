@@ -1,4 +1,4 @@
-package org.texttechnologylab;
+package org.texttechnologylab.TypeClasses;
 
 import java.util.ArrayList;
 

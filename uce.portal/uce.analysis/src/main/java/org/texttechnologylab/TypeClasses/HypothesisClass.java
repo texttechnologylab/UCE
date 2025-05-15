@@ -1,32 +1,27 @@
-package org.texttechnologylab;
+package org.texttechnologylab.TypeClasses;
 
-public class ClaimClass {
+public class HypothesisClass {
 
+    private String hypothesis;
     private int begin;
     private int end;
-    private String claim;
 
+    public String getHypothesis() {
+        return hypothesis;
+    }
+    public void setHypothesis(String hypothesis) {
+        this.hypothesis = hypothesis;
+    }
     public int getBegin() {
         return begin;
     }
-
     public void setBegin(int begin) {
         this.begin = begin;
     }
-
     public int getEnd() {
         return end;
     }
-
     public void setEnd(int end) {
         this.end = end;
-    }
-
-    public String getClaim() {
-        return claim;
-    }
-
-    public void setClaim(String claim) {
-        this.claim = claim;
     }
 }

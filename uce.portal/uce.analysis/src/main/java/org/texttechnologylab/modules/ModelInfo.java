@@ -1,4 +1,4 @@
-package org.texttechnologylab;
+package org.texttechnologylab.modules;
 
 
 

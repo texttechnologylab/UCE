@@ -1,6 +1,6 @@
-package org.texttechnologylab;
+package org.texttechnologylab.TypeClasses;
 
-import org.javatuples.Tuple;
+import org.texttechnologylab.modules.ModelInfo;
 
 import java.util.ArrayList;
 

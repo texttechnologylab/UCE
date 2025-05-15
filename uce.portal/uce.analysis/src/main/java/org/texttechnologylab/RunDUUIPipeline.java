@@ -1,10 +1,17 @@
 package org.texttechnologylab;
+
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
-import java.util.*;
+import org.texttechnologylab.TypeClasses.TextClass;
+import org.texttechnologylab.modules.*;
+
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
 
 
 public class RunDUUIPipeline {

@@ -1,7 +1,6 @@
 package org.texttechnologylab;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
-import io.swagger.models.auth.In;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.uima.UIMAException;
 import org.apache.uima.cas.CASException;
@@ -15,11 +14,13 @@ import org.hucompute.textimager.uima.type.category.CategoryCoveredTagged;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIRemoteDriver;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
+import org.texttechnologylab.TypeClasses.*;
 import org.texttechnologylab.annotation.*;
+import org.texttechnologylab.modules.ModelInfo;
+import org.texttechnologylab.modules.Sentences;
 import org.xml.sax.SAXException;
 
 import java.io.IOException;
-import java.lang.ref.Reference;
 import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashMap;

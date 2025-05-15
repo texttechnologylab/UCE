@@ -1,4 +1,6 @@
-package org.texttechnologylab;
+package org.texttechnologylab.modules;
+
+import org.texttechnologylab.TypeClasses.TextClass;
 
 import java.util.HashMap;
 import java.util.List;

@@ -1,5 +1,8 @@
 package org.texttechnologylab;
 
+import org.texttechnologylab.modules.DUUIInformation;
+import org.texttechnologylab.modules.ModelGroup;
+
 import java.util.HashMap;
 import java.util.List;
 
