@@ -187,11 +187,11 @@ label {
 
 .topic-card {
     flex: 1 1 100%;
-    background: #f8f9fa;
-    border: 2px solid #007bff;
-    border-radius: 12px;
+    /*background: #f8f9fa;*/
+    /*border: 2px solid #007bff;*/
+    /*border-radius: 12px;*/
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);*/
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
@@ -284,11 +284,11 @@ label {
 
 .sentiment-card {
     flex: 1 1 100%;
-    background: #f8f9fa;
-    border: 2px solid #007bff;
-    border-radius: 12px;
+    /*background: #f8f9fa;*/
+    /*border: 2px solid #007bff;*/
+    /*border-radius: 12px;*/
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);*/
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
@@ -314,11 +314,11 @@ label {
 
 .hate-card {
     flex: 1 1 100%;
-    background: #f8f9fa;
-    border: 2px solid #007bff;
-    border-radius: 12px;
+    /*background: #f8f9fa;*/
+    /*border: 2px solid #007bff;*/
+    /*border-radius: 12px;*/
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);*/
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
@@ -375,11 +375,11 @@ label {
 
 .fact-card {
     flex: 1 1 100%;
-    background: #f8f9fa;
-    border: 2px solid #007bff;
-    border-radius: 12px;
+    /*background: #f8f9fa;*/
+    /*border: 2px solid #007bff;*/
+    /*border-radius: 12px;*/
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);*/
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
@@ -430,11 +430,11 @@ label {
 
 .toxic-card {
     flex: 1 1 100%;
-    background: #f8f9fa;
-    border: 2px solid #007bff;
-    border-radius: 12px;
+    /*background: #f8f9fa;*/
+    /*border: 2px solid #007bff;*/
+    /*border-radius: 12px;*/
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);*/
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
@@ -492,11 +492,11 @@ label {
 
 .emotion-card {
     flex: 1 1 100%;
-    background: #f8f9fa;
-    border: 2px solid #007bff;
-    border-radius: 12px;
+    /*background: #f8f9fa;*/
+    /*border: 2px solid #007bff;*/
+    /*border-radius: 12px;*/
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);*/
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
@@ -575,11 +575,11 @@ label {
 
 .coherence-card {
     flex: 1 1 100%;
-    background: #f8f9fa;
-    border: 2px solid #007bff;
-    border-radius: 12px;
+    /*background: #f8f9fa;*/
+    /*border: 2px solid #007bff;*/
+    /*border-radius: 12px;*/
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);*/
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
@@ -680,11 +680,11 @@ label {
 
 .stance-card {
     flex: 1 1 100%;
-    background: #f8f9fa;
-    border: 2px solid #007bff;
-    border-radius: 12px;
+    /*background: #f8f9fa;*/
+    /*border: 2px solid #007bff;*/
+    /*border-radius: 12px;*/
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);*/
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
@@ -711,11 +711,11 @@ label {
 
 .readability-card {
     flex: 1 1 100%;
-    background: #f8f9fa;
-    border: 2px solid #007bff;
-    border-radius: 12px;
+    /*background: #f8f9fa;*/
+    /*border: 2px solid #007bff;*/
+    /*border-radius: 12px;*/
     padding: 20px;
-    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    /*box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);*/
     transition: transform 0.3s, box-shadow 0.3s;
 }
 

@@ -21,10 +21,10 @@
                                 <li>
                                     <div class="tree-toggle">
                                         <i class="fa-solid fa-chevron-right toggle-icon"></i>
-                                        <input type="checkbox" class="group-checkbox" id="group_${group_index}" />
-                                        <label class="group-label" for="group_${group_index}">${group.name}</label>
+                                        <input type="checkbox" class="group-checkbox" id="group_${group_index}"/>
+                                        <label class="group-label" for="group_${group_index}">${group.name}(${group.models?size})</label>
                                     </div>
-                                    <ul class="nested">
+                                    <ol class="nested">
                                         <#list group.models as model>
                                             <li>
                                                 <div class="model-item">
@@ -35,7 +35,7 @@
                                                 </div>
                                             </li>
                                         </#list>
-                                    </ul>
+                                    </ol>
                                 </li>
                             </#list>
                         </ul>
@@ -88,8 +88,8 @@
             <div id="analysis-InputText-container"></div>
         </div>
         <div class="col-5">
-            <div class="group-box card-shadow bg-light">
-                <h5 class="mb-0 mr-1 color-prime">${languageResource.get("output")}</h5>
+            <div>
+<#--                <h5 class="mb-0 mr-1 color-prime">${languageResource.get("output")}</h5>-->
                 <div id="analysis-result-container">
                 </div>
             </div>
