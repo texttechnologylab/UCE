@@ -8,7 +8,7 @@
     <div id="search-results-visualization-graph"></div>
 
     <form>
-        <div class="row mt-2 mb-0 mx-0">
+        <div class="row mb-0 mx-0 mt-3">
             <div class="col-md-4 mb-0">
                 <div class="form-group">
                     <label for="search-viz-n-bins">${languageResource.get("searchVisualizationPlotNBinsLabel")}</label>
@@ -22,7 +22,7 @@
             <div class="col-md-4 mb-0">
             </div>
         </div>
-        <div class="row mt-0 mx-0">
+        <div class="row mx-0">
             <div class="col-md-4 mt-0">
                 <div class="form-group">
                     <input
@@ -46,7 +46,7 @@
             </div>
             <div class="col-md-4 mt-0">
                 <div class="form-group">
-                    <button type="submit" id="search-viz-update-button" class="form-control btn btn-primary">${languageResource.get("searchVisualizationPlotUpdateButton")}</button>
+                    <button type="submit" id="search-viz-update-button" class="form-control p-0 btn btn-primary">${languageResource.get("searchVisualizationPlotUpdateButton")}</button>
                 </div>
             </div>
         </div>

@@ -141,7 +141,6 @@
                                 <option data-id="${corpusVm.getCorpus().getId()}"
                                         data-hasbiofid="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()?c}"
                                         data-hasembeddings="${corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()?c}"
-                                        data-hastopicdist="${corpusVm.getCorpusConfig().getOther().isAvailableOnFrankfurtUniversityCollection()?c}"
                                         data-hasragbot="${corpusVm.getCorpusConfig().getOther().isEnableRAGBot()?c}"
                                         data-hastaxonannotations="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isAnnotated()?c}"
                                         data-hastimeannotations="${corpusVm.getCorpusConfig().getAnnotations().isTime()?c}"

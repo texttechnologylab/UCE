@@ -147,6 +147,10 @@ public class SearchState extends CacheItem {
         this.documentIdxToRank = documentIdxToRank;
     }
 
+    public boolean hasUceMetadataFilters(){
+        return getUceMetadataFilters() != null && !getUceMetadataFilters().isEmpty();
+    }
+
     public List<UCEMetadataFilterDto> getUceMetadataFilters() {
         return uceMetadataFilters;
     }
