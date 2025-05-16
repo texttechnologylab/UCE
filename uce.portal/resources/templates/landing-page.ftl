@@ -26,8 +26,13 @@
                     class="color-prime fas fa-database mr-2"></i> ${languageResource.get("corpora")}</h3>
         <div class="row m-0 p-0 ">
             <#if corpora?size == 0>
-                <div class="group-box mt-2 bg-ghost">
-                    <p class="mb-0 text-center w-100 text">${languageResource.get("noCorpora")}</p>
+                <div class="d-flex flex-column align-items-center justify-content-center w-100 mt-5 px-3">
+                    <p class="text-muted text-center mb-3" style="font-size: 1.1rem;">
+                        ${languageResource.get("noCorpora")}
+                    </p>
+                    <button class="btn btn-primary btn-lg" data-toggle="modal" data-target="#addCorpusModal">
+                        <i class="fas fa-plus-circle mr-2"></i>${languageResource.get("addNewCorpus")}
+                    </button>
                 </div>
             </#if>
             <#list corpora as corpusVm>

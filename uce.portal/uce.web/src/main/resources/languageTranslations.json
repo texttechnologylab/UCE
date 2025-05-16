@@ -272,8 +272,8 @@
     "en-EN": "No corpus description provided."
   },
   "noCorpora": {
-    "de-DE": "Keine Korpora verfügbar. Verwenden Sie den Korpusimporter und eine Korpuskonfigurationsdatei in Verbindung mit kommentierten UIMA-Dateien, um Korpora zu importieren und das UCE-Webportal zu nutzen.",
-    "en-EN": "No corpora available. Use the Corpus Importer and a corpus configuration file in conjunction with annotated UIMA files to import corpora and use the UCE web portal."
+    "de-DE": "Keine Korpora verfügbar.",
+    "en-EN": "No corpora available."
   },
   "noMetadataFound": {
     "de-DE": "Keine Metadaten vorhanden.",
@@ -402,5 +402,53 @@
   "topicDistribution": {
     "de-DE": "Thema Verteilung",
     "en-EN": "Topic Distribution"
+  },
+  "corpusSettings": {
+    "de-DE": "Korpus-Einstellungen",
+    "en-EN": "Corpus Settings"
+  },
+  "manageCorpus": {
+    "de-DE": "Korpus verwalten",
+    "en-EN": "Manage Corpus"
+  },
+  "addNewCorpus": {
+    "de-DE": "Neuen Korpus hinzufügen",
+    "en-EN": "Add New Corpus"
+  },
+  "addCorpus": {
+    "de-DE": " Korpus hinzufügen",
+    "en-EN": "Add Corpus"
+  },
+  "selectFolder": {
+    "de-DE": "Ordner auswählen",
+    "en-EN": "Select Folder"
+  },
+  "corpusName": {
+    "de-DE": "Korpusname (Optional)",
+    "en-EN": "Corpus Name (Optional)"
+  },
+  "cancel": {
+    "de-DE": "Abbrechen",
+    "en-EN": "Cancel"
+  },
+  "add": {
+    "de-DE": "Hinzufügen",
+    "en-EN": "Add"
+  },
+  "folderPathPlaceholder": {
+    "de-DE": "Pfad zum Ordner eingeben",
+    "en-EN": "Enter folder path"
+  },
+  "corpusNamePlaceholder": {
+    "de-DE": "Korpusname eingeben",
+    "en-EN": "Enter corpus name"
+  },
+  "uploadXmiFile": {
+    "de-DE": "XMI-Datei hochladen",
+    "en-EN": "Upload XMI File"
+  },
+  "loadingCorpus": {
+    "en-EN": "Please wait while we add your corpus...",
+    "de-DE": "Bitte warten Sie, während wir Ihren Korpus hinzufügen..."
   }
 }
