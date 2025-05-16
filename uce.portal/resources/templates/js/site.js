@@ -253,3 +253,48 @@ $(document).ready(function () {
     //window.flowVizHandler.createFlowChart(document.getElementById('full-flow-container'));
     //window.flowVizHandler.createNewFromLinkableNode("org.texttechnologylab.models.corpus.Document-3515");
 })
+$('.corpus-settings-btn').on('click', function(e) {
+    e.preventDefault();
+    $('#corpus-settings-dropdown').toggleClass('display-none');
+});
+
+$(document).on('mousedown', function(e) {
+    const $dropdown = $('#corpus-settings-dropdown');
+    const $btn = $('.corpus-settings-btn');
+    if (
+        !$dropdown.is(e.target) && $dropdown.has(e.target).length === 0 &&
+        !$btn.is(e.target) && $btn.has(e.target).length === 0
+    ) {
+        $dropdown.addClass('display-none');
+    }
+});
+
+$('#addCorpusForm').on('submit', function (e) {
+    e.preventDefault();
+
+    const formData = new FormData(this);
+    const corpusPath = $('#corpusPath').val();
+
+    formData.append('corpusPath', corpusPath);
+    // Show loader and hide modal
+    $('#globalLoader').css('display', 'flex');
+    $('#addCorpusModal').modal('hide');
+
+    $.ajax({
+        url: '/api/ie/upload/Corpus', // API endpoint
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function (response) {
+            //alert('Corpus Import started successfully!');
+            $('#globalLoader').hide();
+            // $('#addCorpusModal').modal('hide');
+            location.reload();
+        },
+        error: function (xhr) {
+            alert('Error uploading the corpus: ' + xhr.responseText);
+            $('#globalLoader').hide();
+        }
+    });
+});

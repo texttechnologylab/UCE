@@ -63,10 +63,17 @@
 
 <body>
 <#include "*/messageModal.ftl">
-
+<#include "*/corpus/components/corpusSetting.ftl">
 <!--<div id="leaflet-map-modal">
 
 </div>-->
+<div id="globalLoader">
+    <!-- Flex column container -->
+    <div style="display: flex; flex-direction: column; align-items: center;">
+        <div class="spinner-border text-primary" role="status" ></div>
+        <div class="mt-3 text-primary font-weight-bold">${languageResource.get("loadingCorpus")}</div>
+    </div>
+</div>
 
 <!-- The flow chart of the Linkable objects -->
 <div id="flow-chart-modal" class="display-none">
@@ -149,6 +156,26 @@
                                         data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
                             </#list>
                         </select>
+                        <div class="dropdown corpus-settings">
+                            <a class="btn btn-light rounded-0 corpus-settings-btn" data-trigger="hover"
+                               data-toggle="popover" data-placement="right"
+                               data-content="${languageResource.get("corpusSettings")}">
+                                <i class="fas fa-cog large-font mt-1 text-dark mr-1 ml-1"></i>
+                            </a>
+                            <div id="corpus-settings-dropdown" class="dropdown-content display-none">
+
+                                <a href="#" class="manage-corpus-btn"
+                                        <#if corpora?size == 0>
+                                            style="pointer-events: none; opacity: 0.5;" aria-disabled="true"
+                                        </#if> data-toggle="modal" data-target="#manageCorpusModal">
+                                    <i class="fas fa-edit mr-2"></i>${languageResource.get("manageCorpus")}
+                                </a>
+
+                                <a href="#" class="add-corpus-btn" data-toggle="modal" data-target="#addCorpusModal" >
+                                    <i class="fas fa-plus-circle mr-2"></i>${languageResource.get("addNewCorpus")}
+                                </a>
+                            </div>
+                        </div>
                     </div>
                 </div>
 

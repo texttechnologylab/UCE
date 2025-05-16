@@ -304,6 +304,7 @@ public class App {
 
             path("/ie", () -> {
                 post("/upload/uima", importExportApi.uploadUIMA);
+                post("/upload/Corpus", importExportApi.uploadCorpus);
             });
 
             path("/wiki", () -> {

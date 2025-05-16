@@ -6,11 +6,23 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.Importer;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.imp.ImportStatus;
+import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import spark.Route;
 
+import javax.servlet.MultipartConfigElement;
+import javax.servlet.ServletException;
+import java.io.*;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 public class ImportExportApi {
 
@@ -59,4 +71,40 @@ public class ImportExportApi {
         }
     });
 
+
+    public Route uploadCorpus = ((request, response) -> {
+        try {
+
+            try (InputStream folderPathStream = request.raw().getPart("corpusPath").getInputStream()) {
+                String folderPath = new String(folderPathStream.readAllBytes(), StandardCharsets.UTF_8);
+
+                var importId = UUID.randomUUID().toString();
+                var importerNumber = 1;
+                var numThreads = 1;
+                var importer = new Importer(this.serviceContext, folderPath,importerNumber,importId,null)  ;
+                // If this is the number 1 importer, he will create a Database entry for this import. The other importers will wait for that db entry.
+
+                var uceImport = new UCEImport(importId, folderPath, ImportStatus.STARTING);
+                var fileCount = ExceptionUtils.tryCatchLog(importer::getXMICountInPath,
+                        (ex) -> logger.warn("There was an IO error counting the importable UIMA files - the import will probably fail at some point.", ex));
+                uceImport.setTotalDocuments(fileCount == null ? -1 : fileCount);
+                serviceContext.getBean(PostgresqlDataInterface_Impl.class).saveOrUpdateUceImport(uceImport);
+
+                // Import the doc in the background
+                var importFuture = CompletableFuture.runAsync(() -> {
+                    try {
+                        importer.start(numThreads);
+                    } catch (DatabaseOperationException e) {
+                        throw new RuntimeException(e);
+                    }
+                });
+                importFuture.get();
+                response.status(200);
+                return "Corpus added successfully!";
+            }
+        } catch (Exception e) {
+            response.status(500);
+            return "Error uploading the corpus: " + e.getMessage();
+        }
+    });
 }
