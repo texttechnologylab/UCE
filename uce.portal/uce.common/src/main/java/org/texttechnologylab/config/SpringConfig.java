@@ -36,4 +36,7 @@ public class SpringConfig {
     @Bean
     public RAGService ragService() {return new RAGService(databaseService());}
 
+    @Bean
+    public S3Storage s3Storage() {return new S3Storage();}
+
 }

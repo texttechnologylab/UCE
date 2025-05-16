@@ -37,6 +37,7 @@
 
     "includeKeywordDistribution": false,
     "enableEmbeddings": false,
-    "enableRAGBot": false
+    "enableRAGBot": false,
+    "enableS3Storage": false
   }
 }
