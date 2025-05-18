@@ -118,6 +118,14 @@ public class CommonConfig {
         return getProperty("uce.version");
     }
 
+    public String getMinioEndpoint() { return getProperty("minio.endpoint");}
+
+    public String getMinioBucket() { return getProperty("minio.bucket");}
+
+    public String getMinioKey() { return getProperty("minio.username");}
+
+    public String getMinioSecret() { return getProperty("minio.pwd");}
+
     public List<FeatureCode> getGeoNamesFeatureCodesList() {
         return this.geoNamesFeatureCodes;
     }
