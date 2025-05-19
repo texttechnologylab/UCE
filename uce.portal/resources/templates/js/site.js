@@ -101,8 +101,8 @@ $('body').on('change', '#corpus-select', function () {
     if (hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
     else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
 
-    if (hasGeoNameAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="GEONAME"]').show();
-    else $('.layered-search-builder-container .choose-layer-popup a[data-type="GEONAME"]').hide();
+    if (hasGeoNameAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').show();
+    else $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').hide();
 
     if (hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false' && hasGeoNameAnnotations === 'false') {
         $('.open-layered-search-builder-btn-badge').hide();

@@ -46,7 +46,7 @@
             </div>
             <div class="col-md-4 mt-0">
                 <div class="form-group">
-                    <button type="submit" id="search-viz-update-button" class="form-control p-0 btn btn-primary">${languageResource.get("searchVisualizationPlotUpdateButton")}</button>
+                    <button type="submit" id="search-viz-update-button" class="form-control p-0 btn btn-primary"><i class="fas fa-sync mr-1"></i> ${languageResource.get("searchVisualizationPlotUpdateButton")}</button>
                 </div>
             </div>
         </div>

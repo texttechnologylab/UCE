@@ -19,23 +19,23 @@ let LayeredSearchHandler = (function () {
         else $layer.find('.apply-layer-btn').removeClass('loading-btn');
     }
 
-    LayeredSearchHandler.prototype.updateUIBatch = function(){
+    LayeredSearchHandler.prototype.updateUIBatch = function () {
         const status = this.submitStatus;
-        if(status === true){
+        if (status === true) {
             $('.search-header .open-layered-search-builder-btn-badge').html(Object.keys(this.layers).length);
-        } else{
+        } else {
             $('.search-header .open-layered-search-builder-btn-badge').html('0');
         }
     }
 
-    LayeredSearchHandler.prototype.setSubmitStatus = function($clickedBtn){
+    LayeredSearchHandler.prototype.setSubmitStatus = function ($clickedBtn) {
         const status = $clickedBtn.attr('data-submit') === 'true';
-        if(status === true && Object.keys(this.layers).length === 0) {
+        if (status === true && Object.keys(this.layers).length === 0) {
             showMessageModal('No Layers', 'You can only apply if you have added at least one layer.');
             return;
         }
-        $('.layered-search-builder-container .submit-div a').each(function(){
-            if($(this).attr('data-submit') !== status.toString()) $(this).removeClass('activated');
+        $('.layered-search-builder-container .submit-div a').each(function () {
+            if ($(this).attr('data-submit') !== status.toString()) $(this).removeClass('activated');
             else $(this).addClass('activated');
         })
         $('.search-settings-div .submit-layered-search-input').val(status);
@@ -43,17 +43,17 @@ let LayeredSearchHandler = (function () {
         this.updateUIBatch();
     }
 
-    LayeredSearchHandler.prototype.deleteSlot = function($slot){
+    LayeredSearchHandler.prototype.deleteSlot = function ($slot) {
         const $layer = $slot.closest('.layer-container');
         const depth = $layer.attr('data-depth');
-        if(!this.layers[depth]) return;
+        if (!this.layers[depth]) return;
         let newSlotList = [];
         this.layers[depth].forEach(($s) => {
-            if($s.attr('data-id') === $slot.attr('data-id')) $s.remove();
+            if ($s.attr('data-id') === $slot.attr('data-id')) $s.remove();
             else newSlotList.push($s);
         })
         this.layers[depth] = newSlotList;
-        if(newSlotList.length === 0) $layer.find('.empty-slot').get(0).style.maxWidth = '100%';
+        if (newSlotList.length === 0) $layer.find('.empty-slot').get(0).style.maxWidth = '100%';
         this.markLayersAsDirty(depth);
     }
 
@@ -61,16 +61,16 @@ let LayeredSearchHandler = (function () {
         delete this.layers[depth];
         let newLayers = {};
         Object.keys(this.layers).forEach((k) => {
-            if(k > depth) newLayers[k - 1] = this.layers[k];
+            if (k > depth) newLayers[k - 1] = this.layers[k];
             else newLayers[k] = this.layers[k];
         })
         this.layers = newLayers;
         let _this = this;
         // Delete the UI element
-        $('.layered-search-builder-container .layers-container .layer-container').each(function(){
+        $('.layered-search-builder-container .layers-container .layer-container').each(function () {
             let dataDepth = $(this).attr('data-depth');
-            if(dataDepth === depth) $(this).remove();
-            else if(dataDepth > depth) {
+            if (dataDepth === depth) $(this).remove();
+            else if (dataDepth > depth) {
                 const newDepth = dataDepth - 1;
                 $(this).attr('data-depth', newDepth);
                 $(this).find('.depth-label').html(newDepth);
@@ -111,14 +111,26 @@ let LayeredSearchHandler = (function () {
         this.markLayersAsDirty(depth, false);
 
         // If the type is a location, we need to setup the leaflet map
-        if(type === "GEONAME"){
-            graphVizHandler.createUceMap($layer.find('.slot[data-id="[ID]"] .location-map'.replace('[ID]', id)).get(0));
+        if (type === "LOCATION") {
+            const uceMap = graphVizHandler.createUceMap($layer.find('.slot[data-id="[ID]"] .location-map'.replace('[ID]', id)).get(0));
+            // Subscribe to the events
+            const $slot = $('.slot[data-id="[ID]"]'.replace('[ID]', id));
+            const $slotInput = $slot.find('.slot-value');
+            const ctx = this;
+            uceMap.on('stateChanged', function (e) {
+                if (e.longLat && e.radius) {
+                    $slotInput.val('R::lng=' + e.longLat.lng.toFixed(2) + ";lat=" + e.longLat.lat.toFixed(2) + ";r=" + e.radius.toFixed(2));
+                    ctx.markLayersAsDirty(depth, false);
+                }
+            });
+            // There is a weird bug with leaflet and its re-sizing. I need to manually hide it here once.
+            $slot.find('.location-map').hide();
         }
     }
 
-    LayeredSearchHandler.prototype.buildApplicableLayers = function(applicableDepths){
+    LayeredSearchHandler.prototype.buildApplicableLayers = function (applicableDepths) {
         let applicableLayers = [];
-        if(applicableDepths.length === 0) applicableDepths = Object.keys(this.layers);
+        if (applicableDepths.length === 0) applicableDepths = Object.keys(this.layers);
 
         applicableDepths.forEach((d) => {
             this.setLayerIsLoading(d, true);
@@ -167,7 +179,7 @@ let LayeredSearchHandler = (function () {
         });
     }
 
-    LayeredSearchHandler.prototype.markLayersAsDirty = function (depth, apply=true) {
+    LayeredSearchHandler.prototype.markLayersAsDirty = function (depth, apply = true) {
         let applicableDepths = Object.keys(this.layers).filter(d => d >= depth);
         applicableDepths.forEach((d) => {
             let $layer = $('.layers-container .layer-container[data-depth="' + d + '"]');
@@ -227,28 +239,28 @@ $('body').on('change', '.layered-search-builder-container .layer .slot .slot-val
 /**
  * Triggers when we want to add a new layer.
  */
-$('body').on('click', '.layered-search-builder-container .add-new-layer-btn',  function () {
+$('body').on('click', '.layered-search-builder-container .add-new-layer-btn', function () {
     window.layeredSearchHandler.addNewLayerAtEnd();
 })
 
 /**
  * Triggers when we want to delete a layer.
  */
-$('body').on('click', '.layered-search-builder-container .layer-container .delete-layer-btn',  function () {
+$('body').on('click', '.layered-search-builder-container .layer-container .delete-layer-btn', function () {
     window.layeredSearchHandler.deleteLayer($(this).closest('.layer-container').attr('data-depth'));
 })
 
 /**
  * Triggers when we want to delete a layer.
  */
-$('body').on('click', '.layered-search-builder-container .submit-div a',  function () {
+$('body').on('click', '.layered-search-builder-container .submit-div a', function () {
     window.layeredSearchHandler.setSubmitStatus($(this));
 })
 
 /**
  * Triggers when we want to delete a slot.
  */
-$('body').on('click', '.layered-search-builder-container .layer-container .slot .delete-slot-btn',  function () {
+$('body').on('click', '.layered-search-builder-container .layer-container .slot .delete-slot-btn', function () {
     window.layeredSearchHandler.deleteSlot($(this).closest('.slot'));
 })
 

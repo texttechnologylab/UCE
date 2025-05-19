@@ -95,8 +95,8 @@ BEGIN
 				-- %s
                 d.documenttitle
             FROM limited_docs d
-            %s
             JOIN page p ON d.id = p.document_id
+            %s
 			-- %s
             AND ($5 IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))';
 	ELSE

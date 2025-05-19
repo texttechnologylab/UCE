@@ -18,6 +18,9 @@ import org.apache.uima.jcas.cas.AnnotationBase;
 import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.geonames.GeoNamesEntity;
@@ -70,7 +73,7 @@ public class Importer {
 
     private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger(Importer.class);
-    private static final int BATCH_SIZE = 250;
+    private static final int BATCH_SIZE = 10;
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
@@ -287,18 +290,25 @@ public class Importer {
                                         // Block other threads by not releasing the latch yet. We want the postprocessing being done by a single thread,
                                         // while all the others wait.
                                         logImportInfo("=========== UPDATING THE LOGICAL LINKS...", LogStatus.POST_PROCESSING, "LINKS", 0);
-                                        var result = ExceptionUtils.tryCatchLog(
+                                        var logicalLinksResult = ExceptionUtils.tryCatchLog(
                                                 () -> db.callLogicalLinksRefresh(),
                                                 (ex) -> logImportError("Error updating the logical links while postprocessing a batch.", ex, filePath.toString()));
-                                        if (result != null)
-                                            logImportInfo("=========== Finished updating the logical links. Inserted new links: " + result, LogStatus.SAVED, "LINKS", 0);
+                                        if (logicalLinksResult != null)
+                                            logImportInfo("=========== Finished updating the logical links. Inserted new links: " + logicalLinksResult, LogStatus.SAVED, "LINKS", 0);
 
                                         logImportInfo("=========== UPDATING THE LEXICON...", LogStatus.POST_PROCESSING, "LEXICON", 0);
-                                        var result2 = ExceptionUtils.tryCatchLog(
+                                        var lexiconResult = ExceptionUtils.tryCatchLog(
                                                 () -> lexiconService.updateLexicon(false),
                                                 (ex) -> logImportError("Error updating the lexicon while postprocessing a batch.", ex, filePath.toString()));
-                                        if (result2 != null)
-                                            logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + result2, LogStatus.SAVED, "LEXICON", 0);
+                                        if (lexiconResult != null)
+                                            logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + lexiconResult, LogStatus.SAVED, "LEXICON", 0);
+
+                                        logImportInfo("=========== UPDATING THE GEONAME LOCATIONS...", LogStatus.POST_PROCESSING, "GEONAME_LOCATION", 0);
+                                        var geonameLocationResult = ExceptionUtils.tryCatchLog(
+                                                () -> db.callGeonameLocationRefresh(),
+                                                (ex) -> logImportError("Error updating the geoname locations while postprocessing a batch.", ex, filePath.toString()));
+                                        if (geonameLocationResult != null)
+                                            logImportInfo("=========== Finished updating the geoname locations. Inserted new locations: " + geonameLocationResult, LogStatus.SAVED, "GEONAME_LOCATION", 0);
 
                                         logImportInfo("=========== POSTPROCESSING THE CORPUS...", LogStatus.POST_PROCESSING, "CORPUS", 0);
                                         postProccessCorpus(corpus1, corpusConfigFinal);
@@ -328,6 +338,11 @@ public class Importer {
         ExceptionUtils.tryCatchLog(
                 () -> lexiconService.updateLexicon(false),
                 (ex) -> logger.error("Error in the final lexicon update of the current corpus with id " + corpus1.getId()));
+
+        // Final geonames location updating
+        ExceptionUtils.tryCatchLog(
+                () -> db.callGeonameLocationRefresh(),
+                (ex) -> logger.error("Error in the final geoname location update of the current corpus with id " + corpus1.getId()));
 
         // Final corpus postprocessing
         ExceptionUtils.tryCatchLog(

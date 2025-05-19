@@ -1,9 +1,6 @@
 package org.texttechnologylab.utils;
 
 
-import org.texttechnologylab.models.UIMAAnnotation;
-import org.texttechnologylab.models.corpus.Page;
-
 import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -79,7 +76,7 @@ public class StringUtils {
     }
 
     // Method to check if a segment ends with a common abbreviation
-    public static boolean EndsWithAbbreviation(String segment) {
+    public static boolean endsWithAbbreviation(String segment) {
         for (String abbr : ABBREVIATIONS) {
             if (segment.endsWith(abbr)) {
                 return true;
@@ -134,7 +131,7 @@ public class StringUtils {
 
 
     // Method to add line breaks at sensible points with deterministic randomness
-    public static String AddLineBreaks(String text, long seed) {
+    public static String addLineBreaks(String text, long seed) {
         Random rand = new Random(seed);
 
         // Split the text, but avoid breaking after abbreviations and number-ending periods
@@ -145,7 +142,7 @@ public class StringUtils {
             segment = segment.trim();
 
             // Avoid line breaks after numbers followed by periods (e.g., "18.") or abbreviations (e.g., "Dr.")
-            if (!segment.matches(".*\\d+\\.$") && !EndsWithAbbreviation(segment)) {
+            if (!segment.matches(".*\\d+\\.$") && !endsWithAbbreviation(segment)) {
                 formattedText.append(segment);
 
                 // Add a line break randomly based on seeded randomness
@@ -167,7 +164,7 @@ public class StringUtils {
         return formattedText.toString();
     }
 
-    public static String ReplaceSpacesInQuotes(String input) {
+    public static String replaceSpacesInQuotes(String input) {
         // Regex pattern to match any text inside quotes and replace spaces inside
         Pattern pattern = Pattern.compile("(['\"])(.*?)\\1");
         Matcher matcher = pattern.matcher(input);
@@ -186,7 +183,7 @@ public class StringUtils {
     // https://en.wikipedia.org/wiki/Taxonomic_rank#:~:text=Main%20ranks,-In%20his%20landmark&text=Today%2C%20the%20nomenclature%20is%20regulated,family%2C%20genus%2C%20and%20species.
     public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::"};
 
-    public static String GetFullTaxonRankByCode(String code) {
+    public static String getFullTaxonRankByCode(String code) {
         return switch (code) {
             case "C" -> "class";
             case "F" -> "family";

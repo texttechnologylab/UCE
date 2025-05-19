@@ -501,6 +501,19 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
+    public int callGeonameLocationRefresh() throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+            var insertedLex = 0;
+            try (var storedProcedure = connection.prepareCall("{call update_geoname_locations()}")) {
+                var result = storedProcedure.executeQuery();
+                while (result.next()) {
+                    insertedLex = result.getInt(1);
+                }
+            }
+            return insertedLex;
+        }));
+    }
+
     @Override
     public DocumentSearchResult semanticRoleSearchForDocuments(int skip,
                                                                int take,

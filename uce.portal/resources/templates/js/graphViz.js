@@ -13,12 +13,13 @@ var GraphVizHandler = (function () {
         console.log('Created GraphViz Handler.');
     }
 
-    GraphVizHandler.prototype.createUceMap = async function(target){
+    GraphVizHandler.prototype.createUceMap = function(target){
         const chartId = generateUUID();
         const uceMap = new UCEMap(target);
 
         this.activeCharts[chartId] = uceMap;
         activatePopovers();
+        return uceMap;
     }
 
     /**

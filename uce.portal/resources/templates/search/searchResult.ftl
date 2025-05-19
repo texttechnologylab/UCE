@@ -15,7 +15,7 @@
             <div class="group-box bg-ghost card-shadow w-100">
                 <div class="flexed align-items-center justify-content-between clickable"
                      onclick="$(this).closest('.group-box').find('.expanded').fadeToggle(75)">
-                    <p class="mb-0 w-100">Visualizations</p>
+                    <h6 class="mb-0 w-100">${languageResource.get("searchVisualizationSummaryTitle")}</h6>
                     <a class="rounded-a"><i class="far fa-chart-bar"></i></a>
                 </div>
 

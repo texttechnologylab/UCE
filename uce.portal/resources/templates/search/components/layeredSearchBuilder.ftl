@@ -30,13 +30,14 @@
             </div>
         </div>
 
-        <div class="template-GEONAME slot" data-id="-" data-type="GEONAME">
+        <div class="template-LOCATION slot" data-id="-" data-type="LOCATION">
             <div class="flexed mb-2 align-items-center justify-content-between">
                 <label class="mb-0 w-100 text ml-1 mr-1"><i class="fas fa-map-marker-alt mr-2"></i>Location Filter</label>
                 <a class="rounded-a bg-light light-border rounded-0 delete-slot-btn"><i class="small-font fas fa-trash-alt"></i></a>
             </div>
             <div class="w-100 flexed align-items-center">
                 <input class="form-control rounded-0 w-100 slot-value" placeholder="Wien"/>
+                <button class="btn btn-primary rounded-0" onclick="$(this).parent().next().toggle()"><i class="fas fa-map-marked-alt"></i></button>
             </div>
             <!-- leafmap map for location choosing -->
             <div class="location-map">
@@ -83,7 +84,7 @@
                                                     class="fas fa-tenge"></i></a>
                                         <a class="rounded-a mt-0 ml-1 mr-1" data-type="TIME"><i
                                                     class="fas fa-clock"></i></a>
-                                        <a class="rounded-a mt-0 ml-1 mr-1" data-type="GEONAME"><i
+                                        <a class="rounded-a mt-0 ml-1 mr-1" data-type="LOCATION"><i
                                                     class="fas fa-map-marker-alt"></i></a>
                                     </div>
                                 </div>

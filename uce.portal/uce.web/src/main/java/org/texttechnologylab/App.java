@@ -122,6 +122,16 @@ public class App {
             }
         });
 
+        logger.info("Checking if we can or should update any geoname locations... (this may take a moment depending on the time of the last update. Runs asynchronous.)");
+        CompletableFuture.runAsync(() -> {
+            try{
+                var result = context.getBean(PostgresqlDataInterface_Impl.class).callGeonameLocationRefresh();
+                logger.info("Finished updating the geoname locations. Updated locations: " + result);
+            } catch (Exception ex){
+                logger.error("There was an error trying to refresh geoname locations in the startup of the web app. App starts normally though.");
+            }
+        });
+
         // Set the folder for our template files of freemarker
         try {
             configuration.setDirectoryForTemplateLoading(new File(commonConfig.getTemplatesLocation()));

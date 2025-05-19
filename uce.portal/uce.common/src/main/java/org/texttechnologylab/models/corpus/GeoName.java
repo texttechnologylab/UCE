@@ -1,5 +1,7 @@
 package org.texttechnologylab.models.corpus;
 
+import org.hibernate.annotations.Type;
+import org.locationtech.jts.geom.Point;
 import org.texttechnologylab.models.UIMAAnnotation;
 
 import javax.persistence.*;
@@ -34,6 +36,14 @@ public class GeoName extends UIMAAnnotation {
     public GeoName(){}
     public GeoName(int begin, int end){
         super(begin, end);
+    }
+
+    public Long getPageId() {
+        return pageId;
+    }
+
+    public void setPageId(Long pageId) {
+        this.pageId = pageId;
     }
 
     public Page getPage() {
