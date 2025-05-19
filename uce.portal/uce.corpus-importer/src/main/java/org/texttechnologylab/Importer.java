@@ -84,6 +84,7 @@ public class Importer {
     private GbifService gbifService;
     private RAGService ragService;
     private JenaSparqlService jenaSparqlService;
+    private S3Storage s3Storage;
     private String path;
     private String importId;
     private Integer importerNumber;
@@ -115,6 +116,7 @@ public class Importer {
         this.lexiconService = serviceContext.getBean(LexiconService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
         this.gbifService = serviceContext.getBean(GbifService.class);
+        this.s3Storage = serviceContext.getBean(S3Storage.class);
     }
 
     /**
@@ -431,6 +433,16 @@ public class Importer {
     }
 
     /**
+     * Upload input stream to minio s3 storage
+     * @param inputStream
+     * @param objectName
+     * @throws Exception
+     */
+    private void uploadInputStream(InputStream inputStream, String objectName) throws Exception {
+        this.s3Storage.uploadInputStream(inputStream, objectName, new HashMap<>());
+    }
+
+    /**
      * Convert a UIMA jCas to an OCRDocument
      */
     public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath) {
@@ -501,6 +513,12 @@ public class Importer {
 
             // For now, we skip this. This doesn't relly improve anything and is very costly.
             //setCleanedFullText(document, jCas);
+            if ( corpusConfig.getOther().isEnableS3Storage() ) {
+                ExceptionUtils.tryCatchLog(
+                        () -> uploadInputStream(openInputStreamBasedOnExtension(filePath), document.getDocumentId()),
+                        (ex) -> logImportWarn("Was not able to upload XMI to S3 Storage!", ex, filePath));
+            }
+
             if (corpusConfig.getAnnotations().isUceMetadata())
                 ExceptionUtils.tryCatchLog(
                         () -> setUceMetadata(document, jCas, corpus.getId()),

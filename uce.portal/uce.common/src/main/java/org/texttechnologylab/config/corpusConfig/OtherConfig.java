@@ -5,6 +5,7 @@ public class OtherConfig{
     private boolean includeKeywordDistribution;
     private boolean enableEmbeddings;
     private boolean enableRAGBot;
+    private boolean enableS3Storage;
 
     public boolean isIncludeKeywordDistribution() {
         return includeKeywordDistribution;
@@ -36,5 +37,13 @@ public class OtherConfig{
 
     public void setEnableRAGBot(boolean enableRAGBot) {
         this.enableRAGBot = enableRAGBot;
+    }
+
+    public boolean isEnableS3Storage() {
+        return enableS3Storage;
+    }
+
+    public void setEnableS3Storage(boolean enableS3Storage) {
+        this.enableS3Storage = enableS3Storage;
     }
 }
