@@ -40,7 +40,9 @@ function setLanguage(language) {
 
 function getLanguage() {
     if(document.cookie.includes("language=")){
-        return document.cookie.split("=")[1];
+        return document.cookie.split("; ")
+            .find((row) => row.startsWith("language="))
+            ?.split("=")[1];
     }
     return undefined;
 }
