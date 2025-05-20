@@ -59,6 +59,9 @@ CREATE INDEX IF NOT EXISTS idx_srlink_groundcoveredtext ON srlink(LOWER(groundco
 -- Create indexes on our lexicon.
 CREATE INDEX IF NOT EXISTS idx_lexicon_coveredtext_lower_trgm ON lexicon USING gin (lower(coveredtext) gin_trgm_ops);
 
+-- Create indexes for the Geoname Locations and Postgis in general
+CREATE INDEX IF NOT EXISTS idx_location_geography ON geoname USING GIST (location);
+
 -- Create a Generated Column for the "taxon" value column that splits the values x|y|z into its own array
 DO $$
 BEGIN

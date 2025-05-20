@@ -5,10 +5,12 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.corpus.GeoNameFeatureClass;
 import org.texttechnologylab.models.dto.LayeredSearchLayerDto;
 import org.texttechnologylab.models.dto.LayeredSearchSlotType;
 import org.texttechnologylab.models.dto.LocationDto;
 import org.texttechnologylab.models.search.CacheItem;
+import org.texttechnologylab.models.search.EnrichedSearchQuery;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.StringUtils;
@@ -217,7 +219,7 @@ public class LayeredSearch extends CacheItem {
 
                 // Let's see if we got a specific long/lat with a range
                 if(slot.getValue().startsWith("R::")){
-                    var locationDto = LocationDto.fromCommandString(slot.getValue());
+                    var locationDto = EnrichedSearchQuery.parseLocationRadiusCommand(slot.getValue());
                     if(locationDto == null) continue;
                     // We use the postgis extension for fast radius-based geographic queries.
                     var condition = "ST_DWithin(location, ST_MakePoint({LNG},{LAT})::geography, {RADIUS}) " + conditionEnding;
@@ -228,8 +230,17 @@ public class LayeredSearch extends CacheItem {
                     statements.add(statement);
                     continue;
                 } else if(slot.getValue().startsWith("LOC::")){
-                    // Then we have a location command with geonames feature classes and codes
+                    // Then we have a location command with geonames feature classes and codes. Have a look at EnrichedSearchQuery for better description
+                    var split = slot.getValue().replace("LOC::", "").split("\\.");
+                    var featureClass = split[0];
+                    var featureCode = "";
+                    if(split.length > 1) featureCode = split[1];
 
+                    var condition = "a.featureclass = {FEATURE_CLASS} ".replace("{FEATURE_CLASS}", Integer.toString(GeoNameFeatureClass.valueOf(featureClass).ordinal()));
+                    if(!featureCode.isEmpty()) condition += "AND a.featurecode = '{FEATURE_CODE}' ".replace("{FEATURE_CODE}", featureCode);
+                    condition += "AND a.page_id is not null " + conditionEnding;
+                    var statement = sql.replace("{CONDITION}", condition);
+                    statements.add(statement);
                 }
             }
         }

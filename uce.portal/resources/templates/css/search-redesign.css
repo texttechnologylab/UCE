@@ -351,6 +351,10 @@
     color: orange !important;
 }
 
+.enriched-search-tokens-list .enriched-token[data-type="LOCATION_COMMAND"] .value{
+    color: dodgerblue !important;
+}
+
 .enriched-search-tokens-list .enriched-token .children-container{
     max-height: 200px;
     overflow-y: auto;

@@ -78,7 +78,7 @@
                                     <div class="flexed align-items-center justify-content-between">
                                         <label class="mb-0 text-dark font-italic ml-1 mr-1 text-center w-100 clickable hoverable value"
                                                onclick="$(this).closest('.enriched-token').find('.expanded-content').toggle(75)">
-                                            ${token.getValue()}
+                                            <span>${token.getValue()}</span><span class="ml-1 xsmall-font text">(${token.getType().name()})</span>
                                         </label>
                                     </div>
                                     <#if width == "w-100">

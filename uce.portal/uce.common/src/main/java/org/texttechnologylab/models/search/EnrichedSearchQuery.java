@@ -1,10 +1,12 @@
 package org.texttechnologylab.models.search;
 
+import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
-import org.apache.logging.log4j.LogManager;
-import org.apache.logging.log4j.Logger;
+import org.jetbrains.annotations.NotNull;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
-import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.corpus.GeoName;
+import org.texttechnologylab.models.corpus.GeoNameFeatureClass;
+import org.texttechnologylab.models.dto.LocationDto;
 import org.texttechnologylab.models.viewModels.CorpusViewModel;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
@@ -25,14 +27,17 @@ public class EnrichedSearchQuery {
     public static final String[] QUERY_OPERATORS = {"&", "|", "!", "<->", "(", ")"};
     // https://en.wikipedia.org/wiki/Taxonomic_rank#:~:text=Main%20ranks,-In%20his%20landmark&text=Today%2C%20the%20nomenclature%20is%20regulated,family%2C%20genus%2C%20and%20species.
     public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::"};
-    public static final String[] LOCATION_COMMANDS = {"LOC::"};
+    public static final String[] LOCATION_COMMANDS = {"LOC::", "R::"};
     public static final String[] ENRICHMENT_COMMANDS = ArrayUtils.addAll(TAX_RANKS, LOCATION_COMMANDS);
 
     private final PostgresqlDataInterface_Impl db;
     private final JenaSparqlService jenaSparqlService;
 
+    @Getter
     private final String originalQuery;
+    @Getter
     private String enrichedQuery;
+    @Getter
     private List<EnrichedSearchToken> enrichedSearchTokens;
     private boolean parseTaxonomy;
     private boolean parseGeonames;
@@ -68,8 +73,8 @@ public class EnrichedSearchQuery {
             boolean isEnriched = false;
 
             // First we try to parse the command for potential enrichment
-            if (shouldHandleLocation(cleanedToken, corpusVm)) {
-                isEnriched = true;
+            if (shouldHandleLocationCommand(cleanedToken, corpusVm)) {
+                isEnriched = handleLocationCommand(cleanedToken, enrichedToken, enrichedSearchQuery, delimiter, or, corpusVm.getCorpus().getId());
             } else if (shouldHandleTaxonomicCommand(cleanedToken)) {
                 isEnriched = handleTaxonomicCommand(cleanedToken, enrichedToken, enrichedSearchQuery, delimiter, or);
             }
@@ -80,6 +85,7 @@ public class EnrichedSearchQuery {
             }
 
             enrichedSearchTokens.add(enrichedToken);
+            if (!isEnriched) enrichedSearchQuery.append(delimiter).append(cleanedToken).append(delimiter);
         }
 
         this.enrichedQuery = enrichedSearchQuery.toString().trim();
@@ -94,7 +100,7 @@ public class EnrichedSearchQuery {
         return Arrays.asList(QUERY_OPERATORS).contains(token);
     }
 
-    private void appendOperator(String token, StringBuilder query) {
+    private void appendOperator(String token, @NotNull StringBuilder query) {
         query.append(token).append(" ");
         enrichedSearchTokens.add(new EnrichedSearchToken(token, EnrichedSearchTokenType.OPERATOR));
     }
@@ -104,7 +110,7 @@ public class EnrichedSearchQuery {
         return cleaned.contains("__") ? cleaned.replaceAll("__", " ") : cleaned;
     }
 
-    private boolean shouldHandleLocation(String token, CorpusViewModel corpusVm) {
+    private boolean shouldHandleLocationCommand(String token, @NotNull CorpusViewModel corpusVm) {
         return corpusVm.getCorpusConfig().getAnnotations().isGeoNames()
                 && this.parseGeonames
                 && Stream.of(LOCATION_COMMANDS).anyMatch(token::startsWith);
@@ -116,8 +122,55 @@ public class EnrichedSearchQuery {
                 && Stream.of(TAX_RANKS).anyMatch(token::startsWith);
     }
 
-    private boolean handleTaxonomicCommand(String token, EnrichedSearchToken enrichedToken,
-                                           StringBuilder query, String delimiter, String or) throws IOException {
+    private boolean handleLocationCommand(@NotNull String token,
+                                          @NotNull EnrichedSearchToken enrichedToken,
+                                          StringBuilder query,
+                                          String delimiter,
+                                          String or,
+                                          long corpusId) throws DatabaseOperationException {
+        enrichedToken.setType(EnrichedSearchTokenType.LOCATION_COMMAND);
+        var command = "";
+        for (var c : LOCATION_COMMANDS) {
+            if (token.startsWith(c)) command = c;
+        }
+        var value = StringUtils.removeSpecialCharactersAtEdges(token.substring(command.length()));
+        enrichedToken.setValue(value);
+
+        // Handle the different commands
+        if (command.equals("R::")) {
+            var locationDto = parseLocationRadiusCommand(value);
+            // TODO: Continue here
+        } else if (command.equals("LOC::")) {
+            // The syntax should be  LOC::<FEATURE_CLASS>.<FEATURE_CODE>, so e.g.: LOC::A.ADMS
+            var split = value.split("\\.");
+            var featureClass = split[0];
+            var featureCode = "";
+            if (split.length > 1) featureCode = split[1];
+
+            var geoNames = db.getDistinctGeonamesNamesByFeatureCode(GeoNameFeatureClass.valueOf(featureClass), featureCode, corpusId, 100);
+
+            if (geoNames.isEmpty()) {
+                query.append(delimiter).append(value).append(delimiter).append(" ");
+            } else {
+                appendEnrichedNames(query, geoNames, "", delimiter, or);
+                enrichedToken.setChildren(geoNames.stream()
+                        .map(n -> new EnrichedSearchToken(n, EnrichedSearchTokenType.LOCATION)).toList());
+            }
+        }
+
+        return true;
+    }
+
+    public static LocationDto parseLocationRadiusCommand(@NotNull String input) {
+        if (input.startsWith("R::")) input = input.replace("R::", "");
+        return LocationDto.fromCommandString(input);
+    }
+
+    private boolean handleTaxonomicCommand(@NotNull String token,
+                                           @NotNull EnrichedSearchToken enrichedToken,
+                                           StringBuilder query,
+                                           String delimiter,
+                                           String or) throws IOException {
         enrichedToken.setType(EnrichedSearchTokenType.TAXON_COMMAND);
         var command = token.substring(0, 3);
         var value = StringUtils.removeSpecialCharactersAtEdges(token.substring(3));
@@ -137,12 +190,15 @@ public class EnrichedSearchQuery {
         return true;
     }
 
-    private boolean handleBasicTaxon(String cleanedToken, String originalToken,
-                                     EnrichedSearchToken enrichedToken, StringBuilder query,
-                                     String delimiter, String or) throws DatabaseOperationException, IOException {
+    private boolean handleBasicTaxon(String cleanedToken,
+                                     String originalToken,
+                                     EnrichedSearchToken enrichedToken,
+                                     StringBuilder query,
+                                     String delimiter,
+                                     String or) throws DatabaseOperationException, IOException {
         var potentialTaxons = db.getIdentifiableTaxonsByValues(List.of(cleanedToken.toLowerCase()));
         if (potentialTaxons == null || potentialTaxons.isEmpty()) {
-            query.append(originalToken.replaceAll("__", " ")).append(" ");
+            //query.append(originalToken.replaceAll("__", " ")).append(" ");
             return false;
         }
 
@@ -169,9 +225,14 @@ public class EnrichedSearchQuery {
         return true;
     }
 
-    private void appendEnrichedNames(StringBuilder query, List<String> names, String original,
-                                     String delimiter, String or) {
-        query.append(" ( ").append(original).append(or).append(delimiter)
+    private void appendEnrichedNames(StringBuilder query,
+                                     List<String> names,
+                                     String original,
+                                     String delimiter,
+                                     String or) {
+        query.append(" ( ");
+        if (!original.isEmpty())query.append(original).append(or);
+        query.append(delimiter)
                 .append(String.join(or + delimiter, names.stream().map(n -> n.replace("'", "") + delimiter).toList()))
                 .append(" ) ");
     }
@@ -186,20 +247,7 @@ public class EnrichedSearchQuery {
     }
 
     public EnrichedSearchQuery withGeonames() {
-        this.parseTaxonomy = true;
+        this.parseGeonames = true;
         return this;
     }
-
-    public String getOriginalQuery() {
-        return this.originalQuery;
-    }
-
-    public String getEnrichedQuery() {
-        return this.enrichedQuery;
-    }
-
-    public List<EnrichedSearchToken> getEnrichedSearchTokens() {
-        return this.enrichedSearchTokens;
-    }
-
 }

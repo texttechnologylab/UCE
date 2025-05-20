@@ -9,7 +9,7 @@ public class LocationDto {
     private double range;
 
     public static LocationDto fromCommandString(String commandString){
-        var split = commandString.substring(3).split(";");
+        var split = commandString.split(";");
         var lng = Arrays.stream(split)
                 .filter(s -> s.startsWith("lng="))
                 .map(s -> s.split("=")[1])

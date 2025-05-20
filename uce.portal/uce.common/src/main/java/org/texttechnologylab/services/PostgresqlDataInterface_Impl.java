@@ -1077,6 +1077,28 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<String> getDistinctGeonamesNamesByFeatureCode(GeoNameFeatureClass featureClass, String featureCode, long corpusId, int limit) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String hql = """
+                SELECT DISTINCT g.name
+                FROM GeoName g
+                JOIN Document d ON g.documentId = d.id
+                WHERE g.featureClass = :featureClass
+                  AND (:featureCode IS NULL OR g.featureCode = :featureCode)
+                  AND d.corpusId = :corpusId
+            """;
+
+            var query = session.createQuery(hql, String.class); // <-- note String.class here
+            query.setParameter("featureClass", featureClass);
+            query.setParameter("featureCode", featureCode.isEmpty() ? null : featureCode);
+            query.setParameter("corpusId", corpusId);
+            query.setMaxResults(limit);
+
+            return query.getResultList();
+        });
+    }
+
+
     public List<GbifOccurrence> getGbifOccurrencesByGbifTaxonId(long gbifTaxonId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteriaBuilder = session.getCriteriaBuilder();
@@ -1369,7 +1391,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-
     public DocumentTopThreeTopics getDocumentTopThreeTopicsById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var dist = session.get(DocumentTopThreeTopics.class, id);
@@ -1454,7 +1475,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-
     public List<Object[]> getSimilarTopicsbyTopicLabel(String topicValue, long corpusId, int minSharedWords, int result_limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = "SELECT * FROM find_similar_topics(:topicValue, :minSharedWords, :result_limit, :corpusId)";
@@ -1495,7 +1515,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return topicWords.size() > 20 ? topicWords.subList(0, 20) : topicWords;
         });
     }
-
 
     public Map<String, Double> getTopNormalizedTopicsByCorpusId(long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {

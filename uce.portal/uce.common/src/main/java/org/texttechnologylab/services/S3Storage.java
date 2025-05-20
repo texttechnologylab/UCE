@@ -19,7 +19,7 @@ import java.util.Map;
 @Service
 public class S3Storage {
     private CommonConfig config;
-    private final MinioClient minioClient;
+    private MinioClient minioClient;
 
     public S3Storage() {
         try {
@@ -40,7 +40,6 @@ public class S3Storage {
             SystemStatus.S3StorageStatus = new HealthStatus(true, "", null);
         } catch (Exception ex) {
             SystemStatus.S3StorageStatus = new HealthStatus(false, "Couldn't init the MinioS3UtilityService", ex);
-            throw new RuntimeException("Failed to initialize MinioS3UtilityService", ex);
         }
     }
 

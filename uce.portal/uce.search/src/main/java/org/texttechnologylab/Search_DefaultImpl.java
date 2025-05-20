@@ -62,7 +62,7 @@ public class Search_DefaultImpl implements Search {
                 (ex) -> logger.error("Error fetching the corpus and corpus config of corpus: " + corpusId, ex)));
 
         // First: enrich if wanted (and we can; we need the graph database for it)
-        if (enrichSearchTerm && SystemStatus.JenaSparqlStatus.isAlive() && !searchPhrase.isBlank()) {
+        if (enrichSearchTerm && !searchPhrase.isBlank()) {
             var enrichedSearchQuery = ExceptionUtils.tryCatchLog(
                     () -> new EnrichedSearchQuery(searchPhrase, db, jenaSparqlService)
                             .withAll()

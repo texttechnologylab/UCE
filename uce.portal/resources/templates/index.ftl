@@ -328,12 +328,12 @@
                                 <div class="option w-auto" data-trigger="hover"
                                      data-toggle="popover" data-placement="top" data-html="true"
                                      data-content="${languageResource.get("enrichOption")}">
-                                    <#assign enrichDisabled = 'checked'>
+                                    <#--<#assign enrichDisabled = 'checked'>
                                     <#if !isSparqlAlive>
                                         <#assign enrichDisabled = 'disabled'>
-                                    </#if>
+                                    </#if>-->
                                     <label class="mb-0 w-100 small-font mr-3">Enrich</label>
-                                    <input type="checkbox" data-id="ENRICH" ${enrichDisabled}/>
+                                    <input type="checkbox" data-id="ENRICH"/>
                                 </div>
                             </div>
                         </div>
