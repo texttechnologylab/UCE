@@ -169,10 +169,15 @@
         </dependency>-->
 
         <!-- Local reference -->
+<!--        <dependency>-->
+<!--            <groupId>com.github.mevbagci</groupId>-->
+<!--            <artifactId>UIMATypeSystem</artifactId>-->
+<!--            <version>3.0.11</version>-->
+<!--        </dependency>-->
         <dependency>
-            <groupId>com.github.mevbagci</groupId>
+            <groupId>com.github.texttechnologylab</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>3.0.11</version>
+            <version>1c31dddaf</version>
         </dependency>
 
     </dependencies>
