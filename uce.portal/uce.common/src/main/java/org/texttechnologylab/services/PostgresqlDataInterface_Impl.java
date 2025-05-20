@@ -1079,6 +1079,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public List<String> getDistinctGeonamesNamesByFeatureCode(GeoNameFeatureClass featureClass, String featureCode, long corpusId, int limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
+            // This with hibernate query builder doesn't work.
             String hql = """
                 SELECT DISTINCT g.name
                 FROM GeoName g
@@ -1088,7 +1089,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                   AND d.corpusId = :corpusId
             """;
 
-            var query = session.createQuery(hql, String.class); // <-- note String.class here
+            var query = session.createQuery(hql, String.class);
             query.setParameter("featureClass", featureClass);
             query.setParameter("featureCode", featureCode.isEmpty() ? null : featureCode);
             query.setParameter("corpusId", corpusId);
@@ -1098,6 +1099,28 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<String> getDistinctGeonamesNamesByRadius(double longitude, double latitude, double radius, long corpusId, int limit) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            // This with hibernate query builder doesn't work since we use Postgis location queries.
+            String sql = """
+                SELECT DISTINCT g.name
+                FROM geoname g
+                JOIN document d ON g.document_id = d.id
+                WHERE ST_DWithin(location, CAST(ST_MakePoint(:longitude,:latitude) AS geography), :radius)
+                AND d.corpusId = :corpusId
+                LIMIT :limit
+            """;
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("longitude", longitude);
+            query.setParameter("latitude", latitude);
+            query.setParameter("radius", radius); // in meters
+            query.setParameter("corpusId", corpusId);
+            query.setParameter("limit", limit);
+
+            return query.getResultList();
+        });
+    }
 
     public List<GbifOccurrence> getGbifOccurrencesByGbifTaxonId(long gbifTaxonId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
@@ -1657,6 +1680,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getDocumentKeywordDistribution());
         Hibernate.initialize(doc.getSentences());
         Hibernate.initialize(doc.getNamedEntities());
+        Hibernate.initialize(doc.getGeoNames());
         Hibernate.initialize(doc.getTaxons());
         Hibernate.initialize(doc.getTimes());
         Hibernate.initialize(doc.getWikipediaLinks());

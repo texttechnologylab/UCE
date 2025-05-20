@@ -8,7 +8,6 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.GeoNameFeatureClass;
 import org.texttechnologylab.models.dto.LayeredSearchLayerDto;
 import org.texttechnologylab.models.dto.LayeredSearchSlotType;
-import org.texttechnologylab.models.dto.LocationDto;
 import org.texttechnologylab.models.search.CacheItem;
 import org.texttechnologylab.models.search.EnrichedSearchQuery;
 import org.texttechnologylab.services.JenaSparqlService;
@@ -225,7 +224,7 @@ public class LayeredSearch extends CacheItem {
                     var condition = "ST_DWithin(location, ST_MakePoint({LNG},{LAT})::geography, {RADIUS}) " + conditionEnding;
                     condition = condition.replace("{LNG}", Double.toString(locationDto.getLongitude()));
                     condition = condition.replace("{LAT}", Double.toString(locationDto.getLatitude()));
-                    condition = condition.replace("{RADIUS}", Double.toString(locationDto.getRange()));
+                    condition = condition.replace("{RADIUS}", Double.toString(locationDto.getRadius()));
                     var statement = sql.replace("{CONDITION}", condition);
                     statements.add(statement);
                     continue;

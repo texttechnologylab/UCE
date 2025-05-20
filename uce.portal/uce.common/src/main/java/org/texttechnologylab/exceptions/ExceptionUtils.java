@@ -28,9 +28,6 @@ public class ExceptionUtils {
 
     /**
      * Functional way of doing a whole try,catch for a single method that doesn't return a value.
-     * @param function
-     * @param logCallback
-     * @return
      */
     public static void tryCatchLog(RunnableWithException function, Consumer<Exception> logCallback) {
         try {

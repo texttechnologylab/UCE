@@ -211,7 +211,7 @@ body {
 }
 
 .document-content .multi-annotation:hover .multi-annotation-popup {
-    display: flex;
+    display: inline-flex;
 }
 
 .document-content .multi-annotation-popup {
@@ -271,6 +271,11 @@ body {
 
 .document-content .time {
     color: var(--dark);
+    text-decoration-color: transparent;
+}
+
+.document-content .geoname {
+    color: dodgerblue;
     text-decoration-color: transparent;
 }
 

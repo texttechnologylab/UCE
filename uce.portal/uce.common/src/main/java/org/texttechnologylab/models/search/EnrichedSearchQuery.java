@@ -4,7 +4,6 @@ import lombok.Getter;
 import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
-import org.texttechnologylab.models.corpus.GeoName;
 import org.texttechnologylab.models.corpus.GeoNameFeatureClass;
 import org.texttechnologylab.models.dto.LocationDto;
 import org.texttechnologylab.models.viewModels.CorpusViewModel;
@@ -137,25 +136,27 @@ public class EnrichedSearchQuery {
         enrichedToken.setValue(value);
 
         // Handle the different commands
+        List<String> geoNames = new ArrayList<>();
+
         if (command.equals("R::")) {
+            // Syntax should be R::lng=5;lat=70;r=1000
             var locationDto = parseLocationRadiusCommand(value);
-            // TODO: Continue here
+            geoNames = db.getDistinctGeonamesNamesByRadius(locationDto.getLongitude(), locationDto.getLatitude(), locationDto.getRadius(), corpusId, 100);
         } else if (command.equals("LOC::")) {
             // The syntax should be  LOC::<FEATURE_CLASS>.<FEATURE_CODE>, so e.g.: LOC::A.ADMS
             var split = value.split("\\.");
             var featureClass = split[0];
             var featureCode = "";
             if (split.length > 1) featureCode = split[1];
+            geoNames = db.getDistinctGeonamesNamesByFeatureCode(GeoNameFeatureClass.valueOf(featureClass), featureCode, corpusId, 100);
+        }
 
-            var geoNames = db.getDistinctGeonamesNamesByFeatureCode(GeoNameFeatureClass.valueOf(featureClass), featureCode, corpusId, 100);
-
-            if (geoNames.isEmpty()) {
-                query.append(delimiter).append(value).append(delimiter).append(" ");
-            } else {
-                appendEnrichedNames(query, geoNames, "", delimiter, or);
-                enrichedToken.setChildren(geoNames.stream()
-                        .map(n -> new EnrichedSearchToken(n, EnrichedSearchTokenType.LOCATION)).toList());
-            }
+        if (geoNames.isEmpty()) {
+            query.append(delimiter).append(value).append(delimiter).append(" ");
+        } else {
+            appendEnrichedNames(query, geoNames, "", delimiter, or);
+            enrichedToken.setChildren(geoNames.stream()
+                    .map(n -> new EnrichedSearchToken(n, EnrichedSearchTokenType.LOCATION)).toList());
         }
 
         return true;

@@ -1,12 +1,17 @@
 package org.texttechnologylab.models.dto;
 
+import lombok.Getter;
+import lombok.Setter;
+
 import java.util.Arrays;
 
+@Setter
+@Getter
 public class LocationDto {
 
     private double longitude;
     private double latitude;
-    private double range;
+    private double radius;
 
     public static LocationDto fromCommandString(String commandString){
         var split = commandString.split(";");
@@ -30,33 +35,10 @@ public class LocationDto {
     }
 
     public LocationDto(){}
-    public LocationDto(Double latitude, Double longitude, Double range){
+    public LocationDto(Double latitude, Double longitude, Double radius){
         this.latitude = latitude;
         this.longitude = longitude;
-        this.range = range;
+        this.radius = radius;
     }
 
-    public double getLongitude() {
-        return longitude;
-    }
-
-    public void setLongitude(double longitude) {
-        this.longitude = longitude;
-    }
-
-    public double getLatitude() {
-        return latitude;
-    }
-
-    public void setLatitude(double latitude) {
-        this.latitude = latitude;
-    }
-
-    public double getRange() {
-        return range;
-    }
-
-    public void setRange(double range) {
-        this.range = range;
-    }
 }

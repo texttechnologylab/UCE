@@ -3,12 +3,13 @@ package org.texttechnologylab.models.corpus;
 import org.hibernate.annotations.Type;
 import org.locationtech.jts.geom.Point;
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.WikiModel;
 
 import javax.persistence.*;
 
 @Entity
 @Table(name = "geoname")
-public class GeoName extends UIMAAnnotation {
+public class GeoName extends UIMAAnnotation implements WikiModel {
 
     @Column(columnDefinition = "TEXT")
     private String name;
@@ -149,4 +150,7 @@ public class GeoName extends UIMAAnnotation {
     public void setRefNamedEntity(NamedEntity refNamedEntity) {
         this.refNamedEntity = refNamedEntity;
     }
+
+    @Override
+    public String getWikiId() { return "LOC-" + this.getId();}
 }
