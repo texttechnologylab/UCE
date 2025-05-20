@@ -40,9 +40,9 @@
     </dependency>
 
         <dependency>
-            <groupId>org.texttechnologylab</groupId>
+            <groupId>com.github.mevbagci</groupId>
             <artifactId>DockerUnifiedUIMAInterface</artifactId>
-            <version>1.4.6</version>
+            <version>1.4.7</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.springframework/spring-beans -->

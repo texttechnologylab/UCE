@@ -550,20 +550,21 @@ label {
     color: #343a40; /* Dunklere Textfarbe für den Score */
 }
 
-/* Emotionen-spezifische Farben */
-.emotion-love { --emotion-color: 255, 105, 180; }       /* Rosa */
-.emotion-joy { --emotion-color: 255, 223, 0; }           /* Gelb */
-.emotion-surprise { --emotion-color: 138, 43, 226; }     /* Violett */
-.emotion-anger { --emotion-color: 255, 0, 0; }           /* Rot */
-.emotion-sadness { --emotion-color: 0, 0, 255; }         /* Blau */
-.emotion-fear { --emotion-color: 0, 128, 128; }          /* Türkis */
-.emotion-disgust { --emotion-color: 85, 107, 47; }       /* Dunkles Olivgrün */
-.emotion-others { --emotion-color: 128, 128, 128; }      /* Grau */
-.emotion-anticipation { --emotion-color: 255, 165, 0; }  /* Orange */
-.emotion-apprehension { --emotion-color: 75, 0, 130; }   /* Indigoblau */
-.emotion-happiness { --emotion-color: 255, 255, 0; }     /* Helles Gelb */
-.emotion-confusion { --emotion-color: 199, 21, 133; }    /* Violett-Rosa */
-.emotion-default { --emotion-color: 200, 200, 200; }     /* Hellgrau */
+/* Emotionen-spezifische helle Farben für schwarzen Hintergrund */
+.emotion-love { --emotion-color: 255, 182, 193; }         /* Helles Rosa */
+.emotion-joy { --emotion-color: 255, 239, 120; }          /* Helles Gelb */
+.emotion-surprise { --emotion-color: 216, 160, 255; }     /* Helles Violett */
+.emotion-anger { --emotion-color: 255, 102, 102; }        /* Helles Rot */
+.emotion-sadness { --emotion-color: 135, 206, 250; }      /* Hellblau */
+.emotion-fear { --emotion-color: 144, 238, 238; }         /* Helles Türkis */
+.emotion-disgust { --emotion-color: 192, 255, 192; }      /* Helles Grün (pastellig) */
+.emotion-others { --emotion-color: 200, 200, 200; }       /* Helles Grau */
+.emotion-anticipation { --emotion-color: 255, 210, 120; } /* Helles Orange */
+.emotion-apprehension { --emotion-color: 186, 145, 255; } /* Helles Indigo */
+.emotion-happiness { --emotion-color: 255, 255, 153; }    /* Sehr helles Gelb */
+.emotion-confusion { --emotion-color: 238, 130, 238; }    /* Hell-Violettrosa */
+.emotion-default { --emotion-color: 220, 220, 220; }      /* Sehr helles Grau */
+
 
 
 .coherences-container {
@@ -633,12 +634,14 @@ label {
     color: #343a40; /* Dunklere Textfarbe für den Score */
 }
 
-.coherence-euclidean { --coherence-color: 255, 105, 180; }       /* Rosa */
-.coherence-cosine { --coherence-color: 255, 223, 0; }           /* Gelb */
-.coherence-distanceCorrelation { --coherence-color: 138, 43, 226; }     /* Violett */
-.coherence-wasserstein { --coherence-color: 255, 0, 0; }           /* Rot */
-.coherence-jensenshannon { --coherence-color: 0, 0, 255; }         /* Blau */
-.coherence-bhattacharyya { --coherence-color: 0, 128, 128; }          /* Türkis */
+/* Helle Farben für Coherence-Typen (für schwarzen Hintergrund geeignet) */
+.coherence-euclidean { --coherence-color: 255, 182, 193; }          /* Helles Rosa */
+.coherence-cosine { --coherence-color: 255, 239, 120; }             /* Helles Gelb */
+.coherence-distanceCorrelation { --coherence-color: 216, 160, 255; }/* Helles Violett */
+.coherence-wasserstein { --coherence-color: 255, 102, 102; }        /* Helles Rot */
+.coherence-jensenshannon { --coherence-color: 135, 206, 250; }      /* Hellblau */
+.coherence-bhattacharyya { --coherence-color: 144, 238, 238; }      /* Helles Türkis */
+
 
 .stance-entry {
     display: inline-block;
@@ -770,12 +773,13 @@ label {
 }
 
 
-.readability-fleschkincaid { --readability-color: 255, 105, 180; }
-.readability-flesch         { --readability-color: 255, 223, 0; }
-.readability-gunningfog     { --readability-color: 138, 43, 226; }
-.readability-colemanliau    { --readability-color: 255, 0, 0; }
-.readability-ari            { --readability-color: 0, 0, 255; }
-.readability-linsearwrite   { --readability-color: 0, 128, 128; }
-.readability-smog           { --readability-color: 85, 107, 47; }
-.readability-spache         { --readability-color: 255, 165, 0; }
-.readability-dalechall      { --readability-color: 75, 0, 130; }
+/* Helle Farben für Readability-Metriken – optimiert für schwarzen Hintergrund */
+.readability-fleschkincaid  { --readability-color: 255, 182, 193; }   /* Helles Rosa */
+.readability-flesch         { --readability-color: 255, 239, 120; }   /* Helles Gelb */
+.readability-gunningfog     { --readability-color: 216, 160, 255; }   /* Helles Violett */
+.readability-colemanliau    { --readability-color: 255, 102, 102; }   /* Helles Rot */
+.readability-ari            { --readability-color: 135, 206, 250; }   /* Hellblau */
+.readability-linsearwrite   { --readability-color: 144, 238, 238; }   /* Helles Türkis */
+.readability-smog           { --readability-color: 192, 255, 192; }   /* Helles Olivgrün/Pastellgrün */
+.readability-spache         { --readability-color: 255, 210, 120; }   /* Helles Orange */
+.readability-dalechall      { --readability-color: 186, 145, 255; }   /* Helles Indigo */

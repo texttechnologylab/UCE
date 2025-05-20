@@ -26,6 +26,11 @@ const masterCheckbox = document.getElementById('all-models-checkbox');
 masterCheckbox.addEventListener('change', function () {
     const allCheckboxes = document.querySelectorAll('.analysis-treeview input[type="checkbox"]:not(#all-models-checkbox)');
     allCheckboxes.forEach(cb => cb.checked = this.checked);
+
+    // Sichtbarkeiten aktualisieren
+    updateFieldVisibility('factchecking', 'claim-field-wrapper', 'claim-text');
+    updateFieldVisibility('cohesion', 'text-field-wrapper', 'input-text');
+    updateFieldVisibility('stance', 'stance-field-wrapper', 'stance-text');
 });
 
 // Wenn eine Gruppen-Checkbox geändert wird
@@ -39,65 +44,51 @@ document.querySelectorAll('.group-checkbox').forEach(groupCheckbox => {
         });
 
         updateMasterCheckbox();
+        updateFieldVisibility('factchecking', 'claim-field-wrapper', 'claim-text');
+        updateFieldVisibility('cohesion', 'text-field-wrapper', 'input-text');
+        updateFieldVisibility('stance', 'stance-field-wrapper', 'stance-text');
+
         e.stopPropagation(); // Verhindert Baum-Öffnen beim Checkbox-Klick
     });
 });
 
-document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
-    modelCheckbox.addEventListener('change', function () {
-        const isFactChecking = this.id.toLowerCase().includes('factchecking');
-        const isCoherence = this.id.toLowerCase().includes('cohesion');
-        const isStance = this.id.toLowerCase().includes('stance');
-        if (isFactChecking) {
-            const wrapper = document.getElementById('claim-field-wrapper');
-            if (this.checked) {
-                wrapper.style.display = 'block';
-            } else {
-                wrapper.style.display = 'none';
-                document.getElementById('claim-text').value = ''; // optional: reset field
-            }
-        }
-        if (isCoherence) {
-            const wrapper = document.getElementById('text-field-wrapper');
-            if (this.checked) {
-                wrapper.style.display = 'block';
-            } else {
-                wrapper.style.display = 'none';
-                document.getElementById('input-text').value = ''; // optional: reset field
-            }
-        }
-        if (isStance) {
-            const wrapper = document.getElementById('stance-field-wrapper');
-            if (this.checked) {
-                wrapper.style.display = 'block';
-            } else {
-                wrapper.style.display = 'none';
-                document.getElementById('stance-text').value = ''; // optional: reset field
-            }
-        }
-    });
-});
-
+// Wenn eine Modell-Checkbox geändert wird
 // document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
-//     modelCheckbox.addEventListener('change', function () {
-//         const isFactChecking = this.id.toLowerCase().includes('cohesion');
-//         if (isFactChecking) {
-//             const wrapper = document.getElementById('text-field-wrapper');
-//             if (this.checked) {
-//                 wrapper.style.display = 'block';
-//             } else {
-//                 wrapper.style.display = 'none';
-//                 document.getElementById('input-text').value = ''; // optional: reset field
-//             }
+//     modelCheckbox.addEventListener('change', function(e) {
+//         const groupItem = this.closest('ul').parentElement;
+//         const groupCheckbox = groupItem.querySelector('.group-checkbox');
+//         const modelCheckboxes = groupItem.querySelectorAll('.model-checkbox');
+//
+//         const allChecked = Array.from(modelCheckboxes).every(cb => cb.checked);
+//         const noneChecked = Array.from(modelCheckboxes).every(cb => !cb.checked);
+//
+//         if (allChecked) {
+//             groupCheckbox.checked = true;
+//             groupCheckbox.indeterminate = false;
+//         } else if (noneChecked) {
+//             groupCheckbox.checked = false;
+//             groupCheckbox.indeterminate = false;
+//         } else {
+//             groupCheckbox.checked = false;
+//             groupCheckbox.indeterminate = true;
 //         }
+//
+//         updateMasterCheckbox();
+//
+//         // Sichtbarkeiten aktualisieren
+//         updateFieldVisibility('factchecking', 'claim-field-wrapper', 'claim-text');
+//         updateFieldVisibility('cohesion', 'text-field-wrapper', 'input-text');
+//         updateFieldVisibility('stance', 'stance-field-wrapper', 'stance-text');
+//
+//         e.stopPropagation(); // Verhindert Baum-Öffnen beim Checkbox-Klick
 //     });
 // });
-
-
-// Wenn eine Modell-Checkbox geändert wird
 document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
     modelCheckbox.addEventListener('change', function(e) {
-        const groupItem = this.closest('ul').parentElement;
+        const modelItem = this.closest('li'); // Das ist das Modell-<li>
+        const groupItem = modelItem.closest('ol.nested').closest('li'); // Jetzt:
+
+        // Fix: direktes Elternelement der Gruppe
         const groupCheckbox = groupItem.querySelector('.group-checkbox');
         const modelCheckboxes = groupItem.querySelectorAll('.model-checkbox');
 
@@ -116,20 +107,45 @@ document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
         }
 
         updateMasterCheckbox();
-        e.stopPropagation(); // Verhindert Baum-Öffnen beim Checkbox-Klick
+
+        updateFieldVisibility('factchecking', 'claim-field-wrapper', 'claim-text');
+        updateFieldVisibility('cohesion', 'text-field-wrapper', 'input-text');
+        updateFieldVisibility('stance', 'stance-field-wrapper', 'stance-text');
+
+        e.stopPropagation();
     });
 });
 
-// Update-Funktion für die Master-"Modelle"-Checkbox
-function updateMasterCheckbox() {
-    const groupCheckboxes = document.querySelectorAll('.group-checkbox');
-    const allChecked = Array.from(groupCheckboxes).every(cb => cb.checked);
-    const noneChecked = Array.from(groupCheckboxes).every(cb => !cb.checked);
 
-    if (allChecked) {
+// Update-Funktion für die Master-"Modelle"-Checkbox
+// function updateMasterCheckbox() {
+//     const groupCheckboxes = document.querySelectorAll('.group-checkbox');
+//     const allChecked = Array.from(groupCheckboxes).every(cb => cb.checked);
+//     const noneChecked = Array.from(groupCheckboxes).every(cb => !cb.checked);
+//
+//     if (allChecked) {
+//         masterCheckbox.checked = true;
+//         masterCheckbox.indeterminate = false;
+//     } else if (noneChecked) {
+//         masterCheckbox.checked = false;
+//         masterCheckbox.indeterminate = false;
+//     } else {
+//         masterCheckbox.checked = false;
+//         masterCheckbox.indeterminate = true;
+//     }
+// }
+function updateMasterCheckbox() {
+    const masterCheckbox = document.getElementById('all-models-checkbox');
+    const groupCheckboxes = document.querySelectorAll('.group-checkbox');
+
+    const total = groupCheckboxes.length;
+    const checked = Array.from(groupCheckboxes).filter(cb => cb.checked).length;
+    const indeterminate = Array.from(groupCheckboxes).some(cb => cb.indeterminate);
+
+    if (checked === total && !indeterminate) {
         masterCheckbox.checked = true;
         masterCheckbox.indeterminate = false;
-    } else if (noneChecked) {
+    } else if (checked === 0 && !indeterminate) {
         masterCheckbox.checked = false;
         masterCheckbox.indeterminate = false;
     } else {
@@ -138,6 +154,24 @@ function updateMasterCheckbox() {
     }
 }
 
+// Hilfsfunktion: Sichtbarkeit je nach Checkbox-Zustand steuern
+function updateFieldVisibility(keyword, wrapperId, inputId) {
+    const checkboxes = document.querySelectorAll('.model-checkbox');
+    const anyChecked = Array.from(checkboxes).some(cb => cb.id.toLowerCase().includes(keyword) && cb.checked);
+    const wrapper = document.getElementById(wrapperId);
+
+    if (wrapper) {
+        console.log(wrapper)
+        console.log(anyChecked)
+        wrapper.style.display = anyChecked ? 'block' : 'none';
+        if (!anyChecked) {
+            const input = document.getElementById(inputId);
+            if (input) input.value = ''; // optional: reset field
+        }
+    }
+}
+
+// Datei-Upload
 const uploadBtn = document.getElementById('upload-btn');
 const fileInput = document.getElementById('file-input');
 const textarea = document.getElementById('input');
@@ -157,4 +191,3 @@ fileInput.addEventListener('change', () => {
         reader.readAsText(file);
     }
 });
-

@@ -40,7 +40,7 @@
                                         <#list model.topics as topic>
                                         <#-- Berechne die Transparenz basierend auf dem Score (zwischen 0 und 1) -->
                                             <#assign opacity = topic.getScore()?string?replace(",", ".")>
-                                            <div class="topic-entry" style="background-color: rgba(0, 123, 255, ${opacity});">
+                                            <div class="topic-entry" style="background-color: rgba(0, 200, 200, ${opacity});">
                                                 <div class="topic-score">${topic.getKey()}: ${topic.getScore()}</div>
                                             </div>
                                         </#list>
@@ -91,7 +91,7 @@
                                     <div class="hate-entry" style="background-color: rgba(255, 100, 0, ${hateOpacity});">
                                         <div class="hate-score">AVG Hate: ${model.getHate()}</div>
                                     </div>
-                                    <div class="hate-entry" style="background-color: rgba(0, 150, 255, ${nonHateOpacity});">
+                                    <div class="hate-entry" style="background-color: rgba(0, 200, 200, ${nonHateOpacity});">
                                         <div class="hate-score">AVG Not Hate: ${model.getNonHate()}</div>
                                     </div>
                                 </div>
@@ -114,7 +114,7 @@
                                     <div class="toxic-entry" style="background-color: rgba(255, 65, 0, ${toxicOpacity});">
                                         <div class="toxic-score">AVG Toxic: ${model.getToxic()}</div>
                                     </div>
-                                    <div class="toxic-entry" style="background-color: rgba(0, 150, 255, ${nontoxicOpacity});">
+                                    <div class="toxic-entry" style="background-color: rgba(0, 200, 200, ${nontoxicOpacity});">
                                         <div class="toxic-score">AVG Not Toxic: ${model.getNonToxic()}</div>
                                     </div>
                                 </div>
@@ -167,7 +167,7 @@
                                     <div class="fact-entry" style="background-color: rgba(255, 65, 0, ${factOpacity});">
                                         <div class="fact-score">AVG Fact: ${model.getFact()}</div>
                                     </div>
-                                    <div class="fact-entry" style="background-color: rgba(0, 150, 255, ${nonfactOpacity});">
+                                    <div class="fact-entry" style="background-color: rgba(0, 200, 200, ${nonfactOpacity});">
                                         <div class="fact-score">AVG Not Fact: ${model.getNonFact()}</div>
                                     </div>
                                 </div>

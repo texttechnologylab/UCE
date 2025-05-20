@@ -1,27 +1,27 @@
 {
-    "Topic Tweet": {
-      "url": "http://tweentopic.service.component.duui.texttechnologylab.org",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
-      "huggingface": "https://huggingface.co/cardiffnlp/tweet-topic-large-multilingual",
-      "paper": "https://arxiv.org/abs/2410.03075",
-      "map": "cardiffnlp/tweet-topic-large-multilingual",
-      "Name": "Topic Tweet",
-      "Main Tool": "Topic Modeling",
-      "Variant": "Topic",
-      "type": ""
-    },
-    "Topic IPTC ": {
-      "url": "http://iptc.service.component.duui.texttechnologylab.org",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
-      "huggingface": "https://huggingface.co/classla/multilingual-IPTC-news-topic-classifier",
-      "paper": "",
-      "map": "classla/multilingual-IPTC-news-topic-classifier",
-        "Name": "Topic IPTC",
-        "Main Tool": "Topic Modeling",
-        "Variant": "Topic",
-      "type": ""
-    },
-    "Topic Manifesto": {
+  "Topic Tweet": {
+    "url": "http://tweentopic.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
+    "huggingface": "https://huggingface.co/cardiffnlp/tweet-topic-large-multilingual",
+    "paper": "https://arxiv.org/abs/2410.03075",
+    "map": "cardiffnlp/tweet-topic-large-multilingual",
+    "Name": "Topic Tweet",
+    "Main Tool": "Topic Modeling",
+    "Variant": "Topic",
+    "type": ""
+  },
+  "Topic IPTC ": {
+    "url": "http://iptc.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
+    "huggingface": "https://huggingface.co/classla/multilingual-IPTC-news-topic-classifier",
+    "paper": "",
+    "map": "classla/multilingual-IPTC-news-topic-classifier",
+    "Name": "Topic IPTC",
+    "Main Tool": "Topic Modeling",
+    "Variant": "Topic",
+    "type": ""
+  },
+  "Topic Manifesto": {
     "url": "http://topic-manifestoberta-xlm-roberta.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
     "huggingface": "https://huggingface.co/manifesto-project/manifestoberta-xlm-roberta-56policy-topics-context-2023-1-1",
@@ -30,8 +30,8 @@
     "Name": "Topic Manifesto",
     "Main Tool": "Topic Modeling",
     "Variant": "Topic",
-      "type": ""
-    },
+    "type": ""
+  },
   "Topic Cardiffnlp (EN)": {
     "url": "http://topic-cardiffnlp-roberta-large-tweet-topic-single-all.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
@@ -54,116 +54,116 @@
     "Variant": "Topic",
     "type": ""
   },
-    "Sentiment CardiffNLP": {
-      "url": "http://sentiment-cardiffnlp.service.component.duui.texttechnologylab.org",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
-      "huggingface": "https://huggingface.co/cardiffnlp/twitter-xlm-roberta-base-sentiment",
-      "paper": "https://arxiv.org/abs/2104.12250",
-      "map": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
-      "Name": "Sentiment CardiffNLP",
-      "Main Tool": "Sentiment Analysis",
-        "Variant": "Sentiment",
-      "type": ""
-    },
-    "Sentiment CitizenLab": {
-      "url": "http://sentiment-citizenlab.service.component.duui.texttechnologylab.org",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
-      "huggingface": "https://huggingface.co/citizenlab/twitter-xlm-roberta-base-sentiment-finetunned",
-      "paper": "",
-      "map": "citizenlab/twitter-xlm-roberta-base-sentiment-finetunned",
-      "Name": "Sentiment CitizenLab",
-      "Main Tool": "Sentiment Analysis",
-        "Variant": "Sentiment",
-      "type": ""
-    },
-    "Sentiment Multilingual DistilBert Students": {
-      "url": "http://duui-transformers-sentiment-atomar-distilbert-student.service.component.duui.texttechnologylab.org",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
-      "huggingface": "https://huggingface.co/lxyuan/distilbert-base-multilingual-cased-sentiments-student",
-      "paper": "",
-      "map": "lxyuan/distilbert-base-multilingual-cased-sentiments-student",
-      "Name": "Sentiment Multilingual DistilBert Students",
-      "Main Tool": "Sentiment Analysis",
-      "Variant": "Sentiment",
-      "type": ""
-    },
-    "Sentiment Multilingual DistilBert": {
-      "url": "http://duui-transformers-sentiment-atomar-distilbert-multilingual.service.component.duui.texttechnologylab.org",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
-      "huggingface": "https://huggingface.co/philschmid/distilbert-base-multilingual-cased-sentiment",
-      "paper": "",
-      "map": "philschmid/distilbert-base-multilingual-cased-sentiment",
-      "Name": "Sentiment Multilingual DistilBert",
-      "Main Tool": "Sentiment Analysis",
-      "Variant": "Sentiment",
-      "type": ""
-    },
-    "Sentiment CardiffNLP (EN)": {
-      "url": "http://duui-transformers-sentiment-atomar-cardiffnlp-sentiment-en.service.component.duui.texttechnologylab.org",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
-      "huggingface": "https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest",
-      "paper": "",
-      "map": "cardiffnlp/twitter-roberta-base-sentiment-latest",
-      "Name": "Sentiment CardiffNLP (EN)",
-      "Main Tool": "Sentiment Analysis",
-      "Variant": "Sentiment",
-      "type": ""
-    },
-    "Sentiment RoBERTa based (EN)": {
-      "url": "http://duui-transformers-sentiment-atomar-roberta-based-en.service.component.duui.texttechnologylab.org/",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
-      "huggingface": "https://huggingface.co/j-hartmann/sentiment-roberta-large-english-3-classes",
-      "paper": "",
-      "map": "j-hartmann/sentiment-roberta-large-english-3-classes",
-      "Name": "Sentiment RoBERTa based (EN)",
-      "Main Tool": "Sentiment Analysis",
-      "Variant": "Sentiment",
-      "type": ""
-    },
-    "Sentiment Finance (DE)": {
-      "url": "http://duui-transformers-sentiment-atomar-finance-sentiment-de.service.component.duui.texttechnologylab.org",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
-      "huggingface": "https://huggingface.co/bardsai/finance-sentiment-de-base",
-      "paper": "",
-      "map": "bardsai/finance-sentiment-de-base",
-      "Name": "Sentiment Finance (DE)",
-      "Main Tool": "Sentiment Analysis",
-      "Variant": "Sentiment",
-      "type": ""
-    },
-    "Hate Cardiffnlp": {
-      "url": "http://cardiffnlp.service.component.duui.texttechnologylab.org",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
-      "huggingface": "https://huggingface.co/cardiffnlp/twitter-roberta-base-hate-latest",
-      "paper": "https://aclanthology.org/2023.woah-1.25.pdf",
-      "map": "cardiffnlp/twitter-roberta-base-hate-latest",
-      "Name": "Hate Cardiffnlp",
-      "Main Tool": "Hate Speech Detection",
-        "Variant": "Hate",
-      "type": ""
-    },
-    "Hate MeHate-RoBERTa": {
-      "url": "http://hate-l3cube.service.component.duui.texttechnologylab.org",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
-      "huggingface": "https://huggingface.co/l3cube-pune/me-hate-roberta",
-      "paper": "https://aclanthology.org/2023.findings-ijcnlp.22.pdf",
-      "map": "l3cube-pune/me-hate-roberta",
-      "Name": "Hate MeHate-RoBERTa",
-      "Main Tool": "Hate Speech Detection",
-        "Variant": "Hate",
-      "type": ""
-    },
-    "Hate Andrazp": {
-      "url": "http://hate-andrazp.service.component.duui.texttechnologylab.org",
-      "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
-      "huggingface": "https://huggingface.co/Andrazp/multilingual-hate-speech-robacofi",
-      "paper": "",
-      "map": "Andrazp/multilingual-hate-speech-robacofi",
-      "Name": "Hate Andrazp",
-      "Main Tool": "Hate Speech Detection",
-      "Variant": "Hate",
-      "type": ""
-    },
+  "Sentiment CardiffNLP": {
+    "url": "http://sentiment-cardiffnlp.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+    "huggingface": "https://huggingface.co/cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "paper": "https://arxiv.org/abs/2104.12250",
+    "map": "cardiffnlp/twitter-xlm-roberta-base-sentiment",
+    "Name": "Sentiment CardiffNLP",
+    "Main Tool": "Sentiment Analysis",
+    "Variant": "Sentiment",
+    "type": ""
+  },
+  "Sentiment CitizenLab": {
+    "url": "http://sentiment-citizenlab.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+    "huggingface": "https://huggingface.co/citizenlab/twitter-xlm-roberta-base-sentiment-finetunned",
+    "paper": "",
+    "map": "citizenlab/twitter-xlm-roberta-base-sentiment-finetunned",
+    "Name": "Sentiment CitizenLab",
+    "Main Tool": "Sentiment Analysis",
+    "Variant": "Sentiment",
+    "type": ""
+  },
+  "Sentiment Multilingual DistilBert Students": {
+    "url": "http://duui-transformers-sentiment-atomar-distilbert-student.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+    "huggingface": "https://huggingface.co/lxyuan/distilbert-base-multilingual-cased-sentiments-student",
+    "paper": "",
+    "map": "lxyuan/distilbert-base-multilingual-cased-sentiments-student",
+    "Name": "Sentiment Multilingual DistilBert Students",
+    "Main Tool": "Sentiment Analysis",
+    "Variant": "Sentiment",
+    "type": ""
+  },
+  "Sentiment Multilingual DistilBert": {
+    "url": "http://duui-transformers-sentiment-atomar-distilbert-multilingual.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+    "huggingface": "https://huggingface.co/philschmid/distilbert-base-multilingual-cased-sentiment",
+    "paper": "",
+    "map": "philschmid/distilbert-base-multilingual-cased-sentiment",
+    "Name": "Sentiment Multilingual DistilBert",
+    "Main Tool": "Sentiment Analysis",
+    "Variant": "Sentiment",
+    "type": ""
+  },
+  "Sentiment CardiffNLP (EN)": {
+    "url": "http://duui-transformers-sentiment-atomar-cardiffnlp-sentiment-en.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+    "huggingface": "https://huggingface.co/cardiffnlp/twitter-roberta-base-sentiment-latest",
+    "paper": "",
+    "map": "cardiffnlp/twitter-roberta-base-sentiment-latest",
+    "Name": "Sentiment CardiffNLP (EN)",
+    "Main Tool": "Sentiment Analysis",
+    "Variant": "Sentiment",
+    "type": ""
+  },
+  "Sentiment RoBERTa based (EN)": {
+    "url": "http://duui-transformers-sentiment-atomar-roberta-based-en.service.component.duui.texttechnologylab.org/",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+    "huggingface": "https://huggingface.co/j-hartmann/sentiment-roberta-large-english-3-classes",
+    "paper": "",
+    "map": "j-hartmann/sentiment-roberta-large-english-3-classes",
+    "Name": "Sentiment RoBERTa based (EN)",
+    "Main Tool": "Sentiment Analysis",
+    "Variant": "Sentiment",
+    "type": ""
+  },
+  "Sentiment Finance (DE)": {
+    "url": "http://duui-transformers-sentiment-atomar-finance-sentiment-de.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-sentiment-atomar",
+    "huggingface": "https://huggingface.co/bardsai/finance-sentiment-de-base",
+    "paper": "",
+    "map": "bardsai/finance-sentiment-de-base",
+    "Name": "Sentiment Finance (DE)",
+    "Main Tool": "Sentiment Analysis",
+    "Variant": "Sentiment",
+    "type": ""
+  },
+  "Hate Cardiffnlp": {
+    "url": "http://cardiffnlp.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/cardiffnlp/twitter-roberta-base-hate-latest",
+    "paper": "https://aclanthology.org/2023.woah-1.25.pdf",
+    "map": "cardiffnlp/twitter-roberta-base-hate-latest",
+    "Name": "Hate Cardiffnlp",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate MeHate-RoBERTa": {
+    "url": "http://hate-l3cube.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/l3cube-pune/me-hate-roberta",
+    "paper": "https://aclanthology.org/2023.findings-ijcnlp.22.pdf",
+    "map": "l3cube-pune/me-hate-roberta",
+    "Name": "Hate MeHate-RoBERTa",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate Andrazp": {
+    "url": "http://hate-andrazp.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/Andrazp/multilingual-hate-speech-robacofi",
+    "paper": "",
+    "map": "Andrazp/multilingual-hate-speech-robacofi",
+    "Name": "Hate Andrazp",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
   "HateBERT GroNLP (EN)": {
     "url": "http://hate-groNLP.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
@@ -428,6 +428,28 @@
     "Variant": "Factchecking",
     "type": ""
   },
+  "FactChecking FactCC (EN)": {
+    "url": "http://factchecking-factcc.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-FactChecking",
+    "huggingface": "https://huggingface.co/manueldeprada/FactCC",
+    "paper": "https://aclanthology.org/2020.emnlp-main.750/",
+    "map": "manueldeprada/FactCC",
+    "Name": "FactChecking FactCC (EN)",
+    "Main Tool": "Fact Checking",
+    "Variant": "Factchecking",
+    "type": ""
+  },
+  "FactChecking MiniCheck (EN)": {
+    "url": "http://factchecking-minicheck.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-FactChecking",
+    "huggingface": "https://github.com/Liyan06/MiniCheck",
+    "paper": "https://aclanthology.org/2020.evalnlgeval-1.4/",
+    "map": "MiniCheck",
+    "Name": "FactChecking MiniCheck (EN)",
+    "Main Tool": "Fact Checking",
+    "Variant": "Factchecking",
+    "type": ""
+  },
   "Cohesion Intfloat": {
     "url": "http://transformers-complexity.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Complexity",
@@ -449,6 +471,61 @@
     "Main Tool": "Text Cohesion Analysis",
     "Variant": "Coherence",
     "type": "BERT"
+  },
+  "Cohesion FaceBook": {
+    "url": "http://transformers-complexity.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Complexity",
+    "huggingface": "",
+    "paper": "",
+    "map": "facebook/xlm-v-base",
+    "Name": "Cohesion FaceBook",
+    "Main Tool": "Text Cohesion Analysis",
+    "Variant": "Coherence",
+    "type": "BERT"
+  },
+  "Cohesion FaceBook-XLM-Roberta": {
+    "url": "http://transformers-complexity.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Complexity",
+    "huggingface": "",
+    "paper": "",
+    "map": "FacebookAI/xlm-roberta-large",
+    "Name": "Cohesion FaceBook-XLM-Roberta",
+    "Main Tool": "Text Cohesion Analysis",
+    "Variant": "Coherence",
+    "type": "BERT"
+  },
+  "Cohesion CardiffNLP": {
+    "url": "http://transformers-complexity.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Complexity",
+    "huggingface": "",
+    "paper": "",
+    "map": "cardiffnlp/twitter-xlm-roberta-base",
+    "Name": "Cohesion CardiffNLP",
+    "Main Tool": "Text Cohesion Analysis",
+    "Variant": "Coherence",
+    "type": "BERT"
+  },
+  "Cohesion LEALLA": {
+    "url": "http://transformers-complexity.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Complexity",
+    "huggingface": "",
+    "paper": "",
+    "map": "setu4993/LEALLA-small",
+    "Name": "Cohesion LEALLA",
+    "Main Tool": "Text Cohesion Analysis",
+    "Variant": "Coherence",
+    "type": "BertSentence"
+  },
+  "Cohesion Twitter": {
+    "url": "http://transformers-complexity.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Complexity",
+    "huggingface": "",
+    "paper": "",
+    "map": "Twitter/twhin-bert-large",
+    "Name": "Cohesion Twitter",
+    "Main Tool": "Text Cohesion Analysis",
+    "Variant": "Coherence",
+    "type": "Bert"
   },
   "Cohesion LABSE": {
     "url": "http://transformers-complexity.service.component.duui.texttechnologylab.org",
