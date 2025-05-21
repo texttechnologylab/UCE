@@ -111,12 +111,12 @@
     display: block;
 }
 
-/* Modell-Items etwas kleiner und dezenter */
+/* Slightly smaller and more subtle model items */
 .analysis-treeview .model-item label {
     display: flex;
     align-items: center;
     padding: 0.3rem 0.8rem;
-    background-color: #e9ecef; /* Leichter Hintergrund */
+    background-color: #e9ecef;
     color: #212529;
     border-radius: 0.375rem;
     margin: 0.2rem 0;
@@ -134,13 +134,13 @@
 .grow-text {
     display: flex;
     flex-direction: column;
-    align-items: center;  /* Zentriert alles horizontal */
-    justify-content: center;  /* Zentriert alles vertikal (falls nötig) */
-    text-align: center;  /* Damit der Button Text auch mittig ist */
+    align-items: center;  /* Center everything horizontally */
+    justify-content: center;  /* Center everything vertically (if necessary) */
+    text-align: center;  /* Space between the textarea and the button */
 }
 
-#upload-btn {
-    margin-top: 0.5rem;  /* Abstand zwischen Textarea und Button */
+#analysis-upload-btn {
+    margin-top: 0.5rem;  /* Ensures the button text is centered as well */
 }
 
 .history-buttons button {
@@ -149,13 +149,13 @@
 }
 
 
-label,
-textarea {
+.analysis-text-view label,
+.analysis-text-view textarea {
     font-size: 0.8rem;
     letter-spacing: 1px;
 }
 
-textarea {
+.analysis-text-view textarea {
     padding: 10px;
     width: 500px;
     height: 200px;
@@ -166,26 +166,26 @@ textarea {
 }
 
 
-textarea {
+.analysis-text-view textarea {
     margin: 0 auto;
     display: block;
     width: 100%;
 }
 
-label {
+.analysis-text-view label {
     display: block;
     margin-bottom: 10px;
 }
 
 
-.topics-container {
+.analysis-topics-container {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
     margin-top: 20px;
 }
 
-.topic-card {
+.analysis-topic-card {
     flex: 1 1 100%;
     /*background: #f8f9fa;*/
     /*border: 2px solid #007bff;*/
@@ -195,12 +195,12 @@ label {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.topic-card:hover {
+.analysis-topic-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.topic-card-title {
+.analysis-topic-card-title {
     font-size: 1.6em;
     margin-bottom: 20px;
     color: #343a40;
@@ -208,13 +208,13 @@ label {
     padding-bottom: 8px;
 }
 
-.topics-grid {
+.analysis-topics-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
 }
 
-.topic-entry {
+.analysis-topic-entry {
     flex: 1 1 calc(33.333% - 16px);
     border: 1px solid #dee2e6;
     border-radius: 10px;
@@ -224,27 +224,27 @@ label {
     transition: background-color 0.3s, transform 0.3s;
 }
 
-.topic-entry:hover {
+.analysis-topic-entry:hover {
     transform: translateY(-3px);
 }
 
-.topic-name {
+.analysis-topic-name {
     font-size: 1.1em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe */
+    color: #343a40; /* Slightly darker text color */
     margin-bottom: 8px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Light text shadow */
 }
 
-.topic-score {
+.analysis-topic-score {
     display: inline-block;
     margin-top: 4px;
     font-size: 0.9em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe für den Score */
+    color: #343a40; /* Slightly darker text color for the score */
 }
 
-.sentiment-entry {
+.analysis-sentiment-entry {
     display: inline-block;
     width: calc(32.333% - 16px);
     margin-right: 16px;
@@ -253,36 +253,36 @@ label {
     text-align: center;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     transition: background-color 0.3s, transform 0.3s;
-    margin-bottom: 16px; /* Abstand nach unten */
+    margin-bottom: 16px; /* Spacing below */
 }
 
-.sentiment-entry:hover {
+.analysis-sentiment-entry:hover {
     transform: translateY(-3px);
 }
 
-.sentiment-name {
+.analysis-sentiment-name {
     font-size: 1.1em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe */
+    color: #343a40; /* darker text color */
     margin-bottom: 8px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Light text shadow */
 }
 
-.sentiment-score {
+.analysis-sentiment-score {
     display: inline-block;
     margin-top: 4px;
     font-size: 0.9em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe für den Score */
+    color: #343a40; /* darker text color for the score */
 }
 
-.sentiment-container {
+.analysis-sentiment-container {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
 }
 
-.sentiment-card {
+.analysis-sentiment-card {
     flex: 1 1 100%;
     /*background: #f8f9fa;*/
     /*border: 2px solid #007bff;*/
@@ -292,12 +292,12 @@ label {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.sentiment-card:hover {
+.analysis-sentiment-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.sentiment-card-title {
+.analysis-sentiment-card-title {
     font-size: 1.6em;
     margin-bottom: 20px;
     color: #343a40;
@@ -306,13 +306,13 @@ label {
 }
 
 
-.hate-container {
+.analysis-hate-container {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
 }
 
-.hate-card {
+.analysis-hate-card {
     flex: 1 1 100%;
     /*background: #f8f9fa;*/
     /*border: 2px solid #007bff;*/
@@ -322,12 +322,12 @@ label {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.hate-card:hover {
+.analysis-hate-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.hate-card-title {
+.analysis-hate-card-title {
     font-size: 1.6em;
     margin-bottom: 20px;
     color: #343a40;
@@ -335,7 +335,7 @@ label {
     padding-bottom: 8px;
 }
 
-.hate-entry {
+.analysis-hate-entry {
     display: inline-block;
     width: calc(49.333% - 16px);
     margin-right: 16px;
@@ -344,36 +344,36 @@ label {
     text-align: center;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     transition: background-color 0.3s, transform 0.3s;
-    margin-bottom: 16px; /* Abstand nach unten */
+    margin-bottom: 16px; /* Spacing below */
 }
 
-.hate-entry:hover {
+.analysis-hate-entry:hover {
     transform: translateY(-3px);
 }
 
-.hate-name {
+.analysis-hate-name {
     font-size: 1.1em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe */
+    color: #343a40;
     margin-bottom: 8px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Light text shadow */
 }
 
-.hate-score {
+.analysis-hate-score {
     display: inline-block;
     margin-top: 4px;
     font-size: 0.9em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe für den Score */
+    color: #343a40; /* darker text color for the score */
 }
 
-.fact-container {
+.analysis-fact-container {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
 }
 
-.fact-card {
+.analysis-fact-card {
     flex: 1 1 100%;
     /*background: #f8f9fa;*/
     /*border: 2px solid #007bff;*/
@@ -383,12 +383,12 @@ label {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.fact-card:hover {
+.analysis-fact-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.fact-card-title {
+.analysis-fact-card-title {
     font-size: 1.6em;
     margin-bottom: 20px;
     color: #343a40;
@@ -396,7 +396,7 @@ label {
     padding-bottom: 8px;
 }
 
-.fact-entry {
+.analysis-fact-entry {
     display: inline-block;
     width: calc(49.333% - 16px);
     margin-right: 16px;
@@ -408,11 +408,11 @@ label {
     margin-bottom: 16px;
 }
 
-.fact-entry:hover {
+.analysis-fact-entry:hover {
     transform: translateY(-3px);
 }
 
-.fact-score {
+.analysis-fact-score {
     display: inline-block;
     margin-top: 4px;
     font-size: 0.9em;
@@ -422,13 +422,13 @@ label {
 
 
 
-.toxic-container {
+.analysis-toxic-container {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
 }
 
-.toxic-card {
+.analysis-toxic-card {
     flex: 1 1 100%;
     /*background: #f8f9fa;*/
     /*border: 2px solid #007bff;*/
@@ -438,12 +438,12 @@ label {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.toxic-card:hover {
+.analysis-toxic-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.toxic-card-title {
+.analysis-toxic-card-title {
     font-size: 1.6em;
     margin-bottom: 20px;
     color: #343a40;
@@ -451,7 +451,7 @@ label {
     padding-bottom: 8px;
 }
 
-.toxic-entry {
+.analysis-toxic-entry {
     display: inline-block;
     width: calc(49.333% - 16px);
     margin-right: 16px;
@@ -460,37 +460,37 @@ label {
     text-align: center;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     transition: background-color 0.3s, transform 0.3s;
-    margin-bottom: 16px; /* Abstand nach unten */
+    margin-bottom: 16px; /* Spacing below */
 }
 
-.toxic-entry:hover {
+.analysis-toxic-entry:hover {
     transform: translateY(-3px);
 }
 
-.toxic-name {
+.analysis-toxic-name {
     font-size: 1.1em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe */
+    color: #343a40; /* darker text color */
     margin-bottom: 8px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Light text shadow */
 }
 
-.toxic-score {
+.analysis-toxic-score {
     display: inline-block;
     margin-top: 4px;
     font-size: 0.9em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe für den Score */
+    color: #343a40; /* darker text color for the score */
 }
 
-.emotions-container {
+.analysis-emotions-container {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
     margin-top: 20px;
 }
 
-.emotion-card {
+.analysis-emotion-card {
     flex: 1 1 100%;
     /*background: #f8f9fa;*/
     /*border: 2px solid #007bff;*/
@@ -500,12 +500,12 @@ label {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.emotion-card:hover {
+.analysis-emotion-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.emotion-card-title {
+.analysis-emotion-card-title {
     font-size: 1.6em;
     margin-bottom: 20px;
     color: #343a40;
@@ -513,13 +513,13 @@ label {
     padding-bottom: 8px;
 }
 
-.emotions-grid {
+.analysis-emotions-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
 }
 
-.emotion-entry {
+.analysis-emotion-entry {
     flex: 1 1 calc(33.333% - 16px);
     border: 1px solid #dee2e6;
     border-radius: 10px;
@@ -527,54 +527,54 @@ label {
     text-align: center;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     transition: background-color 0.3s, transform 0.3s;
-    background-color: rgba(var(--emotion-color), 1); /* Fallback ohne JS */
+    background-color: rgba(var(--analysis-emotion-color), 1); /* Fallback without JS */
 }
 
-.emotion-entry:hover {
+.analysis-emotion-entry:hover {
     transform: translateY(-3px);
 }
 
-.emotion-name {
+.analysis-emotion-name {
     font-size: 1.1em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe */
+    color: #343a40;
     margin-bottom: 8px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Light text shadow */
 }
 
-.emotion-score {
+.analysis-emotion-score {
     display: inline-block;
     margin-top: 4px;
     font-size: 0.9em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe für den Score */
+    color: #343a40; /* darker text color for the score */
 }
 
-/* Emotionen-spezifische helle Farben für schwarzen Hintergrund */
-.emotion-love { --emotion-color: 255, 182, 193; }         /* Helles Rosa */
-.emotion-joy { --emotion-color: 255, 239, 120; }          /* Helles Gelb */
-.emotion-surprise { --emotion-color: 216, 160, 255; }     /* Helles Violett */
-.emotion-anger { --emotion-color: 255, 102, 102; }        /* Helles Rot */
-.emotion-sadness { --emotion-color: 135, 206, 250; }      /* Hellblau */
-.emotion-fear { --emotion-color: 144, 238, 238; }         /* Helles Türkis */
-.emotion-disgust { --emotion-color: 192, 255, 192; }      /* Helles Grün (pastellig) */
-.emotion-others { --emotion-color: 200, 200, 200; }       /* Helles Grau */
-.emotion-anticipation { --emotion-color: 255, 210, 120; } /* Helles Orange */
-.emotion-apprehension { --emotion-color: 186, 145, 255; } /* Helles Indigo */
-.emotion-happiness { --emotion-color: 255, 255, 153; }    /* Sehr helles Gelb */
-.emotion-confusion { --emotion-color: 238, 130, 238; }    /* Hell-Violettrosa */
-.emotion-default { --emotion-color: 220, 220, 220; }      /* Sehr helles Grau */
+/* Emotions-colors for different emotions */
+.analysis-emotion-love { --analysis-emotion-color: 255, 182, 193; }        /* Light pink */
+.analysis-emotion-joy { --analysis-emotion-color: 255, 239, 120; }          /* Light yellow */
+.analysis-emotion-surprise { --analysis-emotion-color: 216, 160, 255; }     /* Light violet */
+.analysis-emotion-anger { --analysis-emotion-color: 255, 102, 102; }        /* Light red */
+.analysis-emotion-sadness { --analysis-emotion-color: 135, 206, 250; }      /* Light blue */
+.analysis-emotion-fear { --analysis-emotion-color: 144, 238, 238; }         /* Light turquoise */
+.analysis-emotion-disgust { --analysis-emotion-color: 192, 255, 192; }      /* Light olive green/pastel green */
+.analysis-emotion-others { --analysis-emotion-color: 200, 200, 200; }       /* Light grey */
+.analysis-emotion-anticipation { --analysis-emotion-color: 255, 210, 120; } /* Light orange */
+.analysis-emotion-apprehension { --analysis-emotion-color: 186, 145, 255; } /* Light indigo */
+.analysis-emotion-happiness { --analysis-emotion-color: 255, 255, 153; }    /* Very Light yellow */
+.analysis-emotion-confusion { --analysis-emotion-color: 238, 130, 238; }    /* Very Light violet */
+.analysis-emotion-default { --analysis-emotion-color: 220, 220, 220; }      /* Very Light grey */
 
 
 
-.coherences-container {
+.analysis-coherences-container {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
     margin-top: 20px;
 }
 
-.coherence-card {
+.analysis-coherence-card {
     flex: 1 1 100%;
     /*background: #f8f9fa;*/
     /*border: 2px solid #007bff;*/
@@ -584,12 +584,12 @@ label {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.coherence-card:hover {
+.analysis-coherence-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.coherence-card-title {
+.analysis-coherence-card-title {
     font-size: 1.6em;
     margin-bottom: 20px;
     color: #343a40;
@@ -597,13 +597,13 @@ label {
     padding-bottom: 8px;
 }
 
-.coherences-grid {
+.analysis-coherences-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
 }
 
-.coherence-entry {
+.analysis-coherence-entry {
     flex: 1 1 calc(33.333% - 16px);
     border: 1px solid #dee2e6;
     border-radius: 10px;
@@ -611,39 +611,39 @@ label {
     text-align: center;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     transition: background-color 0.3s, transform 0.3s;
-    background-color: rgba(var(--coherence-color), 1); /* Fallback ohne JS */
+    background-color: rgba(var(--analysis-coherence-color), 1); /* Fallback without JS */
 }
 
-.coherence-entry:hover {
+.analysis-coherence-entry:hover {
     transform: translateY(-3px);
 }
 
-.coherence-name {
+.analysis-coherence-name {
     font-size: 1.1em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe */
+    color: #343a40; /* darker text color */
     margin-bottom: 8px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Light text shadow */
 }
 
-.coherence-score {
+.analysis-coherence-score {
     display: inline-block;
     margin-top: 4px;
     font-size: 0.9em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe für den Score */
+    color: #343a40; /* darker text color for the score */
 }
 
-/* Helle Farben für Coherence-Typen (für schwarzen Hintergrund geeignet) */
-.coherence-euclidean { --coherence-color: 255, 182, 193; }          /* Helles Rosa */
-.coherence-cosine { --coherence-color: 255, 239, 120; }             /* Helles Gelb */
-.coherence-distanceCorrelation { --coherence-color: 216, 160, 255; }/* Helles Violett */
-.coherence-wasserstein { --coherence-color: 255, 102, 102; }        /* Helles Rot */
-.coherence-jensenshannon { --coherence-color: 135, 206, 250; }      /* Hellblau */
-.coherence-bhattacharyya { --coherence-color: 144, 238, 238; }      /* Helles Türkis */
+/* Coherence-colors for different coherence metrics */
+.analysis-coherence-euclidean { --analysis-coherence-color: 255, 182, 193; }          /* light pink */
+.analysis-coherence-cosine { --analysis-coherence-color: 255, 239, 120; }             /* light yellow */
+.analysis-coherence-distanceCorrelation { --analysis-coherence-color: 216, 160, 255; }/* light violet */
+.analysis-coherence-wasserstein { --analysis-coherence-color: 255, 102, 102; }        /* light red */
+.analysis-coherence-jensenshannon { --analysis-coherence-color: 135, 206, 250; }      /* light blue */
+.analysis-coherence-bhattacharyya { --analysis-coherence-color: 144, 238, 238; }      /* light turquoise */
 
 
-.stance-entry {
+.analysis-stance-entry {
     display: inline-block;
     width: calc(32.333% - 16px);
     margin-right: 16px;
@@ -652,36 +652,36 @@ label {
     text-align: center;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     transition: background-color 0.3s, transform 0.3s;
-    margin-bottom: 16px; /* Abstand nach unten */
+    margin-bottom: 16px; /* Spacing below */
 }
 
-.stance-entry:hover {
+.analysis-stance-entry:hover {
     transform: translateY(-3px);
 }
 
-.stance-name {
+.analysis-stance-name {
     font-size: 1.1em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe */
+    color: #343a40; /* darker text color */
     margin-bottom: 8px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Light text shadow */
 }
 
-.stance-score {
+.analysis-stance-score {
     display: inline-block;
     margin-top: 4px;
     font-size: 0.9em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe für den Score */
+    color: #343a40; /* darker text color for the score */
 }
 
-.stance-container {
+.analysis-stance-container {
     display: flex;
     justify-content: space-between;
     flex-wrap: wrap;
 }
 
-.stance-card {
+.analysis-stance-card {
     flex: 1 1 100%;
     /*background: #f8f9fa;*/
     /*border: 2px solid #007bff;*/
@@ -691,12 +691,12 @@ label {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.stance-card:hover {
+.analysis-stance-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.stance-card-title {
+.analysis-stance-card-title {
     font-size: 1.6em;
     margin-bottom: 20px;
     color: #343a40;
@@ -705,14 +705,14 @@ label {
 }
 
 
-.readabilitys-container {
+.analysis-readabilitys-container {
     display: flex;
     flex-wrap: wrap;
     gap: 20px;
     margin-top: 20px;
 }
 
-.readability-card {
+.analysis-readability-card {
     flex: 1 1 100%;
     /*background: #f8f9fa;*/
     /*border: 2px solid #007bff;*/
@@ -722,12 +722,12 @@ label {
     transition: transform 0.3s, box-shadow 0.3s;
 }
 
-.readability-card:hover {
+.analysis-readability-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
 }
 
-.readability-card-title {
+.analysis-readability-card-title {
     font-size: 1.6em;
     margin-bottom: 20px;
     color: #343a40;
@@ -735,13 +735,13 @@ label {
     padding-bottom: 8px;
 }
 
-.readabilitys-grid {
+.analysis-readabilitys-grid {
     display: flex;
     flex-wrap: wrap;
     gap: 16px;
 }
 
-.readability-entry {
+.analysis-readability-entry {
     flex: 1 1 calc(33.333% - 16px);
     border: 1px solid #dee2e6;
     border-radius: 10px;
@@ -749,37 +749,37 @@ label {
     text-align: center;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
     transition: background-color 0.3s, transform 0.3s;
-    background-color: rgba(var(--readability-color), 0.5);
+    background-color: rgba(var(--analysis-readability-color), 0.5);
 }
 
-.readability-entry:hover {
+.analysis-readability-entry:hover {
     transform: translateY(-3px);
 }
 
-.readability-name {
+.analysis-readability-name {
     font-size: 1.1em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe */
+    color: #343a40; /* darker text color */
     margin-bottom: 8px;
-    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Leichter Textschatten */
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2); /* Light text shadow */
 }
 
-.readability-score {
+.analysis-readability-score {
     display: inline-block;
     margin-top: 4px;
     font-size: 0.9em;
     font-weight: bold;
-    color: #343a40; /* Dunklere Textfarbe für den Score */
+    color: #343a40; /* darker text color for the score */
 }
 
 
-/* Helle Farben für Readability-Metriken – optimiert für schwarzen Hintergrund */
-.readability-fleschkincaid  { --readability-color: 255, 182, 193; }   /* Helles Rosa */
-.readability-flesch         { --readability-color: 255, 239, 120; }   /* Helles Gelb */
-.readability-gunningfog     { --readability-color: 216, 160, 255; }   /* Helles Violett */
-.readability-colemanliau    { --readability-color: 255, 102, 102; }   /* Helles Rot */
-.readability-ari            { --readability-color: 135, 206, 250; }   /* Hellblau */
-.readability-linsearwrite   { --readability-color: 144, 238, 238; }   /* Helles Türkis */
-.readability-smog           { --readability-color: 192, 255, 192; }   /* Helles Olivgrün/Pastellgrün */
-.readability-spache         { --readability-color: 255, 210, 120; }   /* Helles Orange */
-.readability-dalechall      { --readability-color: 186, 145, 255; }   /* Helles Indigo */
+/* Readability-colors for different readability metrics */
+.analysis-readability-fleschkincaid  { --analysis-readability-color: 255, 182, 193; }   /* light pink */
+.analysis-readability-flesch         { --analysis-readability-color: 255, 239, 120; }   /* light yellow */
+.analysis-readability-gunningfog     { --analysis-readability-color: 216, 160, 255; }   /* light violet */
+.analysis-readability-colemanliau    { --analysis-readability-color: 255, 102, 102; }   /* light red */
+.analysis-readability-ari            { --analysis-readability-color: 135, 206, 250; }   /* light blue */
+.analysis-readability-linsearwrite   { --analysis-readability-color: 144, 238, 238; }   /* light turquoise */
+.analysis-readability-smog           { --analysis-readability-color: 192, 255, 192; }   /* light olive green/pastel green */
+.analysis-readability-spache         { --analysis-readability-color: 255, 210, 120; }   /* light orange */
+.analysis-readability-dalechall      { --analysis-readability-color: 186, 145, 255; }   /* light indigo */

@@ -59,7 +59,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.4.0/gsap.min.js"></script>
     <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
     <!--<script src="https://unpkg.com/@tweenjs/tween.js@^20.0.0/dist/tween.umd.js"></script>-->
-<#--    <script src="/js/analysis.js"></script>-->
     <title>${title}</title>
 </head>
 

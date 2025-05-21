@@ -1,4 +1,4 @@
-package org.texttechnologylab.models;
+package org.texttechnologylab.models.dto;
 
 public class HistoryRequestDto {
     private String historyId;

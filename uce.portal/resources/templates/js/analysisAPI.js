@@ -3,7 +3,7 @@
  */
 async function runAnalysisPipeline() {
     const selectedModels = [];
-    const inputText = $('#input').val().trim();
+    const inputText = $('#analysis-input').val().trim();
     const $runButton = $('.run-pipeline-btn');
     const inputClaim = $('#claim-text').val().trim();
     const inputCoherence = $('#coherence-text').val().trim();

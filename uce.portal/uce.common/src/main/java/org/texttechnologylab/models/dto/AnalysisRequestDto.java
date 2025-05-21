@@ -1,4 +1,4 @@
-package org.texttechnologylab.models;
+package org.texttechnologylab.models.dto;
 
 import java.util.List;
 

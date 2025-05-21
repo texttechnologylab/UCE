@@ -19,15 +19,13 @@ public final class ModelResources {
     public void setGroupMap(HashMap<String, ModelInfo> groupMap) {
         this.groupMap = groupMap;
     }
+
     public HashMap<String, ModelInfo> getGroupMap() {
         return groupMap;
     }
 
-
-
-
     public ModelResources() throws IOException {
-        var inputStream = getClass().getClassLoader().getResourceAsStream("Models.json");
+        var inputStream = getClass().getClassLoader().getResourceAsStream("models.json");
         String jsonData;
         try (var reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             jsonData = reader.lines().collect(Collectors.joining(System.lineSeparator()));

@@ -51,37 +51,45 @@
         <div class="col-5">
             <div class="group-box card-shadow bg-light">
                 <h5 class="mb-0 mr-1 color-prime">${languageResource.get("inputField")}</h5>
-                <div class="grow-text">
-                    <label for="input"></label><textarea name="input" id="input" rows="10" placeholder="${languageResource.get("input")}" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
-                    <br />
-                    <button type="button" class="btn-primary" id="upload-btn">${languageResource.get("upload")}</button>
-                    <input type="file" id="file-input" accept=".txt" style="display: none;" />
-                    <button class="btn btn-success run-pipeline-btn">
-                        <i class="fas fa-play"></i> ${languageResource.get("RunPipeline")}
-                    </button>
+                <div class="analysis-text-view">
+                    <div class="grow-text">
+                        <label for="analysis-input"></label><textarea name="analysis-input" id="analysis-input" rows="10" placeholder="${languageResource.get("input")}" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                        <br />
+                        <button type="button" class="btn-primary" id="upload-btn">${languageResource.get("upload")}</button>
+                        <input type="file" id="file-input" accept=".txt" style="display: none;" />
+                        <button class="btn btn-success run-pipeline-btn">
+                            <i class="fas fa-play"></i> ${languageResource.get("RunPipeline")}
+                        </button>
+                    </div>
                 </div>
             </div>
             <div id="claim-field-wrapper" style="display: none;">
                 <div class="group-box card-shadow bg-light">
                     <h5 class="mb-0 mr-1 color-prime">Claim</h5>
-                    <div class="grow-text">
-                        <textarea name="claim-text" id="claim-text" rows="10" placeholder="Claim" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                    <div class="analysis-text-view">
+                        <div class="grow-text">
+                            <textarea name="claim-text" id="claim-text" rows="10" placeholder="Claim" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
             <div id="text-field-wrapper" style="display: none;">
                 <div class="group-box card-shadow bg-light">
                     <h5 class="mb-0 mr-1 color-prime">Cohesion Text</h5>
-                    <div class="grow-text">
-                        <textarea name="coherence-text" id="coherence-text" rows="10" placeholder="Text" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                    <div class="analysis-text-view">
+                        <div class="grow-text">
+                            <textarea name="coherence-text" id="coherence-text" rows="10" placeholder="Text" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                        </div>
                     </div>
                 </div>
             </div>
             <div id="stance-field-wrapper" style="display: none;">
                 <div class="group-box card-shadow bg-light">
                     <h5 class="mb-0 mr-1 color-prime">Hypothesis</h5>
-                    <div class="grow-text">
-                        <textarea name="stance-text" id="stance-text" rows="10" placeholder="Text" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                    <div class="analysis-text-view">
+                        <div class="grow-text">
+                            <textarea name="stance-text" id="stance-text" rows="10" placeholder="Text" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                        </div>
                     </div>
                 </div>
             </div>

@@ -1,7 +1,6 @@
-// Pfeile und Baumstruktur togglen
 document.querySelectorAll('.tree-toggle').forEach(toggle => {
     toggle.addEventListener('click', function (e) {
-        // Wenn auf Checkbox oder Label geklickt wird → NICHT klappen!
+
         if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'label') {
             return;
         }
@@ -20,20 +19,20 @@ document.querySelectorAll('.tree-toggle').forEach(toggle => {
     });
 });
 
-// Wenn die Master-"Modelle"-Checkbox geändert wird
+
 const masterCheckbox = document.getElementById('all-models-checkbox');
 
 masterCheckbox.addEventListener('change', function () {
     const allCheckboxes = document.querySelectorAll('.analysis-treeview input[type="checkbox"]:not(#all-models-checkbox)');
     allCheckboxes.forEach(cb => cb.checked = this.checked);
 
-    // Sichtbarkeiten aktualisieren
+
     updateFieldVisibility('factchecking', 'claim-field-wrapper', 'claim-text');
     updateFieldVisibility('cohesion', 'text-field-wrapper', 'input-text');
     updateFieldVisibility('stance', 'stance-field-wrapper', 'stance-text');
 });
 
-// Wenn eine Gruppen-Checkbox geändert wird
+
 document.querySelectorAll('.group-checkbox').forEach(groupCheckbox => {
     groupCheckbox.addEventListener('change', function(e) {
         const groupItem = this.closest('li');
@@ -52,43 +51,12 @@ document.querySelectorAll('.group-checkbox').forEach(groupCheckbox => {
     });
 });
 
-// Wenn eine Modell-Checkbox geändert wird
-// document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
-//     modelCheckbox.addEventListener('change', function(e) {
-//         const groupItem = this.closest('ul').parentElement;
-//         const groupCheckbox = groupItem.querySelector('.group-checkbox');
-//         const modelCheckboxes = groupItem.querySelectorAll('.model-checkbox');
-//
-//         const allChecked = Array.from(modelCheckboxes).every(cb => cb.checked);
-//         const noneChecked = Array.from(modelCheckboxes).every(cb => !cb.checked);
-//
-//         if (allChecked) {
-//             groupCheckbox.checked = true;
-//             groupCheckbox.indeterminate = false;
-//         } else if (noneChecked) {
-//             groupCheckbox.checked = false;
-//             groupCheckbox.indeterminate = false;
-//         } else {
-//             groupCheckbox.checked = false;
-//             groupCheckbox.indeterminate = true;
-//         }
-//
-//         updateMasterCheckbox();
-//
-//         // Sichtbarkeiten aktualisieren
-//         updateFieldVisibility('factchecking', 'claim-field-wrapper', 'claim-text');
-//         updateFieldVisibility('cohesion', 'text-field-wrapper', 'input-text');
-//         updateFieldVisibility('stance', 'stance-field-wrapper', 'stance-text');
-//
-//         e.stopPropagation(); // Verhindert Baum-Öffnen beim Checkbox-Klick
-//     });
-// });
+
 document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
     modelCheckbox.addEventListener('change', function(e) {
         const modelItem = this.closest('li'); // Das ist das Modell-<li>
         const groupItem = modelItem.closest('ol.nested').closest('li'); // Jetzt:
 
-        // Fix: direktes Elternelement der Gruppe
         const groupCheckbox = groupItem.querySelector('.group-checkbox');
         const modelCheckboxes = groupItem.querySelectorAll('.model-checkbox');
 
@@ -116,24 +84,6 @@ document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
     });
 });
 
-
-// Update-Funktion für die Master-"Modelle"-Checkbox
-// function updateMasterCheckbox() {
-//     const groupCheckboxes = document.querySelectorAll('.group-checkbox');
-//     const allChecked = Array.from(groupCheckboxes).every(cb => cb.checked);
-//     const noneChecked = Array.from(groupCheckboxes).every(cb => !cb.checked);
-//
-//     if (allChecked) {
-//         masterCheckbox.checked = true;
-//         masterCheckbox.indeterminate = false;
-//     } else if (noneChecked) {
-//         masterCheckbox.checked = false;
-//         masterCheckbox.indeterminate = false;
-//     } else {
-//         masterCheckbox.checked = false;
-//         masterCheckbox.indeterminate = true;
-//     }
-// }
 function updateMasterCheckbox() {
     const masterCheckbox = document.getElementById('all-models-checkbox');
     const groupCheckboxes = document.querySelectorAll('.group-checkbox');
@@ -154,7 +104,7 @@ function updateMasterCheckbox() {
     }
 }
 
-// Hilfsfunktion: Sichtbarkeit je nach Checkbox-Zustand steuern
+
 function updateFieldVisibility(keyword, wrapperId, inputId) {
     const checkboxes = document.querySelectorAll('.model-checkbox');
     const anyChecked = Array.from(checkboxes).some(cb => cb.id.toLowerCase().includes(keyword) && cb.checked);
@@ -171,10 +121,9 @@ function updateFieldVisibility(keyword, wrapperId, inputId) {
     }
 }
 
-// Datei-Upload
 const uploadBtn = document.getElementById('upload-btn');
 const fileInput = document.getElementById('file-input');
-const textarea = document.getElementById('input');
+const textarea = document.getElementById('analysis-input');
 
 uploadBtn.addEventListener('click', () => {
     fileInput.click();
@@ -186,7 +135,7 @@ fileInput.addEventListener('change', () => {
         const reader = new FileReader();
         reader.onload = function(e) {
             textarea.value = e.target.result;
-            textarea.parentNode.dataset.replicatedValue = textarea.value; // aktualisiert auch dein Dataset
+            textarea.parentNode.dataset.replicatedValue = textarea.value;
         };
         reader.readAsText(file);
     }
