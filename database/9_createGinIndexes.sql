@@ -1,9 +1,3 @@
--- Enable some postgresql extensions, if not already enabled
-CREATE EXTENSION IF NOT EXISTS pg_trgm;
-CREATE EXTENSION IF NOT EXISTS vector;
-CREATE EXTENSION IF NOT EXISTS btree_gin;
-CREATE EXTENSION IF NOT EXISTS postgis;
-
 -- Some standard indexes on title and such
 CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_title ON metadatatitleinfo (title);
 CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_published ON metadatatitleinfo (published);
