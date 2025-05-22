@@ -12,24 +12,24 @@
                 <ul class="analysis-treeview">
                     <li>
                         <div class="tree-toggle">
-                            <i class="fa-solid fa-chevron-right toggle-icon"></i>
-                            <input type="checkbox" id="all-models-checkbox" />
-                            <label class="group-label" for="all-models-checkbox">${languageResource.get("models")}</label>
+                            <i class="fas fa-chevron-right toggle-icon"></i>
+                            <input type="checkbox" id="all-analysis-models-checkbox" />
+                            <label class="group-label" for="all-analysis-models-checkbox">${languageResource.get("models")}</label>
                         </div>
                         <ul class="nested">
                             <#list modelGroups as group>
                                 <li>
                                     <div class="tree-toggle">
-                                        <i class="fa-solid fa-chevron-right toggle-icon"></i>
-                                        <input type="checkbox" class="group-checkbox" id="group_${group_index}"/>
-                                        <label class="group-label" for="group_${group_index}">${group.name}(${group.models?size})</label>
+                                        <i class="fas fa-chevron-right toggle-icon"></i>
+                                        <input type="checkbox" class="analysis-group-checkbox" id="group_${group_index}"/>
+                                        <label class="analysis-group-label" for="group_${group_index}">${group.name} (${group.models?size})</label>
                                     </div>
                                     <ol class="nested">
                                         <#list group.models as model>
                                             <li>
                                                 <div class="model-item">
                                                     <label for="${group.name?replace(" ", "_")}_${model.key?replace(" ", "_")}">
-                                                        <input type="checkbox" class="model-checkbox" id="${group.name?replace(" ", "_")}_${model.key?replace(" ", "_")}"/>
+                                                        <input type="checkbox" class="analysis-model-checkbox" id="${group.name?replace(" ", "_")}_${model.key?replace(" ", "_")}"/>
                                                         ${model.name!model.key}
                                                     </label>
                                                 </div>
@@ -55,7 +55,7 @@
                     <div class="grow-text">
                         <label for="analysis-input"></label><textarea name="analysis-input" id="analysis-input" rows="10" placeholder="${languageResource.get("input")}" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
                         <br />
-                        <button type="button" class="btn-primary" id="upload-btn">${languageResource.get("upload")}</button>
+                        <button type="button" class="btn-primary" id="analysis-upload-btn">${languageResource.get("upload")}</button>
                         <input type="file" id="file-input" accept=".txt" style="display: none;" />
                         <button class="btn btn-success run-pipeline-btn">
                             <i class="fas fa-play"></i> ${languageResource.get("RunPipeline")}

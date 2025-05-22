@@ -13,7 +13,7 @@ async function runAnalysisPipeline() {
     let checkboxStance = false;
 
     // Get only the *lowest* selected checkboxes (no partially selected parents)
-    $('.model-checkbox:checked').each(function() {
+    $('.analysis-model-checkbox:checked').each(function() {
         const $checkbox = $(this);
         const $childCheckboxes = $checkbox.closest('li').find('ul input[type="checkbox"]');
         if ($childCheckboxes.length === 0) {

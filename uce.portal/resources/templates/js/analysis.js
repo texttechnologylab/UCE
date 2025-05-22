@@ -20,10 +20,10 @@ document.querySelectorAll('.tree-toggle').forEach(toggle => {
 });
 
 
-const masterCheckbox = document.getElementById('all-models-checkbox');
+const masterCheckbox = document.getElementById('all-analysis-models-checkbox');
 
 masterCheckbox.addEventListener('change', function () {
-    const allCheckboxes = document.querySelectorAll('.analysis-treeview input[type="checkbox"]:not(#all-models-checkbox)');
+    const allCheckboxes = document.querySelectorAll('.analysis-treeview input[type="checkbox"]:not(#all-analysis-models-checkbox)');
     allCheckboxes.forEach(cb => cb.checked = this.checked);
 
 
@@ -33,10 +33,10 @@ masterCheckbox.addEventListener('change', function () {
 });
 
 
-document.querySelectorAll('.group-checkbox').forEach(groupCheckbox => {
+document.querySelectorAll('.analysis-group-checkbox').forEach(groupCheckbox => {
     groupCheckbox.addEventListener('change', function(e) {
         const groupItem = this.closest('li');
-        const modelCheckboxes = groupItem.querySelectorAll('.model-checkbox');
+        const modelCheckboxes = groupItem.querySelectorAll('.analysis-model-checkbox');
 
         modelCheckboxes.forEach(cb => {
             cb.checked = this.checked;
@@ -52,13 +52,13 @@ document.querySelectorAll('.group-checkbox').forEach(groupCheckbox => {
 });
 
 
-document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
+document.querySelectorAll('.analysis-model-checkbox').forEach(modelCheckbox => {
     modelCheckbox.addEventListener('change', function(e) {
         const modelItem = this.closest('li'); // Das ist das Modell-<li>
         const groupItem = modelItem.closest('ol.nested').closest('li'); // Jetzt:
 
-        const groupCheckbox = groupItem.querySelector('.group-checkbox');
-        const modelCheckboxes = groupItem.querySelectorAll('.model-checkbox');
+        const groupCheckbox = groupItem.querySelector('.analysis-group-checkbox');
+        const modelCheckboxes = groupItem.querySelectorAll('.analysis-model-checkbox');
 
         const allChecked = Array.from(modelCheckboxes).every(cb => cb.checked);
         const noneChecked = Array.from(modelCheckboxes).every(cb => !cb.checked);
@@ -85,8 +85,8 @@ document.querySelectorAll('.model-checkbox').forEach(modelCheckbox => {
 });
 
 function updateMasterCheckbox() {
-    const masterCheckbox = document.getElementById('all-models-checkbox');
-    const groupCheckboxes = document.querySelectorAll('.group-checkbox');
+    const masterCheckbox = document.getElementById('all-analysis-models-checkbox');
+    const groupCheckboxes = document.querySelectorAll('.analysis-group-checkbox');
 
     const total = groupCheckboxes.length;
     const checked = Array.from(groupCheckboxes).filter(cb => cb.checked).length;
@@ -106,7 +106,7 @@ function updateMasterCheckbox() {
 
 
 function updateFieldVisibility(keyword, wrapperId, inputId) {
-    const checkboxes = document.querySelectorAll('.model-checkbox');
+    const checkboxes = document.querySelectorAll('.analysis-model-checkbox');
     const anyChecked = Array.from(checkboxes).some(cb => cb.id.toLowerCase().includes(keyword) && cb.checked);
     const wrapper = document.getElementById(wrapperId);
 
@@ -121,7 +121,7 @@ function updateFieldVisibility(keyword, wrapperId, inputId) {
     }
 }
 
-const uploadBtn = document.getElementById('upload-btn');
+const uploadBtn = document.getElementById('analysis-upload-btn');
 const fileInput = document.getElementById('file-input');
 const textarea = document.getElementById('analysis-input');
 
