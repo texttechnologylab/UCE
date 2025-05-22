@@ -46,7 +46,7 @@ services:
     volumes:
       - "${UCE_CONFIG_PATH}:/app/config/uceConfig.json"
       - "./database:/app/database"
-    command: [ "/bin/sh", "-c", "sleep 7 && java -jar ./target/webportal-jar-with-dependencies.jar -cf /app/config/uceConfig.json" ]
+    command: ["/bin/sh", "-c", "sleep 7 && java --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.util/java.base=ALL-UNNAMED -jar ./target/webportal-jar-with-dependencies.jar -cf /app/config/uceConfig.json"]
 
   uce-importer:
     container_name: uce-importer

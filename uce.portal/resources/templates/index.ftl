@@ -21,6 +21,7 @@
         <#include "*/css/layered-search-builder.css">
         <#include "*/css/kwic.css">
         <#include "*/css/drawflow.css">
+        <#include "*/css/analysis.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
@@ -60,7 +61,6 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.4.0/gsap.min.js"></script>
     <script src="https://requirejs.org/docs/release/2.3.5/minified/require.js"></script>
     <!--<script src="https://unpkg.com/@tweenjs/tween.js@^20.0.0/dist/tween.umd.js"></script>-->
-
     <title>${title}</title>
 </head>
 
@@ -164,6 +164,8 @@
                                     class="fab fa-wikipedia-w color-prime"></i> ${languageResource.get("lexicon")}</a>
                         <a class="switch-view-btn btn text" data-id="team"><i
                                     class="fas fa-users color-prime"></i> ${languageResource.get("team")}</a>
+                        <a class="switch-view-btn btn text" data-id="analysis"><i
+                                    class="fas fa-chart-pie color-prime"></i> ${languageResource.get("analysis")}</a>
                     </div>
                     <select class="form-control bg-default rounded-0 color-prime border-right-0 large-font switch-language-select">
                         <option data-lang="en-EN">Englisch</option>
@@ -357,6 +359,11 @@
             <#include "*/wiki/lexicon.ftl" />
         </div>
 
+        <!-- analysis -->
+        <div class="view display-none" data-id="analysis">
+            <#include "*/wiki/analysis.ftl" />
+        </div>
+
         <!-- team -->
         <div class="view display-none" data-id="team">
             <div class="container" style="margin-top: 5rem">
@@ -488,6 +495,7 @@
     <#include "js/search.js">
     <#include "js/layeredSearch.js">
     <#include "js/keywordInContext.js">
+    <#include "js/analysis.js">
+    <#include "js/analysisAPI.js">
 </script>
-
 </html>

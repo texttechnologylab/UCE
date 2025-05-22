@@ -7,6 +7,38 @@
     "de-DE": "Team",
     "en-EN": "Team"
   },
+  "analysis": {
+    "de-DE": "Analyse",
+    "en-EN": "Analysis"
+  },
+  "input": {
+    "de-DE": "Eingabe",
+    "en-EN": "Input"
+  },
+  "inputField": {
+    "de-DE": "Eingabe Text",
+    "en-EN": "Input Text"
+  },
+  "upload": {
+    "de-DE": "Datei Hochladen",
+    "en-EN": "Upload File"
+  },
+  "RunPipeline": {
+    "de-DE": "Pipeline Ausführen",
+    "en-EN": "Run Pipeline"
+  },
+  "output": {
+    "de-DE": "Ausgabe",
+    "en-EN": "Output"
+  },
+  "history": {
+    "de-DE": "Historie",
+    "en-EN": "History"
+  },
+  "models": {
+    "de-DE": "Modelle",
+    "en-EN": "Models"
+  },
   "search": {
     "de-DE": "Suche",
     "en-EN": "Search"

@@ -17,8 +17,9 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.Renderer;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.corpus.Corpus;
-import org.texttechnologylab.models.corpus.LexiconEntryId;
 import org.texttechnologylab.models.corpus.UCELog;
+import org.texttechnologylab.modules.ModelGroup;
+import org.texttechnologylab.modules.ModelResources;
 import org.texttechnologylab.routes.*;
 import org.texttechnologylab.services.LexiconService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
@@ -33,6 +34,7 @@ import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
+import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
@@ -43,6 +45,7 @@ public class App {
     private static final Logger logger = LogManager.getLogger(App.class);
     private static CommonConfig commonConfig = null;
     private static boolean forceLexicalization = false;
+    private static int DUUIInputCounter = 0;
 
     public static void main(String[] args) throws IOException {
         logger.info("Starting the UCE web service...");
@@ -93,6 +96,9 @@ public class App {
         logger.info("Testing the language resources:");
         var languageResource = new LanguageResources("en-EN");
         logger.info(languageResource.get("search"));
+
+        var modelResources = new ModelResources();
+        logger.info("Testing the model resources:");
 
         // Start the different cronjobs in the background
         SessionManager.InitSessionManager(commonConfig.getSessionJobInterval());
@@ -232,13 +238,14 @@ public class App {
         }
     }
 
-    private static void initSparkRoutes(ApplicationContext context) {
+    private static void initSparkRoutes(ApplicationContext context) throws IOException {
         var searchApi = new SearchApi(context, configuration);
         var documentApi = new DocumentApi(context, configuration);
         var ragApi = new RAGApi(context, configuration);
         var corpusUniverseApi = new CorpusUniverseApi(context, configuration);
         var wikiApi = new WikiApi(context, configuration);
         var importExportApi = new ImportExportApi(context);
+        var analysisApi = new AnalysisApi(context, configuration, DUUIInputCounter);
         Renderer.freemarkerConfig = configuration;
 
         before((request, response) -> {
@@ -269,6 +276,8 @@ public class App {
             RequestContextHolder.setLanguageResources(languageResources);
         });
 
+        ModelResources modelResources = new ModelResources();
+        List<ModelGroup> groups = modelResources.getGroupedModelObjects();
         // Landing page
         get("/", (request, response) -> {
             var model = new HashMap<String, Object>();
@@ -286,6 +295,7 @@ public class App {
             model.put("lexiconEntriesCount", context.getBean(LexiconService.class).countLexiconEntries());
             model.put("lexiconizableAnnotations", LexiconService.lexiconizableAnnotations);
             model.put("uceVersion", commonConfig.getUceVersion());
+            model.put("modelGroups", groups);
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");
@@ -340,6 +350,14 @@ public class App {
                 get("/active/page", searchApi.activeSearchPage);
                 get("/active/sort", searchApi.activeSearchSort);
                 get("/semanticRole/builder", searchApi.getSemanticRoleBuilderView);
+            });
+
+            path("/analysis", () -> {
+                post("/runPipeline", analysisApi.runPipeline);
+                get("/setHistory", analysisApi.setHistory);
+                post("/callHistory", analysisApi.callHistory);
+                post("/callHistoryText", analysisApi.callHistoryText);
+//                get("/runPipeline", analysisApi.runPipeline);
             });
 
             path("/corpusUniverse", () -> {

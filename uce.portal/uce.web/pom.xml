@@ -31,6 +31,17 @@
             <version>3.8.1</version>
             <scope>test</scope>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.github.texttechnologylab</groupId>-->
+<!--            <artifactId>DockerUnifiedUIMAInterface</artifactId>-->
+<!--            <version>1.4</version>-->
+<!--        </dependency>-->
+
+<!--        <dependency>-->
+<!--            <groupId>org.texttechnologylab</groupId>-->
+<!--            <artifactId>DockerUnifiedUIMAInterface</artifactId>-->
+<!--            <version>1.4.6</version>-->
+<!--        </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/org.springframework/spring-beans -->
         <dependency>
@@ -71,6 +82,12 @@
         <dependency>
             <groupId>org.texttechnologylab</groupId>
             <artifactId>uce.search</artifactId>
+            <version>1.0-SNAPSHOT</version>
+            <scope>compile</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.texttechnologylab</groupId>
+            <artifactId>uce.analysis</artifactId>
             <version>1.0-SNAPSHOT</version>
             <scope>compile</scope>
         </dependency>
