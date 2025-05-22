@@ -10,7 +10,6 @@ import javax.persistence.*;
 @Entity
 @Table(name = "documentlink")
 public class DocumentLink extends Link {
-    private long corpusId;
     @Column(name = "\"fromm\"", columnDefinition = "TEXT")
     private String from;
     @Column(name = "\"too\"", columnDefinition = "TEXT")
@@ -25,14 +24,6 @@ public class DocumentLink extends Link {
 
     public void setTo(String to) {
         this.to = to;
-    }
-
-    public long getCorpusId() {
-        return corpusId;
-    }
-
-    public void setCorpusId(long corpusId) {
-        this.corpusId = corpusId;
     }
 
     public String getFrom() {

@@ -18,9 +18,11 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.corpus.KeywordDistribution;
+import org.texttechnologylab.models.corpus.Sentence;
 import org.texttechnologylab.models.dto.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.DocumentEmbedding;
+import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
 import org.texttechnologylab.models.rag.RAGChatMessage;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
@@ -417,6 +419,36 @@ public class RAGService {
     }
 
     /**
+     * Gets all embedding sentences of a document
+     *
+     * @return
+     */
+    public ArrayList<DocumentSentenceEmbedding> getDocumentSentenceEmbeddingsOfDocument(long documentId) throws SQLException {
+        var query = "SELECT * FROM documentsentenceembeddings WHERE document_id = ?";
+        var statement = vectorDbConnection.prepareStatement(query);
+        statement.setLong(1, documentId);
+        var resultSet = statement.executeQuery();
+        return buildDocumentSentenceEmbeddingsFromResultSet(resultSet);
+    }
+
+
+    private ArrayList<DocumentSentenceEmbedding> buildDocumentSentenceEmbeddingsFromResultSet(ResultSet resultSet) throws SQLException {
+        var embeddings = new ArrayList<DocumentSentenceEmbedding>();
+        while (resultSet.next()) {
+            var embedding = new DocumentSentenceEmbedding();
+            embedding.setEmbedding(resultSet.getObject("embedding") != null ? ((PGvector) resultSet.getObject("embedding")).toArray() : null);
+            embedding.setTsne3d(resultSet.getObject("tsne3d") != null ? ((PGvector) resultSet.getObject("tsne3d")).toArray() : null);
+            embedding.setTsne2d(resultSet.getObject("tsne2d") != null ? ((PGvector) resultSet.getObject("tsne2d")).toArray() : null);
+            embedding.setDocument_id(resultSet.getLong("document_id"));
+            embedding.setSentence_id(resultSet.getLong("sentence_id"));
+            embedding.setId(resultSet.getLong("id"));
+
+            if(embedding.getEmbedding() != null) embeddings.add(embedding);
+        }
+        return embeddings;
+    }
+
+    /**
      *  Returns true if the given document by its id has documentchunkembeddings in the database.
      */
     public boolean documentHasDocumentEmbedding(long documentId) throws SQLException {
@@ -550,6 +582,75 @@ public class RAGService {
             empty.setDocument_id(document.getId());
         }
         return emptyEmbeddings;
+    }
+
+
+    /**
+     * Gets a single DocumentSentenceEmbedding for a document.
+     *
+     * @param document
+     * @return
+     */
+    public ArrayList<DocumentSentenceEmbedding> getSentenceEmbeddingFromDocument(Document document) throws IOException, URISyntaxException, InterruptedException {
+        var sentenceEmbeddings = new ArrayList<DocumentSentenceEmbedding>();
+
+        List<Sentence> sentences = document.getSentences();
+        for (int i = 0; i < sentences.size(); i++) {
+            var documentSentenceEmbedding = new DocumentSentenceEmbedding();
+            documentSentenceEmbedding.setDocument_id(document.getId());
+            var sentenceEmbedding = getEmbeddingForText(sentences.get(i).getCoveredText());
+            documentSentenceEmbedding.setEmbedding(sentenceEmbedding);
+            documentSentenceEmbedding.setSentence_id(sentences.get(i).getId());
+            sentenceEmbeddings.add(documentSentenceEmbedding);
+        }
+        return sentenceEmbeddings;
+    }
+
+
+    /**
+     *  Returns true if the given document by its id has documentsentenceembeddings in the database.
+     */
+    public boolean documentHasDocumentSentenceEmbeddings(long documentId) throws SQLException {
+        String query = "SELECT COUNT(*) FROM documentsentenceembeddings WHERE document_id = ?";
+        try (var statement = vectorDbConnection.prepareStatement(query)) {
+            statement.setLong(1, documentId);
+            try (var resultSet = statement.executeQuery()) {
+                if (resultSet.next()) {
+                    int count = resultSet.getInt(1);
+                    return count > 0;
+                }
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Saves a document embedding.
+     */
+    public void saveDocumentSentenceEmbedding(DocumentSentenceEmbedding documentSentenceEmbedding) throws SQLException {
+        String query = "INSERT INTO documentsentenceembeddings (document_id,sentence_id, embedding, tsne2d, tsne3d) VALUES (?, ?, ?, ?, ?)";
+        executeUpdate(query,
+                documentSentenceEmbedding.getDocument_id(),
+                documentSentenceEmbedding.getSentence_id(),
+                new PGvector(documentSentenceEmbedding.getEmbedding()),
+                new PGvector(documentSentenceEmbedding.getTsne2d()),
+                new PGvector(documentSentenceEmbedding.getTsne3d()));
+    }
+
+    /**
+     * Updates a document sentence embedding.
+     */
+    public void updateDocumentSentenceEmbedding(DocumentSentenceEmbedding documentSentenceEmbedding) throws SQLException {
+        String query = "UPDATE documentsentenceembeddings SET embedding = ?, tsne2d = ?, tsne3d = ? WHERE id = ? AND sentence_id = ? AND document_id = ?";
+        executeUpdate(query,
+                new PGvector(documentSentenceEmbedding.getEmbedding()),
+
+                new PGvector(documentSentenceEmbedding.getTsne2d()),
+                new PGvector(documentSentenceEmbedding.getTsne3d()),
+                documentSentenceEmbedding.getId(),
+            documentSentenceEmbedding.getSentence_id(),
+            documentSentenceEmbedding.getDocument_id());
+
     }
 
     /**

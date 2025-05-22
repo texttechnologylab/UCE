@@ -69,9 +69,9 @@ $('body').on('change', '#corpus-select', function () {
     const sparqlAlive = selectedOption.getAttribute("data-sparqlalive");
     const hasEmbeddings = selectedOption.getAttribute("data-hasembeddings");
     const hasRagBot = selectedOption.getAttribute("data-hasragbot");
-    const hasTopicDist = selectedOption.getAttribute("data-hastopicdist");
     const hasTimeAnnotations = selectedOption.getAttribute("data-hastimeannotations");
     const hasTaxonAnnotations = selectedOption.getAttribute("data-hastaxonannotations");
+    const hasGeoNameAnnotations = selectedOption.getAttribute("data-hasgeonameannotations");
     const oldCorpusId = selectedCorpus;
     selectedCorpus = parseInt(selectedOption.getAttribute("data-id"));
     if (oldCorpusId !== selectedCorpus) {
@@ -101,7 +101,10 @@ $('body').on('change', '#corpus-select', function () {
     if (hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
     else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
 
-    if (hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false') {
+    if (hasGeoNameAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').show();
+    else $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').hide();
+
+    if (hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false' && hasGeoNameAnnotations === 'false') {
         $('.open-layered-search-builder-btn-badge').hide();
         $('.open-layered-search-builder-btn').hide();
     } else {

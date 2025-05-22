@@ -1,8 +1,7 @@
 package org.texttechnologylab.utils;
 
 
-import org.texttechnologylab.models.UIMAAnnotation;
-import org.texttechnologylab.models.corpus.Page;
+import java.text.DecimalFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -13,10 +12,19 @@ import java.util.regex.Pattern;
 public class StringUtils {
 
     // List of common abbreviations to exclude from splitting
-    public static final String[] ABBREVIATIONS = { "Dr.", "Mr.", "Ms.", "Prof.", "Jr.", "Sr.", "zB.", "V.", "B.", "A.", "C", "M", "etc.", "S.", "ab."};
+    public static final String[] ABBREVIATIONS = {"Dr.", "Mr.", "Ms.", "Prof.", "Jr.", "Sr.", "zB.", "V.", "B.", "A.", "C", "M", "etc.", "S.", "ab."};
+
+    public static float tryParseFloat(String value) {
+        try {
+            return Float.parseFloat(value);
+        } catch (NumberFormatException e) {
+            return Float.NaN;
+        }
+    }
 
     /**
      * Removes special characters only at beginning and end.
+     *
      * @param str
      * @return
      */
@@ -24,6 +32,24 @@ public class StringUtils {
         return str.replaceAll("^[^a-zA-Z0-9]+", "")
                 .replaceAll("[^a-zA-Z0-9]+$", "")
                 .trim();
+    }
+
+    public static String tryRoundToTwoDecimals(String input) {
+        if (input == null || input.trim().isEmpty()) {
+            return input;
+        }
+
+        try {
+            double number = Double.parseDouble(input);
+            if (Double.isNaN(number) || Double.isInfinite(number)) {
+                return input;
+            }
+
+            var df = new DecimalFormat("0.##");
+            return df.format(number);
+        } catch (NumberFormatException e) {
+            return input;
+        }
     }
 
     public static String lowerCaseFirstChar(String str) {
@@ -50,7 +76,7 @@ public class StringUtils {
     }
 
     // Method to check if a segment ends with a common abbreviation
-    public static boolean EndsWithAbbreviation(String segment) {
+    public static boolean endsWithAbbreviation(String segment) {
         for (String abbr : ABBREVIATIONS) {
             if (segment.endsWith(abbr)) {
                 return true;
@@ -64,6 +90,15 @@ public class StringUtils {
      */
     public static boolean checkIfFileHasExtension(String s, String[] extensions) {
         return Arrays.stream(extensions).anyMatch(s::endsWith);
+    }
+
+    /**
+     * replace special characters with html variant, to persist appearance
+     * @param text
+     * @return
+     */
+    public static String getHtmlText(String text){
+        return text.replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
     }
 
     /**
@@ -96,7 +131,7 @@ public class StringUtils {
 
 
     // Method to add line breaks at sensible points with deterministic randomness
-    public static String AddLineBreaks(String text, long seed) {
+    public static String addLineBreaks(String text, long seed) {
         Random rand = new Random(seed);
 
         // Split the text, but avoid breaking after abbreviations and number-ending periods
@@ -107,13 +142,13 @@ public class StringUtils {
             segment = segment.trim();
 
             // Avoid line breaks after numbers followed by periods (e.g., "18.") or abbreviations (e.g., "Dr.")
-            if (!segment.matches(".*\\d+\\.$") && !EndsWithAbbreviation(segment)) {
+            if (!segment.matches(".*\\d+\\.$") && !endsWithAbbreviation(segment)) {
                 formattedText.append(segment);
 
                 // Add a line break randomly based on seeded randomness
                 if (rand.nextInt(3) == 0) {  // 1 in 3 chance to add a line break
                     formattedText.append("<br/>");
-                    if(rand.nextInt(3) == 1){
+                    if (rand.nextInt(3) == 1) {
                         formattedText.append("<br/>");
                     }
                 }
@@ -129,7 +164,7 @@ public class StringUtils {
         return formattedText.toString();
     }
 
-    public static String ReplaceSpacesInQuotes(String input) {
+    public static String replaceSpacesInQuotes(String input) {
         // Regex pattern to match any text inside quotes and replace spaces inside
         Pattern pattern = Pattern.compile("(['\"])(.*?)\\1");
         Matcher matcher = pattern.matcher(input);
@@ -148,7 +183,9 @@ public class StringUtils {
     // https://en.wikipedia.org/wiki/Taxonomic_rank#:~:text=Main%20ranks,-In%20his%20landmark&text=Today%2C%20the%20nomenclature%20is%20regulated,family%2C%20genus%2C%20and%20species.
     public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::"};
 
-    public static String GetFullTaxonRankByCode(String code){
+    public static String BIOFID_URL_BASE = "https://www.biofid.de/bio-ontologies/gbif/";
+
+    public static String getFullTaxonRankByCode(String code) {
         return switch (code) {
             case "C" -> "class";
             case "F" -> "family";
@@ -175,15 +212,11 @@ public class StringUtils {
                     result.append(input.charAt(i));
                     i++;
                 }
-            }
-
-            else if (i <= input.length() - 7 && input.substring(i, i + 7).equals("</span>")) {
+            } else if (i <= input.length() - 7 && input.substring(i, i + 7).equals("</span>")) {
                 inSpan = false;
                 result.append("</span>");
                 i += 7;
-            }
-
-            else {
+            } else {
                 char currentChar = input.charAt(i);
                 if (inSpan) {
 
@@ -213,7 +246,8 @@ public class StringUtils {
     }
 
     public static final String[] TIME_COMMANDS = {"Y::", "M::", "D::", "S::"};
-    public static String GetFullTimeUnitByCode(String code){
+
+    public static String GetFullTimeUnitByCode(String code) {
         return switch (code) {
             case "Y" -> "year";
             case "M" -> "month";
@@ -277,7 +311,7 @@ public class StringUtils {
                 result.append(c);
             }
 
-            idx ++;
+            idx++;
         }
         return result.toString();
     }

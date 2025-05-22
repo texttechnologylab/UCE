@@ -8,8 +8,6 @@ var FlowVizHandler = (function () {
         console.log('Created FlowVizHandler Handler.');
     }
 
-    /**
-     */
     FlowVizHandler.prototype.createFlowChart = async function (target, initialNode) {
         const flowId = generateUUID();
         const flow = new DrawflowJS(target);
@@ -30,8 +28,8 @@ var FlowVizHandler = (function () {
             success: function(response) {
                 const node = JSON.parse(response);
                 const container = document.getElementById('full-flow-container');
-                $(container).show();
-                container.style.visibility = 'visible';
+                container.innerHTML = ''; // reset the last chart
+                $(container).parent('#flow-chart-modal').show();
                 window.flowVizHandler.createFlowChart(container, node);
             },
             error: (xhr, status, error) => {

@@ -1,11 +1,13 @@
 package org.texttechnologylab.models.topic;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 
 import javax.persistence.*;
 
 @Entity
 @Table(name = "topicword")
+@Typesystem(types = {org.texttechnologylab.annotation.TopicWord.class})
 public class TopicWord extends UIMAAnnotation {
     /***
      * TopicWord class can be used to represent a word in a topic with a probability value. Since each word belongs to
@@ -35,6 +37,7 @@ public class TopicWord extends UIMAAnnotation {
         super(begin, end);
         setCoveredText(coveredText);
     }
+
     public TopicValueBase getTopic() {
         return topic;
     }

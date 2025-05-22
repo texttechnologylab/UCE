@@ -1,13 +1,17 @@
 package org.texttechnologylab;
 
+import com.google.gson.Gson;
 import org.joda.time.DateTime;
 import org.texttechnologylab.config.CorpusConfig;
+import org.texttechnologylab.models.corpus.UCEMetadata;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.states.KeywordInContextState;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.search.*;
 
 import java.util.*;
+
+import static java.util.stream.Collectors.groupingBy;
 
 /**
  * A class that holds all states of a biofid search. We can use this class to serialize the search. It shouldn't hold any services.
@@ -141,6 +145,10 @@ public class SearchState extends CacheItem {
 
     public void setDocumentIdxToRank(HashMap<Integer, Float> documentIdxToRank) {
         this.documentIdxToRank = documentIdxToRank;
+    }
+
+    public boolean hasUceMetadataFilters(){
+        return getUceMetadataFilters() != null && !getUceMetadataFilters().isEmpty();
     }
 
     public List<UCEMetadataFilterDto> getUceMetadataFilters() {
@@ -480,5 +488,21 @@ public class SearchState extends CacheItem {
 
     public void setFoundEvents(ArrayList<AnnotationSearchResult> foundEvents) {
         this.foundEvents = foundEvents;
+    }
+
+    public String getVisualizationData() {
+        // Prepare data for visualization
+        // TODO this only consideres the documents in the current page of the search, this needs some adaptations in the inner search procedure to consider all documents...
+        Map<String, List<UCEMetadata>> visualizationData = this
+                .getCurrentDocuments()
+                .stream()
+                .map(Document::getUceMetadataWithoutJson)
+                .flatMap(Collection::stream)
+                .collect(groupingBy(UCEMetadata::getKey));
+
+        Map<String, Object> data = new HashMap<>();
+        data.put("data", visualizationData);
+        data.put("currentPage", this.getCurrentPage());
+        return new Gson().toJson(data);
     }
 }

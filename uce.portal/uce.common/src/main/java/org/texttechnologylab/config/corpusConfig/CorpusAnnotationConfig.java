@@ -12,6 +12,7 @@ public class CorpusAnnotationConfig {
     private boolean srLink;
     private boolean lemma;
     private boolean namedEntity;
+    private boolean geoNames;
     private boolean sentence;
     private boolean time;
     private boolean wikipediaLink;
@@ -23,6 +24,18 @@ public class CorpusAnnotationConfig {
     private boolean scope;
     private boolean xscope;
     private boolean unifiedTopic;
+
+    public boolean isGeoNames() {
+        return geoNames;
+    }
+
+    public void setGeoNames(boolean geoNames) {
+        this.geoNames = geoNames;
+    }
+
+    public void setUnifiedTopic(boolean unifiedTopic) {
+        this.unifiedTopic = unifiedTopic;
+    }
 
     public boolean isLogicalLinks() {
         return logicalLinks;

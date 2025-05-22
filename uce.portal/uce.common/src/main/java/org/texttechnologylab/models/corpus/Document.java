@@ -1,5 +1,10 @@
 package org.texttechnologylab.models.corpus;
 
+import freemarker.template.TemplateModel;
+import freemarker.template.TemplateModelException;
+import freemarker.template.TemplateSequenceModel;
+import lombok.Getter;
+import lombok.Setter;
 import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
@@ -9,12 +14,20 @@ import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
+import org.texttechnologylab.models.biofid.GazetteerTaxon;
+import org.texttechnologylab.models.biofid.GnFinderTaxon;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.corpus.links.Link;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.search.AnnotationSearchResult;
+import org.texttechnologylab.models.search.PageSnippet;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.UnifiedTopic;
+import org.texttechnologylab.utils.FreemarkerUtils;
+import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.*;
 import java.util.*;
@@ -33,7 +46,7 @@ public class Document extends ModelBase implements WikiModel, Linkable {
 
     @Override
     public List<Class<? extends ModelBase>> getCompatibleLinkTypes() {
-        return List.of(DocumentLink.class);
+        return List.of(DocumentLink.class, DocumentToAnnotationLink.class, AnnotationToDocumentLink.class);
     }
 
     @Override
@@ -41,95 +54,165 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         return this.getId();
     }
 
+    @Setter
     private String language;
+    @Setter
     @Column(columnDefinition = "TEXT")
     private String documentTitle;
+    @Getter
+    @Setter
     private String documentId;
+    @Getter
+    @Setter
     private long corpusId;
+    @Getter
     @Column(columnDefinition = "TEXT")
     private String fullText;
+    @Getter
+    @Setter
     @Column
     private boolean postProcessed;
+    @Getter
     @Column(columnDefinition = "TEXT")
     private String fullTextCleaned;
 
+    @Setter
+    private String mimeType;
+
+    // Binary data for mime types that are not text, e.g. PDFs and images
+    @Getter
+    @Setter
+    @Lob
+    private byte[] documentData;
+
+    @Setter
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     @JoinColumn(name = "document_Id")
     private List<Page> pages;
 
+    @Getter
+    @Setter
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<Sentence> sentences;
 
+    @Getter
+    @Setter
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<NamedEntity> namedEntities;
 
+    @Getter
+    @Setter
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
+    private List<GeoName> geoNames;
+
+    @Getter
+    @Setter
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<Lemma> lemmas;
 
+    @Getter
+    @Setter
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<SrLink> srLinks;
 
+    @Getter
+    @Setter
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<Time> times;
 
+    @Getter
+    @Setter
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
-    private List<Taxon> taxons;
+    private List<GazetteerTaxon> gazetteerTaxons;
 
+    @Getter
+    @Setter
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
+    private List<GnFinderTaxon> gnFinderTaxons;
+
+    @Getter
+    @Setter
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<BiofidTaxon> biofidTaxons;
 
+    @Setter
     @OneToMany(cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @BatchSize(size = 50)
     @JoinColumn(name = "document_Id")
     @Filter(name = "valueTypeFilter", condition = "valueType != 2")
-    // Dont eagerly fetch the json metadata. That is way too costly probably.
     private List<UCEMetadata> uceMetadata;
 
+    @Getter
+    @Setter
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<WikipediaLink> wikipediaLinks;
 
+    @Getter
+    @Setter
     @OneToOne(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_id")
     private MetadataTitleInfo metadataTitleInfo;
 
+    @Getter
+    @Setter
     @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
     @JoinColumn(name = "document_id")
     private DocumentKeywordDistribution documentKeywordDistribution;
 
+    @Setter
+    @Getter
+    @OneToOne(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = true)
+    private DocumentTopThreeTopics documentTopThreeTopics;
     // Negations:
+    @Getter
+    @Setter
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<CompleteNegation> completeNegations;
 
+    @Setter
+    @Getter
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<Cue> cues;
 
+    @Setter
+    @Getter
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<Event> events;
 
+    @Setter
+    @Getter
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<Focus> focuses;
 
+    @Setter
+    @Getter
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<Scope> scopes;
 
+    @Setter
+    @Getter
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<XScope> xscopes;
 
+    @Setter
+    @Getter
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<UnifiedTopic> unifiedTopics;
@@ -145,12 +228,16 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         this.corpusId = corpusId;
     }
 
-    public List<BiofidTaxon> getBiofidTaxons() {
-        return biofidTaxons;
+    public String getMimeType() {
+        // default to "text/plain" if no mime type is set, this prevents errors in the template comparisons
+        if (mimeType == null) {
+            return "text/plain";
+        }
+        return mimeType;
     }
 
-    public void setBiofidTaxons(List<BiofidTaxon> biofidTaxons) {
-        this.biofidTaxons = biofidTaxons;
+    public String getDocumentDataBase64() {
+        return Base64.getEncoder().encodeToString(documentData);
     }
 
     public boolean hasJsonUceMetadata() {
@@ -167,118 +254,10 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         return uceMetadata;
     }
 
-    public void setUceMetadata(List<UCEMetadata> uceMetadata) {
-        this.uceMetadata = uceMetadata;
-    }
-
-    public boolean isPostProcessed() {
-        return postProcessed;
-    }
-
-    public void setPostProcessed(boolean postProcessed) {
-        this.postProcessed = postProcessed;
-    }
-
-    public DocumentKeywordDistribution getDocumentKeywordDistribution() {
-        return documentKeywordDistribution;
-    }
-
-    public void setDocumentKeywordDistribution(DocumentKeywordDistribution documentKeywordDistribution) {
-        this.documentKeywordDistribution = documentKeywordDistribution;
-    }
-
-    public List<Lemma> getLemmas() {
-        return lemmas;
-    }
-
-    public void setLemmas(List<Lemma> lemmas) {
-        this.lemmas = lemmas;
-    }
-
-    public void setLanguage(String language) {
-        this.language = language;
-    }
-
-    public void setDocumentId(String documentId) {
-        this.documentId = documentId;
-    }
-
-    public List<SrLink> getSrLinks() {
-        return srLinks;
-    }
-
-    public void setSrLinks(List<SrLink> srLinks) {
-        this.srLinks = srLinks;
-    }
-
-    public long getCorpusId() {
-        return corpusId;
-    }
-
-    public void setCorpusId(long corpusId) {
-        this.corpusId = corpusId;
-    }
-
-    public String getFullTextCleaned() {
-        return fullTextCleaned;
-    }
-
     public void setFullTextCleaned(String fullTextCleaned) {
         // Remove control characters: https://docs.oracle.com/javase/6/docs/api/java/util/regex/Pattern.html
         fullTextCleaned = fullTextCleaned.replaceAll("\\p{Cntrl}", "");
         this.fullTextCleaned = fullTextCleaned;
-    }
-
-    public MetadataTitleInfo getMetadataTitleInfo() {
-        return metadataTitleInfo;
-    }
-
-    public void setMetadataTitleInfo(MetadataTitleInfo metadataTitleInfo) {
-        this.metadataTitleInfo = metadataTitleInfo;
-    }
-
-    public List<WikipediaLink> getWikipediaLinks() {
-        return wikipediaLinks;
-    }
-
-    public void setWikipediaLinks(List<WikipediaLink> wikipediaLinks) {
-        this.wikipediaLinks = wikipediaLinks;
-    }
-
-    public List<Taxon> getTaxons() {
-        return taxons;
-    }
-
-    public void setTaxons(List<Taxon> taxons) {
-        this.taxons = taxons;
-    }
-
-    public List<Time> getTimes() {
-        return times;
-    }
-
-    public void setTimes(List<Time> times) {
-        this.times = times;
-    }
-
-    public List<NamedEntity> getNamedEntities() {
-        return namedEntities;
-    }
-
-    public void setNamedEntities(List<NamedEntity> namedEntities) {
-        this.namedEntities = namedEntities;
-    }
-
-    public List<Sentence> getSentences() {
-        return sentences;
-    }
-
-    public void setSentences(List<Sentence> sentences) {
-        this.sentences = sentences;
-    }
-
-    public String getFullText() {
-        return fullText;
     }
 
     public String getFullTextSnippet(int take) {
@@ -313,6 +292,44 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         return result.toString();
     }
 
+    public String getFullTextSnippetAnnotationOffset(UIMAAnnotation annotation) {
+        int offsetStart = Math.max(annotation.getBegin() - 150, 0);
+        int offsetEnd = Math.min(annotation.getEnd() + 150, annotation.getBegin() + 500);
+        String snippet = getFullTextSnippetCharOffset(offsetStart, offsetEnd);
+        List<ArrayList<Integer>> offsetList = new ArrayList<>();
+        ArrayList<Integer> offsetArray = new ArrayList<>();
+        offsetArray.add(annotation.getBegin());
+        offsetArray.add(annotation.getEnd());
+        offsetList.add(offsetArray);
+        return StringUtils.getHtmlText(StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)));
+    }
+
+    public String getFullTextSnippetOffsetList(TemplateModel model) throws TemplateModelException {
+        if (model instanceof TemplateSequenceModel) {
+            List<ArrayList<Integer>> offsetList = FreemarkerUtils.convertToNestedIntegerList((TemplateSequenceModel) model);
+
+
+            int minBegin = 999999999;
+            int maxEnd = 0;
+            for (ArrayList<Integer> offset : offsetList) {
+                if (minBegin > offset.getFirst()) {
+                    minBegin = offset.getFirst();
+                }
+                if (maxEnd < offset.getLast()) {
+                    maxEnd = offset.getLast();
+                }
+            }
+            for (ArrayList<Integer> pair : offsetList) {
+                for (int i = 0; i < pair.size(); i++) {
+                    pair.set(i, pair.get(i) - Math.max(minBegin - 100, 0));
+                }
+            }
+            String snippet = getFullTextSnippetCharOffset(Math.max(minBegin - 100, 0), Math.min(maxEnd + 100, minBegin + 500));
+            return StringUtils.getHtmlText(StringUtils.mergeBoldTags(StringUtils.addBoldTags(snippet, offsetList)));
+        }
+
+        return null;
+    }
 
     /**
      * Gets all objects of type UIMAAnnotation of this document
@@ -324,8 +341,10 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         var pagesEnd = getPages().stream().skip(Math.min(pagesSkip + pagesTake, getPages().size() - 1)).limit(1).findFirst().get().getEnd();
 
         var annotations = new ArrayList<UIMAAnnotation>();
-        annotations.addAll(taxons.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        annotations.addAll(gazetteerTaxons.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        annotations.addAll(gnFinderTaxons.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(namedEntities.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        annotations.addAll(geoNames.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(times.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(wikipediaLinks.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(lemmas.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
@@ -347,10 +366,6 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         this.fullText = fullText.replaceAll("<", "");
     }
 
-    public void setPages(List<Page> pages) {
-        this.pages = pages;
-    }
-
     public List<Page> getPages() {
         return pages.stream()
                 .sorted(Comparator.comparingInt(Page::getPageNumber))
@@ -365,77 +380,13 @@ public class Document extends ModelBase implements WikiModel, Linkable {
                 .collect(Collectors.toList());
     }
 
-    public String getDocumentId() {
-        return documentId;
-    }
-
     public String getDocumentTitle() {
         var title = metadataTitleInfo.getTitle() == null ? documentTitle : metadataTitleInfo.getTitle();
         return title == null ? "(Unbekannt)" : title;
     }
 
-    public void setDocumentTitle(String documentTitle) {
-        this.documentTitle = documentTitle;
-    }
-
     public String getLanguage() {
         return language == null ? "-" : language;
-    }
-
-    public List<CompleteNegation> getCompleteNegations() {
-        return completeNegations;
-    }
-
-    public void setCompleteNegations(List<CompleteNegation> completeNegations) {
-        this.completeNegations = completeNegations;
-    }
-
-    public List<Cue> getCues() {
-        return cues;
-    }
-
-    public void setCues(List<Cue> cues) {
-        this.cues = cues;
-    }
-
-    public List<Event> getEvents() {
-        return events;
-    }
-
-    public void setEvents(List<Event> events) {
-        this.events = events;
-    }
-
-    public List<Focus> getFocuses() {
-        return focuses;
-    }
-
-    public void setFocuses(List<Focus> focuses) {
-        this.focuses = focuses;
-    }
-
-    public List<Scope> getScopes() {
-        return scopes;
-    }
-
-    public void setScopes(List<Scope> scopes) {
-        this.scopes = scopes;
-    }
-
-    public List<XScope> getXscopes() {
-        return xscopes;
-    }
-
-    public void setXscopes(List<XScope> xscopes) {
-        this.xscopes = xscopes;
-    }
-
-    public List<UnifiedTopic> getUnifiedTopics() {
-        return unifiedTopics;
-    }
-
-    public void setUnifiedTopics(List<UnifiedTopic> unifiedTopics) {
-        this.unifiedTopics = unifiedTopics;
     }
 
     public List<TopicValueBase> getDocumentUnifiedTopicDistribution(Integer topN) {

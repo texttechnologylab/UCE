@@ -3,6 +3,7 @@ package org.texttechnologylab.freeMarker;
 import freemarker.template.Configuration;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.models.Linkable;
+import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.viewModels.link.LinkableViewModel;
 import spark.ModelAndView;
@@ -29,8 +30,13 @@ public final class Renderer {
             uiModel.put("searchId", "");
             uiModel.put("reduced",true);
             path = "*/search/components/documentCardContent.ftl";
+            return "<div class='document-card'>" + Renderer.renderToHTML(path, uiModel) + "</div>";
+        } else if (linkable instanceof UIMAAnnotation anno){
+            path = "*/links/linkableAnnotation.ftl";
+            uiModel.put("anno", anno);
+            return Renderer.renderToHTML(path, uiModel);
         }
-        return "<div class='document-card'>" + Renderer.renderToHTML(path, uiModel) + "</div>";
+        return Renderer.renderToHTML(path, uiModel);
     }
 
     public static String renderToHTML(String path, HashMap<String, Object> model){

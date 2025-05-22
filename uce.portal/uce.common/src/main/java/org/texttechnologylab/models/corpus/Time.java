@@ -1,5 +1,7 @@
 package org.texttechnologylab.models.corpus;
 
+import org.hibernate.annotations.Type;
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 
@@ -8,6 +10,7 @@ import java.sql.Date;
 
 @Entity
 @Table(name = "time")
+@Typesystem(types = {org.texttechnologylab.annotation.type.Time.class})
 public class Time extends UIMAAnnotation implements WikiModel {
     @Column(name = "\"valuee\"", columnDefinition = "TEXT")
     private String value;
@@ -102,5 +105,8 @@ public class Time extends UIMAAnnotation implements WikiModel {
     public String getWikiId() {
         return "TI" + "-" + this.getId();
     }
-    public String getType() {return "TIME";}
+
+    public String getType() {
+        return "TIME";
+    }
 }

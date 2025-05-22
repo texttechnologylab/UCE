@@ -5,14 +5,15 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.corpus.GeoNameFeatureClass;
 import org.texttechnologylab.models.dto.LayeredSearchLayerDto;
 import org.texttechnologylab.models.dto.LayeredSearchSlotType;
 import org.texttechnologylab.models.search.CacheItem;
+import org.texttechnologylab.models.search.EnrichedSearchQuery;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.StringUtils;
 
-import java.math.BigInteger;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Comparator;
@@ -147,7 +148,7 @@ public class LayeredSearch extends CacheItem {
                     var possibleCommand = slot.getValue().substring(0, 3);
                     if (Arrays.asList(StringUtils.TAX_RANKS).contains(possibleCommand)) {
                         // The full name of the taxonomic rank
-                        var fullRankName = StringUtils.GetFullTaxonRankByCode(possibleCommand.replace("::", "")).toLowerCase();
+                        var fullRankName = StringUtils.getFullTaxonRankByCode(possibleCommand.replace("::", "")).toLowerCase();
                         var value = slot.getValue().substring(3);
                         //var ordinalValue = TaxonRank.valueOf(fullRankName).ordinal();
                         var idsOfRank = ExceptionUtils.tryCatchLog(
@@ -212,6 +213,34 @@ public class LayeredSearch extends CacheItem {
                 condition = condition.replace("{VALUE}", slot.getCleanedValue());
                 var statement = sql.replace("{CONDITION}", condition);
                 statements.add(statement);
+            } else if (slot.getType() == LayeredSearchSlotType.LOCATION){
+                sql = sql.replace("{TABLE}", "geoname");
+
+                // Let's see if we got a specific long/lat with a range
+                if(slot.getValue().startsWith("R::")){
+                    var locationDto = EnrichedSearchQuery.parseLocationRadiusCommand(slot.getValue());
+                    if(locationDto == null) continue;
+                    // We use the postgis extension for fast radius-based geographic queries.
+                    var condition = "ST_DWithin(location, ST_MakePoint({LNG},{LAT})::geography, {RADIUS}) " + conditionEnding;
+                    condition = condition.replace("{LNG}", Double.toString(locationDto.getLongitude()));
+                    condition = condition.replace("{LAT}", Double.toString(locationDto.getLatitude()));
+                    condition = condition.replace("{RADIUS}", Double.toString(locationDto.getRadius()));
+                    var statement = sql.replace("{CONDITION}", condition);
+                    statements.add(statement);
+                    continue;
+                } else if(slot.getValue().startsWith("LOC::")){
+                    // Then we have a location command with geonames feature classes and codes. Have a look at EnrichedSearchQuery for better description
+                    var split = slot.getValue().replace("LOC::", "").split("\\.");
+                    var featureClass = split[0];
+                    var featureCode = "";
+                    if(split.length > 1) featureCode = split[1];
+
+                    var condition = "a.featureclass = {FEATURE_CLASS} ".replace("{FEATURE_CLASS}", Integer.toString(GeoNameFeatureClass.valueOf(featureClass).ordinal()));
+                    if(!featureCode.isEmpty()) condition += "AND a.featurecode = '{FEATURE_CODE}' ".replace("{FEATURE_CODE}", featureCode);
+                    condition += "AND a.page_id is not null " + conditionEnding;
+                    var statement = sql.replace("{CONDITION}", condition);
+                    statements.add(statement);
+                }
             }
         }
 

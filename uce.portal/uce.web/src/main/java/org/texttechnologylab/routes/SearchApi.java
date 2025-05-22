@@ -19,9 +19,7 @@ import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import spark.ModelAndView;
 import spark.Route;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.*;
 
 public class SearchApi {
     private static final Logger logger = LogManager.getLogger(SearchApi.class);
@@ -113,6 +111,8 @@ public class SearchApi {
             keywordContext.put("contextState", activeSearchState.getKeywordInContextState());
             var keywordView = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(keywordContext, "search/components/keywordInContext.ftl"));
             result.put("keywordInContextView", keywordView);
+            // And finally, the visualization data JSON
+            result.put("searchVisualization", activeSearchState.getVisualizationData());
         } catch (Exception ex) {
             result.replace("status", 500);
             logger.error("Error changing the page of an active search - best refer to the last logged API call " +
@@ -169,7 +169,11 @@ public class SearchApi {
                 var semanticRoleSearch = new Search_SemanticRoleImpl(context, corpusId, searchInput);
                 searchState = semanticRoleSearch.initSearch();
             } else if (searchInput.startsWith("NEG::")) {
-                var negRoleSearch = new SearchCompleteNegation(context, corpusId, searchInput);
+                var negRoleSearch = new SearchCompleteNegation(
+                        context,
+                        corpusId,
+                        searchInput)
+                        .withUceMetadataFilters(uceMetadataFilters);
                 searchState = negRoleSearch.initSearch();
             } else {
                 // Define the search layers from the sent layers

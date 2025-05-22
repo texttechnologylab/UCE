@@ -80,25 +80,15 @@
             <version>1.0-SNAPSHOT</version>
         </dependency>
 
-        <!-- Global reference -->
-        <!--<dependency>
-            <groupId>com.github.texttechnologylab</groupId>
-            <artifactId>UIMATypeSystem</artifactId>
-            <version>3.0.5</version>
-        </dependency>-->
-
-        <!-- Own Fork reference -->
         <dependency>
             <groupId>com.github.texttechnologylab</groupId>
             <artifactId>UIMATypeSystem</artifactId>
             <version>1c31dddaf</version>
         </dependency>
-
-        <!-- Local reference -->
         <!--<dependency>
             <groupId>org.texttechnologylab.annotation</groupId>
             <artifactId>typesystem</artifactId>
-            <version>3.0.5</version>
+            <version>3.0.10</version>
         </dependency>-->
 
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-shade-plugin -->

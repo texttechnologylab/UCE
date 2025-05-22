@@ -1,7 +1,11 @@
 package org.texttechnologylab.models;
 
 import io.micrometer.common.lang.Nullable;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
+import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.utils.StringUtils;
@@ -12,7 +16,18 @@ import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @MappedSuperclass
-public class UIMAAnnotation extends ModelBase {
+public class UIMAAnnotation extends ModelBase implements Linkable {
+
+    @Override
+    public List<Class<? extends ModelBase>> getCompatibleLinkTypes() {
+        return List.of(DocumentToAnnotationLink.class, AnnotationToDocumentLink.class);
+    }
+
+    @Override
+    public long getPrimaryDbIdentifier() {
+        return this.getId();
+    }
+
     @Column(name = "\"beginn\"")
     private int begin;
     @Column(name = "\"endd\"")
@@ -94,6 +109,10 @@ public class UIMAAnnotation extends ModelBase {
         // We build start and end of the annotations and store them in the TreeMap
         Map<Integer, List<UIMAAnnotation>> startTags = new TreeMap<>();
         Map<Integer, List<String>> endTags = new TreeMap<>();
+        Map<Integer, String> topicMarkers = new TreeMap<>();
+        Map<Integer, String> topicCoverWrappersStart = new TreeMap<>();
+        Map<Integer, String> topicCoverWrappersEnd = new TreeMap<>();
+
 
         for (var annotation : annotations) {
             if(annotation.getCoveredText() == null){
@@ -122,6 +141,18 @@ public class UIMAAnnotation extends ModelBase {
                 continue;
             }
 
+            if (annotation instanceof UnifiedTopic topic) {
+                var start = topic.getBegin() - offset - errorOffset;
+                var end = topic.getEnd() - offset - errorOffset; // marker after last char
+
+                topicCoverWrappersStart.put(start, topic.generateTopicCoveredStartSpan());
+                topicCoverWrappersEnd.put(end, "</span>");
+
+                topicMarkers.put(end, topic.generateTopicMarker());
+                continue;
+            }
+
+
             var start = annotation.getBegin() - offset - errorOffset;
             var end = annotation.getEnd() - offset - errorOffset;
 
@@ -137,7 +168,10 @@ public class UIMAAnnotation extends ModelBase {
         var finalText = new StringBuilder();
 
         for (int i = 0; i < coveredText.length(); i++) {
-            // Add closing tags at this index. Add the END tags before OPENING NEW ones
+            // Insert end spans first
+            if (topicCoverWrappersEnd.containsKey(i)) {
+                finalText.append(topicCoverWrappersEnd.get(i));
+            }
             if (endTags.containsKey(i)) {
                 //finalText.append(endTags.get(i).getFirst());
                 for (var tag : endTags.get(i)) {
@@ -145,7 +179,15 @@ public class UIMAAnnotation extends ModelBase {
                 }
             }
 
-            // Add opening tags at this index
+            // Insert start spans
+            if (topicCoverWrappersStart.containsKey(i)) {
+                finalText.append(topicCoverWrappersStart.get(i));
+            }
+
+            // Insert marker after character
+            if (topicMarkers.containsKey(i)) {
+                finalText.append(topicMarkers.get(i));
+            }
             if (startTags.containsKey(i)) {
                 finalText.append(generateMultiHTMLTag(startTags.get(i)));
             }
@@ -183,7 +225,11 @@ public class UIMAAnnotation extends ModelBase {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu ne-%1$s' title='%2$s' data-wid='%3$s' data-wcovered='%4$s'>",
                     ne.getType(), includeTitle ? ne.getCoveredText() : "", ne.getWikiId(), ne.getCoveredText());
-        } else if (annotation instanceof Time time) {
+        } else if(annotation instanceof GeoName geoName){
+            return String.format(
+                    "<span class='open-wiki-page annotation custom-context-menu geoname' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
+                    includeTitle ? geoName.getName() : "", geoName.getWikiId(), geoName.getCoveredText());
+        }else if (annotation instanceof Time time) {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu time' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
                     includeTitle ? time.getCoveredText() : "", time.getWikiId(), time.getCoveredText());
@@ -220,9 +266,20 @@ public class UIMAAnnotation extends ModelBase {
                     "<span class='annotation custom-context-menu focus' title='%1$s'>",
                     includeTitle ? focus.getCoveredText() : "");
         } else if (annotation instanceof UnifiedTopic topic) {
+            // Get the representative topic if available
+            String repTopicValue = "";
+            if (topic.getTopics() != null && !topic.getTopics().isEmpty()) {
+                var repTopic = topic.getRepresentativeTopic();
+                if (repTopic != null) {
+                    repTopicValue = repTopic.getValue();
+                }
+            }
+
+            // Instead of wrapping the entire text, we'll just add a marker at the end
+            // The actual text will be rendered normally, and only the indicator will be clickable
             return String.format(
-                    "<span class='open-wiki-page annotation custom-context-menu topic' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
-                    includeTitle ? topic.getWikiId() : "", topic.getWikiId(), topic.getCoveredText());
+                    "<span class='open-wiki-page annotation custom-context-menu topic colorable-topic' title='%1$s' data-wid='%2$s' data-wcovered='%3$s' data-topic-value='%4$s'>",
+                    includeTitle ? repTopicValue : "", topic.getWikiId(), topic.getCoveredText(), repTopicValue);
         }
 
         return "";

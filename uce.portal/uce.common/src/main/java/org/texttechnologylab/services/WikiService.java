@@ -1,14 +1,18 @@
 package org.texttechnologylab.services;
 
 import org.texttechnologylab.exceptions.DatabaseOperationException;
+import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.DocumentKeywordDistribution;
 import org.texttechnologylab.models.corpus.PageKeywordDistribution;
 import org.texttechnologylab.models.corpus.KeywordDistribution;
+import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.viewModels.wiki.*;
 import org.texttechnologylab.states.KeywordInContextState;
+import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 public class WikiService {
@@ -28,6 +32,8 @@ public class WikiService {
         viewModel.setAnnotationType("Corpus");
         viewModel.setCorpus(corpus.getViewModel());
         viewModel.setDocumentsCount(db.countDocumentsInCorpus(corpusId));
+        viewModel.setNormalizedTopicWords(db.getNormalizedTopicWordsForCorpus(corpusId));
+        viewModel.setTopicDistributions(db.getTopNormalizedTopicsByCorpusId(corpusId));
 
         return viewModel;
     }
@@ -61,16 +67,18 @@ public class WikiService {
     }
 
     /**
-     * Builds a view model to render a negation (cue basis) annotation wiki page
+     * Builds a view model to render a negation (cue basis) annotation wiki page : id = cue_id
      */
     public NegationAnnotationWikiPageViewModel buildNegationAnnotationWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
         var viewModel = new NegationAnnotationWikiPageViewModel();
-        var negation = db.getCompleteNegationById(id);
+        //var negation = db.getCompleteNegationById(id);
+        var negation = db.getCompleteNegationByCueId(id);
         var cue = negation.getCue();
         viewModel.setWikiModel(cue);
         viewModel.setDocument(db.getDocumentById(negation.getDocument().getId()));
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
         viewModel.setCoveredText(coveredText);
+        //viewModel.setCoveredText("lol");
         viewModel.setAnnotationType("Cue");
 
         viewModel.setCue(cue);
@@ -101,19 +109,33 @@ public class WikiService {
         return viewModel;
     }
 
-    /**
-     * Gets a TopicValueBaseWikiPageViewModel to render a Wikipage for that annotation
-     */
-    public TopicValueBaseWikiPageViewModel buildTopicValueBaseWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
-        var viewModel = new TopicValueBaseWikiPageViewModel();
-        var topicValueBase = db.getTopicValueBaseById(id);
-        viewModel.setWikiModel(topicValueBase);
-        viewModel.setDocument(db.getDocumentById(topicValueBase.getDocument().getId()));
-        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
-        viewModel.setCoveredText(coveredText);
-        viewModel.setAnnotationType("TopicValueBase");
-        viewModel.setTopic(topicValueBase);
 
+    /**
+     * Gets a DocumentTopicDistributionWikiPageViewModel to render a Wikipage for that topic distribution
+     */
+    public TopicWikiPageViewModel buildTopicWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new TopicWikiPageViewModel();
+        var documentTopThreeTopics = db.getDocumentTopThreeTopicsById(id);
+        viewModel.setWikiModel(documentTopThreeTopics);
+        viewModel.setDocument(db.getDocumentById(documentTopThreeTopics.getDocumentId()));
+        var corpusId = viewModel.getDocument().getCorpusId();
+        viewModel.setCorpus(db.getCorpusById(corpusId).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("Topic");
+        viewModel.setDocumentTopicDistribution(documentTopThreeTopics);
+
+        if (coveredText != null && !coveredText.isEmpty()) {
+            List<TopicWord> topicWords = db.getTopicWordsByTopicLabel(
+                coveredText, corpusId
+            );
+            viewModel.setTopicTerms(topicWords);
+
+            List<Object[]> topDocuments = db.getTopDocumentsByTopicLabel(coveredText, corpusId, 20);
+            viewModel.setTopDocumentsForTopic(topDocuments);
+
+            List<Object[]> similarTopics = db.getSimilarTopicsbyTopicLabel(coveredText, corpusId, 2, 8);
+            viewModel.setSimilarTopics(similarTopics);
+        }
 
         return viewModel;
     }
@@ -132,23 +154,28 @@ public class WikiService {
         if(viewModel.getCorpus().getCorpusConfig().getAnnotations().isUceMetadata())
             viewModel.setUceMetadata(db.getUCEMetadataByDocumentId(doc.getId()));
 
+        viewModel.setTopicDistribution(db.getTopTopicsByDocument(doc.getId(), 10));
+        viewModel.setTopicWords(db.getDocumentWordDistribution(doc.getId()));
+        viewModel.setSimilarDocuments(db.getSimilarDocumentbyDocumentId(doc.getId()));
+
         return viewModel;
     }
 
     /**
      * Gets an TaxonAnnotationWikiPageViewModel to render a Wikipage for that annotation
      */
-    public TaxonAnnotationWikiPageViewModel buildTaxonWikipageViewModel(long id, String coveredText) throws DatabaseOperationException, IOException {
+    public TaxonAnnotationWikiPageViewModel buildTaxonWikipageViewModel(long id, String coveredText, Class<?> clazz) throws DatabaseOperationException, IOException {
         var viewModel = new TaxonAnnotationWikiPageViewModel();
         viewModel.setCoveredText(coveredText);
-        var taxon = db.getTaxonById(id);
+        var taxon = clazz == GnFinderTaxon.class ? db.getGnFinderTaxonById(id) : db.getGazetteerTaxonById(id);
         viewModel.setAnnotationType("Taxon");
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(taxon.getBegin(), taxon.getEnd(), taxon.getDocumentId()));
         viewModel.setWikiModel(taxon);
         // We are not interested in the standard w3 XML triplets
+        var biofidUrl = StringUtils.BIOFID_URL_BASE + taxon.getRecordId();
         viewModel.setNextRDFNodes(
-                sparqlService.queryBySubject(taxon.getPrimaryBiofidOntologyIdentifier()));
-        viewModel.setGbifOccurrences(db.getGbifOccurrencesByGbifTaxonId(taxon.getGbifTaxonId()));
+                sparqlService.queryBySubject(biofidUrl));
+        viewModel.setGbifOccurrences(new ArrayList<>());
         viewModel.setDocument(db.getDocumentById(taxon.getDocumentId()));
         viewModel.setAnnotationType("Taxon");
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
@@ -162,8 +189,8 @@ public class WikiService {
         kwicState.recalculate(List.of(viewModel.getDocument()), List.of(viewModel.getCoveredText()));
         viewModel.setKwicState(kwicState);
 
-        if(SystemStatus.JenaSparqlStatus.isAlive() && taxon.getIdentifier() != null && !taxon.getIdentifier().isEmpty()){
-            viewModel.setAlternativeNames(sparqlService.getAlternativeNamesOfTaxons(taxon.getIdentifierAsList()));
+        if(SystemStatus.JenaSparqlStatus.isAlive() && taxon.getRecordId() != -1){
+            viewModel.setAlternativeNames(sparqlService.getAlternativeNamesOfTaxons(List.of(biofidUrl)));
         }
 
         return viewModel;

@@ -15,7 +15,7 @@
                         <#list document.getLinkableViewModel().getIncomingLinks() as link>
                             <#assign popupText += "<i class='small-font fas fa-link mr-1 color-prime'></i>" + link.getLink().getType() + "<br/>">
                         </#list>
-                        <div class="link lines open-linkable-node"
+                        <div class="link lines open-linkable-node clickable"
                              data-unique="${document.getUnique()}"
                              data-trigger="hover"
                              data-placement="left"
@@ -34,6 +34,7 @@
     <div class="pl-3 pr-3 pb-2 pt-3 w-100">
         <div class="document-header">
             <div class="w-100">
+                <!-- name, title, author etc -->
                 <div class="flexed align-items-center">
                     <div class="flexed align-items-center">
                         <!-- We only show the 3d taxonomy dist if we have them annotated in the current corpus -->
@@ -115,20 +116,37 @@
                            class="add-wiki-logo open-wiki-page">
                         #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
                     </label>
-                    <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
-                           data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
-                           class="add-wiki-logo open-wiki-page">
-                        #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
-                    </label>
                 </#if>
-                <#if document.getDocumentUnifiedTopicDistribution(3)?has_content>
-                    <#list document.getDocumentUnifiedTopicDistribution(3) as topic>
-                        <label data-wid="${topic.getWikiId()}"
-                               data-wcovered="${topic.getValue()}"
-                               class="add-wiki-logo open-wiki-page">
-                            ${topic.getValue()}
-                        </label>
-                    </#list>
+
+                <#if document.getDocumentTopThreeTopics()?has_content>
+                    <#assign documentTopThreeTopics = document.getDocumentTopThreeTopics()!>
+                    <#assign documentTopThreeTopicsWikiId = document.getDocumentTopThreeTopics().getWikiId()!>
+                    <#assign documentTopicOne = document.getDocumentTopThreeTopics().getTopicOne()!>
+                    <#assign documentTopicTwo = document.getDocumentTopThreeTopics().getTopicTwo()!>
+                    <#assign documentTopicThree = document.getDocumentTopThreeTopics().getTopicThree()!>
+                    <#if documentTopThreeTopics?has_content>
+                        <#if documentTopicOne?has_content>
+                            <label data-wid="${documentTopThreeTopicsWikiId}"
+                                   data-wcovered="${documentTopicOne}"
+                                   class="add-wiki-logo open-wiki-page">
+                                ${documentTopicOne}
+                            </label>
+                        </#if>
+                        <#if documentTopicTwo?has_content>
+                            <label data-wid="${documentTopThreeTopicsWikiId}"
+                                   data-wcovered="${documentTopicTwo}"
+                                   class="add-wiki-logo open-wiki-page">
+                                ${documentTopicTwo}
+                            </label>
+                        </#if>
+                        <#if documentTopicThree?has_content>
+                            <label data-wid="${documentTopThreeTopicsWikiId}"
+                                   data-wcovered="${documentTopicThree}"
+                                   class="add-wiki-logo open-wiki-page">
+                                ${documentTopicThree}
+                            </label>
+                        </#if>
+                    </#if>
                 </#if>
             </div>
         </div>
@@ -137,9 +155,9 @@
             <#if snippets?has_content>
                 <#list snippets as snippet>
                     <#assign displayStyle = (snippet?index != 0)?then('display: none;', '')>
-                    <div class="snippet-content mt-1 mb-2 position-relative"
+                    <div class="snippet-content mt-1 mb-2 h-100 position-relative"
                          data-id="${snippet?index}" style="${displayStyle}">
-                        <div class="small-font text font-italic mr-2 block-text">
+                        <div class="small-font text font-italic mr-2 word-break-word">
                             ${snippet.getSnippet()}
                             <#if snippet.getPage()?has_content>
                                 <label class="display-none page-html">
@@ -164,6 +182,7 @@
             </#if>
         </#macro>
 
+        <#--
         <#macro renderFallback document>
             <#if document?has_content>
                 <div class="snippet-content position-relative">
@@ -171,6 +190,32 @@
                         ${document.getFullTextSnippet(85)}...
                     </div>
                 </div>
+            </#if>
+        </#macro>
+        -->
+        <#macro renderFallback document>
+            <#if document?has_content>
+                <#if mainAnno??>
+                    <#if offsetList??>
+                        <div class="snippet-content position-relative">
+                            <div class="small-font text font-italic mr-2 word-break-word">
+                                ${document.getFullTextSnippetOffsetList(offsetList)}...
+                            </div>
+                        </div>
+                    <#else>
+                        <div class="snippet-content position-relative">
+                            <div class="small-font text font-italic mr-2 word-break-word">
+                                ${document.getFullTextSnippetAnnotationOffset(mainAnno)}...
+                            </div>
+                        </div>
+                    </#if>
+                <#else>
+                    <div class="snippet-content position-relative">
+                        <div class="small-font text font-italic mr-2 word-break-word">
+                            ${document.getFullTextSnippet(85)}...
+                        </div>
+                    </div>
+                </#if>
             </#if>
         </#macro>
 
@@ -191,6 +236,35 @@
         <#else>
             <@renderFallback document/>
         </#if>
+
+
+        <#--
+        <#macro renderFallback document>
+            <#if document?has_content>
+                <#if mainAnno??>
+                    <#if offsetList??>
+                        <div class="snippet-content h-100 position-relative">
+                            <div class="mb-0 small-font text font-italic mr-2 word-break-word">
+                                ${document.getFullTextSnippetOffsetList(offsetList)}...
+                            </div>
+                        </div>
+                    <#else>
+                        <div class="snippet-content h-100 position-relative">
+                            <div class="mb-0 small-font text font-italic mr-2 word-break-word">
+                                ${document.getFullTextSnippetAnnotationOffset(mainAnno)}...
+                            </div>
+                        </div>
+                    </#if>
+                <#else>
+                    <div class="snippet-content h-100 position-relative">
+                        <div class="mb-0 small-font text font-italic mr-2 word-break-word">
+                            ${document.getFullTextSnippet(85)}...
+                        </div>
+                    </div>
+                </#if>
+            </#if>
+        </#macro>
+        -->
 
         <!-- metadata if it exists (and its not reduced view) -->
         <#if !isReducedView && document.getUceMetadataWithoutJson()?size gt 0>
@@ -213,7 +287,7 @@
                         <#list document.getLinkableViewModel().getOutgoingLinks() as link>
                             <#assign popupText += "<i class='small-font fas fa-link mr-1 color-prime'></i>" + link.getLink().getType() + "<br/>">
                         </#list>
-                        <div class="link lines open-linkable-node"
+                        <div class="link lines open-linkable-node clickable"
                              data-unique="${document.getUnique()}"
                              data-trigger="hover"
                              data-placement="right"

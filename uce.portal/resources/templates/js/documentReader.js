@@ -1,5 +1,9 @@
 let currentFocusedPage = 0;
 let searchTokens = "";
+let topicColorMap = {};
+let currentSelectedTopic = null;
+let currentTopicIndex = -1;
+let matchingTopics = [];
 
 /**
  * Handles the expanding and de-expanding of the side bar
@@ -50,8 +54,8 @@ $('body').on('click', '.side-bar .toggle-highlighting-btn', function () {
     let highlight = $(this).data('highlighted');
     highlight = !highlight;
 
-    $('.document-content .annotation, .multi-annotation').each(function(){
-        if(highlight) $(this).removeClass('no-highlighting');
+    $('.document-content .annotation, .multi-annotation').each(function () {
+        if (highlight) $(this).removeClass('no-highlighting');
         else $(this).addClass('no-highlighting');
     })
 
@@ -137,13 +141,126 @@ $(document).ready(function () {
     // Enable popovers
     activatePopovers();
 
+    // Load document topics
+    loadDocumentTopics();
+
+    const hasTopics = $('.colorable-topic').length > 0;
+    if (hasTopics) {
+        $('.scrollbar-minimap').show();
+        initScrollbarMinimap();
+    } else {
+        $('.scrollbar-minimap').hide();
+    }
+
     let possibleSearchTokens = $('.reader-container').data('searchtokens');
     if (possibleSearchTokens === undefined || possibleSearchTokens === '') return;
     searchTokens = possibleSearchTokens.split('[TOKEN]');
 
     // Highlight potential search terms for the first 10 pages
     for (let i = 1; i < 11; i++) searchPotentialSearchTokensInPage(i);
-})
+
+});
+
+function loadDocumentTopics() {
+    $('.topics-loading').hide();
+
+    // Extract topics from colorable-topic spans in the document
+    const topicFrequency = {};
+    $('.colorable-topic').each(function () {
+        const topic = $(this).data('topic-value');
+        if (topic) {
+            topicFrequency[topic] = (topicFrequency[topic] || 0) + 1;
+        }
+    });
+
+    // Convert to array and sort by frequency
+    const topicArray = Object.keys(topicFrequency).map(topic => ({
+        label: topic,
+        frequency: topicFrequency[topic]
+    }));
+
+    topicArray.sort((a, b) => b.frequency - a.frequency);
+
+    // Find max and min for normalization across ALL topics
+    const maxFreq = topicArray.length > 0 ? topicArray[0].frequency : 1;
+    const minFreq = topicArray.length > 0 ? topicArray[topicArray.length - 1].frequency : 0;
+    const freqRange = maxFreq - minFreq;
+
+    // Create color mapping for ALL topics
+    topicArray.forEach(function (topic) {
+        const normalizedFreq = freqRange > 0 ?
+            (topic.frequency - minFreq) / freqRange : 1;
+        topicColorMap[topic.label] = window.graphVizHandler.getColorForWeight(normalizedFreq);
+    });
+
+    // Take top 10 topics for display
+    const topTopics = topicArray.slice(0, 10);
+
+    if (topTopics.length > 0) {
+        let html = '';
+
+        // Generate HTML for each top topic
+        topTopics.forEach(function (topic) {
+            html += '<div class="topic-item">' +
+                '<div class="topic-tag" data-topic="' + topic.label + '" data-frequency="' + topic.frequency + '" style="background-color: ' + topicColorMap[topic.label] + '">' +
+                '<span>' + topic.label + '</span>' +
+                '</div>' +
+                '</div>';
+        });
+
+        $('.document-topics-list').html(html);
+        attachTopicClickHandlers();
+
+        if (typeof updateMinimapMarkers === 'function') {
+            setTimeout(updateMinimapMarkers, 500);
+        }
+    } else {
+        $('.document-topics-list').html('<p>No topics found in this document.</p>');
+        // Hide the minimap since there are no topics
+        $('.scrollbar-minimap').hide();
+    }
+}
+
+function attachTopicClickHandlers() {
+    $('.topic-tag').off('click');
+
+    $('.topic-tag').on('click', function () {
+        const topic = $(this).data('topic');
+        const wasActive = $(this).hasClass('active-topic');
+        $('.topic-tag').removeClass('active-topic');
+
+        if (wasActive) {
+            clearTopicColoring();
+
+            hideTopicNavButtons();
+            currentSelectedTopic = null;
+        } else {
+            $(this).addClass('active-topic');
+
+            colorUnifiedTopics(topic);
+            setTimeout(function () {
+                scrollToFirstMatchingTopic(topic);
+            }, 100);
+        }
+    });
+
+    // Attach click handlers to the navigation buttons
+    $('.next-topic-button').off('click').on('click', function () {
+        if ($(this).hasClass('disabled') || !currentSelectedTopic) return;
+
+        currentTopicIndex++;
+        updateTopicNavButtonStates();
+        scrollToTopicElement($(matchingTopics[currentTopicIndex]));
+    });
+
+    $('.prev-topic-button').off('click').on('click', function () {
+        if ($(this).hasClass('disabled') || !currentSelectedTopic) return;
+        currentTopicIndex--;
+        updateTopicNavButtonStates();
+        scrollToTopicElement($(matchingTopics[currentTopicIndex]));
+    });
+}
+
 
 /**
  * Handle the custom cursor
@@ -179,6 +296,12 @@ async function lazyLoadPages() {
                     $('.reader-container .document-content').append(response);
                     activatePopovers();
                     for (let k = i + 1; k < Math.max(i + 10, pagesCount); k++) searchPotentialSearchTokensInPage(k);
+
+                    const $activeTopic = $('.topic-tag.active-topic');
+                    if ($activeTopic.length > 0) {
+                        colorUnifiedTopics($activeTopic.data('topic'));
+                    }
+                    updateMinimapMarkers();
                 },
                 error: function (xhr, status, error) {
                     console.error(xhr.responseText);
@@ -209,9 +332,9 @@ function searchPotentialSearchTokensInPage(page) {
             if ($el.attr('title').toLowerCase().includes(toHighlight.toLowerCase())) {
 
                 // If this annotation is within a multi-annotation, we need to highlight the multi-anno.
-                if($el.parent().hasClass('multi-annotation-popup')){
+                if ($el.parent().hasClass('multi-annotation-popup')) {
                     $el = $el.closest('.multi-annotation');
-                    if(highlightedAnnos.includes($el.attr('title'))) continue;
+                    if (highlightedAnnos.includes($el.attr('title'))) continue;
                     else highlightedAnnos.push($el.attr('title'))
                 }
 
@@ -231,5 +354,422 @@ function searchPotentialSearchTokensInPage(page) {
                 $('.found-searchtokens-list').append(html);
             }
         }
+    });
+}
+
+function colorUnifiedTopics(selectedTopic) {
+    clearTopicColoring();
+
+    if (!selectedTopic) {
+        return;
+    }
+
+    const $selectedTopicTag = $('.topic-tag').filter(function () {
+        return $(this).data('topic') === selectedTopic;
+    });
+
+    if ($selectedTopicTag.length === 0) {
+        return;
+    }
+
+    const color = $selectedTopicTag.css('background-color');
+
+    let finalColor = color;
+
+    if (color.startsWith('rgb(') && !color.startsWith('rgba(')) {
+        finalColor = color.replace('rgb(', 'rgba(').replace(')', ', 0.3)');
+    }
+
+    $('.colorable-topic').each(function () {
+        const topicValue = $(this).data('topic-value');
+
+        if (topicValue === selectedTopic) {
+            $(this).css({
+                'background-color': finalColor,
+                'border-radius': '3px',
+                'padding': '0 2px'
+            });
+        }
+    });
+    updateTopicMarkersOnMinimap();
+}
+
+function clearTopicColoring() {
+    $('.colorable-topic').css({
+        'background-color': '',
+        'border-radius': '',
+        'padding': ''
+    });
+
+    $('.minimap-marker.topic-marker').remove();
+    $('.minimap-marker.all-topics-marker').show();
+}
+
+
+function scrollToFirstMatchingTopic(topicValue) {
+    currentSelectedTopic = topicValue;
+
+    matchingTopics = $('.colorable-topic').filter(function () {
+        return $(this).data('topic-value') === topicValue;
+    }).toArray();
+
+    if (matchingTopics.length === 0) {
+        console.log('No matching unified topics found for: ' + topicValue);
+        hideTopicNavButtons();
+        return false;
+    }
+
+    currentTopicIndex = 0;
+
+    showTopicNavButtons();
+    updateTopicNavButtonStates();
+
+    const $firstMatchingTopic = $(matchingTopics[currentTopicIndex]);
+
+    if (isElementInViewport($firstMatchingTopic)) {
+        console.log('First matching topic is already visible in viewport');
+        return false;
+    }
+    scrollToTopicElement($firstMatchingTopic);
+
+    return true;
+}
+
+function scrollToTopicElement($topicElement) {
+
+    const windowHeight = $(window).height();
+    const elementHeight = $topicElement.outerHeight();
+    const scrollToPosition = $topicElement.offset().top - (windowHeight / 2) + (elementHeight / 2);
+
+    $('html, body').animate({
+        scrollTop: Math.max(0, scrollToPosition)
+    }, 800, function () {
+        $topicElement.addClass('animated-topic-scroll');
+
+        setTimeout(function () {
+            $topicElement.removeClass('animated-topic-scroll');
+        }, 1500);
+    });
+}
+
+function showTopicNavButtons() {
+    $('.topic-navigation-buttons').addClass('visible');
+}
+
+function hideTopicNavButtons() {
+    $('.topic-navigation-buttons').removeClass('visible');
+}
+
+function updateTopicNavButtonStates() {
+    if (currentTopicIndex <= 0) {
+        $('.prev-topic-button').addClass('disabled');
+    } else {
+        $('.prev-topic-button').removeClass('disabled');
+    }
+    if (currentTopicIndex >= matchingTopics.length - 1) {
+        $('.next-topic-button').addClass('disabled');
+    } else {
+        $('.next-topic-button').removeClass('disabled');
+    }
+}
+
+function initScrollbarMinimap() {
+    setTimeout(updateMinimapMarkers, 500);
+
+    $(window).on('scroll', function() {
+        updateMinimapScroll();
+    });
+
+    $(window).on('resize', function() {
+        updateMinimapMarkers();
+        updateMinimapScroll();
+    });
+
+    $('.scrollbar-minimap').on('click', function(e) {
+        const clickPosition = (e.pageY - $(this).offset().top) / $(this).height();
+        const dimensions = getMinimapDimensions();
+        const documentPosition = minimapToDocumentPosition(clickPosition * dimensions.minimapHeight, dimensions);
+
+        const scrollTo = documentPosition - (dimensions.windowHeight / 2);
+        $('html, body').animate({
+            scrollTop: Math.max(0, scrollTo)
+        }, 300);
+    });
+
+    $(document).on('mouseenter', '.minimap-marker', function(e) {
+        const $marker = $(this);
+        const $preview = $('.minimap-preview');
+        const $previewContent = $('.preview-content');
+        const dimensions = getMinimapDimensions();
+
+        let previewText = '';
+        let previewTitle = '';
+
+        const topicValue = $marker.data('topic');
+        if (topicValue && topicValue !== 'multiple') {
+            previewTitle = '<strong>Topic: ' + topicValue + '</strong>';
+
+            const markerTop = parseFloat($marker.css('top'));
+            const approximateDocumentPosition = minimapToDocumentPosition(markerTop, dimensions);
+
+            const $topicElements = $('.colorable-topic').filter(function() {
+                return $(this).data('topic-value') === topicValue;
+            });
+
+            let closestElement = null;
+            let minDistance = Number.MAX_VALUE;
+
+            $topicElements.each(function() {
+                const $element = $(this);
+                const elementOffset = $element.offset();
+
+                if (elementOffset) {
+                    const distance = Math.abs(elementOffset.top - approximateDocumentPosition);
+                    if (distance < minDistance) {
+                        minDistance = distance;
+                        closestElement = $element;
+                    }
+                }
+            });
+
+            if (closestElement) {
+                const $paragraph = closestElement.closest('p');
+                if ($paragraph.length) {
+                    let contextText = $paragraph.text().trim();
+                    if (contextText.length > 200) {
+                        contextText = contextText.substring(0, 200) + '...';
+                    }
+                    previewText = contextText;
+                } else {
+                    previewText = closestElement.text().trim();
+                }
+
+                const coveredText = closestElement.data('wcovered');
+                if (coveredText) {
+                    previewText =  coveredText;
+                }
+            }
+            if (previewTitle) {
+                $previewContent.html(previewTitle + '<br><br>' + previewText);
+            } else {
+                $previewContent.text(previewText);
+            }
+
+            const previewHeight = $preview.outerHeight();
+            let previewTop = markerTop - (previewHeight / 2);
+            if (previewTop < 0) previewTop = 0;
+            if (previewTop + previewHeight > dimensions.minimapHeight) {
+                previewTop = dimensions.minimapHeight - previewHeight;
+            }
+
+            $preview.css('top', previewTop + 'px').show();
+        } else {
+            // Get the text content from the corresponding document section
+            // const elementId = $marker.data('element-id');
+            // const $element = $('#' + elementId);
+            //
+            // if ($element.length) {
+            //     // Get a snippet of text from the element
+            //     previewText = $element.text().trim();
+            //     // Limit preview text length
+            //     if (previewText.length > 200) {
+            //         previewText = previewText.substring(0, 200) + '...';
+            //     }
+            // }
+        }
+    });
+
+    $(document).on('mouseleave', '.minimap-marker', function() {
+        $('.minimap-preview').hide();
+    });
+
+    $('.scrollbar-minimap').on('mouseleave', function() {
+        $('.minimap-preview').hide();
+    });
+}
+
+function updateMinimapMarkers() {
+    const $minimap = $('.minimap-markers');
+    const dimensions = getMinimapDimensions();
+    
+    $minimap.empty();
+
+    $('.document-content .page').each(function(index) {
+        const $page = $(this);
+
+        if (!$page.attr('id')) {
+            $page.attr('id', 'page-' + (index + 1));
+        }
+
+        const pageId = $page.attr('id');
+        const pageTop = $page.offset().top;
+        const pageHeight = $page.outerHeight();
+
+        const markerTop = documentToMinimapPosition(pageTop, dimensions);
+        const markerHeight = documentToMinimapPosition(pageHeight, dimensions);
+
+        const $marker = createMinimapMarker({
+            top: markerTop,
+            height: markerHeight,
+            color: '#ccc',
+            elementId: pageId
+        });
+
+        $minimap.append($marker);
+    });
+
+    addAllTopicMarkersToMinimap();
+    updateTopicMarkersOnMinimap();
+}
+
+function addAllTopicMarkersToMinimap() {
+    const $minimap = $('.minimap-markers');
+    const dimensions = getMinimapDimensions();
+    const topicPositions = {};
+
+    $('.colorable-topic').each(function() {
+        const $topic = $(this);
+        const topicValue = $topic.data('topic-value');
+
+        if (topicValue && topicColorMap[topicValue]) {
+            const topicTop = $topic.offset().top;
+            const topicHeight = $topic.outerHeight();
+
+            const markerTop = Math.floor(documentToMinimapPosition(topicTop, dimensions));
+            const markerHeight = Math.max(2, documentToMinimapPosition(topicHeight, dimensions));
+
+            if (!topicPositions[markerTop]) {
+                topicPositions[markerTop] = {
+                    topics: {},
+                    height: markerHeight
+                };
+            }
+
+            topicPositions[markerTop].topics[topicValue] = topicColorMap[topicValue];
+            topicPositions[markerTop].height = Math.max(topicPositions[markerTop].height, markerHeight);
+        }
+    });
+
+    Object.keys(topicPositions).forEach(function(position) {
+        const pos = parseInt(position);
+        const topicData = topicPositions[pos];
+        const topicValues = Object.keys(topicData.topics);
+
+        if (topicValues.length > 0) {
+            const topicValue = topicValues[0];
+            const color = topicData.topics[topicValue];
+
+            const $marker = createMinimapMarker({
+                top: pos,
+                height: topicData.height,
+                color: color,
+                topic: topicValues.length === 1 ? topicValue : 'multiple',
+                className: 'all-topics-marker'
+            });
+
+            $minimap.append($marker);
+        }
+    });
+}
+
+function updateTopicMarkersOnMinimap() {
+    const $minimap = $('.minimap-markers');
+    const dimensions = getMinimapDimensions();
+
+    const $activeTopic = $('.topic-tag.active-topic');
+    if ($activeTopic.length === 0) return;
+
+    $('.minimap-marker.all-topics-marker').hide();
+
+    const activeTopic = $activeTopic.data('topic');
+    const topicColor = $activeTopic.css('background-color');
+
+    $('.colorable-topic').each(function() {
+        const $topic = $(this);
+        const topicValue = $topic.data('topic-value');
+
+        if (topicValue === activeTopic) {
+            const topicTop = $topic.offset().top;
+            const topicHeight = $topic.outerHeight();
+
+            const markerTop = documentToMinimapPosition(topicTop, dimensions);
+            const markerHeight = Math.max(3, documentToMinimapPosition(topicHeight, dimensions));
+
+            const $marker = createMinimapMarker({
+                top: markerTop,
+                height: markerHeight,
+                color: topicColor,
+                className: 'topic-marker'
+            });
+
+            $minimap.append($marker);
+        }
+    });
+}
+
+// Helper functions for minimap calculations
+function getMinimapDimensions() {
+    return {
+        documentHeight: $(document).height(),
+        windowHeight: $(window).height(),
+        minimapHeight: $('.scrollbar-minimap').height()
+    };
+}
+
+function documentToMinimapPosition(documentPos, dimensions) {
+    const { documentHeight, minimapHeight } = dimensions || getMinimapDimensions();
+    return (documentPos / documentHeight) * minimapHeight;
+}
+
+function minimapToDocumentPosition(minimapPos, dimensions) {
+    const { documentHeight, minimapHeight } = dimensions || getMinimapDimensions();
+    return (minimapPos / minimapHeight) * documentHeight;
+}
+
+function createMinimapMarker(options) {
+    const { top, height, color, elementId, topic, className } = options;
+    
+    const $marker = $('<div></div>')
+        .addClass('minimap-marker')
+        .addClass(className || '')
+        .css({
+            'top': top + 'px',
+            'height': Math.max(2, height) + 'px',
+            'background-color': color || '#ccc'
+        });
+    
+    if (elementId) $marker.attr('data-element-id', elementId);
+    if (topic) $marker.attr('data-topic', topic);
+    
+    return $marker;
+}
+
+function updateMinimapScroll() {
+    const windowHeight = $(window).height();
+    const documentHeight = $(document).height();
+    const scrollTop = $(window).scrollTop();
+    const minimapHeight = $('.scrollbar-minimap').height();
+
+    const visibleStart = scrollTop / documentHeight;
+    const visibleHeight = windowHeight / documentHeight;
+
+    let $visibleArea = $('.minimap-visible-area');
+    if ($visibleArea.length === 0) {
+        $visibleArea = $('<div class="minimap-visible-area"></div>')
+            .css({
+                'position': 'absolute',
+                'left': '0',
+                'width': '100%',
+                'background-color': 'rgba(0, 0, 0, 0.1)',
+                'border-top': '1px solid rgba(0, 0, 0, 0.2)',
+                'border-bottom': '1px solid rgba(0, 0, 0, 0.2)',
+                'z-index': 1
+            });
+        $('.scrollbar-minimap').append($visibleArea);
+    }
+
+    $visibleArea.css({
+        'top': (visibleStart * minimapHeight) + 'px',
+        'height': (visibleHeight * minimapHeight) + 'px'
     });
 }

@@ -1,8 +1,13 @@
 package org.texttechnologylab.services;
 
 import org.texttechnologylab.exceptions.DatabaseOperationException;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
+import org.texttechnologylab.models.biofid.GazetteerTaxon;
+import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
@@ -139,7 +144,8 @@ public interface DataInterface {
                                                                    boolean countAll,
                                                                    SearchOrder order,
                                                                    OrderByColumn orderedByColumn,
-                                                                   long corpusId)
+                                                                   long corpusId,
+                                                                   List<UCEMetadataFilterDto> filters)
         throws DatabaseOperationException;
     /**
      * Searches for documents with a variety of criterias. It's the main db search of the biofid portal
@@ -249,10 +255,14 @@ public interface DataInterface {
      */
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException;
 
+    public GazetteerTaxon getGazetteerTaxonById(long id) throws DatabaseOperationException;
+
+    public GnFinderTaxon getGnFinderTaxonById(long id) throws DatabaseOperationException;
+
     /**
      * Gets a single taxon by its id
      */
-    public Taxon getTaxonById(long id) throws DatabaseOperationException;
+    public BiofidTaxon getBiofidTaxonById(long id) throws DatabaseOperationException;
 
     /**
      * Gets a lemma by its id
@@ -318,6 +328,16 @@ public interface DataInterface {
      * @param corpusTsnePlot
      */
     public void saveOrUpdateCorpusTsnePlot(CorpusTsnePlot corpusTsnePlot, Corpus corpus) throws DatabaseOperationException;
+
+    /**
+     *  Saves or updates a list of documentLinks.
+     */
+    public void saveOrUpdateManyDocumentToAnnotationLinks(List<DocumentToAnnotationLink> links) throws DatabaseOperationException;
+
+    /**
+     * Saves or updates a list of DocumentToAnnotation Links
+     */
+    public void saveOrUpdateManyAnnotationToDocumentLinks(List<AnnotationToDocumentLink> links) throws DatabaseOperationException;
 
     /**
      * Saves or updates a list of documentLinks.

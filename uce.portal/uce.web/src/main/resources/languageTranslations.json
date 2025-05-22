@@ -394,5 +394,45 @@
   "noKWIC": {
     "de-DE": "Die Suche wurde ohne das Keyword-on-context feature gestartet.",
     "en-EN": "Search has been started without the Keyword-in-context feature."
+  },
+  "searchVisualizationSummaryTitle": {
+    "de-DE": "Suchergebnisse-basierte Visualisierungen",
+    "en-EN": "Search result visualizations"
+  },
+  "searchVisualizationPlotFeatureLabel": {
+    "de-DE": "Merkmal:",
+    "en-EN": "Feature:"
+  },
+  "searchVisualizationPlotNBinsLabel": {
+    "de-DE": "Anzahl der Klassen:",
+    "en-EN": "Number of bins:"
+  },
+  "searchVisualizationPlotUpdateButton": {
+    "de-DE": "Histogramm aktualisieren",
+    "en-EN": "Update histogram"
+  },
+  "searchVisualizationPlotTitleTemplate": {
+    "de-DE": "Verteilung des Merkmals \"{selectedFeature}\" auf der aktuellen Seite ({currentPage}) der Suchergebnisse ({numDocs} Dokumente)",
+    "en-EN": "Distribution of feature \"{selectedFeature}\" in the current page ({currentPage}) of the search results ({numDocs} documents)"
+  },
+  "topics": {
+    "de-DE": "Wichtige Themen",
+    "en-EN": "Key Topics"
+  },
+  "corpusWords": {
+    "de-DE": "Top Wörter aus dem Korpus",
+    "en-EN": "Top words from Corpus"
+  },
+  "documentWords": {
+    "de-DE": "Top Wörter aus dem Dokument",
+    "en-EN": "Top words from document"
+  },
+  "topicWords": {
+    "de-DE": "Top Wörter aus dem Thema",
+    "en-EN": "Top words from Topic"
+  },
+  "topicDistribution": {
+    "de-DE": "Thema Verteilung",
+    "en-EN": "Topic Distribution"
   }
 }

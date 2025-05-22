@@ -82,6 +82,14 @@
     border-left-color: darkgreen;
 }
 
+.lexicon-view .lexicon-entry[data-type="unifiedtopic"] {
+    border-left-color: lightpink;
+}
+
+.lexicon-view .lexicon-entry[data-type="geoname"] {
+    border-left-color: var(--dark);
+}
+
 .lexicon-view .lexicon-entry[data-type="time"] {
     border-left-color: lightblue;
 }

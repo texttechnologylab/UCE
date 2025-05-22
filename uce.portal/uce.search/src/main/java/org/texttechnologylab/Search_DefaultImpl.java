@@ -62,10 +62,16 @@ public class Search_DefaultImpl implements Search {
                 (ex) -> logger.error("Error fetching the corpus and corpus config of corpus: " + corpusId, ex)));
 
         // First: enrich if wanted (and we can; we need the graph database for it)
-        if (enrichSearchTerm && SystemStatus.JenaSparqlStatus.isAlive() && !searchPhrase.isBlank()) {
-            var enrichment = enrichSearchQuery(searchPhrase);
-            this.searchState.setEnrichedSearchQuery(enrichment.getLeft());
-            this.searchState.setEnrichedSearchTokens(enrichment.getRight());
+        if (enrichSearchTerm && !searchPhrase.isBlank()) {
+            var enrichedSearchQuery = ExceptionUtils.tryCatchLog(
+                    () -> new EnrichedSearchQuery(searchPhrase, db, jenaSparqlService)
+                            .withAll()
+                            .parse(proModeActivated, corpusId),
+                    (ex) -> logger.error("There was an error enriching the following search phrase: " + searchPhrase, ex));
+            if(enrichedSearchQuery != null){
+                this.searchState.setEnrichedSearchQuery(enrichedSearchQuery.getEnrichedQuery());
+                this.searchState.setEnrichedSearchTokens(enrichedSearchQuery.getEnrichedSearchTokens());
+            }
         }
 
         // Then store the search tokens
@@ -257,9 +263,12 @@ public class Search_DefaultImpl implements Search {
         return Stopwords.GetStopwords(languageCode);
     }
 
+    /**
+     * [OBSOLETE!], was replaced by common.models.search.EnrichedSearchQuery.java
+     */
     private Pair<String, List<EnrichedSearchToken>> enrichSearchQuery(String searchQuery) {
         // First off, we replace the spaces in "" and '' enclosed tokens with __ as to indicate: these are a token
-        searchQuery = StringUtils.ReplaceSpacesInQuotes(searchQuery);
+        searchQuery = StringUtils.replaceSpacesInQuotes(searchQuery);
 
         // We split the tokens and remove special characters at their edges.
         var tokens = searchQuery.split(" ");
@@ -307,7 +316,7 @@ public class Search_DefaultImpl implements Search {
                         enrichedSearchToken.setValue(cleanedToken);
                         var finalCleanedToken = cleanedToken;
                         var speciesIds = ExceptionUtils.tryCatchLog(
-                                () -> jenaSparqlService.getSpeciesIdsOfUpperRank(StringUtils.GetFullTaxonRankByCode(possibleCommand.replace("::", "")), finalCleanedToken),
+                                () -> jenaSparqlService.getSpeciesIdsOfUpperRank(StringUtils.getFullTaxonRankByCode(possibleCommand.replace("::", "")), finalCleanedToken),
                                 (ex) -> logger.error("Error querying species by an upper rank.", ex));
                         if (speciesIds != null) taxonIds.addAll(speciesIds);
                     }

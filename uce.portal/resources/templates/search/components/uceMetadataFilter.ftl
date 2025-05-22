@@ -1,5 +1,5 @@
-<div class="filter-div flex-grow-1 col-md-auto m-0 pt-1 pb-1 pl-2 pr-2 small-font" data-type="${filter.getValueType()}">
-    <div class="flexed align-items-center justify-content-between">
+<div class="filter-div flex-grow-1 col-md-auto m-0 pt-1 pb-1 pl-1 pr-1 small-font" data-type="${filter.getValueType()}">
+    <div class="flexed align-items-center justify-content-between group-box bg-lightgray p-2 mb-0">
         <label class="mb-0 mr-1 color-secondary">${filter.getKey()}</label>
 
         <#if filter.getValueType().name() == "ENUM">
@@ -13,14 +13,21 @@
             </select>
         </#if>
 
+        <!-- TODO: Date needs better filering -->
         <#if filter.getValueType().name() == "DATE">
+            <input type="number" class="w-100 ml-1 small-font p-1 form-control h-auto" placeholder="{${filter.getValueType().name()}}"/>
         </#if>
 
         <#if filter.getValueType().name() == "STRING" || filter.getValueType().name() == "URL">
             <input type="text" class="w-100 ml-1 small-font p-1 form-control h-auto" placeholder="{${filter.getValueType().name()}}"/>
         </#if>
 
-        <#if filter.getValueType().name() == "NUMBER">
+        <!-- TODO: NUMBER needs better filtering option -->
+        <#if filter.getValueType().name() == "NUMBER" && filter.getMin()?has_content && filter.getMax()?has_content>
+            Min:
+            <input type="number" data-range="min" class="w-100 ml-1 small-font p-1 form-control h-auto" placeholder="${filter.getMin()}"/>
+            Max:
+            <input type="number" data-range="max" class="w-100 ml-1 small-font p-1 form-control h-auto" placeholder="${filter.getMax()}"/>
         </#if>
     </div>
 </div>

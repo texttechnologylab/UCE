@@ -8,12 +8,11 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.Renderer;
-import org.texttechnologylab.models.Linkable;
-import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.biofid.GazetteerTaxon;
+import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.dto.LinkableNodeDto;
 import org.texttechnologylab.models.viewModels.wiki.CachedWikiPage;
 import org.texttechnologylab.services.*;
-import org.texttechnologylab.utils.ClassUtils;
 import org.texttechnologylab.utils.SystemStatus;
 import spark.ModelAndView;
 import spark.Route;
@@ -91,16 +90,22 @@ public class WikiApi {
                 return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
             }
 
+            // Determine the type. A wikiID always has the following format: <type>-<model_id>
+            var split = wid.split("-");
+            var type = split[0];
+
             // Check if we have loaded, built and cached that wiki page before. We don't re-render it then.
             // BUT: We have different wiki views for different languages so the lang needs to be part of the key!
             var cacheId = wid + languageResources.getDefaultLanguage();
+
+            if (type.startsWith("DTR")) {
+                cacheId += coveredText;
+            }
+
             if (SessionManager.CachedWikiPages.containsKey(cacheId)) {
                 return ((CachedWikiPage)SessionManager.CachedWikiPages.get(cacheId)).getRenderedView();
             }
 
-            // Determine the type. A wikiID always has the following format: <type>-<model_id>
-            var split = wid.split("-");
-            var type = split[0];
             // A missing id isn't necessarily bad, as we also have documentation pages etc.
             var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(split[1]), (ex) -> {});
 
@@ -116,8 +121,9 @@ public class WikiApi {
                 model.put("vm", wikiService.buildNamedEntityWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/namedEntityAnnotationPage.ftl";
             } else if (type.startsWith("TA")) {
-                // We then clicked onto a Taxon wiki item
-                model.put("vm", wikiService.buildTaxonWikipageViewModel(id, coveredText));
+                // We then clicked onto a Taxon wiki item, but which one?
+                var clazz = type.equals("TA_GN") ? GnFinderTaxon.class : GazetteerTaxon.class;
+                model.put("vm", wikiService.buildTaxonWikipageViewModel(id, coveredText, clazz));
                 renderView = "/wiki/pages/taxonAnnotationPage.ftl";
             } else if (type.equals("TP") || type.equals("TD")) {
                 // TP = TopicPage TD = TopicDocument
@@ -145,10 +151,11 @@ public class WikiApi {
             } else if (type.startsWith("UT")) {
                 model.put("vm", wikiService.buildUnifiedTopicWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/unifiedTopicAnnotationPage.ftl";
-            } else if (type.startsWith("TVB")) {
-                model.put("vm", wikiService.buildTopicValueBaseWikiPageViewModel(id, coveredText));
-                renderView = "/wiki/pages/topicValueBaseAnnotationPage.ftl";
-            } else {
+            } else if (type.startsWith("DTR")) {
+                model.put("vm", wikiService.buildTopicWikiPageViewModel(id, coveredText));
+                renderView = "/wiki/pages/topicPage.ftl";
+           }
+            else {
                 // The type part of the wikiId was unknown. Throw an error.
                 logger.warn("Someone tried to query a wiki page of a type that does not exist in UCE. This shouldn't happen.");
                 model.put("information", languageResources.get("missingParameterError"));

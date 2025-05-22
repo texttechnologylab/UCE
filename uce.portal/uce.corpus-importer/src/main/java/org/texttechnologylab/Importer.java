@@ -18,16 +18,25 @@ import org.apache.uima.jcas.cas.AnnotationBase;
 import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
+import org.locationtech.jts.geom.Coordinate;
+import org.locationtech.jts.geom.GeometryFactory;
+import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotation.DocumentAnnotation;
+import org.texttechnologylab.annotation.geonames.GeoNamesEntity;
 import org.texttechnologylab.annotation.link.*;
 import org.texttechnologylab.annotation.ocr.*;
+import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
+import org.texttechnologylab.models.biofid.GazetteerTaxon;
+import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
+import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.corpus.ocr.OCRPageAdapterImpl;
 import org.texttechnologylab.models.corpus.ocr.PageAdapter;
 import org.texttechnologylab.models.corpus.ocr.PageAdapterImpl;
@@ -37,6 +46,7 @@ import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.LogStatus;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
+import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -52,8 +62,10 @@ import java.nio.file.Paths;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.CopyOnWriteArrayList;
+import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
@@ -63,29 +75,36 @@ public class Importer {
 
     private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger(Importer.class);
+    private static final int BATCH_SIZE = 10;
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
-    private static final String[] COMATIBLE_CAS_FILE_ENDINGS = Arrays.asList("xmi", "bz2", "zip").toArray(new String[0]);
+    private static final String[] COMATIBLE_CAS_FILE_ENDINGS = Arrays.asList("xmi", "bz2", "zip", "gz").toArray(new String[0]);
+    private static final Set<String> MIME_TYPES_PDF = Set.of("application/pdf", "pdf");
     private GoetheUniversityService goetheUniversityService;
     private PostgresqlDataInterface_Impl db;
     private GbifService gbifService;
     private RAGService ragService;
     private JenaSparqlService jenaSparqlService;
+    private S3Storage s3Storage;
     private String path;
     private String importId;
     private Integer importerNumber;
     private List<UCEMetadataFilter> uceMetadataFilters = new CopyOnWriteArrayList<>(); // need thread safety.
     private LexiconService lexiconService;
+    private CommonConfig commonConfig = new CommonConfig();
+    private String casView;
 
     public Importer(ApplicationContext serviceContext,
                     String foldername,
                     int importerNumber,
-                    String importId) {
+                    String importId,
+                    String casView) {
         initServices(serviceContext);
         this.importerNumber = importerNumber;
         this.importId = importId;
         this.path = foldername;
+        this.casView = casView;
     }
 
     public Importer(ApplicationContext serviceContext) {
@@ -99,6 +118,7 @@ public class Importer {
         this.lexiconService = serviceContext.getBean(LexiconService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
         this.gbifService = serviceContext.getBean(GbifService.class);
+        this.s3Storage = serviceContext.getBean(S3Storage.class);
     }
 
     /**
@@ -109,7 +129,7 @@ public class Importer {
         try (var fileStream = Files.walk(Path.of(path))) {
             return (int) fileStream
                     .filter(Files::isRegularFile)
-                    .filter(path -> path.toString().toLowerCase().endsWith(".xmi"))
+                    .filter(path -> StringUtils.checkIfFileHasExtension(path.toString().toLowerCase(), COMATIBLE_CAS_FILE_ENDINGS))
                     .count();
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -135,7 +155,8 @@ public class Importer {
         logger.info("===========> Global Import Id: " + importId);
         logger.info("===========> Importer Number: " + importerNumber);
         logger.info("===========> Used Threads: " + numThreads);
-        logger.info("===========> Importing from path: " + path + "\n\n");
+        logger.info("===========> Importing from path: " + path);
+        logger.info("===========> Reading view: " + casView + "\n\n");
 
         storeCorpusFromFolderAsync(path, numThreads);
     }
@@ -220,15 +241,26 @@ public class Importer {
 
         var inputFolderName = Path.of(folderName, "input");
         final var corpusConfigFinal = corpusConfig;
-        final var counter = new AtomicInteger(0); // To handle mutation in lambdas
         final var corpus1 = corpus;
+
+        // Needed for parallel processing
+        var docInBatch = new AtomicInteger(0);
+        var lock = new Object();
+        var batchLatch = new AtomicReference<>(new CountDownLatch(0));
 
         try (var fileStream = Files.walk(inputFolderName)) {
             fileStream.filter(Files::isRegularFile)
                     .filter(path -> StringUtils.checkIfFileHasExtension(path.toString().toLowerCase(), COMATIBLE_CAS_FILE_ENDINGS))
                     .forEach(filePath -> {
-                        var docFuture = CompletableFuture.supplyAsync(
-                                        () -> XMIToDocument(filePath.toString(), corpus1), executor) // Convert the XMI to a Document
+                        var docFuture = CompletableFuture.supplyAsync(() -> {
+                                    try {
+                                        batchLatch.get().await(); // wait if a batch is being postprocessed
+                                    } catch (InterruptedException e) {
+                                        Thread.currentThread().interrupt();
+                                    }
+
+                                    return XMIToDocument(filePath.toString(), corpus1);
+                                }, executor)
                                 .thenApply(doc -> {
                                     if (doc == null) return null;
 
@@ -240,52 +272,58 @@ public class Importer {
                                 })
                                 .thenAcceptAsync(doc -> {
                                     if (doc != null) {
-                                        // Log and try to postprocess the document
                                         logImportInfo("Stored document " + filePath.getFileName(), LogStatus.SAVED, filePath.toString(), 0);
                                         logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
 
-                                        // Postprocess the document
                                         ExceptionUtils.tryCatchLog(
                                                 () -> postProccessDocument(doc, corpus1, filePath.toString()),
-                                                (ex) -> logImportError("Error postprocessing a saved document with id " + doc.getId(), (ex), filePath.toString()));
+                                                (ex) -> logImportError("Error postprocessing a saved document with id " + doc.getId(), ex, filePath.toString()));
                                         logImportInfo("Finished with import.", LogStatus.FINISHED, filePath.toString(), 0);
+                                    }
+
+                                    int local = docInBatch.incrementAndGet();
+                                    if (local == BATCH_SIZE) {
+                                        synchronized (lock) {
+                                            // Double-check to avoid race
+                                            if (docInBatch.get() == BATCH_SIZE) {
+                                                docInBatch.set(0);
+                                                batchLatch.set(new CountDownLatch(1));
+                                            }
+                                        }
+
+                                        // Block other threads by not releasing the latch yet. We want the postprocessing being done by a single thread,
+                                        // while all the others wait.
+                                        logImportInfo("=========== UPDATING THE LOGICAL LINKS...", LogStatus.POST_PROCESSING, "LINKS", 0);
+                                        var logicalLinksResult = ExceptionUtils.tryCatchLog(
+                                                () -> db.callLogicalLinksRefresh(),
+                                                (ex) -> logImportError("Error updating the logical links while postprocessing a batch.", ex, filePath.toString()));
+                                        if (logicalLinksResult != null)
+                                            logImportInfo("=========== Finished updating the logical links. Inserted new links: " + logicalLinksResult, LogStatus.SAVED, "LINKS", 0);
+
+                                        logImportInfo("=========== UPDATING THE LEXICON...", LogStatus.POST_PROCESSING, "LEXICON", 0);
+                                        var lexiconResult = ExceptionUtils.tryCatchLog(
+                                                () -> lexiconService.updateLexicon(false),
+                                                (ex) -> logImportError("Error updating the lexicon while postprocessing a batch.", ex, filePath.toString()));
+                                        if (lexiconResult != null)
+                                            logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + lexiconResult, LogStatus.SAVED, "LEXICON", 0);
+
+                                        logImportInfo("=========== UPDATING THE GEONAME LOCATIONS...", LogStatus.POST_PROCESSING, "GEONAME_LOCATION", 0);
+                                        var geonameLocationResult = ExceptionUtils.tryCatchLog(
+                                                () -> db.callGeonameLocationRefresh(),
+                                                (ex) -> logImportError("Error updating the geoname locations while postprocessing a batch.", ex, filePath.toString()));
+                                        if (geonameLocationResult != null)
+                                            logImportInfo("=========== Finished updating the geoname locations. Inserted new locations: " + geonameLocationResult, LogStatus.SAVED, "GEONAME_LOCATION", 0);
+
+                                        logImportInfo("=========== POSTPROCESSING THE CORPUS...", LogStatus.POST_PROCESSING, "CORPUS", 0);
+                                        postProccessCorpus(corpus1, corpusConfigFinal);
+                                        logImportInfo("=========== FINISHED POSTPROCESSING THE CORPUS...", LogStatus.POST_PROCESSING, "CORPUS", 0);
+
+                                        // Allow all others to continue
+                                        batchLatch.get().countDown();
                                     }
                                 });
 
                         futures.add(docFuture);
-
-                        int currentCount = counter.incrementAndGet();
-
-                        // Periodic processing of the imports such as lexicon refreshing and corpus postprocessing
-                        if (currentCount % 50 == 0) {
-
-                            // Logical Links
-                            CompletableFuture.runAsync(() -> {
-                                logImportInfo("=========== UPDATING THE LOGICAL LINKS...", LogStatus.POST_PROCESSING, "LINKS", 0);
-                                var result = ExceptionUtils.tryCatchLog(
-                                        () -> db.callLogicalLinksRefresh(),
-                                        (ex) -> logImportError("Error refreshing the logical links of corpus " + corpus1.getId(), ex, "LINKS"));
-                                if(result != null)
-                                    logImportInfo("=========== Finished updating the lexicon. Inserted new links: " + result, LogStatus.SAVED, "LINKS", 0);
-                            }, executor);
-
-                            // Lexicon
-                            CompletableFuture.runAsync(() -> {
-                                logImportInfo("=========== UPDATING THE LEXICON...", LogStatus.POST_PROCESSING, "LEXICON", 0);
-                                var result = ExceptionUtils.tryCatchLog(
-                                        () -> lexiconService.updateLexicon(false),
-                                        (ex) -> logImportError("Unknown error updating the lexicon of corpus " + corpus1.getId(), ex, "LEXICON"));
-                                if (result != null)
-                                    logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + result + "\n\n", LogStatus.SAVED, "LEXICON", 0);
-                            }, executor);
-
-                            // Corpus
-                            CompletableFuture.runAsync(() -> {
-                                ExceptionUtils.tryCatchLog(
-                                        () -> postProccessCorpus(corpus1, corpusConfigFinal),
-                                        (ex) -> logger.error("Error postprocessing the current corpus with id " + corpus1.getId()));
-                            }, executor);
-                        }
                     });
 
         } catch (IOException ex) {
@@ -300,10 +338,15 @@ public class Importer {
                 () -> db.callLogicalLinksRefresh(),
                 (ex) -> logger.error("Error in the final logical links update of the current corpus with id " + corpus1.getId()));
 
-        // Final lexion updating
+        // Final lexicon updating
         ExceptionUtils.tryCatchLog(
                 () -> lexiconService.updateLexicon(false),
                 (ex) -> logger.error("Error in the final lexicon update of the current corpus with id " + corpus1.getId()));
+
+        // Final geonames location updating
+        ExceptionUtils.tryCatchLog(
+                () -> db.callGeonameLocationRefresh(),
+                (ex) -> logger.error("Error in the final geoname location update of the current corpus with id " + corpus1.getId()));
 
         // Final corpus postprocessing
         ExceptionUtils.tryCatchLog(
@@ -343,6 +386,11 @@ public class Importer {
                 // https://uima.apache.org/d/uimaj-current/api/org/apache/uima/util/CasIOUtils.html
                 // tsiInputStream: Optional stream for typesystem - only used if not null. (which it currently is)
                 CasIOUtils.load(inputStream, null, jCas.getCas(), CasLoadMode.LENIENT);
+
+                // Import from a specific view, if given
+                if (casView != null) {
+                    jCas = jCas.getView(casView);
+                }
             }
 
             return XMIToDocument(jCas, corpus, filename);
@@ -384,6 +432,16 @@ public class Importer {
         }
 
         return null; // Unsupported
+    }
+
+    /**
+     * Upload input stream to minio s3 storage
+     * @param inputStream
+     * @param objectName
+     * @throws Exception
+     */
+    private void uploadInputStream(InputStream inputStream, String objectName) throws Exception {
+        this.s3Storage.uploadInputStream(inputStream, objectName, new HashMap<>());
     }
 
     /**
@@ -435,14 +493,34 @@ public class Importer {
                 return null;
             }
 
+            // set the mime type
+            document.setMimeType(jCas.getSofaMimeType());
+
             // Set the full text
-            document.setFullText(jCas.getDocumentText());
-            logger.info("Setting full text done.");
+            if (MIME_TYPES_PDF.contains(document.getMimeType())) {
+                document.setFullText("");
+
+                // PDF is just bytes in the SofA
+                // TODO support different ways of storing the PDF?
+                byte[] pdfBytes = jCas.getSofaDataStream().readAllBytes();
+                document.setDocumentData(pdfBytes);
+                logger.info("Document is a PDF: " + document.getMimeType() + " of length " + pdfBytes.length);
+            } else {
+                // by default, we assume text as before
+                document.setFullText(jCas.getDocumentText());
+                logger.info("Setting full text done.");
+            }
 
             setMetadataTitleInfo(document, jCas, corpusConfig);
 
             // For now, we skip this. This doesn't relly improve anything and is very costly.
             //setCleanedFullText(document, jCas);
+            if ( corpusConfig.getOther().isEnableS3Storage() ) {
+                ExceptionUtils.tryCatchLog(
+                        () -> uploadInputStream(openInputStreamBasedOnExtension(filePath), document.getDocumentId()),
+                        (ex) -> logImportWarn("Was not able to upload XMI to S3 Storage!", ex, filePath));
+            }
+
             if (corpusConfig.getAnnotations().isUceMetadata())
                 ExceptionUtils.tryCatchLog(
                         () -> setUceMetadata(document, jCas, corpus.getId()),
@@ -457,6 +535,12 @@ public class Importer {
                 ExceptionUtils.tryCatchLog(
                         () -> setNamedEntities(document, jCas),
                         (ex) -> logImportWarn("This file should have contained ner annotations, but selecting them caused an error.", ex, filePath));
+
+            // GeoNames requires both GeoName and NamedEntity annotations.
+            if (corpusConfig.getAnnotations().isNamedEntity() && corpusConfig.getAnnotations().isGeoNames())
+                ExceptionUtils.tryCatchLog(
+                        () -> setGeoNames(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained GeoNames annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().isLemma())
                 ExceptionUtils.tryCatchLog(
@@ -496,7 +580,7 @@ public class Importer {
             // Keep this at the end of the annotation setting, as they might require previous annotations. Order matter here!
             if (corpusConfig.getAnnotations().isLogicalLinks())
                 ExceptionUtils.tryCatchLog(
-                        () -> storeLogicLinks(jCas, corpus.getId()),
+                        () -> setLogicLinks(document, jCas, corpus.getId(), filePath),
                         (ex) -> logImportWarn("This file should have contained LinkTypesystem annotations, but selecting them caused an error.", ex, filePath));
 
             ExceptionUtils.tryCatchLog(
@@ -516,9 +600,45 @@ public class Importer {
     }
 
     /**
+     * Selects and set the geoNames of a document.
+     */
+    private void setGeoNames(Document document, JCas jCas) {
+        var geoNames = new ArrayList<GeoName>();
+        JCasUtil.select(jCas, GeoNamesEntity.class).forEach(g -> {
+            var geoName = new GeoName(g.getBegin(), g.getEnd());
+            geoName.setCoveredText(g.getCoveredText());
+            geoName.setName(g.getName());
+            geoName.setFeatureClass(GeoNameFeatureClass.valueOf(g.getFeatureClass()));
+            geoName.setFeatureCode(g.getFeatureCode());
+            geoName.setCountryCode(g.getCountryCode());
+            geoName.setAdm1(g.getAdm1());
+            geoName.setAdm2(g.getAdm2());
+            geoName.setAdm3(g.getAdm3());
+            geoName.setAdm4(g.getAdm4());
+            geoName.setLatitude(g.getLatitude());
+            geoName.setLongitude(g.getLongitude());
+            geoName.setElevation(g.getElevation());
+            var referenceNE = g.getReferenceAnnotation();
+            if (referenceNE != null) {
+                // The NE should have already been extracted and added to the document
+                var ne = document.getNamedEntities().stream().filter(
+                        n -> n.getBegin() == referenceNE.getBegin() && n.getEnd() == referenceNE.getEnd() && n.getType().equals("LOCATION")).findFirst();
+                if (ne.isPresent()) {
+                    geoName.setRefNamedEntity(ne.get());
+                    ne.get().setGeoName(geoName);
+                }
+            }
+            geoNames.add(geoName);
+        });
+        document.setGeoNames(geoNames);
+        logger.info("Setting GeoNames done.");
+    }
+
+    /**
      * Selects and sets the logical links between documents, annotations and more.
      */
-    private void storeLogicLinks(JCas jCas, long corpusId) throws DatabaseOperationException {
+    private void setLogicLinks(Document document, JCas jCas, long corpusId, String filePath) throws DatabaseOperationException {
+        // Document -> Document Links
         var documentLinks = new ArrayList<DocumentLink>();
         JCasUtil.select(jCas, DLink.class).forEach(l -> {
             var docLink = new DocumentLink();
@@ -533,6 +653,68 @@ public class Importer {
         // We store the document links not to the Document class directly, as that doesn't fit the idea of the datastructure.
         // Linking should happen *on top* of documents and clusters, not as a part of them. Keep that in mind.
         db.saveOrUpdateManyDocumentLinks(documentLinks);
+
+        // Document -> Annotation Link
+        var documentToAnnotationLinks = new ArrayList<DocumentToAnnotationLink>();
+        JCasUtil.select(jCas, DALink.class).forEach(l -> {
+            var docToAnnoLink = new DocumentToAnnotationLink();
+            docToAnnoLink.setCorpusId(corpusId);
+            docToAnnoLink.setFrom(l.getFrom()); // from is a documentId, but not of *this* document.
+            docToAnnoLink.setLinkId(String.valueOf(l.getLinkId()));
+            docToAnnoLink.setType(l.getLinkType());
+            // In the case of a Document -> Annotation, the "to" in the typesystem points to the current document
+            docToAnnoLink.setTo(document.getDocumentId());
+
+            var toAnnotation = l.getTo();
+            docToAnnoLink.setToBegin(toAnnotation.getBegin());
+            docToAnnoLink.setToEnd(toAnnotation.getEnd());
+            docToAnnoLink.setToCoveredText(toAnnotation.getCoveredText());
+            // The toAnnotation points to any kind of annotation *within* the cas. We have to translate that information
+            // to UCE's model classes and we do that through Reflection Utils... Reflection is very costly ressourcewise,
+            // so we cached a lot upon start, but this may still slow down the process - we have to investigate by how much.
+            Class<?> modelClass = ReflectionUtils.findModelClassForCASAnnotation(toAnnotation);
+            if (modelClass == null) {
+                logImportWarn("A logical Link annotation tried to point to an annotation that UCE doesn't support yet, hence skipped the link.",
+                        new InvalidClassException(toAnnotation.getType().getName() + " annotation not supported by UCE."), filePath);
+                return;
+            }
+            docToAnnoLink.setToAnnotationType(modelClass.getName());
+            var tableName = ReflectionUtils.getTableAnnotationName(modelClass);
+            docToAnnoLink.setToAnnotationTypeTable(tableName);
+
+            documentToAnnotationLinks.add(docToAnnoLink);
+        });
+        db.saveOrUpdateManyDocumentToAnnotationLinks(documentToAnnotationLinks);
+
+        // Annotation -> Document Link
+        var annotationToDocumentLinks = new ArrayList<AnnotationToDocumentLink>();
+        JCasUtil.select(jCas, ADLink.class).forEach(l -> {
+            var annoToDocLink = new AnnotationToDocumentLink();
+            annoToDocLink.setCorpusId(corpusId);
+            annoToDocLink.setTo(l.getTo()); // to is a documentId, but not of *this* document.
+            annoToDocLink.setLinkId(String.valueOf(l.getLinkId()));
+            annoToDocLink.setType(l.getLinkType());
+            // In the case of a Annotation -> Document, the "from" in the typesystem points to the current document
+            annoToDocLink.setFrom(document.getDocumentId());
+
+            var fromAnnotation = l.getFrom();
+            annoToDocLink.setFromBegin(fromAnnotation.getBegin());
+            annoToDocLink.setFromEnd(fromAnnotation.getEnd());
+            annoToDocLink.setFromCoveredText(fromAnnotation.getCoveredText());
+            // Same procedure as in DocumentToAnnotation above; read that comment.
+            Class<?> modelClass = ReflectionUtils.findModelClassForCASAnnotation(fromAnnotation);
+            if (modelClass == null) {
+                logImportWarn("A logical Link annotation tried to point to an annotation that UCE doesn't support yet, hence skipped the link.",
+                        new InvalidClassException(fromAnnotation.getType().getName() + " annotation not supported by UCE."), filePath);
+                return;
+            }
+            annoToDocLink.setFromAnnotationType(modelClass.getName());
+            var tableName = ReflectionUtils.getTableAnnotationName(modelClass);
+            annoToDocLink.setFromAnnotationTypeTable(tableName);
+
+            annotationToDocumentLinks.add(annoToDocLink);
+        });
+        db.saveOrUpdateManyAnnotationToDocumentLinks(annotationToDocumentLinks);
     }
 
     /**
@@ -558,7 +740,18 @@ public class Importer {
             // If it's empty, we don't have that metadata cached as a filter yet. So do it.
             if (possibleFilter.isEmpty()) {
                 var newFilter = new UCEMetadataFilter(corpusId, metadata.getKey(), metadata.getValueType());
-                newFilter.addPossibleCategory(metadata.getValue());
+                if (metadata.getValueType() == UCEMetadataValueType.NUMBER) {
+                    // We assume, that a number can actually be parsed to a number
+                    // TODO should this be configurable? What about integers?
+                    var number = StringUtils.tryParseFloat(metadata.getValue());
+                    // do not setup a filter if we cant parse the number
+                    if (!Float.isNaN(number)) {
+                        newFilter.setMin(number);
+                        newFilter.setMax(number);
+                    }
+                } else {
+                    newFilter.addPossibleCategory(metadata.getValue());
+                }
                 synchronized (newFilter) {
                     this.uceMetadataFilters.add(newFilter);
                 }
@@ -569,15 +762,34 @@ public class Importer {
                 // If this filter already exists, then we need to check if it's an Enum filter. If yes, there is a chance
                 // that a new category to that enum must be added and stored. Let's check.
                 var existingFilter = possibleFilter.get();
-                if (existingFilter.getValueType() != UCEMetadataValueType.ENUM)
-                    return; // There is nothing to update for none enums.
-                // Again, thread safety. If this worker updates a filter category, we need the other to know.
-                synchronized (existingFilter) {
-                    if (existingFilter.getPossibleCategories().stream().noneMatch(c -> c.equals(metadata.getValue()))) {
-                        existingFilter.addPossibleCategory(metadata.getValue());
-                        ExceptionUtils.tryCatchLog(
-                                () -> db.saveOrUpdateUCEMetadataFilter(existingFilter),
-                                (ex) -> logger.error("Tried updating an existing UCEMetadataFilter, but got an error: ", ex));
+                if (existingFilter.getValueType() == UCEMetadataValueType.ENUM) {
+                    // Again, thread safety. If this worker updates a filter category, we need the other to know.
+                    synchronized (existingFilter) {
+                        if (existingFilter.getPossibleCategories().stream().noneMatch(c -> c.equals(metadata.getValue()))) {
+                            existingFilter.addPossibleCategory(metadata.getValue());
+                            ExceptionUtils.tryCatchLog(
+                                    () -> db.saveOrUpdateUCEMetadataFilter(existingFilter),
+                                    (ex) -> logger.error("Tried updating an existing UCEMetadataFilter, but got an error: ", ex));
+                        }
+                    }
+                } else if (existingFilter.getValueType() == UCEMetadataValueType.NUMBER) {
+                    // We assume, that a number can actually be parsed to a number
+                    // TODO should this be configurable? What about integers?
+                    var number = StringUtils.tryParseFloat(metadata.getValue());
+                    if (!Float.isNaN(number)) {
+                        synchronized (existingFilter) {
+                            if (existingFilter.getMin() == null) existingFilter.setMin(number);
+                            else if (number < existingFilter.getMin()) {
+                                existingFilter.setMin(number);
+                            }
+                            if (existingFilter.getMax() == null) existingFilter.setMax(number);
+                            else if (number > existingFilter.getMax()) {
+                                existingFilter.setMax(number);
+                            }
+                            ExceptionUtils.tryCatchLog(
+                                    () -> db.saveOrUpdateUCEMetadataFilter(existingFilter),
+                                    (ex) -> logger.error("Tried updating an existing UCEMetadataFilter for type NUMBER, but got an error: ", ex));
+                        }
                     }
                 }
             }
@@ -692,21 +904,33 @@ public class Importer {
     }
 
     private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage) {
-        // Set the pages for the different annotations
+        // Set the pages for the different annotations - this is pretty horribly, but I cant be bothered right now.
+        if (document.getGazetteerTaxons() != null) {
+            for (var anno : document.getGazetteerTaxons().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getGnFinderTaxons() != null) {
+            for (var anno : document.getGnFinderTaxons().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
         if (document.getBiofidTaxons() != null) {
             for (var anno : document.getBiofidTaxons().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
                 anno.setPage(page);
             }
         }
-        if (document.getTaxons() != null) {
-            for (var anno : document.getTaxons().stream().filter(t ->
+        if (document.getNamedEntities() != null) {
+            for (var anno : document.getNamedEntities().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
                 anno.setPage(page);
             }
         }
-        if (document.getNamedEntities() != null) {
-            for (var anno : document.getNamedEntities().stream().filter(t ->
+        if (document.getGeoNames() != null) {
+            for (var anno : document.getGeoNames().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
                 anno.setPage(page);
             }
@@ -775,29 +999,71 @@ public class Importer {
      * Selects taxnomies and tries to enrich specific biofid onthologies as well.
      */
     private void setTaxonomy(Document document, JCas jCas, CorpusConfig corpusConfig) {
-        var taxons = new ArrayList<Taxon>();
-        var biofidTaxons = new ArrayList<BiofidTaxon>();
+        var biofidTaxa = new ArrayList<BiofidTaxon>();
 
+        // Handle Verified GNFinder taxa
+        var gnFinderTaxa = new ArrayList<GnFinderTaxon>();
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.biofid.gnfinder.VerifiedTaxon.class).forEach(t -> {
+            var taxon = new GnFinderTaxon(t.getBegin(), t.getEnd());
+            taxon.setValue(t.getValue());
+            taxon.setDocument(document);
+            taxon.setCoveredText(t.getCoveredText());
+            taxon.setIdentifier(t.getIdentifier());
+            ExceptionUtils.tryCatchLog(
+                    () -> taxon.setRecordId(Long.parseLong(Arrays.stream(taxon.getIdentifier().split("/")).toList().getLast())),
+                    (ex) -> logger.warn("Setting the recordId of a Taxon failed, but continuing the import: ", ex));
+            taxon.setOddsLog10(t.getOddsLog10());
+            taxon.setMatchedName(t.getMatchedName());
+            taxon.setMatchedCanonical(t.getMatchedCanonicalFull());
+
+            var biofidUrl = StringUtils.BIOFID_URL_BASE + taxon.getRecordId();
+            var newBiofidTaxons = ExceptionUtils.tryCatchLog(
+                    () -> jenaSparqlService.queryBiofidTaxon(biofidUrl),
+                    (ex) -> logger.error("Error building a BiofidTaxon object from a potential id.", ex));
+            if (newBiofidTaxons != null) {
+                for (var biofidTaxon : newBiofidTaxons) {
+                    biofidTaxon.setCoveredText(t.getCoveredText());
+                    biofidTaxon.setBegin(t.getBegin());
+                    biofidTaxon.setEnd(t.getEnd());
+                    biofidTaxon.setDocument(document);
+                    biofidTaxon.setBiofidUrl(biofidUrl);
+                    biofidTaxon.setOriginalAnnotatedTaxonTable(ReflectionUtils.getTableAnnotationName(GnFinderTaxon.class));
+                    biofidTaxa.add(biofidTaxon);
+                }
+            }
+            gnFinderTaxa.add(taxon);
+        });
+        document.setGnFinderTaxons(gnFinderTaxa);
+
+        // Handle Gazetteer Taxa
+        var gazetteerTaxa = new ArrayList<GazetteerTaxon>();
         JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Taxon.class).forEach(t -> {
-            var taxon = new Taxon(t.getBegin(), t.getEnd());
+            var taxon = new GazetteerTaxon(t.getBegin(), t.getEnd());
             taxon.setDocument(document);
             taxon.setValue(t.getValue());
             taxon.setCoveredText(t.getCoveredText());
             taxon.setIdentifier(t.getIdentifier());
-            // We need to handle taxons specifically, depending on whether they have annotated identifiers.
-            if (corpusConfig.getAnnotations().getTaxon().isBiofidOnthologyAnnotated() && taxon.getIdentifier() != null && !taxon.getIdentifier().isEmpty()) {
-                // The recognized taxons should be split by a |
-                var occurrences = new ArrayList<GbifOccurrence>();
+
+            // We need to handle taxa specifically, depending on whether they have annotated identifiers.
+            if (taxon.getIdentifier() != null && !taxon.getIdentifier().isEmpty()) {
+
+                // The recognized taxa should be split by a |
                 var splited = new ArrayList<String>();
+
                 // Sometimes they are delimitered by |, sometimes by space - who knows in this dump? :)
                 for (var split : taxon.getIdentifier().split("\\|")) {
                     splited.addAll(Arrays.asList(split.split(" ")));
                 }
+                if(splited.isEmpty()) return;
 
+                // Set the primary ids and identifier
+                taxon.setPrimaryIdentifier(splited.getFirst());
+                ExceptionUtils.tryCatchLog(
+                        () -> taxon.setRecordId(Long.parseLong(Arrays.stream(taxon.getPrimaryIdentifier().split("/")).toList().getLast())),
+                        (ex) -> logger.warn("Setting the recordId of a Taxon failed, but continuing the import: ", ex));
+
+                // The potential biofid urls are like: https://www.biofid.de/bio-ontologies/gbif/10428508
                 for (var potentialBiofidId : splited) {
-                    // The biofid urls are like: https://www.biofid.de/bio-ontologies/gbif/10428508
-                    // We need the last number in that string, have a lookup into our sparql database and from there fetch the
-                    // correct TaxonId
                     if (potentialBiofidId.isEmpty()) continue;
 
                     // Before we do GbifOccurence stuff, we build specific BiofidTaxon objects if we can.
@@ -811,40 +1077,17 @@ public class Importer {
                             biofidTaxon.setEnd(t.getEnd());
                             biofidTaxon.setDocument(document);
                             biofidTaxon.setBiofidUrl(potentialBiofidId);
-                            biofidTaxons.add(biofidTaxon);
+                            biofidTaxon.setOriginalAnnotatedTaxonTable(ReflectionUtils.getTableAnnotationName(GazetteerTaxon.class));
+                            biofidTaxa.add(biofidTaxon);
                         }
                     }
-
-                    var taxonId = ExceptionUtils.tryCatchLog(
-                            () -> jenaSparqlService.biofidIdUrlToGbifTaxonId(potentialBiofidId),
-                            (ex) -> logger.error("Error getting the taxonId of a biofid annotation while importing.", ex));
-                    if (taxonId == null || taxonId == -1) continue;
-                    taxon.setGbifTaxonId(taxonId);
-
-                    // Now check if we already have stored occurences for that taxon - we don't need to do that again then.
-                    // We need to check in the current loop and in the database.
-                    if (taxons.stream().anyMatch(ta -> ta.getGbifTaxonId() == taxonId)) break;
-                    var is = ExceptionUtils.tryCatchLog(() -> db.checkIfGbifOccurrencesExist(taxonId),
-                            (ex) -> logger.error("Error checking if taxon occurrence already exists.", ex));
-                    if (is == null || is) break;
-
-                    // Otherwise, fetch new occurrences.
-                    var potentialOccurrences = ExceptionUtils.tryCatchLog(
-                            () -> gbifService.scrapeGbifOccurrence(taxonId),
-                            (ex) -> logger.error("Error scraping the gbif occurrence of taxonId: " + taxonId, ex));
-                    if (potentialOccurrences != null && !potentialOccurrences.isEmpty()) {
-                        occurrences.addAll(potentialOccurrences);
-                        taxon.setPrimaryBiofidOntologyIdentifier(potentialBiofidId);
-                        break;
-                    }
                 }
-                taxon.setGbifOccurrences(occurrences);
             }
-            taxons.add(taxon);
+            gazetteerTaxa.add(taxon);
         });
-        document.setTaxons(taxons);
-        document.setBiofidTaxons(biofidTaxons);
-        logger.info("Setting Taxons done.");
+        document.setGazetteerTaxons(gazetteerTaxa);
+        document.setBiofidTaxons(biofidTaxa);
+        logger.info("Setting Taxa done.");
     }
 
     /**
@@ -1186,6 +1429,33 @@ public class Importer {
             var chunked = ListUtils.partitionList(corpusDocuments, 100);
 
             for (var documents : chunked) {
+                // Get the complete list of document sentence embeddings of all documents
+                var docSentenceEmbeddings = documents.stream()
+                        .flatMap(d -> ExceptionUtils.tryCatchLog(
+                                () -> ragService.getDocumentSentenceEmbeddingsOfDocument(d.getId()).stream(),
+                                (ex) -> logger.error("Error getting the document sentence embeddings of document " + d.getId(), ex)))
+                        .filter(Objects::nonNull)
+                        .toList();
+
+                // Now, from these sentences - generate a 2D and 3D tsne reduction embedding and store it
+                // with the single document embedding
+                var reducedSEmbeddingDto = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getEmbeddingDimensionReductions(
+                                docSentenceEmbeddings.stream().map(DocumentSentenceEmbedding::getEmbedding).toList()),
+                        (ex) -> logger.error("Error getting embedding dimension reductions in post processing a corpus.", ex));
+
+                if (reducedSEmbeddingDto == null || reducedSEmbeddingDto.getTsne2D() == null) continue;
+                // Store the tsne reduction in each sentence - this is basically now a 2D and 3D coordinate
+                for (var i = 0; i < reducedSEmbeddingDto.getTsne2D().length; i++) {
+                    docSentenceEmbeddings.get(i).setTsne2d(reducedSEmbeddingDto.getTsne2D()[i]);
+                    docSentenceEmbeddings.get(i).setTsne3d(reducedSEmbeddingDto.getTsne3D()[i]);
+                }
+                // Update the changes (Could be a bulk Update... let's see :-)
+                docSentenceEmbeddings.forEach(de -> ExceptionUtils.tryCatchLog(
+                        () -> ragService.updateDocumentSentenceEmbedding(de),
+                        (ex) -> logger.error("Error updating and saving a document sentence embedding.", ex)));
+
+
                 // Get the complete list of document chunk embeddings of all documents
                 var docChunkEmbeddings = documents.stream()
                         .flatMap(d -> ExceptionUtils.tryCatchLog(
@@ -1270,6 +1540,33 @@ public class Importer {
             ExceptionUtils.tryCatchLog(() -> db.saveOrUpdateCorpusTsnePlot(finalCorpusTsnePlot, corpus),
                     (ex) -> logger.error("Error saving or updating the corpus tsne plot.", ex));*/
         }
+
+        if (corpusConfig.getAnnotations().isUnifiedTopic()) {
+            logger.info("Inserting into Document and Corpus Topic word tables...");
+
+            try {
+                Path insertDocumentTopicWordFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/3_updateDocumentTopicWord.sql");
+                var insertDocumentTopicWordScript = Files.readString(insertDocumentTopicWordFilePath);
+
+                ExceptionUtils.tryCatchLog(
+                        () -> db.executeSqlWithoutReturn(insertDocumentTopicWordScript),
+                        (ex) -> logger.error("Error executing SQL script to populate documenttopicword table", ex)
+                );
+
+                Path insertCorpusTopicWordFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/4_updateCorpusTopicWord.sql");
+                var insertCorpusTopicWordScript = Files.readString(insertCorpusTopicWordFilePath);
+
+                ExceptionUtils.tryCatchLog(
+                        () -> db.executeSqlWithoutReturn(insertCorpusTopicWordScript),
+                        (ex) -> logger.error("Error executing SQL script to populate corpustopicword table", ex)
+                );
+
+                logger.info("Successfully created and populated word based topic tables");
+            } catch (Exception e) {
+                logger.error("Error reading or executing SQL script for topic distribution", e);
+            }
+
+        }
         logger.info("Done with the corpus postprocessing.");
     }
 
@@ -1285,6 +1582,26 @@ public class Importer {
         // Calculate embeddings if they are activated
         if (corpusConfig.getOther().isEnableEmbeddings()) {
             logger.info("Embeddings...");
+
+            // Sentence Embeddings
+            var docHasSentenceEmbeddings = ExceptionUtils.tryCatchLog(
+                    () -> ragService.documentHasDocumentSentenceEmbeddings(document.getId()),
+                    (ex) -> logImportError("Error while checking if a document already has DocumentSentenceEmbeddings.", ex, filePath));
+            if (docHasSentenceEmbeddings != null && !docHasSentenceEmbeddings) {
+                // Build the sentences, which are the most crucial embeddings
+                var documentSentenceEmbeddings = ExceptionUtils.tryCatchLog(
+                        () -> ragService.getSentenceEmbeddingFromDocument(document),
+                        (ex) -> logImportError("Error getting the complete embedding sentences for document: " + document.getId(), ex, filePath));
+
+                // Store the sentences
+                if (documentSentenceEmbeddings != null)
+                    for (var docEmbedding : documentSentenceEmbeddings) {
+                        ExceptionUtils.tryCatchLog(
+                                () -> ragService.saveDocumentSentenceEmbedding(docEmbedding),
+                                (ex) -> logImportError("Error saving a document sentence embeddings.", ex, filePath)
+                        );
+                    }
+            }
 
             // Chunk Embeddings
             var docHasChunkEmbeddings = ExceptionUtils.tryCatchLog(
@@ -1362,6 +1679,72 @@ public class Importer {
                         (ex) -> logImportError("Error storing the document keyword distribution - the postprocessing ends now.", ex, filePath));
             }
         }
+
+        if (corpusConfig.getAnnotations().isUnifiedTopic()) {
+
+            logger.info("Inserting Sentence and Document Topics...");
+
+            try {
+                Path insertSentenceTopicsFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/1_updateSentenceTopics.sql");
+                var insertSentenceTopicsScript = Files.readString(insertSentenceTopicsFilePath);
+
+                ExceptionUtils.tryCatchLog(
+                        () -> db.executeSqlWithoutReturn(insertSentenceTopicsScript),
+                        (ex) -> logImportError("Error executing SQL script to populate sentencetopics table", ex, filePath)
+                );
+
+                Path insertDocumentTopicsFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/2_updateDocumentTopics.sql");
+                var insertDocumentTopicsScript = Files.readString(insertDocumentTopicsFilePath);
+
+                ExceptionUtils.tryCatchLog(
+                        () -> db.executeSqlWithoutReturn(insertDocumentTopicsScript),
+                        (ex) -> logImportError("Error executing SQL script to populate documenttopicsraw table", ex, filePath)
+                );
+
+                logger.info("Successfully created and populated sentencetopics and documenttopicsraw tables");
+            } catch (Exception e) {
+                logger.error("Error reading or executing SQL script for topic distribution", e);
+            }
+
+            logger.info("Topic Three Topics...");
+
+            if (document.getDocumentTopThreeTopics() == null) {
+                var topTopics = ExceptionUtils.tryCatchLog(
+                        () -> db.getTopTopicsByDocument(document.getId(), 3),
+                        (ex) -> logImportError("Error getting top three topics for document: " + document.getId(), ex, filePath));
+
+                if (topTopics != null && !topTopics.isEmpty()) {
+                    var documentTopThreeTopics = new DocumentTopThreeTopics();
+                    documentTopThreeTopics.setDocument(document);
+                    documentTopThreeTopics.setDocumentId(document.getId());
+
+                    if (topTopics.size() >= 1) {
+                        Object[] topic1 = topTopics.get(0);
+                        documentTopThreeTopics.setTopicOne((String) topic1[0]);
+                        documentTopThreeTopics.setTopicOneScore((Double) topic1[1]);
+                    }
+                    if (topTopics.size() >= 2) {
+                        Object[] topic2 = topTopics.get(1);
+                        documentTopThreeTopics.setTopicTwo((String) topic2[0]);
+                        documentTopThreeTopics.setTopicTwoScore((Double) topic2[1]);
+                    }
+                    if (topTopics.size() >= 3) {
+                        Object[] topic3 = topTopics.get(2);
+                        documentTopThreeTopics.setTopicThree((String) topic3[0]);
+                        documentTopThreeTopics.setTopicThreeScore((Double) topic3[1]);
+                    }
+
+                    document.setDocumentTopThreeTopics(documentTopThreeTopics);
+
+                    ExceptionUtils.tryCatchLog(
+                            () -> db.saveDocumentTopThreeTopics(document),
+                            (ex) -> logImportError("Error storing document top three topics", ex, filePath));
+
+                    logImportInfo("Successfully added top three topics to document: " + document.getId(), LogStatus.SAVED, filePath, System.currentTimeMillis() - start);
+                }
+            }
+        }
+
 
         logImportInfo("Successfully post processed document " + filePath, LogStatus.SAVED, filePath, System.currentTimeMillis() - start);
     }

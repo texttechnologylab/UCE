@@ -5,5 +5,6 @@ public enum EnrichedSearchTokenType {
     OPERATOR,
     TAXON,
     TAXON_COMMAND,
-    GEONAMES_ENTITY
+    LOCATION,
+    LOCATION_COMMAND
 }
