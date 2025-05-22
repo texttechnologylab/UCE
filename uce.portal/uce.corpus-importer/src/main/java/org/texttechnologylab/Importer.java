@@ -31,6 +31,8 @@ import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
+import org.texttechnologylab.models.biofid.GazetteerTaxon;
+import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
@@ -902,15 +904,21 @@ public class Importer {
     }
 
     private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage) {
-        // Set the pages for the different annotations
-        if (document.getBiofidTaxons() != null) {
-            for (var anno : document.getBiofidTaxons().stream().filter(t ->
+        // Set the pages for the different annotations - this is pretty horribly, but I cant be bothered right now.
+        if (document.getGazetteerTaxons() != null) {
+            for (var anno : document.getGazetteerTaxons().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
                 anno.setPage(page);
             }
         }
-        if (document.getTaxons() != null) {
-            for (var anno : document.getTaxons().stream().filter(t ->
+        if (document.getGnFinderTaxons() != null) {
+            for (var anno : document.getGnFinderTaxons().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getBiofidTaxons() != null) {
+            for (var anno : document.getBiofidTaxons().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
                 anno.setPage(page);
             }
@@ -991,29 +999,71 @@ public class Importer {
      * Selects taxnomies and tries to enrich specific biofid onthologies as well.
      */
     private void setTaxonomy(Document document, JCas jCas, CorpusConfig corpusConfig) {
-        var taxons = new ArrayList<Taxon>();
-        var biofidTaxons = new ArrayList<BiofidTaxon>();
+        var biofidTaxa = new ArrayList<BiofidTaxon>();
 
+        // Handle Verified GNFinder taxa
+        var gnFinderTaxa = new ArrayList<GnFinderTaxon>();
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.biofid.gnfinder.VerifiedTaxon.class).forEach(t -> {
+            var taxon = new GnFinderTaxon(t.getBegin(), t.getEnd());
+            taxon.setValue(t.getValue());
+            taxon.setDocument(document);
+            taxon.setCoveredText(t.getCoveredText());
+            taxon.setIdentifier(t.getIdentifier());
+            ExceptionUtils.tryCatchLog(
+                    () -> taxon.setRecordId(Long.parseLong(Arrays.stream(taxon.getIdentifier().split("/")).toList().getLast())),
+                    (ex) -> logger.warn("Setting the recordId of a Taxon failed, but continuing the import: ", ex));
+            taxon.setOddsLog10(t.getOddsLog10());
+            taxon.setMatchedName(t.getMatchedName());
+            taxon.setMatchedCanonical(t.getMatchedCanonicalFull());
+
+            var biofidUrl = StringUtils.BIOFID_URL_BASE + taxon.getRecordId();
+            var newBiofidTaxons = ExceptionUtils.tryCatchLog(
+                    () -> jenaSparqlService.queryBiofidTaxon(biofidUrl),
+                    (ex) -> logger.error("Error building a BiofidTaxon object from a potential id.", ex));
+            if (newBiofidTaxons != null) {
+                for (var biofidTaxon : newBiofidTaxons) {
+                    biofidTaxon.setCoveredText(t.getCoveredText());
+                    biofidTaxon.setBegin(t.getBegin());
+                    biofidTaxon.setEnd(t.getEnd());
+                    biofidTaxon.setDocument(document);
+                    biofidTaxon.setBiofidUrl(biofidUrl);
+                    biofidTaxon.setOriginalAnnotatedTaxonTable(ReflectionUtils.getTableAnnotationName(GnFinderTaxon.class));
+                    biofidTaxa.add(biofidTaxon);
+                }
+            }
+            gnFinderTaxa.add(taxon);
+        });
+        document.setGnFinderTaxons(gnFinderTaxa);
+
+        // Handle Gazetteer Taxa
+        var gazetteerTaxa = new ArrayList<GazetteerTaxon>();
         JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Taxon.class).forEach(t -> {
-            var taxon = new Taxon(t.getBegin(), t.getEnd());
+            var taxon = new GazetteerTaxon(t.getBegin(), t.getEnd());
             taxon.setDocument(document);
             taxon.setValue(t.getValue());
             taxon.setCoveredText(t.getCoveredText());
             taxon.setIdentifier(t.getIdentifier());
-            // We need to handle taxons specifically, depending on whether they have annotated identifiers.
-            if (corpusConfig.getAnnotations().getTaxon().isBiofidOnthologyAnnotated() && taxon.getIdentifier() != null && !taxon.getIdentifier().isEmpty()) {
-                // The recognized taxons should be split by a |
-                var occurrences = new ArrayList<GbifOccurrence>();
+
+            // We need to handle taxa specifically, depending on whether they have annotated identifiers.
+            if (taxon.getIdentifier() != null && !taxon.getIdentifier().isEmpty()) {
+
+                // The recognized taxa should be split by a |
                 var splited = new ArrayList<String>();
+
                 // Sometimes they are delimitered by |, sometimes by space - who knows in this dump? :)
                 for (var split : taxon.getIdentifier().split("\\|")) {
                     splited.addAll(Arrays.asList(split.split(" ")));
                 }
+                if(splited.isEmpty()) return;
 
+                // Set the primary ids and identifier
+                taxon.setPrimaryIdentifier(splited.getFirst());
+                ExceptionUtils.tryCatchLog(
+                        () -> taxon.setRecordId(Long.parseLong(Arrays.stream(taxon.getPrimaryIdentifier().split("/")).toList().getLast())),
+                        (ex) -> logger.warn("Setting the recordId of a Taxon failed, but continuing the import: ", ex));
+
+                // The potential biofid urls are like: https://www.biofid.de/bio-ontologies/gbif/10428508
                 for (var potentialBiofidId : splited) {
-                    // The biofid urls are like: https://www.biofid.de/bio-ontologies/gbif/10428508
-                    // We need the last number in that string, have a lookup into our sparql database and from there fetch the
-                    // correct TaxonId
                     if (potentialBiofidId.isEmpty()) continue;
 
                     // Before we do GbifOccurence stuff, we build specific BiofidTaxon objects if we can.
@@ -1027,40 +1077,17 @@ public class Importer {
                             biofidTaxon.setEnd(t.getEnd());
                             biofidTaxon.setDocument(document);
                             biofidTaxon.setBiofidUrl(potentialBiofidId);
-                            biofidTaxons.add(biofidTaxon);
+                            biofidTaxon.setOriginalAnnotatedTaxonTable(ReflectionUtils.getTableAnnotationName(GazetteerTaxon.class));
+                            biofidTaxa.add(biofidTaxon);
                         }
                     }
-
-                    var taxonId = ExceptionUtils.tryCatchLog(
-                            () -> jenaSparqlService.biofidIdUrlToGbifTaxonId(potentialBiofidId),
-                            (ex) -> logger.error("Error getting the taxonId of a biofid annotation while importing.", ex));
-                    if (taxonId == null || taxonId == -1) continue;
-                    taxon.setGbifTaxonId(taxonId);
-
-                    // Now check if we already have stored occurences for that taxon - we don't need to do that again then.
-                    // We need to check in the current loop and in the database.
-                    if (taxons.stream().anyMatch(ta -> ta.getGbifTaxonId() == taxonId)) break;
-                    var is = ExceptionUtils.tryCatchLog(() -> db.checkIfGbifOccurrencesExist(taxonId),
-                            (ex) -> logger.error("Error checking if taxon occurrence already exists.", ex));
-                    if (is == null || is) break;
-
-                    // Otherwise, fetch new occurrences.
-                    var potentialOccurrences = ExceptionUtils.tryCatchLog(
-                            () -> gbifService.scrapeGbifOccurrence(taxonId),
-                            (ex) -> logger.error("Error scraping the gbif occurrence of taxonId: " + taxonId, ex));
-                    if (potentialOccurrences != null && !potentialOccurrences.isEmpty()) {
-                        occurrences.addAll(potentialOccurrences);
-                        taxon.setPrimaryBiofidOntologyIdentifier(potentialBiofidId);
-                        break;
-                    }
                 }
-                taxon.setGbifOccurrences(occurrences);
             }
-            taxons.add(taxon);
+            gazetteerTaxa.add(taxon);
         });
-        document.setTaxons(taxons);
-        document.setBiofidTaxons(biofidTaxons);
-        logger.info("Setting Taxons done.");
+        document.setGazetteerTaxons(gazetteerTaxa);
+        document.setBiofidTaxons(biofidTaxa);
+        logger.info("Setting Taxa done.");
     }
 
     /**

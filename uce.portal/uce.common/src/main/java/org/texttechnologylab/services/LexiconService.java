@@ -9,6 +9,8 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
+import org.texttechnologylab.models.biofid.GazetteerTaxon;
+import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.UnifiedTopic;
@@ -38,7 +40,8 @@ public class LexiconService {
                     GeoName.class,
                     Lemma.class,
                     Time.class,
-                    Taxon.class,
+                    GazetteerTaxon.class,
+                    GnFinderTaxon.class,
                     BiofidTaxon.class,
                     CompleteNegation.class,
                     Focus.class,

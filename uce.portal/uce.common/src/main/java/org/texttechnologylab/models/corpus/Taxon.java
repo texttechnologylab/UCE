@@ -1,5 +1,7 @@
 package org.texttechnologylab.models.corpus;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
@@ -10,46 +12,47 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-@Entity
-@Table(name = "taxon")
+@MappedSuperclass
 @Typesystem(types = {org.texttechnologylab.annotation.type.Taxon.class})
-public class Taxon extends UIMAAnnotation implements WikiModel {
-    @Override
-    public String getWikiId() {
-        return "TA" + "-" + this.getId();
-    }
-
+public abstract class Taxon extends UIMAAnnotation implements WikiModel{
+    @Getter
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
 
+    @Getter
+    @Setter
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "page_id", nullable = false)
     private Page page;
 
+    @Getter
+    @Setter
     @Column(name = "page_id", insertable = false, updatable = false)
     private Long pageId;
 
-    @Column(name = "\"valuee\"", columnDefinition = "TEXT")
-    private String value;
-
-    @Transient
-    @Column(name = "value_array")
-    private List<String> valueArray;
-
+    @Getter
+    @Setter
     @Column(columnDefinition = "TEXT")
     private String identifier;
 
-    @Column(name = "gbiftaxonid")
+    @Setter
+    @Getter
+    @Column(name = "\"valuee\"", columnDefinition = "TEXT")
+    private String value;
+
+    @Getter
+    @Setter
+    @Column(name = "recordId")
     /**
-     * The taxon id of this entity which can also be used on gbif. like: https://www.gbif.org/species/6093134
+     * The record id of this entity which can also be used on gbif. like: https://www.gbif.org/species/6093134
+     * and as the BIOfid Url
      */
-    private long gbifTaxonId;
+    private long recordId;
 
-    @OneToMany(mappedBy = "gbifTaxonId", cascade = CascadeType.ALL)
-    private List<GbifOccurrence> gbifOccurrences;
-
-    private String primaryBiofidOntologyIdentifier;
+    //@OneToMany(mappedBy = "gbifTaxonId", cascade = CascadeType.ALL)
+    //private List<GbifOccurrence> gbifOccurrences;
 
     public Taxon() {
         super(-1, -1);
@@ -59,75 +62,12 @@ public class Taxon extends UIMAAnnotation implements WikiModel {
         super(begin, end);
     }
 
-    public Page getPage() {
-        return page;
-    }
-
-    public void setPage(Page page) {
-        this.page = page;
-    }
-
-    public Long getPageId() {
-        return pageId;
-    }
-
-    public void setPageId(Long pageId) {
-        this.pageId = pageId;
-    }
-
-    public Document getDocument() {
-        return document;
-    }
-
-    public void setDocument(Document document) {
-        this.document = document;
-    }
-
-    public String getPrimaryBiofidOntologyIdentifier() {
-        if (this.primaryBiofidOntologyIdentifier == null || this.primaryBiofidOntologyIdentifier.isEmpty())
-            return this.getIdentifierAsList().getFirst();
-        return primaryBiofidOntologyIdentifier;
-    }
-
-    public void setPrimaryBiofidOntologyIdentifier(String primaryBiofidOntologyIdentifier) {
-        this.primaryBiofidOntologyIdentifier = primaryBiofidOntologyIdentifier;
-    }
-
-    public long getGbifTaxonId() {
-        return gbifTaxonId;
-    }
-
-    public void setGbifTaxonId(long gbifTaxonId) {
-        this.gbifTaxonId = gbifTaxonId;
-    }
-
-    public List<GbifOccurrence> getGbifOccurrences() {
-        return gbifOccurrences;
-    }
-
-    public void setGbifOccurrences(List<GbifOccurrence> gbifOccurrences) {
-        this.gbifOccurrences = gbifOccurrences;
-    }
-
-    public String getIdentifier() {
-        return identifier;
-    }
-
     public List<String> getIdentifierAsList() {
         if (this.getIdentifier() == null || this.getIdentifier().isEmpty()) return new ArrayList<>();
         // Split by | or SPACE
         return Arrays.stream(this.getIdentifier().split("[|\\s]+")).toList();
     }
 
-    public void setIdentifier(String identifier) {
-        this.identifier = identifier;
-    }
-
-    public void setValue(String value) {
-        this.value = value;
-    }
-
-    public String getValue() {
-        return value;
-    }
+    @Override
+    public abstract String getWikiId();
 }

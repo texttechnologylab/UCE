@@ -179,17 +179,17 @@
 <!--            <version>1.4</version>-->
 <!--        </dependency>-->
 
-<!--        <dependency>-->
-<!--            <groupId>com.github.texttechnologylab</groupId>-->
-<!--            <artifactId>UIMATypeSystem</artifactId>-->
-<!--            <version>3.0.5</version>-->
-<!--        </dependency>-->
-
         <dependency>
+            <groupId>com.github.texttechnologylab</groupId>
+            <artifactId>UIMATypeSystem</artifactId>
+            <version>1c31dddaf</version>
+        </dependency>
+
+        <!--<dependency>
             <groupId>org.texttechnologylab.annotation</groupId>
             <artifactId>typesystem</artifactId>
             <version>3.0.10</version>
-        </dependency>
+        </dependency>-->
         <dependency>
             <groupId>org.freemarker</groupId>
             <artifactId>freemarker</artifactId>

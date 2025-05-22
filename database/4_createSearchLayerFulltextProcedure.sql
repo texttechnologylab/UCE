@@ -215,10 +215,10 @@ BEGIN
             GROUP BY t.id, t.coveredtext, t.valuee, t.document_id
         ),
         extracted_taxons AS NOT MATERIALIZED (
-            SELECT ARRAY[ta.id::text, ta.coveredtext, COUNT(ta.id)::text, ta.valuee, ta.document_id::text] 
+            SELECT ARRAY[ta.id::text, ta.coveredtext, COUNT(ta.id)::text, ta.primaryname, ta.document_id::text] 
             FROM ranked_documents rd
-            JOIN taxon ta ON rd.id = ta.document_id
-            GROUP BY ta.id, ta.coveredtext, ta.valuee, ta.document_id
+            JOIN biofidtaxon ta ON rd.id = ta.document_id
+            GROUP BY ta.id, ta.coveredtext, ta.primaryname, ta.document_id
         )
         SELECT 
             CASE WHEN $8 THEN (SELECT total_count FROM counted_documents) ELSE NULL END,

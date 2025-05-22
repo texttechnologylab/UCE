@@ -1,17 +1,19 @@
 package org.texttechnologylab.services;
 
 import org.texttechnologylab.exceptions.DatabaseOperationException;
+import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.DocumentKeywordDistribution;
 import org.texttechnologylab.models.corpus.PageKeywordDistribution;
 import org.texttechnologylab.models.corpus.KeywordDistribution;
 import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.viewModels.wiki.*;
 import org.texttechnologylab.states.KeywordInContextState;
+import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
-import java.util.Map;
 
 public class WikiService {
     private final PostgresqlDataInterface_Impl db;
@@ -162,17 +164,18 @@ public class WikiService {
     /**
      * Gets an TaxonAnnotationWikiPageViewModel to render a Wikipage for that annotation
      */
-    public TaxonAnnotationWikiPageViewModel buildTaxonWikipageViewModel(long id, String coveredText) throws DatabaseOperationException, IOException {
+    public TaxonAnnotationWikiPageViewModel buildTaxonWikipageViewModel(long id, String coveredText, Class<?> clazz) throws DatabaseOperationException, IOException {
         var viewModel = new TaxonAnnotationWikiPageViewModel();
         viewModel.setCoveredText(coveredText);
-        var taxon = db.getTaxonById(id);
+        var taxon = clazz == GnFinderTaxon.class ? db.getGnFinderTaxonById(id) : db.getGazetteerTaxonById(id);
         viewModel.setAnnotationType("Taxon");
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(taxon.getBegin(), taxon.getEnd(), taxon.getDocumentId()));
         viewModel.setWikiModel(taxon);
         // We are not interested in the standard w3 XML triplets
+        var biofidUrl = StringUtils.BIOFID_URL_BASE + taxon.getRecordId();
         viewModel.setNextRDFNodes(
-                sparqlService.queryBySubject(taxon.getPrimaryBiofidOntologyIdentifier()));
-        viewModel.setGbifOccurrences(db.getGbifOccurrencesByGbifTaxonId(taxon.getGbifTaxonId()));
+                sparqlService.queryBySubject(biofidUrl));
+        viewModel.setGbifOccurrences(new ArrayList<>());
         viewModel.setDocument(db.getDocumentById(taxon.getDocumentId()));
         viewModel.setAnnotationType("Taxon");
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
@@ -186,8 +189,8 @@ public class WikiService {
         kwicState.recalculate(List.of(viewModel.getDocument()), List.of(viewModel.getCoveredText()));
         viewModel.setKwicState(kwicState);
 
-        if(SystemStatus.JenaSparqlStatus.isAlive() && taxon.getIdentifier() != null && !taxon.getIdentifier().isEmpty()){
-            viewModel.setAlternativeNames(sparqlService.getAlternativeNamesOfTaxons(taxon.getIdentifierAsList()));
+        if(SystemStatus.JenaSparqlStatus.isAlive() && taxon.getRecordId() != -1){
+            viewModel.setAlternativeNames(sparqlService.getAlternativeNamesOfTaxons(List.of(biofidUrl)));
         }
 
         return viewModel;

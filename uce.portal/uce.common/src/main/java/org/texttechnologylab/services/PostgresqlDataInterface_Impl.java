@@ -13,6 +13,9 @@ import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.Linkable;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
+import org.texttechnologylab.models.biofid.GazetteerTaxon;
+import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
@@ -333,7 +336,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public List<GlobeTaxon> getGlobeDataForDocument(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            var taxonCommand = "SELECT DISTINCT t " +
+            return null;
+            // TODO: CLEANUP this is obsolete probably now.
+            /*var taxonCommand = "SELECT DISTINCT t " +
                     "FROM Document d " +
                     "JOIN d.taxons t " +
                     "JOIN GbifOccurrence go ON go.gbifTaxonId = t.gbifTaxonId " +
@@ -368,7 +373,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 documents.add(doc);
             }
 
-            return documents;
+            return documents;*/
         });
     }
 
@@ -1162,8 +1167,16 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> session.get(NamedEntity.class, id));
     }
 
-    public Taxon getTaxonById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(Taxon.class, id));
+    public GazetteerTaxon getGazetteerTaxonById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(GazetteerTaxon.class, id));
+    }
+
+    public GnFinderTaxon getGnFinderTaxonById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(GnFinderTaxon.class, id));
+    }
+
+    public BiofidTaxon getBiofidTaxonById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(BiofidTaxon.class, id));
     }
 
     public Lemma getLemmaById(long id) throws DatabaseOperationException {
@@ -1681,7 +1694,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getSentences());
         Hibernate.initialize(doc.getNamedEntities());
         Hibernate.initialize(doc.getGeoNames());
-        Hibernate.initialize(doc.getTaxons());
+        Hibernate.initialize(doc.getBiofidTaxons());
+        Hibernate.initialize(doc.getGazetteerTaxons());
+        Hibernate.initialize(doc.getGnFinderTaxons());
         Hibernate.initialize(doc.getTimes());
         Hibernate.initialize(doc.getWikipediaLinks());
         Hibernate.initialize(doc.getLemmas());

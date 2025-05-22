@@ -292,10 +292,7 @@ body {
 }
 
 .document-content .taxon {
-    text-decoration-thickness: 1px;
-    opacity: 0.75;
     color: darkred;
-    text-decoration-line: underline;
 }
 
 .document-content .cue {

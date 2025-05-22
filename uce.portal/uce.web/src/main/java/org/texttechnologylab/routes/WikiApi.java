@@ -8,6 +8,8 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.Renderer;
+import org.texttechnologylab.models.biofid.GazetteerTaxon;
+import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.dto.LinkableNodeDto;
 import org.texttechnologylab.models.viewModels.wiki.CachedWikiPage;
 import org.texttechnologylab.services.*;
@@ -119,8 +121,9 @@ public class WikiApi {
                 model.put("vm", wikiService.buildNamedEntityWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/namedEntityAnnotationPage.ftl";
             } else if (type.startsWith("TA")) {
-                // We then clicked onto a Taxon wiki item
-                model.put("vm", wikiService.buildTaxonWikipageViewModel(id, coveredText));
+                // We then clicked onto a Taxon wiki item, but which one?
+                var clazz = type.equals("TA_GN") ? GnFinderTaxon.class : GazetteerTaxon.class;
+                model.put("vm", wikiService.buildTaxonWikipageViewModel(id, coveredText, clazz));
                 renderView = "/wiki/pages/taxonAnnotationPage.ftl";
             } else if (type.equals("TP") || type.equals("TD")) {
                 // TP = TopicPage TD = TopicDocument

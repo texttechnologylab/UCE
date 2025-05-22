@@ -2,6 +2,7 @@ package org.texttechnologylab.models.corpus;
 
 import com.google.gson.JsonElement;
 import com.google.gson.JsonParser;
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.ModelBase;
 import org.texttechnologylab.models.viewModels.JsonViewModel;
 import org.texttechnologylab.utils.JsonBeautifier;
@@ -15,6 +16,7 @@ import java.util.List;
 
 @Entity
 @Table(name = "ucemetadata")
+@Typesystem(types = {org.texttechnologylab.annotation.uce.Metadata.class})
 public class UCEMetadata extends ModelBase {
     @Column(name = "document_id", insertable = false, updatable = false)
     private long documentId;

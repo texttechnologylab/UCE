@@ -1,6 +1,7 @@
 package org.texttechnologylab.models;
 
 import io.micrometer.common.lang.Nullable;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;

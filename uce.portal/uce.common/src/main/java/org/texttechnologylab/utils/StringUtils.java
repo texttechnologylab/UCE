@@ -183,6 +183,8 @@ public class StringUtils {
     // https://en.wikipedia.org/wiki/Taxonomic_rank#:~:text=Main%20ranks,-In%20his%20landmark&text=Today%2C%20the%20nomenclature%20is%20regulated,family%2C%20genus%2C%20and%20species.
     public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::"};
 
+    public static String BIOFID_URL_BASE = "https://www.biofid.de/bio-ontologies/gbif/";
+
     public static String getFullTaxonRankByCode(String code) {
         return switch (code) {
             case "C" -> "class";

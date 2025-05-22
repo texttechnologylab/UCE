@@ -56,22 +56,3 @@ CREATE INDEX IF NOT EXISTS idx_lexicon_coveredtext_lower_trgm ON lexicon USING g
 -- Create indexes for the Geoname Locations and Postgis in general
 CREATE INDEX IF NOT EXISTS idx_location_geography ON geoname USING GIST (location);
 
--- Create a Generated Column for the "taxon" value column that splits the values x|y|z into its own array
-DO $$
-BEGIN
-    -- Check if the value_array column exists in the taxon table
-    IF NOT EXISTS (
-        SELECT 1
-        FROM information_schema.columns
-        WHERE table_name = 'taxon' AND column_name = 'value_array'
-    ) THEN
-        -- Add the generated column, and remove occurrences of " before splitting
-        ALTER TABLE taxon
-        ADD COLUMN value_array TEXT[] GENERATED ALWAYS AS (string_to_array(REPLACE(valuee, '"', ''), '|')) STORED;
-    END IF;
-END
-$$;
-
--- Add the index on the value_array column
-CREATE INDEX IF NOT EXISTS idx_taxon_value_array ON taxon USING gin (value_array);
-

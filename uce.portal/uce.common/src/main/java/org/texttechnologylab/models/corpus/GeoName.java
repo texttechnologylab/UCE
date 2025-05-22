@@ -2,6 +2,7 @@ package org.texttechnologylab.models.corpus;
 
 import org.hibernate.annotations.Type;
 import org.locationtech.jts.geom.Point;
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 
@@ -9,6 +10,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "geoname")
+@Typesystem(types = {org.texttechnologylab.annotation.GeoNamesEntity.class})
 public class GeoName extends UIMAAnnotation implements WikiModel {
 
     @Column(columnDefinition = "TEXT")

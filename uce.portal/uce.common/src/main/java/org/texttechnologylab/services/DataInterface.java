@@ -1,6 +1,9 @@
 package org.texttechnologylab.services;
 
 import org.texttechnologylab.exceptions.DatabaseOperationException;
+import org.texttechnologylab.models.biofid.BiofidTaxon;
+import org.texttechnologylab.models.biofid.GazetteerTaxon;
+import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
@@ -252,10 +255,14 @@ public interface DataInterface {
      */
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException;
 
+    public GazetteerTaxon getGazetteerTaxonById(long id) throws DatabaseOperationException;
+
+    public GnFinderTaxon getGnFinderTaxonById(long id) throws DatabaseOperationException;
+
     /**
      * Gets a single taxon by its id
      */
-    public Taxon getTaxonById(long id) throws DatabaseOperationException;
+    public BiofidTaxon getBiofidTaxonById(long id) throws DatabaseOperationException;
 
     /**
      * Gets a lemma by its id
