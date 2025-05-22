@@ -168,7 +168,7 @@ public class WikiService {
         var viewModel = new TaxonAnnotationWikiPageViewModel();
         viewModel.setCoveredText(coveredText);
         var taxon = clazz == GnFinderTaxon.class ? db.getGnFinderTaxonById(id) : db.getGazetteerTaxonById(id);
-        viewModel.setAnnotationType("Taxon");
+        viewModel.setAnnotatedBy(clazz.getSimpleName());
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(taxon.getBegin(), taxon.getEnd(), taxon.getDocumentId()));
         viewModel.setWikiModel(taxon);
         // We are not interested in the standard w3 XML triplets

@@ -97,6 +97,7 @@ public class App {
         var languageResource = new LanguageResources("en-EN");
         logger.info(languageResource.get("search"));
 
+        // Load in and test the model resources for the Analysis Engine
         var modelResources = new ModelResources();
         logger.info("Testing the model resources:");
 

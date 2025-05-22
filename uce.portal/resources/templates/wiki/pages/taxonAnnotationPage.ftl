@@ -10,6 +10,11 @@
         <#include "*/wiki/components/metadata.ftl">
     </div>
 
+    <!-- by which DUUI Tool -->
+    <div class="flexed align-items-center pl-1 w-100">
+        <i class="fas fa-toolbox color-prime"></i> <span class="text ml-2 mr-1">Annotated by</span><label class="mb-0 font-italic">${vm.getAnnotatedBy()}</label>
+    </div>
+
     <!-- BIOfid specific urls here -->
     <div class="mt-0 mb-2">
         <div>

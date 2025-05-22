@@ -5,7 +5,7 @@ import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
-import org.texttechnologylab.TypeClasses.TextClass;
+import org.texttechnologylab.typeClasses.TextClass;
 import org.texttechnologylab.modules.*;
 
 import java.util.ArrayList;

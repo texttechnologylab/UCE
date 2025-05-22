@@ -1,4 +1,4 @@
-package org.texttechnologylab.TypeClasses;
+package org.texttechnologylab.typeClasses;
 
 public class TopicInput {
 

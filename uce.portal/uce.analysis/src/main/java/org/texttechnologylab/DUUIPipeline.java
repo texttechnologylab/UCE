@@ -14,7 +14,7 @@ import org.hucompute.textimager.uima.type.category.CategoryCoveredTagged;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIRemoteDriver;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
-import org.texttechnologylab.TypeClasses.*;
+import org.texttechnologylab.typeClasses.*;
 import org.texttechnologylab.annotation.*;
 import org.texttechnologylab.modules.ModelInfo;
 import org.texttechnologylab.modules.Sentences;

@@ -1,6 +1,6 @@
 package org.texttechnologylab.modules;
 
-import org.texttechnologylab.TypeClasses.SentenceClass;
+import org.texttechnologylab.typeClasses.SentenceClass;
 
 import java.util.HashMap;
 

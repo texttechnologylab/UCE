@@ -18,7 +18,7 @@ CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_author_trgm ON metadatatitleinf
 -- Create trigram indexes on the 'coveredtext' columns for the relevant tables
 CREATE INDEX IF NOT EXISTS idx_namedentity_coveredtext_trgm ON namedentity USING gin (coveredtext gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_time_coveredtext_trgm ON time USING gin (coveredtext gin_trgm_ops);
-CREATE INDEX IF NOT EXISTS idx_taxon_coveredtext_trgm ON taxon USING gin (coveredtext gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_biofidtaxon_coveredtext_trgm ON biofidtaxon USING gin (coveredtext gin_trgm_ops);
 
 -- For the metadata lemma search, we use coveredtext and value of the column, which is why we add them both in the index as well.
 CREATE INDEX IF NOT EXISTS idx_lemma_coveredtext_trgm ON lemma USING gin ((value || ' ' || coveredtext) gin_trgm_ops); 
@@ -38,7 +38,7 @@ CREATE INDEX IF NOT EXISTS idx_document_corpusid ON document (corpusid) INCLUDE 
 -- Since we look for annotations a lot:
 CREATE INDEX IF NOT EXISTS idx_namedentity_document_id ON namedentity (document_id);
 CREATE INDEX IF NOT EXISTS idx_time_document_id ON time (document_id);
-CREATE INDEX IF NOT EXISTS idx_taxon_document_id ON taxon (document_id);
+CREATE INDEX IF NOT EXISTS idx_taxon_document_id ON biofidtaxon (document_id);
 CREATE INDEX IF NOT EXISTS idx_lemma_document_id ON lemma (document_id);
 
 -- For the semantic role labels
