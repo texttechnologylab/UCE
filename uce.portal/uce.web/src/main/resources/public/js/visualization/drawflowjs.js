@@ -30,9 +30,8 @@ class DrawflowJS {
         this.placeNodeDto(nodeDto, 1);
 
         if (this.nodes.length > 0) {
-            console.log(this.placedNodes);
             const firstNode = this.placedNodes.values().next().value;
-            this.editor.translate_to(firstNode.posX, firstNode.posY, 0.72);
+            this.editor.translate_to(350, 150, 0.8);
         }
 
         activatePopovers();

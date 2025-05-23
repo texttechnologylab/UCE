@@ -42,7 +42,6 @@ public class LexiconService {
                     Time.class,
                     GazetteerTaxon.class,
                     GnFinderTaxon.class,
-                    BiofidTaxon.class,
                     CompleteNegation.class,
                     Focus.class,
                     Cue.class,

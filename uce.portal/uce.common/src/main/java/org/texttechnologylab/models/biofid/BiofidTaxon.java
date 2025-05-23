@@ -19,12 +19,11 @@ import java.util.List;
 @Entity
 @Table(name = "biofidtaxon")
 @Typesystem(types = {org.texttechnologylab.annotation.type.Taxon.class})
-public class BiofidTaxon extends UIMAAnnotation implements Cloneable, WikiModel {
+public class BiofidTaxon extends UIMAAnnotation implements Cloneable {
 
-    @Override
-    public String getWikiId() {
+    /*public String getWikiId() {
         return "TA-" + this.getId();
-    }
+    }*/
 
     @Override
     public BiofidTaxon clone() {
