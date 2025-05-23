@@ -78,7 +78,9 @@
     border-left-color: darkgreen;
 }
 
-.lexicon-view .lexicon-entry[data-type="biofidtaxon"] {
+.lexicon-view .lexicon-entry[data-type="biofidtaxon"],
+.lexicon-view .lexicon-entry[data-type="gazetteertaxon"],
+.lexicon-view .lexicon-entry[data-type="gnfindertaxon"]{
     border-left-color: darkgreen;
 }
 
@@ -87,11 +89,15 @@
 }
 
 .lexicon-view .lexicon-entry[data-type="geoname"] {
-    border-left-color: var(--dark);
+    border-left-color: dodgerblue;
 }
 
 .lexicon-view .lexicon-entry[data-type="time"] {
     border-left-color: lightblue;
+}
+
+.lexicon-view .lexicon-entry[data-type="sentence"] {
+    border-left-color: var(--dark);
 }
 
 .lexicon-view .lexicon-entry[data-type="focus"]{

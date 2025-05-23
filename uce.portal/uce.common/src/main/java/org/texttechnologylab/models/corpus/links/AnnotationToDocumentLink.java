@@ -20,7 +20,7 @@ public class AnnotationToDocumentLink extends Link{
     @Column(name = "\"too\"", columnDefinition = "TEXT")
     private String to;
 
-    @Column(name = "\"tocoveredtext\"", columnDefinition = "TEXT")
+    @Column(name = "\"fromcoveredtext\"", columnDefinition = "TEXT")
     private String fromCoveredText;
 
     /**

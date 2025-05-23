@@ -55,6 +55,9 @@
     "rag": {
       "model": "ChatGPT",
       "apiKey": ""
+    },
+    "analysis": {
+      "enableAnalysisEngine": true
     }
   }
 }

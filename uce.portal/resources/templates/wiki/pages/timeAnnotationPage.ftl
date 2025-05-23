@@ -28,6 +28,17 @@
         </div>
     </div>
 
+    <!-- linkable space -->
+    <div class="mt-2 mb-2">
+        <#assign unique = (vm.getWikiModel().getUnique())!"none">
+        <#assign height = 500>
+        <#if unique != "none">
+            <div class="w-100">
+                <#include "*/wiki/components/linkableSpace.ftl">
+            </div>
+        </#if>
+    </div>
+
     <!-- kwic view -->
     <div class="mt-3">
         <#include "*/wiki/components/kwic.ftl">

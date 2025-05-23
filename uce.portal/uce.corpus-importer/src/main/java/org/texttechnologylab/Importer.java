@@ -75,7 +75,7 @@ public class Importer {
 
     private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger(Importer.class);
-    private static final int BATCH_SIZE = 10;
+    private static final int BATCH_SIZE = 50;
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
@@ -83,7 +83,6 @@ public class Importer {
     private static final Set<String> MIME_TYPES_PDF = Set.of("application/pdf", "pdf");
     private GoetheUniversityService goetheUniversityService;
     private PostgresqlDataInterface_Impl db;
-    private GbifService gbifService;
     private RAGService ragService;
     private JenaSparqlService jenaSparqlService;
     private S3Storage s3Storage;
@@ -117,7 +116,6 @@ public class Importer {
         this.ragService = serviceContext.getBean(RAGService.class);
         this.lexiconService = serviceContext.getBean(LexiconService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
-        this.gbifService = serviceContext.getBean(GbifService.class);
         this.s3Storage = serviceContext.getBean(S3Storage.class);
     }
 

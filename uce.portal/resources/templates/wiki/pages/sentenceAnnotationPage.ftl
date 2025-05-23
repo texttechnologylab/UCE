@@ -12,9 +12,9 @@
 
     <hr class="mt-2 mb-4"/>
 
-    <!-- list the lemmas that form this named entity -->
+    <!-- list the lemmas that form this annotation -->
     <div class="mt-3 mb-3">
-        <#assign neType = vm.getWikiModel().getType()>
+        <#assign neType = "Sentence">
         <#include "*/wiki/components/lemmaTree.ftl">
     </div>
 
@@ -29,13 +29,11 @@
     </div>
 
     <!-- linkable space -->
-    <div class="mt-2 mb-2">
+    <div class="mt-0">
         <#assign unique = (vm.getWikiModel().getUnique())!"none">
         <#assign height = 500>
         <#if unique != "none">
-            <div class="w-100">
-                <#include "*/wiki/components/linkableSpace.ftl">
-            </div>
+            <#include "*/wiki/components/linkableSpace.ftl">
         </#if>
     </div>
 
@@ -44,7 +42,7 @@
         <#include "*/wiki/components/kwic.ftl">
     </div>
 
-    <!-- similar documents as in the sense of where this ne also exists -->
+    <!-- similar documents as in the sense of where this annotation also exists -->
     <#if (vm.getSimilarDocuments()?has_content) && (vm.getSimilarDocuments()?size > 0)>
         <div class="mt-4">
             <#assign similarDocuments = vm.getSimilarDocuments()>

@@ -197,6 +197,31 @@ public class WikiService {
     }
 
     /**
+     * Builds a SentenceAnnotationWikiPageViewModel for a wiki page for a Sentence annotation.
+     */
+    public SentenceWikiPageViewModel buildSentenceAnnotationWikiPageViewModel(long id) throws DatabaseOperationException {
+        var viewModel = new SentenceWikiPageViewModel();
+        var sentence = db.getSentenceAnnotationById(id);
+        viewModel.setCoveredText(sentence.getCoveredText());
+        viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(sentence.getBegin(), sentence.getEnd(), sentence.getDocumentId()));
+        viewModel.setWikiModel(sentence);
+        viewModel.setDocument(db.getDocumentById(sentence.getDocumentId()));
+        viewModel.setAnnotationType("Sentence");
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setSimilarDocuments(
+                db.getDocumentsByAnnotationCoveredText(sentence.getCoveredText(), 10, "sentences")
+                        .stream()
+                        .filter(d -> d.getId() != viewModel.getDocument().getId())
+                        .toList());
+
+        var kwicState = new KeywordInContextState();
+        kwicState.recalculate(List.of(viewModel.getDocument()), List.of(viewModel.getCoveredText()));
+        viewModel.setKwicState(kwicState);
+
+        return viewModel;
+    }
+
+    /**
      * Gets an AnnotationWikiPageViewModel to render a Wikipage for that annotation.
      */
     public NamedEntityAnnotationWikiPageViewModel buildTimeAnnotationWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {

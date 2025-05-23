@@ -52,7 +52,7 @@
     <script src="js/visualization/cdns/d3js-790.js"></script>
     <script src="js/visualization/cdns/drawflow-last.js"></script>
     <!-- for leaflet search plugin -->
-    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css" />
+    <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
 
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
@@ -87,13 +87,13 @@
             <!-- Right-pointing arrow with white border -->
             <marker id="arrow-right" markerWidth="10" markerHeight="7" refX="5" refY="3.5"
                     orient="auto" markerUnits="strokeWidth">
-                <path d="M0,0 L0,7 L10,3.5 z" fill="var(--prime)" />
+                <path d="M0,0 L0,7 L10,3.5 z" fill="var(--prime)"/>
             </marker>
 
             <!-- Left-pointing arrow with white border -->
             <marker id="arrow-left" markerWidth="10" markerHeight="7" refX="5" refY="3.5"
                     orient="auto" markerUnits="strokeWidth">
-                <path d="M10,0 L10,7 L0,3.5 z" fill="var(--prime)" />
+                <path d="M10,0 L10,7 L0,3.5 z" fill="var(--prime)"/>
             </marker>
         </defs>
     </svg>
@@ -137,7 +137,8 @@
                            data-content="${languageResource.get("openCorpus")}">
                             <i class="fas fa-globe large-font mt-1 text-dark mr-1 ml-1"></i>
                         </a>
-                        <select class="form-control" id="corpus-select" aria-label="Default select example" data-trigger="hover"
+                        <select class="form-control" id="corpus-select" aria-label="Default select example"
+                                data-trigger="hover"
                                 data-toggle="popover" data-placement="right"
                                 data-content="${languageResource.get("selectCorpus")}">
                             <#list corpora as corpusVm>
@@ -164,8 +165,11 @@
                                     class="fab fa-wikipedia-w color-prime"></i> ${languageResource.get("lexicon")}</a>
                         <a class="switch-view-btn btn text" data-id="team"><i
                                     class="fas fa-users color-prime"></i> ${languageResource.get("team")}</a>
-                        <a class="switch-view-btn btn text" data-id="analysis"><i
-                                    class="fas fa-chart-pie color-prime"></i> ${languageResource.get("analysis")}</a>
+                        <#if system.getSettings().getAnalysis().isEnableAnalysisEngine()>
+                            <a class="switch-view-btn btn text" data-id="analysis"><i
+                                        class="fas fa-chart-pie color-prime"></i> ${languageResource.get("analysis")}
+                            </a>
+                        </#if>
                     </div>
                     <select class="form-control bg-default rounded-0 color-prime border-right-0 large-font switch-language-select">
                         <option data-lang="en-EN">Englisch</option>

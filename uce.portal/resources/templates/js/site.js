@@ -99,7 +99,7 @@ $('body').on('change', '#corpus-select', function () {
     else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
 
     if (hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
-    else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
+    else $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').hide();
 
     if (hasGeoNameAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').show();
     else $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').hide();

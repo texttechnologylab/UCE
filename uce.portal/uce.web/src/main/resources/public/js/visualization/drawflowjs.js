@@ -9,15 +9,35 @@ class DrawflowJS {
         this.placedConnections = new Map();
         this.rowPerDepth = new Map();
         //this.editor.editor_mode = 'view';
+
+        // Add zoom to function
+        this.editor.translate_to = function (x, y, zoom) {
+            this.canvas_x = x;
+            this.canvas_y = y;
+            let storedZoom = zoom;
+            this.zoom = 1;
+            this.precanvas.style.transform = "translate(" + this.canvas_x + "px, " + this.canvas_y + "px) scale(" + this.zoom + ")";
+            this.zoom = storedZoom;
+            this.zoom_last_value = 1;
+            this.zoom_refresh();
+        }
     }
 
     init(nodeDto) {
-        console.log(nodeDto);
         this.placedNodes = new Map();
         this.nodes = [];
-        this.placeNodeDto(nodeDto, 1, 1); // root starts at (1,1)
+
+        this.placeNodeDto(nodeDto, 1);
+
+        if (this.nodes.length > 0) {
+            console.log(this.placedNodes);
+            const firstNode = this.placedNodes.values().next().value;
+            this.editor.translate_to(firstNode.posX, firstNode.posY, 0.72);
+        }
+
         activatePopovers();
     }
+
 
     createNodeFromNodeDto(nodeDto) {
         return {
@@ -35,7 +55,7 @@ class DrawflowJS {
     }
 
     addLabelNode(labelText, depth, toNodeUnique) {
-        const spacingX = 650;
+        const spacingX = 500;
 
         const posX = depth > 0 ? depth * spacingX : 150;
         const toNode = this.placedNodes.get(toNodeUnique);
@@ -43,7 +63,7 @@ class DrawflowJS {
         const posY = toNode ? toNode.posY : 0;  // default to 0 if missing
 
         const html = `
-        <div class="p-2 label color-secondary large-font">
+        <div class="p-2 label color-secondary rounded">
             ${labelText}
         </div>
     `;
@@ -56,8 +76,8 @@ class DrawflowJS {
             return this.placedNodes.get(nodeDto.unique).id;
         }
 
-        const spacingX = 650;
-        const spacingY = 225;
+        const spacingX = 500;
+        const spacingY = 165;
 
         // Get and increment row for this depth
         let row = this.rowPerDepth.get(depth) || 0;

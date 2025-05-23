@@ -16,6 +16,7 @@
         <#include "*/css/document-reader.css">
         <#include "*/css/custom-context-menu.css">
         <#include "*/css/wiki.css">
+        <#include "*/css/drawflow.css">
         <#include "*/css/bg-anim.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"

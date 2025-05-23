@@ -19,6 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_author_trgm ON metadatatitleinf
 CREATE INDEX IF NOT EXISTS idx_namedentity_coveredtext_trgm ON namedentity USING gin (coveredtext gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_time_coveredtext_trgm ON time USING gin (coveredtext gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_biofidtaxon_coveredtext_trgm ON biofidtaxon USING gin (coveredtext gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_sentence_coveredtext_trgm ON sentence USING gin (coveredtext gin_trgm_ops);
 
 -- For the metadata lemma search, we use coveredtext and value of the column, which is why we add them both in the index as well.
 CREATE INDEX IF NOT EXISTS idx_lemma_coveredtext_trgm ON lemma USING gin ((value || ' ' || coveredtext) gin_trgm_ops); 

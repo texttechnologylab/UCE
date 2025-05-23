@@ -225,7 +225,7 @@ public interface DataInterface {
 
     /**
      * Gets a list of distinct documents that contain a named entity with a given covered text.
-     * @param annotationName Either "namedEntities" or "times". It's the list name of the annotations within a Document objects.
+     * @param annotationName Either "namedEntities", "times", "sentences". It's the **list name** of the annotations within a Document objects.
      */
     public List<Document> getDocumentsByAnnotationCoveredText(String coveredText, int limit, String annotationName) throws DatabaseOperationException;
 
@@ -239,6 +239,11 @@ public interface DataInterface {
      * Gets a time annotation by its id
      */
     public Time getTimeAnnotationById(long id) throws DatabaseOperationException;
+
+    /**
+     * Returns a sentence annotation by its id.
+     */
+    public Sentence getSentenceAnnotationById(long id) throws DatabaseOperationException;
 
     /**
      * Counts the entries in the lexicon

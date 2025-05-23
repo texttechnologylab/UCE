@@ -43,6 +43,17 @@
         </div>
     </div>
 
+    <!-- linkable space -->
+    <div class="mt-2 mb-2">
+        <#assign unique = (vm.getWikiModel().getUnique())!"none">
+        <#assign height = 500>
+        <#if unique != "none">
+            <div class="w-100">
+                <#include "*/wiki/components/linkableSpace.ftl">
+            </div>
+        </#if>
+    </div>
+
     <!-- The next rdf nodes from the sparql db if they exist -->
     <div class="mt-1 mb-3">
         <p class="mb-1 w-100 text-center">

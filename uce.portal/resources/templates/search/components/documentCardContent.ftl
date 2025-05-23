@@ -31,7 +31,7 @@
         </div>
     </#if>
 
-    <div class="pl-3 pr-3 pb-2 pt-3 w-100">
+    <div class="pl-3 pr-3 pb-2 pt-3 w-100 padder">
         <div class="document-header">
             <div class="w-100">
                 <!-- name, title, author etc -->

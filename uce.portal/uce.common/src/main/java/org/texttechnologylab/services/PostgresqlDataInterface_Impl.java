@@ -945,10 +945,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             var root = criteriaQuery.from(Document.class);
 
             // Join with NamedEntity or other annotation entities via foreign key documentId
-            var namedEntityJoin = root.join(annotationName);
+            var annotationJoin = root.join(annotationName);
 
             criteriaQuery.select(root).distinct(true) // Ensure distinct documents
-                    .where(criteriaBuilder.equal(namedEntityJoin.get("coveredText"), coveredText));
+                    .where(criteriaBuilder.equal(annotationJoin.get("coveredText"), coveredText));
 
             // set the limit
             var docs = session.createQuery(criteriaQuery)
@@ -1147,6 +1147,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(Time.class, id));
+    }
+
+    public Sentence getSentenceAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(Sentence.class, id));
     }
 
     public long countLexiconEntries() throws DatabaseOperationException {

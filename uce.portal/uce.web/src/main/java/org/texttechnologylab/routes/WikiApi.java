@@ -133,6 +133,10 @@ public class WikiApi {
                 // Then we have a Time annotation
                 model.put("vm", wikiService.buildTimeAnnotationWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/timeAnnotationPage.ftl";
+            }  else if (type.equals("SENT")) {
+                // Then we have a Sentence annotation
+                model.put("vm", wikiService.buildSentenceAnnotationWikiPageViewModel(id));
+                renderView = "/wiki/pages/sentenceAnnotationPage.ftl";
             } else if (type.equals("C")) {
                 // Then we have a corpus
                 model.put("vm", wikiService.buildCorpusWikiPageViewModle(id, coveredText));

@@ -32,9 +32,13 @@ BEGIN
     USING document 
     WHERE srlink.document_id = document.id AND document.corpusid = corpus_id;
 
-    DELETE FROM taxon 
+    DELETE FROM gazetteertaxon 
     USING document 
-    WHERE taxon.document_id = document.id AND document.corpusid = corpus_id;
+    WHERE gazetteertaxon.document_id = document.id AND document.corpusid = corpus_id;
+
+    DELETE FROM gnfindertaxon 
+    USING document 
+    WHERE gnfindertaxon.document_id = document.id AND document.corpusid = corpus_id;
 
     DELETE FROM page 
     USING document 

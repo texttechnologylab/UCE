@@ -12,7 +12,6 @@
 
     <hr class="mt-2 mb-4"/>
 
-
     <!-- the document this is from -->
     <div class="mt-4 mb-3 w-100 p-0 m-0 justify-content-center flexed align-items-start">
         <div class="document-card w-100">
@@ -23,6 +22,16 @@
         </div>
     </div>
 
+    <!-- linkable space -->
+    <div class="mt-2 mb-2">
+        <#assign unique = (vm.getWikiModel().getUnique())!"none">
+        <#assign height = 500>
+        <#if unique != "none">
+            <div class="w-100">
+                <#include "*/wiki/components/linkableSpace.ftl">
+            </div>
+        </#if>
+    </div>
 
     <div class="topic-container">
         <!-- Dropdown Section -->

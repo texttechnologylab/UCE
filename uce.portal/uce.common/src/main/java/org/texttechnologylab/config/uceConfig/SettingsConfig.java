@@ -1,14 +1,14 @@
 package org.texttechnologylab.config.uceConfig;
 
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
 public class SettingsConfig {
 
     private RAGConfig rag;
 
-    public RAGConfig getRag() {
-        return rag;
-    }
+    private AnalysisConfig analysis;
 
-    public void setRag(RAGConfig rag) {
-        this.rag = rag;
-    }
 }
