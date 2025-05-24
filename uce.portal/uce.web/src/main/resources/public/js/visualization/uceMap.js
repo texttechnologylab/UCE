@@ -1,7 +1,8 @@
 class UCEMap {
 
-    constructor(container) {
+    constructor(container, readonly=false) {
         this._eventHandlers = {};
+        this.readonly = readonly;
         this.currentMarker = undefined;
         this.currentLongLat = undefined; // {lat: 0, lng: 0}
         this.currentCircle = undefined; // _mRadius
@@ -22,6 +23,7 @@ class UCEMap {
         this.$container.append('<div class="map-container h-100"></div>');
         this.$mapContainer = this.$container.find('.map-container');
         this.$uiContainer = this.$container.find('.map-ui-container');
+        if(this.readonly) this.$uiContainer.hide();
         this.twoDim();
     }
 
@@ -35,6 +37,42 @@ class UCEMap {
         }).addTo(this.twoDimMap);
 
         this.attachEvents();
+    }
+
+    /**
+     * Adds a list of nodes in the form of {lat, lng, label} to an existing 2D map.
+     */
+    placeNodes(nodes) {
+        if (!Array.isArray(nodes)) return;
+
+        // Optional: Clear previously added node markers
+        if (!this.nodeMarkers) this.nodeMarkers = [];
+        this.nodeMarkers.forEach(marker => this.twoDimMap.removeLayer(marker));
+        this.nodeMarkers = [];
+
+        nodes.forEach(node => {
+            if (typeof node.lat === 'number' && typeof node.lng === 'number') {
+                const marker = L.marker([node.lat, node.lng]);
+
+                if (node.label) {
+                    marker.bindPopup(node.label);
+                }
+
+                marker.addTo(this.twoDimMap);
+                this.nodeMarkers.push(marker);
+            }
+        });
+    }
+
+    /**
+     * Translates on the map to a given point ({lat, lng}) with a given zoom
+     */
+    translateTo(point, zoom = 13) {
+        if (!point || typeof point.lat !== 'number' || typeof point.lng !== 'number') {
+            console.warn('Invalid point provided to translateTo');
+            return;
+        }
+        this.twoDimMap.setView([point.lat, point.lng], zoom);
     }
 
     on(eventName, callback) {
@@ -61,6 +99,8 @@ class UCEMap {
      */
     attachEvents() {
         const ctx = this;
+
+        if(this.readonly) return;
 
         // Activate the geo search for locations on the map
         if (typeof L.Control.Geocoder !== 'undefined') {

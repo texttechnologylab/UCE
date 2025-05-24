@@ -30,10 +30,12 @@ import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.AnnotationLink;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
@@ -142,13 +144,13 @@ public class Importer {
     public void start(int numThreads) throws DatabaseOperationException {
         logger.info(
                 "\n _   _ _____  _____   _____                           _   \n" +
-                        "| | | /  __ \\|  ___| |_   _|                         | |  \n" +
-                        "| | | | /  \\/| |__     | | _ __ ___  _ __   ___  _ __| |_ \n" +
-                        "| | | | |    |  __|    | || '_ ` _ \\| '_ \\ / _ \\| '__| __|\n" +
-                        "| |_| | \\__/\\| |___   _| || | | | | | |_) | (_) | |  | |_ \n" +
-                        " \\___/ \\____/\\____/   \\___/_| |_| |_| .__/ \\___/|_|   \\__|\n" +
-                        "                                    | |                   \n" +
-                        "                                    |_|"
+                "| | | /  __ \\|  ___| |_   _|                         | |  \n" +
+                "| | | | /  \\/| |__     | | _ __ ___  _ __   ___  _ __| |_ \n" +
+                "| | | | |    |  __|    | || '_ ` _ \\| '_ \\ / _ \\| '__| __|\n" +
+                "| |_| | \\__/\\| |___   _| || | | | | | |_) | (_) | |  | |_ \n" +
+                " \\___/ \\____/\\____/   \\___/_| |_| |_| .__/ \\___/|_|   \\__|\n" +
+                "                                    | |                   \n" +
+                "                                    |_|"
         );
         logger.info("===========> Global Import Id: " + importId);
         logger.info("===========> Importer Number: " + importerNumber);
@@ -210,7 +212,7 @@ public class Importer {
                 final var corpusConfig1 = corpusConfig; // This sucks so hard - why doesn't java just do this itself if needed?
                 var existingCorpus = ExceptionUtils.tryCatchLog(() -> db.getCorpusByName(corpusConfig1.getName()),
                         (ex) -> logger.error("Error getting an existing corpus by name. The corpus config should probably be changed " +
-                                "to not add to existing corpus then.", ex));
+                                             "to not add to existing corpus then.", ex));
 
                 if (existingCorpus != null) { // If we have the corpus, use that. Else store the new corpus.
                     corpus = existingCorpus;
@@ -434,6 +436,7 @@ public class Importer {
 
     /**
      * Upload input stream to minio s3 storage
+     *
      * @param inputStream
      * @param objectName
      * @throws Exception
@@ -480,7 +483,7 @@ public class Importer {
             var exists = db.documentExists(corpus.getId(), document.getDocumentId());
             if (exists) {
                 logger.info("Document with id " + document.getDocumentId()
-                        + " already exists in the corpus " + corpus.getId() + ".");
+                            + " already exists in the corpus " + corpus.getId() + ".");
                 logger.info("Checking if that document was also post-processed yet...");
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
                 if (!existingDoc.isPostProcessed()) {
@@ -513,7 +516,7 @@ public class Importer {
 
             // For now, we skip this. This doesn't relly improve anything and is very costly.
             //setCleanedFullText(document, jCas);
-            if ( corpusConfig.getOther().isEnableS3Storage() ) {
+            if (corpusConfig.getOther().isEnableS3Storage()) {
                 ExceptionUtils.tryCatchLog(
                         () -> uploadInputStream(openInputStreamBasedOnExtension(filePath), document.getDocumentId()),
                         (ex) -> logImportWarn("Was not able to upload XMI to S3 Storage!", ex, filePath));
@@ -712,6 +715,10 @@ public class Importer {
 
             annotationToDocumentLinks.add(annoToDocLink);
         });
+
+        // TODO: Annotation -> Annotation Link
+        // TODO: CoveredText -> CoveredText
+
         db.saveOrUpdateManyAnnotationToDocumentLinks(annotationToDocumentLinks);
     }
 
@@ -816,8 +823,8 @@ public class Importer {
             if (documentAnnotation != null) {
                 try {
                     metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
-                            + documentAnnotation.getDateMonth() + "."
-                            + documentAnnotation.getDateYear());
+                                                   + documentAnnotation.getDateMonth() + "."
+                                                   + documentAnnotation.getDateYear());
                     metadataTitleInfo.setAuthor(documentAnnotation.getAuthor());
                 } catch (Exception ex) {
                     logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
@@ -1052,7 +1059,7 @@ public class Importer {
                 for (var split : taxon.getIdentifier().split("\\|")) {
                     splited.addAll(Arrays.asList(split.split(" ")));
                 }
-                if(splited.isEmpty()) return;
+                if (splited.isEmpty()) return;
 
                 // Set the primary ids and identifier
                 taxon.setPrimaryIdentifier(splited.getFirst());
@@ -1577,6 +1584,61 @@ public class Importer {
         var start = System.currentTimeMillis();
         var corpusConfig = corpus.getViewModel().getCorpusConfig();
 
+        // Store simple connections between Time, Geonames and Annotation to approximate the question:
+        // This annotation occurred in context with this location at this time.
+        if (corpusConfig.getAnnotations().isGeoNames() || corpusConfig.getAnnotations().isTime()) {
+            logger.info("Doing contextualized Links between Annotations...");
+            // For now we assume that, IF the annotations are on the same page, they are somewhat linked.
+            // For now, we link NamedEntities and taxa to Geonames and/or Time
+            for (var page : document.getPages()) {
+
+                // Geonames and Times
+                var contextAnnotations = new ArrayList<UIMAAnnotation>();
+                if (corpusConfig.getAnnotations().isGeoNames())
+                    contextAnnotations.addAll(document.getGeoNames().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
+                if (corpusConfig.getAnnotations().isTime())
+                    contextAnnotations.addAll(document.getTimes().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
+
+                // Link them to other annotations, such as Taxa, NamedEntity (e.g. PERSON)
+                var linkedAnnotations = new ArrayList<UIMAAnnotation>();
+                if (corpusConfig.getAnnotations().isNamedEntity())
+                    linkedAnnotations.addAll(document.getNamedEntities().stream().filter(g -> !g.getType().equals("LOCATION") && g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
+                if (corpusConfig.getAnnotations().getTaxon().isAnnotated()) {
+                    linkedAnnotations.addAll(document.getGazetteerTaxons().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
+                    linkedAnnotations.addAll(document.getGnFinderTaxons().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
+                }
+
+                // We link FROM the ANNOTATION TO the CONTEXT
+                var links = new ArrayList<AnnotationLink>();
+                for (var context : contextAnnotations) {
+                    for (var anno : linkedAnnotations) {
+                        var annoLink = new AnnotationLink();
+                        annoLink.setCorpusId(corpus.getId());
+                        annoLink.setFrom(document.getDocumentId());
+                        annoLink.setTo(document.getDocumentId());
+                        annoLink.setType(context instanceof Time ? "time" : "location");
+                        annoLink.setLinkId("context");
+                        annoLink.setFromId(anno.getId());
+                        annoLink.setToId(context.getId());
+                        annoLink.setFromAnnotationTypeTable(ReflectionUtils.getTableAnnotationName(anno.getClass()));
+                        annoLink.setToAnnotationTypeTable(ReflectionUtils.getTableAnnotationName(context.getClass()));
+                        annoLink.setFromAnnotationType(anno.getClass().getName());
+                        annoLink.setToAnnotationType(context.getClass().getName());
+                        annoLink.setFromCoveredText(anno.getCoveredText());
+                        annoLink.setToCoveredText(context.getCoveredText());
+                        annoLink.setFromBegin(anno.getBegin());
+                        annoLink.setToBegin(context.getBegin());
+                        annoLink.setFromEnd(anno.getEnd());
+                        annoLink.setToEnd(context.getEnd());
+
+                        links.add(annoLink);
+                    }
+                }
+                ExceptionUtils.tryCatchLog(() -> db.saveOrUpdateManyAnnotationLinks(links),
+                        (ex) -> logImportError("Couldn't build contextual annotation links while postprocessing.", ex, filePath));
+            }
+        }
+
         // Calculate embeddings if they are activated
         if (corpusConfig.getOther().isEnableEmbeddings()) {
             logger.info("Embeddings...");
@@ -1742,7 +1804,6 @@ public class Importer {
                 }
             }
         }
-
 
         logImportInfo("Successfully post processed document " + filePath, LogStatus.SAVED, filePath, System.currentTimeMillis() - start);
     }

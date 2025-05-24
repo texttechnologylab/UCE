@@ -5,6 +5,7 @@ import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.links.AnnotationLink;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
@@ -15,6 +16,7 @@ import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.search.*;
 
+import java.lang.annotation.Annotation;
 import java.util.List;
 
 public interface DataInterface {
@@ -236,6 +238,11 @@ public interface DataInterface {
     public List<Lemma> getLemmasWithinBeginAndEndOfDocument(int begin, int end, long documentId) throws DatabaseOperationException;
 
     /**
+     * Gets a GeoName annotation by its unique id.
+     */
+    public GeoName getGeoNameAnnotationById(long id) throws DatabaseOperationException;
+
+    /**
      * Gets a time annotation by its id
      */
     public Time getTimeAnnotationById(long id) throws DatabaseOperationException;
@@ -338,6 +345,11 @@ public interface DataInterface {
      *  Saves or updates a list of documentLinks.
      */
     public void saveOrUpdateManyDocumentToAnnotationLinks(List<DocumentToAnnotationLink> links) throws DatabaseOperationException;
+
+    /**
+     * Saves or updates a list of annotation links.
+     */
+    public void saveOrUpdateManyAnnotationLinks(List<AnnotationLink> links) throws DatabaseOperationException;
 
     /**
      * Saves or updates a list of DocumentToAnnotation Links

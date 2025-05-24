@@ -9,10 +9,11 @@ import java.util.List;
 
 @Getter
 @Setter
-public class NamedEntityAnnotationWikiPageViewModel extends AnnotationWikiPageViewModel{
+public class GeoNameAnnotationWikiPageViewModel extends AnnotationWikiPageViewModel{
 
     private List<Document> similarDocuments;
     private List<Lemma> lemmas;
 
-    public NamedEntityAnnotationWikiPageViewModel(){}
+    public GeoNameAnnotationWikiPageViewModel(){}
+
 }

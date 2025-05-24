@@ -133,6 +133,10 @@ public class WikiApi {
                 // Then we have a Time annotation
                 model.put("vm", wikiService.buildTimeAnnotationWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/timeAnnotationPage.ftl";
+            }  else if (type.equals("LOC")) {
+                // Then we have a GeoName annotation
+                model.put("vm", wikiService.buildGeoNameAnnotationWikiPageViewModel(id, coveredText));
+                renderView = "/wiki/pages/geoNameAnnotationPage.ftl";
             }  else if (type.equals("SENT")) {
                 // Then we have a Sentence annotation
                 model.put("vm", wikiService.buildSentenceAnnotationWikiPageViewModel(id));

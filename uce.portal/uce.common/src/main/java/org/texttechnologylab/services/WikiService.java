@@ -221,6 +221,28 @@ public class WikiService {
         return viewModel;
     }
 
+    public GeoNameAnnotationWikiPageViewModel buildGeoNameAnnotationWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new GeoNameAnnotationWikiPageViewModel();
+        viewModel.setCoveredText(coveredText);
+        var geoName = db.getGeoNameAnnotationById(id);
+        viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(geoName.getBegin(), geoName.getEnd(), geoName.getDocumentId()));
+        viewModel.setWikiModel(geoName);
+        viewModel.setDocument(db.getDocumentById(geoName.getDocumentId()));
+        viewModel.setAnnotationType("GeoName");
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setSimilarDocuments(
+                db.getDocumentsByAnnotationCoveredText(geoName.getCoveredText(), 10, "geoNames")
+                        .stream()
+                        .filter(d -> d.getId() != viewModel.getDocument().getId())
+                        .toList());
+
+        var kwicState = new KeywordInContextState();
+        kwicState.recalculate(List.of(viewModel.getDocument()), List.of(viewModel.getCoveredText()));
+        viewModel.setKwicState(kwicState);
+
+        return viewModel;
+    }
+
     /**
      * Gets an AnnotationWikiPageViewModel to render a Wikipage for that annotation.
      */

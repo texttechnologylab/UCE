@@ -5,10 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.Linkable;
 import org.texttechnologylab.models.corpus.Document;
-import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
-import org.texttechnologylab.models.corpus.links.DocumentLink;
-import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
-import org.texttechnologylab.models.corpus.links.Link;
+import org.texttechnologylab.models.corpus.links.*;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.ReflectionUtils;
 
@@ -30,13 +27,14 @@ public class LinkViewModel {
     public LinkableViewModel getFromLinkableViewModel() {
         if (fromLinkableViewModel == null) {
             try {
-
                 // Depending on what kind of link we have here (DocumentLink, DocumentAnnotationLink..) we have to fetch specific links
                 Class<? extends Linkable> fromClazz = null;
                 if (link instanceof DocumentLink) fromClazz = Document.class;
                 else if (link instanceof DocumentToAnnotationLink) fromClazz = Document.class;
                 else if (link instanceof AnnotationToDocumentLink annoToDoc)
                     fromClazz = ReflectionUtils.getClassFromClassName(annoToDoc.getFromAnnotationType(), Linkable.class);
+                else if (link instanceof AnnotationLink annoLink)
+                    fromClazz = ReflectionUtils.getClassFromClassName(annoLink.getFromAnnotationType(), Linkable.class);
                 final var finalFrom = fromClazz;
 
                 fromLinkableViewModel = ExceptionUtils.tryCatchLog(() -> db.getLinkable(link.getFromId(), finalFrom).getLinkableViewModel(),
@@ -56,6 +54,8 @@ public class LinkViewModel {
                 else if (link instanceof DocumentToAnnotationLink docToAnno)
                     toClazz = ReflectionUtils.getClassFromClassName(docToAnno.getToAnnotationType(), Linkable.class);
                 else if (link instanceof AnnotationToDocumentLink) toClazz = Document.class;
+                else if (link instanceof AnnotationLink annoLink)
+                    toClazz = ReflectionUtils.getClassFromClassName(annoLink.getToAnnotationType(), Linkable.class);
                 final var finalTo = toClazz;
 
                 toLinkableViewModel = db.getLinkable(link.getToId(), finalTo).getLinkableViewModel();

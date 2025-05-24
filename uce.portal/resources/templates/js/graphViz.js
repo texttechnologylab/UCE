@@ -13,9 +13,9 @@ var GraphVizHandler = (function () {
         console.log('Created GraphViz Handler.');
     }
 
-    GraphVizHandler.prototype.createUceMap = function(target){
+    GraphVizHandler.prototype.createUceMap = function (target, readonly = false) {
         const chartId = generateUUID();
-        const uceMap = new UCEMap(target);
+        const uceMap = new UCEMap(target, readonly);
 
         this.activeCharts[chartId] = uceMap;
         activatePopovers();
@@ -25,7 +25,7 @@ var GraphVizHandler = (function () {
     /**
      * [CHARTJS] -> Creates a pie chart into the given $target (jquery object)
      */
-    GraphVizHandler.prototype.createBasicChart = async function (target, title, data, type=null) {
+    GraphVizHandler.prototype.createBasicChart = async function (target, title, data, type = null) {
         const chartId = generateUUID();
         let wrapper = document.createElement('div');
         wrapper.classList.add('chart-container');
@@ -57,7 +57,7 @@ var GraphVizHandler = (function () {
         const jsChart = new ChartJS(canvas, title);
 
         jsChart.setData(data);
-        if (type){
+        if (type) {
             jsChart.setType(type);
         }
         this.activeCharts[chartId] = jsChart;
@@ -127,7 +127,7 @@ var GraphVizHandler = (function () {
     }
 
 
-    GraphVizHandler.prototype.getColorForWeight = function(weight) {
+    GraphVizHandler.prototype.getColorForWeight = function (weight) {
         return getColorForWeight(weight);
     }
 

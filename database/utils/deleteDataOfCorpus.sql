@@ -46,6 +46,9 @@ BEGIN
 
     DELETE FROM documentlink 
     WHERE documentlink.corpusid = corpus_id;
+	
+	DELETE FROM annotationlink 
+    WHERE annotationlink.corpusid = corpus_id;
 
     DELETE FROM documenttoannotationlink 
     WHERE documenttoannotationlink.corpusid = corpus_id;

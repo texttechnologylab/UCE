@@ -17,10 +17,7 @@ import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
-import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
-import org.texttechnologylab.models.corpus.links.DocumentLink;
-import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
-import org.texttechnologylab.models.corpus.links.Link;
+import org.texttechnologylab.models.corpus.links.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
@@ -40,6 +37,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
+import java.lang.annotation.Annotation;
 import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -1145,6 +1143,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public GeoName getGeoNameAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.get(GeoName.class, id));
+    }
+
     public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(Time.class, id));
     }
@@ -1313,6 +1315,15 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             }
             return null;
         });
+    }
+
+    public void saveOrUpdateManyAnnotationLinks(List<AnnotationLink> links) throws DatabaseOperationException {
+        executeOperationSafely((session -> {
+            for (var link : links) {
+                session.saveOrUpdate(link);
+            }
+            return null;
+        }));
     }
 
     public void saveOrUpdateManyDocumentToAnnotationLinks(List<DocumentToAnnotationLink> links) throws DatabaseOperationException {
