@@ -15,13 +15,6 @@ public class NamedEntity extends UIMAAnnotation implements WikiModel {
     @JoinColumn(name = "document_id", nullable = false)
     private Document document;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "page_id", nullable = false)
-    private Page page;
-
-    @Column(name = "page_id", insertable = false, updatable = false)
-    private Long pageId;
-
     @OneToOne
     @JoinColumn(name = "geoname_id")
     private GeoName geoName;
@@ -54,22 +47,6 @@ public class NamedEntity extends UIMAAnnotation implements WikiModel {
 
     public void setGeoNameId(Long geoNameId) {
         this.geoNameId = geoNameId;
-    }
-
-    public Page getPage() {
-        return page;
-    }
-
-    public void setPage(Page page) {
-        this.page = page;
-    }
-
-    public Long getPageId() {
-        return pageId;
-    }
-
-    public void setPageId(Long pageId) {
-        this.pageId = pageId;
     }
 
     public Document getDocument() {

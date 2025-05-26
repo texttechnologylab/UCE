@@ -272,6 +272,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely(session -> {
             var linkable = session.get(clazz, id);
             if (linkable instanceof Document doc) Hibernate.initialize(doc.getPages());
+            if(clazz != Document.class && clazz != Page.class && linkable instanceof UIMAAnnotation anno) Hibernate.initialize(anno.getPage());
             return linkable;
         });
     }

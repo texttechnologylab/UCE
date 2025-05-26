@@ -12,13 +12,10 @@ import java.sql.Date;
 @Table(name = "time")
 @Typesystem(types = {org.texttechnologylab.annotation.type.Time.class})
 public class Time extends UIMAAnnotation implements WikiModel {
+
     @Column(name = "\"valuee\"", columnDefinition = "TEXT")
     private String value;
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "page_id", nullable = false)
-    private Page page;
-    @Column(name = "page_id", insertable = false, updatable = false)
-    private Long pageId;
+
     private Integer year;
     private String month;
     private String day;
@@ -75,22 +72,6 @@ public class Time extends UIMAAnnotation implements WikiModel {
 
     public void setDay(String day) {
         this.day = day;
-    }
-
-    public Page getPage() {
-        return page;
-    }
-
-    public void setPage(Page page) {
-        this.page = page;
-    }
-
-    public Long getPageId() {
-        return pageId;
-    }
-
-    public void setPageId(Long pageId) {
-        this.pageId = pageId;
     }
 
     public String getValue() {

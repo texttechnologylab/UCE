@@ -77,7 +77,7 @@ public class Importer {
 
     private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger(Importer.class);
-    private static final int BATCH_SIZE = 50;
+    private static final int BATCH_SIZE = 100;
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
@@ -910,6 +910,18 @@ public class Importer {
 
     private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage) {
         // Set the pages for the different annotations - this is pretty horribly, but I cant be bothered right now.
+        if (document.getSentences() != null) {
+            for (var anno : document.getSentences().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getLemmas() != null) {
+            for (var anno : document.getLemmas().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
         if (document.getGazetteerTaxons() != null) {
             for (var anno : document.getGazetteerTaxons().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {

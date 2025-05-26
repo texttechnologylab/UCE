@@ -30,31 +30,9 @@ public class GeoName extends UIMAAnnotation implements WikiModel {
     @OneToOne(mappedBy = "geoName", cascade = CascadeType.ALL, orphanRemoval = true)
     private NamedEntity refNamedEntity;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "page_id", nullable = false)
-    private Page page;
-    @Column(name = "page_id", insertable = false, updatable = false)
-    private Long pageId;
-
     public GeoName(){}
     public GeoName(int begin, int end){
         super(begin, end);
-    }
-
-    public Long getPageId() {
-        return pageId;
-    }
-
-    public void setPageId(Long pageId) {
-        this.pageId = pageId;
-    }
-
-    public Page getPage() {
-        return page;
-    }
-
-    public void setPage(Page page) {
-        this.page = page;
     }
 
     public String getName() {

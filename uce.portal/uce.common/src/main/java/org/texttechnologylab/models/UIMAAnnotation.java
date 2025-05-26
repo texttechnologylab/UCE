@@ -1,6 +1,8 @@
 package org.texttechnologylab.models;
 
 import io.micrometer.common.lang.Nullable;
+import lombok.Getter;
+import lombok.Setter;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.AnnotationLink;
@@ -11,8 +13,7 @@ import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.utils.StringUtils;
 
-import javax.persistence.Column;
-import javax.persistence.MappedSuperclass;
+import javax.persistence.*;
 import java.util.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -38,6 +39,17 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
     private Boolean isLexicalized = false;
     @Column(name = "document_id", insertable = false, updatable = false)
     private Long documentId;
+
+    @Getter
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "page_id", nullable = true)
+    private Page page;
+
+    @Getter
+    @Setter
+    @Column(name = "page_id", insertable = false, updatable = false)
+    private Long pageId;
 
     public String getCoveredText() {
         return coveredText;

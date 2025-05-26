@@ -11,7 +11,7 @@ import java.util.*;
 @Typesystem(types = {org.texttechnologylab.annotation.ocr.abbyy.Page.class}, optional = true)
 public class Page extends UIMAAnnotation {
     private int pageNumber;
-    private String pageId;
+    private String pageIdentifier;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
@@ -33,10 +33,10 @@ public class Page extends UIMAAnnotation {
     @JoinColumn(name = "page_id")
     private PageKeywordDistribution pageKeywordDistribution;
 
-    public Page(int begin, int end, int pageNumber, String pageId) {
+    public Page(int begin, int end, int pageNumber, String pageIdentifier) {
         super(begin, end);
         this.pageNumber = pageNumber;
-        this.pageId = pageId;
+        this.pageIdentifier = pageIdentifier;
     }
 
     public Page() {
@@ -55,8 +55,8 @@ public class Page extends UIMAAnnotation {
         this.pageNumber = pageNumber;
     }
 
-    public void setPageId(String pageId) {
-        this.pageId = pageId;
+    public void setPageIdentifier(String pageId) {
+        this.pageIdentifier = pageId;
     }
 
     public PageKeywordDistribution getPageKeywordDistribution() {
@@ -100,8 +100,8 @@ public class Page extends UIMAAnnotation {
         this.blocks = blocks;
     }
 
-    public String getPageId() {
-        return pageId;
+    public String getPageIdentifier() {
+        return pageIdentifier;
     }
 
     public int getPageNumber() {

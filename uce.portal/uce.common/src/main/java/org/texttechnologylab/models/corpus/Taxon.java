@@ -23,17 +23,6 @@ public abstract class Taxon extends UIMAAnnotation implements WikiModel{
 
     @Getter
     @Setter
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "page_id", nullable = false)
-    private Page page;
-
-    @Getter
-    @Setter
-    @Column(name = "page_id", insertable = false, updatable = false)
-    private Long pageId;
-
-    @Getter
-    @Setter
     @Column(columnDefinition = "TEXT")
     private String identifier;
 

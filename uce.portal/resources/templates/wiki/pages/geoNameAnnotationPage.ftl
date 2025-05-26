@@ -31,6 +31,7 @@
     <!-- map -->
     <div class="mt-2 mb-4">
         <div class="group-box card-shadow w-100 h-100 m-0 p-0">
+            <div class="w-100 bg-lightgray pb-2 pt-2 pr-3 pl-3"><label class="text-dark mb-0">Map</label></div>
             <div class="w-100 uce-map-container" style="height: 400px"></div>
         </div>
     </div>
