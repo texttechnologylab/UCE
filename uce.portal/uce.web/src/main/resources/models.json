@@ -570,5 +570,16 @@
     "Main Tool": "Text Readability",
     "Variant": "Readability",
     "type": "Readability"
+  },
+  "DeepSeek-R1": {
+    "url": "http://readability.service.component.duui.texttechnologylab.org/",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-llm",
+    "huggingface": "",
+    "paper": "",
+    "map": "test:DeepSeek-R1",
+    "Name": "DeepSeek-R1",
+    "Main Tool": "LLM",
+    "Variant": "LLM",
+    "type": "LLM"
   }
 }

@@ -14,6 +14,8 @@ import org.hucompute.textimager.uima.type.category.CategoryCoveredTagged;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIRemoteDriver;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
+import org.texttechnologylab.type.LLMPrompt;
+import org.texttechnologylab.type.LLMSystemPrompt;
 import org.texttechnologylab.typeClasses.*;
 import org.texttechnologylab.annotation.*;
 import org.texttechnologylab.modules.ModelInfo;
@@ -26,6 +28,7 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.texttechnologylab.type.LLMPrompt;
 
 public class DUUIPipeline {
 
@@ -174,6 +177,23 @@ public class DUUIPipeline {
             counter++;
         }
         hypothesisAnnotation.addToIndexes();
+        return new Object[]{cas, sb};
+    }
+
+    public Object[] setPrompt(JCas cas, String systemPrompt ,StringBuilder sb) throws UIMAException {
+        String prompt = cas.getDocumentText();
+        int firstBegin = 0;
+        int lastEnd = sb.length();
+        LLMPrompt promptAnnotation = new LLMPrompt(cas, firstBegin, lastEnd);
+        promptAnnotation.setPrompt(prompt);
+        if (systemPrompt != "") {
+            LLMSystemPrompt systemPromptAnnotation = new LLMSystemPrompt(cas, sb.length(), sb.length()+systemPrompt.length());
+            sb.append(systemPrompt).append(" ");
+            systemPromptAnnotation.setMessage(systemPrompt);
+            systemPromptAnnotation.addToIndexes();
+            promptAnnotation.setSystemPrompt(systemPromptAnnotation);
+        }
+        promptAnnotation.addToIndexes();
         return new Object[]{cas, sb};
     }
 

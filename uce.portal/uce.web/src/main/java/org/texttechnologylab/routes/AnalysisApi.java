@@ -42,15 +42,17 @@ public class AnalysisApi {
             var inputClaim = requestDto.getInputClaim();
             var inputCoherence = requestDto.getInputCoherence();
             var inputStance = requestDto.getInputStance();
+            var inputSystemPrompt = requestDto.getInputSystemPrompt();
 
             model.put("inputText", inputText);
             model.put("selectedModels", selectedModels);
             model.put("inputClaim", inputClaim);
             model.put("inputCoherence", inputCoherence);
             model.put("inputStance", inputStance);
+            model.put("inputSystemPrompt", inputSystemPrompt);
 
             RunDUUIPipeline pipeline = new RunDUUIPipeline();
-            DUUIInformation DataRequest = pipeline.getModelResources(selectedModels, inputText, inputClaim, inputCoherence, inputStance);
+            DUUIInformation DataRequest = pipeline.getModelResources(selectedModels, inputText, inputClaim, inputCoherence, inputStance, inputSystemPrompt);
             model.put("DUUI", DataRequest);
             model.put("SuccessRequest", true);
             model.put("modelGroups", DataRequest.getModelGroups());

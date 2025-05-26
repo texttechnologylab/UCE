@@ -81,9 +81,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.texttechnologylab</groupId>
+            <groupId>com.github.mevbagci</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>1c31dddaf</version>
+            <version>3.0.12</version>
         </dependency>
         <!--<dependency>
             <groupId>org.texttechnologylab.annotation</groupId>
