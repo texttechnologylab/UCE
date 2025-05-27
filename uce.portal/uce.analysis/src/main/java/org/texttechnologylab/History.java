@@ -18,7 +18,7 @@ public class History {
 
     private HashMap<String, String> inputStanceHashMap = new HashMap<>();
 
-    private HashMap<String, String> inputSystemPromptHashMap = new HashMap<>();
+    private HashMap<String, String> inputLLMHashMap = new HashMap<>();
 
     public HashMap<String, DUUIInformation> getDuuiInformationHashMap() {
         return duuiInformationHashMap;
@@ -87,8 +87,8 @@ public class History {
         this.inputClaimHashMap.put(id, inputClaim);
     }
 
-    public void addInputSystemPrompt(String id, String inputSystemPrompt) {
-        this.inputSystemPromptHashMap.put(id, inputSystemPrompt);
+   public void addInputLLM(String id, String inputLLM) {
+        this.inputLLMHashMap.put(id, inputLLM);
     }
 
     public void addSelectedModels(String id, List<String> selectedModels) {
@@ -111,8 +111,8 @@ public class History {
         return this.inputClaimHashMap.get(id);
     }
 
-    public String getInputSystemPrompt(String id) {
-        return this.inputSystemPromptHashMap.get(id);
+   public String getInputLLM(String id) {
+        return this.inputLLMHashMap.get(id);
     }
 
     public List<String> getSelectedModels(String id) {

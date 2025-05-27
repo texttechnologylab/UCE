@@ -8,9 +8,11 @@ async function runAnalysisPipeline() {
     const inputClaim = $('#claim-text').val().trim();
     const inputCoherence = $('#coherence-text').val().trim();
     const inputStance = $('#stance-text').val().trim();
+    const inputLLM = $('#llm-text').val().trim();
     let checkboxClaim = false;
     let checkboxCoherence = false;
     let checkboxStance = false;
+    let checkboxLLM = false;
 
     // Get only the *lowest* selected checkboxes (no partially selected parents)
     $('.analysis-model-checkbox:checked').each(function() {
@@ -29,6 +31,10 @@ async function runAnalysisPipeline() {
             const isStance = $checkbox[0]["id"].toLowerCase().includes('stance');
             if (isStance) {
                 checkboxStance = true;
+            }
+            const isLLM = $checkbox[0]["id"].toLowerCase().includes('llm');
+            if (isLLM) {
+                checkboxLLM = true;
             }
         }
     });
@@ -63,6 +69,12 @@ async function runAnalysisPipeline() {
         return;
     }
 
+    // Validation: if LLM is selected, the LLM field must not be empty
+    if (checkboxLLM && inputLLM.length === 0) {
+        showMessageModal("LLM Error", "Please enter a System Prompt text to analyze.");
+        return;
+    }
+
     // Disable the button and show loading spinner
     $runButton.prop('disabled', true);
     $('.analysis-result-container .loader-container').fadeIn(150);
@@ -78,6 +90,7 @@ async function runAnalysisPipeline() {
             inputClaim: inputClaim,
             inputCoherence: inputCoherence,
             inputStance: inputStance,
+            inputLLM: inputLLM,
         }),
         contentType: "application/json",
         success: function(firstResponse) {
@@ -92,7 +105,6 @@ async function runAnalysisPipeline() {
         $runButton.prop('disabled', false);
         $('.analysis-result-container .loader-container').fadeOut(150);
     });
-    console.log("First response:", firstResponse);
     const secondResponse = await $.ajax({
         url: "/api/analysis/setHistory",
         type: "GET",
@@ -102,7 +114,7 @@ async function runAnalysisPipeline() {
         // }),
         // contentType: "application/json",
         success: function(secondResponse) {
-            console.log(secondResponse);
+            // console.log(secondResponse);
             $('#analysis-result-history').html(secondResponse);
         },
         error: function(xhr, status, error) {
@@ -110,7 +122,6 @@ async function runAnalysisPipeline() {
             showMessageModal("History Error", "There was an error retrieving the analysis history.");
         }
     });
-    console.log("Second response:", secondResponse);
 }
 
 // Bind to the "Run Pipeline" button

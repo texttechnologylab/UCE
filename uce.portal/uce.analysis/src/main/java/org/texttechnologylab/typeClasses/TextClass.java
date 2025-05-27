@@ -1,5 +1,4 @@
 package org.texttechnologylab.typeClasses;
-
 import org.texttechnologylab.modules.ModelInfo;
 
 import java.util.ArrayList;
@@ -17,6 +16,7 @@ public class TextClass {
 
     private HashMap<ModelInfo, ArrayList<CoherenceClass>> coherence = new HashMap<>();
     private HashMap<ModelInfo, ArrayList<StanceClass>> stance = new HashMap<>();
+    private HashMap<ModelInfo, LLMClass> llm = new HashMap<>();
 
     private ArrayList<HateClass> hateAVG = new ArrayList<>();
     private ArrayList<SentimentClass> sentimentAVG = new ArrayList<>();
@@ -28,6 +28,8 @@ public class TextClass {
     private ArrayList<CoherenceClass> coherenceAVG = new ArrayList<>();
     private ArrayList<StanceClass> stanceAVG = new ArrayList<>();
     private ArrayList<ReadabilityClass> readabilityAVG = new ArrayList<>();
+    private ArrayList<LLMClass> llmAVG = new ArrayList<>();
+    private ArrayList<TAClass> taScoreAVG = new ArrayList<>();
 
     private ArrayList<ModelInfo> topicsModels = new ArrayList<>();
     private ArrayList<ModelInfo> hateModels = new ArrayList<>();
@@ -40,6 +42,8 @@ public class TextClass {
 
     private ArrayList<ModelInfo> coherenceModels = new ArrayList<>();
     private ArrayList<ModelInfo> readabilityModels = new ArrayList<>();
+    private ArrayList<ModelInfo> taModels = new ArrayList<>();
+    private ArrayList<ModelInfo> llmModels = new ArrayList<>();
 
     private ClaimClass claim = new ClaimClass();
 
@@ -93,6 +97,13 @@ public class TextClass {
         this.stance.get(model).add(stance);
         if (!this.stanceModels.contains(model)) {
             this.stanceModels.add(model);
+        }
+    }
+
+    public void addLLM(ModelInfo model, LLMClass llm) {
+        this.llm.put(model, llm);
+        if (!this.llmModels.contains(model)) {
+            this.llmModels.add(model);
         }
     }
 
@@ -222,6 +233,14 @@ public class TextClass {
     public void deleteToxic(ModelInfo model) {
         this.toxic.remove(model);
         this.toxicModels.remove(model);
+    }
+
+    public void addAVGLLM(LLMClass llm) {
+        this.llmAVG.add(llm);
+    }
+
+    public void addAVGTA(TAClass ta) {
+        this.taScoreAVG.add(ta);
     }
 
 
@@ -411,6 +430,14 @@ public class TextClass {
         return topicAVG;
     }
 
+    public ArrayList<LLMClass> getLlmAVG() {
+        return llmAVG;
+    }
+
+    public ArrayList<TAClass> getTaScoreAVG() {
+        return taScoreAVG;
+    }
+
     public ArrayList<ToxicClass> getToxicAVG() {
         return toxicAVG;
     }
@@ -461,5 +488,20 @@ public class TextClass {
 
     public void setReadabilityModels(ArrayList<ModelInfo> readabilityModels) {
         this.readabilityModels = readabilityModels;
+    }
+
+    public ArrayList<ModelInfo> getLLModels() {
+        return llmModels;
+    }
+
+    public void setLLModels(ArrayList<ModelInfo> llmModels) {
+        this.llmModels = llmModels;
+    }
+
+    public ArrayList<ModelInfo> getTaModels() {
+        return taModels;
+    }
+    public void setTaModels(ArrayList<ModelInfo> taModels) {
+        this.taModels = taModels;
     }
 }

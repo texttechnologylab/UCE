@@ -35,6 +35,7 @@ public class RunDUUIPipeline {
         boolean isStance = false;
         boolean isReadability = false;
         boolean isLLM = false;
+        boolean isTA = false;
         for (String modelKey : modelGroups) {
             if (modelInfos.containsKey(modelKey)) {
                 ModelInfo modelInfo = modelInfos.get(modelKey);
@@ -76,8 +77,13 @@ public class RunDUUIPipeline {
                         isReadability = true;
                         break;
                     case "LLM":
+                        specialModel = true;
                         isLLM = true;
                         break;
+                    case "TA":
+                        isTA = true;
+                        break;
+
                 }
             }
         }
@@ -122,6 +128,12 @@ public class RunDUUIPipeline {
                 newCas = (JCas) output_stance[0];
                 sb = (StringBuilder) output_stance[1];
             }
+            // LLM
+            if (isLLM) {
+                Object[] output_llm = pipeline.setPrompt(newCas, systemPrompt, sb);
+                newCas = (JCas) output_llm[0];
+                sb = (StringBuilder) output_llm[1];
+            }
             text = sb.toString();
             // set document text
             newCas.setDocumentText(text);
@@ -155,6 +167,10 @@ public class RunDUUIPipeline {
         duuiInformation.setIsStance(isStance);
         // set readability
         duuiInformation.setIsReadability(isReadability);
+        // set LLM
+        duuiInformation.setIsLLM(isLLM);
+        // set TA
+        duuiInformation.setIsTA(isTA);
         return duuiInformation;
     }
 

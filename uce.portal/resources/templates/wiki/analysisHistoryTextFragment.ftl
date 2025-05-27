@@ -34,5 +34,14 @@
                 </div>
             </div>
         </#if>
+        <#if inputLLM?? && inputLLM?has_content>
+            <h5 class="mb-0 mr-1 color-prime">System Prompt</h5>
+            <div class="analysis-text-view">
+                <div class="grow-text">
+                    <textarea name="analysis-text" id="analysis-text" rows="10" onInput="this.parentNode.dataset.replicatedValue = this.value" readonly>${inputLLM}
+                    </textarea>
+                </div>
+            </div>
+        </#if>
     </div>
 </#if>

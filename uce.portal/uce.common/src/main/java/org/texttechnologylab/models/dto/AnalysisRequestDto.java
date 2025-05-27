@@ -16,7 +16,7 @@ public class AnalysisRequestDto {
 
     private String inputStance;
 
-    private String inputSystemPrompt;
+    private String inputLLM;
 
     public AnalysisRequestDto() {
         // Empty constructor for Gson
@@ -62,10 +62,10 @@ public class AnalysisRequestDto {
         this.inputStance = inputStance;
     }
 
-    public String getInputSystemPrompt() {
-        return inputSystemPrompt;
+    public String getInputLLM() {
+        return inputLLM;
     }
-    public void setInputSystemPrompt(String inputSystemPrompt) {
-        this.inputSystemPrompt = inputSystemPrompt;
+    public void setInputLLM(String inputSystemPrompt) {
+        this.inputLLM = inputLLM;
     }
 }

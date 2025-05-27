@@ -571,15 +571,28 @@
     "Variant": "Readability",
     "type": "Readability"
   },
-  "DeepSeek-R1": {
-    "url": "http://readability.service.component.duui.texttechnologylab.org/",
+  "TAScore": {
+    "url": "http://ta.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-TAScore",
+    "huggingface": "",
+    "paper": "",
+    "map": "TA",
+    "Name": "TAScore",
+    "Main Tool": "TA",
+    "Variant": "TA",
+    "type": "TA"
+  },
+  "LLM DeepSeek-R1": {
+    "url": "http://llm.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-llm",
     "huggingface": "",
     "paper": "",
     "map": "test:DeepSeek-R1",
-    "Name": "DeepSeek-R1",
+    "Name": "LLM DeepSeek-R1",
     "Main Tool": "LLM",
     "Variant": "LLM",
-    "type": "LLM"
+    "type": "LLM",
+    "url-Parameter": "gondor.hucompute.org",
+    "port-Parameter": "11434"
   }
 }

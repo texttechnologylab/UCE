@@ -65,8 +65,8 @@ services:
 
   uce-postgresql-db:
     container_name: uce-postgresql-db
-    #image: pgvector/pgvector:pg16 # Old image
-    image: docker.texttechnologylab.org/uce/uce-postgresql:0.0.1
+    image: pgvector/pgvector:pg16 # Old image/
+    #image: docker.texttechnologylab.org/uce/uce-postgresql:0.0.1
     shm_size: 1g
     environment:
       POSTGRES_DB: uce

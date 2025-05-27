@@ -16,6 +16,9 @@ public class ModelInfo {
 
     private String modelType;
 
+    private String urlParameter;
+    private String portParameter;
+
     // Getter & Setter
     public String getKey() {
         return key;
@@ -95,6 +98,19 @@ public class ModelInfo {
 
     public void setModelType(String modelType) {
         this.modelType = modelType;
+    }
+
+    public String getUrlParameter() {
+        return urlParameter;
+    }
+    public void setUrlParameter(String urlParameter) {
+        this.urlParameter = urlParameter;
+    }
+    public String getPortParameter() {
+        return portParameter;
+    }
+    public void setPortParameter(String portParameter) {
+        this.portParameter = portParameter;
     }
 
 }
