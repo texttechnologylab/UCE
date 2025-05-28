@@ -18,9 +18,6 @@ import org.apache.uima.jcas.cas.AnnotationBase;
 import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
-import org.locationtech.jts.geom.Coordinate;
-import org.locationtech.jts.geom.GeometryFactory;
-import org.locationtech.jts.geom.PrecisionModel;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.geonames.GeoNamesEntity;
@@ -42,7 +39,6 @@ import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.corpus.ocr.OCRPageAdapterImpl;
 import org.texttechnologylab.models.corpus.ocr.PageAdapter;
 import org.texttechnologylab.models.corpus.ocr.PageAdapterImpl;
-import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.LogStatus;
@@ -909,7 +905,7 @@ public class Importer {
     }
 
     private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage) {
-        // Set the pages for the different annotations - this is pretty horribly, but I cant be bothered right now.
+        // Set the pages for the different annotations - this is pretty horrible, but I cant be bothered right now.
         if (document.getSentences() != null) {
             for (var anno : document.getSentences().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
@@ -1118,7 +1114,7 @@ public class Importer {
             time.setCoveredText(t.getCoveredText());
 
             // Let's see if we can dissect the raw time string into more usable formats for our db.
-            var units = RegexUtils.DissectTimeAnnotationString(time.getCoveredText());
+            var units = RegexUtils.dissectTimeAnnotationString(time.getCoveredText());
             time.setYear(units.year);
             time.setMonth(units.month);
             time.setDay(units.day);

@@ -66,7 +66,7 @@ public class RegexUtils {
     /**
      * Given a coveredtext from a Time annotation, tries to dissect it into little units.
      */
-    public static TimeUnits DissectTimeAnnotationString(String timeString) {
+    public static TimeUnits dissectTimeAnnotationString(String timeString) {
         Pattern yearPattern = Pattern.compile("\\b(1[7-9][0-9]{2}|20[0-2][0-9])\\b");
         Pattern monthPattern = Pattern.compile("\\b(January|February|March|April|May|June|July|August|September|October|November|December|Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)\\b", Pattern.CASE_INSENSITIVE);
         Pattern dayPattern = Pattern.compile("\\b([1-9]|[12][0-9]|3[01])\\.\\s?(January|February|March|April|May|June|July|August|September|October|November|December|Januar|Februar|März|April|Mai|Juni|Juli|August|September|Oktober|November|Dezember)?\\b", Pattern.CASE_INSENSITIVE);
@@ -74,7 +74,7 @@ public class RegexUtils {
 
         Matcher yearMatcher = yearPattern.matcher(timeString);
         Matcher monthMatcher = monthPattern.matcher(timeString);
-        Matcher dayMatcher = dayPattern.matcher(timeString);
+        Matcher dayMatcher = dayMatcher = dayPattern.matcher(timeString);
         Matcher seasonMatcher = seasonPattern.matcher(timeString);
 
         Integer year = null;
@@ -91,19 +91,36 @@ public class RegexUtils {
         String season = seasonMatcher.find() ? seasonMatcher.group() : "";
 
         Date fullDate = null;
-        try {
-            SimpleDateFormat format = new SimpleDateFormat("dd. MMMM yyyy", Locale.ENGLISH);
-            fullDate = new Date(format.parse(timeString).getTime());
-        } catch (ParseException e) {
-            try {
-                SimpleDateFormat format = new SimpleDateFormat("dd. MMMM yyyy", Locale.GERMAN);
-                fullDate = new Date(format.parse(timeString).getTime());
-            } catch (ParseException ex) {
-                fullDate = null;
-            }
+
+        // 1. Try full date
+        fullDate = tryParse(timeString, "dd. MMMM yyyy", Locale.ENGLISH);
+        if (fullDate == null)
+            fullDate = tryParse(timeString, "dd. MMMM yyyy", Locale.GERMAN);
+
+        // 2. Try month + year
+        if (fullDate == null && !month.isEmpty() && year != null) {
+            String fallbackString = "01. " + month + " " + year;
+            fullDate = tryParse(fallbackString, "dd. MMMM yyyy", Locale.ENGLISH);
+            if (fullDate == null)
+                fullDate = tryParse(fallbackString, "dd. MMMM yyyy", Locale.GERMAN);
+        }
+
+        // 3. Try year only
+        if (fullDate == null && year != null) {
+            String fallbackString = "01. January " + year;
+            fullDate = tryParse(fallbackString, "dd. MMMM yyyy", Locale.ENGLISH);
         }
 
         return new TimeUnits(year, month, day, fullDate, season);
+    }
+
+    private static java.sql.Date tryParse(String input, String pattern, Locale locale) {
+        try {
+            java.util.Date utilDate = new SimpleDateFormat(pattern, locale).parse(input);
+            return new java.sql.Date(utilDate.getTime());
+        } catch (ParseException e) {
+            return null;
+        }
     }
 
 

@@ -1,4 +1,4 @@
-package org.texttechnologylab.models.dto;
+package org.texttechnologylab.models.dto.map;
 
 import lombok.Getter;
 import lombok.Setter;

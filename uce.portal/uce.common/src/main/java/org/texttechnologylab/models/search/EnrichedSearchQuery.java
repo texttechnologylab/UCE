@@ -5,7 +5,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.GeoNameFeatureClass;
-import org.texttechnologylab.models.dto.LocationDto;
+import org.texttechnologylab.models.dto.map.LocationDto;
 import org.texttechnologylab.models.viewModels.CorpusViewModel;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;

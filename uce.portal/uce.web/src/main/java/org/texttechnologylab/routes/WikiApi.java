@@ -1,18 +1,25 @@
 package org.texttechnologylab.routes;
 
+import com.google.gson.ExclusionStrategy;
+import com.google.gson.FieldAttributes;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.hibernate.Hibernate;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.Renderer;
+import org.texttechnologylab.models.Linkable;
+import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.dto.LinkableNodeDto;
 import org.texttechnologylab.models.viewModels.wiki.CachedWikiPage;
 import org.texttechnologylab.services.*;
+import org.texttechnologylab.utils.ReflectionUtils;
 import org.texttechnologylab.utils.SystemStatus;
 import spark.ModelAndView;
 import spark.Route;
@@ -65,7 +72,7 @@ public class WikiApi {
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/components/rdfNodeList.ftl"));
         } catch (Exception ex) {
             logger.error("Error querying the ontology in the graph database " +
-                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+                         "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
     });
@@ -103,16 +110,17 @@ public class WikiApi {
             }
 
             if (SessionManager.CachedWikiPages.containsKey(cacheId)) {
-                return ((CachedWikiPage)SessionManager.CachedWikiPages.get(cacheId)).getRenderedView();
+                return ((CachedWikiPage) SessionManager.CachedWikiPages.get(cacheId)).getRenderedView();
             }
 
             // A missing id isn't necessarily bad, as we also have documentation pages etc.
-            var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(split[1]), (ex) -> {});
+            var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(split[1]), (ex) -> {
+            });
 
             var renderView = "";
-            if(type.startsWith("DOC")){
+            if (type.startsWith("DOC")) {
                 model.put("jenaSparqlAlive", SystemStatus.JenaSparqlStatus.isAlive());
-                if(split[1].equals("SEARCH")){
+                if (split[1].equals("SEARCH")) {
                     model.put("vm", wikiService.buildDocumentationWikiPageViewModel());
                     renderView = "/wiki/pages/searchDocumentation.ftl";
                 }
@@ -133,11 +141,11 @@ public class WikiApi {
                 // Then we have a Time annotation
                 model.put("vm", wikiService.buildTimeAnnotationWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/timeAnnotationPage.ftl";
-            }  else if (type.equals("LOC")) {
+            } else if (type.equals("LOC")) {
                 // Then we have a GeoName annotation
                 model.put("vm", wikiService.buildGeoNameAnnotationWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/geoNameAnnotationPage.ftl";
-            }  else if (type.equals("SENT")) {
+            } else if (type.equals("SENT")) {
                 // Then we have a Sentence annotation
                 model.put("vm", wikiService.buildSentenceAnnotationWikiPageViewModel(id));
                 renderView = "/wiki/pages/sentenceAnnotationPage.ftl";
@@ -162,8 +170,7 @@ public class WikiApi {
             } else if (type.startsWith("DTR")) {
                 model.put("vm", wikiService.buildTopicWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/topicPage.ftl";
-           }
-            else {
+            } else {
                 // The type part of the wikiId was unknown. Throw an error.
                 logger.warn("Someone tried to query a wiki page of a type that does not exist in UCE. This shouldn't happen.");
                 model.put("information", languageResources.get("missingParameterError"));
@@ -177,7 +184,7 @@ public class WikiApi {
             return view;
         } catch (Exception ex) {
             logger.error("Error getting a wiki page - best refer to the last logged API call " +
-                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+                         "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
     });
@@ -191,11 +198,11 @@ public class WikiApi {
                 (ex) -> logger.error("Couldn't fetch occurrences of lexicon entry - coveredText missing.", ex));
         var type = ExceptionUtils.tryCatchLog(() -> requestBody.get("type").toString(),
                 (ex) -> logger.error("Couldn't fetch occurrences of lexicon entry - type missing.", ex));
-        var skip = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("skip").toString()),
+        var skip = ExceptionUtils.tryCatchLog(() -> (int) Double.parseDouble(requestBody.get("skip").toString()),
                 (ex) -> logger.error("Calling a lexicon entry without skip shouldn't happen.", ex));
-        var take = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("take").toString()),
+        var take = ExceptionUtils.tryCatchLog(() -> (int) Double.parseDouble(requestBody.get("take").toString()),
                 (ex) -> logger.error("Calling a lexicon entry without take shouldn't happen.", ex));
-        if(coveredText == null || type == null || skip == null || take == null){
+        if (coveredText == null || type == null || skip == null || take == null) {
             model.put("information", languageResources.get("missingParameterError"));
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
         }
@@ -204,7 +211,7 @@ public class WikiApi {
             var occurrences = ExceptionUtils.tryCatchLog(
                     () -> lexiconService.getOccurrenceViewModelsOfEntry(coveredText, type, skip, take),
                     (ex) -> logger.error("Error fetching lexicon entries: ", ex));
-            if(occurrences == null){
+            if (occurrences == null) {
                 response.status(500);
                 return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
             }
@@ -213,7 +220,7 @@ public class WikiApi {
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/lexicon/occurrencesList.ftl"));
         } catch (Exception ex) {
             logger.error("Error getting occurrences from a lexicon entry - best refer to the last logged API call " +
-                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+                         "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
     });
@@ -223,27 +230,32 @@ public class WikiApi {
         var requestBody = gson.fromJson(request.body(), Map.class);
         var languageResources = LanguageResources.fromRequest(request);
 
-        var skip = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("skip").toString()),
+        var skip = ExceptionUtils.tryCatchLog(() -> (int) Double.parseDouble(requestBody.get("skip").toString()),
                 (ex) -> logger.error("Calling a lexicon without skip shouldn't happen.", ex));
-        var take = ExceptionUtils.tryCatchLog(() -> (int)Double.parseDouble(requestBody.get("take").toString()),
+        var take = ExceptionUtils.tryCatchLog(() -> (int) Double.parseDouble(requestBody.get("take").toString()),
                 (ex) -> logger.error("Calling a lexicon without take shouldn't happen.", ex));
-        if(skip == null || take == null){
+        if (skip == null || take == null) {
             model.put("information", languageResources.get("missingParameterError"));
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
         }
 
         // These parameters are optional. We can work without just fine.
-        var alphabet = ExceptionUtils.tryCatchLog(() -> (List<String>) requestBody.get("alphabet"), (ex) -> {});
-        var annotationFilters = ExceptionUtils.tryCatchLog(() -> (List<String>) requestBody.get("annotationFilters"), (ex) -> {});
-        var sortColumn = ExceptionUtils.tryCatchLog(() -> requestBody.get("sortColumn").toString(), (ex) -> {});
-        var sortDirection = ExceptionUtils.tryCatchLog(() -> requestBody.get("sortDirection").toString(), (ex) -> {});
-        var searchInput = ExceptionUtils.tryCatchLog(() -> requestBody.get("searchInput").toString(), (ex) -> {});
+        var alphabet = ExceptionUtils.tryCatchLog(() -> (List<String>) requestBody.get("alphabet"), (ex) -> {
+        });
+        var annotationFilters = ExceptionUtils.tryCatchLog(() -> (List<String>) requestBody.get("annotationFilters"), (ex) -> {
+        });
+        var sortColumn = ExceptionUtils.tryCatchLog(() -> requestBody.get("sortColumn").toString(), (ex) -> {
+        });
+        var sortDirection = ExceptionUtils.tryCatchLog(() -> requestBody.get("sortDirection").toString(), (ex) -> {
+        });
+        var searchInput = ExceptionUtils.tryCatchLog(() -> requestBody.get("searchInput").toString(), (ex) -> {
+        });
 
         try {
             var entries = ExceptionUtils.tryCatchLog(
                     () -> lexiconService.getEntries(skip, take, alphabet, annotationFilters, sortColumn, sortDirection, searchInput),
                     (ex) -> logger.error("Error fetching lexicon entries: ", ex));
-            if(entries == null){
+            if (entries == null) {
                 response.status(500);
                 return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
             }
@@ -252,7 +264,7 @@ public class WikiApi {
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/lexicon/entryList.ftl"));
         } catch (Exception ex) {
             logger.error("Error getting entries from the lexicon - best refer to the last logged API call " +
-                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+                         "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
     });
@@ -264,7 +276,7 @@ public class WikiApi {
 
         var unique = ExceptionUtils.tryCatchLog(() -> requestBody.get("unique"),
                 (ex) -> logger.error("Error, getting a linkable node without unique identifier.", ex));
-        if(unique == null){
+        if (unique == null) {
             model.put("information", languageResources.get("missingParameterError"));
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
         }
@@ -283,7 +295,7 @@ public class WikiApi {
 
             // Here we resolve the incoming and outgoing links into simply: to and from nodes
             linkableDto.fromNodes = new ArrayList<>();
-            for(var incoming:linkableVm.getIncomingLinks()){
+            for (var incoming : linkableVm.getIncomingLinks()) {
                 var newLinkableDto = new LinkableNodeDto(incoming.getFromLinkableViewModel().getBaseModel());
                 newLinkableDto.setNodeHtml(Renderer.renderLinkable(incoming.getFromLinkableViewModel().getBaseModel()));
                 newLinkableDto.setLink(incoming.getLink());
@@ -291,7 +303,7 @@ public class WikiApi {
             }
 
             linkableDto.toNodes = new ArrayList<>();
-            for(var outgoing:linkableVm.getOutgoingLinks()){
+            for (var outgoing : linkableVm.getOutgoingLinks()) {
                 var newLinkableDto = new LinkableNodeDto(outgoing.getToLinkableViewModel().getBaseModel());
                 newLinkableDto.setNodeHtml(Renderer.renderLinkable(outgoing.getToLinkableViewModel().getBaseModel()));
                 newLinkableDto.setLink(outgoing.getLink());
@@ -301,8 +313,58 @@ public class WikiApi {
             return gson.toJson(linkableDto);
         } catch (Exception ex) {
             logger.error("Error getting linkable - best refer to the last logged API call " +
-                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+                         "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
     });
+
+    public Route getAnnotation = ((request, response) -> {
+        var model = new HashMap<String, Object>();
+
+        try {
+            var languageResources = LanguageResources.fromRequest(request);
+
+            var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
+                    (ex) -> logger.error("Couldn't fetch annotation - id missing.", ex));
+            var annotationClass = ExceptionUtils.tryCatchLog(() -> request.queryParams("class"),
+                    (ex) -> logger.error("Couldn't fetch annotation - annotation class missing.", ex));
+
+            if (id == null || annotationClass == null || annotationClass.isEmpty()) {
+                model.put("information", languageResources.get("missingParameterError"));
+                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+            }
+            // We need a special gson that handles the lazy loaded proxies of Hibernate.
+            var specialGson = new GsonBuilder()
+                    .setExclusionStrategies(new ExclusionStrategy() {
+                        @Override
+                        public boolean shouldSkipField(FieldAttributes f) {
+                            // Skip java.lang.Class fields (like HibernateProxy#getClass)
+                            return f.getDeclaredType() == Class.class;
+                        }
+
+                        @Override
+                        public boolean shouldSkipClass(Class<?> clazz) {
+                            // Skip hibernate proxies
+                            return clazz.getName().contains("org.hibernate.proxy");
+                        }
+                    })
+                    .create();
+
+            var linkableAnnotation = db.getLinkable(id, annotationClass);
+            // This right here is why Hibernate has no fking friends. Their lazy loading, initializing logic
+            // does whatever it wants to do and hence I have to STORE the page text and ADD IT manually after
+            // jsonifiying it. If you find a solution for this - don't tell me, don't care.
+            var pageText = ((UIMAAnnotation) linkableAnnotation).getPage().getCoveredText();
+            var jsonTree = specialGson.toJsonTree(linkableAnnotation).getAsJsonObject();
+            if (jsonTree.has("page") && jsonTree.get("page").isJsonObject()) {
+                jsonTree.getAsJsonObject("page").addProperty("coveredText", pageText);
+            }
+            return specialGson.toJson(jsonTree);
+        } catch (Exception ex) {
+            logger.error("Error getting an annotation - best refer to the last logged API call " +
+                         "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
+
 }

@@ -1,0 +1,18 @@
+package org.texttechnologylab.models.dto.map;
+
+import lombok.Getter;
+import lombok.Setter;
+
+@Getter
+@Setter
+public class PointDto {
+    private long id;
+    private long annotationId;
+    private String annotationType;
+    private String location;
+    private String date;
+    private String dateCoveredText;
+    private String label;
+    private double latitude;
+    private double longitude;
+}

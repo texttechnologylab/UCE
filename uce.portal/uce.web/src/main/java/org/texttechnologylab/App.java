@@ -22,6 +22,7 @@ import org.texttechnologylab.modules.ModelGroup;
 import org.texttechnologylab.modules.ModelResources;
 import org.texttechnologylab.routes.*;
 import org.texttechnologylab.services.LexiconService;
+import org.texttechnologylab.services.MapService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.ImageUtils;
 import org.texttechnologylab.utils.StringUtils;
@@ -33,6 +34,7 @@ import javax.servlet.MultipartConfigElement;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
+import java.sql.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -98,8 +100,10 @@ public class App {
         logger.info(languageResource.get("search"));
 
         // Load in and test the model resources for the Analysis Engine
-        var modelResources = new ModelResources();
-        logger.info("Testing the model resources:");
+        if(SystemStatus.UceConfig.getSettings().getAnalysis().isEnableAnalysisEngine()){
+            var modelResources = new ModelResources();
+            logger.info("Testing the model resources:");
+        }
 
         // Start the different cronjobs in the background
         SessionManager.InitSessionManager(commonConfig.getSessionJobInterval());
@@ -134,6 +138,9 @@ public class App {
             try{
                 var result = context.getBean(PostgresqlDataInterface_Impl.class).callGeonameLocationRefresh();
                 logger.info("Finished updating the geoname locations. Updated locations: " + result);
+                logger.info("Trying to refresh the timeline map cache...");
+                context.getBean(MapService.class).refreshCachedTimelineMap(false);
+                logger.info("Finished refreshing the timeline map.");
             } catch (Exception ex){
                 logger.error("There was an error trying to refresh geoname locations in the startup of the web app. App starts normally though.");
             }
@@ -156,6 +163,13 @@ public class App {
         ExceptionUtils.tryCatchLog(() -> initSparkRoutes(context),
                 (ex) -> logger.error("There was a problem initializing the spark routes, web service will be shut down.", ex));
         logger.info("Routes initialized - UCE web service has started!");
+
+        try{
+            var test = context.getBean(MapService.class).getGeoNameTimelineLinks(38,10,40,60, Date.valueOf("1800-01-01"), Date.valueOf("1850-12-31"), 9);
+            var xd = "";
+        }catch (Exception ex){
+            logger.error("What", ex);
+        }
     }
 
     /**
@@ -247,6 +261,7 @@ public class App {
         var wikiApi = new WikiApi(context, configuration);
         var importExportApi = new ImportExportApi(context);
         var analysisApi = new AnalysisApi(context, configuration, DUUIInputCounter);
+        var mapApi = new MapApi(context, configuration);
         Renderer.freemarkerConfig = configuration;
 
         before((request, response) -> {
@@ -329,6 +344,7 @@ public class App {
 
             path("/wiki", () -> {
                 get("/page", wikiApi.getPage);
+                get("/annotation", wikiApi.getAnnotation);
                 path("/linkable", () -> {
                     post("/node", wikiApi.getLinkableNode);
                 });
@@ -342,6 +358,9 @@ public class App {
             path("/corpus", () -> {
                 get("/inspector", documentApi.getCorpusInspectorView);
                 get("/documentsList", documentApi.getDocumentListOfCorpus);
+                path("/map", () -> {
+                    post("/linkedOccurrences", mapApi.getLinkedOccurrences);
+                });
             });
 
             path("/search", () -> {

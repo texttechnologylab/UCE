@@ -343,9 +343,14 @@ $('body').on('click', '.expand-metadata-string-btn', function () {
 });
 
 /**
- * Opens something in a large text window
+ * Opens something in a large text window, give title, content and a highlight array
  */
-function openInExpandedTextView(title, content) {
+function openInExpandedTextView(title, content, highlightedWords = []) {
+    if(highlightedWords && highlightedWords.length > 0){
+        highlightedWords.forEach(function (word){
+            content = content.replaceAll(word, "<b>" + word + "</b>");
+        });
+    }
     $('.wiki-metadata-expanded-view .content').html(content);
     $('.wiki-metadata-expanded-view .title').html(title);
     $('.wiki-metadata-expanded-view').fadeIn(25);

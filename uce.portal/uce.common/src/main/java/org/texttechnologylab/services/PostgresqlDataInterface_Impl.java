@@ -19,6 +19,8 @@ import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
+import org.texttechnologylab.models.dto.map.MapClusterDto;
+import org.texttechnologylab.models.dto.map.PointDto;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.imp.ImportLog;
@@ -108,6 +110,77 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     annotations.add(annotationSearchResult);
                 }
                 return annotations;
+            }
+        }));
+    }
+
+    public ArrayList<PointDto> getGeonameTimelineLinks(double minLng,
+                                                       double minLat,
+                                                       double maxLng,
+                                                       double maxLat,
+                                                       java.sql.Date fromDate,
+                                                       java.sql.Date toDate,
+                                                       long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+            try (var storedProcedure = connection.prepareCall("{call uce_query_geoname_timeline_links" + "(?, ?, ?, ?, ?, ?, ?)}")) {
+                storedProcedure.setDouble(1, minLng);
+                storedProcedure.setDouble(2, minLat);
+                storedProcedure.setDouble(3, maxLng);
+                storedProcedure.setDouble(4, maxLat);
+                storedProcedure.setDate(5, fromDate);
+                storedProcedure.setDate(6, toDate);
+                storedProcedure.setInt(7, (int) corpusId);
+
+                var result = storedProcedure.executeQuery();
+                var points = new ArrayList<PointDto>();
+                while (result.next()) {
+                    var pointDto = new PointDto();
+                    pointDto.setId(result.getLong("id"));
+                    pointDto.setAnnotationId(result.getLong("annotationId"));
+                    pointDto.setAnnotationType(result.getString("annotationType"));
+                    pointDto.setLocation(result.getString("location"));
+                    pointDto.setDateCoveredText(result.getString("datecoveredtext"));
+                    var date = result.getDate("date");
+                    pointDto.setDate(date != null ? date.toString() : null);
+                    pointDto.setLabel(result.getString("fromcoveredtext"));
+                    pointDto.setLongitude(result.getDouble("lng"));
+                    pointDto.setLatitude(result.getDouble("lat"));
+                    points.add(pointDto);
+                }
+                return points;
+            }
+        }));
+    }
+
+    public ArrayList<MapClusterDto> getGeonameClustersFromTimelineMap(double minLng,
+                                                                      double minLat,
+                                                                      double maxLng,
+                                                                      double maxLat,
+                                                                      double gridSize,
+                                                                      java.sql.Date fromDate,
+                                                                      java.sql.Date toDate,
+                                                                      long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
+            try (var storedProcedure = connection.prepareCall("{call uce_query_clustered_geoname_timeline_cache" + "(?, ?, ?, ?, ?, ?, ?, ?)}")) {
+                storedProcedure.setDouble(1, minLng);
+                storedProcedure.setDouble(2, minLat);
+                storedProcedure.setDouble(3, maxLng);
+                storedProcedure.setDouble(4, maxLat);
+                storedProcedure.setDouble(5, gridSize);
+                storedProcedure.setDate(6, fromDate);
+                storedProcedure.setDate(7, toDate);
+                storedProcedure.setInt(8, (int) corpusId);
+
+                var result = storedProcedure.executeQuery();
+                var clusters = new ArrayList<MapClusterDto>();
+                while (result.next()) {
+                    var clusterDto = new MapClusterDto();
+                    clusterDto.setCount(result.getInt("count"));
+                    clusterDto.setLongitude(result.getDouble("lng"));
+                    clusterDto.setLatitude(result.getDouble("lat"));
+                    clusters.add(clusterDto);
+                }
+                return clusters;
             }
         }));
     }

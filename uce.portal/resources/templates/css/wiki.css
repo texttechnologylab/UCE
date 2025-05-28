@@ -452,6 +452,11 @@
     line-height: 1.5;
 }
 
+.wiki-metadata-expanded-view .content-reader .content b{
+    color:var(--prime);
+    background-color: rgba(125, 125, 125, 0.1);
+}
+
 .wiki-metadata-expanded-view .content-reader .content h1,
 .wiki-metadata-expanded-view .content-reader .content h2,
 .wiki-metadata-expanded-view .content-reader .content h3,

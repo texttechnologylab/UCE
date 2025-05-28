@@ -42,22 +42,6 @@ public class BiofidTaxon extends UIMAAnnotation implements Cloneable {
 
     @Getter
     @Setter
-    @Column(name = "document_id", insertable = false, updatable = false)
-    private Long documentId;
-
-    @Getter
-    @Setter
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "page_id", nullable = false)
-    private Page page;
-
-    @Getter
-    @Setter
-    @Column(name = "page_id", insertable = false, updatable = false)
-    private Long pageId;
-
-    @Getter
-    @Setter
     private String biofidUrl;
 
     @Getter

@@ -343,6 +343,10 @@
     "de-DE": "Alternative Namen",
     "en-EN": "Alternative Names"
   },
+  "map": {
+    "de-DE": "Karte",
+    "en-EN": "Map"
+  },
   "noOntologies": {
     "de-DE": "Keine Ontologien gefunden.",
     "en-EN": "No ontologies found."

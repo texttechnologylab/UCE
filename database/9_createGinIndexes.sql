@@ -54,6 +54,11 @@ CREATE INDEX IF NOT EXISTS idx_srlink_groundcoveredtext ON srlink(LOWER(groundco
 -- Create indexes on our lexicon.
 CREATE INDEX IF NOT EXISTS idx_lexicon_coveredtext_lower_trgm ON lexicon USING gin (lower(coveredtext) gin_trgm_ops);
 
+-- Create indexes for the Logical Links
+CREATE INDEX IF NOT EXISTS idx_links_fromid_partial ON annotationlink(fromid) WHERE fromid IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_links_toid_partial ON annotationlink(toid) WHERE toid IS NOT NULL;
+
+
 -- Create indexes for the Geoname Locations and Postgis in general
 CREATE INDEX IF NOT EXISTS idx_location_geography ON geoname USING GIST (location);
 

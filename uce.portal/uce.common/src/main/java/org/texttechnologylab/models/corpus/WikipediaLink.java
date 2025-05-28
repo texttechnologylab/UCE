@@ -18,7 +18,6 @@ public class WikipediaLink extends UIMAAnnotation {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "wikipediaLink_Id")
     private List<WikiDataHyponym> wikiDataHyponyms;
-    private String coveredText;
 
     public WikipediaLink() {
         super(-1, -1);
@@ -26,14 +25,6 @@ public class WikipediaLink extends UIMAAnnotation {
 
     public WikipediaLink(int begin, int end) {
         super(begin, end);
-    }
-
-    public String getCoveredText() {
-        return coveredText;
-    }
-
-    public void setCoveredText(String coveredText) {
-        this.coveredText = coveredText;
     }
 
     public String getWikiData() {
