@@ -19,6 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_author_trgm ON metadatatitleinf
 CREATE INDEX IF NOT EXISTS idx_namedentity_coveredtext_trgm ON namedentity USING gin (coveredtext gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_time_coveredtext_trgm ON time USING gin (coveredtext gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_biofidtaxon_coveredtext_trgm ON biofidtaxon USING gin (coveredtext gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_biofidtaxon_primaryname_trgm ON biofidtaxon USING gin (primaryname gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_sentence_coveredtext_trgm ON sentence USING gin (coveredtext gin_trgm_ops);
 
 -- For the metadata lemma search, we use coveredtext and value of the column, which is why we add them both in the index as well.
@@ -57,7 +58,6 @@ CREATE INDEX IF NOT EXISTS idx_lexicon_coveredtext_lower_trgm ON lexicon USING g
 -- Create indexes for the Logical Links
 CREATE INDEX IF NOT EXISTS idx_links_fromid_partial ON annotationlink(fromid) WHERE fromid IS NOT NULL;
 CREATE INDEX IF NOT EXISTS idx_links_toid_partial ON annotationlink(toid) WHERE toid IS NOT NULL;
-
 
 -- Create indexes for the Geoname Locations and Postgis in general
 CREATE INDEX IF NOT EXISTS idx_location_geography ON geoname USING GIST (location);

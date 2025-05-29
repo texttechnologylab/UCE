@@ -27,9 +27,9 @@ public interface DataInterface {
     public List<AnnotationSearchResult> getAnnotationsOfCorpus(long corpusId, int skip, int take) throws DatabaseOperationException;
 
     /**
-     * Returns all taxons (if any) that match the given string values AND their identifier column is not empty.
+     * Returns all biofidurls (if any) of biofidtaxon that match the given string values.
      */
-    public List<Taxon> getIdentifiableTaxonsByValues(List<String> tokens) throws DatabaseOperationException;
+    public List<String> getIdentifiableTaxonsByValue(String token) throws DatabaseOperationException;
 
     /**
      * Counts all documents within a given corpus

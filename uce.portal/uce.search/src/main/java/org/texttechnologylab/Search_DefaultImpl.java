@@ -325,7 +325,7 @@ public class Search_DefaultImpl implements Search {
                 // If we already parsed a taxon command, we can skip the fetching of alternative taxon names
                 if (!isTaxonCommandToken) {
                     String finalCleanedToken = cleanedToken;
-                    var potentialTaxons = ExceptionUtils.tryCatchLog(
+                    /*var potentialTaxons = ExceptionUtils.tryCatchLog(
                             () -> db.getIdentifiableTaxonsByValues(List.of(finalCleanedToken.toLowerCase())),
                             (ex) -> logger.error("Error trying to fetch taxons based on a list of tokens.", ex));
 
@@ -343,7 +343,7 @@ public class Search_DefaultImpl implements Search {
                         } else {
                             taxonIds.add(taxon.getIdentifier().trim());
                         }
-                    }
+                    }*/
                 }
 
                 // Get the names of the taxon ids

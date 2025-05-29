@@ -185,27 +185,18 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }));
     }
 
-    public List<Taxon> getIdentifiableTaxonsByValues(List<String> tokens) throws DatabaseOperationException {
-        var tokensAsOneString = String.join(" ", tokens);
-        var finalTokens = new ArrayList<String>(tokens);
-        finalTokens.add(tokensAsOneString);
-
-        // TODO: Hardcoded SQL, since writing this in Hibernate is waaaay more painful
+    public List<String> getIdentifiableTaxonsByValue(String token) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            String sql = "SELECT * FROM taxon t " +
-                    "WHERE (lower(t.coveredText) IN :tokens " +
-                    "OR EXISTS ( " +
-                    "    SELECT 1 FROM unnest(t.value_array) AS val " +
-                    "    WHERE TRIM(LOWER(val)) IN :tokens " +
-                    ")) " +
-                    "AND t.identifier IS NOT NULL " +
-                    "AND t.identifier <> '' ";
+            String sql = "SELECT DISTINCT biofidurl FROM biofidtaxon WHERE primaryname ILIKE :token LIMIT 100";
 
-            // Create a query with the native SQL
-            var query = session.createNativeQuery(sql, Taxon.class);
-            query.setParameter("tokens", finalTokens.stream().map(String::toLowerCase).toList());
+            var query = session.createNativeQuery(sql); // No type/class here
+            query.setParameter("token", "%" + token + "%");
 
-            return query.getResultList();
+            @SuppressWarnings("unchecked")
+            List<Object> result = query.getResultList();
+            return result.stream()
+                    .map(Object::toString)
+                    .toList();
         });
     }
 
