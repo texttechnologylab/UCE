@@ -476,6 +476,9 @@
                             <i class="fas fa-globe-europe mr-1"></i> Website
                         </a>
                         <p class="mb-0">${system.getCorporate().getContact().getAddress()}</p>
+                        <a class="mt-1" href="/imprint">
+                            <i class="fas fa-gavel mr-1"></i> ${languageResource.get("imprint")}
+                        </a>
                     </div>
                 </div>
             </div>

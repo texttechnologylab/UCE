@@ -317,6 +317,13 @@ public class App {
             return new ModelAndView(model, "index.ftl");
         }, new CustomFreeMarkerEngine(configuration));
 
+        // Potential imprint
+        get("/imprint", (request, response) -> {
+            var model = new HashMap<String, Object>();
+            model.put("imprint", SystemStatus.UceConfig.getCorporate().getImprint());
+            return new ModelAndView(model, "imprint.ftl");
+        }, new CustomFreeMarkerEngine(configuration));
+
         // A document reader view
         get("/documentReader", documentApi.getSingleDocumentReadView);
 
