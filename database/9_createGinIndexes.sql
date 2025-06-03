@@ -60,5 +60,12 @@ CREATE INDEX IF NOT EXISTS idx_links_fromid_partial ON annotationlink(fromid) WH
 CREATE INDEX IF NOT EXISTS idx_links_toid_partial ON annotationlink(toid) WHERE toid IS NOT NULL;
 
 -- Create indexes for the Geoname Locations and Postgis in general
-CREATE INDEX IF NOT EXISTS idx_location_geography ON geoname USING GIST (location);
+CREATE INDEX IF NOT EXISTS idx_geoname_location_geog ON geoname USING GIST(location_geog);
+CREATE INDEX IF NOT EXISTS idx_geoname_location_geom ON geoname USING GIST(location_geom);
+
+-- Add imortant indexes to the materialized view of the timeline map:
+CREATE INDEX IF NOT EXISTS idx_geom ON geoname_context_timeline_cache USING GIST (location_geom);
+CREATE INDEX IF NOT EXISTS idx_date ON geoname_context_timeline_cache (date);
+CREATE INDEX IF NOT EXISTS idx_corpus ON geoname_context_timeline_cache (corpusid);
+CREATE INDEX IF NOT EXISTS idx_corpus_date ON geoname_context_timeline_cache (corpusid, date);
 

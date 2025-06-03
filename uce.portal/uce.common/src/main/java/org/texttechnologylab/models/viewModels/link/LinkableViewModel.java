@@ -31,7 +31,7 @@ public class LinkableViewModel {
      */
     private void fetchLinks(){
         var allLinks = ExceptionUtils.tryCatchLog(
-                () ->db.getAllLinksOfLinkable(baseModel.getPrimaryDbIdentifier(), baseModel.getCompatibleLinkTypes()),
+                () ->db.getAllLinksOfLinkable(baseModel.getPrimaryDbIdentifier(), baseModel.getClass(), baseModel.getCompatibleLinkTypes()),
                 (ex) -> logger.error("Error fetching all links connected to Linkable " + baseModel.getUnique(), ex));
         if(allLinks == null) return;
         this.incomingLinks = allLinks.stream().filter(l -> l.getToId() == baseModel.getPrimaryDbIdentifier())

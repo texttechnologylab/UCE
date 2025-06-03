@@ -6,6 +6,7 @@ import com.google.gson.reflect.TypeToken;
 import org.hibernate.*;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
+import org.jsoup.Connection;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
@@ -120,9 +121,11 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                        double maxLat,
                                                        java.sql.Date fromDate,
                                                        java.sql.Date toDate,
-                                                       long corpusId) throws DatabaseOperationException {
+                                                       long corpusId,
+                                                       int skip,
+                                                       int take) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
-            try (var storedProcedure = connection.prepareCall("{call uce_query_geoname_timeline_links" + "(?, ?, ?, ?, ?, ?, ?)}")) {
+            try (var storedProcedure = connection.prepareCall("{call uce_query_geoname_timeline_links" + "(?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
                 storedProcedure.setDouble(1, minLng);
                 storedProcedure.setDouble(2, minLat);
                 storedProcedure.setDouble(3, maxLng);
@@ -130,6 +133,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 storedProcedure.setDate(5, fromDate);
                 storedProcedure.setDate(6, toDate);
                 storedProcedure.setInt(7, (int) corpusId);
+                storedProcedure.setInt(8, skip);
+                storedProcedure.setInt(9, take);
 
                 var result = storedProcedure.executeQuery();
                 var points = new ArrayList<PointDto>();
@@ -311,22 +316,28 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Link> getAllLinksOfLinkable(long id, List<Class<? extends ModelBase>> possibleLinkTypes) throws DatabaseOperationException {
+    public List<Link> getAllLinksOfLinkable(long id, Class<? extends Linkable> linkableType, List<Class<? extends ModelBase>> possibleLinkTypes) throws DatabaseOperationException {
         // A linkable object can have multiple links that reference different tables (document, namedentity, token...)
         var links = new ArrayList<Link>();
 
         for (var type : possibleLinkTypes) {
-            links.addAll(getLinksOfLinkableByType(id, type));
+            links.addAll(getLinksOfLinkableByType(id, linkableType, type));
         }
         return links;
     }
 
-    public List<Link> getLinksOfLinkableByType(long id, Class<? extends ModelBase> type) throws DatabaseOperationException {
+    public List<Link> getLinksOfLinkableByType(long id, Class<? extends Linkable> linkableType, Class<? extends ModelBase> type) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteria = session.createCriteria(type);
             criteria.add(Restrictions.or(
-                    Restrictions.eq("fromId", id),
-                    Restrictions.eq("toId", id)
+                    Restrictions.and(
+                            Restrictions.eq("fromId", id),
+                            Restrictions.eq("fromAnnotationType", linkableType.getName())
+                    ),
+                    Restrictions.and(
+                            Restrictions.eq("toId", id),
+                            Restrictions.eq("toAnnotationType", linkableType.getName())
+                    )
             ));
             return criteria.list();
         });
@@ -1138,8 +1149,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             Document doc = session.createQuery(criteriaQuery).uniqueResult();
 
             if (doc != null) {
-                Hibernate.initialize(doc.getPages());
-                Hibernate.initialize(doc.getUceMetadata());
+                initializeCompleteDocument(doc, 0, 999999);
             }
             return doc;
         });

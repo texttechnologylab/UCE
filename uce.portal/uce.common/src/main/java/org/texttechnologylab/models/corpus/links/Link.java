@@ -1,5 +1,7 @@
 package org.texttechnologylab.models.corpus.links;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.texttechnologylab.models.ModelBase;
 
 import javax.persistence.Column;
@@ -14,55 +16,58 @@ import javax.persistence.MappedSuperclass;
  */
 @MappedSuperclass
 public class Link extends ModelBase {
+    @Getter
+    @Setter
     private long corpusId;
+
+    @Getter
+    @Setter
     @Column(columnDefinition = "TEXT")
     private String type;
+
+    @Getter
+    @Setter
     private String linkId;
+
     /**
      * This is the PK of the document or annotation in the db, so the 'id'.
      */
+    @Getter
+    @Setter
     private long fromId;
+
     /**
      * This is the PK of the document or annotation in the db, so the 'id'.
      */
+    @Getter
+    @Setter
     private long toId;
 
-    public String getType() {
-        return type;
-    }
+    /*
+    Interesting info concerning supertypes. We don't know what kind of annotation this link points to.
+    We could use Hibernates @Inheritance and @Discriminator logic, but that leaves things to Hibernate
+    and in the end, if you'd rename the table of e.g. namedentity, you will still need a manual migration
+    to all foreign keys and what not... I don't see the benefit over simply storing the table name  of the annotation as well.
+    Makes things much easier and from what I read, the outcome is pretty similar.
+     */
 
-    public void setType(String type) {
-        this.type = type;
-    }
+    @Getter
+    @Setter
+    @Column(columnDefinition = "TEXT")
+    private String fromAnnotationTypeTable;
 
-    public String getLinkId() {
-        return linkId;
-    }
+    @Getter
+    @Setter
+    @Column(columnDefinition = "TEXT")
+    private String toAnnotationTypeTable;
 
-    public void setLinkId(String linkId) {
-        this.linkId = linkId;
-    }
+    @Getter
+    @Setter
+    @Column(columnDefinition = "TEXT")
+    private String fromAnnotationType;
 
-    public long getFromId() {
-        return fromId;
-    }
-
-    public void setFromId(long fromId) {
-        this.fromId = fromId;
-    }
-
-    public long getToId() {
-        return toId;
-    }
-
-    public void setToId(long toId) {
-        this.toId = toId;
-    }
-    public long getCorpusId() {
-        return corpusId;
-    }
-
-    public void setCorpusId(long corpusId) {
-        this.corpusId = corpusId;
-    }
+    @Getter
+    @Setter
+    @Column(columnDefinition = "TEXT")
+    private String toAnnotationType;
 }

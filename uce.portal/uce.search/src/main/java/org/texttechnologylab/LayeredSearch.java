@@ -221,7 +221,7 @@ public class LayeredSearch extends CacheItem {
                     var locationDto = EnrichedSearchQuery.parseLocationRadiusCommand(slot.getValue());
                     if(locationDto == null) continue;
                     // We use the postgis extension for fast radius-based geographic queries.
-                    var condition = "ST_DWithin(location, ST_MakePoint({LNG},{LAT})::geography, {RADIUS}) " + conditionEnding;
+                    var condition = "ST_DWithin(location_geog, ST_MakePoint({LNG},{LAT}), {RADIUS}) " + conditionEnding;
                     condition = condition.replace("{LNG}", Double.toString(locationDto.getLongitude()));
                     condition = condition.replace("{LAT}", Double.toString(locationDto.getLatitude()));
                     condition = condition.replace("{RADIUS}", Double.toString(locationDto.getRadius()));

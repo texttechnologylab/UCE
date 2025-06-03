@@ -5,12 +5,20 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1
         FROM information_schema.columns
-        WHERE table_name = 'geoname' AND column_name = 'location'
+        WHERE table_name = 'geoname' AND column_name = 'location_geog'
     ) THEN
-        ALTER TABLE geoname
-        ADD COLUMN location geography(Point, 4326);
+        ALTER TABLE geoname ADD COLUMN location_geog geography(Point, 4326);
+    END IF;
+
+    IF NOT EXISTS (
+        SELECT 1
+        FROM information_schema.columns
+        WHERE table_name = 'geoname' AND column_name = 'location_geom'
+    ) THEN
+        ALTER TABLE geoname ADD COLUMN location_geom geometry(Point, 4326);
     END IF;
 END $$;
+
 
 -- Create or replace the function to update the geoname.location column
 CREATE OR REPLACE FUNCTION update_geoname_locations()
@@ -20,8 +28,10 @@ DECLARE
 BEGIN
     -- Update location where it is NULL and latitude/longitude are not NULL
     UPDATE geoname
-    SET location = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)
-    WHERE location IS NULL
+    SET
+        location_geog = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geography,
+        location_geom = ST_SetSRID(ST_MakePoint(longitude, latitude), 4326)::geometry
+    WHERE location_geog IS NULL
       AND latitude IS NOT NULL
       AND longitude IS NOT NULL;
 
@@ -31,14 +41,13 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
-
 -- Create a cached materialized view of logical links and geoname/time annotations
 -- To refresh it, use "REFRESH MATERIALIZED VIEW [NAME]]"
 CREATE MATERIALIZED VIEW IF NOT EXISTS geoname_context_timeline_cache AS
 SELECT
     g.id AS geoname_id,
     g.name AS geoname_name,
-    g.location,
+    g.location_geom,
     al.corpusid,
     t.date,
 	al.fromannotationtypetable,
@@ -51,10 +60,9 @@ LEFT JOIN (
     JOIN time t ON al1.toid = t.id
     WHERE al1.linkid = 'context' AND t.date IS NOT NULL
 ) t ON al.fromid = t.fromid
-WHERE al.linkid = 'context'
+WHERE al.linkid = 'context' and al.fromannotationtypetable != 'namedEntity' 
 GROUP BY
-    g.id, g.name, g.location, al.corpusid, t.date, al.fromannotationtypetable;
-
+    g.id, g.name, g.location_geom, al.corpusid, t.date, al.fromannotationtypetable;
 
 -- Query geoname markers on the premise of the annotationlink connection geoname -> annotation -> time
 CREATE OR REPLACE FUNCTION uce_query_geoname_timeline_links(
@@ -64,7 +72,9 @@ CREATE OR REPLACE FUNCTION uce_query_geoname_timeline_links(
     max_lat DOUBLE PRECISION,
     from_date DATE DEFAULT NULL,
     to_date DATE DEFAULT NULL,
-    corpus BIGINT DEFAULT NULL
+    corpus BIGINT DEFAULT NULL,
+    skip INTEGER DEFAULT 0,
+    take INTEGER DEFAULT NULL
 )
 RETURNS TABLE (
     lat DOUBLE PRECISION,
@@ -81,8 +91,8 @@ AS $$
 BEGIN
     RETURN QUERY
     SELECT
-        ST_Y(g.location::geometry) AS lat,
-        ST_X(g.location::geometry) AS lng,
+        ST_Y(g.location_geom) AS lat,
+        ST_X(g.location_geom) AS lng,
         al.fromcoveredtext,
         al.id AS id,
         al.fromid AS annotationId,
@@ -91,25 +101,27 @@ BEGIN
         t.date,
         t.coveredtext AS datecoveredtext
     FROM geoname g
-    JOIN annotationlink al ON al.toid = g.id and al.corpusid = corpus
+    JOIN annotationlink al ON al.toid = g.id AND al.corpusid = corpus
     LEFT JOIN (
         SELECT al1.fromid, t.date, t.coveredtext 
         FROM annotationlink al1
         JOIN time t ON al1.toid = t.id
         WHERE al1.linkid = 'context' AND t.date IS NOT NULL
     ) t ON al.fromid = t.fromid
-    WHERE al.linkid = 'context' and al.fromannotationtypetable != 'namedEntity' 
+    WHERE al.linkid = 'context' 
+      AND al.fromannotationtypetable != 'namedEntity' 
       AND ST_Within(
-            g.location::geometry,
+            g.location_geom,
             ST_MakeEnvelope(min_lng, min_lat, max_lng, max_lat, 4326)
           )
       AND (
             (from_date IS NULL AND to_date IS NULL)
             OR (t.date BETWEEN from_date AND to_date)
-          );
+          )
+    OFFSET skip
+    LIMIT take;
 END;
 $$ LANGUAGE plpgsql STABLE;
-
 
 -- Similar function used to query the context timelinecache we built in a materialized view. Example call:
 CREATE OR REPLACE FUNCTION uce_query_clustered_geoname_timeline_cache(
@@ -134,15 +146,15 @@ BEGIN
         SUM(context_count)::BIGINT AS count,
 
         -- Calculate latitude and longitude of the cluster's centroid using PostGIS functions
-        ST_Y(ST_Centroid(ST_Collect(location::geometry))) AS lat,
-        ST_X(ST_Centroid(ST_Collect(location::geometry))) AS lng
+        ST_Y(ST_Centroid(ST_Collect(location_geom))) AS lat,
+        ST_X(ST_Centroid(ST_Collect(location_geom))) AS lng
 
     FROM geoname_context_timeline_cache
 
     WHERE
         -- Filter points within the specified map viewport
         ST_Within(
-            location::geometry,
+            location_geom,
             ST_MakeEnvelope(min_lng, min_lat, max_lng, max_lat, 4326)  -- Bounding box in WGS84 (EPSG:4326)
         )
 
@@ -159,6 +171,6 @@ BEGIN
         AND corpusid = corpus
 
     -- Group nearby points based on a fixed spatial grid to create clusters
-    GROUP BY ST_SnapToGrid(location::geometry, grid_size, grid_size);
+    GROUP BY ST_SnapToGrid(location_geom, grid_size, grid_size);
 END;
 $$ LANGUAGE plpgsql;
