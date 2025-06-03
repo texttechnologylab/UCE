@@ -7,6 +7,7 @@ import java.util.HashMap;
 public class TextClass {
 
     private HashMap<ModelInfo, ArrayList<TopicClass>> topics = new HashMap<>();
+    private HashMap<ModelInfo, ArrayList<OffensiveClass>> offensives = new HashMap<>();
     private HashMap<ModelInfo, ArrayList<HateClass>> hate = new HashMap<>();
     private HashMap<ModelInfo, ArrayList<SentimentClass>> sentiment = new HashMap<>();
     private HashMap<ModelInfo, ArrayList<ToxicClass>> toxic = new HashMap<>();
@@ -21,6 +22,7 @@ public class TextClass {
     private ArrayList<HateClass> hateAVG = new ArrayList<>();
     private ArrayList<SentimentClass> sentimentAVG = new ArrayList<>();
     private ArrayList<TopicClass> topicAVG = new ArrayList<>();
+    private ArrayList<OffensiveClass> offensiveAVG = new ArrayList<>();
     private ArrayList<ToxicClass> toxicAVG = new ArrayList<>();
     private ArrayList<EmotionClass> emotionAVG = new ArrayList<>();
     private ArrayList<FactClass> factAVG = new ArrayList<>();
@@ -32,6 +34,7 @@ public class TextClass {
     private ArrayList<TAClass> taScoreAVG = new ArrayList<>();
 
     private ArrayList<ModelInfo> topicsModels = new ArrayList<>();
+    private ArrayList<ModelInfo> offensivesModels = new ArrayList<>();
     private ArrayList<ModelInfo> hateModels = new ArrayList<>();
     private ArrayList<ModelInfo> sentimentModels = new ArrayList<>();
     private ArrayList<ModelInfo> toxicModels = new ArrayList<>();
@@ -57,6 +60,16 @@ public class TextClass {
         this.topics.get(model).add(topic);
         if (!this.topicsModels.contains(model)) {
             this.topicsModels.add(model);
+        }
+    }
+
+    public void addOffensive(ModelInfo model, OffensiveClass offensive) {
+        if (!this.offensives.containsKey(model)) {
+            this.offensives.put(model, new ArrayList<>());
+        }
+        this.offensives.get(model).add(offensive);
+        if (!this.offensivesModels.contains(model)) {
+            this.offensivesModels.add(model);
         }
     }
 
@@ -112,6 +125,13 @@ public class TextClass {
             return new ArrayList<>();
         }
         return this.topics.get(model);
+    }
+
+    public ArrayList<OffensiveClass> getOffensive(ModelInfo model) {
+        if (!this.offensives.containsKey(model)) {
+            return new ArrayList<>();
+        }
+        return this.offensives.get(model);
     }
 
     public ArrayList<EmotionClass> getEmotion(ModelInfo model) {
@@ -312,6 +332,32 @@ public class TextClass {
         }
     }
 
+    public void computeAVGOffensive(){
+        for (ModelInfo model : this.offensives.keySet()) {
+            HashMap<String, Double> offensiveScores = new HashMap<>();
+            ArrayList<OffensiveClass> offensiveList = this.offensives.get(model);
+            for (OffensiveClass offensive : offensiveList) {
+                ArrayList<OffensiveInput> offensives = offensive.getOffensives();
+                for (OffensiveInput offensiveInput : offensives) {
+                    String key = offensiveInput.getKey();
+                    double score = offensiveInput.getScore();
+                    offensiveScores.put(key, offensiveScores.getOrDefault(key, 0.0) + score);
+                }
+            }
+            OffensiveClass avgOffensive = new OffensiveClass();
+            ArrayList<OffensiveInput> avgOffensives = new ArrayList<>();
+            for (String key : offensiveScores.keySet()) {
+                OffensiveInput offensiveInput = new OffensiveInput();
+                offensiveInput.setKey(key);
+                offensiveInput.setScore(offensiveScores.get(key) / offensiveList.size());
+                avgOffensives.add(offensiveInput);
+            }
+            avgOffensive.setOffensives(avgOffensives);
+            avgOffensive.setModelInfo(model);
+            this.offensiveAVG.add(avgOffensive);
+        }
+    }
+
     public void computeAVGEmotion(){
         for (ModelInfo model : this.emotions.keySet()) {
             HashMap<String, Double> emotionScores = new HashMap<>();
@@ -428,6 +474,10 @@ public class TextClass {
 
     public ArrayList<TopicClass> getTopicAVG() {
         return topicAVG;
+    }
+
+    public ArrayList<OffensiveClass> getOffensiveAVG() {
+        return offensiveAVG;
     }
 
     public ArrayList<LLMClass> getLlmAVG() {

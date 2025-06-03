@@ -36,6 +36,8 @@ public class DUUIInformation {
 
     private Boolean isLLM = false;
 
+    private Boolean isOffensive = false;
+
     public DUUIInformation(Sentences sentence, TextClass textInformation, List<ModelGroup> modelGroups, HashMap<String, ModelInfo> modelInfos) {
         this.sentence = sentence;
         this.textInformation = textInformation;
@@ -99,6 +101,14 @@ public class DUUIInformation {
 
     public void setIsTopic(Boolean isTopic) {
         this.isTopic = isTopic;
+    }
+
+    public Boolean getIsOffensive() {
+        return isOffensive;
+    }
+
+    public void setIsOffensive(Boolean isOffensive) {
+        this.isOffensive = isOffensive;
     }
 
     public Boolean getIsToxic() {

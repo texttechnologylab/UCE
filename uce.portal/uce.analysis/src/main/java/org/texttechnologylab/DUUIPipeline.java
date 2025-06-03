@@ -240,6 +240,7 @@ public class DUUIPipeline {
         textClass.computeAVGFact();
         textClass.computeAVGCoherence();
         textClass.computeAVGStance();
+        textClass.computeAVGOffensive();
         return new Object[]{sentences, textClass};
     }
 
@@ -268,6 +269,31 @@ public class DUUIPipeline {
                     }
                     sentences.getSentence(Integer.toString(begin), Integer.toString(end)).addTopic(topicClass);
                     textClass.addTopic(modelInfo, topicClass);
+                }
+                break;
+            case "Offensive":
+                Collection<OffensiveSpeech> allOffensive = JCasUtil.select(cas, OffensiveSpeech.class);
+                for (OffensiveSpeech offensive : allOffensive) {
+                    OffensiveClass offensiveClass = new OffensiveClass();
+                    int begin = offensive.getBegin();
+                    int end = offensive.getEnd();
+                    FSArray<AnnotationComment> offensives_all = offensive.getOffensives();
+                    String model_name = offensive.getModel().getModelName();
+                    offensiveClass.setModelInfo(modelInfo);
+                    // model_name must be the same as modelInfo.getmap
+                    if (!model_name.equals(modelInfo.getMap())) {
+                        continue;
+                    }
+                    for (AnnotationComment annotationComment: offensives_all) {
+                        String keyOffensive = annotationComment.getKey();
+                        String valueOffensive = annotationComment.getValue();
+                        OffensiveInput offensiveInput = new OffensiveInput();
+                        offensiveInput.setKey(keyOffensive);
+                        offensiveInput.setScore(Double.parseDouble(valueOffensive));
+                        offensiveClass.addOffensive(offensiveInput);
+                    }
+                    sentences.getSentence(Integer.toString(begin), Integer.toString(end)).addOffensive(offensiveClass);
+                    textClass.addOffensive(modelInfo, offensiveClass);
                 }
                 break;
             case "Emotion":

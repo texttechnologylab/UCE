@@ -36,6 +36,7 @@ public class RunDUUIPipeline {
         boolean isReadability = false;
         boolean isLLM = false;
         boolean isTA = false;
+        boolean isOffensive = false;
         for (String modelKey : modelGroups) {
             if (modelInfos.containsKey(modelKey)) {
                 ModelInfo modelInfo = modelInfos.get(modelKey);
@@ -83,7 +84,9 @@ public class RunDUUIPipeline {
                     case "TA":
                         isTA = true;
                         break;
-
+                    case "Offensive":
+                        isOffensive = true;
+                        break;
                 }
             }
         }
@@ -171,6 +174,8 @@ public class RunDUUIPipeline {
         duuiInformation.setIsLLM(isLLM);
         // set TA
         duuiInformation.setIsTA(isTA);
+        // set offensive
+        duuiInformation.setIsOffensive(isOffensive);
         return duuiInformation;
     }
 

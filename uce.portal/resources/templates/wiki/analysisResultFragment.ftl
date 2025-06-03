@@ -94,6 +94,28 @@
                         </div>
                     </div>
                 </#if>
+                <#-- Offensive -->
+                <#if DUUI.isOffensive>
+                    <div class="border p-2 mb-2 bg-light">
+                        <h6 class="mb-0 mr-1 color-prime">Multilabel Offensive</h6>
+                        <div class="analysis-offensives-container">
+                            <#list DUUI.textInformation.offensiveAVG as model>
+                                <div class="analysis-offensive-card">
+                                    <div class="analysis-offensive-card-title">${model.getModelInfo().getName()}</div>
+                                    <div class="analysis-offensives-grid">
+                                        <#list model.offensives as offensive>
+                                        <#-- Berechne die Transparenz basierend auf dem Score (zwischen 0 und 1) -->
+                                            <#assign opacity = offensive.getScore()?string?replace(",", ".")>
+                                            <div class="analysis-offensive-entry" style="background-color: rgba(0, 200, 200, ${opacity});">
+                                                <div class="analysis-offensive-score">${offensive.getKey()}: ${offensive.getScore()}</div>
+                                            </div>
+                                        </#list>
+                                    </div>
+                                </div>
+                            </#list>
+                        </div>
+                    </div>
+                </#if>
                 <#-- Emotion -->
                 <#if DUUI.isEmotion>
                     <div class="border p-2 mb-2 bg-light">
