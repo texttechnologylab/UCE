@@ -3,8 +3,8 @@ class UCEMap {
     constructor(container, readonly = false) {
         this._eventHandlers = {};
         this.readonly = readonly;
-        this.isAdaptive = false;
-        this.selectedMakerPayload = undefined;
+        this.isTimelineMap = false;
+        this.selectedMarkerPayload = undefined;
         this.corpusId = undefined;
         this.currentMarker = undefined;
         this.currentLongLat = undefined; // {lat: 0, lng: 0}
@@ -12,6 +12,10 @@ class UCEMap {
 
         this.$container = $(container);
         this.$container.addClass('uce-map');
+        this.$container.append(`
+        <div class="full-loader">
+            <div class="simple-loader"><p class="p-2 m-0 text-center w-100 color-prime font-italic">Fetching Occurrences</p></div>
+        </div>`);
         this.$container.append(`
         <div class="map-ui-container p-2">
             <div class="flexed align-items-center justify-content-end w-100">
@@ -47,7 +51,7 @@ class UCEMap {
      */
     linkedTimelineMap(corpusId) {
         const ctx = this;
-        this.isAdaptive = true;
+        this.isTimelineMap = true;
         this.corpusId = corpusId;
         this.twoDim();
 
@@ -68,17 +72,22 @@ class UCEMap {
                             </label>
                         </div>
                     </div>
-                    <div class="flexed align-items-center justify-content-between wrapped">
-                        <input class="form-control w-auto" data-type="from" type="date" value="1700-01-01"/>
-                        <i class="ml-2 mr-2 fas fa-long-arrow-alt-right"></i>
-                        <input class="form-control w-auto" data-type="to" type="date" value="2000-01-01"/>
+                    <div>
+                        <input class="form-control w-100" data-type="from" type="date" value="1700-01-01"/>
+                        <label class="w-100 text-center mt-2 mb-2"><i class="fas fa-long-arrow-alt-down"></i></label>
+                        <input class="form-control w-100" data-type="to" type="date" value="2000-01-01"/>
+                        <div class="w-100 flexed justify-content-center mt-2">
+                            <button class="btn btn-prime p-1 mt-2 submit-time-btn"><i class="fas fa-check"></i></button>
+                        </div>
                     </div>
                 </div>
                 <!-- List of annotation links -->
                 <div class="group-box bg-default p-0">
                     <label class="text-center w-100 p-2">Occurrences</label>
                     <div class="occurrences-list p-2">
-                        <p class="text small-font w-100 text-center">None selected.</p>
+                        <div class="alert alert-info mb-0">
+                            <p class="mb-0 text small-font w-100 text-center">None selected.</p>
+                        </div>
                     </div>
                     <div class="w=100 p-2">
                         <button class="p-1 btn btn-light w-100 rounded-0 load-more-occurrences">Load more</button>
@@ -90,25 +99,24 @@ class UCEMap {
     `);
 
         this.$linkedMapNavigator = this.$container.find('.linked-map-navigator');
-        this.$linkedMapNavigator.find('#timeline-switch').on('change', () => this.fetchAndRenderAdaptiveNodes());
-        this.$linkedMapNavigator.find('.timeline-inputs input[type="date"]').on('change', () => this.fetchAndRenderAdaptiveNodes());
+        this.$linkedMapNavigator.find('#timeline-switch').on('change', () => this.fetchAndRenderTimelineNodes());
+        this.$linkedMapNavigator.find('.timeline-inputs .submit-time-btn').on('click', () => this.fetchAndRenderTimelineNodes());
         this.$linkedMapNavigator.find('button.load-more-occurrences').on('click', function () {
-            if(!ctx.selectedMakerPayload) return;
-            ctx.selectedMakerPayload.skip += ctx.selectedMakerPayload.take;
-            ctx.renderTimelineOccurrences(ctx.selectedMakerPayload);
+            if (!ctx.selectedMarkerPayload) return;
+            ctx.selectedMarkerPayload.skip += ctx.selectedMarkerPayload.take;
+            ctx.renderTimelineOccurrences(ctx.selectedMarkerPayload);
         });
 
-        this.fetchAndRenderAdaptiveNodes();
+        this.fetchAndRenderTimelineNodes();
     }
 
     buildPayload() {
-        const bounds = this.twoDimMap.getBounds();
         const zoom = this.twoDimMap.getZoom();
         return {
-            minLat: bounds.getSouth(),
-            maxLat: bounds.getNorth(),
-            minLng: bounds.getWest(),
-            maxLng: bounds.getEast(),
+            minLat: -90,
+            maxLat: 90,
+            minLng: -180,
+            maxLng: 180,
             zoom: zoom,
             corpusId: this.corpusId,
             fromDate: this.$linkedMapNavigator.find('#timeline-switch').is(':checked')
@@ -120,9 +128,10 @@ class UCEMap {
         };
     }
 
-    fetchAndRenderAdaptiveNodes() {
-        const mode = 'clustered';
+    fetchAndRenderTimelineNodes() {
         const payload = this.buildPayload();
+        const ctx = this;
+        ctx.$container.find('.full-loader').fadeIn(150);
 
         fetch('/api/corpus/map/linkedOccurrenceClusters', {
             method: 'POST',
@@ -132,9 +141,49 @@ class UCEMap {
         })
             .then(response => response.json())
             .then(data => {
-                this.renderTimelineNodes(data, mode);
+                this.renderTimelineNodes(data);
+                ctx.$container.find('.full-loader').fadeOut(125);
             })
-            .catch(err => console.error('Error fetching adaptive nodes:', err));
+            .catch(err => {
+                showMessageModal("Error", "There was an error fetching the map nodes.");
+                ctx.$container.find('.full-loader').fadeOut(125);
+            });
+    }
+
+    renderTimelineNodes(data) {
+        // Clear previous layers
+        if (this.timelineClusters) this.twoDimMap.removeLayer(this.timelineClusters);
+        const ctx = this;
+
+        this.timelineClusters = L.markerClusterGroup({
+            spiderfyOnMaxZoom: false,
+        });
+        data.forEach(d => {
+            const marker = L.marker([d.latitude, d.longitude]);
+            marker.options.count = d.count;
+            marker.bindPopup(`Cluster of ${d.count} items`);
+
+            // Attach to the on click events
+            marker.on('click', function (e) {
+                // When clicked, we simply list all the annotations of that cluster.
+                let payload = ctx.buildPayload();
+                payload.minLng = d.longitude - 0.0001;
+                payload.maxLng = d.longitude + 0.0001;
+                payload.minLat = d.latitude - 0.0001;
+                payload.maxLat = d.latitude + 0.0001;
+                payload['take'] = 25;
+                payload['skip'] = 0;
+                ctx.selectedMarkerPayload = payload;
+                // Clear the list of the previous occurrences
+                const $listContainer = ctx.$linkedMapNavigator.find('.occurrences-list');
+                $listContainer.html('');
+                ctx.renderTimelineOccurrences(payload);
+            });
+
+            this.timelineClusters.addLayer(marker);
+        });
+
+        this.twoDimMap.addLayer(this.timelineClusters);
     }
 
     renderTimelineOccurrences(payload) {
@@ -161,7 +210,7 @@ class UCEMap {
                                 <div class="text-right">
                                     <p class="small-font mb-0 font-italic text"><i class="far fa-clock mr-1"></i>${marker.date ?? "(-)"}</p>
                                     <span class="display-none" data-type="date">${marker.dateCoveredText}</span>
-                                    <p class="small-font mb-0 font-italic text"><i class="fas fa-map-marker-alt"></i> <span data-type="location">${marker.location}</span></p>
+                                    <p class="small-font mb-0 font-italic text"><i class="fas fa-map-marker-alt"></i> <span data-type="location">${marker.locationCoveredText}</span></p>
                                 </div>
                             </div>
                         </div>
@@ -179,7 +228,7 @@ class UCEMap {
                     })
                         .then(response => {
                             if (!response.ok) {
-                                throw new Error(`HTTP error! status: ${response.status}`);
+                                showMessageModal("Error", "There was an error fetching the information of that occurrence.");
                             }
                             return response.json();
                         })
@@ -189,79 +238,13 @@ class UCEMap {
                                 $card.find('span[data-type="location"]').html(),
                                 $card.find('span[data-type="date"]').html()
                             ]
-                            openInExpandedTextView(data.coveredText, data.page.coveredText, highlights);
+                            openInExpandedTextView(data.coveredText, data.page.coveredText, highlights, data.wikiId, data.coveredText);
                         })
-                        .catch(err => console.error('Error fetching adaptive nodes:', err));
+                        .catch(err => showMessageModal("Error", "There was an error fetching the information of that occurrence."));
                 });
             })
-            .catch(err => console.error('Error fetching adaptive nodes:', err));
+            .catch(err => showMessageModal("Error", "There was an error fetching the map markers."));
     }
-
-    renderTimelineNodes(data, mode) {
-        // Clear previous layers
-        //if (this.nodeMarkers) this.nodeMarkers.forEach(m => this.twoDimMap.removeLayer(m));
-        //if (this.clusterGroup) this.twoDimMap.removeLayer(this.clusterGroup);
-        //if (this.heatLayer) this.twoDimMap.removeLayer(this.heatLayer);
-        const ctx = this;
-
-        if (mode === 'clustered') {
-            this.timelineClusters = L.markerClusterGroup({
-                spiderfyOnMaxZoom: false,
-            });
-            data.forEach(d => {
-                const marker = L.marker([d.latitude, d.longitude]);
-                marker.options.count = d.count;
-                marker.bindPopup(`Cluster of ${d.count} items`);
-
-                // Attach to the on click events
-                marker.on('click', function (e) {
-                    // When clicked, we simply list all the annotations of that cluster.
-                    let payload = ctx.buildPayload();
-                    payload.minLng = d.longitude - 1;
-                    payload.maxLng = d.longitude + 1;
-                    payload.minLat = d.latitude - 1;
-                    payload.maxLat = d.latitude + 1;
-                    payload['take'] = 25;
-                    payload['skip'] = 0;
-                    ctx.selectedMakerPayload = payload;
-                    // Clear the list of the previous occurrences
-                    const $listContainer = ctx.$linkedMapNavigator.find('.occurrences-list');
-                    $listContainer.html('');
-                    ctx.renderTimelineOccurrences(payload);
-                });
-
-                this.timelineClusters.addLayer(marker);
-            });
-
-            this.twoDimMap.addLayer(this.timelineClusters);
-        } else if (mode === 'inspect') {
-            this.inspectMarkers = L.markerClusterGroup({
-                iconCreateFunction: function (cluster) {
-                    // Sum up all marker counts
-                    const totalCount = cluster.getAllChildMarkers().reduce((sum, marker) => {
-                        return sum + (marker.options.count || 1); // default to 1 if count missing
-                    }, 0);
-                    return L.divIcon({
-                        html: `<div class="custom-cluster">${totalCount}</div>`,
-                        className: 'custom-cluster-wrapper',
-                        iconSize: L.point(40 + Math.min(totalCount, 50), 40 + Math.min(totalCount, 50))
-                    });
-                },
-                spiderfyOnMaxZoom: false,
-            });
-
-            data.forEach(d => {
-                const marker = L.marker([d.latitude, d.longitude]);
-                if (d.count) marker.options.count = d.count;
-                marker.options.data = d;
-                marker.bindPopup(`${d.count} occurrences`);
-                this.inspectMarkers.addLayer(marker);
-            });
-
-            this.twoDimMap.addLayer(this.inspectMarkers);
-        }
-    }
-
 
     /**
      * Adds a list of nodes in the form of {lat, lng, label} to an existing 2D map.
@@ -350,7 +333,7 @@ class UCEMap {
         }
 
         // When zooming in an we have adaptive nodes, we want to rerender nodes
-        if (this.isAdaptive)
+        if (this.isTimelineMap)
             this.twoDimMap.on('moveend', () => {
                 //ctx.fetchAndRenderAdaptiveNodes();
             });

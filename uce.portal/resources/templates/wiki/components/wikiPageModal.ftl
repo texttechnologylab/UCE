@@ -7,8 +7,11 @@
     <div class="content-reader">
 
         <header class="pl-4 pr-4 pt-3 pb-3 flexed align-items-center justify-content-between">
+            <a class="w-rounded-btn m-0 open-wiki-page" data-wid="-" data-wcovered="-" onclick="$(this).closest('.wiki-metadata-expanded-view').fadeOut(25)">
+                <i class="color-prime fab fa-wikipedia-w"></i>
+            </a>
             <h5 class="mb-0 text-dark title"></h5>
-            <a class="rounded-a" onclick="$(this).closest('.wiki-metadata-expanded-view').fadeOut(25)">
+            <a class="w-rounded-btn m-0" onclick="$(this).closest('.wiki-metadata-expanded-view').fadeOut(25)">
                 <i class="fas fa-times"></i>
             </a>
         </header>

@@ -34,7 +34,6 @@ import javax.servlet.MultipartConfigElement;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.sql.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.UUID;
@@ -84,7 +83,7 @@ public class App {
         // Execute the external database scripts
         logger.info("Executing external database scripts from " + commonConfig.getDatabaseScriptsLocation());
         ExceptionUtils.tryCatchLog(
-                () -> SystemStatus.ExecuteExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
+                () -> SystemStatus.executeExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
                 (ex) -> logger.warn("Couldn't read the db scripts in the external database scripts folder; path wasn't found or other IO problems. ", ex));
         logger.info("Finished with executing external database scripts.");
 
@@ -109,7 +108,7 @@ public class App {
         SessionManager.InitSessionManager(commonConfig.getSessionJobInterval());
         logger.info("Initialized the Session Job.");
 
-        SystemStatus.InitSystemStatus(commonConfig.getSystemJobInterval(), context);
+        SystemStatus.initSystemStatus(commonConfig.getSystemJobInterval(), context);
         logger.info("Initialized the System Job.");
 
         logger.info("Checking if we can or should update the lexicon... (this may take a moment depending on the time of the last update. Runs asynchronous.)");

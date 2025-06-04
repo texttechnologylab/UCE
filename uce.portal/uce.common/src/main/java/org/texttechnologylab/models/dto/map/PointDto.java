@@ -9,6 +9,7 @@ public class PointDto {
     private long id;
     private long annotationId;
     private String annotationType;
+    private String locationCoveredText;
     private String location;
     private String date;
     private String dateCoveredText;

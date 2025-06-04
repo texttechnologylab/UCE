@@ -345,7 +345,11 @@ $('body').on('click', '.expand-metadata-string-btn', function () {
 /**
  * Opens something in a large text window, give title, content and a highlight array
  */
-function openInExpandedTextView(title, content, highlightedWords = []) {
+function openInExpandedTextView(title,
+                                content,
+                                highlightedWords = [],
+                                wikiId = undefined,
+                                wikiCoveredText = undefined) {
     if(highlightedWords && highlightedWords.length > 0){
         highlightedWords.forEach(function (word){
             content = content.replaceAll(word, "<b>" + word + "</b>");
@@ -353,6 +357,15 @@ function openInExpandedTextView(title, content, highlightedWords = []) {
     }
     $('.wiki-metadata-expanded-view .content').html(content);
     $('.wiki-metadata-expanded-view .title').html(title);
+
+    const $wikiButton = $('.wiki-metadata-expanded-view a.open-wiki-page');
+    if(wikiId){
+        $wikiButton.show();
+        $wikiButton.data('wid', wikiId);
+        if(wikiCoveredText) $wikiButton.data('wcovered', wikiCoveredText);
+    } else{
+        $wikiButton.hide();
+    }
     $('.wiki-metadata-expanded-view').fadeIn(25);
 }
 

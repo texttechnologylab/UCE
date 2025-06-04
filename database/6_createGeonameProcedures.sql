@@ -60,7 +60,7 @@ LEFT JOIN (
     JOIN time t ON al1.toid = t.id
     WHERE al1.linkid = 'context' AND t.date IS NOT NULL
 ) t ON al.fromid = t.fromid
-WHERE al.linkid = 'context' and al.fromannotationtypetable != 'namedEntity' 
+WHERE al.linkid = 'context' --and al.fromannotationtypetable != 'namedEntity' 
 GROUP BY
     g.id, g.name, g.location_geom, al.corpusid, t.date, al.fromannotationtypetable;
 
@@ -83,6 +83,7 @@ RETURNS TABLE (
     id BIGINT,
     annotationId BIGINT,
     annotationType TEXT,
+    locationcoveredtext TEXT,
     location TEXT,
     date DATE,
     datecoveredtext TEXT
@@ -97,7 +98,8 @@ BEGIN
         al.id AS id,
         al.fromid AS annotationId,
         al.fromannotationtype AS annotationType,
-        al.tocoveredtext AS location,
+        al.tocoveredtext AS locationcoveredtext,
+        g.name AS location,
         t.date,
         t.coveredtext AS datecoveredtext
     FROM geoname g
@@ -109,7 +111,7 @@ BEGIN
         WHERE al1.linkid = 'context' AND t.date IS NOT NULL
     ) t ON al.fromid = t.fromid
     WHERE al.linkid = 'context' 
-      AND al.fromannotationtypetable != 'namedEntity' 
+      --AND al.fromannotationtypetable != 'namedEntity' 
       AND ST_Within(
             g.location_geom,
             ST_MakeEnvelope(min_lng, min_lat, max_lng, max_lat, 4326)
@@ -159,7 +161,7 @@ BEGIN
         )
 
         -- For now, no named entities
-        AND fromannotationtypetable != 'namedEntity' 
+        --AND fromannotationtypetable != 'namedEntity' 
 
         -- Filter by date range
         AND (

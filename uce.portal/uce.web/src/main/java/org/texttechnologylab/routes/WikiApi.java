@@ -14,6 +14,7 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.Renderer;
 import org.texttechnologylab.models.Linkable;
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.dto.LinkableNodeDto;
@@ -356,6 +357,7 @@ public class WikiApi {
             // jsonifiying it. If you find a solution for this - don't tell me, don't care.
             var pageText = ((UIMAAnnotation) linkableAnnotation).getPage().getCoveredText();
             var jsonTree = specialGson.toJsonTree(linkableAnnotation).getAsJsonObject();
+            if(linkableAnnotation instanceof WikiModel wikiModel) jsonTree.addProperty("wikiId", wikiModel.getWikiId());
             if (jsonTree.has("page") && jsonTree.get("page").isJsonObject()) {
                 jsonTree.getAsJsonObject("page").addProperty("coveredText", pageText);
             }

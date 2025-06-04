@@ -6,7 +6,6 @@ import com.google.gson.reflect.TypeToken;
 import org.hibernate.*;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
-import org.jsoup.Connection;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
@@ -40,14 +39,12 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
-import java.lang.annotation.Annotation;
 import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
 
 @Service
 public class PostgresqlDataInterface_Impl implements DataInterface {
@@ -143,6 +140,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     pointDto.setId(result.getLong("id"));
                     pointDto.setAnnotationId(result.getLong("annotationId"));
                     pointDto.setAnnotationType(result.getString("annotationType"));
+                    pointDto.setLocationCoveredText(result.getString("locationcoveredtext"));
                     pointDto.setLocation(result.getString("location"));
                     pointDto.setDateCoveredText(result.getString("datecoveredtext"));
                     var date = result.getDate("date");
@@ -1184,7 +1182,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 SELECT DISTINCT g.name
                 FROM geoname g
                 JOIN document d ON g.document_id = d.id
-                WHERE ST_DWithin(location, CAST(ST_MakePoint(:longitude,:latitude) AS geography), :radius)
+                WHERE ST_DWithin(location_geog, CAST(ST_MakePoint(:longitude,:latitude) AS geography), :radius)
                 AND d.corpusId = :corpusId
                 LIMIT :limit
             """;
