@@ -14,6 +14,7 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.Renderer;
 import org.texttechnologylab.models.Linkable;
 import org.texttechnologylab.models.UIMAAnnotation;
+import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.dto.LinkableNodeDto;
@@ -290,14 +291,14 @@ public class WikiApi {
 
             // Now create the DTO from it.
             var linkableDto = new LinkableNodeDto(linkable);
-            linkableDto.setNodeHtml(Renderer.renderLinkable(linkable));
+            linkableDto.setNodeHtml(Renderer.renderLinkable(linkable, null));
             var linkableVm = linkable.getLinkableViewModel();
 
             // Here we resolve the incoming and outgoing links into simply: to and from nodes
             linkableDto.fromNodes = new ArrayList<>();
             for (var incoming : linkableVm.getIncomingLinks()) {
                 var newLinkableDto = new LinkableNodeDto(incoming.getFromLinkableViewModel().getBaseModel());
-                newLinkableDto.setNodeHtml(Renderer.renderLinkable(incoming.getFromLinkableViewModel().getBaseModel()));
+                newLinkableDto.setNodeHtml(Renderer.renderLinkable(incoming.getFromLinkableViewModel().getBaseModel(), linkable));
                 newLinkableDto.setLink(incoming.getLink());
                 linkableDto.fromNodes.add(newLinkableDto);
             }
@@ -305,7 +306,7 @@ public class WikiApi {
             linkableDto.toNodes = new ArrayList<>();
             for (var outgoing : linkableVm.getOutgoingLinks()) {
                 var newLinkableDto = new LinkableNodeDto(outgoing.getToLinkableViewModel().getBaseModel());
-                newLinkableDto.setNodeHtml(Renderer.renderLinkable(outgoing.getToLinkableViewModel().getBaseModel()));
+                newLinkableDto.setNodeHtml(Renderer.renderLinkable(outgoing.getToLinkableViewModel().getBaseModel(), linkable));
                 newLinkableDto.setLink(outgoing.getLink());
                 linkableDto.toNodes.add(newLinkableDto);
             }
@@ -356,6 +357,7 @@ public class WikiApi {
             // jsonifiying it. If you find a solution for this - don't tell me, don't care.
             var pageText = ((UIMAAnnotation) linkableAnnotation).getPage().getCoveredText();
             var jsonTree = specialGson.toJsonTree(linkableAnnotation).getAsJsonObject();
+            if(linkableAnnotation instanceof WikiModel wikiModel) jsonTree.addProperty("wikiId", wikiModel.getWikiId());
             if (jsonTree.has("page") && jsonTree.get("page").isJsonObject()) {
                 jsonTree.getAsJsonObject("page").addProperty("coveredText", pageText);
             }

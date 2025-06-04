@@ -22,7 +22,7 @@ public final class Renderer {
     /**
      * Renders a linkable to an HTML component that is primarily used for the flow diagram of the Linkable network
      */
-    public static String renderLinkable(Linkable linkable){
+    public static String renderLinkable(Linkable linkable, Linkable from){
         String path = "defaultError.ftl";
         var uiModel = new HashMap<String, Object>();
         if(linkable instanceof Document doc){
@@ -34,6 +34,7 @@ public final class Renderer {
         } else if (linkable instanceof UIMAAnnotation anno){
             path = "*/links/linkableAnnotation.ftl";
             uiModel.put("anno", anno);
+            if(from instanceof UIMAAnnotation fromAnno) uiModel.put("sourceanno", fromAnno);
             return Renderer.renderToHTML(path, uiModel);
         }
         return Renderer.renderToHTML(path, uiModel);

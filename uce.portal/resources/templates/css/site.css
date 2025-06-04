@@ -1086,6 +1086,13 @@ nav .selected-nav-btn.text::before {
     width: 100%;
 }
 
+.uce-map .full-loader{
+    z-index: 901;
+    background-color: rgba(255, 255, 255, 0.65) !important;
+    backdrop-filter: blur(3px) !important;
+    display: none;
+}
+
 .uce-map a[href="https://leafletjs.com"] {
     display: none;
 }
@@ -1129,17 +1136,17 @@ nav .selected-nav-btn.text::before {
     max-width: 500px;
     background-color: rgba(255, 255, 255, 0.85);
     backdrop-filter: blur(6px);
-    z-index: 999;
+    z-index: 900;
     box-shadow: rgba(100, 100, 111, 0.2) 0px 7px 29px 0px;
 }
 
 #uce-timeline-map .linked-map-navigator .occurrences-list{
     overflow-y: auto;
-    max-height: 60vh;
+    max-height: 45vh;
 }
 
 #uce-timeline-map .linked-map-navigator .occurrences-list .occurrence-card{
-    padding: 6px;
+    padding: 10px;
     margin-bottom: 12px;
     border-radius: 3px;
     border:lightgrey 1px solid;

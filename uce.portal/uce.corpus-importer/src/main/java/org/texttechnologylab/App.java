@@ -1,34 +1,27 @@
 package org.texttechnologylab;
 
-import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.uima.fit.testing.util.DisableLogging;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.SpringConfig;
-import org.texttechnologylab.config.UceConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.UCEImport;
 
 import org.apache.commons.cli.DefaultParser;
-import org.apache.commons.cli.MissingOptionException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.File;
-import java.io.FileNotFoundException;
-import java.io.FileReader;
-import java.io.InputStreamReader;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.logging.ConsoleHandler;
 import java.util.logging.Level;
 
 /**
@@ -48,7 +41,7 @@ public class App {
         var commonConfig = new CommonConfig();
         logger.info("Executing external database scripts from " + commonConfig.getDatabaseScriptsLocation());
         ExceptionUtils.tryCatchLog(
-                () -> SystemStatus.ExecuteExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
+                () -> SystemStatus.executeExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
                 (ex) -> logger.warn("Couldn't read the db scripts in the external database scripts folder; path wasn't found or other IO problems. ", ex));
         logger.info("Finished with executing external database scripts.");
 
