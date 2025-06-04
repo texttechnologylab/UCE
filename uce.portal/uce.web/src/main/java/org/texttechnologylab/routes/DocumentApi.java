@@ -229,4 +229,35 @@ public class DocumentApi {
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(Map.of("information", "Error retrieving document topics."), "defaultError.ftl"));
         }
     });
+
+    public Route getTaxonCountByPage = ((request, response) -> {
+        var documentId = request.queryParams("documentId");
+
+        if (documentId == null || documentId.isEmpty()) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+        }
+
+        try {
+            var taxonCounts = db.getTaxonCountByPageId(Long.parseLong(documentId));
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : taxonCounts) {
+                var pageMap = new HashMap<String, Object>();
+                pageMap.put("page_id", row[0]);
+                pageMap.put("taxon_count", row[1]);
+                result.add(pageMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+        } catch (Exception ex) {
+            logger.error("Error getting taxon counts.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving taxon counts."), "defaultError.ftl"));
+        }
+    });
+
 }

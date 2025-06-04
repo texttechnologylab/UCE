@@ -821,6 +821,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             $('.scrollbar-minimap').show();
         }
         if (targetId === 'visualization-tab') {
+            setTimeout(() => renderTemporalExplorer('vp-1'), 500);
             $('.viz-nav-btn').removeClass('active');
             $('.viz-nav-btn').first().addClass('active');
 
@@ -846,6 +847,7 @@ $(document).on('click', '.viz-nav-btn', function () {
     $(target).addClass('active');
 
     if (target === '#viz-panel-1') {
+        setTimeout(() => renderTemporalExplorer('vp-1'), 500);
     }
     if (target === '#viz-panel-2') {
 
@@ -940,5 +942,121 @@ function renderSentenceTopicSankey(containerId) {
             $('.scrollbar-minimap').hide();
             console.log('Edge clicked from', params.data.source, 'to', params.data.target);
         }
+    });
+}
+
+// TODO: MOVE CODE TO GRAPHVIZ
+function renderTemporalExplorer(containerId) {
+    const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
+    const docId = rawValue ? parseInt(rawValue, 10) : null;
+    if (!docId) return console.error("Missing or invalid documentId");
+
+    const taxonReq = $.get('/api/document/page/taxons', { documentId: docId });
+
+    Promise.all([taxonReq]).then(([taxons]) => {
+        const rawPageIds = new Set();
+
+        taxons.forEach(d => rawPageIds.add(parseInt(d.page_id)));
+
+        const sortedPageIds = Array.from(rawPageIds).sort((a, b) => a - b);
+
+        const pageIdToPageNumber = new Map();
+        sortedPageIds.forEach((pid, idx) => {
+            pageIdToPageNumber.set(pid, idx + 1);
+        });
+
+        // Merge data
+        const dataMap = new Map();
+
+
+        // From taxons
+        taxons.forEach(({ page_id, taxon_count }) => {
+            const pid = parseInt(page_id);
+            const page = pageIdToPageNumber.get(pid);
+            if (!dataMap.has(page)) dataMap.set(page, { page, topicSet: new Set(), taxon: 0, ne: 0 });
+            dataMap.get(page).taxon = parseInt(taxon_count);
+        });
+
+        // Sort and extract
+        const sorted = Array.from(dataMap.values()).sort((a, b) => a.page - b.page);
+        const pages = sorted.map(row => row.page);
+        const taxonCounts = sorted.map(row => row.taxon);
+
+        const chart = echarts.init(document.getElementById(containerId));
+
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                formatter: function (params) {
+                    const values = {};
+                    params.forEach(p => {
+                        if (p.seriesName.includes('Taxons')) values['Taxons'] = p.data;
+                    });
+
+                    let result = `Page `+params[0].axisValue+`<br/>`;
+                    for (const [key, val] of Object.entries(values)) {
+                        result += key+`:` +val+`<br/>`;
+                    }
+                    return result;
+                }
+            },
+
+            legend: {
+                data: [
+                    'Taxons (Line)',
+                ]
+            },
+            xAxis: {
+                type: 'category',
+                name: 'Page Number',
+                data: pages
+            },
+            yAxis: {
+                type: 'value',
+                name: 'Count'
+            },
+            series: [
+
+
+                // Taxons
+                {
+                    name: 'Taxons (Bar)',
+                    type: 'bar',
+                    data: taxonCounts,
+                    itemStyle: {
+                        color: '#91CC75',
+                        opacity: 0.15
+                    },
+                    barGap: '-100%',
+                    z: 1
+                },
+                {
+                    name: 'Taxons (Line)',
+                    type: 'line',
+                    data: taxonCounts,
+                    symbol: 'circle',
+                    symbolSize: 10,
+                    lineStyle: { width: 3, color: '#91CC75' },
+                    itemStyle: { color: '#91CC75' },
+                    z: 2
+                },
+            ]
+        };
+
+        chart.setOption(option);
+        chart.on('click', function (params) {
+            if (params.componentSubType === 'line' || params.componentSubType === 'bar') {
+                const pageNumber = params.name;
+
+                const pageElement = document.querySelector('.page[data-id="' + pageNumber + '"]');
+                if (pageElement) {
+                    pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    console.error(`Page`+pageNumber+` not found.`);
+                }
+            }
+        });
+    }).catch(err => {
+        console.error("Error loading temporal data:", err);
     });
 }

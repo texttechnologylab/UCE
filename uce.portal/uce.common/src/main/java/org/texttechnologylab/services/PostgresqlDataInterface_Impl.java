@@ -8,6 +8,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
+import org.texttechnologylab.annotations.Taxonsystem;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.Linkable;
@@ -1724,6 +1725,36 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     "LIMIT 20";
 
             var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId);
+
+            return query.getResultList();
+        });
+    }
+
+    public List<Object[]> getTaxonCountByPageId(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            List<String> taxonTypes = ReflectionUtils.getTaxonSystemTypes(Taxon.class);
+
+            // Dynamically construct the SQL query using UNION ALL for all taxon tables
+            StringBuilder sqlBuilder = new StringBuilder();
+            for (int i = 0; i < taxonTypes.size(); i++) {
+                String tableName = taxonTypes.get(i);
+                sqlBuilder.append("SELECT t.page_id, COUNT(t.valuee) AS taxon_count ")
+                        .append("FROM ").append(tableName).append(" t ")
+                        .append("WHERE t.document_id = :documentId ")
+                        .append("GROUP BY t.page_id ");
+                if (i < taxonTypes.size() - 1) {
+                    sqlBuilder.append("UNION ALL ");
+                }
+            }
+
+            // Wrap the UNION ALL query in a final aggregation query
+            String finalSql = "SELECT page_id, SUM(taxon_count) AS total_taxon_count " +
+                    "FROM (" + sqlBuilder.toString() + ") AS combined_taxons " +
+                    "GROUP BY page_id " +
+                    "ORDER BY total_taxon_count DESC";
+
+            var query = session.createNativeQuery(finalSql)
                     .setParameter("documentId", documentId);
 
             return query.getResultList();
