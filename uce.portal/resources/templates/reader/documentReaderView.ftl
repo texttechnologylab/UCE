@@ -45,6 +45,7 @@
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script src="js/utils.js"></script>
     <script src="js/visualization/cdns/chartjs-449.js"></script>
+    <script src="js/visualization/cdns/echarts-560.js"></script>
     <script src="js/visualization/cdns/d3js-790.js"></script>
     <script src="js/visualization/cdns/drawflow-last.js"></script>
     <script type="module" src="js/md-block.js"></script>
