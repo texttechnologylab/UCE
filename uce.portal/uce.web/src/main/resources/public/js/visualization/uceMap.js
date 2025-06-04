@@ -204,7 +204,7 @@ class UCEMap {
                              data-type="${marker.annotationType}">
                             <div class="flexed align-items-center justify-content-between">
                                 <div>
-                                    <p class="mb-0 color-prime"><i class="fas fa-map-pin mr-1"></i> <span data-type="label">${marker.label}</span></p>
+                                    <p class="mb-0 color-prime"><i class="fas fa-search-location mr-1"></i> <span data-type="label">${marker.label}</span></p>
                                     <p class="mb-0 text font-italic small-font">(${marker.annotationType.split('.').pop()})</p>
                                 </div>
                                 <div class="text-right">
