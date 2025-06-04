@@ -4,6 +4,7 @@ class UCEMap {
         this._eventHandlers = {};
         this.readonly = readonly;
         this.isAdaptive = false;
+        this.selectedMakerPayload = undefined;
         this.corpusId = undefined;
         this.currentMarker = undefined;
         this.currentLongLat = undefined; // {lat: 0, lng: 0}
@@ -45,6 +46,7 @@ class UCEMap {
      * fetching and loading new points according to zoom and position.
      */
     linkedTimelineMap(corpusId) {
+        const ctx = this;
         this.isAdaptive = true;
         this.corpusId = corpusId;
         this.twoDim();
@@ -76,7 +78,10 @@ class UCEMap {
                 <div class="group-box bg-default p-0">
                     <label class="text-center w-100 p-2">Occurrences</label>
                     <div class="occurrences-list p-2">
-                    
+                        <p class="text small-font w-100 text-center">None selected.</p>
+                    </div>
+                    <div class="w=100 p-2">
+                        <button class="p-1 btn btn-light w-100 rounded-0 load-more-occurrences">Load more</button>
                     </div>
                 </div>
             </div>
@@ -87,15 +92,19 @@ class UCEMap {
         this.$linkedMapNavigator = this.$container.find('.linked-map-navigator');
         this.$linkedMapNavigator.find('#timeline-switch').on('change', () => this.fetchAndRenderAdaptiveNodes());
         this.$linkedMapNavigator.find('.timeline-inputs input[type="date"]').on('change', () => this.fetchAndRenderAdaptiveNodes());
+        this.$linkedMapNavigator.find('button.load-more-occurrences').on('click', function () {
+            if(!ctx.selectedMakerPayload) return;
+            ctx.selectedMakerPayload.skip += ctx.selectedMakerPayload.take;
+            ctx.renderTimelineOccurrences(ctx.selectedMakerPayload);
+        });
 
         this.fetchAndRenderAdaptiveNodes();
     }
 
-    fetchAndRenderAdaptiveNodes() {
+    buildPayload() {
         const bounds = this.twoDimMap.getBounds();
         const zoom = this.twoDimMap.getZoom();
-
-        const payload = {
+        return {
             minLat: bounds.getSouth(),
             maxLat: bounds.getNorth(),
             minLng: bounds.getWest(),
@@ -109,6 +118,27 @@ class UCEMap {
                 ? this.$linkedMapNavigator.find('.timeline-inputs input[data-type="to"]').val()
                 : null,
         };
+    }
+
+    fetchAndRenderAdaptiveNodes() {
+        const mode = 'clustered';
+        const payload = this.buildPayload();
+
+        fetch('/api/corpus/map/linkedOccurrenceClusters', {
+            method: 'POST',
+            contentType: "application/json",
+            headers: {'Content-Type': 'application/json'},
+            body: JSON.stringify(payload)
+        })
+            .then(response => response.json())
+            .then(data => {
+                this.renderTimelineNodes(data, mode);
+            })
+            .catch(err => console.error('Error fetching adaptive nodes:', err));
+    }
+
+    renderTimelineOccurrences(payload) {
+        const ctx = this;
 
         fetch('/api/corpus/map/linkedOccurrences', {
             method: 'POST',
@@ -117,31 +147,95 @@ class UCEMap {
             body: JSON.stringify(payload)
         })
             .then(response => response.json())
-            .then(data => {
-                this.renderAdaptiveNodes(data, zoom);
+            .then(occurrences => {
+                const $listContainer = ctx.$linkedMapNavigator.find('.occurrences-list');
+                occurrences.forEach(function (marker) {
+                    $listContainer.append(`
+                        <div class="occurrence-card" data-id="${marker.annotationId}" 
+                             data-type="${marker.annotationType}">
+                            <div class="flexed align-items-center justify-content-between">
+                                <div>
+                                    <p class="mb-0 color-prime"><i class="fas fa-map-pin mr-1"></i> <span data-type="label">${marker.label}</span></p>
+                                    <p class="mb-0 text font-italic small-font">(${marker.annotationType.split('.').pop()})</p>
+                                </div>
+                                <div class="text-right">
+                                    <p class="small-font mb-0 font-italic text"><i class="far fa-clock mr-1"></i>${marker.date ?? "(-)"}</p>
+                                    <span class="display-none" data-type="date">${marker.dateCoveredText}</span>
+                                    <p class="small-font mb-0 font-italic text"><i class="fas fa-map-marker-alt"></i> <span data-type="location">${marker.location}</span></p>
+                                </div>
+                            </div>
+                        </div>
+                    `);
+                });
+
+                // Attach all needed events to those occurence cards.
+                $listContainer.find('.occurrence-card').on('click', function () {
+                    const $card = $(this);
+                    fetch('/api/wiki/annotation?id=' + $(this).data('id') + '&class=' + $(this).data('type'), {
+                        method: 'GET',
+                        headers: {
+                            'Content-Type': 'application/json'
+                        }
+                    })
+                        .then(response => {
+                            if (!response.ok) {
+                                throw new Error(`HTTP error! status: ${response.status}`);
+                            }
+                            return response.json();
+                        })
+                        .then(data => {
+                            const highlights = [
+                                $card.find('span[data-type="label"]').html(),
+                                $card.find('span[data-type="location"]').html(),
+                                $card.find('span[data-type="date"]').html()
+                            ]
+                            openInExpandedTextView(data.coveredText, data.page.coveredText, highlights);
+                        })
+                        .catch(err => console.error('Error fetching adaptive nodes:', err));
+                });
             })
             .catch(err => console.error('Error fetching adaptive nodes:', err));
     }
 
-    renderAdaptiveNodes(data, zoom) {
+    renderTimelineNodes(data, mode) {
         // Clear previous layers
-        if (this.nodeMarkers) this.nodeMarkers.forEach(m => this.twoDimMap.removeLayer(m));
-        if (this.clusterGroup) this.twoDimMap.removeLayer(this.clusterGroup);
-        if (this.heatLayer) this.twoDimMap.removeLayer(this.heatLayer);
+        //if (this.nodeMarkers) this.nodeMarkers.forEach(m => this.twoDimMap.removeLayer(m));
+        //if (this.clusterGroup) this.twoDimMap.removeLayer(this.clusterGroup);
+        //if (this.heatLayer) this.twoDimMap.removeLayer(this.heatLayer);
         const ctx = this;
 
-        if (zoom <= 9) {
-            // data should be a cluster list with count, latitude, longitude
-            const heatPoints = data.map(d => [d.latitude, d.longitude, Math.min(d.count / 10, 1.0)]); // Normalize count
+        if (mode === 'clustered') {
+            this.timelineClusters = L.markerClusterGroup({
+                spiderfyOnMaxZoom: false,
+            });
+            data.forEach(d => {
+                const marker = L.marker([d.latitude, d.longitude]);
+                marker.options.count = d.count;
+                marker.bindPopup(`Cluster of ${d.count} items`);
 
-            this.heatLayer = L.heatLayer(heatPoints, {
-                radius: 30,
-                blur: 12,
-                maxZoom: 12
-            }).addTo(this.twoDimMap);
+                // Attach to the on click events
+                marker.on('click', function (e) {
+                    // When clicked, we simply list all the annotations of that cluster.
+                    let payload = ctx.buildPayload();
+                    payload.minLng = d.longitude - 1;
+                    payload.maxLng = d.longitude + 1;
+                    payload.minLat = d.latitude - 1;
+                    payload.maxLat = d.latitude + 1;
+                    payload['take'] = 25;
+                    payload['skip'] = 0;
+                    ctx.selectedMakerPayload = payload;
+                    // Clear the list of the previous occurrences
+                    const $listContainer = ctx.$linkedMapNavigator.find('.occurrences-list');
+                    $listContainer.html('');
+                    ctx.renderTimelineOccurrences(payload);
+                });
 
-        } else if (zoom <= 20) {
-            this.clusterGroup = L.markerClusterGroup({
+                this.timelineClusters.addLayer(marker);
+            });
+
+            this.twoDimMap.addLayer(this.timelineClusters);
+        } else if (mode === 'inspect') {
+            this.inspectMarkers = L.markerClusterGroup({
                 iconCreateFunction: function (cluster) {
                     // Sum up all marker counts
                     const totalCount = cluster.getAllChildMarkers().reduce((sum, marker) => {
@@ -156,88 +250,18 @@ class UCEMap {
                 spiderfyOnMaxZoom: false,
             });
 
-            // From that zoom, we allow to click onto the clusters and by doing so, we load the list of
-            // annotationLinks to that location at a given time.
-            if (zoom >= 13) {
-                this.clusterGroup.on('clusterclick', function (event) {
-                    const cluster = event.layer;
-                    // When clicked, we simply list all the annotations of that cluster...
-                    // This isn't paginated. I fear for gigantic clusters which are just too large. We'll see
-                    const $listContainer = ctx.$linkedMapNavigator.find('.occurrences-list');
-                    $listContainer.html('');
-
-                    cluster.getAllChildMarkers().forEach(function (marker) {
-                        $listContainer.append(`
-                            <div class="occurrence-card" data-id="${marker.options.data.annotationId}" 
-                                 data-type="${marker.options.data.annotationType}">
-                                <div class="flexed align-items-center justify-content-between">
-                                    <div>
-                                        <p class="mb-0 color-prime"><i class="fas fa-map-pin mr-1"></i> <span data-type="label">${marker.options.data.label}</span></p>
-                                        <p class="mb-0 text font-italic small-font">(${marker.options.data.annotationType.split('.').pop()})</p>
-                                    </div>
-                                    <div class="text-right">
-                                        <p class="small-font mb-0 font-italic text"><i class="far fa-clock mr-1"></i>${marker.options.data.date ?? "(-)"}</p>
-                                        <span class="display-none" data-type="date">${marker.options.data.dateCoveredText}</span>
-                                        <p class="small-font mb-0 font-italic text"><i class="fas fa-map-marker-alt"></i> <span data-type="location">${marker.options.data.location}</span></p>
-                                    </div>
-                                </div>
-                            </div>
-                        `);
-                    });
-
-                    $listContainer.find('.occurrence-card').on('click', function () {
-                        const $card = $(this);
-                        fetch('/api/wiki/annotation?id=' + $(this).data('id') + '&class=' + $(this).data('type'), {
-                            method: 'GET',
-                            headers: {
-                                'Content-Type': 'application/json'
-                            }
-                        })
-                            .then(response => {
-                                if (!response.ok) {
-                                    throw new Error(`HTTP error! status: ${response.status}`);
-                                }
-                                return response.json();
-                            })
-                            .then(data => {
-                                const highlights = [
-                                    $card.find('span[data-type="label"]').html(),
-                                    $card.find('span[data-type="location"]').html(),
-                                    $card.find('span[data-type="date"]').html()
-                                ]
-                                openInExpandedTextView(data.coveredText, data.page.coveredText, highlights);
-                            })
-                            .catch(err => console.error('Error fetching adaptive nodes:', err));
-                    });
-                })
-            }
-
             data.forEach(d => {
                 const marker = L.marker([d.latitude, d.longitude]);
                 if (d.count) marker.options.count = d.count;
                 marker.options.data = d;
                 marker.bindPopup(`${d.count} occurrences`);
-                this.clusterGroup.addLayer(marker);
+                this.inspectMarkers.addLayer(marker);
             });
 
-            this.twoDimMap.addLayer(this.clusterGroup);
-        } else {
-            // OBSOLETE: We dont use this ELSE here currently
-            this.clusterGroup = L.markerClusterGroup({
-                spiderfyOnMaxZoom: false,
-                showCoverageOnHover: false,
-                zoomToBoundsOnClick: false
-            });
-            data.forEach(d => {
-                const marker = L.marker([d.latitude, d.longitude]);
-                marker.options.count = d.count;
-                marker.bindPopup(`Cluster of items`);
-                this.clusterGroup.addLayer(marker);
-            });
-
-            this.twoDimMap.addLayer(this.clusterGroup);
+            this.twoDimMap.addLayer(this.inspectMarkers);
         }
     }
+
 
     /**
      * Adds a list of nodes in the form of {lat, lng, label} to an existing 2D map.
@@ -328,7 +352,7 @@ class UCEMap {
         // When zooming in an we have adaptive nodes, we want to rerender nodes
         if (this.isAdaptive)
             this.twoDimMap.on('moveend', () => {
-                this.fetchAndRenderAdaptiveNodes();
+                //ctx.fetchAndRenderAdaptiveNodes();
             });
 
         // Place a marker. If a marker exists currently, delete the old one.

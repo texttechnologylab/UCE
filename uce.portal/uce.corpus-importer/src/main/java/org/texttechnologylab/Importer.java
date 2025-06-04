@@ -73,7 +73,7 @@ public class Importer {
 
     private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger(Importer.class);
-    private static final int BATCH_SIZE = 100;
+    private static final int BATCH_SIZE = 2000;
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
@@ -644,6 +644,10 @@ public class Importer {
             docLink.setLinkId(String.valueOf(l.getLinkId()));
             docLink.setType(l.getLinkType());
             docLink.setCorpusId(corpusId);
+            docLink.setFromAnnotationTypeTable(ReflectionUtils.getTableAnnotationName(Document.class));
+            docLink.setFromAnnotationType(Document.class.getName());
+            docLink.setToAnnotationTypeTable(ReflectionUtils.getTableAnnotationName(Document.class));
+            docLink.setToAnnotationType(Document.class.getName());
 
             documentLinks.add(docLink);
         });
@@ -657,6 +661,8 @@ public class Importer {
             var docToAnnoLink = new DocumentToAnnotationLink();
             docToAnnoLink.setCorpusId(corpusId);
             docToAnnoLink.setFrom(l.getFrom()); // from is a documentId, but not of *this* document.
+            docToAnnoLink.setFromAnnotationTypeTable(ReflectionUtils.getTableAnnotationName(Document.class));
+            docToAnnoLink.setFromAnnotationType(Document.class.getName());
             docToAnnoLink.setLinkId(String.valueOf(l.getLinkId()));
             docToAnnoLink.setType(l.getLinkType());
             // In the case of a Document -> Annotation, the "to" in the typesystem points to the current document
@@ -689,6 +695,8 @@ public class Importer {
             var annoToDocLink = new AnnotationToDocumentLink();
             annoToDocLink.setCorpusId(corpusId);
             annoToDocLink.setTo(l.getTo()); // to is a documentId, but not of *this* document.
+            annoToDocLink.setToAnnotationTypeTable(ReflectionUtils.getTableAnnotationName(Document.class));
+            annoToDocLink.setToAnnotationType(Document.class.getName());
             annoToDocLink.setLinkId(String.valueOf(l.getLinkId()));
             annoToDocLink.setType(l.getLinkType());
             // In the case of a Annotation -> Document, the "from" in the typesystem points to the current document
@@ -1594,6 +1602,7 @@ public class Importer {
 
         // Store simple connections between Time, Geonames and Annotation to approximate the question:
         // This annotation occurred in context with this location at this time.
+        // TODO: This needs a check if the document already was linked before. Sometimes docs are preprocessed when they already exist.
         if (corpusConfig.getAnnotations().isGeoNames() || corpusConfig.getAnnotations().isTime()) {
             logger.info("Doing contextualized Links between Annotations...");
             // For now we assume that, IF the annotations are on the same page, they are somewhat linked.

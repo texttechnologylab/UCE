@@ -163,13 +163,6 @@ public class App {
         ExceptionUtils.tryCatchLog(() -> initSparkRoutes(context),
                 (ex) -> logger.error("There was a problem initializing the spark routes, web service will be shut down.", ex));
         logger.info("Routes initialized - UCE web service has started!");
-
-        try{
-            var test = context.getBean(MapService.class).getGeoNameTimelineLinks(38,10,40,60, Date.valueOf("1800-01-01"), Date.valueOf("1850-12-31"), 9);
-            var xd = "";
-        }catch (Exception ex){
-            logger.error("What", ex);
-        }
     }
 
     /**
@@ -367,6 +360,7 @@ public class App {
                 get("/documentsList", documentApi.getDocumentListOfCorpus);
                 path("/map", () -> {
                     post("/linkedOccurrences", mapApi.getLinkedOccurrences);
+                    post("/linkedOccurrenceClusters", mapApi.getLinkedOccurrenceClusters);
                 });
             });
 

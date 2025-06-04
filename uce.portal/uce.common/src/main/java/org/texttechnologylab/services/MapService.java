@@ -26,13 +26,15 @@ public class MapService {
      * of annotations (taxa, ner e.g.) by a given location viewport and a time range.
      */
     public List<PointDto> getGeoNameTimelineLinks(double minLng,
-                                              double minLat,
-                                              double maxLng,
-                                              double maxLat,
-                                              java.sql.Date fromDate,
-                                              java.sql.Date toDate,
-                                              long corpusId) throws DatabaseOperationException {
-        return db.getGeonameTimelineLinks(minLng, minLat, maxLng, maxLat, fromDate, toDate, corpusId);
+                                                  double minLat,
+                                                  double maxLng,
+                                                  double maxLat,
+                                                  java.sql.Date fromDate,
+                                                  java.sql.Date toDate,
+                                                  long corpusId,
+                                                  int skip,
+                                                  int take) throws DatabaseOperationException {
+        return db.getGeonameTimelineLinks(minLng, minLat, maxLng, maxLat, fromDate, toDate, corpusId, skip, take);
     }
 
     /**
@@ -40,13 +42,13 @@ public class MapService {
      * checks for Time links, such that you can not only query by a location viewport, but also by time.
      */
     public List<MapClusterDto> getTimelineMapClusters(double minLng,
-                                              double minLat,
-                                              double maxLng,
-                                              double maxLat,
-                                              double gridSize,
-                                              java.sql.Date fromDate,
-                                              java.sql.Date toDate,
-                                              long corpusId) throws DatabaseOperationException {
+                                                      double minLat,
+                                                      double maxLng,
+                                                      double maxLat,
+                                                      double gridSize,
+                                                      java.sql.Date fromDate,
+                                                      java.sql.Date toDate,
+                                                      long corpusId) throws DatabaseOperationException {
         return db.getGeonameClustersFromTimelineMap(minLng, minLat, maxLng, maxLat, gridSize, fromDate, toDate, corpusId);
     }
 
