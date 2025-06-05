@@ -516,6 +516,94 @@
     "Variant": "Offensive",
     "type": ""
   },
+  "BERT-IT Hate Speech (IT)": {
+    "url": "http://offensive-bert-it-hate-speech.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/pysentimiento/bert-it-hate-speech",
+    "paper": "",
+    "map": "pysentimiento/bert-it-hate-speech",
+    "Name": "BERT-IT Hate Speech (IT)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "IMSyPP Social Media Hate Speech": {
+    "url": "http://offensive-imsypp-social-media.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/IMSyPP/hate_speech_multilingual",
+    "paper": "",
+    "map": "IMSyPP/hate_speech_multilingual",
+    "Name": "IMSyPP Social Media Hate Speech",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "IMSyPP Social Media Hate Speech (EN)": {
+    "url": "http://offensive-imsypp-social-media-en.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/IMSyPP/hate_speech_en",
+    "paper": "",
+    "map": "IMSyPP/hate_speech_en",
+    "Name": "IMSyPP Social Media Hate Speech (EN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "IMSyPP Social Media Hate Speech (IT)": {
+    "url": "http://offensive-imsypp-social-media-it.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/IMSyPP/hate_speech_it",
+    "paper": "",
+    "map": "IMSyPP/hate_speech_it",
+    "Name": "IMSyPP Social Media Hate Speech (IT)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "IMSyPP Social Media Hate Speech (NL)": {
+    "url": "http://offensive-imsypp-social-media-nl.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/IMSyPP/hate_speech_nl",
+    "paper": "",
+    "map": "IMSyPP/hate_speech_nl",
+    "Name": "IMSyPP Social Media Hate Speech (NL)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "IMSyPP Social Media Hate Speech (SLO)": {
+    "url": "http://offensive-imsypp-social-media-slo.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/IMSyPP/hate_speech_SLO",
+    "paper": "",
+    "map": "IMSyPP/hate_speech_slo",
+    "Name": "IMSyPP Social Media Hate Speech (SLO)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "CardiffNLP Multiclass Hate (EN)": {
+    "url": "http://offensive-cardiffnlp-hate-multiclass.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/cardiffnlp/twitter-roberta-base-hate-multiclass-latest",
+    "paper": "",
+    "map": "cardiffnlp/twitter-roberta-base-hate-multiclass-latest",
+    "Name": "CardiffNLP Multiclass Hate (EN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "CardiffNLP Multilabel Sensitive (EN)": {
+    "url": "http://offensive-cardiffnlp-sensitive-multilabel.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/cardiffnlp/twitter-roberta-large-sensitive-multilabel",
+    "paper": "",
+    "map": "cardiffnlp/twitter-roberta-large-sensitive-multilabel",
+    "Name": "CardiffNLP Multilabel Sensitive (EN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
   "Emotion Twitter": {
     "url": "http://emotion-finetuned-twitter-xlm-roberta-base-emotion.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-Emotion",
