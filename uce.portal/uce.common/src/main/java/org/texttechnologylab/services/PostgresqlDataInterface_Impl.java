@@ -1802,6 +1802,51 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<Object[]> getSentenceTopicsWithEntitiesByPageForDocument(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = """
+            WITH best_topic_per_sentence AS (
+                SELECT DISTINCT ON (st.document_id, st.sentence_id)
+                    st.sentence_id,
+                    st.topiclabel
+                FROM 
+                    sentencetopics st
+                WHERE 
+                    st.document_id = :document_id
+                ORDER BY 
+                    st.document_id, st.sentence_id, st.thetast DESC
+            ),
+            entities_in_sentences AS (
+                SELECT DISTINCT
+                    s.id AS sentence_id,
+                    ne.typee AS entity_type
+                FROM
+                    sentence s
+                    JOIN namedentity ne ON 
+                        ne.document_id = s.document_id AND
+                        ne.beginn >= s.beginn AND 
+                        ne.endd <= s.endd
+                WHERE
+                    s.document_id = :document_id
+            )
+            SELECT
+                btps.topiclabel,
+                eis.entity_type
+            FROM
+                best_topic_per_sentence btps
+                JOIN entities_in_sentences eis ON btps.sentence_id = eis.sentence_id
+            ORDER BY
+                btps.sentence_id, eis.entity_type
+            """;
+
+            Query<Object[]> query = session.createNativeQuery(sql)
+                    .setParameter("document_id", documentId);
+
+            return query.getResultList();
+        });
+    }
+
+
 
 
 

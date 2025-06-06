@@ -294,4 +294,35 @@ public class DocumentApi {
         }
     });
 
+    public Route getSentenceTopicsWithEntities = ((request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for sentence topics with entities. ", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for sentence topics with entities"), "defaultError.ftl"));
+        }
+
+        try {
+            var topicsWithEntities = db.getSentenceTopicsWithEntitiesByPageForDocument(documentId);
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : topicsWithEntities) {
+                var topicEntityMap = new HashMap<String, Object>();
+                topicEntityMap.put("topiclabel", row[0]);
+                topicEntityMap.put("entity_type", row[1]);
+                result.add(topicEntityMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+        } catch (Exception ex) {
+            logger.error("Error getting sentence topics with entities.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving sentence topics with entities."), "defaultError.ftl"));
+        }
+    });
+
 }
