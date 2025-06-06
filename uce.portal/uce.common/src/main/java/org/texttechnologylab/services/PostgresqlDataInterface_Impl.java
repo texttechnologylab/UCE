@@ -6,6 +6,10 @@ import com.google.gson.reflect.TypeToken;
 import org.hibernate.*;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.type.ArrayType;
+import org.hibernate.type.BasicType;
+import org.hibernate.type.LongType;
+import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.annotations.Taxonsystem;
@@ -1731,35 +1735,74 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Object[]> getTaxonCountByPageId(long documentId) throws DatabaseOperationException {
+    public List<Object[]> getTaxonValuesAndCountByPageId(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             List<String> taxonTypes = ReflectionUtils.getTaxonSystemTypes(Taxon.class);
 
-            // Dynamically construct the SQL query using UNION ALL for all taxon tables
             StringBuilder sqlBuilder = new StringBuilder();
             for (int i = 0; i < taxonTypes.size(); i++) {
                 String tableName = taxonTypes.get(i);
-                sqlBuilder.append("SELECT t.page_id, COUNT(t.valuee) AS taxon_count ")
+                sqlBuilder.append("SELECT t.page_id, t.valuee ")
                         .append("FROM ").append(tableName).append(" t ")
-                        .append("WHERE t.document_id = :documentId ")
-                        .append("GROUP BY t.page_id ");
+                        .append("WHERE t.document_id = :documentId ");
                 if (i < taxonTypes.size() - 1) {
                     sqlBuilder.append("UNION ALL ");
                 }
             }
 
-            // Wrap the UNION ALL query in a final aggregation query
-            String finalSql = "SELECT page_id, SUM(taxon_count) AS total_taxon_count " +
-                    "FROM (" + sqlBuilder.toString() + ") AS combined_taxons " +
-                    "GROUP BY page_id " +
-                    "ORDER BY total_taxon_count DESC";
+            // Outer query: group by page_id, aggregate values and count
+            String finalSql = "SELECT page_id, valuee AS taxon_value " +
+                    "FROM (" + sqlBuilder.toString() + ") AS combined_taxon ";
 
             var query = session.createNativeQuery(finalSql)
+                    .setParameter("documentId", documentId)
+                    .unwrap(org.hibernate.query.NativeQuery.class)
+                    .addScalar("page_id", LongType.INSTANCE)
+                    .addScalar("taxon_value", StandardBasicTypes.TEXT);
+
+            return query.getResultList();
+        });
+    }
+
+
+    public List<Object[]> getTopicDistributionByPageForDocument(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = """
+        WITH best_topic_per_sentence AS (
+            SELECT DISTINCT ON (st.document_id, st.sentence_id)
+                st.unifiedtopic_id,
+                st.document_id,
+                st.sentence_id,
+                st.topiclabel,
+                st.thetast
+            FROM 
+                sentencetopics st
+            WHERE 
+                st.document_id = :documentId
+            ORDER BY 
+                st.document_id, st.sentence_id, st.thetast DESC
+        )
+        SELECT DISTINCT 
+            ut.page_id,
+            btp.topiclabel
+        FROM 
+            best_topic_per_sentence btp
+        JOIN 
+            unifiedtopic ut ON btp.unifiedtopic_id = ut.id
+        WHERE 
+            ut.document_id = :documentId
+        ORDER BY 
+            ut.page_id, btp.topiclabel
+        """;
+
+            var query = session.createNativeQuery(sql)
                     .setParameter("documentId", documentId);
 
             return query.getResultList();
         });
     }
+
+
 
 
     /**

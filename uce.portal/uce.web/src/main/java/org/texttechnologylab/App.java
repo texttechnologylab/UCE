@@ -393,7 +393,7 @@ public class App {
                 get("/uceMetadata", documentApi.getUceMetadataOfDocument);
                 get("/topics", documentApi.getDocumentTopics);
                 get("/page/taxon", documentApi.getTaxonCountByPage);
-
+                get("/page/topics", documentApi.getDocumentTopicDistributionByPage);
             });
 
             path("/rag", () -> {
