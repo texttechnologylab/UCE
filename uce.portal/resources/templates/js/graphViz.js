@@ -266,6 +266,7 @@ var GraphVizHandler = (function () {
                                                                  minLabelWidth = 70,          // Width of label column in px
                                                                  fontSize = 10                // Font size for values
                                                              } = {}) {
+        // This function creates a simple mini bar chart in HTML which can be used in tooltips or small displays as hover actions.
 
         const maxVal = Math.max(...data.map(([_, v]) => v)) || 1;
 
@@ -378,6 +379,80 @@ var GraphVizHandler = (function () {
 
         return echart;
     };
+
+
+    GraphVizHandler.prototype.createChordChart = async function (
+        target,
+        title,
+        data,
+        tooltipFormatter = null,
+        onClick = null
+    ) {
+        const chartId = generateUUID();
+        const hasGraphData = data.nodes && data.links && data.categories;
+
+        const option = {
+            title: { text: title, left: 'center' },
+            tooltip: {
+                trigger: 'item',
+                enterable: hasGraphData,
+                formatter: hasGraphData
+                    ? tooltipFormatter
+                    : function (params) {
+                        if (params.dataType === 'edge') {
+                            return params.data.source + ' → ' + params.data.target + ': <b>' + params.data.value + '</b>';
+                        }
+                        return params.name;
+                    }
+            },
+            legend: hasGraphData ? {
+                data: data.categories.map(c => c.name),
+                left: '10px',
+                orient: 'vertical',
+                position: 'right'
+            } : undefined,
+            series: hasGraphData ? [{
+                type: 'graph',
+                layout: 'circular',
+                circular: { rotateLabel: true },
+                data: data.nodes,
+                links: data.links,
+                categories: data.categories,
+                roam: true,
+                label: { rotate: 90, show: true },
+                itemStyle: { borderWidth: 1, borderColor: '#aaa' },
+                lineStyle: { opacity: 0.5, width: 2, curveness: 0.3 },
+                emphasis: { focus: 'adjacency', label: { show: true } }
+            }] : {
+                type: 'chord',
+                data: data.nodes,
+                links: data.links,
+                emphasis: {
+                    focus: 'adjacency',
+                    label: {
+                        show: true,
+                        color: '#000'
+                    }
+                },
+                itemStyle: {
+                    borderWidth: 1,
+                    borderColor: '#fff'
+                }
+            }
+        };
+
+        const echart = new ECharts(target, option);
+        this.activeCharts[chartId] = echart;
+
+        echart.getInstance().on('click', function (params) {
+            if (onClick && typeof onClick === 'function') {
+                onClick(params);
+            }
+        });
+
+        return echart;
+    };
+
 
     return GraphVizHandler;
 }());
