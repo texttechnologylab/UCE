@@ -952,110 +952,138 @@ function renderTemporalExplorer(containerId) {
     if (!docId) return console.error("Missing or invalid documentId");
 
     const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
+    const topicReq = $.get('/api/document/page/topics', { documentId: docId });
 
-    Promise.all([taxonReq]).then(([taxon]) => {
-        const rawPageIds = new Set();
+    Promise.all([taxonReq, topicReq]).then(([taxon, topics]) => {
+        const rawPageIds = [];
+        taxon.forEach(d => {
+            const pid = parseInt(d.page_id);
+            if (!isNaN(pid)) rawPageIds.push(pid);
+        });
+        topics.forEach(d => {
+            const pid = parseInt(d.page_id);
+            if (!isNaN(pid)) rawPageIds.push(pid);
+        });
 
-        taxon.forEach(d => rawPageIds.add(parseInt(d.page_id)));
-
-        const sortedPageIds = Array.from(rawPageIds).sort((a, b) => a - b);
+        const uniqueSortedPageIds = Array.from(new Set(rawPageIds)).sort((a, b) => a - b);
 
         const pageIdToPageNumber = new Map();
-        sortedPageIds.forEach((pid, idx) => {
+        uniqueSortedPageIds.forEach((pid, idx) => {
             pageIdToPageNumber.set(pid, idx + 1);
         });
 
-        // Merge data
         const dataMap = new Map();
 
-
         // From taxon
-        taxon.forEach(({ page_id, taxon_count }) => {
+        taxon.forEach(({ page_id, taxon_value }) => {
             const pid = parseInt(page_id);
             const page = pageIdToPageNumber.get(pid);
-            if (!dataMap.has(page)) dataMap.set(page, { page, topicSet: new Set(), taxon: 0, ne: 0 });
-            dataMap.get(page).taxon = parseInt(taxon_count);
+            if (!dataMap.has(page)) {
+                dataMap.set(page, { page, topics: new Set(), taxon: new Set(), ne: new Set() });
+            }
+            dataMap.get(page).taxon.add(taxon_value.split('|')[0]);
+        });
+
+        //From topics
+        topics.forEach(({ page_id, topiclabel }) => {
+            const pid = parseInt(page_id);
+            const page = pageIdToPageNumber.get(pid);
+            if (!dataMap.has(page)) {
+                dataMap.set(page, { page, topics: new Set(), taxon: new Set(), ne: new Set() });
+            }
+            dataMap.get(page).topics.add(topiclabel);
         });
 
         // Sort and extract
         const sorted = Array.from(dataMap.values()).sort((a, b) => a.page - b.page);
         const pages = sorted.map(row => row.page);
-        const taxonCounts = sorted.map(row => row.taxon);
+        const taxonCounts = sorted.map(row => row.taxon.size);
+        const topicCounts = sorted.map(row => row.topics.size);
 
-        const chart = echarts.init(document.getElementById(containerId));
-
-        const option = {
-            tooltip: {
-                trigger: 'axis',
-                formatter: function (params) {
-                    const values = {};
-                    params.forEach(p => {
-                        if (p.seriesName.includes('Taxon')) values['Taxon'] = p.data;
-                    });
-
-                    let result = `Page `+params[0].axisValue+`<br/>`;
-                    for (const [key, val] of Object.entries(values)) {
-                        result += key+`:` +val+`<br/>`;
-                    }
-                    return result;
+        // Construct input for generalized chart
+        const chartConfig = {
+            xData: pages,
+            seriesData: [
+                {
+                    name: 'Taxon',
+                    data: taxonCounts,
+                    color: '#91CC75'
+                },
+                {
+                    name: 'Topics',
+                    data: topicCounts,
+                    color: '#75ccc5'
                 }
-            },
 
-            legend: {
-                data: [
-                    'Taxon (Line)',
-                ]
-            },
-            xAxis: {
-                type: 'category',
-                name: 'Page Number',
-                data: pages
-            },
-            yAxis: {
-                type: 'value',
-                name: 'Count'
-            },
-            series: [
-
-
-                // Taxon
-                {
-                    name: 'Taxon (Bar)',
-                    type: 'bar',
-                    data: taxonCounts,
-                    itemStyle: {
-                        color: '#91CC75',
-                        opacity: 0.15
-                    },
-                    barGap: '-100%',
-                    z: 1
-                },
-                {
-                    name: 'Taxon (Line)',
-                    type: 'line',
-                    data: taxonCounts,
-                    symbol: 'circle',
-                    symbolSize: 10,
-                    lineStyle: { width: 3, color: '#91CC75' },
-                    itemStyle: { color: '#91CC75' },
-                    z: 2
-                },
-            ]
+            ],
+            yLabel: 'Count'
         };
 
-        chart.setOption(option);
-        chart.on('click', function (params) {
-            if (params.componentSubType === 'line' || params.componentSubType === 'bar') {
-                const pageNumber = params.name;
+        // Custom tooltip formatter
+        const tooltipFormatter = function(params) {
+            const page = parseInt(params[0].axisValue);
+            const record = dataMap.get(page);
+            if (!record) {
+                return 'Page ' + page + '<br/>No data.';
+            }
 
+            // Categories to show, with display label and color
+            const categories = [
+                { key: 'taxon', label: 'Taxon', color: '#91CC75' },
+                { key: 'topics', label: 'Topics', color: '#75ccc5' },
+                // add more categories if needed
+            ];
+
+            let tooltipHtml = '<div><b>Page ' + page + '</b></div>';
+
+            categories.forEach(({ key, label, color }) => {
+                const items = record[key];
+                if (!items || items.size === 0) return;
+
+                // Compute frequencies
+                const freq = {};
+                items.forEach(item => {
+                    freq[item] = (freq[item] || 0) + 1;
+                });
+
+                const topN = Object.entries(freq)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+
+                tooltipHtml += window.graphVizHandler.createMiniBarChart({
+                    data: topN,
+                    labelPrefix: label,
+                    labelHighlight: `Page `+page,
+                    primaryColor: color,
+                    usePrimaryForEntity: true,
+                    maxBarWidth: 100,
+                    fontSize: 10
+                });
+            });
+
+            if (tooltipHtml === '<div><b>Page ' + page + '</b></div>') {
+                tooltipHtml += '<div style="color:#888;">No data available</div>';
+            }
+
+            return tooltipHtml;
+        };
+
+
+       window.graphVizHandler.createBarLineChart(
+            containerId,
+            '',
+            chartConfig,
+            tooltipFormatter,
+            function onClick(params) {
+                const pageNumber = params.name;
                 const pageElement = document.querySelector('.page[data-id="' + pageNumber + '"]');
                 if (pageElement) {
                     pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
                 } else {
-                    console.error(`Page`+pageNumber+` not found.`);
+                    console.error(`Page ` + pageNumber + ` not found.`);
                 }
             }
-        });
+        );
     }).catch(err => {
         console.error("Error loading temporal data:", err);
     });
