@@ -253,6 +253,132 @@ var GraphVizHandler = (function () {
         return echart;
     };
 
+    GraphVizHandler.prototype.createMiniBarChart = function ({
+                                                                 data = [],                   // Array of [label, value]
+                                                                 title = '',                  // Chart title
+                                                                 labelPrefix = '',            // Optional prefix for title like "Topics for"
+                                                                 labelHighlight = '',         // The highlighted part (e.g., entity/topic name)
+                                                                 primaryColor = '#5470C6',    // Default bar color
+                                                                 secondaryColor = '#91CC75',  // Alternate bar color
+                                                                 usePrimaryForEntity = false, // Toggle color logic
+                                                                 barHeight = 10,              // Height of bars in px
+                                                                 maxBarWidth = 100,           // Max bar width in px
+                                                                 minLabelWidth = 70,          // Width of label column in px
+                                                                 fontSize = 10                // Font size for values
+                                                             } = {}) {
+
+        const maxVal = Math.max(...data.map(([_, v]) => v)) || 1;
+
+        const barsHtml = data.map(([label, value]) => {
+            const width = Math.round((value / maxVal) * maxBarWidth);
+            return (
+                '<div style="margin:2px 0; display:flex; align-items:center;">' +
+                '<span style="display:inline-block;min-width:' + minLabelWidth + 'px;vertical-align:middle;">' + label + '</span>' +
+                '<span style="display:inline-block;height:' + barHeight + 'px;width:' + width + 'px;margin-left:5px;background:' + (usePrimaryForEntity ? primaryColor : secondaryColor) + ';vertical-align:middle;"></span>' +
+                '<span style="font-size:' + fontSize + 'px;margin-left:5px;vertical-align:middle;">' + value + '</span>' +
+                '</div>'
+            );
+        }).join('');
+
+        const fullTitle = '<i>' + labelPrefix + '</i>';
+
+        return (
+            '<div style="min-width:200px;">' +
+            '<div style="margin-bottom:6px;">' + (title || fullTitle) + '</div>' +
+            (barsHtml || '<div style="color:#888;">No associations</div>') +
+            '</div>'
+        );
+
+    }
+
+    GraphVizHandler.prototype.createBarLineChart = async function (
+        target,
+        title,
+        config,
+        tooltipFormatter,
+        onClick = null
+    ) {
+        const chartId = generateUUID();
+
+        const {
+            xData,
+            seriesData,
+            yLabel = 'Count'
+        } = config;
+
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                enterable: true,
+                backgroundColor: '#fff',
+                borderColor: '#ccc',
+                borderWidth: 1,
+                textStyle: {
+                    color: '#000',
+                    fontSize: 12
+                },
+                formatter: tooltipFormatter
+            },
+
+            title: {
+                text: title,
+                left: 'center'
+            },
+
+            legend: {
+                data: seriesData.map(s => s.name),
+                top: 'bottom'
+            },
+
+            xAxis: {
+                type: 'category',
+                name: 'X',
+                data: xData
+            },
+
+            yAxis: {
+                type: 'value',
+                name: yLabel
+            },
+
+            series: []
+        };
+
+        seriesData.forEach(s => {
+            option.series.push({
+                name: s.name + ' (Bar)',
+                type: 'bar',
+                data: s.data,
+                itemStyle: {
+                    color: s.color,
+                    opacity: 0.15
+                },
+                barGap: '-100%',
+                z: 1
+            });
+
+            option.series.push({
+                name: s.name + ' (Line)',
+                type: 'line',
+                data: s.data,
+                symbol: 'circle',
+                symbolSize: 10,
+                lineStyle: { width: 3, color: s.color },
+                itemStyle: { color: s.color },
+                z: 2
+            });
+        });
+
+        const echart = new ECharts(target, option);
+        this.activeCharts[chartId] = echart;
+
+        if (onClick && typeof onClick === 'function') {
+            echart.getInstance().on('click', onClick);
+        }
+
+        return echart;
+    };
+
     return GraphVizHandler;
 }());
 
