@@ -951,12 +951,12 @@ function renderTemporalExplorer(containerId) {
     const docId = rawValue ? parseInt(rawValue, 10) : null;
     if (!docId) return console.error("Missing or invalid documentId");
 
-    const taxonReq = $.get('/api/document/page/taxons', { documentId: docId });
+    const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
 
-    Promise.all([taxonReq]).then(([taxons]) => {
+    Promise.all([taxonReq]).then(([taxon]) => {
         const rawPageIds = new Set();
 
-        taxons.forEach(d => rawPageIds.add(parseInt(d.page_id)));
+        taxon.forEach(d => rawPageIds.add(parseInt(d.page_id)));
 
         const sortedPageIds = Array.from(rawPageIds).sort((a, b) => a - b);
 
@@ -969,8 +969,8 @@ function renderTemporalExplorer(containerId) {
         const dataMap = new Map();
 
 
-        // From taxons
-        taxons.forEach(({ page_id, taxon_count }) => {
+        // From taxon
+        taxon.forEach(({ page_id, taxon_count }) => {
             const pid = parseInt(page_id);
             const page = pageIdToPageNumber.get(pid);
             if (!dataMap.has(page)) dataMap.set(page, { page, topicSet: new Set(), taxon: 0, ne: 0 });
@@ -990,7 +990,7 @@ function renderTemporalExplorer(containerId) {
                 formatter: function (params) {
                     const values = {};
                     params.forEach(p => {
-                        if (p.seriesName.includes('Taxons')) values['Taxons'] = p.data;
+                        if (p.seriesName.includes('Taxon')) values['Taxon'] = p.data;
                     });
 
                     let result = `Page `+params[0].axisValue+`<br/>`;
@@ -1003,7 +1003,7 @@ function renderTemporalExplorer(containerId) {
 
             legend: {
                 data: [
-                    'Taxons (Line)',
+                    'Taxon (Line)',
                 ]
             },
             xAxis: {
@@ -1018,9 +1018,9 @@ function renderTemporalExplorer(containerId) {
             series: [
 
 
-                // Taxons
+                // Taxon
                 {
-                    name: 'Taxons (Bar)',
+                    name: 'Taxon (Bar)',
                     type: 'bar',
                     data: taxonCounts,
                     itemStyle: {
@@ -1031,7 +1031,7 @@ function renderTemporalExplorer(containerId) {
                     z: 1
                 },
                 {
-                    name: 'Taxons (Line)',
+                    name: 'Taxon (Line)',
                     type: 'line',
                     data: taxonCounts,
                     symbol: 'circle',
