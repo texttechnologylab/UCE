@@ -821,6 +821,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             $('.scrollbar-minimap').show();
         }
         if (targetId === 'visualization-tab') {
+            setTimeout(() => renderTemporalExplorer('vp-1'), 500);
             $('.viz-nav-btn').removeClass('active');
             $('.viz-nav-btn').first().addClass('active');
 
@@ -846,6 +847,7 @@ $(document).on('click', '.viz-nav-btn', function () {
     $(target).addClass('active');
 
     if (target === '#viz-panel-1') {
+        setTimeout(() => renderTemporalExplorer('vp-1'), 500);
     }
     if (target === '#viz-panel-2') {
 
@@ -940,5 +942,150 @@ function renderSentenceTopicSankey(containerId) {
             $('.scrollbar-minimap').hide();
             console.log('Edge clicked from', params.data.source, 'to', params.data.target);
         }
+    });
+}
+
+function renderTemporalExplorer(containerId) {
+    const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
+    const docId = rawValue ? parseInt(rawValue, 10) : null;
+    if (!docId) return console.error("Missing or invalid documentId");
+
+    const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
+    const topicReq = $.get('/api/document/page/topics', { documentId: docId });
+
+    Promise.all([taxonReq, topicReq]).then(([taxon, topics]) => {
+        const annotationSources = [
+            {
+                key: 'taxon',
+                data: taxon,
+                pageField: 'page_id',
+                valueField: 'taxon_value',
+                label: 'Taxon',
+                color: '#91CC75',
+                transformValue: v => v.split('|')[0]
+            },
+            {
+                key: 'topics',
+                data: topics,
+                pageField: 'page_id',
+                valueField: 'topiclabel',
+                label: 'Topics',
+                color: '#75ccc5'
+            }
+        ];
+
+        // Collect unique sorted page IDs
+        const rawPageIds = [];
+        annotationSources.forEach(({ data, pageField }) => {
+            data.forEach(d => {
+                const pid = parseInt(d[pageField]);
+                if (!isNaN(pid)) rawPageIds.push(pid);
+            });
+        });
+        const uniqueSortedPageIds = Array.from(new Set(rawPageIds)).sort((a, b) => a - b);
+
+        const pageIdToPageNumber = new Map();
+        uniqueSortedPageIds.forEach((pid, idx) => {
+            pageIdToPageNumber.set(pid, idx + 1);
+        });
+
+        const dataMap = new Map();
+
+        annotationSources.forEach(({ key, data, pageField, valueField, transformValue }) => {
+            data.forEach(item => {
+                const pid = parseInt(item[pageField]);
+                const page = pageIdToPageNumber.get(pid);
+                if (!page) return;
+
+                if (!dataMap.has(page)) {
+                    dataMap.set(page, {
+                        page,
+                        taxon: new Set(),
+                        topics: new Set(),
+                        ne: new Set()
+                    });
+                }
+
+                const value = item[valueField];
+                if (value) {
+                    dataMap.get(page)[key].add(transformValue ? transformValue(value) : value);
+                }
+            });
+        });
+
+        const sorted = Array.from(dataMap.values()).sort((a, b) => a.page - b.page);
+        const pages = sorted.map(row => row.page);
+
+        const seriesData = annotationSources
+            .map(({ key, label, color }) => {
+                const data = sorted.map(row => row[key]?.size || 0);
+                const hasNonZero = data.some(count => count > 0);
+                return hasNonZero ? { name: label, data, color } : null;
+            })
+            .filter(d => d !== null);
+
+
+        const chartConfig = {
+            xData: pages,
+            seriesData,
+            yLabel: 'Count'
+        };
+
+        // Tooltip formatter
+        const tooltipFormatter = function (params) {
+            const page = parseInt(params[0].axisValue);
+            const record = dataMap.get(page);
+            if (!record) return 'Page ' + page + '<br/>No data.';
+
+            let tooltipHtml = '<div><b>Page ' + page + '</b></div>';
+
+            annotationSources.forEach(({ key, label, color }) => {
+                const items = record[key];
+                if (!items || items.size === 0) return;
+
+                const freq = {};
+                items.forEach(item => {
+                    freq[item] = (freq[item] || 0) + 1;
+                });
+
+                const topN = Object.entries(freq)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+
+                tooltipHtml += window.graphVizHandler.createMiniBarChart({
+                    data: topN,
+                    labelPrefix: label,
+                    labelHighlight: `Page ` + page,
+                    primaryColor: color,
+                    usePrimaryForEntity: true,
+                    maxBarWidth: 100,
+                    fontSize: 10
+                });
+            });
+
+            if (tooltipHtml === '<div><b>Page ' + page + '</b></div>') {
+                tooltipHtml += '<div style="color:#888;">No data available</div>';
+            }
+
+            return tooltipHtml;
+        };
+
+        window.graphVizHandler.createBarLineChart(
+            containerId,
+            '',
+            chartConfig,
+            tooltipFormatter,
+            function onClick(params) {
+                const pageNumber = params.name;
+                const pageElement = document.querySelector('.page[data-id="' + pageNumber + '"]');
+                if (pageElement) {
+                    pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    console.error(`Page ` + pageNumber + ` not found.`);
+                }
+            }
+        );
+    }).catch(err => {
+        console.error("Error loading or processing annotation data:", err);
     });
 }

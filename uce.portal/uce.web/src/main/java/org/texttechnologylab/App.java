@@ -392,6 +392,8 @@ public class App {
                 get("/reader/pagesList", documentApi.getPagesListView);
                 get("/uceMetadata", documentApi.getUceMetadataOfDocument);
                 get("/topics", documentApi.getDocumentTopics);
+                get("/page/taxon", documentApi.getTaxonCountByPage);
+                get("/page/topics", documentApi.getDocumentTopicDistributionByPage);
             });
 
             path("/rag", () -> {

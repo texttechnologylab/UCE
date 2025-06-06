@@ -6,8 +6,13 @@ import com.google.gson.reflect.TypeToken;
 import org.hibernate.*;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
+import org.hibernate.type.ArrayType;
+import org.hibernate.type.BasicType;
+import org.hibernate.type.LongType;
+import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
+import org.texttechnologylab.annotations.Taxonsystem;
 import org.texttechnologylab.config.HibernateConf;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.Linkable;
@@ -1729,6 +1734,75 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return query.getResultList();
         });
     }
+
+    public List<Object[]> getTaxonValuesAndCountByPageId(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            List<String> taxonTypes = ReflectionUtils.getTaxonSystemTypes(Taxon.class);
+
+            StringBuilder sqlBuilder = new StringBuilder();
+            for (int i = 0; i < taxonTypes.size(); i++) {
+                String tableName = taxonTypes.get(i);
+                sqlBuilder.append("SELECT t.page_id, t.valuee ")
+                        .append("FROM ").append(tableName).append(" t ")
+                        .append("WHERE t.document_id = :documentId ");
+                if (i < taxonTypes.size() - 1) {
+                    sqlBuilder.append("UNION ALL ");
+                }
+            }
+
+            // Outer query: group by page_id, aggregate values and count
+            String finalSql = "SELECT page_id, valuee AS taxon_value " +
+                    "FROM (" + sqlBuilder.toString() + ") AS combined_taxon ";
+
+            var query = session.createNativeQuery(finalSql)
+                    .setParameter("documentId", documentId)
+                    .unwrap(org.hibernate.query.NativeQuery.class)
+                    .addScalar("page_id", LongType.INSTANCE)
+                    .addScalar("taxon_value", StandardBasicTypes.TEXT);
+
+            return query.getResultList();
+        });
+    }
+
+
+    public List<Object[]> getTopicDistributionByPageForDocument(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = """
+        WITH best_topic_per_sentence AS (
+            SELECT DISTINCT ON (st.document_id, st.sentence_id)
+                st.unifiedtopic_id,
+                st.document_id,
+                st.sentence_id,
+                st.topiclabel,
+                st.thetast
+            FROM 
+                sentencetopics st
+            WHERE 
+                st.document_id = :documentId
+            ORDER BY 
+                st.document_id, st.sentence_id, st.thetast DESC
+        )
+        SELECT DISTINCT 
+            ut.page_id,
+            btp.topiclabel
+        FROM 
+            best_topic_per_sentence btp
+        JOIN 
+            unifiedtopic ut ON btp.unifiedtopic_id = ut.id
+        WHERE 
+            ut.document_id = :documentId
+        ORDER BY 
+            ut.page_id, btp.topiclabel
+        """;
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId);
+
+            return query.getResultList();
+        });
+    }
+
+
 
 
     /**

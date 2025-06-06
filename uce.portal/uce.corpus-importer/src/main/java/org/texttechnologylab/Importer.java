@@ -993,6 +993,12 @@ public class Importer {
                 anno.setPage(page);
             }
         }
+        if (document.getUnifiedTopics() != null) {
+            for (var anno : document.getUnifiedTopics().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
     }
 
     /**

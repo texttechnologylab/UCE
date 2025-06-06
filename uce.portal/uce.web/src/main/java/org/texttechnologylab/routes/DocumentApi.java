@@ -229,4 +229,69 @@ public class DocumentApi {
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(Map.of("information", "Error retrieving document topics."), "defaultError.ftl"));
         }
     });
+
+    public Route getTaxonCountByPage = ((request, response) -> {
+        var documentId = request.queryParams("documentId");
+
+        if (documentId == null || documentId.isEmpty()) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+        }
+
+        try {
+            var taxonValuesAndCounts = db.getTaxonValuesAndCountByPageId(Long.parseLong(documentId));
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : taxonValuesAndCounts) {
+                var pageMap = new HashMap<String, Object>();
+                pageMap.put("page_id", row[0]);
+                pageMap.put("taxon_value", row[1]);
+                //var taxonValues = row[1].toString().replaceAll("[\\{\\}]", "").split(",");
+                //pageMap.put("taxon_values", taxonValues);
+                //pageMap.put("taxon_count", row[2]);
+                result.add(pageMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+        } catch (Exception ex) {
+            logger.error("Error getting taxon counts.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving taxon counts."), "defaultError.ftl"));
+        }
+    });
+
+    public Route getDocumentTopicDistributionByPage = ((request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for topics. ", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+        }
+
+        try {
+            var topicDistPerPage = db.getTopicDistributionByPageForDocument(documentId);
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : topicDistPerPage) {
+                var pageMap = new HashMap<String, Object>();
+                pageMap.put("page_id", row[0]);
+                pageMap.put("topiclabel", row[1]);
+                result.add(pageMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+        } catch (Exception ex) {
+            logger.error("Error getting document topics.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving document topics."), "defaultError.ftl"));
+        }
+    });
+
 }

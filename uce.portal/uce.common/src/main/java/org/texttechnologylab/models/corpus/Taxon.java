@@ -2,6 +2,7 @@ package org.texttechnologylab.models.corpus;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.texttechnologylab.annotations.Taxonsystem;
 import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
@@ -14,6 +15,7 @@ import java.util.List;
 
 @MappedSuperclass
 @Typesystem(types = {org.texttechnologylab.annotation.type.Taxon.class})
+@Taxonsystem(types = {"gnfindertaxon", "gazetteertaxon"})
 public abstract class Taxon extends UIMAAnnotation implements WikiModel{
     @Getter
     @Setter

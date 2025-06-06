@@ -4,9 +4,13 @@ import org.apache.uima.jcas.tcas.Annotation;
 import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import org.reflections.util.ConfigurationBuilder;
+import org.texttechnologylab.annotations.Taxonsystem;
 import org.texttechnologylab.annotations.Typesystem;
 
 import javax.persistence.Table;
+import java.lang.reflect.Method;
+import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 
 public class ReflectionUtils {
@@ -47,6 +51,12 @@ public class ReflectionUtils {
         if (modelClass == null) return null;
         var table = modelClass.getAnnotation(Table.class);
         return table != null ? table.name() : null;
+    }
+
+    public static List<String> getTaxonSystemTypes(Class<?> modelClass) {
+        if (modelClass == null) return null;
+        var taxonsystem = modelClass.getAnnotation(Taxonsystem.class);
+        return taxonsystem != null ? Arrays.asList(taxonsystem.types()) : null;
     }
 
     public static <T> Class<? extends T> getClassFromClassName(String name, Class<T> baseType) throws ClassNotFoundException {
