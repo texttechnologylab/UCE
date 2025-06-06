@@ -945,7 +945,6 @@ function renderSentenceTopicSankey(containerId) {
     });
 }
 
-// TODO: MOVE CODE TO GRAPHVIZ
 function renderTemporalExplorer(containerId) {
     const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
     const docId = rawValue ? parseInt(rawValue, 10) : null;
@@ -955,16 +954,34 @@ function renderTemporalExplorer(containerId) {
     const topicReq = $.get('/api/document/page/topics', { documentId: docId });
 
     Promise.all([taxonReq, topicReq]).then(([taxon, topics]) => {
-        const rawPageIds = [];
-        taxon.forEach(d => {
-            const pid = parseInt(d.page_id);
-            if (!isNaN(pid)) rawPageIds.push(pid);
-        });
-        topics.forEach(d => {
-            const pid = parseInt(d.page_id);
-            if (!isNaN(pid)) rawPageIds.push(pid);
-        });
+        const annotationSources = [
+            {
+                key: 'taxon',
+                data: taxon,
+                pageField: 'page_id',
+                valueField: 'taxon_value',
+                label: 'Taxon',
+                color: '#91CC75',
+                transformValue: v => v.split('|')[0]
+            },
+            {
+                key: 'topics',
+                data: topics,
+                pageField: 'page_id',
+                valueField: 'topiclabel',
+                label: 'Topics',
+                color: '#75ccc5'
+            }
+        ];
 
+        // Collect unique sorted page IDs
+        const rawPageIds = [];
+        annotationSources.forEach(({ data, pageField }) => {
+            data.forEach(d => {
+                const pid = parseInt(d[pageField]);
+                if (!isNaN(pid)) rawPageIds.push(pid);
+            });
+        });
         const uniqueSortedPageIds = Array.from(new Set(rawPageIds)).sort((a, b) => a - b);
 
         const pageIdToPageNumber = new Map();
@@ -974,73 +991,58 @@ function renderTemporalExplorer(containerId) {
 
         const dataMap = new Map();
 
-        // From taxon
-        taxon.forEach(({ page_id, taxon_value }) => {
-            const pid = parseInt(page_id);
-            const page = pageIdToPageNumber.get(pid);
-            if (!dataMap.has(page)) {
-                dataMap.set(page, { page, topics: new Set(), taxon: new Set(), ne: new Set() });
-            }
-            dataMap.get(page).taxon.add(taxon_value.split('|')[0]);
-        });
+        annotationSources.forEach(({ key, data, pageField, valueField, transformValue }) => {
+            data.forEach(item => {
+                const pid = parseInt(item[pageField]);
+                const page = pageIdToPageNumber.get(pid);
+                if (!page) return;
 
-        //From topics
-        topics.forEach(({ page_id, topiclabel }) => {
-            const pid = parseInt(page_id);
-            const page = pageIdToPageNumber.get(pid);
-            if (!dataMap.has(page)) {
-                dataMap.set(page, { page, topics: new Set(), taxon: new Set(), ne: new Set() });
-            }
-            dataMap.get(page).topics.add(topiclabel);
-        });
-
-        // Sort and extract
-        const sorted = Array.from(dataMap.values()).sort((a, b) => a.page - b.page);
-        const pages = sorted.map(row => row.page);
-        const taxonCounts = sorted.map(row => row.taxon.size);
-        const topicCounts = sorted.map(row => row.topics.size);
-
-        // Construct input for generalized chart
-        const chartConfig = {
-            xData: pages,
-            seriesData: [
-                {
-                    name: 'Taxon',
-                    data: taxonCounts,
-                    color: '#91CC75'
-                },
-                {
-                    name: 'Topics',
-                    data: topicCounts,
-                    color: '#75ccc5'
+                if (!dataMap.has(page)) {
+                    dataMap.set(page, {
+                        page,
+                        taxon: new Set(),
+                        topics: new Set(),
+                        ne: new Set()
+                    });
                 }
 
-            ],
+                const value = item[valueField];
+                if (value) {
+                    dataMap.get(page)[key].add(transformValue ? transformValue(value) : value);
+                }
+            });
+        });
+
+        const sorted = Array.from(dataMap.values()).sort((a, b) => a.page - b.page);
+        const pages = sorted.map(row => row.page);
+
+        const seriesData = annotationSources
+            .map(({ key, label, color }) => {
+                const data = sorted.map(row => row[key]?.size || 0);
+                const hasNonZero = data.some(count => count > 0);
+                return hasNonZero ? { name: label, data, color } : null;
+            })
+            .filter(d => d !== null);
+
+
+        const chartConfig = {
+            xData: pages,
+            seriesData,
             yLabel: 'Count'
         };
 
-        // Custom tooltip formatter
-        const tooltipFormatter = function(params) {
+        // Tooltip formatter
+        const tooltipFormatter = function (params) {
             const page = parseInt(params[0].axisValue);
             const record = dataMap.get(page);
-            if (!record) {
-                return 'Page ' + page + '<br/>No data.';
-            }
-
-            // Categories to show, with display label and color
-            const categories = [
-                { key: 'taxon', label: 'Taxon', color: '#91CC75' },
-                { key: 'topics', label: 'Topics', color: '#75ccc5' },
-                // add more categories if needed
-            ];
+            if (!record) return 'Page ' + page + '<br/>No data.';
 
             let tooltipHtml = '<div><b>Page ' + page + '</b></div>';
 
-            categories.forEach(({ key, label, color }) => {
+            annotationSources.forEach(({ key, label, color }) => {
                 const items = record[key];
                 if (!items || items.size === 0) return;
 
-                // Compute frequencies
                 const freq = {};
                 items.forEach(item => {
                     freq[item] = (freq[item] || 0) + 1;
@@ -1053,7 +1055,7 @@ function renderTemporalExplorer(containerId) {
                 tooltipHtml += window.graphVizHandler.createMiniBarChart({
                     data: topN,
                     labelPrefix: label,
-                    labelHighlight: `Page `+page,
+                    labelHighlight: `Page ` + page,
                     primaryColor: color,
                     usePrimaryForEntity: true,
                     maxBarWidth: 100,
@@ -1068,8 +1070,7 @@ function renderTemporalExplorer(containerId) {
             return tooltipHtml;
         };
 
-
-       window.graphVizHandler.createBarLineChart(
+        window.graphVizHandler.createBarLineChart(
             containerId,
             '',
             chartConfig,
@@ -1085,6 +1086,258 @@ function renderTemporalExplorer(containerId) {
             }
         );
     }).catch(err => {
-        console.error("Error loading temporal data:", err);
+        console.error("Error loading or processing annotation data:", err);
     });
+}
+
+
+
+
+
+
+
+
+const navigator = document.getElementById('leftNavigator');
+const toggleButton = document.querySelector('.toggle-navigator-btn-left');
+
+toggleButton.addEventListener('click', () => {
+    navigator.classList.toggle('open');
+    toggleButton.querySelector('i').classList.toggle('fa-chevron-right');
+    toggleButton.querySelector('i').classList.toggle('fa-chevron-left');
+
+    // Adjust the left property of the toggleButton based on the navigator's width
+
+    if (navigator.classList.contains('open')) {
+
+        const navigatorWidth = navigator.offsetWidth;
+        toggleButton.style.left =navigatorWidth +`px`;
+    }else{
+        toggleButton.style.left ='0';
+    }
+
+});
+
+document.querySelectorAll('.left-nav-tab-btn').forEach(btn => {
+    btn.addEventListener('click', function () {
+        // Remove active class from all buttons
+        document.querySelectorAll('.left-nav-tab-btn').forEach(b => b.classList.remove('active'));
+        // Add active class to clicked button
+        this.classList.add('active');
+
+        // Hide all tab panes
+        document.querySelectorAll('.left-navigator .tab-pane').forEach(pane => pane.style.display = 'none');
+        // Show the selected tab pane
+        const tabId = this.getAttribute('data-tab');
+        document.getElementById(tabId).style.display = 'block';
+    });
+});
+
+
+document.addEventListener("DOMContentLoaded", async () => {
+    const nav = document.getElementById("topics-tab");
+
+    try {
+        // Extract topic numbers
+        const topicNumbers = [];
+        let topicDDCMap = {};
+        $('.colorable-topic').each(function () {
+            const topicValue = $(this).data('topic-value');
+            const match = topicValue.match(/__label_ddc__(\d+)/);
+            if (match) topicNumbers.push(match[1]);
+            topicDDCMap[String(match[1])] = match ? topicValue : null;
+        });
+
+        const ddcData = await loadDDC();
+        const ddcColorData = await loadDDCColors();
+        const filteredTree = buildDDCTree(ddcData, topicNumbers);
+        const treeElement = buildTreeFromDDC(filteredTree, ddcColorData, null);
+        const oldTree = nav.querySelector("ul.treeview");
+
+        if (oldTree) oldTree.remove();
+        nav.appendChild(treeElement);
+
+        nav.querySelectorAll(".caret").forEach(caret => {
+            caret.addEventListener("click", function (e) {
+                e.stopPropagation();
+                this.classList.toggle("expanded");
+                const nested = this.nextElementSibling;
+                if (nested && nested.classList.contains("nested")) {
+                    nested.style.display = nested.style.display === "block" ? "none" : "block";
+                }
+            });
+        });
+
+        document.querySelectorAll('.treeview li span:not(.caret)').forEach(leafNode => {
+            leafNode.addEventListener('click', function () {
+                const isHighlighted = this.classList.contains('highlighted-leaf');
+
+                // Remove highlighting from all leaf nodes
+                document.querySelectorAll('.treeview li span.highlighted-leaf').forEach(node => {
+                    node.classList.remove('highlighted-leaf');
+                });
+
+                if (isHighlighted) {
+                    // If already highlighted, remove highlighting and execute the additional code
+
+                    hideTopicNavButtons();
+                    clearTopicColoring();
+                } else {
+                    // Highlight the clicked leaf node
+                    this.classList.add('highlighted-leaf');
+                    const ddClass = this.textContent;
+                    const ddClassNumber = ddClass.split(' – ')[0];
+                    const name = topicDDCMap[ddClassNumber];
+                    const textColor = window.getComputedStyle(this).color;
+                    colorUnifiedTopics(name, textColor);
+                    scrollToFirstMatchingTopic(name);
+                    updateTopicMarkersOnMinimap(name);
+                    updateFloatingUIPositions();
+                    $('.scrollbar-minimap').show();
+                }
+            });
+        });
+
+    } catch (err) {
+        console.error("Error loading DDC tree:", err);
+    }
+});
+
+async function createDDCMappings() {
+    const ddcData = await loadDDC();
+    const ddcColorData = await loadDDCColors();
+
+    const classToLabelMap = {};
+    const labelToClassMap = {};
+    const classToColorMap = {};
+
+    // Helper function to recursively process DDC data
+    function processDDCNode(node, parentColor = null) {
+        classToLabelMap[node.class_number] = node.title;
+        labelToClassMap[node.title] = node.class_number;
+
+        // Assign color based on parent node for 100, 200, 300
+        let nodeColor = parentColor;
+        if (!parentColor) {
+            const colorData = ddcColorData.color_scheme.find(item => item.ddc_class === node.class_number);
+            nodeColor = colorData ? colorData.color : null;
+        }
+        classToColorMap[node.class_number] = nodeColor;
+
+        if (node.subdivisions) {
+            for (const child of node.subdivisions) {
+                processDDCNode(child, nodeColor);
+            }
+        }
+    }
+
+    // Process top-level nodes
+    for (const topLevelNode of ddcData) {
+        const isSpecialNode = ['100', '200', '300'].includes(topLevelNode.class_number);
+        processDDCNode(topLevelNode, isSpecialNode ? null : undefined);
+    }
+
+    return { classToLabelMap, labelToClassMap, classToColorMap };
+}
+
+
+
+async function loadDDC() {
+    try {
+        const response = await fetch('./ddc_mapping.json');
+        if (!response.ok) throw new Error(`HTTP `+response.status);
+        return await response.json();
+    } catch (err) {
+        console.error("Failed to load DDC mapping:", err);
+        return [];
+    }
+}
+
+async function loadDDCColors() {
+    try {
+        const response = await fetch('./ddc_color_mapping.json');
+        if (!response.ok) throw new Error(`HTTP `+response.status);
+        return await response.json();
+    } catch (err) {
+        console.error("Failed to load DDC mapping:", err);
+        return [];
+    }
+}
+
+function buildDDCTree(ddcData, topicNumbers) {
+    const topicSet = new Set(topicNumbers); // for fast lookup
+
+    function recurse(node) {
+        const result = {
+            class_number: node.class_number,
+            title: node.title,
+            children: []
+        };
+
+        if (node.subdivisions) {
+            for (const child of node.subdivisions) {
+                const childTree = recurse(child);
+                if (childTree) {
+                    result.children.push(childTree);
+                }
+            }
+        }
+
+        const isMatch = topicSet.has(node.class_number);
+        const hasMatchingChildren = result.children.length > 0;
+
+        if (isMatch || hasMatchingChildren) {
+            return result;
+        } else {
+            return null;
+        }
+    }
+
+    const tree = [];
+
+    for (const topLevel of ddcData) {
+        const t = recurse(topLevel);
+        if (t) tree.push(t);
+    }
+
+    return tree;
+}
+
+
+function buildTreeFromDDC(treeNodes, colorMapping=null, nodeColor=null) {
+    const ul = document.createElement('ul');
+    ul.classList.add('treeview');
+
+    for (const node of treeNodes) {
+        const li = document.createElement('li');
+        const label = node.class_number + ' – ' + node.title;
+
+        let color;
+        if(nodeColor === null || nodeColor === undefined) {
+            const colorData = colorMapping.color_scheme.filter(item => item.ddc_class === node.class_number);
+            color = colorData.length > 0 ? colorData[0].color : 'transparent';
+        }
+        else{
+            color = nodeColor;
+        }
+
+        const span = document.createElement('span');
+        span.textContent = label;
+        span.style.color = color;
+
+        if (node.children && node.children.length > 0) {
+            span.classList.add('caret');
+
+            const childUl = buildTreeFromDDC(node.children, colorMapping, color);
+            childUl.classList.add('nested');
+
+            li.appendChild(span);
+            li.appendChild(childUl);
+        } else {
+            li.appendChild(span);
+        }
+
+        ul.appendChild(li);
+    }
+
+    return ul;
 }
