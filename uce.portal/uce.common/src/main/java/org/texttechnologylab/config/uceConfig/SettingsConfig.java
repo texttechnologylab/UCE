@@ -11,4 +11,6 @@ public class SettingsConfig {
 
     private AnalysisConfig analysis;
 
+    private EmbeddingsConfig embeddings;
+
 }
