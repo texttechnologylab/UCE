@@ -850,7 +850,7 @@ $(document).on('click', '.viz-nav-btn', function () {
         setTimeout(() => renderTemporalExplorer('vp-1'), 500);
     }
     if (target === '#viz-panel-2') {
-
+        setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
     }
     if (target === '#viz-panel-3') {
 
@@ -863,6 +863,153 @@ $(document).on('click', '.viz-nav-btn', function () {
 
     }
 });
+
+function renderTopicEntityChordDiagram(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container || container.classList.contains('rendered')) return;
+    const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
+    const docId = rawValue ? parseInt(rawValue, 10) : null;
+    if (!docId) {
+        console.error("Missing or invalid documentId for Chord Diagram");
+        return;
+    }
+
+    $.get('/api/document/page/topicEntityRelation', { documentId: docId })
+        .then(data => {
+            const nodeMap = new Map();
+            const nodes = [];
+            const linkCounts = new Map();
+
+            let nodeIndex = 0;
+
+            const categories = [
+                { name: 'Topic', itemStyle: { color: '#5470C6' } },
+                { name: 'Entity', itemStyle: { color: '#91CC75' } }
+            ];
+
+            function getCategory(name, isEntity) {
+                return isEntity ? 1 : 0;
+            }
+
+            // Step 1: build nodes
+            data.forEach(item => {
+                const topic = item.topiclabel;
+                const entityType = item.entity_type;
+
+                if (topic && !nodeMap.has(topic)) {
+                    nodeMap.set(topic, nodeIndex++);
+                    nodes.push({ name: topic, value: 0, category: getCategory(topic, false) });
+                }
+                if (entityType && !nodeMap.has(entityType)) {
+                    nodeMap.set(entityType, nodeIndex++);
+                    nodes.push({ name: entityType, value: 0, category: getCategory(entityType, true) });
+                }
+
+                // Step 2: count link frequency as weight
+                if (topic && entityType) {
+                    const linkKey = topic + '___' + entityType;
+                    linkCounts.set(linkKey, (linkCounts.get(linkKey) || 0) + 1);
+                }
+            });
+
+            // Step 3: build links with frequency as value
+            const links = [];
+            linkCounts.forEach((count, key) => {
+                const [sourceName, targetName] = key.split('___');
+                if (nodeMap.has(sourceName) && nodeMap.has(targetName)) {
+                    links.push({
+                        source: nodeMap.get(sourceName),
+                        target: nodeMap.get(targetName),
+                        value: count
+                    });
+
+                    nodes[nodeMap.get(sourceName)].value += count;
+                    nodes[nodeMap.get(targetName)].value += count;
+                }
+            });
+
+            // Step 4: normalize node sizes
+            const minSize = 10;
+            const maxSize = 50;
+            const values = nodes.map(n => n.value);
+            const maxVal = Math.max(...values);
+            const minVal = Math.min(...values);
+
+            nodes.forEach(n => {
+                if (maxVal === minVal) {
+                    n.symbolSize = (minSize + maxSize) / 2;
+                } else {
+                    n.symbolSize = minSize + (n.value - minVal) / (maxVal - minVal) * (maxSize - minSize);
+                }
+            });
+
+            const tooltipFormatter = function (params) {
+                if (params.dataType !== 'node') return '';
+
+                const node = nodes[params.dataIndex];
+                const clickedNodeName = node.name;
+                const isEntity = node.category === 1;
+
+                const filtered = data.filter(item => {
+                    return isEntity ? item.entity_type === clickedNodeName : item.topiclabel === clickedNodeName;
+                });
+                const aggMap = new Map();
+
+                filtered.forEach(item => {
+                    // The other side of the relation
+                    const key = isEntity ? item.topiclabel : item.entity_type;
+                    if (key) {
+                        aggMap.set(key, (aggMap.get(key) || 0) + 1);
+                    }
+                });
+
+                const entityColor = '#91CC75'
+                const topicColor = '#5470C6';
+                const label = (isEntity ? "Topics for Entity: <b>" + clickedNodeName + "</b>" : "Entities for Topic: <b>" + clickedNodeName + "</b>");
+
+                const topN = [...aggMap.entries()]
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+
+                return window.graphVizHandler.createMiniBarChart({
+                    data: topN,
+                    labelPrefix: label,
+                    primaryColor: topicColor,
+                    secondaryColor: entityColor,
+                    usePrimaryForEntity: isEntity,
+                    maxBarWidth: 100,
+                    fontSize: 10
+                });
+            };
+
+            window.graphVizHandler.createChordChart(
+                containerId,
+                '',
+                {nodes, links, categories},
+                tooltipFormatter,
+                function onClick(params) {
+                    const pageNumber = params.name;
+                    const pageElement = document.querySelector('.page[data-id="' + pageNumber + '"]');
+                    if (pageElement) {
+                        pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        console.error(`Page ` + pageNumber + ` not found.`);
+                    }
+                }
+            );
+            container.classList.add('rendered');
+
+
+            // window.addEventListener('resize', () => {
+            //     chart.resize();
+            // });
+
+
+        })
+        .catch(err => {
+            console.error("Error loading topic-entity chord data:", err);
+        });
+}
 
 function renderSentenceTopicSankey(containerId) {
     const container = document.getElementById(containerId);
@@ -946,6 +1093,10 @@ function renderSentenceTopicSankey(containerId) {
 }
 
 function renderTemporalExplorer(containerId) {
+
+    const container = document.getElementById(containerId);
+    if (!container || container.classList.contains('rendered')) return;
+
     const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
     const docId = rawValue ? parseInt(rawValue, 10) : null;
     if (!docId) return console.error("Missing or invalid documentId");
@@ -1085,6 +1236,7 @@ function renderTemporalExplorer(containerId) {
                 }
             }
         );
+        container.classList.add('rendered');
     }).catch(err => {
         console.error("Error loading or processing annotation data:", err);
     });

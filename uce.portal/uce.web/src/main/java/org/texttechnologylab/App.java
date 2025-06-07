@@ -394,6 +394,7 @@ public class App {
                 get("/topics", documentApi.getDocumentTopics);
                 get("/page/taxon", documentApi.getTaxonCountByPage);
                 get("/page/topics", documentApi.getDocumentTopicDistributionByPage);
+                get("/page/topicEntityRelation", documentApi.getSentenceTopicsWithEntities);
             });
 
             path("/rag", () -> {
