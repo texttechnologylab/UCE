@@ -872,9 +872,7 @@ function renderSentenceTopicNetwork(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
 
-    let $spinner = $('.visualization-spinner').show()
-    $(container).empty().append($spinner);
-
+    $('.visualization-spinner').show()
     const documentId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
 
 
@@ -901,7 +899,7 @@ function renderSentenceTopicNetwork(containerId) {
                 data: { documentId },
                 dataType: 'json',
                 success: function (embeddings) {
-                    $spinner.remove();
+                    $('.visualization-spinner').hide()
                     if (!embeddings || !Array.isArray(embeddings) || embeddings.length === 0) {
                         const container = document.getElementById(containerId);
                         if (container) {
@@ -1083,19 +1081,16 @@ function renderTopicSimilarityMatrix(containerId) {
         $('.selector-container').show();
         return;
     }
+    $('.visualization-spinner').show()
     const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
-    if (!docId) {
-        console.error("Missing or invalid documentId for Chord Diagram");
-        return;
-    }
-
 
     $.get('/api/document/page/topicWords', { documentId: docId })
         .then(data => {
+            $('.visualization-spinner').hide()
             if (!data || !Array.isArray(data) || data.length === 0) {
                 const container = document.getElementById(containerId);
                 if (container) {
-                    container.innerHTML = '<div style="color:#888;">' + container.getAttribute('data-message') + '</div>';
+                    container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
                 }
                 return;
             }
@@ -1134,14 +1129,21 @@ function renderTopicSimilarityMatrix(containerId) {
 function renderTopicEntityChordDiagram(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
+    $('.visualization-spinner').show()
+
     const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
-    if (!docId) {
-        console.error("Missing or invalid documentId for Chord Diagram");
-        return;
-    }
+
 
     $.get('/api/document/page/topicEntityRelation', { documentId: docId })
         .then(data => {
+            $('.visualization-spinner').hide()
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+                }
+                return;
+            }
             const nodeMap = new Map();
             const nodes = [];
             const linkCounts = new Map();
@@ -1281,6 +1283,8 @@ function renderSentenceTopicSankey(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
 
+    $('.visualization-spinner').show()
+
     let sentenceTopicData = [];
     const topicFrequency = {};
 
@@ -1322,6 +1326,7 @@ function renderSentenceTopicSankey(containerId) {
         target: d.to,
         value: d.weight
     }));
+    $('.visualization-spinner').hide()
     window.graphVizHandler.createSankeyChart(containerId, 'Sentence-Topic Sankey Diagram', links, nodes, function (params) {
         if (params.dataType === 'node') {
             const name = params.name;
@@ -1362,15 +1367,14 @@ function renderTemporalExplorer(containerId) {
 
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
-
+    $('.visualization-spinner').show()
     const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
-
-    if (!docId) return console.error("Missing or invalid documentId");
 
     const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
     const topicReq = $.get('/api/document/page/topics', { documentId: docId });
 
     Promise.all([taxonReq, topicReq]).then(([taxon, topics]) => {
+        $('.visualization-spinner').hide()
         const annotationSources = [
             {
                 key: 'taxon',
@@ -1417,15 +1421,15 @@ function renderTemporalExplorer(containerId) {
                 if (!dataMap.has(page)) {
                     dataMap.set(page, {
                         page,
-                        taxon: new Set(),
-                        topics: new Set(),
-                        ne: new Set()
+                        taxon: [],
+                        topics: [],
+                        ne: []
                     });
                 }
 
                 const value = item[valueField];
                 if (value) {
-                    dataMap.get(page)[key].add(transformValue ? transformValue(value) : value);
+                    dataMap.get(page)[key].push(transformValue ? transformValue(value) : value);
                 }
             });
         });
@@ -1435,7 +1439,7 @@ function renderTemporalExplorer(containerId) {
 
         const seriesData = annotationSources
             .map(({ key, label, color }) => {
-                const data = sorted.map(row => row[key]?.size || 0);
+                const data = sorted.map(row => row[key]?.length || 0);
                 const hasNonZero = data.some(count => count > 0);
                 return hasNonZero ? { name: label, data, color } : null;
             })
@@ -1458,7 +1462,7 @@ function renderTemporalExplorer(containerId) {
 
             annotationSources.forEach(({ key, label, color }) => {
                 const items = record[key];
-                if (!items || items.size === 0) return;
+                if (!items || items.length === 0) return;
 
                 const freq = {};
                 items.forEach(item => {
