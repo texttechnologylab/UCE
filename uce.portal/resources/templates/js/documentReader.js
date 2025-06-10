@@ -905,6 +905,7 @@ function renderSentenceTopicNetwork(containerId) {
                         if (container) {
                             container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
                         }
+                        container.classList.add('rendered');
                         return;
                     }
                     const sentenceEmbeddingMap = new Map();
@@ -1092,6 +1093,8 @@ function renderTopicSimilarityMatrix(containerId) {
                 if (container) {
                     container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
                 }
+                container.classList.remove('rendered');
+                $('.selector-container').hide();
                 return;
             }
             $('.selector-container').show();
@@ -1142,6 +1145,7 @@ function renderTopicEntityChordDiagram(containerId) {
                 if (container) {
                     container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
                 }
+                container.classList.add('rendered');
                 return;
             }
             const nodeMap = new Map();
@@ -1285,10 +1289,21 @@ function renderSentenceTopicSankey(containerId) {
 
     $('.visualization-spinner').show()
 
+    const $colorableTopics = $('.colorable-topic');
+    if ($colorableTopics.length === 0) {
+        $('.visualization-spinner').hide()
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+        }
+        container.classList.add('rendered');
+        return;
+    }
+
     let sentenceTopicData = [];
     const topicFrequency = {};
 
-    $('.colorable-topic').each(function () {
+    $colorableTopics.each(function () {
         const topicValue = $(this).data('topic-value');
         const utId = parseInt(this.id.replace('utopic-UT-', ''));
 
@@ -1375,6 +1390,14 @@ function renderTemporalExplorer(containerId) {
 
     Promise.all([taxonReq, topicReq]).then(([taxon, topics]) => {
         $('.visualization-spinner').hide()
+        if ((!taxon || taxon.length === 0) && (!topics || topics.length === 0)) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+            }
+            container.classList.add('rendered');
+            return;
+        }
         const annotationSources = [
             {
                 key: 'taxon',
