@@ -625,6 +625,27 @@ body {
     padding-bottom: 60px; /* adjust if nav height changes */
 }
 
+.visualization-wrapper .visualization-spinner {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    height: 220px;
+}
+.visualization-wrapper .visualization-spinner__icon {
+    margin-bottom: 16px;
+}
+.visualization-wrapper .visualization-spinner__icon i {
+    font-size: 2.5rem;
+    color: #0078d4;
+}
+.visualization-wrapper .visualization-spinner__text {
+    font-size: 1.1rem;
+    color: #444;
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
 
 .visualization-content .viz-panel {
     display: none;

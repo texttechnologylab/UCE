@@ -853,7 +853,7 @@ $(document).on('click', '.viz-nav-btn', function () {
         setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
     }
     if (target === '#viz-panel-3') {
-
+        setTimeout(() => renderSentenceTopicNetwork('vp-3'), 500);
     }
     if (target === '#viz-panel-4') {
         $('.selector-container').hide();
@@ -865,6 +865,176 @@ $(document).on('click', '.viz-nav-btn', function () {
 
     }
 });
+
+
+
+function renderSentenceTopicNetwork(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container || container.classList.contains('rendered')) return;
+
+    let $spinner = $('.visualization-spinner').show()
+    $(container).empty().append($spinner);
+
+    const documentId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
+
+    $.ajax({
+        url: `/api/document/unifiedTopicSentenceMap`,
+        method: 'GET',
+        data: { documentId },
+        dataType: 'json',
+        success: function (utToSentenceMapList) {
+            const utToSentenceMap = new Map();
+            const topicToSentences = {};
+
+            utToSentenceMapList.forEach(({ unifiedtopicId, sentenceId }) => {
+                const utId = unifiedtopicId.toString();
+                const sId = sentenceId.toString();
+                utToSentenceMap.set(utId, sId);
+                if (!topicToSentences[utId]) topicToSentences[utId] = [];
+                topicToSentences[utId].push(sId);
+            });
+
+            $.ajax({
+                url: `/api/rag/sentenceEmbeddings`,
+                method: 'GET',
+                data: { documentId },
+                dataType: 'json',
+                success: function (embeddings) {
+                    $spinner.remove();
+                    if (!embeddings || !Array.isArray(embeddings) || embeddings.length === 0) {
+                        const container = document.getElementById(containerId);
+                        if (container) {
+                            container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+                        }
+                        return;
+                    }
+                    const sentenceEmbeddingMap = new Map();
+                    embeddings.forEach(({ sentenceId, tsne2d }) => {
+                        sentenceEmbeddingMap.set(sentenceId.toString(), tsne2d);
+                    });
+
+                    const nodes = [];
+                    const nodeSet = new Set();
+
+                    $('.colorable-topic').each(function () {
+                        const utId = this.id.replace('utopic-UT-', '');
+                        const topicValue = $(this).data('topic-value')?.toString();
+                        const text = $(this).data('wcovered').toString();
+                        if (!utToSentenceMap.has(utId)) return;
+                        const sentenceId = utToSentenceMap.get(utId);
+                        if (!sentenceEmbeddingMap.has(sentenceId)) return;
+
+                        if (nodeSet.has(sentenceId)) return;
+                        nodeSet.add(sentenceId);
+
+                        const [x, y] = sentenceEmbeddingMap.get(sentenceId);
+                        const color = topicColorMap[topicValue] || '#888';
+
+                        nodes.push({
+                            id: sentenceId,
+                            name: `Sentence `+utId,
+                            symbolSize: 20,
+                            x, y,
+                            itemStyle: { color },
+                            label: { show: false },
+                            tooltip: {
+                                confine: true, // prevent overflow
+
+                                textStyle: {
+                                    color: '#333',
+                                    overflow: 'truncate',  // enables word wrap
+                                    fontSize: 12,
+
+                                },
+                                formatter: () => {
+                                    return (
+                                        "<b>Sentence ID:</b> " + sentenceId + "<br>" +
+                                        "<b>Topic:</b> " + topicValue + "<br>" +
+                                        "<b>Text:</b> " + text
+                                    );
+                                }
+                            }
+                        });
+                    });
+
+                    const links = [];
+
+                    const k = 3;
+                    const embeddingArray = Array.from(sentenceEmbeddingMap.entries());
+
+                    function euclidean([x1, y1], [x2, y2]) {
+                        return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+                    }
+
+                    embeddingArray.forEach(([id1, vec1]) => {
+                        if (!nodeSet.has(id1)) return;
+
+                        const neighbors = embeddingArray
+                            .filter(([id2]) => id1 !== id2 && nodeSet.has(id2))
+                            .map(([id2, vec2]) => ({ id2, dist: euclidean(vec1, vec2) }))
+                            .sort((a, b) => a.dist - b.dist)
+                            .slice(0, k);
+
+                        neighbors.forEach(({ id2 }) => {
+                            links.push({
+                                source: id1,
+                                target: id2,
+                                lineStyle: { color: '#bbb', opacity: 0.2 }
+                            });
+                        });
+                    });
+
+                    const nodeDegreeMap = {};
+                    links.forEach(link => {
+                        nodeDegreeMap[link.source] = (nodeDegreeMap[link.source] || 0) + 1;
+                        nodeDegreeMap[link.target] = (nodeDegreeMap[link.target] || 0) + 1;
+                    });
+
+                    nodes.forEach(node => {
+                        const degree = nodeDegreeMap[node.id] || 0;
+                        node.symbolSize = 10 + degree * 2;
+                    });
+
+                    window.graphVizHandler.createNetworkGraph(
+                        containerId,
+                        '',
+                        nodes,
+                        links,
+                    null,
+                    function (params) {
+                        if (params.dataType === 'node') {
+                            const name = params.name.split('Sentence ')[1];
+                            $('.scrollbar-minimap').hide();
+                            hideTopicNavButtons();
+                            clearTopicColoring();
+                            $('.colorable-topic').each(function () {
+                                const topicValue = $(this).data('topic-value');
+                                const utId = this.id.replace('utopic-UT-', '');
+                                if (utId === name) {
+                                    $(this).css({
+                                        'background-color': topicColorMap[topicValue],
+                                        'border-radius': '3px',
+                                        'padding': '0 2px'
+                                    });
+                                    this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            });
+                        }
+                    });
+
+                    container.classList.add('rendered');
+                },
+                error: function () {
+                    console.error('Failed to get sentence embeddings');
+                }
+            });
+        },
+        error: function () {
+            console.error('Failed to get unified topic to sentence map');
+        }
+    });
+}
 
 function computeTopicSimilarityMatrix(data, type = "cosine") {
     const topicLabels = data.map(t => t.topicLabel);
