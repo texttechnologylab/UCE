@@ -1846,6 +1846,22 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<Object[]> getTopicWordsByDocumentId(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT topiclabel, word, AVG(probability) AS avg_probability " +
+                    "FROM documenttopicwords " +
+                    "WHERE document_id = :documentId " +
+                    "GROUP BY topiclabel, word " +
+                    "ORDER BY avg_probability DESC";
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("documentId", documentId);
+
+            List<Object[]> results = query.getResultList();
+
+            return results;
+        });
+    }
 
 
 
