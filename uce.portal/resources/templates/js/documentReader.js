@@ -913,8 +913,7 @@ function renderTopicSimilarityMatrix(containerId) {
         $('.selector-container').show();
         return;
     }
-    const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
-    const docId = rawValue ? parseInt(rawValue, 10) : null;
+    const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
     if (!docId) {
         console.error("Missing or invalid documentId for Chord Diagram");
         return;
@@ -965,8 +964,7 @@ function renderTopicSimilarityMatrix(containerId) {
 function renderTopicEntityChordDiagram(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
-    const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
-    const docId = rawValue ? parseInt(rawValue, 10) : null;
+    const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
     if (!docId) {
         console.error("Missing or invalid documentId for Chord Diagram");
         return;
@@ -1195,8 +1193,8 @@ function renderTemporalExplorer(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
 
-    const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
-    const docId = rawValue ? parseInt(rawValue, 10) : null;
+    const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
     if (!docId) return console.error("Missing or invalid documentId");
 
     const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
