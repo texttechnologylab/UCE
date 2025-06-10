@@ -197,6 +197,94 @@
     "Variant": "Hate",
     "type": ""
   },
+  "Hate-speech-CNERG (PL)": {
+    "url": "http://hate-cnergpl.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/Hate-speech-CNERG/dehatebert-mono-polish",
+    "paper": "https://arxiv.org/abs/2004.06465",
+    "map": "Hate-speech-CNERG/dehatebert-mono-polish",
+    "Name": "Hate-speech-CNERG (PL)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate-speech-CNERG (ES)": {
+    "url": "http://hate-cnerges.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/Hate-speech-CNERG/dehatebert-mono-spanish",
+    "paper": "https://arxiv.org/abs/2004.06465",
+    "map": "Hate-speech-CNERG/dehatebert-mono-spanish",
+    "Name": "Hate-speech-CNERG (ES)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate-speech-CNERG (IT)": {
+    "url": "http://hate-cnergit.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/Hate-speech-CNERG/dehatebert-mono-italian",
+    "paper": "https://arxiv.org/abs/2004.06465",
+    "map": "Hate-speech-CNERG/dehatebert-mono-italian",
+    "Name": "Hate-speech-CNERG (IT)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate-speech-CNERG (PT)": {
+    "url": "http://hate-cnergpt.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/Hate-speech-CNERG/dehatebert-mono-portuguese",
+    "paper": "https://arxiv.org/abs/2004.06465",
+    "map": "Hate-speech-CNERG/dehatebert-mono-portugese",
+    "Name": "Hate-speech-CNERG (PT)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate-speech-CNERG (AR)": {
+    "url": "http://hate-cnergar.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/Hate-speech-CNERG/dehatebert-mono-arabic",
+    "paper": "https://arxiv.org/abs/2004.06465",
+    "map": "Hate-speech-CNERG/dehatebert-mono-arabic",
+    "Name": "Hate-speech-CNERG (AR)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate-speech-CNERG (FR)": {
+    "url": "http://hate-cnergfr.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/Hate-speech-CNERG/dehatebert-mono-french",
+    "paper": "https://arxiv.org/abs/2004.06465",
+    "map": "Hate-speech-CNERG/dehatebert-mono-french",
+    "Name": "Hate-speech-CNERG (FR)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate-speech-CNERG (ID)": {
+    "url": "http://hate-cnergid.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/Hate-speech-CNERG/dehatebert-mono-indonesian",
+    "paper": "https://arxiv.org/abs/2004.06465",
+    "map": "Hate-speech-CNERG/dehatebert-mono-indonesian",
+    "Name": "Hate-speech-CNERG (ID)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate-speech-Alexandrainst (DA)": {
+    "url": "http://hate-alexandrainst.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/alexandrainst/da-hatespeech-detection-base",
+    "paper": "",
+    "map": "alexandrainst/da-hatespeech-detection-base",
+    "Name": "Hate-speech-Alexandrainst (DA)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
   "Hate Deepset GermanBert (DE)": {
     "url": "http://hate-deepset.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
@@ -204,6 +292,50 @@
     "paper": "",
     "map": "deepset/bert-base-german-cased-hatespeech-GermEval18Coarse",
     "Name": "Hate Deepset GermanBert (DE)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate LFTW Facebook (EN)": {
+    "url": "http://hate-lftw-facebook.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/facebook/roberta-hate-speech-dynabench-r4-target",
+    "paper": "",
+    "map": "facebook/roberta-hate-speech-dynabench-r4-target",
+    "Name": "Hate LFTW Facebook (EN)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate MetaHateBERT (EN)": {
+    "url": "http://hate-metahatebert.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/irlab-udc/MetaHateBERT",
+    "paper": "",
+    "map": "irlab-udc/MetaHateBERT",
+    "Name": "Hate MetaHateBERT (EN)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate HateBERT hateval (EN)": {
+    "url": "http://hate-hatebert-hateval.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://osf.io/tbd58/files/osfstorage?view_only=d90e681c672a494bb555de99fc7ae780",
+    "paper": "",
+    "map": "HateBERT_hateval",
+    "Name": "Hate HateBERT hateval (EN)",
+    "Main Tool": "Hate Speech Detection",
+    "Variant": "Hate",
+    "type": ""
+  },
+  "Hate Check Eziisk (EN)": {
+    "url": "http://hate-hate-check-eziisk.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-Hate",
+    "huggingface": "https://huggingface.co/EZiisk/EZ_finetune_Vidgen_model_RHS_Best",
+    "paper": "",
+    "map": "HateCheckEziisk",
+    "Name": "Hate Check Eziisk (EN)",
     "Main Tool": "Hate Speech Detection",
     "Variant": "Hate",
     "type": ""
@@ -283,6 +415,193 @@
     "Name": "Toxicity German (DE)",
     "Main Tool": "Toxic Language Detection",
     "Variant": "Toxic",
+    "type": ""
+  },
+  "Toxic XLM-Roberta": {
+    "url": "http://toxic-xlm-roberta.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-transformers-toxic",
+    "huggingface": "https://huggingface.co/EIStakovskii/xlm_roberta_base_multilingual_toxicity_classifier_plus",
+    "paper": "",
+    "map": "EIStakovskii/xlm_roberta_base_multilingual_toxicity_classifier_plus",
+    "Name": "Toxicity XLM-Roberta",
+    "Main Tool": "Toxic Language Detection",
+    "Variant": "Toxic",
+    "type": ""
+  },
+  "CNERG HateExplain (EN)": {
+    "url": "http://offensive-cnerg-hatexplain.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface": "https://huggingface.co/Hate-speech-CNERG/bert-base-uncased-hatexplain",
+    "paper": "",
+    "map": "Hate-speech-CNERG/bert-base-uncased-hatexplain",
+    "Name": "CNERG HateExplain (EN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "CNERG HateExplain-Rationale (EN)": {
+    "url": "http://offensive-cnerg-hatexplain-rationale.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface": "https://huggingface.co/Hate-speech-CNERG/bert-base-uncased-hatexplain-rationale-two",
+    "paper": "",
+    "map": "Hate-speech-CNERG/bert-base-uncased-hatexplain-rationale-two",
+    "Name": "CNERG HateExplain-Rationale (EN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "NaijaXLM-T-base Hate (EN,IG,YO,HA,PIGDIN)": {
+    "url": "http://offensive-naija-xlm-t-base-hate.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface": "https://huggingface.co/worldbank/naija-xlm-twitter-base-hate",
+    "paper": "",
+    "map": "worldbank/naija-xlm-twitter-base-hate",
+    "Name": "NaijaXLM-T-base Hate (EN,IG,YO,HA,PIGDIN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "HateBERT abuseval (EN)": {
+    "url": "http://offensive-hatebert-abuseval.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface": "https://osf.io/tbd58/files/osfstorage?view_only=d90e681c672a494bb555de99fc7ae780",
+    "paper": "",
+    "map": "HateBERT_abuseval",
+    "Name": "HateBERT abuseval (EN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "HateBERT offenseval (EN)": {
+    "url": "http://offensive-hatebert-offenseval.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface": "https://osf.io/tbd58/files/osfstorage?view_only=d90e681c672a494bb555de99fc7ae780",
+    "paper": "",
+    "map": "HateBERT_offenseval",
+    "Name": "HateBERT offenseval (EN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "BERTweet Hate Speech (EN)": {
+    "url": "http://offensive-bertweet-hate-speech.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/pysentimiento/bertweet-hate-speech",
+    "paper": "",
+    "map": "pysentimiento/bertweet-hate-speech",
+    "Name": "BERTweet Hate Speech (EN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "RoBERTuito Hate Speech (ES)": {
+    "url": "http://offensive-robertuito-hate-speech.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/pysentimiento/robertuito-hate-speech",
+    "paper": "",
+    "map": "pysentimiento/robertuito-hate-speech",
+    "Name": "RoBERTuito Hate Speech (ES)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "BERTabaporu Hate Speech (PT)": {
+    "url": "http://offensive-bertabaporu-hate-speech.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/pysentimiento/bertabaporu-pt-hate-speech",
+    "paper": "",
+    "map": "pysentimiento/bertabaporu-pt-hate-speech",
+    "Name": "BERTabaporu Hate Speech (PT)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "BERT-IT Hate Speech (IT)": {
+    "url": "http://offensive-bert-it-hate-speech.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/pysentimiento/bert-it-hate-speech",
+    "paper": "",
+    "map": "pysentimiento/bert-it-hate-speech",
+    "Name": "BERT-IT Hate Speech (IT)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "IMSyPP Social Media Hate Speech": {
+    "url": "http://offensive-imsypp-social-media.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/IMSyPP/hate_speech_multilingual",
+    "paper": "",
+    "map": "IMSyPP/hate_speech_multilingual",
+    "Name": "IMSyPP Social Media Hate Speech",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "IMSyPP Social Media Hate Speech (EN)": {
+    "url": "http://offensive-imsypp-social-media-en.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/IMSyPP/hate_speech_en",
+    "paper": "",
+    "map": "IMSyPP/hate_speech_en",
+    "Name": "IMSyPP Social Media Hate Speech (EN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "IMSyPP Social Media Hate Speech (IT)": {
+    "url": "http://offensive-imsypp-social-media-it.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/IMSyPP/hate_speech_it",
+    "paper": "",
+    "map": "IMSyPP/hate_speech_it",
+    "Name": "IMSyPP Social Media Hate Speech (IT)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "IMSyPP Social Media Hate Speech (NL)": {
+    "url": "http://offensive-imsypp-social-media-nl.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/IMSyPP/hate_speech_nl",
+    "paper": "",
+    "map": "IMSyPP/hate_speech_nl",
+    "Name": "IMSyPP Social Media Hate Speech (NL)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "IMSyPP Social Media Hate Speech (SLO)": {
+    "url": "http://offensive-imsypp-social-media-slo.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/IMSyPP/hate_speech_SLO",
+    "paper": "",
+    "map": "IMSyPP/hate_speech_slo",
+    "Name": "IMSyPP Social Media Hate Speech (SLO)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "CardiffNLP Multiclass Hate (EN)": {
+    "url": "http://offensive-cardiffnlp-hate-multiclass.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/cardiffnlp/twitter-roberta-base-hate-multiclass-latest",
+    "paper": "",
+    "map": "cardiffnlp/twitter-roberta-base-hate-multiclass-latest",
+    "Name": "CardiffNLP Multiclass Hate (EN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
+    "type": ""
+  },
+  "CardiffNLP Multilabel Sensitive (EN)": {
+    "url": "http://offensive-cardiffnlp-sensitive-multilabel.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-offensive",
+    "huggingface":"https://huggingface.co/cardiffnlp/twitter-roberta-large-sensitive-multilabel",
+    "paper": "",
+    "map": "cardiffnlp/twitter-roberta-large-sensitive-multilabel",
+    "Name": "CardiffNLP Multilabel Sensitive (EN)",
+    "Main Tool": "Multilabel Offensive Speech Detection",
+    "Variant": "Offensive",
     "type": ""
   },
   "Emotion Twitter": {
@@ -570,5 +889,29 @@
     "Main Tool": "Text Readability",
     "Variant": "Readability",
     "type": "Readability"
+  },
+  "TAScore": {
+    "url": "http://ta.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-TAScore",
+    "huggingface": "",
+    "paper": "",
+    "map": "TA",
+    "Name": "TAScore",
+    "Main Tool": "TA",
+    "Variant": "TA",
+    "type": "TA"
+  },
+  "LLM DeepSeek-R1": {
+    "url": "http://llm.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-llm",
+    "huggingface": "",
+    "paper": "",
+    "map": "test:DeepSeek-R1",
+    "Name": "LLM DeepSeek-R1",
+    "Main Tool": "LLM",
+    "Variant": "LLM",
+    "type": "LLM",
+    "url-Parameter": "gondor.hucompute.org",
+    "port-Parameter": "11434"
   }
 }
