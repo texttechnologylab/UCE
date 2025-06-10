@@ -269,8 +269,8 @@
                                         <div class="selector-container">
                                             <label for="similarityTypeSelector">Similarity Type:</label>
                                             <select id="similarityTypeSelector">
-                                                <option value="cosine" title="Cosine: Measures angular similarity of topic-word vectors">Cosine</option>
-                                                <option value="count" title="Shared Count: Simply counts overlapping words between topics">Shared Count</option>
+                                                <option value="cosine" title="${languageResource.get('cosine')}">Cosine</option>
+                                                <option value="count" title="${languageResource.get('overlap')}">Shared Count</option>
                                             </select>
                                         </div>
                                         <div id="vp-4" data-message="${languageResource.get('noDataAvailable')}"></div>
