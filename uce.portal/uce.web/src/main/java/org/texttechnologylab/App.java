@@ -397,6 +397,7 @@ public class App {
                 get("/page/topicEntityRelation", documentApi.getSentenceTopicsWithEntities);
                 get("/page/topicWords", documentApi.getTopicWordsByDocument);
                 get("/unifiedTopicSentenceMap", documentApi.getUnifiedTopicToSentenceMap);
+                get("/page/namedEntities", documentApi.getDocumentNamedEntitiesByPage);
             });
 
             path("/rag", () -> {

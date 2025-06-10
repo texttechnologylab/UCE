@@ -905,6 +905,7 @@ function renderSentenceTopicNetwork(containerId) {
                         if (container) {
                             container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
                         }
+                        container.classList.add('rendered');
                         return;
                     }
                     const sentenceEmbeddingMap = new Map();
@@ -1092,6 +1093,8 @@ function renderTopicSimilarityMatrix(containerId) {
                 if (container) {
                     container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
                 }
+                container.classList.remove('rendered');
+                $('.selector-container').hide();
                 return;
             }
             $('.selector-container').show();
@@ -1142,6 +1145,7 @@ function renderTopicEntityChordDiagram(containerId) {
                 if (container) {
                     container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
                 }
+                container.classList.add('rendered');
                 return;
             }
             const nodeMap = new Map();
@@ -1285,10 +1289,21 @@ function renderSentenceTopicSankey(containerId) {
 
     $('.visualization-spinner').show()
 
+    const $colorableTopics = $('.colorable-topic');
+    if ($colorableTopics.length === 0) {
+        $('.visualization-spinner').hide()
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+        }
+        container.classList.add('rendered');
+        return;
+    }
+
     let sentenceTopicData = [];
     const topicFrequency = {};
 
-    $('.colorable-topic').each(function () {
+    $colorableTopics.each(function () {
         const topicValue = $(this).data('topic-value');
         const utId = parseInt(this.id.replace('utopic-UT-', ''));
 
@@ -1372,15 +1387,24 @@ function renderTemporalExplorer(containerId) {
 
     const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
     const topicReq = $.get('/api/document/page/topics', { documentId: docId });
+    const entityReq = $.get('/api/document/page/namedEntities', { documentId: docId });
 
-    Promise.all([taxonReq, topicReq]).then(([taxon, topics]) => {
+    Promise.all([taxonReq, topicReq, entityReq]).then(([taxon, topics, entities]) => {
         $('.visualization-spinner').hide()
+        if ((!taxon || taxon.length === 0) && (!topics || topics.length === 0) && (!entities || entities.length === 0)) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+            }
+            container.classList.add('rendered');
+            return;
+        }
         const annotationSources = [
             {
                 key: 'taxon',
                 data: taxon,
-                pageField: 'page_id',
-                valueField: 'taxon_value',
+                pageField: 'pageId',
+                valueField: 'taxonValue',
                 label: 'Taxon',
                 color: '#91CC75',
                 transformValue: v => v.split('|')[0]
@@ -1388,10 +1412,20 @@ function renderTemporalExplorer(containerId) {
             {
                 key: 'topics',
                 data: topics,
-                pageField: 'page_id',
-                valueField: 'topiclabel',
+                pageField: 'pageId',
+                valueField: 'topicLabel',
                 label: 'Topics',
                 color: '#75ccc5'
+            }
+            ,
+            {
+                key: 'ne',
+                data: entities,
+                pageField: 'pageId',
+                valueField: 'entityType',
+                label: 'Named Entities',
+                color: '#5470C6',
+                transformValue: v => v.split('|')[0]
             }
         ];
 
