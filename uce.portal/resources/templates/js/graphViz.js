@@ -531,6 +531,60 @@ var GraphVizHandler = (function () {
         return echart;
     };
 
+    GraphVizHandler.prototype.createNetworkGraph = async function (
+        target,
+        title,
+        nodes,
+        links,
+        tooltipFormatter = null,
+        onClick = null
+    ) {
+        const chartId = generateUUID();
+        const option = {
+            title: { text: '', left: 'center' },
+            tooltip: {},
+            xAxis: { show: false, min: 'dataMin', max: 'dataMax' },
+            yAxis: { show: false, min: 'dataMin', max: 'dataMax' },
+            animationDuration: 1500,
+            animationEasingUpdate: 'quinticInOut',
+            series: [{
+                type: 'graph',
+                layout: 'force',
+                draggable: true,
+                force: {
+                    edgeLength: 5,
+                    repulsion: 10,
+                    gravity: 0.5
+                },
+                data: nodes,
+                edges: links,
+                roam: true,
+                symbolSize: 10,
+                label: { show: false },
+                emphasis: {
+                    focus: 'adjacency',
+                    lineStyle: {
+                        width: 10
+                    }
+                },
+
+                itemStyle: { borderColor: '#fff', borderWidth: 1 }
+            }]
+        };
+
+
+        const echart = new ECharts(target, option);
+        this.activeCharts[chartId] = echart;
+
+        echart.getInstance().on('click', function (params) {
+            if (onClick && typeof onClick === 'function') {
+                onClick(params);
+            }
+        });
+
+        return echart;
+    };
+
 
     return GraphVizHandler;
 }());

@@ -254,9 +254,17 @@
                     <#assign documentTopics = document.getUnifiedTopics()![]>
                     <div class="tab-pane" id="visualization-tab">
                         <div class="visualization-wrapper">
-                            <div class="visualization-content">
+                            <div class="visualization-spinner display-none">
+                                <div class="visualization-spinner__icon">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                </div>
+                                <div class="visualization-spinner__text">
+                                    Loading visualization&hellip;
+                                </div>
+                            </div>
+                            <div class="visualization-content" id="viz-content" data-message="${languageResource.get('noDataAvailable')}">
                                 <div class="viz-panel" id="viz-panel-1">
-                                    <div id="vp-1" data-document-id="${document.id}"></div>
+                                    <div id="vp-1"></div>
                                 </div>
                                 <div class="viz-panel" id="viz-panel-2">
                                     <div id="vp-2" ></div>
@@ -273,7 +281,7 @@
                                                 <option value="count" title="${languageResource.get('overlap')}">Shared Count</option>
                                             </select>
                                         </div>
-                                        <div id="vp-4" data-message="${languageResource.get('noDataAvailable')}"></div>
+                                        <div id="vp-4"></div>
                                     </div>
 
                                 </div>

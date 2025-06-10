@@ -11,10 +11,7 @@ import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Document;
-import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
-import org.texttechnologylab.models.rag.RAGChatMessage;
-import org.texttechnologylab.models.rag.RAGChatState;
-import org.texttechnologylab.models.rag.Roles;
+import org.texttechnologylab.models.rag.*;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
 import spark.ModelAndView;
@@ -167,6 +164,39 @@ public class RAGApi {
         }
 
         return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
+    });
+    public Route getSentenceEmbeddings = ((request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for sentence topics with entities. ", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for fetching sentence embeddings"), "defaultError.ftl"));
+        }
+
+        try {
+
+            ArrayList<DocumentSentenceEmbedding> result =
+                    ragService.getDocumentSentenceEmbeddingsOfDocument(documentId);
+
+            List<Map<String, Object>> simplified = result.stream()
+                    .map(e -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("sentenceId", e.getSentence_id());
+                        map.put("tsne2d", e.getTsne2d());
+                        return map;
+                    })
+                    .toList();
+
+            response.type("application/json");
+            return new Gson().toJson(simplified);
+        } catch (Exception ex) {
+            logger.error("Error getting sentence embeddings.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving sentence embeddings."), "defaultError.ftl"));
+        }
     });
 
 }
