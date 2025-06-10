@@ -1763,6 +1763,19 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return query.getResultList();
         });
     }
+    public List<Object[]> getNamedEntityValuesAndCountByPage(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            // Construct the SQL query to select page_id and coveredtext from the namedentity table
+            String sql = "SELECT ne.page_id, ne.coveredtext AS named_entity_value, ne.typee AS named_entity_type " +
+                    "FROM namedentity ne " +
+                    "WHERE ne.document_id = :documentId";
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId);
+
+            return query.getResultList();
+        });
+    }
 
 
     public List<Object[]> getTopicDistributionByPageForDocument(long documentId) throws DatabaseOperationException {

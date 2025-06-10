@@ -246,8 +246,8 @@ public class DocumentApi {
 
             for (Object[] row : taxonValuesAndCounts) {
                 var pageMap = new HashMap<String, Object>();
-                pageMap.put("page_id", row[0]);
-                pageMap.put("taxon_value", row[1]);
+                pageMap.put("pageId", row[0]);
+                pageMap.put("taxonValue", row[1]);
                 //var taxonValues = row[1].toString().replaceAll("[\\{\\}]", "").split(",");
                 //pageMap.put("taxon_values", taxonValues);
                 //pageMap.put("taxon_count", row[2]);
@@ -280,8 +280,8 @@ public class DocumentApi {
 
             for (Object[] row : topicDistPerPage) {
                 var pageMap = new HashMap<String, Object>();
-                pageMap.put("page_id", row[0]);
-                pageMap.put("topiclabel", row[1]);
+                pageMap.put("pageId", row[0]);
+                pageMap.put("topicLabel", row[1]);
                 result.add(pageMap);
             }
 
@@ -294,6 +294,39 @@ public class DocumentApi {
                     .render(new ModelAndView(Map.of("information", "Error retrieving document topics."), "defaultError.ftl"));
         }
     });
+
+    public Route getDocumentNamedEntitiesByPage = ((request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for entities. ", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+        }
+
+        try {
+            var entitiesPerPage = db.getNamedEntityValuesAndCountByPage(documentId);
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : entitiesPerPage) {
+                var pageMap = new HashMap<String, Object>();
+                pageMap.put("pageId", row[0]);
+                pageMap.put("entityValue", row[1]);
+                pageMap.put("entityType", row[2]);
+                result.add(pageMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+        } catch (Exception ex) {
+            logger.error("Error getting document entities.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving document entities."), "defaultError.ftl"));
+        }
+    });
+
 
     public Route getSentenceTopicsWithEntities = ((request, response) -> {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
