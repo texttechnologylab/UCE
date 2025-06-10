@@ -1862,7 +1862,30 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return results;
         });
     }
+    public Map<Long, Long> getUnifiedTopicToSentenceMap(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT unifiedtopic_id, sentence_id FROM sentencetopics WHERE document_id = :documentId";
 
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId);
+
+            List<Object[]> rows = query.getResultList();
+
+            Map<Long, Long> map = new HashMap<>();
+            for (Object[] row : rows) {
+                Long unifiedTopicId = ((Number) row[0]).longValue();
+                Long sentenceId = ((Number) row[1]).longValue();
+
+                if (map.containsKey(unifiedTopicId)) {
+                    continue;
+                }
+
+                map.put(unifiedTopicId, sentenceId);
+            }
+
+            return map;
+        });
+    }
 
 
 

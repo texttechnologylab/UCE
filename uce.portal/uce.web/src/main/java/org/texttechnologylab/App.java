@@ -396,12 +396,14 @@ public class App {
                 get("/page/topics", documentApi.getDocumentTopicDistributionByPage);
                 get("/page/topicEntityRelation", documentApi.getSentenceTopicsWithEntities);
                 get("/page/topicWords", documentApi.getTopicWordsByDocument);
+                get("/unifiedTopicSentenceMap", documentApi.getUnifiedTopicToSentenceMap);
             });
 
             path("/rag", () -> {
                 get("/new", ragApi.getNewRAGChat);
                 post("/postUserMessage", ragApi.postUserMessage);
                 get("/plotTsne", ragApi.getTsnePlot);
+                get("/sentenceEmbeddings", ragApi.getSentenceEmbeddings);
             });
         });
     }
