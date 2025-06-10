@@ -94,6 +94,28 @@
                         </div>
                     </div>
                 </#if>
+                <#-- Offensive -->
+                <#if DUUI.isOffensive>
+                    <div class="border p-2 mb-2 bg-light">
+                        <h6 class="mb-0 mr-1 color-prime">Multilabel Offensive</h6>
+                        <div class="analysis-offensives-container">
+                            <#list DUUI.textInformation.offensiveAVG as model>
+                                <div class="analysis-offensive-card">
+                                    <div class="analysis-offensive-card-title">${model.getModelInfo().getName()}</div>
+                                    <div class="analysis-offensives-grid">
+                                        <#list model.offensives as offensive>
+                                        <#-- Berechne die Transparenz basierend auf dem Score (zwischen 0 und 1) -->
+                                            <#assign opacity = offensive.getScore()?string?replace(",", ".")>
+                                            <div class="analysis-offensive-entry" style="background-color: rgba(0, 200, 200, ${opacity});">
+                                                <div class="analysis-offensive-score">${offensive.getKey()}: ${offensive.getScore()}</div>
+                                            </div>
+                                        </#list>
+                                    </div>
+                                </div>
+                            </#list>
+                        </div>
+                    </div>
+                </#if>
                 <#-- Emotion -->
                 <#if DUUI.isEmotion>
                     <div class="border p-2 mb-2 bg-light">
@@ -247,6 +269,58 @@
                                     </div>
                                 </div>
                             </#list>
+                        </div>
+                    </div>
+                </#if>
+                <#-- LLM -->
+                <#if DUUI.isLLM>
+                    <div class="border p-2 mb-2 bg-light">
+                        <h6 class="mb-0 mr-1 color-prime">LLM</h6>
+                        <div class="analysis-llm-container">
+                            <#list DUUI.textInformation.llmAVG as model>
+                                <div class="analysis-llm-card">
+                                    <div class="analysis-llm-card-title">${model.getModelInfo().getName()}</div>
+                                     <#-- LLM Textarea .analysis-llm-textarea -->
+                                    <div>
+                                        <#if model.getSystemPrompt()?has_content>
+                                        <p><strong>System Prompt:</strong> ${model.getSystemPrompt()}</p>
+                                        </#if>
+                                        <p><strong>Response:</strong> ${model.getResult()}</p>
+                                    </div>
+                                </div>
+                            </#list>
+                        </div>
+                    </div>
+                </#if>
+                <#-- TA Similar to Topic -->
+                <#if DUUI.isTA>
+                    <div class="border p-2 mb-2 bg-light">
+                        <h6 class="mb-0 mr-1 color-prime">TA Analysis</h6>
+                        <div class="analysis-ta-container">
+                            <#if DUUI.textInformation?has_content>
+                            <#-- Check if taAVG is not empty -->
+                                <p>TextInformation</p>
+                                <#if DUUI.textInformation.taScoreAVG?has_content>
+                                    <p>TA Analysis</p>
+                                    <#list DUUI.textInformation.taScoreAVG as model>
+                                        <div class="analysis-ta-card">
+                                            <div class="analysis-ta-card-title">${model.getGroupName()}</div>
+                                            <div class="analysis-ta-grid">
+                                                <#list model.taInputs as taInput>
+                                                    <#assign opacity = taInput.getScore()?string?replace(",", ".")>
+                                                    <div class="analysis-ta-entry" style="background-color: rgba(0, 200, 200, ${opacity});">
+                                                        <div class="analysis-ta-score">${taInput.getName()}: ${taInput.getScore()}</div>
+                                                    </div>
+                                                </#list>
+                                            </div>
+                                        </div>
+                                    </#list>
+                                <#else>
+                                    <p><strong>Keine TA Analyse</strong></p>
+                                </#if>
+                            <#else>
+                                <p><strong>Keine TA Analyse</strong></p>
+                            </#if>
                         </div>
                     </div>
                 </#if>

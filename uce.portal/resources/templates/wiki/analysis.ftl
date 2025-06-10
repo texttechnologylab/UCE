@@ -93,6 +93,16 @@
                     </div>
                 </div>
             </div>
+            <div id="llm-field-wrapper" style="display: none;">
+                <div class="group-box card-shadow bg-light">
+                    <h5 class="mb-0 mr-1 color-prime">System Prompt</h5>
+                    <div class="analysis-text-view">
+                        <div class="grow-text">
+                            <textarea name="llm-text" id="llm-text" rows="10" placeholder="Text" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
             <div id="analysis-InputText-container"></div>
         </div>
         <div class="col-5">

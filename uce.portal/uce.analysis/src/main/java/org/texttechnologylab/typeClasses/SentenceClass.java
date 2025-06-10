@@ -14,6 +14,8 @@ public class SentenceClass {
 
     private ArrayList<TopicClass> allTopics = new ArrayList<>();
 
+    private ArrayList<OffensiveClass> allOffensives = new ArrayList<>();
+
     private ArrayList<HateClass> allHates = new ArrayList<>();
 
     private ArrayList<SentimentClass> allSentiments = new ArrayList<>();
@@ -62,6 +64,10 @@ public class SentenceClass {
         this.allTopics.add(topic);
     }
 
+    public void addOffensive(OffensiveClass offensive) {
+        this.allOffensives.add(offensive);
+    }
+
     public void addStance(StanceClass stance) {
         this.allStances.add(stance);
     }
@@ -78,6 +84,13 @@ public class SentenceClass {
 
     public void setAllTopics(ArrayList<TopicClass> allTopics) {
         this.allTopics = allTopics;
+    }
+    public ArrayList<OffensiveClass> getAllOffensives() {
+        return allOffensives;
+    }
+
+    public void setAllOffensives(ArrayList<OffensiveClass> allOffensives) {
+        this.allOffensives = allOffensives;
     }
     public void addHate(HateClass hate) {
         this.allHates.add(hate);

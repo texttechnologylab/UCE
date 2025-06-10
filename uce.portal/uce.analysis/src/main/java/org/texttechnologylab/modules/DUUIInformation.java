@@ -32,6 +32,12 @@ public class DUUIInformation {
 
     private Boolean isReadability = false;
 
+    private Boolean isTA = false;
+
+    private Boolean isLLM = false;
+
+    private Boolean isOffensive = false;
+
     public DUUIInformation(Sentences sentence, TextClass textInformation, List<ModelGroup> modelGroups, HashMap<String, ModelInfo> modelInfos) {
         this.sentence = sentence;
         this.textInformation = textInformation;
@@ -97,6 +103,14 @@ public class DUUIInformation {
         this.isTopic = isTopic;
     }
 
+    public Boolean getIsOffensive() {
+        return isOffensive;
+    }
+
+    public void setIsOffensive(Boolean isOffensive) {
+        this.isOffensive = isOffensive;
+    }
+
     public Boolean getIsToxic() {
         return isToxic;
     }
@@ -143,6 +157,22 @@ public class DUUIInformation {
 
     public void setIsReadability(Boolean isReadability) {
         this.isReadability = isReadability;
+    }
+
+    public Boolean getIsTA() {
+        return isTA;
+    }
+
+    public void setIsTA(Boolean isTA) {
+        this.isTA = isTA;
+    }
+
+    public void setIsLLM(Boolean isLLM) {
+        this.isLLM = isLLM;
+    }
+
+    public Boolean getIsLLM() {
+        return isLLM;
     }
 
 }
