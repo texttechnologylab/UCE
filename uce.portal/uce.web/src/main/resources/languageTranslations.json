@@ -442,5 +442,9 @@
   "topicDistribution": {
     "de-DE": "Thema Verteilung",
     "en-EN": "Topic Distribution"
+  },
+  "noDataAvailable": {
+    "de-DE": "Keine Daten verfügbar.",
+    "en-EN": "No data available."
   }
 }

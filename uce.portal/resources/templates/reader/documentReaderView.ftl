@@ -273,7 +273,7 @@
                                                 <option value="count" title="Shared Count: Simply counts overlapping words between topics">Shared Count</option>
                                             </select>
                                         </div>
-                                        <div id="vp-4"></div>
+                                        <div id="vp-4" data-message="${languageResource.get('noDataAvailable')}"></div>
                                     </div>
 
                                 </div>

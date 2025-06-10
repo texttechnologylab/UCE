@@ -926,7 +926,7 @@ function renderTopicSimilarityMatrix(containerId) {
             if (!data || !Array.isArray(data) || data.length === 0) {
                 const container = document.getElementById(containerId);
                 if (container) {
-                    container.innerHTML = '<div style="color:#888;">No data available</div>';
+                    container.innerHTML = '<div style="color:#888;">' + container.getAttribute('data-message') + '</div>';
                 }
                 return;
             }
