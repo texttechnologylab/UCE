@@ -98,7 +98,7 @@ public class CorpusUniverseApi {
             case DOCUMENTS:
                 // First get the closest document embeddings to the current center
                 var docEmbeddings = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 100, corpusId),
+                        () -> ragService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 5000, corpusId),
                         (ex) -> logger.error("Error getting the closest 3d document embeddings.", ex));
                 if (docEmbeddings == null) {
                     result.replace("status", 500);

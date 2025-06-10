@@ -60,7 +60,6 @@
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <!-- leaflet clusters and heatmap plugins -->
     <script src="js/visualization/cdns/leaflet-heat.js"></script>
-    <!--<script src="js/visualization/cdns/leaflet.markercluster.js"></script>-->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
     <!-- for Markdown blocks -->
@@ -511,9 +510,9 @@
     </div>
 </footer>
 
-<#--<script type="module">
+<script type="module">
     <#include "js/corpusUniverse.js">
-</script>-->
+</script>
 <script type="module">
     <#include "js/graphViz.js">
     <#include "js/flowViz.js">
@@ -528,4 +527,5 @@
     <#include "js/analysis.js">
     <#include "js/analysisAPI.js">
 </script>
+
 </html>

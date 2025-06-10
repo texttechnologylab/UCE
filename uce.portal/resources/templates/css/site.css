@@ -786,7 +786,7 @@ nav .selected-nav-btn.text::before {
     width: 100%;
     border: lightgray 1px solid;
     background-color: ghostwhite;
-    border-radius: 3px;
+    border-radius: 6px;
     margin-bottom: 16px;
     transition: 0.15s;
     box-shadow: rgba(149, 157, 165, 0.2) 0px 2px 6px;
@@ -855,7 +855,8 @@ nav .selected-nav-btn.text::before {
 }
 
 .document-card .snippet-content {
-    font-family: "Courier New", Courier, monospace;
+    font-family: ui-monospace;
+    /*font-family: "Courier New", Courier, monospace;*/
     font-style: normal;
 }
 

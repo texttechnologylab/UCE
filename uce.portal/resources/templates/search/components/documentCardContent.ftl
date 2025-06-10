@@ -157,7 +157,7 @@
                     <#assign displayStyle = (snippet?index != 0)?then('display: none;', '')>
                     <div class="snippet-content mt-1 mb-2 h-100 position-relative"
                          data-id="${snippet?index}" style="${displayStyle}">
-                        <div class="small-font text font-italic mr-2 word-break-word">
+                        <div class="small-font text mr-2 word-break-word">
                             ${snippet.getSnippet()}
                             <#if snippet.getPage()?has_content>
                                 <label class="display-none page-html">
@@ -198,20 +198,20 @@
                 <#if mainAnno??>
                     <#if offsetList??>
                         <div class="snippet-content position-relative">
-                            <div class="small-font text font-italic mr-2 word-break-word">
+                            <div class="small-font text mr-2 word-break-word">
                                 ${document.getFullTextSnippetOffsetList(offsetList)}...
                             </div>
                         </div>
                     <#else>
                         <div class="snippet-content position-relative">
-                            <div class="small-font text font-italic mr-2 word-break-word">
+                            <div class="small-font text mr-2 word-break-word">
                                 ${document.getFullTextSnippetAnnotationOffset(mainAnno)}...
                             </div>
                         </div>
                     </#if>
                 <#else>
                     <div class="snippet-content position-relative">
-                        <div class="small-font text font-italic mr-2 word-break-word">
+                        <div class="small-font text mr-2 word-break-word">
                             ${document.getFullTextSnippet(85)}...
                         </div>
                     </div>
