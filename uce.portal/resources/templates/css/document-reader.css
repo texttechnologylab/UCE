@@ -70,7 +70,7 @@ body {
 /* Topic navigation buttons */
 .reader-container .topic-navigation-buttons {
     position: fixed;
-    right: 520px;
+
     top: 50%;
     transform: translateY(-50%);
     display: flex;
@@ -482,7 +482,7 @@ body {
 /* Scrollbar Minimap Styles */
 .scrollbar-minimap {
     position: fixed;
-    right: 510px; /* Position to the left of the sidebar */
+
     top: 150px;
     width: 20px;
     height: 80vh;
@@ -490,6 +490,7 @@ body {
     border-left: 1px solid #ddd;
     z-index: 50;
     cursor: pointer;
+    transition: right 0.3s ease;
 }
 
 /* Adjust minimap position when sidebar is collapsed */
@@ -571,4 +572,112 @@ body {
     word-break: break-word;
     max-height: 130px;
     overflow: hidden;
+}
+
+.side-bar .tab-header {
+    display: flex;
+    border-bottom: 1px solid #ccc;
+    margin-bottom: 10px;
+}
+
+.tab-header .tab-btn {
+    flex: 1;
+    padding: 10px;
+    cursor: pointer;
+    border: none;
+    background: #f7f7f7;
+    border-right: 1px solid #ccc;
+    font-weight: bold;
+}
+
+.tab-header .tab-btn:last-child {
+    border-right: none;
+}
+
+.tab-header .tab-btn.active {
+    background: #fff;
+    border-bottom: 2px solid #007bff;
+}
+
+.tab-content .tab-pane {
+    display: none;
+    height: 100%;
+    position: relative;
+}
+
+.tab-content .tab-pane.active {
+    display: block;
+}
+.side-bar.visualization-expanded {
+    width: 150vw !important;
+    transition: width 0.3s ease;
+}
+
+.tab-pane .visualization-wrapper {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+    position: relative;
+}
+.visualization-wrapper .visualization-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-bottom: 60px; /* adjust if nav height changes */
+}
+
+
+.visualization-content .viz-panel {
+    display: none;
+}
+.viz-panel.active {
+    display: block;
+}
+
+/* Bottom Navigation */
+.tab-pane .viz-bottom-nav {
+    position: fixed;
+    right: 0%;
+    bottom: 30px;
+    transform: translateX(-50%);
+    width: auto;
+    min-width: 320px;
+    max-width: 200vw;
+    display: flex;
+    justify-content: space-around;
+    border-radius: 24px;
+    box-shadow: 0 4px 24px rgba(0,0,0,0.12);
+    background: #fff;
+    border: 1px solid #e0e0e0;
+    padding: 0.5rem 1.5rem;
+    z-index: 100;
+    white-space: nowrap;
+}
+
+.tab-pane .viz-nav-btn {
+    width: 100%;
+    padding: 8px;
+    border: none;
+    background: none;
+    cursor: pointer;
+    border-radius: 16px;
+    font-weight: 600;
+    color: #555;
+    transition: color 0.2s, background 0.2s;
+}
+.viz-nav-btn.active {
+    color: #007bff;
+    background: none;
+    text-decoration: none;
+    text-underline-offset: unset;
+    text-decoration-thickness: unset;
+    outline: none;
+}
+
+#vp-3, #vp-4, #vp-5, #vp-2, #vp-1 {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    height: 800px;
+    overflow: hidden;
+    position: relative;
 }

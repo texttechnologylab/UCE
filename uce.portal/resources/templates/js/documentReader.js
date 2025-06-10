@@ -359,6 +359,7 @@ function searchPotentialSearchTokensInPage(page) {
 
 function colorUnifiedTopics(selectedTopic) {
     clearTopicColoring();
+    let color;
 
     if (!selectedTopic) {
         return;
@@ -369,10 +370,11 @@ function colorUnifiedTopics(selectedTopic) {
     });
 
     if ($selectedTopicTag.length === 0) {
-        return;
+        color = topicColorMap[selectedTopic];
     }
-
-    const color = $selectedTopicTag.css('background-color');
+    else{
+        color = $selectedTopicTag.css('background-color');
+    }
 
     let finalColor = color;
 
@@ -672,17 +674,17 @@ function addAllTopicMarkersToMinimap() {
     });
 }
 
-function updateTopicMarkersOnMinimap() {
+function updateTopicMarkersOnMinimap(selectedTopic=null) {
     const $minimap = $('.minimap-markers');
     const dimensions = getMinimapDimensions();
 
     const $activeTopic = $('.topic-tag.active-topic');
-    if ($activeTopic.length === 0) return;
+    if ($activeTopic.length === 0 && selectedTopic === null) return;
 
     $('.minimap-marker.all-topics-marker').hide();
 
-    const activeTopic = $activeTopic.data('topic');
-    const topicColor = $activeTopic.css('background-color');
+    const activeTopic = selectedTopic ? selectedTopic : $activeTopic.data('topic');
+    const topicColor = topicColorMap[activeTopic];
 
     $('.colorable-topic').each(function() {
         const $topic = $(this);
@@ -771,5 +773,471 @@ function updateMinimapScroll() {
     $visibleArea.css({
         'top': (visibleStart * minimapHeight) + 'px',
         'height': (visibleHeight * minimapHeight) + 'px'
+    });
+}
+
+function updateFloatingUIPositions() {
+    const sidebar = document.querySelector('.side-bar');
+    const minimap = document.querySelector('.scrollbar-minimap');
+    const navButtons = document.querySelector('.topic-navigation-buttons');
+
+    if (!sidebar || !minimap) return;
+
+    const sidebarRect = sidebar.getBoundingClientRect();
+
+    const minimapRight = window.innerWidth - sidebarRect.left + 10;
+    minimap.style.right = minimapRight + `px`;
+
+    if (navButtons) {
+        navButtons.style.right = minimapRight + 40 + `px`;
+    }
+}
+
+window.addEventListener('resize', updateFloatingUIPositions);
+window.addEventListener('DOMContentLoaded', updateFloatingUIPositions);
+
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', async () => {
+        const targetId = btn.getAttribute('data-tab');
+        const sideBar = document.querySelector('.side-bar');
+
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+
+        document.querySelectorAll('.tab-pane').forEach(pane => {
+            pane.classList.toggle('active', pane.id === targetId);
+        });
+
+        hideTopicNavButtons();
+        clearTopicColoring();
+
+        if (targetId !== 'navigator-tab') {
+            $('.scrollbar-minimap').hide();
+            sideBar.classList.add('visualization-expanded');
+        } else {
+            setTimeout(updateFloatingUIPositions,500) ;
+            currentSelectedTopic = null;
+            sideBar.classList.remove('visualization-expanded');
+            $('.scrollbar-minimap').show();
+        }
+        if (targetId === 'visualization-tab') {
+            setTimeout(() => renderTemporalExplorer('vp-1'), 500);
+            $('.viz-nav-btn').removeClass('active');
+            $('.viz-nav-btn').first().addClass('active');
+
+            $('.viz-panel').removeClass('active');
+            $('.viz-panel').first().addClass('active');
+        }
+    });
+
+});
+
+$(document).on('click', '.viz-nav-btn', function () {
+    const target = $(this).data('target');
+    clearTopicColoring();
+    hideTopicNavButtons();
+    $('.scrollbar-minimap').hide();
+
+    // Update active button
+    $('.viz-nav-btn').removeClass('active');
+    $(this).addClass('active');
+
+    // Update visible panel
+    $('.viz-panel').removeClass('active');
+    $(target).addClass('active');
+
+    if (target === '#viz-panel-1') {
+        setTimeout(() => renderTemporalExplorer('vp-1'), 500);
+    }
+    if (target === '#viz-panel-2') {
+        setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
+    }
+    if (target === '#viz-panel-3') {
+
+    }
+    if (target === '#viz-panel-4') {
+
+    }
+    if (target === '#viz-panel-5') {
+        setTimeout(() => renderSentenceTopicSankey('vp-5'), 500);
+
+    }
+});
+
+function renderTopicEntityChordDiagram(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container || container.classList.contains('rendered')) return;
+    const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
+    const docId = rawValue ? parseInt(rawValue, 10) : null;
+    if (!docId) {
+        console.error("Missing or invalid documentId for Chord Diagram");
+        return;
+    }
+
+    $.get('/api/document/page/topicEntityRelation', { documentId: docId })
+        .then(data => {
+            const nodeMap = new Map();
+            const nodes = [];
+            const linkCounts = new Map();
+
+            let nodeIndex = 0;
+
+            const categories = [
+                { name: 'Topic', itemStyle: { color: '#5470C6' } },
+                { name: 'Entity', itemStyle: { color: '#91CC75' } }
+            ];
+
+            function getCategory(name, isEntity) {
+                return isEntity ? 1 : 0;
+            }
+
+            // Step 1: build nodes
+            data.forEach(item => {
+                const topic = item.topiclabel;
+                const entityType = item.entity_type;
+
+                if (topic && !nodeMap.has(topic)) {
+                    nodeMap.set(topic, nodeIndex++);
+                    nodes.push({ name: topic, value: 0, category: getCategory(topic, false) });
+                }
+                if (entityType && !nodeMap.has(entityType)) {
+                    nodeMap.set(entityType, nodeIndex++);
+                    nodes.push({ name: entityType, value: 0, category: getCategory(entityType, true) });
+                }
+
+                // Step 2: count link frequency as weight
+                if (topic && entityType) {
+                    const linkKey = topic + '___' + entityType;
+                    linkCounts.set(linkKey, (linkCounts.get(linkKey) || 0) + 1);
+                }
+            });
+
+            // Step 3: build links with frequency as value
+            const links = [];
+            linkCounts.forEach((count, key) => {
+                const [sourceName, targetName] = key.split('___');
+                if (nodeMap.has(sourceName) && nodeMap.has(targetName)) {
+                    links.push({
+                        source: nodeMap.get(sourceName),
+                        target: nodeMap.get(targetName),
+                        value: count
+                    });
+
+                    nodes[nodeMap.get(sourceName)].value += count;
+                    nodes[nodeMap.get(targetName)].value += count;
+                }
+            });
+
+            // Step 4: normalize node sizes
+            const minSize = 10;
+            const maxSize = 50;
+            const values = nodes.map(n => n.value);
+            const maxVal = Math.max(...values);
+            const minVal = Math.min(...values);
+
+            nodes.forEach(n => {
+                if (maxVal === minVal) {
+                    n.symbolSize = (minSize + maxSize) / 2;
+                } else {
+                    n.symbolSize = minSize + (n.value - minVal) / (maxVal - minVal) * (maxSize - minSize);
+                }
+            });
+
+            const tooltipFormatter = function (params) {
+                if (params.dataType !== 'node') return '';
+
+                const node = nodes[params.dataIndex];
+                const clickedNodeName = node.name;
+                const isEntity = node.category === 1;
+
+                const filtered = data.filter(item => {
+                    return isEntity ? item.entity_type === clickedNodeName : item.topiclabel === clickedNodeName;
+                });
+                const aggMap = new Map();
+
+                filtered.forEach(item => {
+                    // The other side of the relation
+                    const key = isEntity ? item.topiclabel : item.entity_type;
+                    if (key) {
+                        aggMap.set(key, (aggMap.get(key) || 0) + 1);
+                    }
+                });
+
+                const entityColor = '#91CC75'
+                const topicColor = '#5470C6';
+                const label = (isEntity ? "Topics for Entity: <b>" + clickedNodeName + "</b>" : "Entities for Topic: <b>" + clickedNodeName + "</b>");
+
+                const topN = [...aggMap.entries()]
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+
+                return window.graphVizHandler.createMiniBarChart({
+                    data: topN,
+                    labelPrefix: label,
+                    primaryColor: topicColor,
+                    secondaryColor: entityColor,
+                    usePrimaryForEntity: isEntity,
+                    maxBarWidth: 100,
+                    fontSize: 10
+                });
+            };
+
+            window.graphVizHandler.createChordChart(
+                containerId,
+                '',
+                {nodes, links, categories},
+                tooltipFormatter,
+                function onClick(params) {
+                    const pageNumber = params.name;
+                    const pageElement = document.querySelector('.page[data-id="' + pageNumber + '"]');
+                    if (pageElement) {
+                        pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    } else {
+                        console.error(`Page ` + pageNumber + ` not found.`);
+                    }
+                }
+            );
+            container.classList.add('rendered');
+
+
+            // window.addEventListener('resize', () => {
+            //     chart.resize();
+            // });
+
+
+        })
+        .catch(err => {
+            console.error("Error loading topic-entity chord data:", err);
+        });
+}
+
+function renderSentenceTopicSankey(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container || container.classList.contains('rendered')) return;
+
+    let sentenceTopicData = [];
+    const topicFrequency = {};
+
+    $('.colorable-topic').each(function () {
+        const topicValue = $(this).data('topic-value');
+        const utId = parseInt(this.id.replace('utopic-UT-', ''));
+
+        if (!isNaN(utId) && topicValue) {
+            sentenceTopicData.push({
+                from: utId.toString(),
+                to: topicValue.toString(),
+                weight: 1
+            });
+            topicFrequency[topicValue] = (topicFrequency[topicValue] || 0) + 1;
+        }
+    });
+
+    if (!sentenceTopicData.length) return;
+    container.classList.add('rendered');
+
+    const nodeSet = new Set();
+    sentenceTopicData.forEach(d => {
+        nodeSet.add(d.from);
+        nodeSet.add(d.to);
+    });
+
+    const nodes = Array.from(nodeSet).map(id => {
+        const isTopic = topicFrequency.hasOwnProperty(id);
+        return {
+            name: id,
+            itemStyle: {
+                color: isTopic ? (topicColorMap[id] || '#888') : '#1f77b4'
+            }
+        };
+    });
+
+    const links = sentenceTopicData.map(d => ({
+        source: d.from,
+        target: d.to,
+        value: d.weight
+    }));
+    window.graphVizHandler.createSankeyChart(containerId, 'Sentence-Topic Sankey Diagram', links, nodes, function (params) {
+        if (params.dataType === 'node') {
+            const name = params.name;
+            clearTopicColoring();
+            hideTopicNavButtons();
+            if (typeof name === 'string' && topicColorMap.hasOwnProperty(name)) {
+                colorUnifiedTopics(name);
+                scrollToFirstMatchingTopic(name);
+                updateTopicMarkersOnMinimap(name);
+                updateFloatingUIPositions();
+                $('.scrollbar-minimap').show();
+            } else {
+                $('.scrollbar-minimap').hide();
+                hideTopicNavButtons();
+                $('.colorable-topic').each(function () {
+                    const topicValue = $(this).data('topic-value');
+                    const utId = this.id.replace('utopic-UT-', '');
+                    if (utId === name) {
+                        $(this).css({
+                            'background-color': topicColorMap[topicValue],
+                            'border-radius': '3px',
+                            'padding': '0 2px'
+                        });
+                        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                    }
+                });
+            }
+        } else if (params.dataType === 'edge') {
+            clearTopicColoring();
+            hideTopicNavButtons();
+            $('.scrollbar-minimap').hide();
+            console.log('Edge clicked from', params.data.source, 'to', params.data.target);
+        }
+    });
+}
+
+function renderTemporalExplorer(containerId) {
+
+    const container = document.getElementById(containerId);
+    if (!container || container.classList.contains('rendered')) return;
+
+    const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
+    const docId = rawValue ? parseInt(rawValue, 10) : null;
+    if (!docId) return console.error("Missing or invalid documentId");
+
+    const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
+    const topicReq = $.get('/api/document/page/topics', { documentId: docId });
+
+    Promise.all([taxonReq, topicReq]).then(([taxon, topics]) => {
+        const annotationSources = [
+            {
+                key: 'taxon',
+                data: taxon,
+                pageField: 'page_id',
+                valueField: 'taxon_value',
+                label: 'Taxon',
+                color: '#91CC75',
+                transformValue: v => v.split('|')[0]
+            },
+            {
+                key: 'topics',
+                data: topics,
+                pageField: 'page_id',
+                valueField: 'topiclabel',
+                label: 'Topics',
+                color: '#75ccc5'
+            }
+        ];
+
+        // Collect unique sorted page IDs
+        const rawPageIds = [];
+        annotationSources.forEach(({ data, pageField }) => {
+            data.forEach(d => {
+                const pid = parseInt(d[pageField]);
+                if (!isNaN(pid)) rawPageIds.push(pid);
+            });
+        });
+        const uniqueSortedPageIds = Array.from(new Set(rawPageIds)).sort((a, b) => a - b);
+
+        const pageIdToPageNumber = new Map();
+        uniqueSortedPageIds.forEach((pid, idx) => {
+            pageIdToPageNumber.set(pid, idx + 1);
+        });
+
+        const dataMap = new Map();
+
+        annotationSources.forEach(({ key, data, pageField, valueField, transformValue }) => {
+            data.forEach(item => {
+                const pid = parseInt(item[pageField]);
+                const page = pageIdToPageNumber.get(pid);
+                if (!page) return;
+
+                if (!dataMap.has(page)) {
+                    dataMap.set(page, {
+                        page,
+                        taxon: new Set(),
+                        topics: new Set(),
+                        ne: new Set()
+                    });
+                }
+
+                const value = item[valueField];
+                if (value) {
+                    dataMap.get(page)[key].add(transformValue ? transformValue(value) : value);
+                }
+            });
+        });
+
+        const sorted = Array.from(dataMap.values()).sort((a, b) => a.page - b.page);
+        const pages = sorted.map(row => row.page);
+
+        const seriesData = annotationSources
+            .map(({ key, label, color }) => {
+                const data = sorted.map(row => row[key]?.size || 0);
+                const hasNonZero = data.some(count => count > 0);
+                return hasNonZero ? { name: label, data, color } : null;
+            })
+            .filter(d => d !== null);
+
+
+        const chartConfig = {
+            xData: pages,
+            seriesData,
+            yLabel: 'Count'
+        };
+
+        // Tooltip formatter
+        const tooltipFormatter = function (params) {
+            const page = parseInt(params[0].axisValue);
+            const record = dataMap.get(page);
+            if (!record) return 'Page ' + page + '<br/>No data.';
+
+            let tooltipHtml = '<div><b>Page ' + page + '</b></div>';
+
+            annotationSources.forEach(({ key, label, color }) => {
+                const items = record[key];
+                if (!items || items.size === 0) return;
+
+                const freq = {};
+                items.forEach(item => {
+                    freq[item] = (freq[item] || 0) + 1;
+                });
+
+                const topN = Object.entries(freq)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 5);
+
+                tooltipHtml += window.graphVizHandler.createMiniBarChart({
+                    data: topN,
+                    labelPrefix: label,
+                    labelHighlight: `Page ` + page,
+                    primaryColor: color,
+                    usePrimaryForEntity: true,
+                    maxBarWidth: 100,
+                    fontSize: 10
+                });
+            });
+
+            if (tooltipHtml === '<div><b>Page ' + page + '</b></div>') {
+                tooltipHtml += '<div style="color:#888;">No data available</div>';
+            }
+
+            return tooltipHtml;
+        };
+
+        window.graphVizHandler.createBarLineChart(
+            containerId,
+            '',
+            chartConfig,
+            tooltipFormatter,
+            function onClick(params) {
+                const pageNumber = params.name;
+                const pageElement = document.querySelector('.page[data-id="' + pageNumber + '"]');
+                if (pageElement) {
+                    pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                } else {
+                    console.error(`Page ` + pageNumber + ` not found.`);
+                }
+            }
+        );
+        container.classList.add('rendered');
+    }).catch(err => {
+        console.error("Error loading or processing annotation data:", err);
     });
 }

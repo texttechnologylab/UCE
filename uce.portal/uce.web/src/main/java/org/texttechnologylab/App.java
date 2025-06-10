@@ -22,6 +22,7 @@ import org.texttechnologylab.modules.ModelGroup;
 import org.texttechnologylab.modules.ModelResources;
 import org.texttechnologylab.routes.*;
 import org.texttechnologylab.services.LexiconService;
+import org.texttechnologylab.services.MapService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.ImageUtils;
 import org.texttechnologylab.utils.StringUtils;
@@ -82,7 +83,7 @@ public class App {
         // Execute the external database scripts
         logger.info("Executing external database scripts from " + commonConfig.getDatabaseScriptsLocation());
         ExceptionUtils.tryCatchLog(
-                () -> SystemStatus.ExecuteExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
+                () -> SystemStatus.executeExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
                 (ex) -> logger.warn("Couldn't read the db scripts in the external database scripts folder; path wasn't found or other IO problems. ", ex));
         logger.info("Finished with executing external database scripts.");
 
@@ -98,14 +99,16 @@ public class App {
         logger.info(languageResource.get("search"));
 
         // Load in and test the model resources for the Analysis Engine
-        var modelResources = new ModelResources();
-        logger.info("Testing the model resources:");
+        if(SystemStatus.UceConfig.getSettings().getAnalysis().isEnableAnalysisEngine()){
+            var modelResources = new ModelResources();
+            logger.info("Testing the model resources:");
+        }
 
         // Start the different cronjobs in the background
         SessionManager.InitSessionManager(commonConfig.getSessionJobInterval());
         logger.info("Initialized the Session Job.");
 
-        SystemStatus.InitSystemStatus(commonConfig.getSystemJobInterval(), context);
+        SystemStatus.initSystemStatus(commonConfig.getSystemJobInterval(), context);
         logger.info("Initialized the System Job.");
 
         logger.info("Checking if we can or should update the lexicon... (this may take a moment depending on the time of the last update. Runs asynchronous.)");
@@ -134,6 +137,9 @@ public class App {
             try{
                 var result = context.getBean(PostgresqlDataInterface_Impl.class).callGeonameLocationRefresh();
                 logger.info("Finished updating the geoname locations. Updated locations: " + result);
+                logger.info("Trying to refresh the timeline map cache...");
+                context.getBean(MapService.class).refreshCachedTimelineMap(false);
+                logger.info("Finished refreshing the timeline map.");
             } catch (Exception ex){
                 logger.error("There was an error trying to refresh geoname locations in the startup of the web app. App starts normally though.");
             }
@@ -247,6 +253,7 @@ public class App {
         var wikiApi = new WikiApi(context, configuration);
         var importExportApi = new ImportExportApi(context);
         var analysisApi = new AnalysisApi(context, configuration, DUUIInputCounter);
+        var mapApi = new MapApi(context, configuration);
         Renderer.freemarkerConfig = configuration;
 
         before((request, response) -> {
@@ -302,6 +309,13 @@ public class App {
             return new ModelAndView(model, "index.ftl");
         }, new CustomFreeMarkerEngine(configuration));
 
+        // Potential imprint
+        get("/imprint", (request, response) -> {
+            var model = new HashMap<String, Object>();
+            model.put("imprint", SystemStatus.UceConfig.getCorporate().getImprint());
+            return new ModelAndView(model, "imprint.ftl");
+        }, new CustomFreeMarkerEngine(configuration));
+
         // A document reader view
         get("/documentReader", documentApi.getSingleDocumentReadView);
 
@@ -329,6 +343,7 @@ public class App {
 
             path("/wiki", () -> {
                 get("/page", wikiApi.getPage);
+                get("/annotation", wikiApi.getAnnotation);
                 path("/linkable", () -> {
                     post("/node", wikiApi.getLinkableNode);
                 });
@@ -342,6 +357,10 @@ public class App {
             path("/corpus", () -> {
                 get("/inspector", documentApi.getCorpusInspectorView);
                 get("/documentsList", documentApi.getDocumentListOfCorpus);
+                path("/map", () -> {
+                    post("/linkedOccurrences", mapApi.getLinkedOccurrences);
+                    post("/linkedOccurrenceClusters", mapApi.getLinkedOccurrenceClusters);
+                });
             });
 
             path("/search", () -> {
@@ -373,6 +392,9 @@ public class App {
                 get("/reader/pagesList", documentApi.getPagesListView);
                 get("/uceMetadata", documentApi.getUceMetadataOfDocument);
                 get("/topics", documentApi.getDocumentTopics);
+                get("/page/taxon", documentApi.getTaxonCountByPage);
+                get("/page/topics", documentApi.getDocumentTopicDistributionByPage);
+                get("/page/topicEntityRelation", documentApi.getSentenceTopicsWithEntities);
             });
 
             path("/rag", () -> {

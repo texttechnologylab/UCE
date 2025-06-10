@@ -5,7 +5,7 @@ import org.apache.commons.lang3.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.corpus.GeoNameFeatureClass;
-import org.texttechnologylab.models.dto.LocationDto;
+import org.texttechnologylab.models.dto.map.LocationDto;
 import org.texttechnologylab.models.viewModels.CorpusViewModel;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
@@ -197,22 +197,12 @@ public class EnrichedSearchQuery {
                                      StringBuilder query,
                                      String delimiter,
                                      String or) throws DatabaseOperationException, IOException {
-        var potentialTaxons = db.getIdentifiableTaxonsByValues(List.of(cleanedToken.toLowerCase()));
-        if (potentialTaxons == null || potentialTaxons.isEmpty()) {
-            //query.append(originalToken.replaceAll("__", " ")).append(" ");
+        var taxonIds = db.getIdentifiableTaxonsByValue(cleanedToken.toLowerCase());
+        if (taxonIds == null || taxonIds.isEmpty()) {
             return false;
         }
 
         enrichedToken.setType(EnrichedSearchTokenType.TAXON);
-        var taxonIds = new ArrayList<String>();
-        for (var taxon : potentialTaxons) {
-            if (taxon.getIdentifier().contains("|") || taxon.getIdentifier().contains(" ")) {
-                taxonIds.addAll(taxon.getIdentifierAsList());
-            } else {
-                taxonIds.add(taxon.getIdentifier().trim());
-            }
-        }
-
         var names = jenaSparqlService.getAlternativeNamesOfTaxons(taxonIds);
         if (names == null || names.isEmpty()) {
             query.append(originalToken).append(" ");

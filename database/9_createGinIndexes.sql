@@ -19,6 +19,7 @@ CREATE INDEX IF NOT EXISTS idx_metadatatitleinfo_author_trgm ON metadatatitleinf
 CREATE INDEX IF NOT EXISTS idx_namedentity_coveredtext_trgm ON namedentity USING gin (coveredtext gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_time_coveredtext_trgm ON time USING gin (coveredtext gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_biofidtaxon_coveredtext_trgm ON biofidtaxon USING gin (coveredtext gin_trgm_ops);
+CREATE INDEX IF NOT EXISTS idx_biofidtaxon_primaryname_trgm ON biofidtaxon USING gin (primaryname gin_trgm_ops);
 CREATE INDEX IF NOT EXISTS idx_sentence_coveredtext_trgm ON sentence USING gin (coveredtext gin_trgm_ops);
 
 -- For the metadata lemma search, we use coveredtext and value of the column, which is why we add them both in the index as well.
@@ -54,6 +55,17 @@ CREATE INDEX IF NOT EXISTS idx_srlink_groundcoveredtext ON srlink(LOWER(groundco
 -- Create indexes on our lexicon.
 CREATE INDEX IF NOT EXISTS idx_lexicon_coveredtext_lower_trgm ON lexicon USING gin (lower(coveredtext) gin_trgm_ops);
 
+-- Create indexes for the Logical Links
+CREATE INDEX IF NOT EXISTS idx_links_fromid_partial ON annotationlink(fromid) WHERE fromid IS NOT NULL;
+CREATE INDEX IF NOT EXISTS idx_links_toid_partial ON annotationlink(toid) WHERE toid IS NOT NULL;
+
 -- Create indexes for the Geoname Locations and Postgis in general
-CREATE INDEX IF NOT EXISTS idx_location_geography ON geoname USING GIST (location);
+CREATE INDEX IF NOT EXISTS idx_geoname_location_geog ON geoname USING GIST(location_geog);
+CREATE INDEX IF NOT EXISTS idx_geoname_location_geom ON geoname USING GIST(location_geom);
+
+-- Add imortant indexes to the materialized view of the timeline map:
+CREATE INDEX IF NOT EXISTS idx_geom ON geoname_context_timeline_cache USING GIST (location_geom);
+CREATE INDEX IF NOT EXISTS idx_date ON geoname_context_timeline_cache (date);
+CREATE INDEX IF NOT EXISTS idx_corpus ON geoname_context_timeline_cache (corpusid);
+CREATE INDEX IF NOT EXISTS idx_corpus_date ON geoname_context_timeline_cache (corpusid, date);
 

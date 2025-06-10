@@ -86,6 +86,7 @@
 <script>
     $(document).ready(function () {
         const map = window.graphVizHandler.createUceMap($('.wiki-page .uce-map-container').get(0), true);
+        map.twoDim();
 
         const marker = {
             lat: ${vm.getWikiModel().getLatitude()?c},

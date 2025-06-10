@@ -21,7 +21,10 @@
                     <label class="display-none page-html">
                         ${occurrence.getPage().getCoveredHtmlText()}
                     </label>
-                    <a class="rounded-a" onclick="openInExpandedTextView('${languageResource.get("page")} ${occurrence.getPage().getPageNumber()}', $(this).prev('.page-html').html())">
+                    <a class="rounded-a" onclick="openInExpandedTextView(
+                            '${languageResource.get("page")} ${occurrence.getPage().getPageNumber()}',
+                            $(this).prev('.page-html').html(),
+                            ['${annotation.getCoveredText()}'])">
                         <i class="text-dark fas fa-file-alt"></i>
                     </a>
                 </#if>

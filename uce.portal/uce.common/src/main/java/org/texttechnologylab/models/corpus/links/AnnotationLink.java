@@ -13,26 +13,6 @@ public class AnnotationLink extends Link{
 
     @Getter
     @Setter
-    @Column(columnDefinition = "TEXT")
-    private String fromAnnotationTypeTable;
-
-    @Getter
-    @Setter
-    @Column(columnDefinition = "TEXT")
-    private String toAnnotationTypeTable;
-
-    @Getter
-    @Setter
-    @Column(columnDefinition = "TEXT")
-    private String fromAnnotationType;
-
-    @Getter
-    @Setter
-    @Column(columnDefinition = "TEXT")
-    private String toAnnotationType;
-
-    @Getter
-    @Setter
     @Column(name = "\"fromm\"", columnDefinition = "TEXT")
     private String from;
 

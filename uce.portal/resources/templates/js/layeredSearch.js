@@ -113,6 +113,7 @@ let LayeredSearchHandler = (function () {
         // If the type is a location, we need to setup the leaflet map
         if (type === "LOCATION") {
             const uceMap = graphVizHandler.createUceMap($layer.find('.slot[data-id="[ID]"] .location-map'.replace('[ID]', id)).get(0));
+            uceMap.twoDim();
             // Subscribe to the events
             const $slot = $('.slot[data-id="[ID]"]'.replace('[ID]', id));
             const $slotInput = $slot.find('.slot-value');

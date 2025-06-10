@@ -343,6 +343,14 @@
     "de-DE": "Alternative Namen",
     "en-EN": "Alternative Names"
   },
+  "map": {
+    "de-DE": "Karte",
+    "en-EN": "Map"
+  },
+  "imprint": {
+    "de-DE": "Impressum",
+    "en-EN": "Imprint"
+  },
   "noOntologies": {
     "de-DE": "Keine Ontologien gefunden.",
     "en-EN": "No ontologies found."

@@ -22,6 +22,10 @@
         <#include "*/css/kwic.css">
         <#include "*/css/drawflow.css">
         <#include "*/css/analysis.css">
+
+        <#-- leaflet specific requirements -->
+        <#include "*/css/leaflet/MarkerCluster.css">
+        <#include "*/css/leaflet/MarkerCluster.Default.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
@@ -54,7 +58,12 @@
     <!-- for leaflet search plugin -->
     <link rel="stylesheet" href="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.css"/>
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
+    <!-- leaflet clusters and heatmap plugins -->
+    <script src="js/visualization/cdns/leaflet-heat.js"></script>
+    <!--<script src="js/visualization/cdns/leaflet.markercluster.js"></script>-->
+    <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
+    <!-- for Markdown blocks -->
     <script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
     <script type="module" src="js/md-block.js"></script>
 
@@ -66,10 +75,6 @@
 
 <body>
 <#include "*/messageModal.ftl">
-
-<!--<div id="leaflet-map-modal">
-
-</div>-->
 
 <!-- The flow chart of the Linkable objects -->
 <div id="flow-chart-modal" class="display-none">
@@ -163,13 +168,15 @@
                                     class="fas fa-globe-europe color-prime"></i> Portal</a>
                         <a class="switch-view-btn btn text" data-id="lexicon"><i
                                     class="fab fa-wikipedia-w color-prime"></i> ${languageResource.get("lexicon")}</a>
-                        <a class="switch-view-btn btn text" data-id="team"><i
-                                    class="fas fa-users color-prime"></i> ${languageResource.get("team")}</a>
+                        <a class="switch-view-btn btn text" data-id="timeline-map"><i
+                                    class="fas fa-map-marked-alt color-prime"></i> ${languageResource.get("map")}</a>
                         <#if system.getSettings().getAnalysis().isEnableAnalysisEngine()>
                             <a class="switch-view-btn btn text" data-id="analysis"><i
                                         class="fas fa-chart-pie color-prime"></i> ${languageResource.get("analysis")}
                             </a>
                         </#if>
+                        <a class="switch-view-btn btn text" data-id="team"><i
+                                    class="fas fa-users color-prime"></i> ${languageResource.get("team")}</a>
                     </div>
                     <select class="form-control bg-default rounded-0 color-prime border-right-0 large-font switch-language-select">
                         <option data-lang="en-EN">Englisch</option>
@@ -363,6 +370,22 @@
             <#include "*/wiki/lexicon.ftl" />
         </div>
 
+        <!-- Corpus Map -->
+        <div class="view display-none" data-id="timeline-map">
+            <!-- Header -->
+            <header class="container-fluid card-shadow bg-lightgray">
+                <div class="container flexed align-items-center justify-content-between">
+                    <h3 class="text-center mb-0 mr-1 color-prime">Linked-Corpus Map</h3>
+                    <a class="w-rounded-btn mb-0 mr-0 ml-2 mt-0" href="#uce-timeline-map">
+                        <i class="fas fa-angle-double-down"></i>
+                    </a>
+                </div>
+            </header>
+            <div>
+                <div id="uce-timeline-map"></div>
+            </div>
+        </div>
+
         <!-- analysis -->
         <div class="view display-none" data-id="analysis">
             <#include "*/wiki/analysis.ftl" />
@@ -453,6 +476,9 @@
                             <i class="fas fa-globe-europe mr-1"></i> Website
                         </a>
                         <p class="mb-0">${system.getCorporate().getContact().getAddress()}</p>
+                        <a class="mt-1" href="/imprint">
+                            <i class="fas fa-gavel mr-1"></i> ${languageResource.get("imprint")}
+                        </a>
                     </div>
                 </div>
             </div>

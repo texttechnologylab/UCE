@@ -7,15 +7,11 @@ import org.texttechnologylab.config.UceConfig;
 import org.texttechnologylab.cronjobs.SystemJob;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.models.util.HealthStatus;
-import org.texttechnologylab.services.LexiconService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 
-import javax.persistence.Table;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Paths;
-import java.util.List;
 
 public final class SystemStatus {
     public static HealthStatus GbifServiceStatus = new HealthStatus();
@@ -29,7 +25,7 @@ public final class SystemStatus {
     public static UceConfig UceConfig = null;
     private static final Logger logger = LogManager.getLogger(SystemStatus.class);
 
-    public static void InitSystemStatus(long cleanupInterval, ApplicationContext serviceContext) {
+    public static void initSystemStatus(long cleanupInterval, ApplicationContext serviceContext) {
         Runnable runnable = new SystemJob(cleanupInterval, serviceContext);
         var sessionJob = new Thread(runnable);
         sessionJob.start();
@@ -38,18 +34,30 @@ public final class SystemStatus {
     /**
      * Executes the external database scripts for triggers, procedures and such.
      */
-    public static void ExecuteExternalDatabaseScripts(String path, PostgresqlDataInterface_Impl db) throws IOException {
-        Files.list(Paths.get(path))
-                .filter(Files::isRegularFile)
-                .filter(file -> file.toString().endsWith(".sql"))
-                .forEach(file -> {
-                    try {
-                        var sqlContent = Files.readString(file);
-                        db.executeSqlWithoutReturn(sqlContent);
-                        logger.info("*--> Successfully executed: " + file.getFileName());
-                    } catch (IOException | DatabaseOperationException ex) {
-                        logger.error("Error trying to execute the database script " + file.getFileName(), ex);
-                    }
-                });
+    public static void executeExternalDatabaseScripts(String path, PostgresqlDataInterface_Impl db) throws IOException {
+        try (var fileStream = Files.list(Paths.get(path))) {
+            fileStream
+                    .filter(Files::isRegularFile)
+                    .filter(file -> file.toString().endsWith(".sql"))
+                    .sorted((f1, f2) -> {
+                        try {
+                            int n1 = Integer.parseInt(f1.getFileName().toString().split("_", 2)[0]);
+                            int n2 = Integer.parseInt(f2.getFileName().toString().split("_", 2)[0]);
+                            return Integer.compare(n1, n2);
+                        } catch (Exception e) {
+                            return 0; // fallback to equal if parsing fails
+                        }
+                    })
+                    .forEach(file -> {
+                        try {
+                            String sqlContent = Files.readString(file);
+                            db.executeSqlWithoutReturn(sqlContent);
+                            logger.info("*--> Successfully executed: " + file.getFileName());
+                        } catch (IOException | DatabaseOperationException ex) {
+                            logger.error("Error trying to execute the database script " + file.getFileName(), ex);
+                        }
+                    });
+        }
+
     }
 }

@@ -8,35 +8,48 @@ import org.texttechnologylab.services.*;
 public class SpringConfig {
 
     @Bean
-    public PostgresqlDataInterface_Impl databaseService(){
+    public PostgresqlDataInterface_Impl databaseService() {
         return new PostgresqlDataInterface_Impl();
     }
 
     @Bean
-    public LexiconService lexiconService() {return new LexiconService(databaseService());}
+    public LexiconService lexiconService() {
+        return new LexiconService(databaseService());
+    }
 
     @Bean
-    public WikiService wikiService(){
+    public MapService mapService() {
+        return new MapService(databaseService());
+    }
+
+    @Bean
+    public WikiService wikiService() {
         return new WikiService(databaseService(), ragService(), jenaSparqlService());
     }
 
     @Bean
-    public GoetheUniversityService goetheUniversityService(){
+    public GoetheUniversityService goetheUniversityService() {
         return new GoetheUniversityService();
     }
 
     @Bean
-    public GbifService gbifService(){
+    public GbifService gbifService() {
         return new GbifService(jenaSparqlService());
     }
 
     @Bean
-    public JenaSparqlService jenaSparqlService() {return new JenaSparqlService();}
+    public JenaSparqlService jenaSparqlService() {
+        return new JenaSparqlService();
+    }
 
     @Bean
-    public RAGService ragService() {return new RAGService(databaseService());}
+    public RAGService ragService() {
+        return new RAGService(databaseService());
+    }
 
     @Bean
-    public S3Storage s3Storage() {return new S3Storage();}
+    public S3Storage s3Storage() {
+        return new S3Storage();
+    }
 
 }

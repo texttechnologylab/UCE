@@ -408,7 +408,6 @@
     border-radius: 0px !important;
     border-top:0 !important;
 }
-
 .wiki-metadata-expanded-view {
     position: fixed;
     background-color: rgba(0, 0, 0, 0.4);
@@ -450,6 +449,11 @@
     color: rgba(125, 125, 125, 1);
     font-family: Courier, monospace !important;
     line-height: 1.5;
+}
+
+.wiki-metadata-expanded-view .content-reader .content b{
+    color:var(--prime);
+    background-color: rgba(125, 125, 125, 0.1);
 }
 
 .wiki-metadata-expanded-view .content-reader .content h1,

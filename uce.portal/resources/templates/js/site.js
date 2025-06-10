@@ -1,4 +1,6 @@
 var selectedCorpus = -1;
+var currentView = undefined;
+var reloadTimelineMap = false;
 
 /**
  * Handles the clicking onto a navbar button
@@ -30,6 +32,18 @@ function navigateToView(id) {
             $(this).removeClass('selected-nav-btn');
         }
     });
+
+    // Special handles
+    if (id === 'timeline-map') {
+        if (reloadTimelineMap) {
+            setTimeout(function(){
+                const map = window.graphVizHandler.createUceMap(document.getElementById('uce-timeline-map'), true);
+                map.linkedTimelineMap(selectedCorpus);
+            }, 750);
+        }
+    }
+
+    currentView = id;
 }
 
 /**
@@ -101,8 +115,16 @@ $('body').on('change', '#corpus-select', function () {
     if (hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
     else $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').hide();
 
-    if (hasGeoNameAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').show();
-    else $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').hide();
+    if (hasGeoNameAnnotations === 'true') {
+        $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').show();
+        $('.site-container nav .nav-container .switch-view-btn[data-id="timeline-map"]').show();
+        reloadTimelineMap = true;
+    } else {
+        $('.site-container nav .nav-container .switch-view-btn[data-id="timeline-map"]').hide();
+        $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').hide();
+        $('#uce-timeline-map').html(''); // Clear old map
+        if (currentView === 'timeline-map') navigateToView('search');
+    }
 
     if (hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false' && hasGeoNameAnnotations === 'false') {
         $('.open-layered-search-builder-btn-badge').hide();
@@ -248,8 +270,7 @@ $(document).ready(function () {
     window.wikiHandler.fetchLexiconEntries(0, 24);
 
     // TODO: JUST TESTING
-    //window.graphVizHandler.createBasicChart(document.getElementById('testDummy'), 'My Test Chart');
-    //window.graphVizHandler.createBasicChart(document.getElementById('testDummy2'), 'My Test Chart');
-    //window.flowVizHandler.createFlowChart(document.getElementById('full-flow-container'));
-    //window.flowVizHandler.createNewFromLinkableNode("org.texttechnologylab.models.corpus.Document-3515");
+    //const map = window.graphVizHandler.createUceMap(document.getElementById('uce-timeline-map'), true);
+    // map.linkedTimelineMap(9);
 })
+

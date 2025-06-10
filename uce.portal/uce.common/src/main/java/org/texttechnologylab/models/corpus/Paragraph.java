@@ -21,8 +21,6 @@ public class Paragraph extends UIMAAnnotation {
     private int startIndent;
     private String align;
     private int lineSpacing;
-    @Column(columnDefinition = "TEXT")
-    private String coveredText;
 
     public Paragraph() {
         super(-1, -1);
@@ -30,14 +28,6 @@ public class Paragraph extends UIMAAnnotation {
 
     public Paragraph(int begin, int end) {
         super(begin, end);
-    }
-
-    public String getCoveredText() {
-        return coveredText;
-    }
-
-    public void setCoveredText(String coveredText) {
-        this.coveredText = coveredText;
     }
 
     public int getLeftIndent() {
