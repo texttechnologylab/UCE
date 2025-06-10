@@ -453,6 +453,84 @@ var GraphVizHandler = (function () {
         return echart;
     };
 
+    GraphVizHandler.prototype.createHeatMap = async function (
+        target,
+        title,
+        matrix,
+        labels,
+        series_name= null,
+        tooltipFormatter = null,
+        onClick = null
+    ) {
+        const chartId = generateUUID();
+        const option = {
+            title: {
+                text: title,
+                left: 'center'
+            },
+            tooltip: {
+                position: 'top',
+                formatter: tooltipFormatter,
+            },
+            grid: {
+                left: '15%',
+                bottom: '15%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: labels,
+                splitArea: {
+                    show: true
+                },
+                axisLabel: {
+                    rotate: 45
+                }
+            },
+            yAxis: {
+                type: 'category',
+                data: labels,
+                splitArea: {
+                    show: true
+                }
+            },
+            visualMap: {
+                min: 0,
+                max: Math.max(...matrix.map(d => d[2])),
+                calculable: true,
+                orient: 'horizontal',
+                left: 'center',
+                bottom: '5%'
+            },
+            series: [{
+                name: series_name || 'Heatmap',
+                type: 'heatmap',
+                data: matrix,
+                roam: true,
+                label: {
+                    show: false
+                },
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }
+            }]
+        };
+
+        const echart = new ECharts(target, option);
+        this.activeCharts[chartId] = echart;
+
+        echart.getInstance().on('click', function (params) {
+            if (onClick && typeof onClick === 'function') {
+                onClick(params);
+            }
+        });
+
+        return echart;
+    };
+
 
     return GraphVizHandler;
 }());
