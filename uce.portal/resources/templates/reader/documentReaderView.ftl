@@ -254,7 +254,7 @@
                     <#assign documentTopics = document.getUnifiedTopics()![]>
                     <div class="tab-pane" id="visualization-tab">
                         <div class="visualization-wrapper">
-                            <div class="visualization-spinner display-none">
+                            <div class="visualization-spinner">
                                 <div class="visualization-spinner__icon">
                                     <i class="fa fa-spinner fa-spin"></i>
                                 </div>
