@@ -393,8 +393,8 @@
 
         <!-- team -->
         <div class="view display-none" data-id="team">
-            <div class="container" style="margin-top: 5rem">
-                <div class="group-box bg-light">
+            <div class="container pb-5" style="margin-top: 5rem">
+                <div class="group-box bg-light mb-0">
                     <h5 class="color-prime text-center mb-2">
                         ${languageResource.get("team")}
                     </h5>
@@ -486,7 +486,7 @@
             <!-- add more footer here later -->
             <div class="col-sm-6 color-secondary w-100 m-0 flexed justify-content-center">
                 <div class="group-box bg-light mb-0">
-                    <h6 class="text-dark">Powered by Unified Corpus Explorer</h6>
+                    <h6 class="text-dark">Powered by the <a href="https://texttechnologylab.github.io/UCE/" target="_blank">Unified Corpus Explorer</a></h6>
                     <a href="https://github.com/texttechnologylab/UCE" target="_blank">
                         <img class="w-100" style="max-width: 125px" src="/img/logo.png"/>
                     </a>

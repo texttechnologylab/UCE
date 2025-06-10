@@ -13,11 +13,9 @@
                 <i class="fas fa-info-circle color-prime large-font"></i>
             </button>
         </div>
-        <div class="content display-none">
+        <div class="content display-none text block-text">
             <hr class="mt-3 mb-3"/>
-            <p class="text block-text mb-0 p-2">
-                ${system.getMeta().getDescription()!languageResource.get("noCorpusDescription")}
-            </p>
+            ${system.getMeta().getDescription()!languageResource.get("noCorpusDescription")}
         </div>
     </div>
 
