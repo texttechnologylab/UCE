@@ -1421,15 +1421,15 @@ function renderTemporalExplorer(containerId) {
                 if (!dataMap.has(page)) {
                     dataMap.set(page, {
                         page,
-                        taxon: new Set(),
-                        topics: new Set(),
-                        ne: new Set()
+                        taxon: [],
+                        topics: [],
+                        ne: []
                     });
                 }
 
                 const value = item[valueField];
                 if (value) {
-                    dataMap.get(page)[key].add(transformValue ? transformValue(value) : value);
+                    dataMap.get(page)[key].push(transformValue ? transformValue(value) : value);
                 }
             });
         });
@@ -1439,7 +1439,7 @@ function renderTemporalExplorer(containerId) {
 
         const seriesData = annotationSources
             .map(({ key, label, color }) => {
-                const data = sorted.map(row => row[key]?.size || 0);
+                const data = sorted.map(row => row[key]?.length || 0);
                 const hasNonZero = data.some(count => count > 0);
                 return hasNonZero ? { name: label, data, color } : null;
             })
@@ -1462,7 +1462,7 @@ function renderTemporalExplorer(containerId) {
 
             annotationSources.forEach(({ key, label, color }) => {
                 const items = record[key];
-                if (!items || items.size === 0) return;
+                if (!items || items.length === 0) return;
 
                 const freq = {};
                 items.forEach(item => {

@@ -1782,7 +1782,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             ORDER BY 
                 st.document_id, st.sentence_id, st.thetast DESC
         )
-        SELECT DISTINCT 
+        SELECT 
             ut.page_id,
             btp.topiclabel
         FROM 
