@@ -265,7 +265,17 @@
                                     <div id="vp-3"></div>
                                 </div>
                                 <div class="viz-panel" id="viz-panel-4">
-                                    <div id="vp-4" data-document-text="${document.getFullText()}"></div>
+                                    <div id="vp-4-wrapper">
+                                        <div class="selector-container">
+                                            <label for="similarityTypeSelector">Similarity Type:</label>
+                                            <select id="similarityTypeSelector">
+                                                <option value="cosine" title="Cosine: Measures angular similarity of topic-word vectors">Cosine</option>
+                                                <option value="count" title="Shared Count: Simply counts overlapping words between topics">Shared Count</option>
+                                            </select>
+                                        </div>
+                                        <div id="vp-4"></div>
+                                    </div>
+
                                 </div>
                                 <div class="viz-panel" id="viz-panel-5">
                                     <div id="vp-5" ></div>
