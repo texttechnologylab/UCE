@@ -20,6 +20,7 @@ import spark.Route;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class DocumentApi {
@@ -366,6 +367,38 @@ public class DocumentApi {
             response.status(500);
             return new CustomFreeMarkerEngine(this.freemarkerConfig)
                     .render(new ModelAndView(Map.of("information", "Error retrieving topic words."), "defaultError.ftl"));
+        }
+    };
+
+    public Route getUnifiedTopicToSentenceMap = (request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for unified topic to sentence mapping.", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for unified topic to sentence mapping"), "defaultError.ftl"));
+        }
+
+        try {
+            Map<Long, Long> mapping = db.getUnifiedTopicToSentenceMap(documentId);
+            List<Map<String, Object>> result = new ArrayList<>();
+
+            for (var entry : mapping.entrySet()) {
+                Map<String, Object> mapEntry = new HashMap<>();
+                mapEntry.put("unifiedtopicId", entry.getKey());
+                mapEntry.put("sentenceId", entry.getValue());
+                result.add(mapEntry);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+
+        } catch (Exception ex) {
+            logger.error("Error retrieving unified topic to sentence mapping.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving unified topic to sentence mapping."), "defaultError.ftl"));
         }
     };
 
