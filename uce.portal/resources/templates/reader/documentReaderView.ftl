@@ -265,7 +265,17 @@
                                     <div id="vp-3"></div>
                                 </div>
                                 <div class="viz-panel" id="viz-panel-4">
-                                    <div id="vp-4" data-document-text="${document.getFullText()}"></div>
+                                    <div id="vp-4-wrapper">
+                                        <div class="selector-container">
+                                            <label for="similarityTypeSelector">Similarity Type:</label>
+                                            <select id="similarityTypeSelector">
+                                                <option value="cosine" title="${languageResource.get('cosine')}">Cosine</option>
+                                                <option value="count" title="${languageResource.get('overlap')}">Shared Count</option>
+                                            </select>
+                                        </div>
+                                        <div id="vp-4" data-message="${languageResource.get('noDataAvailable')}"></div>
+                                    </div>
+
                                 </div>
                                 <div class="viz-panel" id="viz-panel-5">
                                     <div id="vp-5" ></div>

@@ -442,5 +442,17 @@
   "topicDistribution": {
     "de-DE": "Thema Verteilung",
     "en-EN": "Topic Distribution"
+  },
+  "noDataAvailable": {
+    "de-DE": "Keine Daten verfügbar.",
+    "en-EN": "No data available."
+  },
+  "cosine": {
+    "de-DE": "Misst die Winkelsimilarität von Themen-Wort-Vektoren",
+    "en-EN": " Zählt einfach die überlappenden Wörter zwischen Themen"
+  },
+  "overlap": {
+    "de-DE": "Zählt einfach die überlappenden Wörter zwischen Themen",
+    "en-EN": "Counts simply the overlapping words between topics"
   }
 }

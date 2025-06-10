@@ -310,8 +310,8 @@ public class DocumentApi {
 
             for (Object[] row : topicsWithEntities) {
                 var topicEntityMap = new HashMap<String, Object>();
-                topicEntityMap.put("topiclabel", row[0]);
-                topicEntityMap.put("entity_type", row[1]);
+                topicEntityMap.put("topicLabel", row[0]);
+                topicEntityMap.put("entityType", row[1]);
                 result.add(topicEntityMap);
             }
 
@@ -324,5 +324,50 @@ public class DocumentApi {
                     .render(new ModelAndView(Map.of("information", "Error retrieving sentence topics with entities."), "defaultError.ftl"));
         }
     });
+
+    public Route getTopicWordsByDocument = (request, response) -> {
+        Long documentId = ExceptionUtils.tryCatchLog(
+                () -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for topic words.", ex)
+        );
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for topic words"), "defaultError.ftl"));
+        }
+
+        try {
+            var topicWords = db.getTopicWordsByDocumentId(documentId);
+            var groupedResults = new HashMap<String, Map<String, Double>>();
+
+            for (Object[] row : topicWords) {
+                String topicLabel = (String) row[0];
+                String word = (String) row[1];
+                Double avgProbability = ((Number) row[2]).doubleValue();
+
+                groupedResults.computeIfAbsent(topicLabel, k -> new HashMap<>())
+                        .put(word, avgProbability);
+            }
+
+            var result = new ArrayList<Map<String, Object>>();
+            for (var entry : groupedResults.entrySet()) {
+                var topicMap = new HashMap<String, Object>();
+                topicMap.put("topicLabel", entry.getKey());
+                topicMap.put("words", entry.getValue());
+                result.add(topicMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+
+        } catch (Exception ex) {
+            logger.error("Error getting topic words by document ID.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving topic words."), "defaultError.ftl"));
+        }
+    };
+
 
 }

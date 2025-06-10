@@ -856,6 +856,8 @@ $(document).on('click', '.viz-nav-btn', function () {
 
     }
     if (target === '#viz-panel-4') {
+        $('.selector-container').hide();
+        setTimeout(() => renderTopicSimilarityMatrix('vp-4'), 500);
 
     }
     if (target === '#viz-panel-5') {
@@ -863,6 +865,102 @@ $(document).on('click', '.viz-nav-btn', function () {
 
     }
 });
+
+function computeTopicSimilarityMatrix(data, type = "cosine") {
+    const topicLabels = data.map(t => t.topicLabel);
+    const wordProbMaps = data.map(t => t.words);
+    const allWords = new Set(data.flatMap(t => Object.keys(t.words)));
+
+    const matrix = [];
+
+    for (let i = 0; i < wordProbMaps.length; i++) {
+        for (let j = 0; j < wordProbMaps.length; j++) {
+            let score = 0;
+
+            if (type === "cosine") {
+                let dot = 0, normI = 0, normJ = 0;
+                for (const word of allWords) {
+                    const p1 = wordProbMaps[i][word] || 0;
+                    const p2 = wordProbMaps[j][word] || 0;
+                    dot += p1 * p2;
+                    normI += p1 * p1;
+                    normJ += p2 * p2;
+                }
+                score = (normI === 0 || normJ === 0) ? 0 : dot / (Math.sqrt(normI) * Math.sqrt(normJ));
+
+            } else if (type === "count") {
+                const wordsI = new Set(Object.keys(wordProbMaps[i]));
+                const wordsJ = new Set(Object.keys(wordProbMaps[j]));
+                const shared = [...wordsI].filter(w => wordsJ.has(w));
+                score = shared.length;
+            }
+
+            matrix.push([i, j, score]);
+        }
+    }
+
+    return {
+        labels: topicLabels,
+        matrix: matrix
+    };
+}
+
+
+
+function renderTopicSimilarityMatrix(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container || container.classList.contains('rendered')){
+        $('.selector-container').show();
+        return;
+    }
+    const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
+    const docId = rawValue ? parseInt(rawValue, 10) : null;
+    if (!docId) {
+        console.error("Missing or invalid documentId for Chord Diagram");
+        return;
+    }
+
+
+    $.get('/api/document/page/topicWords', { documentId: docId })
+        .then(data => {
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.innerHTML = '<div style="color:#888;">' + container.getAttribute('data-message') + '</div>';
+                }
+                return;
+            }
+            $('.selector-container').show();
+            const similarityTypeSelector = document.getElementById('similarityTypeSelector');
+
+            function updateChart() {
+                const type = similarityTypeSelector.value;
+                const { labels, matrix } = computeTopicSimilarityMatrix(data, type);
+
+                const tooltipFormatter = function (params) {
+                    const xLabel = labels[params.data[0]];
+                    const yLabel = labels[params.data[1]];
+                    const value = type === "count" ? params.data[2] : params.data[2].toFixed(3);
+                   return xLabel + " & " + yLabel + "<br>" + (type.charAt(0).toUpperCase() + type.slice(1)) + ": " + value;
+                };
+
+                window.graphVizHandler.createHeatMap(
+                    containerId,
+                    "Topic Similarity (" + type + ")",
+                    matrix,
+                    labels,
+                    "Similarity (" + type + ")",
+                    tooltipFormatter
+                );
+
+            }
+
+            similarityTypeSelector.addEventListener('change', updateChart);
+            updateChart();
+            container.classList.add('rendered');
+        });
+}
+
 
 function renderTopicEntityChordDiagram(containerId) {
     const container = document.getElementById(containerId);
@@ -893,8 +991,8 @@ function renderTopicEntityChordDiagram(containerId) {
 
             // Step 1: build nodes
             data.forEach(item => {
-                const topic = item.topiclabel;
-                const entityType = item.entity_type;
+                const topic = item.topicLabel;
+                const entityType = item.entityType;
 
                 if (topic && !nodeMap.has(topic)) {
                     nodeMap.set(topic, nodeIndex++);
@@ -951,13 +1049,13 @@ function renderTopicEntityChordDiagram(containerId) {
                 const isEntity = node.category === 1;
 
                 const filtered = data.filter(item => {
-                    return isEntity ? item.entity_type === clickedNodeName : item.topiclabel === clickedNodeName;
+                    return isEntity ? item.entityType === clickedNodeName : item.topicLabel === clickedNodeName;
                 });
                 const aggMap = new Map();
 
                 filtered.forEach(item => {
                     // The other side of the relation
-                    const key = isEntity ? item.topiclabel : item.entity_type;
+                    const key = isEntity ? item.topicLabel : item.entityType;
                     if (key) {
                         aggMap.set(key, (aggMap.get(key) || 0) + 1);
                     }
