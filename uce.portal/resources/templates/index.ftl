@@ -111,12 +111,11 @@
 
     <nav class="position-relative">
 
-        <div class="container-fluid flexed align-items-center justify-content-around">
+        <div class="container-fluid flexed align-items-center justify-content-evenly">
             <div class="flexed h-100 pr-2">
                 <button class="btn switch-view-btn selected-nav-btn" data-id="landing">
                     <img class="mb-0 logo" src="${system.getCorporate().getLogo()}">
                 </button>
-                <p class="mb-0 ml-3 text xsmall-font align-self-center"><b>Version</b> <i>${uceVersion}</i></p>
             </div>
 
             <div class="flexed align-items-stretch">
@@ -163,19 +162,19 @@
                 <!-- right side buttons -->
                 <div class="flexed align-items-center nav-container">
                     <div class="flexed align-items-center nav-buttons">
-                        <a class="switch-view-btn btn text" data-id="search"><i
-                                    class="fas fa-globe-europe color-prime"></i> Portal</a>
-                        <a class="switch-view-btn btn text" data-id="lexicon"><i
-                                    class="fab fa-wikipedia-w color-prime"></i> ${languageResource.get("lexicon")}</a>
-                        <a class="switch-view-btn btn text" data-id="timeline-map"><i
-                                    class="fas fa-map-marked-alt color-prime"></i> ${languageResource.get("map")}</a>
+                        <a class="switch-view-btn btn text" data-id="search" data-trigger="hover" data-toggle="popover"
+                           data-placement="bottom" data-content="Portal"><i class="fas fa-globe-europe color-prime"></i></a>
+                        <a class="switch-view-btn btn text" data-id="lexicon" data-trigger="hover" data-toggle="popover"
+                           data-placement="bottom" data-content="${languageResource.get("lexicon")}"><i class="fas fa-atlas color-prime"></i></a>
+                        <a class="switch-view-btn btn text" data-id="timeline-map" data-trigger="hover" data-toggle="popover"
+                           data-placement="bottom" data-content="${languageResource.get("map")}"><i class="fas fa-map-marked-alt color-prime"></i></a>
                         <#if system.getSettings().getAnalysis().isEnableAnalysisEngine()>
-                            <a class="switch-view-btn btn text" data-id="analysis"><i
-                                        class="fas fa-chart-pie color-prime"></i> ${languageResource.get("analysis")}
+                            <a class="switch-view-btn btn text" data-id="analysis" data-trigger="hover" data-toggle="popover"
+                               data-placement="bottom" data-content="${languageResource.get("analysis")}"><i class="fas fa-chart-pie color-prime"></i>
                             </a>
                         </#if>
-                        <a class="switch-view-btn btn text" data-id="team"><i
-                                    class="fas fa-users color-prime"></i> ${languageResource.get("team")}</a>
+                        <a class="switch-view-btn btn text" data-id="team" data-trigger="hover" data-toggle="popover"
+                           data-placement="bottom" data-content="${languageResource.get("team")}"><i class="fas fa-users color-prime"></i></a>
                     </div>
                     <select class="form-control bg-default rounded-0 color-prime border-right-0 large-font switch-language-select">
                         <option data-lang="en-EN">Englisch</option>
@@ -489,6 +488,7 @@
                     <a href="https://github.com/texttechnologylab/UCE" target="_blank">
                         <img class="w-100" style="max-width: 125px" src="/img/logo.png"/>
                     </a>
+                    <p class="mb-0 text xsmall-font align-self-center"><b>Version</b> <i>${uceVersion}</i></p>
                 </div>
             </div>
 
