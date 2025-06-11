@@ -327,6 +327,38 @@ public class DocumentApi {
         }
     });
 
+    public Route getDocumentLemmaByPage = ((request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for lemma. ", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+        }
+
+        try {
+            var lemmaPerPage = db.getLemmaByPage(documentId);
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : lemmaPerPage) {
+                var pageMap = new HashMap<String, Object>();
+                pageMap.put("pageId", row[0]);
+                pageMap.put("lemmaValue", row[1]);
+                pageMap.put("coarseValue", row[2]);
+                result.add(pageMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+        } catch (Exception ex) {
+            logger.error("Error getting document lemma.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving document lemma."), "defaultError.ftl"));
+        }
+    });
+
 
     public Route getSentenceTopicsWithEntities = ((request, response) -> {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
