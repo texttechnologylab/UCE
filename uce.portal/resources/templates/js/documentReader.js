@@ -1388,10 +1388,11 @@ function renderTemporalExplorer(containerId) {
     const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
     const topicReq = $.get('/api/document/page/topics', { documentId: docId });
     const entityReq = $.get('/api/document/page/namedEntities', { documentId: docId });
+    const lemmaReq = $.get('/api/document/page/lemma', { documentId: docId });
 
-    Promise.all([taxonReq, topicReq, entityReq]).then(([taxon, topics, entities]) => {
+    Promise.all([taxonReq, topicReq, entityReq, lemmaReq]).then(([taxon, topics, entities, lemma]) => {
         $('.visualization-spinner').hide()
-        if ((!taxon || taxon.length === 0) && (!topics || topics.length === 0) && (!entities || entities.length === 0)) {
+        if ((!taxon || taxon.length === 0) && (!topics || topics.length === 0) && (!entities || entities.length === 0) && (!lemma || lemma.length === 0)) {
             const container = document.getElementById(containerId);
             if (container) {
                 container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
@@ -1426,6 +1427,15 @@ function renderTemporalExplorer(containerId) {
                 label: 'Named Entities',
                 color: '#5470C6',
                 transformValue: v => v.split('|')[0]
+            },
+            {
+                key: 'lemma',
+                data: lemma,
+                pageField: 'pageId',
+                valueField: 'coarseValue',
+                label: 'Lemmas',
+                color: '#ff9f7f',
+                transformValue: v => v.split('|')[0]
             }
         ];
 
@@ -1457,7 +1467,8 @@ function renderTemporalExplorer(containerId) {
                         page,
                         taxon: [],
                         topics: [],
-                        ne: []
+                        ne: [],
+                        lemma: []
                     });
                 }
 
