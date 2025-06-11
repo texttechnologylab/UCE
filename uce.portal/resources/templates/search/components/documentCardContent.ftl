@@ -38,7 +38,7 @@
                 <div class="flexed align-items-center">
                     <div class="flexed align-items-center">
                         <!-- We only show the 3d taxonomy dist if we have them annotated in the current corpus -->
-                        <#if corpusConfig?? && corpusConfig.getAnnotations().getTaxon().isBiofidOnthologyAnnotated()>
+                        <#if corpusConfig?? && corpusConfig.getAnnotations().getTaxon().isAnnotated() && corpusConfig.getAnnotations().isGeoNames()>
                             <a class="title-btn open-globe color-prime" data-type="document" data-trigger="hover"
                                data-toggle="popover"
                                data-placement="top"

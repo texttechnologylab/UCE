@@ -1329,6 +1329,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> session.get(UnifiedTopic.class, id));
     }
 
+    public UnifiedTopic getInitializedUnifiedTopicById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var topic = session.get(UnifiedTopic.class, id);
+            Hibernate.initialize(topic.getTopics());
+            for(var t:topic.getTopics()){
+                Hibernate.initialize(t.getWords());
+            }
+            return topic;
+        });
+    }
+
     public <T extends KeywordDistribution> List<T> getKeywordDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
