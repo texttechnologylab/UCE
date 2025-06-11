@@ -1403,7 +1403,7 @@ function renderTemporalExplorer(containerId) {
         }
         const annotationSources = [
             {
-                key: 'taxon',
+                key: 'Taxon',
                 data: taxon,
                 pageField: 'pageId',
                 valueField: 'taxonValue',
@@ -1412,7 +1412,7 @@ function renderTemporalExplorer(containerId) {
                 transformValue: v => v.split('|')[0]
             },
             {
-                key: 'topics',
+                key: 'Topics',
                 data: topics,
                 pageField: 'pageId',
                 valueField: 'topicLabel',
@@ -1421,16 +1421,15 @@ function renderTemporalExplorer(containerId) {
             }
             ,
             {
-                key: 'ne',
+                key: 'Named Entities',
                 data: entities,
                 pageField: 'pageId',
                 valueField: 'entityType',
                 label: 'Named Entities',
                 color: '#5470C6',
-                transformValue: v => v.split('|')[0]
             },
             {
-                key: 'lemma',
+                key: 'Lemmas',
                 data: lemma,
                 pageField: 'pageId',
                 valueField: 'coarseValue',
@@ -1473,10 +1472,11 @@ function renderTemporalExplorer(containerId) {
                 if (!dataMap.has(page)) {
                     dataMap.set(page, {
                         page,
-                        taxon: [],
-                        topics: [],
-                        ne: [],
-                        lemma: []
+                        Taxon: [],
+                        Topics: [],
+                        "Named Entities": [],
+                        Lemmas: [],
+                        Geonames: []
                     });
                 }
 
@@ -1508,12 +1508,15 @@ function renderTemporalExplorer(containerId) {
         // Tooltip formatter
         const tooltipFormatter = function (params) {
             const page = parseInt(params[0].axisValue);
+            const seriesNames = new Set(params.map(p => p.seriesName));
+
             const record = dataMap.get(page);
             if (!record) return 'Page ' + page + '<br/>No data.';
 
             let tooltipHtml = '<div><b>Page ' + page + '</b></div>';
 
             annotationSources.forEach(({ key, label, color }) => {
+                if (!seriesNames.has(label)) return;
                 const items = record[key];
                 if (!items || items.length === 0) return;
 
