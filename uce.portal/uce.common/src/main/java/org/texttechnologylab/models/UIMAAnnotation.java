@@ -52,7 +52,7 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
     private Long pageId;
 
     public String getCoveredText() {
-        return coveredText;
+        return coveredText.replaceAll("<", "");
     }
 
     public String getCoveredHtmlText(){
@@ -181,6 +181,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         var finalText = new StringBuilder();
 
         for (int i = 0; i < coveredText.length(); i++) {
+            if(coveredText.charAt(i) == '<'|| String.valueOf(coveredText.charAt(i)).equals("&lt;")){
+                continue;
+            }
             // Insert end spans first
             if (topicCoverWrappersEnd.containsKey(i)) {
                 finalText.append(topicCoverWrappersEnd.get(i));
