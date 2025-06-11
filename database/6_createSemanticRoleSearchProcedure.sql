@@ -140,12 +140,20 @@ BEGIN
 	  END AS time_temp,
 	  
 	  CASE WHEN count_all THEN
-      ARRAY(
-        SELECT ARRAY[ta.id::text, ta.coveredtext, COUNT(ta.id)::text, ta.valuee, ta.document_id::text] AS taxon
-        FROM documents_query dq
-        JOIN taxon ta ON dq.id = ta.document_id
-        GROUP BY ta.id, ta.coveredtext, ta.valuee, ta.document_id
-      )
+	  ARRAY(
+			SELECT ARRAY[ta.id::text, ta.coveredtext, COUNT(ta.id)::text, ta.valuee, ta.document_id::text] AS taxon
+			FROM documents_query dq
+			JOIN gazetteertaxon ta ON dq.id = ta.document_id
+			GROUP BY ta.id, ta.coveredtext, ta.valuee, ta.document_id
+
+			UNION ALL
+
+			SELECT ARRAY[ta.id::text, ta.coveredtext, COUNT(ta.id)::text, ta.valuee, ta.document_id::text] AS taxon
+			FROM documents_query dq
+			JOIN gnfindertaxon ta ON dq.id = ta.document_id
+			GROUP BY ta.id, ta.coveredtext, ta.valuee, ta.document_id
+	  )
+
 	  ELSE ARRAY[]::text[][]
 	  END AS taxons_temp
 	  

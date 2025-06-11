@@ -27,6 +27,7 @@ public class DocumentApi {
     private PostgresqlDataInterface_Impl db;
     private static final Logger logger = LogManager.getLogger(DocumentApi.class);
     private Configuration freemarkerConfig;
+
     public DocumentApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.freemarkerConfig = freemarkerConfig;
@@ -38,7 +39,7 @@ public class DocumentApi {
 
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId and hence can't return the metadata. ", ex));
-        if(documentId == null){
+        if (documentId == null) {
             model.put("information", languageResources.get("missingParameterError"));
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
@@ -47,7 +48,7 @@ public class DocumentApi {
             var uceMetadata = db.getUCEMetadataByDocumentId(documentId);
             var gson = new GsonBuilder().setPrettyPrinting().create();
             uceMetadata.forEach(m -> {
-                if(m.getValueType() == UCEMetadataValueType.JSON){
+                if (m.getValueType() == UCEMetadataValueType.JSON) {
                     var obj = gson.fromJson(m.getValue(), Object.class);
                     m.setValue(gson.toJson(obj));
                 }
@@ -67,13 +68,13 @@ public class DocumentApi {
 
         var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("corpusId")),
                 (ex) -> logger.error("Error: couldn't determine the corpusId and hence can't return the document list. ", ex));
-        if(corpusId == null){
+        if (corpusId == null) {
             model.put("information", languageResources.get("missingParameterError"));
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
         var page = ExceptionUtils.tryCatchLog(() -> Integer.parseInt(request.queryParams("page")),
                 (ex) -> logger.error("Error: couldn't determine the page, defaulting to page 1 then. ", ex));
-        if(page == null) page = 1;
+        if (page == null) page = 1;
 
         try {
             var take = 10;
@@ -89,8 +90,10 @@ public class DocumentApi {
 
         // Depending on the page, we returns JUST a rendered list of documents or
         // a view that contains the documents but also styles navigation and such
-        if(page == 1) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/corpusDocumentsList.ftl"));
-        else return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/documents.ftl"));
+        if (page == 1)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/corpusDocumentsList.ftl"));
+        else
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/documents.ftl"));
     });
 
     public Route getCorpusInspectorView = ((request, response) -> {
@@ -98,7 +101,8 @@ public class DocumentApi {
 
         var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
                 (ex) -> logger.error("Error: the url for the corpus inspector requires an 'id' query parameter that is the corpusId. ", ex));
-        if(corpusId == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (corpusId == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         try {
             var corpus = db.getCorpusById(corpusId);
@@ -122,7 +126,8 @@ public class DocumentApi {
 
         var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
                 (ex) -> logger.error("Error: the url for the document 3d globe requires an 'id' query parameter that is the document id.", ex));
-        if(id == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (id == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         try {
             // I've forgotten why I introduced this variable here?...
@@ -149,8 +154,9 @@ public class DocumentApi {
 
         var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
                 (ex) -> logger.error("Error: the url for the document reader requires an 'id' query parameter. " +
-                        "Document reader can't be built.", ex));
-        if(id == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+                                     "Document reader can't be built.", ex));
+        if (id == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         // Check if we have an searchId parameter. This is optional
         var searchId = ExceptionUtils.tryCatchLog(() -> request.queryParams("searchId"),
@@ -162,11 +168,12 @@ public class DocumentApi {
 
             // If this document was opened from an active search, we can highlight the search tokens in the text
             // This is only optional and works fine even without the search tokens.
-            if(searchId != null && SessionManager.ActiveSearches.containsKey(searchId)){
-                var activeSearchState = (SearchState)SessionManager.ActiveSearches.get(searchId);
+            if (searchId != null && SessionManager.ActiveSearches.containsKey(searchId)) {
+                var activeSearchState = (SearchState) SessionManager.ActiveSearches.get(searchId);
                 // For SRL Search, there are no search tokens really. We will handle that exclusively later.
-                if(activeSearchState.getSearchType() != SearchType.SEMANTICROLE || activeSearchState.getSearchType() != SearchType.NEG){
-                    model.put("searchTokens", String.join("[TOKEN]", activeSearchState.getSearchTokens()));
+                if (activeSearchState.getSearchType() != SearchType.SEMANTICROLE || activeSearchState.getSearchType() != SearchType.NEG) {
+                    if (activeSearchState.getSearchTokens() != null)
+                        model.put("searchTokens", String.join("[TOKEN]", activeSearchState.getSearchTokens()));
                 }
             }
         } catch (Exception ex) {
@@ -183,16 +190,17 @@ public class DocumentApi {
 
         var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
                 (ex) -> logger.error("Error: the url for the document pages list view requires an 'id' query parameter. ", ex));
-        if(id == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (id == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
-        try{
+        try {
             var skip = Integer.parseInt(request.queryParams("skip"));
             var doc = db.getCompleteDocumentById(Long.parseLong(id), skip, 10);
             var annotations = doc.getAllAnnotations(skip, 10);
             model.put("documentAnnotations", annotations);
             model.put("documentText", doc.getFullText());
             model.put("documentPages", doc.getPages(10, skip));
-        } catch (Exception ex){
+        } catch (Exception ex) {
             logger.error("Error getting the pages list view - either the document couldn't be fetched (id=" + id + ") or its annotations.", ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
@@ -204,7 +212,7 @@ public class DocumentApi {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for topics. ", ex));
 
-        if(documentId == null){
+        if (documentId == null) {
             response.status(400);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
         }

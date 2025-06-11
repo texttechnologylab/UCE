@@ -52,7 +52,7 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
     private Long pageId;
 
     public String getCoveredText() {
-        return coveredText;
+        return coveredText.replaceAll("<", "");
     }
 
     public String getCoveredHtmlText(){

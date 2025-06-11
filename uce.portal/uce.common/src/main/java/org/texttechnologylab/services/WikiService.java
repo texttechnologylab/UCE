@@ -108,7 +108,6 @@ public class WikiService {
         return viewModel;
     }
 
-
     /**
      * Gets a DocumentTopicDistributionWikiPageViewModel to render a Wikipage for that topic distribution
      */
