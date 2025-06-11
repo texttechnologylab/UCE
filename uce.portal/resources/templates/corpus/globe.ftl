@@ -212,14 +212,13 @@
             let pointHtml = `
                 <div class="occurrence-card" data-lat="${curPoint.latitude}" data-long="${curPoint.longitude}" data-name="${curPoint.name}">
                     <div class="row m-0 p-0 w-100 h-100">
-                        <div class="col-8 m-0 p-3 h-100">
+                        <div class="col-12 m-0 p-3 h-100">
                             <div class="flexed align-items-center mb-2">
                                 <a class="mark-on-map-btn mr-2" data><i class="m-0 fas fa-map-marked-alt"></i></a>
                                 <a target="_blank" href="https://www.gbif.org/species/${curPoint.taxonId}"><h6 class="mb-0 color-secondary underlined">${curPoint.name}</h6></a>
                             </div>
                             <p class="mb-0 small-font text">${curPoint.value}</p>
                         </div>
-                        <img class="col-4 m-0 p-0 h-100 thumbnail" src="${curPoint.image}"/>
                     </div>
                 </div>
             `;

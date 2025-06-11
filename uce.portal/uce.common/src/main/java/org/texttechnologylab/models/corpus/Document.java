@@ -32,6 +32,7 @@ import org.texttechnologylab.utils.StringUtils;
 import javax.persistence.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "document")
@@ -329,6 +330,10 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         }
 
         return null;
+    }
+
+    public List<Taxon> getAllTaxa(){
+        return Stream.concat(this.gazetteerTaxons.stream(), this.gnFinderTaxons.stream()).toList();
     }
 
     /**
