@@ -165,7 +165,6 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 continue;
             }
 
-
             var start = annotation.getBegin() - offset - errorOffset;
             var end = annotation.getEnd() - offset - errorOffset;
 
@@ -228,7 +227,7 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             return String.format("<span class='multi-annotation' title='%1$s'>" +
                     "<div class='multi-annotation-popup'>" +
                     btnsHtml.toString().replace("%", "%%") +
-                    "</div>", UUID.randomUUID());
+                    "</div><span class='ruby-text'>", UUID.randomUUID());
         }
     }
 

@@ -71,6 +71,10 @@
     "de-DE": "Lexikon",
     "en-EN": "Lexicon"
   },
+  "chooseLexiconEntry": {
+    "de-DE": "Wählen Sie einen lexikalischen Eintrag.",
+    "en-EN": "Select a lexical entry."
+  },
   "contact": {
     "de-DE": "Kontakt",
     "en-EN": "Contact"

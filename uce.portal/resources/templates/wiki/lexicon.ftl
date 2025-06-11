@@ -66,7 +66,7 @@
                                     <hr class="mt-1 mb-0"/>
                                     <div>
                                         <div class="occurrences-list" data-skip="0" data-covered="" data-type="">
-
+                                            <p class="text text-center mb-1 mt-1">${languageResource.get("chooseLexiconEntry")}</p>
                                         </div>
 
                                         <div class="navigation mt-1 w-100">

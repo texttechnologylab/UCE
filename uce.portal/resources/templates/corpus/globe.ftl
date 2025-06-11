@@ -24,6 +24,9 @@
 
 <div class="site-container">
 
+    <!-- this object must be set on any site we use within UCE -->
+    <div id="prime-color-container" class="color-prime"></div>
+
     <div class="nav container-fluid p-3">
         <div class="w-100 container">
             <div class="flexed align-items-center justify-content-between">
