@@ -368,7 +368,8 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     }
 
     public void setFullText(String fullText) {
-        this.fullText = fullText.replaceAll("<", "");
+        // this.fullText = fullText.replaceAll("<", "");
+        this.fullText = fullText;
     }
 
     public List<Page> getPages() {
