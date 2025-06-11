@@ -1817,6 +1817,33 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<Object[]> getLemmaByPage(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            // Construct the SQL query to select page_id and coveredtext from the namedentity table
+            String sql = "SELECT lemma.page_id, lemma.coveredtext AS lemma_value, lemma.coarsevalue AS coarsevalue " +
+                    "FROM lemma " +
+                    "WHERE lemma.document_id = :documentId";
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId);
+
+            return query.getResultList();
+        });
+    }
+
+    public List<Object[]> getGeonameByPage(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT gn.page_id, gn.coveredtext AS geoname_value " +
+                    "FROM geoname gn " +
+                    "WHERE gn.document_id = :documentId";
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId);
+
+            return query.getResultList();
+        });
+    }
+
 
     public List<Object[]> getTopicDistributionByPageForDocument(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {

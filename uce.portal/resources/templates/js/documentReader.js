@@ -1388,10 +1388,12 @@ function renderTemporalExplorer(containerId) {
     const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
     const topicReq = $.get('/api/document/page/topics', { documentId: docId });
     const entityReq = $.get('/api/document/page/namedEntities', { documentId: docId });
+    const lemmaReq = $.get('/api/document/page/lemma', { documentId: docId });
+    const geonameReq = $.get('/api/document/page/geoname', { documentId: docId });
 
-    Promise.all([taxonReq, topicReq, entityReq]).then(([taxon, topics, entities]) => {
+    Promise.all([taxonReq, topicReq, entityReq, lemmaReq, geonameReq]).then(([taxon, topics, entities, lemma, geoname]) => {
         $('.visualization-spinner').hide()
-        if ((!taxon || taxon.length === 0) && (!topics || topics.length === 0) && (!entities || entities.length === 0)) {
+        if ((!taxon || taxon.length === 0) && (!topics || topics.length === 0) && (!entities || entities.length === 0) && (!lemma || lemma.length === 0 && !geoname || geoname.length === 0)) {
             const container = document.getElementById(containerId);
             if (container) {
                 container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
@@ -1401,7 +1403,7 @@ function renderTemporalExplorer(containerId) {
         }
         const annotationSources = [
             {
-                key: 'taxon',
+                key: 'Taxon',
                 data: taxon,
                 pageField: 'pageId',
                 valueField: 'taxonValue',
@@ -1410,7 +1412,7 @@ function renderTemporalExplorer(containerId) {
                 transformValue: v => v.split('|')[0]
             },
             {
-                key: 'topics',
+                key: 'Topics',
                 data: topics,
                 pageField: 'pageId',
                 valueField: 'topicLabel',
@@ -1419,13 +1421,28 @@ function renderTemporalExplorer(containerId) {
             }
             ,
             {
-                key: 'ne',
+                key: 'Named Entities',
                 data: entities,
                 pageField: 'pageId',
                 valueField: 'entityType',
                 label: 'Named Entities',
                 color: '#5470C6',
-                transformValue: v => v.split('|')[0]
+            },
+            {
+                key: 'Lemmas',
+                data: lemma,
+                pageField: 'pageId',
+                valueField: 'coarseValue',
+                label: 'Lemmas',
+                color: '#ff9f7f',
+            },
+            {
+                key: 'Geonames',
+                data: geoname,
+                pageField: 'pageId',
+                valueField: 'geonameValue',
+                label: 'Geonames',
+                color: '#c680ff',
             }
         ];
 
@@ -1455,9 +1472,11 @@ function renderTemporalExplorer(containerId) {
                 if (!dataMap.has(page)) {
                     dataMap.set(page, {
                         page,
-                        taxon: [],
-                        topics: [],
-                        ne: []
+                        Taxon: [],
+                        Topics: [],
+                        "Named Entities": [],
+                        Lemmas: [],
+                        Geonames: []
                     });
                 }
 
@@ -1489,12 +1508,15 @@ function renderTemporalExplorer(containerId) {
         // Tooltip formatter
         const tooltipFormatter = function (params) {
             const page = parseInt(params[0].axisValue);
+            const seriesNames = new Set(params.map(p => p.seriesName));
+
             const record = dataMap.get(page);
             if (!record) return 'Page ' + page + '<br/>No data.';
 
             let tooltipHtml = '<div><b>Page ' + page + '</b></div>';
 
             annotationSources.forEach(({ key, label, color }) => {
+                if (!seriesNames.has(label)) return;
                 const items = record[key];
                 if (!items || items.length === 0) return;
 

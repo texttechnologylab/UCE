@@ -328,7 +328,7 @@ var GraphVizHandler = (function () {
 
             legend: {
                 data: seriesData.map(s => s.name),
-                top: 'bottom'
+                top: 'auto'
             },
 
             xAxis: {
@@ -347,7 +347,7 @@ var GraphVizHandler = (function () {
 
         seriesData.forEach(s => {
             option.series.push({
-                name: s.name + ' (Bar)',
+                name: s.name,
                 type: 'bar',
                 data: s.data,
                 itemStyle: {
@@ -359,7 +359,7 @@ var GraphVizHandler = (function () {
             });
 
             option.series.push({
-                name: s.name + ' (Line)',
+                name: s.name,
                 type: 'line',
                 data: s.data,
                 symbol: 'circle',

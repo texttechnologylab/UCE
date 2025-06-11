@@ -173,7 +173,7 @@
                 <div class="tab-header">
                     <button class="tab-btn active" data-tab="navigator-tab">Navigator</button>
                     <button class="tab-btn" data-tab="visualization-tab">Visualization</button>
-                    <button class="tab-btn" data-tab="playground-tab">Playground</button>
+<#--                    <button class="tab-btn" data-tab="playground-tab">Playground</button>-->
 
                 </div>
 
