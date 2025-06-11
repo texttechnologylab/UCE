@@ -1831,6 +1831,19 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<Object[]> getGeonameByPage(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT gn.page_id, gn.coveredtext AS geoname_value " +
+                    "FROM geoname gn " +
+                    "WHERE gn.document_id = :documentId";
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId);
+
+            return query.getResultList();
+        });
+    }
+
 
     public List<Object[]> getTopicDistributionByPageForDocument(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {

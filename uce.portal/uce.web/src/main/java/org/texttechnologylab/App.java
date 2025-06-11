@@ -399,6 +399,7 @@ public class App {
                 get("/unifiedTopicSentenceMap", documentApi.getUnifiedTopicToSentenceMap);
                 get("/page/namedEntities", documentApi.getDocumentNamedEntitiesByPage);
                 get("/page/lemma", documentApi.getDocumentLemmaByPage);
+                get("/page/geoname", documentApi.getDocumentGeonameByPage);
             });
 
             path("/rag", () -> {

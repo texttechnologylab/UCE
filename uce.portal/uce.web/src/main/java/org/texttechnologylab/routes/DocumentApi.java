@@ -367,6 +367,37 @@ public class DocumentApi {
         }
     });
 
+    public Route getDocumentGeonameByPage = ((request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for geoname. ", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+        }
+
+        try {
+            var geonamePerPage = db.getGeonameByPage(documentId);
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : geonamePerPage) {
+                var pageMap = new HashMap<String, Object>();
+                pageMap.put("pageId", row[0]);
+                pageMap.put("geonameValue", row[1]);
+                result.add(pageMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+        } catch (Exception ex) {
+            logger.error("Error getting document geoname.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving document geoname."), "defaultError.ftl"));
+        }
+    });
+
 
     public Route getSentenceTopicsWithEntities = ((request, response) -> {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
