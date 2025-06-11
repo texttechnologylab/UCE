@@ -1389,10 +1389,11 @@ function renderTemporalExplorer(containerId) {
     const topicReq = $.get('/api/document/page/topics', { documentId: docId });
     const entityReq = $.get('/api/document/page/namedEntities', { documentId: docId });
     const lemmaReq = $.get('/api/document/page/lemma', { documentId: docId });
+    const geonameReq = $.get('/api/document/page/geoname', { documentId: docId });
 
-    Promise.all([taxonReq, topicReq, entityReq, lemmaReq]).then(([taxon, topics, entities, lemma]) => {
+    Promise.all([taxonReq, topicReq, entityReq, lemmaReq, geonameReq]).then(([taxon, topics, entities, lemma, geoname]) => {
         $('.visualization-spinner').hide()
-        if ((!taxon || taxon.length === 0) && (!topics || topics.length === 0) && (!entities || entities.length === 0) && (!lemma || lemma.length === 0)) {
+        if ((!taxon || taxon.length === 0) && (!topics || topics.length === 0) && (!entities || entities.length === 0) && (!lemma || lemma.length === 0 && !geoname || geoname.length === 0)) {
             const container = document.getElementById(containerId);
             if (container) {
                 container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
@@ -1435,7 +1436,14 @@ function renderTemporalExplorer(containerId) {
                 valueField: 'coarseValue',
                 label: 'Lemmas',
                 color: '#ff9f7f',
-                transformValue: v => v.split('|')[0]
+            },
+            {
+                key: 'Geonames',
+                data: geoname,
+                pageField: 'pageId',
+                valueField: 'geonameValue',
+                label: 'Geonames',
+                color: '#c680ff',
             }
         ];
 
