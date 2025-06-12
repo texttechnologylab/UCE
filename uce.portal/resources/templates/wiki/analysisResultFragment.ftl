@@ -299,12 +299,19 @@
                         <div class="analysis-ta-container">
                             <#if DUUI.textInformation?has_content>
                             <#-- Check if taAVG is not empty -->
-                                <p>TextInformation</p>
                                 <#if DUUI.textInformation.taScoreAVG?has_content>
-                                    <p>TA Analysis</p>
                                     <#list DUUI.textInformation.taScoreAVG as model>
                                         <div class="analysis-ta-card">
-                                            <div class="analysis-ta-card-title">${model.getGroupName()}</div>
+                                            <div class="analysis-ta-card-title">${model.getGroupName()}
+                                                <button
+                                                        class="ta-collapse-toggle-btn"
+                                                        aria-expanded="true"
+                                                        aria-label="Toggle TA details"
+                                                        onclick="toggleCard(this)"
+                                                >
+                                                    ▼
+                                                </button>
+                                            </div>
                                             <div class="analysis-ta-grid">
                                                 <#list model.taInputs as taInput>
                                                     <#assign opacity = taInput.getScore()?string?replace(",", ".")>

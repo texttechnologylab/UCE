@@ -894,13 +894,25 @@
 }
 
 .analysis-ta-card {
+    display:flex;
     flex: 1 1 100%;
+    flex-direction: column;
     /*background: #f8f9fa;*/
     /*border: 2px solid #007bff;*/
     /*border-radius: 12px;*/
     padding: 20px;
     /*box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);*/
     transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.analysis-ta-grid {
+    height: 200px;
+    min-height: 20px;
+    /*max-height: 300px;        !* or whatever height fits your layout *!*/
+    overflow-y: auto;
+    overflow-x: hidden;       /* optional: hide horizontal scroll */
+    padding-right: 10px;      /* optional: prevent content from hiding behind scrollbar */
+    resize: vertical; /* allow vertical resizing */
 }
 
 .analysis-ta-card:hover {
@@ -946,6 +958,22 @@
     font-size: 0.9em;
     font-weight: bold;
     color: #343a40; /* darker text color for the score */
+}
+
+.ta-collapse-toggle-btn {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.analysis-ta-card.collapsed .analysis-ta-grid {
+    display: none;
+}
+
+.analysis-ta-card.collapsed .ta-collapse-toggle-btn {
+    transform: rotate(-90deg);
 }
 
 

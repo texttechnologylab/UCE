@@ -28,8 +28,8 @@ masterCheckbox.addEventListener('change', function () {
 
 
     updateFieldVisibility('factchecking', 'claim-field-wrapper', 'claim-text');
-    updateFieldVisibility('cohesion', 'text-field-wrapper', 'input-text');
-    updateFieldVisibility('stance', 'stance-field-wrapper', 'stance-text');
+    updateFieldVisibility('cohesion ', 'text-field-wrapper', 'input-text');
+    updateFieldVisibility('stance ', 'stance-field-wrapper', 'stance-text');
     updateFieldVisibility('llm', 'llm-field-wrapper', 'llm-text');
 });
 
@@ -45,8 +45,8 @@ document.querySelectorAll('.analysis-group-checkbox').forEach(groupCheckbox => {
 
         updateMasterCheckbox();
         updateFieldVisibility('factchecking', 'claim-field-wrapper', 'claim-text');
-        updateFieldVisibility('cohesion', 'text-field-wrapper', 'input-text');
-        updateFieldVisibility('stance', 'stance-field-wrapper', 'stance-text');
+        updateFieldVisibility('cohesion ', 'text-field-wrapper', 'input-text');
+        updateFieldVisibility('stance ', 'stance-field-wrapper', 'stance-text');
         updateFieldVisibility('llm', 'llm-field-wrapper', 'llm-text');
 
         e.stopPropagation(); // Verhindert Baum-Öffnen beim Checkbox-Klick
@@ -79,8 +79,8 @@ document.querySelectorAll('.analysis-model-checkbox').forEach(modelCheckbox => {
         updateMasterCheckbox();
 
         updateFieldVisibility('factchecking', 'claim-field-wrapper', 'claim-text');
-        updateFieldVisibility('cohesion', 'text-field-wrapper', 'input-text');
-        updateFieldVisibility('stance', 'stance-field-wrapper', 'stance-text');
+        updateFieldVisibility('cohesion ', 'text-field-wrapper', 'input-text');
+        updateFieldVisibility('stance ', 'stance-field-wrapper', 'stance-text');
         updateFieldVisibility('llm', 'llm-field-wrapper', 'llm-text');
 
         e.stopPropagation();
@@ -142,4 +142,19 @@ fileInput.addEventListener('change', () => {
         };
         reader.readAsText(file);
     }
+});
+
+
+function toggleCard(button) {
+    const card = button.closest('.analysis-ta-card');
+    const isCollapsed = card.classList.toggle('collapsed');
+    button.setAttribute('aria-expanded', !isCollapsed);
+}
+
+
+document.querySelectorAll('.ta-collapse-toggle-btn').forEach(button => {
+    button.addEventListener('click', function (e) {
+        e.stopPropagation();
+        toggleCard(this);
+    });
 });

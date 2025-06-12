@@ -25,11 +25,9 @@ import org.xml.sax.SAXException;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
+
 import org.bson.Document;
-import java.util.Map;
 import org.texttechnologylab.type.LLMResult;
 import org.texttechnologylab.type.LLMPrompt;
 
@@ -60,43 +58,47 @@ public class DUUIPipeline {
 
         DUUIRemoteDriver remoteDriver = new DUUIRemoteDriver();
         composer.addDriver(remoteDriver);
+        ArrayList<String> alreadyAddedUrl = new ArrayList<>();
         for (Map.Entry<String, ModelInfo> url : urls.entrySet()) {
-            String Variant = url.getValue().getVariant();
-            switch (Variant){
-                case "Coherence":
-                    composer.add(
-                            new DUUIRemoteDriver.Component(url.getValue().getUrl())
-                                    .withParameter("selection", "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence")
-                                    .withParameter("model_name", url.getValue().getMap())
-                                    .withParameter("complexity_compute", "euclidean,cosine,wasserstein,distance,jensenshannon,bhattacharyya")
-                                    .withParameter("model_art", url.getValue().getModelType())
-                                    .withParameter("embeddings_keep", "0")
-                    );
-                    break;
-                case "Stance":
-                    composer.add(
-                            new DUUIRemoteDriver.Component(url.getValue().getUrl())
-                                    .withParameter("chatgpt_key", "")
-                    );
-                    break;
-                case "LLM":
-                    composer.add(
-                            new DUUIRemoteDriver.Component(url.getValue().getUrl())
-                                    .withParameter("seed", "42")
-                                    .withParameter("model_name", url.getValue().getMap())
-                                    .withParameter("url", url.getValue().getUrlParameter())
-                                    .withParameter("temperature", "1")
-                                    .withParameter("port", url.getValue().getPortParameter())
-                    );
-                    break;
-                default:
-                    composer.add(
-                            new DUUIRemoteDriver.Component(url.getValue().getUrl())
-                                    .withParameter("selection", "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence")
-                    );
-                    break;
-            }
+            if (!alreadyAddedUrl.contains(url.getValue().getUrl())) {
+                String Variant = url.getValue().getVariant();
+                alreadyAddedUrl.add(url.getValue().getUrl());
+                switch (Variant) {
+                    case "Coherence":
+                        composer.add(
+                                new DUUIRemoteDriver.Component(url.getValue().getUrl())
+                                        .withParameter("selection", "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence")
+                                        .withParameter("model_name", url.getValue().getMap())
+                                        .withParameter("complexity_compute", "euclidean,cosine,wasserstein,distance,jensenshannon,bhattacharyya")
+                                        .withParameter("model_art", url.getValue().getModelType())
+                                        .withParameter("embeddings_keep", "0")
+                        );
+                        break;
+                    case "Stance":
+                        composer.add(
+                                new DUUIRemoteDriver.Component(url.getValue().getUrl())
+                                        .withParameter("chatgpt_key", "")
+                        );
+                        break;
+                    case "LLM":
+                        composer.add(
+                                new DUUIRemoteDriver.Component(url.getValue().getUrl())
+                                        .withParameter("seed", "42")
+                                        .withParameter("model_name", url.getValue().getMap())
+                                        .withParameter("url", url.getValue().getUrlParameter())
+                                        .withParameter("temperature", "1")
+                                        .withParameter("port", url.getValue().getPortParameter())
+                        );
+                        break;
+                    default:
+                        composer.add(
+                                new DUUIRemoteDriver.Component(url.getValue().getUrl())
+                                        .withParameter("selection", "de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence")
+                        );
+                        break;
+                }
 
+            }
         }
         return composer;
     }
@@ -245,6 +247,8 @@ public class DUUIPipeline {
     }
 
     public Object[] getExtractedResults(JCas cas, ModelInfo modelInfo, Sentences sentences, TextClass textClass) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
+        String btName = "Bert Token";
+        String ACName = "Auto Correlation";
         switch (modelInfo.getVariant()) {
             case "Topic":
                 Collection<Topic> allTopics = JCasUtil.select(cas, Topic.class);
@@ -269,6 +273,258 @@ public class DUUIPipeline {
                     }
                     sentences.getSentence(Integer.toString(begin), Integer.toString(end)).addTopic(topicClass);
                     textClass.addTopic(modelInfo, topicClass);
+                }
+                break;
+            case "TA":
+                Collection<TAscore> taScores = JCasUtil.select(cas, TAscore.class);
+                HashMap<String, TAClass> taScores_map = new HashMap<>();
+                boolean chosen = false;
+                for (TAscore taScore : taScores) {
+                    String name = taScore.getName();
+                    String groupName = taScore.getGroup();
+                    String nameWithoutPrefix = "";
+                    double score = taScore.getScore();
+                    boolean add = true;
+                    switch (modelInfo.getName()) {
+                        case "TTLAB Cohesion-l BERT Token Auto Correlation" -> {
+                            switch (taScore.getName()) {
+                                case String s when s.contains("btac"):
+                                    nameWithoutPrefix = name.replace("btac", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName = "Autocorrelation of BERT token probabilities (all subwords)";
+                                    break;
+                                case String s when s.contains("bt_prod_ac"):
+                                    nameWithoutPrefix = name.replace("bt_prod_ac", "");
+                                    name = "Bert Token Product Auto Correlation lag " + nameWithoutPrefix;
+                                    groupName = "Autocorrelation of BERT token probabilities (aggregated via subword product)";
+                                    break;
+                                case String s when s.contains("bt_first_ac"):
+                                    nameWithoutPrefix = name.replace("bt_first_ac", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName = "Autocorrelation of BERT token probabilities (first subwords only)";
+                                    break;
+                                case String s when s.contains("bt_mean_ac"):
+                                    nameWithoutPrefix = name.replace("bt_mean_ac", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName ="Autocorrelation of BERT token probabilities (subword average aggregation)";
+                                    break;
+                                case String s when s.contains("bt_min_ac"):
+                                    nameWithoutPrefix = name.replace("bt_min_ac", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName ="Autocorrelation of BERT token probabilities (subword minimum aggregation)";
+                                    break;
+                                case String s when s.contains("bt_max_ac"):
+                                    nameWithoutPrefix = name.replace("bt_max_ac", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName ="Autocorrelation of BERT token probabilities (subword maximum aggregation)";
+                                    break;
+                                case String s when s.contains("btrac"):
+                                    // _prod_ Product, _first_ First, _mean_ Mean, _min_ Min, _max_ Max
+                                    nameWithoutPrefix = name.replace("btrac", "");
+                                    name = "all subwords" + nameWithoutPrefix;
+                                    groupName = "Recursive Autocorrelation of BERT token probabilities";
+                                    break;
+                                case String s when s.contains("bt_prod_rac"):
+                                    nameWithoutPrefix = name.replace("bt_prod_rac", "");
+                                    name = "aggregated via subword product" + nameWithoutPrefix;
+                                    groupName = "Recursive Autocorrelation of BERT token probabilities";
+                                    break;
+                                case String s when s.contains("bt_first_rac"):
+                                    nameWithoutPrefix = name.replace("bt_first_rac", "");
+                                    name = "first subwords only" + nameWithoutPrefix;
+                                    groupName = "Recursive Autocorrelation of BERT token probabilities";
+                                    break;
+                                case String s when s.contains("bt_mean_rac"):
+                                    nameWithoutPrefix = name.replace("bt_mean_rac", "");
+                                    name = "subword average aggregation" + nameWithoutPrefix;
+                                    groupName = "Recursive Autocorrelation of BERT token probabilities";
+                                    break;
+                                case String s when s.contains("bt_min_rac"):
+                                    nameWithoutPrefix = name.replace("bt_min_rac", "");
+                                    name = "subword minimum aggregation" + nameWithoutPrefix;
+                                    groupName = "Recursive Autocorrelation of BERT token probabilities";
+                                    break;
+                                case String s when s.contains("bt_max_rac"):
+                                    nameWithoutPrefix = name.replace("bt_max_rac", "");
+                                    name = "subword maximum aggregation" + nameWithoutPrefix;
+                                    groupName = "Recursive Autocorrelation of BERT token probabilities";
+                                    break;
+                                default:
+                                    add = false;
+//                                    if (name.startsWith("bt") & !name.contains("adc")) {
+//                                        groupName = "Other BERT Token Embedding Features";
+//                                        add = true;
+//                                    }
+                                    break;
+                            }
+                        }
+                        case "TTLAB Cohesion-l BERT Token Auto-Distance-Correlation" -> {
+                            switch (taScore.getName()) {
+                                case String s when s.contains("btadc"):
+                                    nameWithoutPrefix = name.replace("btadc", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName = "Auto Distance Correlation of BERT token probabilities (all subwords)";
+                                    break;
+                                case String s when s.contains("bt_prod_adc"):
+                                    nameWithoutPrefix = name.replace("bt_prod_adc", "");
+                                    name = "Bert Token Product Auto Correlation lag " + nameWithoutPrefix;
+                                    groupName = "Auto Distance Correlation of BERT token probabilities (aggregated via subword product)";
+                                    break;
+                                case String s when s.contains("bt_first_adc"):
+                                    nameWithoutPrefix = name.replace("bt_first_adc", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName = "Auto Distance Correlation of BERT token probabilities (first subwords only)";
+                                    break;
+                                case String s when s.contains("bt_mean_adc"):
+                                    nameWithoutPrefix = name.replace("bt_mean_adc", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName ="Auto Distance Correlation of BERT token probabilities (subword average aggregation)";
+                                    break;
+                                case String s when s.contains("bt_min_adc"):
+                                    nameWithoutPrefix = name.replace("bt_min_adc", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName ="Auto Distance Correlation of BERT token probabilities (subword minimum aggregation)";
+                                    break;
+                                case String s when s.contains("bt_max_adc"):
+                                    nameWithoutPrefix = name.replace("bt_max_adc", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName ="Auto Distance Correlation of BERT token probabilities (subword maximum aggregation)";
+                                    break;
+                                case String s when s.contains("btradc"):
+                                    // _prod_ Product, _first_ First, _mean_ Mean, _min_ Min, _max_ Max
+                                    nameWithoutPrefix = name.replace("btradc", "");
+                                    name = "all subwords" + nameWithoutPrefix;
+                                    groupName = "Recursive Auto Distance Correlation of BERT token probabilities";
+                                    break;
+                                case String s when s.contains("bt_prod_radc"):
+                                    nameWithoutPrefix = name.replace("bt_prod_radc", "");
+                                    name = "aggregated via subword product" + nameWithoutPrefix;
+                                    groupName = "Recursive Auto Distance Correlation of BERT token probabilities";
+                                    break;
+                                case String s when s.contains("bt_first_radc"):
+                                    nameWithoutPrefix = name.replace("bt_first_radc", "");
+                                    name = "first subwords only" + nameWithoutPrefix;
+                                    groupName = "Recursive Auto Distance Correlation of BERT token probabilities";
+                                    break;
+                                case String s when s.contains("bt_mean_radc"):
+                                    nameWithoutPrefix = name.replace("bt_mean_radc", "");
+                                    name = "subword average aggregation" + nameWithoutPrefix;
+                                    groupName = "Recursive Auto Distance Correlation of BERT token probabilities";
+                                    break;
+                                case String s when s.contains("bt_min_radc"):
+                                    nameWithoutPrefix = name.replace("bt_min_radc", "");
+                                    name = "subword minimum aggregation" + nameWithoutPrefix;
+                                    groupName = "Recursive Auto Distance Correlation of BERT token probabilities";
+                                    break;
+                                case String s when s.contains("bt_max_radc"):
+                                    nameWithoutPrefix = name.replace("bt_max_radc", "");
+                                    name = "subword maximum aggregation" + nameWithoutPrefix;
+                                    groupName = "Recursive Auto Distance Correlation of BERT token probabilities";
+                                    break;
+                                default:
+                                    add = false;
+                                    break;
+                            }
+                        }
+                        case "TTLAB Syntactic Features" -> {
+                            if (taScore.getGroup().equals("syntactic")) {
+                                switch (taScore.getName()) {
+                                    case String s when s.endsWith("mu"):
+                                        groupName = "Syntactic Mean Aggregated Features";
+                                        name = name.replace("mu", "");
+                                        break;
+                                    case String s when s.endsWith("H"):
+                                        groupName = "Syntactic Entropy Aggregated Features";
+                                        name = name.replace("H", "");
+                                        break;
+                                    case String s when s.endsWith("G"):
+                                        groupName = "Syntactic Gini Coefficient Aggregated Features";
+                                        name = name.replace("G", "");
+                                        break;
+                                    case String s when s.endsWith("rac"):
+                                        groupName = "Syntactic Recursive Auto Correlation Aggregated Features";
+                                        name = name.replace("rac", "");
+                                        break;
+                                    case String s when s.endsWith("adtw"):
+                                        groupName = "Syntactic Auto Dynamic Time Warping Aggregated Features";
+                                        name = name.replace("adtw", "");
+                                        break;
+                                    default:
+                                        add = false;
+                                        break;
+                                }
+                            }
+                            else {
+                                add = false;
+                            }
+                        }
+                        case "TTLAB Cohesion-s BERT Sentence Auto Correlation & Auto-Distance-Correlation" -> {
+                            switch (taScore.getName()) {
+                                case String s when s.contains("bsac"):
+                                    nameWithoutPrefix = name.replace("bsac", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName = "Autocorrelation of BERT sentence probabilities";
+                                    break;
+                                case String s when s.contains("bsadc"):
+                                    nameWithoutPrefix = name.replace("bsadc", "");
+                                    name = "lag " + nameWithoutPrefix;
+                                    groupName = "Auto Distance Correlation of BERT sentence probabilities";
+                                    break;
+                                case String s when s.contains("bsradc"):
+                                    nameWithoutPrefix = name.replace("bsradc", "");
+                                    name = "recursive" + nameWithoutPrefix;
+                                    groupName = "Auto Distance Correlation of BERT sentence probabilities";
+                                    break;
+                                case String s when s.contains("bsrac"):
+                                    // _prod_ Product, _first_ First, _mean_ Mean, _min_ Min, _max_ Max
+                                    nameWithoutPrefix = name.replace("bsrac", "");
+                                    name = "recursive" + nameWithoutPrefix;
+                                    groupName = "Autocorrelation of BERT sentence probabilities";
+                                    break;
+                                default:
+                                    add = false;
+//                                    if (name.startsWith("bs") & !name.contains("adc")) {
+//                                        groupName = "Other BERT Sentence Embedding Features";
+//                                        add = true;
+//                                    }
+                                    break;
+                            }
+                        }
+                        case "TTLAB Cohesion BERT Others" -> {
+                            add = false;
+                            if (name.startsWith("bs") & !name.contains("adc") & !name.contains("ac")) {
+                                groupName = "Cohesion-s Other BERT Sentence Embedding Features";
+                                add = true;
+                            }
+                            if (name.startsWith("bt") & !name.contains("adc") & !name.contains("ac")) {
+                                groupName = "Cohesion-l Other BERT Token Embedding Features";
+                                add = true;
+                            }
+                        }
+                        case "TAScore" -> {
+                            // TAScore is a special case, it has no prefix
+                            add = true;
+                        }
+                        default -> {
+                            add = false;
+                        }
+                    }
+                    if (add) {
+                        TAInput taInput = new TAInput();
+                        taInput.setName(name);
+                        taInput.setScore(score);
+                        if (!taScores_map.containsKey(groupName)) {
+                            TAClass taClass = new TAClass();
+                            taClass.setGroupName(groupName);
+                            taClass.setModelInfo(modelInfo);
+                            taScores_map.put(groupName, taClass);
+                        }
+                        taScores_map.get(groupName).addTaInput(taInput);
+                    }
+                }
+                for (Map.Entry<String, TAClass> entry : taScores_map.entrySet()) {
+                    TAClass taClass = entry.getValue();
+                    textClass.addAVGTA(taClass);
                 }
                 break;
             case "Offensive":
@@ -533,29 +789,6 @@ public class DUUIPipeline {
                 }
                 readabilityClass.setModelInfo(modelInfo);
                 textClass.addReadability(readabilityClass);
-                break;
-            case "TA":
-                Collection<TAscore> taScores = JCasUtil.select(cas, TAscore.class);
-                HashMap<String, TAClass> taScores_map = new HashMap<>();
-                for (TAscore taScore : taScores) {
-                    String name = taScore.getName();
-                    String groupName = taScore.getGroup();
-                    double score = taScore.getScore();
-                    TAInput taInput = new TAInput();
-                    taInput.setName(name);
-                    taInput.setScore(score);
-                    if (!taScores_map.containsKey(groupName)) {
-                        TAClass taClass = new TAClass();
-                        taClass.setGroupName(groupName);
-                        taClass.setModelInfo(modelInfo);
-                        taScores_map.put(groupName, taClass);
-                    }
-                    taScores_map.get(groupName).addTaInput(taInput);
-                }
-                for (Map.Entry<String, TAClass> entry : taScores_map.entrySet()) {
-                    TAClass taClass = entry.getValue();
-                    textClass.addAVGTA(taClass);
-                }
                 break;
             case "LLM":
                 Collection<LLMResult> llmResults = JCasUtil.select(cas, LLMResult.class);

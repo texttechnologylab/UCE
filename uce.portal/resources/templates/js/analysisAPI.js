@@ -24,11 +24,11 @@ async function runAnalysisPipeline() {
             if (isFactChecking) {
                 checkboxClaim = true;
             }
-            const isCoherence = $checkbox[0]["id"].toLowerCase().includes('cohesion');
+            const isCoherence = $checkbox[0]["id"].toLowerCase().includes('cohesion ');
             if (isCoherence) {
                 checkboxCoherence = true;
             }
-            const isStance = $checkbox[0]["id"].toLowerCase().includes('stance');
+            const isStance = $checkbox[0]["id"].toLowerCase().includes('stance ');
             if (isStance) {
                 checkboxStance = true;
             }
