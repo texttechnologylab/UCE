@@ -5,6 +5,13 @@ let currentSelectedTopic = null;
 let currentTopicIndex = -1;
 let matchingTopics = [];
 
+let topicSettings = {
+    topicCount: 10,
+    colorMode: 'gradient', // 'per-topic' or 'gradient'
+    gradientStartColor: '#ff0000',
+    gradientEndColor: '#00ff00'
+};
+
 /**
  * Handles the expanding and de-expanding of the side bar
  */
@@ -144,6 +151,9 @@ $(document).ready(function () {
     // Load document topics
     loadDocumentTopics();
 
+    // Initialize topic settings panel
+    initializeTopicSettingsPanel();
+
     const hasTopics = $('.colorable-topic').length > 0;
     if (hasTopics) {
         $('.scrollbar-minimap').show();
@@ -161,25 +171,29 @@ $(document).ready(function () {
 
 });
 
-function loadDocumentTopics() {
-    $('.topics-loading').hide();
-
-    // Extract topics from colorable-topic spans in the document
+function sortedTopicArray(){
     const topicFrequency = {};
-    $('.colorable-topic').each(function () {
+    $('.colorable-topic').each(function() {
         const topic = $(this).data('topic-value');
         if (topic) {
             topicFrequency[topic] = (topicFrequency[topic] || 0) + 1;
         }
     });
 
-    // Convert to array and sort by frequency
     const topicArray = Object.keys(topicFrequency).map(topic => ({
         label: topic,
         frequency: topicFrequency[topic]
     }));
 
     topicArray.sort((a, b) => b.frequency - a.frequency);
+
+    return topicArray;
+}
+
+async function loadDocumentTopics() {
+    $('.topics-loading').hide();
+
+    const topicArray = sortedTopicArray();
 
     // Find max and min for normalization across ALL topics
     const maxFreq = topicArray.length > 0 ? topicArray[0].frequency : 1;
@@ -190,11 +204,15 @@ function loadDocumentTopics() {
     topicArray.forEach(function (topic) {
         const normalizedFreq = freqRange > 0 ?
             (topic.frequency - minFreq) / freqRange : 1;
-        topicColorMap[topic.label] = window.graphVizHandler.getColorForWeight(normalizedFreq);
+
+        if (topicSettings.colorMode === 'gradient') {
+            topicColorMap[topic.label] = window.graphVizHandler.getColorForWeight(normalizedFreq, hexToRgb(topicSettings.gradientStartColor), hexToRgb(topicSettings.gradientEndColor));
+        }
+
     });
 
-    // Take top 10 topics for display
-    const topTopics = topicArray.slice(0, 10);
+    // Take top N topics for display based on settings
+    const topTopics = topicArray.slice(0, topicSettings.topicCount);
 
     if (topTopics.length > 0) {
         let html = '';
@@ -1565,5 +1583,113 @@ function renderTemporalExplorer(containerId) {
         container.classList.add('rendered');
     }).catch(err => {
         console.error("Error loading or processing annotation data:", err);
+    });
+}
+
+function initializeTopicSettingsPanel() {
+
+    if (topicSettings.colorMode === 'per-topic') {
+        $('#per-topic-colors').prop('checked', true);
+    } else {
+        $('#gradient-range').prop('checked', true);
+        $('.color-pickers').show();
+    }
+
+    $('#gradient-start-color').val(topicSettings.gradientStartColor);
+    $('#gradient-end-color').val(topicSettings.gradientEndColor);
+
+    function populateTopicCountDropdown(topics) {
+        const totalTopics = topics.length;
+        const $dropdown = $('#topic-count');
+        $dropdown.empty();
+
+        for (let i = 1; i <= totalTopics; i++) {
+            const $option = $('<option></option>').val(i).text(i);
+            if (i === topicSettings.topicCount) {
+                $option.prop('selected', true);
+            }
+            $dropdown.append($option);
+        }
+    }
+
+    function populateTopicColorGrid(topics) {
+        const $grid = $('.key-topic-color-grid');
+        const topicCount = parseInt($('#topic-count').val(), 10);
+        $grid.empty();
+
+        if (!topics || topics.length === 0) {
+            return;
+        }
+        const requiredTopics = topics.slice(0, topicCount);
+
+        requiredTopics.forEach(function(topic) {
+            const $row = $('<div class="topic-setting-per-topic-color-row"></div>');
+            const $topicName = $('<div class="topic-setting-per-topic-name"></div>').text(topic.label);
+            const $colorPicker = $('<div class="topic-setting-per-topic-color-picker"></div>');
+            const $colorInput = $('<input type="color">').val(rgbaToHex(topicColorMap[topic.label] || '#000000'));
+
+            $colorInput.on('change', function() {
+                topicColorMap[topic.label] = convertToRGBA($(this).val());
+            });
+
+            $colorPicker.append($colorInput);
+            $row.append($topicName).append($colorPicker);
+            $grid.append($row);
+        });
+    }
+
+
+
+    $('#topic-count').on('change', function() {
+        const topicArray = sortedTopicArray();
+        if ($('input[name="color-mode"]:checked').val() === 'per-topic') {
+            populateTopicColorGrid(topicArray);
+            $('.key-topic-color-grid').show();
+        }
+    });
+
+    $('.key-topics-settings').on('click', function(e) {
+        e.stopPropagation();
+        $('.key-topic-settings-panel').toggle();
+
+        const topicArray = sortedTopicArray();
+        populateTopicCountDropdown(topicArray);
+
+        if (topicSettings.colorMode === 'per-topic') {
+            populateTopicColorGrid(topicArray);
+            $('.key-topic-color-grid').show();
+        }
+    });
+
+    $('input[name="color-mode"]').on('change', function() {
+        if ($(this).val() === 'gradient') {
+            $('.color-pickers').show();
+            $('.key-topic-color-grid').hide();
+        } else {
+            $('.color-pickers').hide();
+
+            const topicArray = sortedTopicArray();
+            populateTopicColorGrid(topicArray);
+            $('.key-topic-color-grid').show();
+        }
+    });
+
+    $('.key-topics-setting-apply-btn').on('click', function() {
+        // Update settings
+        topicSettings.topicCount = parseInt($('#topic-count').val(), 10) || 10;
+        topicSettings.colorMode = $('input[name="color-mode"]:checked').val() || 'per-topic';
+        topicSettings.gradientStartColor = $('#gradient-start-color').val();
+        topicSettings.gradientEndColor = $('#gradient-end-color').val();
+
+        $('.key-topic-settings-panel').hide();
+
+        loadDocumentTopics();
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.key-topic-settings-panel').length &&
+            !$(e.target).closest('.key-topics-settings').length) {
+            $('.key-topic-settings-panel').hide();
+        }
     });
 }
