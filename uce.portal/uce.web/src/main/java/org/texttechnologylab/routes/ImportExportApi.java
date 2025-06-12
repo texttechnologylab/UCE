@@ -45,7 +45,7 @@ public class ImportExportApi {
             response.raw().setContentType(contentType);
             response.raw().setHeader("Content-Disposition", "attachment; filename=\"" + objectName + "." + StringUtils.getExtensionByContentType(contentType) + "\"");
 
-            byte[] buffer = new byte[8192];
+            var buffer  = new byte[8192];
             int bytesRead;
             while ((bytesRead = s3Stream.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);

@@ -87,7 +87,7 @@ services:
       - MINIO_ROOT_USER=admin
       - MINIO_ROOT_PASSWORD=12345678
     volumes:
-      - minio-data:/data
+      - ${MINIO_STORAGE_DATA}:/data
     command: server /data --console-address ":9001"
 networks:
   app_net:
