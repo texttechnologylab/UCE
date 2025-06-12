@@ -1,5 +1,6 @@
 package org.texttechnologylab.services;
 
+import io.minio.errors.ErrorResponseException;
 import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.jcas.JCas;
 import org.apache.uima.util.CasIOUtils;
@@ -17,11 +18,11 @@ import java.util.HashMap;
 import java.util.Map;
 
 @Service
-public class S3Storage {
+public class S3StorageService {
     private CommonConfig config;
     private MinioClient minioClient;
 
-    public S3Storage() {
+    public S3StorageService() {
         try {
             this.config = new CommonConfig();
             this.minioClient = MinioClient.builder()
@@ -52,7 +53,10 @@ public class S3Storage {
      * @param metadata    Optional metadata for the object
      * @throws Exception If an error occurs during upload
      */
-    public void uploadInputStream(InputStream inputStream, String objectName, Map<String, String> metadata)
+    public void uploadCasInputStream(InputStream inputStream,
+                                     String objectName,
+                                     String contentType,
+                                     Map<String, String> metadata)
             throws Exception {
         // Buffer InputStream content to memory
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
@@ -70,7 +74,7 @@ public class S3Storage {
                             .bucket(config.getMinioBucket())
                             .object(objectName)
                             .stream(bais, data.length, -1)
-                            .contentType("application/xml")
+                            .contentType(contentType)
                             .userMetadata(metadata != null ? metadata : new HashMap<>())
                             .build());
         }
@@ -92,6 +96,19 @@ public class S3Storage {
     }
 
     /**
+     * Returns the object type of a given object by name/
+     */
+    public String getContentTypeOfObject(String objectName) throws Exception {
+        StatObjectResponse stat = minioClient.statObject(
+                StatObjectArgs.builder()
+                        .bucket(config.getMinioBucket())
+                        .object(objectName)
+                        .build()
+        );
+        return stat.contentType();
+    }
+
+    /**
      * Downloads an XMI object from MinIO and loads it into a JCas.
      *
      * @param objectName The object name in MinIO
@@ -109,6 +126,33 @@ public class S3Storage {
         }
 
         return jCas;
+    }
+
+    public String buildCasXmiObjectName(long corpusId, String documentId){
+        return corpusId + "_" + documentId;
+    }
+
+    /**
+     * Checks if an object with a given name exists in the s3storage
+     */
+    public boolean objectExists(String objectName) {
+        try {
+            this.minioClient.statObject(
+                    StatObjectArgs.builder()
+                            .bucket(config.getMinioBucket())
+                            .object(objectName)
+                            .build()
+            );
+            return true;
+        } catch (ErrorResponseException e) {
+            if (e.errorResponse().code().equals("NoSuchKey")) {
+                return false;
+            } else {
+                throw new RuntimeException("Error checking object: " + e.getMessage(), e);
+            }
+        } catch (Exception e) {
+            throw new RuntimeException("MinIO error: " + e.getMessage(), e);
+        }
     }
 
     /**

@@ -339,6 +339,7 @@ public class App {
 
             path("/ie", () -> {
                 post("/upload/uima", importExportApi.uploadUIMA);
+                get("/download/uima", importExportApi.downloadUIMA);
             });
 
             path("/wiki", () -> {

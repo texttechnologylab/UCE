@@ -225,9 +225,9 @@
                                 <button class="btn toggle-highlighting-btn" data-highlighted="true">
                                     <i class="fas fa-highlighter mr-2"></i> Toggle Highlighting
                                 </button>
-                                <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
-                                    <a href="${document.getMetadataTitleInfo().getPdfUrl()}" class="btn">
-                                        <i class="fas fa-file-pdf mr-2"></i> Download PDF
+                                <#if casDownloadName?has_content && casDownloadName != "">
+                                    <a href="/api/ie/download/uima?objectName=${casDownloadName}" class="btn">
+                                        <i class="fas fa-file-download mr-2"></i> Download XMI
                                     </a>
                                 </#if>
                             </div>

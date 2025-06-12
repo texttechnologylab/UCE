@@ -77,7 +77,7 @@ services:
     networks:
       - app_net
       
-  minio:
+  uce-minio-storage:
     image: minio/minio
     container_name: minio
     ports:

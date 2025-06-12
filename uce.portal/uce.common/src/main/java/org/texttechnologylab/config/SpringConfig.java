@@ -48,8 +48,8 @@ public class SpringConfig {
     }
 
     @Bean
-    public S3Storage s3Storage() {
-        return new S3Storage();
+    public S3StorageService s3Storage() {
+        return new S3StorageService();
     }
 
 }

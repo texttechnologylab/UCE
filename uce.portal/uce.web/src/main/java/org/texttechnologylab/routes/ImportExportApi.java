@@ -7,6 +7,8 @@ import org.texttechnologylab.Importer;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
+import org.texttechnologylab.services.S3StorageService;
+import org.texttechnologylab.utils.StringUtils;
 import spark.Route;
 
 import java.nio.charset.StandardCharsets;
@@ -14,6 +16,7 @@ import java.util.concurrent.CompletableFuture;
 
 public class ImportExportApi {
 
+    private S3StorageService s3StorageService;
     private PostgresqlDataInterface_Impl db;
     private ApplicationContext serviceContext;
 
@@ -21,8 +24,41 @@ public class ImportExportApi {
 
     public ImportExportApi(ApplicationContext serviceContext) {
         this.serviceContext = serviceContext;
+        this.s3StorageService = serviceContext.getBean(S3StorageService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
     }
+
+    public Route downloadUIMA = ((request, response) -> {
+        var objectName = ExceptionUtils.tryCatchLog(
+                () -> request.queryParams("objectName"),
+                (ex) -> logger.error("Error getting a cas object from the storage to download, the objectName parameter wasn't set.", ex));
+        if (objectName == null || objectName.isBlank()) {
+            response.status(400);
+            return "Missing required query parameter: objectName";
+        }
+
+        try (
+                var s3Stream = s3StorageService.downloadObject(objectName);
+                var out = response.raw().getOutputStream()
+        ) {
+            var contentType = s3StorageService.getContentTypeOfObject(objectName);
+            response.raw().setContentType(contentType);
+            response.raw().setHeader("Content-Disposition", "attachment; filename=\"" + objectName + "." + StringUtils.getExtensionByContentType(contentType) + "\"");
+
+            byte[] buffer = new byte[8192];
+            int bytesRead;
+            while ((bytesRead = s3Stream.read(buffer)) != -1) {
+                out.write(buffer, 0, bytesRead);
+            }
+
+            out.flush();
+            return response.raw(); // required to return the raw response stream
+        } catch (Exception e) {
+            logger.error("Failed to download object: " + objectName, e);
+            response.status(500);
+            return "Error downloading object: " + e.getMessage();
+        }
+    });
 
     public Route uploadUIMA = ((request, response) -> {
         try {

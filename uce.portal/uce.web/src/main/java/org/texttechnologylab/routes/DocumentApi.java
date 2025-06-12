@@ -15,6 +15,7 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.UCEMetadataValueType;
 import org.texttechnologylab.models.search.SearchType;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
+import org.texttechnologylab.services.S3StorageService;
 import spark.ModelAndView;
 import spark.Route;
 
@@ -24,12 +25,14 @@ import java.util.List;
 import java.util.Map;
 
 public class DocumentApi {
+    private S3StorageService s3StorageService;
     private PostgresqlDataInterface_Impl db;
     private static final Logger logger = LogManager.getLogger(DocumentApi.class);
     private Configuration freemarkerConfig;
 
     public DocumentApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
+        this.s3StorageService = serviceContext.getBean(S3StorageService.class);
         this.freemarkerConfig = freemarkerConfig;
     }
 
@@ -165,6 +168,11 @@ public class DocumentApi {
         try {
             var doc = db.getCompleteDocumentById(Long.parseLong(id), 0, 10);
             model.put("document", doc);
+
+            var corpus = db.getCorpusById(doc.getCorpusId());
+            var casDownloadName = s3StorageService.buildCasXmiObjectName(corpus.getId(), doc.getDocumentId());
+            var casDownloadExists = s3StorageService.objectExists(casDownloadName);
+            model.put("casDownloadName", casDownloadExists ? casDownloadName : "");
 
             // If this document was opened from an active search, we can highlight the search tokens in the text
             // This is only optional and works fine even without the search tokens.

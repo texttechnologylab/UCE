@@ -2,10 +2,7 @@ package org.texttechnologylab.utils;
 
 
 import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -13,6 +10,102 @@ public class StringUtils {
 
     // List of common abbreviations to exclude from splitting
     public static final String[] ABBREVIATIONS = {"Dr.", "Mr.", "Ms.", "Prof.", "Jr.", "Sr.", "zB.", "V.", "B.", "A.", "C", "M", "etc.", "S.", "ab."};
+    private static final Map<String, String> EXTENSION_TO_CONTENT_TYPE = Map.ofEntries(
+            // Text / Documents
+            Map.entry("txt", "text/plain"),
+            Map.entry("csv", "text/csv"),
+            Map.entry("tsv", "text/tab-separated-values"),
+            Map.entry("html", "text/html"),
+            Map.entry("htm", "text/html"),
+            Map.entry("xml", "application/xml"),
+            Map.entry("xmi", "application/xmi+xml"),
+            Map.entry("json", "application/json"),
+            Map.entry("pdf", "application/pdf"),
+            Map.entry("rtf", "application/rtf"),
+            Map.entry("doc", "application/msword"),
+            Map.entry("docx", "application/vnd.openxmlformats-officedocument.wordprocessingml.document"),
+            Map.entry("ppt", "application/vnd.ms-powerpoint"),
+            Map.entry("pptx", "application/vnd.openxmlformats-officedocument.presentationml.presentation"),
+            Map.entry("xls", "application/vnd.ms-excel"),
+            Map.entry("xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"),
+
+            // Images
+            Map.entry("jpg", "image/jpeg"),
+            Map.entry("jpeg", "image/jpeg"),
+            Map.entry("png", "image/png"),
+            Map.entry("gif", "image/gif"),
+            Map.entry("bmp", "image/bmp"),
+            Map.entry("webp", "image/webp"),
+            Map.entry("svg", "image/svg+xml"),
+            Map.entry("ico", "image/x-icon"),
+
+            // Audio
+            Map.entry("mp3", "audio/mpeg"),
+            Map.entry("wav", "audio/wav"),
+            Map.entry("ogg", "audio/ogg"),
+            Map.entry("m4a", "audio/mp4"),
+
+            // Video
+            Map.entry("mp4", "video/mp4"),
+            Map.entry("mov", "video/quicktime"),
+            Map.entry("avi", "video/x-msvideo"),
+            Map.entry("webm", "video/webm"),
+            Map.entry("mkv", "video/x-matroska"),
+
+            // Archives / Compressed
+            Map.entry("zip", "application/zip"),
+            Map.entry("bz2", "application/x-bzip2"),
+            Map.entry("tar", "application/x-tar"),
+            Map.entry("gz", "application/gzip"),
+            Map.entry("rar", "application/vnd.rar"),
+            Map.entry("7z", "application/x-7z-compressed"),
+
+            // Code / Config
+            Map.entry("js", "application/javascript"),
+            Map.entry("jsonld", "application/ld+json"),
+            Map.entry("css", "text/css"),
+            Map.entry("java", "text/x-java-source"),
+            Map.entry("py", "text/x-python"),
+            Map.entry("c", "text/x-c"),
+            Map.entry("cpp", "text/x-c++"),
+            Map.entry("h", "text/x-c"),
+            Map.entry("sh", "application/x-sh"),
+            Map.entry("yaml", "application/x-yaml"),
+            Map.entry("yml", "application/x-yaml"),
+            Map.entry("md", "text/markdown"),
+
+            // Fallback
+            Map.entry("bin", "application/octet-stream")
+    );
+    private static final Map<String, String> CONTENT_TYPE_TO_EXTENSION;
+    static {
+        Map<String, String> reverseMap = new HashMap<>();
+        for (Map.Entry<String, String> entry : EXTENSION_TO_CONTENT_TYPE.entrySet()) {
+            reverseMap.putIfAbsent(entry.getValue(), entry.getKey());
+        }
+        CONTENT_TYPE_TO_EXTENSION = Collections.unmodifiableMap(reverseMap);
+    }
+
+    /**
+     * Get the content type (MIME) for a given filename or extension.
+     * Defaults to "application/octet-stream" for unknown types.
+     */
+    public static String getContentTypeByExtension(String filenameOrExtension) {
+        String ext = filenameOrExtension;
+        int dotIndex = filenameOrExtension.lastIndexOf('.');
+        if (dotIndex != -1 && dotIndex < filenameOrExtension.length() - 1) {
+            ext = filenameOrExtension.substring(dotIndex + 1);
+        }
+        return EXTENSION_TO_CONTENT_TYPE.getOrDefault(ext.toLowerCase(), "application/octet-stream");
+    }
+
+    /**
+     * Get the file extension for a given content type.
+     * Defaults to "bin" for unknown types.
+     */
+    public static String getExtensionByContentType(String contentType) {
+        return CONTENT_TYPE_TO_EXTENSION.getOrDefault(contentType.toLowerCase(), "bin");
+    }
 
     public static float tryParseFloat(String value) {
         try {
@@ -94,10 +187,11 @@ public class StringUtils {
 
     /**
      * replace special characters with html variant, to persist appearance
+     *
      * @param text
      * @return
      */
-    public static String getHtmlText(String text){
+    public static String getHtmlText(String text) {
         return text.replaceAll("\n", "<br/>").replaceAll(" ", "&nbsp;");
     }
 
@@ -162,6 +256,14 @@ public class StringUtils {
         }
 
         return formattedText.toString();
+    }
+
+    public static String getFileExtension(String fileName) {
+        int lastIndex = fileName.lastIndexOf(".");
+        if (lastIndex == -1 || lastIndex == fileName.length() - 1) {
+            return "";
+        }
+        return fileName.substring(lastIndex + 1);
     }
 
     public static String replaceSpacesInQuotes(String input) {
