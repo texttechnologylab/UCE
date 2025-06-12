@@ -23,6 +23,10 @@ public class S3StorageService {
     private MinioClient minioClient;
 
     public S3StorageService() {
+        TestConnection();
+    }
+
+    public void TestConnection(){
         try {
             this.config = new CommonConfig();
             this.minioClient = MinioClient.builder()
@@ -88,6 +92,7 @@ public class S3StorageService {
      * @throws Exception If an error occurs
      */
     public InputStream downloadObject(String objectName) throws Exception {
+        if(!SystemStatus.S3StorageStatus.isAlive()) return null;
         return minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket(config.getMinioBucket())
@@ -99,6 +104,7 @@ public class S3StorageService {
      * Returns the object type of a given object by name/
      */
     public String getContentTypeOfObject(String objectName) throws Exception {
+        if(!SystemStatus.S3StorageStatus.isAlive()) return null;
         StatObjectResponse stat = minioClient.statObject(
                 StatObjectArgs.builder()
                         .bucket(config.getMinioBucket())
@@ -116,6 +122,7 @@ public class S3StorageService {
      * @throws Exception If an error occurs during download or CAS loading
      */
     public JCas downloadAndLoadXmiToCas(String objectName) throws Exception {
+        if(!SystemStatus.S3StorageStatus.isAlive()) return null;
         // Create a new JCas
         JCas jCas = JCasFactory.createJCas();
 
@@ -136,6 +143,7 @@ public class S3StorageService {
      * Checks if an object with a given name exists in the s3storage
      */
     public boolean objectExists(String objectName) {
+        if(!SystemStatus.S3StorageStatus.isAlive()) return false;
         try {
             this.minioClient.statObject(
                     StatObjectArgs.builder()
@@ -162,6 +170,7 @@ public class S3StorageService {
      * @throws Exception If an error occurs
      */
     public void deleteObject(String objectName) throws Exception {
+        if(!SystemStatus.S3StorageStatus.isAlive()) return;
         minioClient.removeObject(
                 RemoveObjectArgs.builder()
                         .bucket(config.getMinioBucket())

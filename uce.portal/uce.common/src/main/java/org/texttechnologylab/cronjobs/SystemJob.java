@@ -6,6 +6,7 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.services.JenaSparqlService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
+import org.texttechnologylab.services.S3StorageService;
 import org.texttechnologylab.utils.SystemStatus;
 
 public class SystemJob implements Runnable {
@@ -34,6 +35,9 @@ public class SystemJob implements Runnable {
 
                 // RAG
                 this.serviceContext.getBean(RAGService.class).TestConnection();
+
+                // S3Storage
+                this.serviceContext.getBean(S3StorageService.class).TestConnection();
 
                 logger.info("System CronJob is still running and has finished a cycle.");
                 Thread.sleep(this.interval * 1000);

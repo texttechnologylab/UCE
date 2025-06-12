@@ -298,6 +298,7 @@ public class App {
             model.put("isSparqlAlive", SystemStatus.JenaSparqlStatus.isAlive());
             model.put("isDbAlive", SystemStatus.PostgresqlDbStatus.isAlive());
             model.put("isRagAlive", SystemStatus.RagServiceStatus.isAlive());
+            model.put("isS3StorageAlive", SystemStatus.S3StorageStatus.isAlive());
             model.put("isLexiconCalculating", SystemStatus.LexiconIsCalculating);
             model.put("alphabetList", StringUtils.getAlphabetAsList());
             model.put("lexiconEntriesCount", context.getBean(LexiconService.class).countLexiconEntries());

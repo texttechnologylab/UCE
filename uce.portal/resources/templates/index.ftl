@@ -123,11 +123,13 @@
                 <div class="system-status-bar border-right">
                     <p class="mb-3 text-center text">System Status</p>
                     <div class="flexed align-items-center">
-                        <i class="fas fa-project-diagram ml-3 mr-3"
+                        <i class="fas fa-project-diagram ml-2 mr-2"
                            style="color: ${isSparqlAlive?string("var(--prime)", "darkgray")}"></i>
-                        <i class="fas fa-robot ml-3 mr-3"
+                        <i class="fas fa-robot ml-2 mr-2"
                            style="color: ${isRagAlive?string("var(--prime)", "darkgray")}"></i>
-                        <i class="fas fa-database ml-3 mr-3"
+                        <i class="fas fa-hdd ml-2 mr-2"
+                           style="color: ${isS3StorageAlive?string("var(--prime)", "darkgray")}"></i>
+                        <i class="fas fa-database ml-2 mr-2"
                            style="color: ${isDbAlive?string("var(--prime)", "darkgray")}"></i>
                     </div>
                 </div>
