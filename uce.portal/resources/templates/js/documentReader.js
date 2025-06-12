@@ -375,7 +375,7 @@ function searchPotentialSearchTokensInPage(page) {
     });
 }
 
-function colorUnifiedTopics(selectedTopic) {
+function colorUnifiedTopics(selectedTopic, defaultColor=null) {
     clearTopicColoring();
     let color;
 
@@ -387,11 +387,15 @@ function colorUnifiedTopics(selectedTopic) {
         return $(this).data('topic') === selectedTopic;
     });
 
-    if ($selectedTopicTag.length === 0) {
-        color = topicColorMap[selectedTopic];
+    if(defaultColor=== null) {
+        if ($selectedTopicTag.length === 0) {
+            color = topicColorMap[selectedTopic];
+        } else {
+            color = $selectedTopicTag.css('background-color');
+        }
     }
     else{
-        color = $selectedTopicTag.css('background-color');
+        color = defaultColor;
     }
 
     let finalColor = color;
@@ -407,7 +411,8 @@ function colorUnifiedTopics(selectedTopic) {
             $(this).css({
                 'background-color': finalColor,
                 'border-radius': '3px',
-                'padding': '0 2px'
+                'padding': '0 2px',
+                'color': '#ffffff'
             });
         }
     });
@@ -418,7 +423,8 @@ function clearTopicColoring() {
     $('.colorable-topic').css({
         'background-color': '',
         'border-radius': '',
-        'padding': ''
+        'padding': '',
+        'color': 'gray'
     });
 
     $('.minimap-marker.topic-marker').remove();
@@ -951,7 +957,7 @@ function renderSentenceTopicNetwork(containerId) {
                         nodes.push({
                             id: sentenceId,
                             name: `Sentence `+utId,
-                            symbolSize: 20,
+                            symbolSize: 5,
                             x, y,
                             itemStyle: { color },
                             label: { show: false },
@@ -997,7 +1003,7 @@ function renderSentenceTopicNetwork(containerId) {
                             links.push({
                                 source: id1,
                                 target: id2,
-                                lineStyle: { color: '#bbb', opacity: 0.2 }
+                                lineStyle: { color: '#bbb', opacity: 0.5, width: 3 },
                             });
                         });
                     });

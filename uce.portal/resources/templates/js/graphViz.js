@@ -341,7 +341,18 @@ var GraphVizHandler = (function () {
                 type: 'value',
                 name: yLabel
             },
-
+            dataZoom: [
+                {
+                    type: 'slider',
+                    show: true,
+                    xAxisIndex: 0,
+                    
+                },
+                {
+                    type: 'inside',
+                    xAxisIndex: 0
+                }
+            ],
             series: []
         };
 
