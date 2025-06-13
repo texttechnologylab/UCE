@@ -306,7 +306,7 @@
                 </div>
 
             </div>
-            <div class="key-topic-settings-panel">
+            <div class="key-topic-settings-panel" data-id="${document.getCorpusId()}">
                 <h4>${languageResource.get("topicSettings")}</h4>
 
                 <div class="setting-group">
@@ -331,11 +331,11 @@
                     <div class="color-pickers" style="display:none;">
                         <div>
                             <input type="color" id="gradient-start-color">
-                            <div class="color-label">Start</div>
+                            <div class="color-label">Min</div>
                         </div>
                         <div>
                             <input type="color" id="gradient-end-color">
-                            <div class="color-label">End</div>
+                            <div class="color-label">Max</div>
                         </div>
                     </div>
 

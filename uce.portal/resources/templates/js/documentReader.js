@@ -1,16 +1,20 @@
 let currentFocusedPage = 0;
 let searchTokens = "";
-let topicColorMap = {};
 let currentSelectedTopic = null;
 let currentTopicIndex = -1;
 let matchingTopics = [];
 
-let topicSettings = {
+let defaultTopicSettings = {
     topicCount: 10,
     colorMode: 'gradient', // 'per-topic' or 'gradient'
     gradientStartColor: '#ff0000',
     gradientEndColor: '#00ff00'
 };
+const corpusId = $('.key-topic-settings-panel').data('id');
+const settingsKey = `settings:`+corpusId+`:topicSettings`;
+const topicColorMapKey = corpusId+`:topicColorMap`;
+const topicSettings = JSON.parse(localStorage.getItem(settingsKey)) || defaultTopicSettings;
+const topicColorMap = JSON.parse(localStorage.getItem(topicColorMapKey)) || {};
 
 /**
  * Handles the expanding and de-expanding of the side bar
@@ -1641,7 +1645,6 @@ function initializeTopicSettingsPanel() {
     }
 
 
-
     $('#topic-count').on('change', function() {
         const topicArray = sortedTopicArray();
         if ($('input[name="color-mode"]:checked').val() === 'per-topic') {
@@ -1687,6 +1690,8 @@ function initializeTopicSettingsPanel() {
         topicSettings.gradientEndColor = $('#gradient-end-color').val();
 
         $('.key-topic-settings-panel').hide();
+        localStorage.setItem(settingsKey, JSON.stringify(topicSettings));
+        localStorage.setItem(topicColorMapKey, JSON.stringify(topicColorMap));
 
         loadDocumentTopics();
     });
