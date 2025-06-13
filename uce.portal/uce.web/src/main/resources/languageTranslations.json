@@ -453,10 +453,30 @@
   },
   "cosine": {
     "de-DE": "Misst die Winkelsimilarität von Themen-Wort-Vektoren",
-    "en-EN": " Zählt einfach die überlappenden Wörter zwischen Themen"
+    "en-EN": "Measures the angular similarity of topic-word vectors"
   },
   "overlap": {
     "de-DE": "Zählt einfach die überlappenden Wörter zwischen Themen",
     "en-EN": "Counts simply the overlapping words between topics"
+  },
+  "topicSettings": {
+    "de-DE": "Thema Einstellungen",
+    "en-EN": "Topic Settings"
+  },
+  "numTopics": {
+    "de-DE": "Anzahl der zu zeigenden Themen",
+    "en-EN": "Number of topics to show"
+  },
+  "topicColorMode": {
+    "de-DE": "Thema-Farben Modus",
+    "en-EN": "Topic Colors Mode"
+  },
+  "perTopic": {
+    "de-DE": "Pro Thema",
+    "en-EN": "Per Topic"
+  },
+  "apply": {
+    "de-DE": "Anwenden",
+    "en-EN": "Apply"
   }
 }
