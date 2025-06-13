@@ -891,7 +891,6 @@ $(document).on('click', '.viz-nav-btn', function () {
 });
 
 
-
 function renderSentenceTopicNetwork(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
@@ -1098,8 +1097,6 @@ function computeTopicSimilarityMatrix(data, type = "cosine") {
     };
 }
 
-
-
 function renderTopicSimilarityMatrix(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')){
@@ -1151,7 +1148,6 @@ function renderTopicSimilarityMatrix(containerId) {
             container.classList.add('rendered');
         });
 }
-
 
 function renderTopicEntityChordDiagram(containerId) {
     const container = document.getElementById(containerId);
@@ -1657,6 +1653,9 @@ function initializeTopicSettingsPanel() {
     $('.key-topics-settings').on('click', function(e) {
         e.stopPropagation();
         $('.key-topic-settings-panel').toggle();
+        // set to default position
+    $('.key-topic-settings-panel').css('top', '160px');
+    $('.key-topic-settings-panel').css('right', '50px');
 
         const topicArray = sortedTopicArray();
         populateTopicCountDropdown(topicArray);
@@ -1698,4 +1697,8 @@ function initializeTopicSettingsPanel() {
             $('.key-topic-settings-panel').hide();
         }
     });
+
+    document.querySelectorAll('.key-topic-settings-panel').forEach(panel =>
+        makeDraggable(panel, 'h4')
+    );
 }

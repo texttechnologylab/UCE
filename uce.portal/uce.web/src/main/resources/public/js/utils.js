@@ -99,3 +99,42 @@ function isElementInViewport($element) {
         (elementTop <= viewportTop && elementBottom >= viewportBottom);
 }
 
+function makeDraggable(el, handleSelector = null) {
+    const handle = handleSelector ? el.querySelector(handleSelector) : el;
+    if (!handle) return;
+
+    handle.style.cursor = 'move';
+
+    let offsetX = 0, offsetY = 0;
+
+    handle.addEventListener('pointerdown', (evt) => {
+        if (evt.button !== 0 && evt.pointerType === 'mouse') return;
+
+        offsetX = evt.clientX - el.offsetLeft;
+        offsetY = evt.clientY - el.offsetTop;
+
+        el.setPointerCapture(evt.pointerId);
+        el.style.userSelect = 'none';
+
+        el.addEventListener('pointermove', onMove);
+        el.addEventListener('pointerup', endDrag);
+        el.addEventListener('pointercancel', endDrag);
+    });
+
+    function onMove(evt) {
+        el.style.left = (evt.clientX - offsetX) + 'px';
+        el.style.top = (evt.clientY - offsetY) + 'px';
+        el.style.right = 'auto';
+        el.style.bottom = 'auto';
+        el.style.transform = 'none';
+    }
+
+    function endDrag(evt) {
+        el.releasePointerCapture(evt.pointerId);
+        el.style.userSelect = '';
+        el.removeEventListener('pointermove', onMove);
+        el.removeEventListener('pointerup', endDrag);
+        el.removeEventListener('pointercancel', endDrag);
+    }
+}
+
