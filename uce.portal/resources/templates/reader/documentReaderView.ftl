@@ -246,45 +246,7 @@
                                     <i class="ml-2 fas fa-cog key-topics-settings" title="Settings"></i>
                                 </div>
 
-                                <div class="key-topic-settings-panel">
-                                    <h4>Topic Settings</h4>
 
-                                    <div class="setting-group">
-                                        <label for="topic-count">Number of topics to show:</label>
-                                        <select id="topic-count" class="form-control">
-                                        </select>
-                                    </div>
-
-                                    <div class="setting-group">
-                                        <label>Topic Color Mode:</label>
-
-                                        <div class="color-option">
-                                            <input type="radio" id="per-topic-colors" name="color-mode" value="per-topic">
-                                            <label for="per-topic-colors">Per-topic colors</label>
-                                        </div>
-
-                                        <div class="color-option">
-                                            <input type="radio" id="gradient-range" name="color-mode" value="gradient">
-                                            <label for="gradient-range">Gradient range</label>
-                                        </div>
-
-                                        <div class="color-pickers" style="display:none;">
-                                            <div>
-                                                <input type="color" id="gradient-start-color">
-                                                <div class="color-label">Start</div>
-                                            </div>
-                                            <div>
-                                                <input type="color" id="gradient-end-color">
-                                                <div class="color-label">End</div>
-                                            </div>
-                                        </div>
-
-                                        <div class="key-topic-color-grid" style="display:none;">
-                                        </div>
-                                    </div>
-
-                                    <button class="key-topics-setting-apply-btn">Apply Settings</button>
-                                </div>
 
                                 <div class="document-topics-list" data-document-id="${document.id}"></div>
                             </div>
@@ -343,6 +305,45 @@
                     </div>
                 </div>
 
+            </div>
+            <div class="key-topic-settings-panel">
+                <h4>${languageResource.get("topicSettings")}</h4>
+
+                <div class="setting-group">
+                    <label for="topic-count">${languageResource.get("numTopics")}</label>
+                    <select id="topic-count" class="form-control">
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label>${languageResource.get("topicColorMode")}</label>
+
+                    <div class="color-option">
+                        <input type="radio" id="per-topic-colors" name="color-mode" value="per-topic">
+                        <label for="per-topic-colors">${languageResource.get("perTopic")}</label>
+                    </div>
+
+                    <div class="color-option">
+                        <input type="radio" id="gradient-range" name="color-mode" value="gradient">
+                        <label for="gradient-range">Gradient range</label>
+                    </div>
+
+                    <div class="color-pickers" style="display:none;">
+                        <div>
+                            <input type="color" id="gradient-start-color">
+                            <div class="color-label">Start</div>
+                        </div>
+                        <div>
+                            <input type="color" id="gradient-end-color">
+                            <div class="color-label">End</div>
+                        </div>
+                    </div>
+
+                    <div class="key-topic-color-grid" style="display:none;">
+                    </div>
+                </div>
+
+                <button class="key-topics-setting-apply-btn">${languageResource.get("apply")}</button>
             </div>
         </div>
 
