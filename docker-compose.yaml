@@ -9,7 +9,7 @@ services:
 
   uce-fuseki-sparql:
     container_name: uce-fuseki-sparql
-    image: fuseki
+    image: docker.texttechnologylab.org/uce/uce-fuseki-sparql:0.0.1
     ports:
       - "8030:5430"
     volumes:
@@ -67,7 +67,7 @@ services:
     container_name: uce-postgresql-db
     #image: pgvector/pgvector:pg16 # Old image/
     image: docker.texttechnologylab.org/uce/uce-postgresql:0.0.1
-    shm_size: 1g
+    #shm_size: 1g
     environment:
       POSTGRES_DB: uce
       POSTGRES_USER: postgres
@@ -76,6 +76,8 @@ services:
       - "8002:5432"
     volumes:
       - ./../backups/2025-06-12-TTLab-Instance-Data/db-data:/var/lib/postgresql/data
+      - ${POSTGRESQL_CONFIG}:/etc/postgresql.conf
+    command: -c config_file=/etc/postgresql.conf
     networks:
       - app_net
       
@@ -91,6 +93,9 @@ services:
     volumes:
       - ${MINIO_STORAGE_DATA}:/data
     command: server /data --console-address ":9001"
+    networks:
+      - app_net
+
 networks:
   app_net:
     driver: bridge
