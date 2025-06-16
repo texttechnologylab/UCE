@@ -171,7 +171,7 @@
             <div class="side-bar">
 
                 <div class="tab-header">
-                    <button class="tab-btn active" data-tab="navigator-tab">Navigator</button>
+                    <button class="tab-btn active" data-tab="navigator-tab">Control Panel</button>
                     <button class="tab-btn" data-tab="visualization-tab">Visualization</button>
 <#--                    <button class="tab-btn" data-tab="playground-tab">Playground</button>-->
 
@@ -241,10 +241,13 @@
                             </#if>
 
                             <div class="group-box topics-box">
-                                <p class="title">
-                                    <span>${languageResource.get("topics")}</span>
-                                    <i class="ml-2 topics-loading rotate fas fa-spinner"></i>
-                                </p>
+                                <div class="key-topics-title d-flex align-items-center justify-content-between mb-3">
+                                    <span class="title mx-auto" style="flex:1; text-align:center;">${languageResource.get("topics")}</span>
+                                    <i class="ml-2 fas fa-cog key-topics-settings" title="Settings"></i>
+                                </div>
+
+
+
                                 <div class="document-topics-list" data-document-id="${document.id}"></div>
                             </div>
                         </div>
@@ -302,6 +305,54 @@
                     </div>
                 </div>
 
+            </div>
+            <div class="key-topic-settings-panel" data-id="${document.getCorpusId()}">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h4 class="mb-0">${languageResource.get("topicSettings")}</h4>
+                    <div>
+                        <button class="save-topic-setting btn btn-light btn-sm mr-2" title="Save" data-toggle="tooltip" data-placement="top" data-original-title="${languageResource.get("saveTopicSettings")}"><i class="fas fa-save"></i></button>
+                        <button class="upload-topic-setting btn btn-light btn-sm" title="Upload" data-toggle="tooltip" data-placement="top" data-original-title="${languageResource.get("uploadTopicSettings")}"><i class="fas fa-upload"></i></button>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label for="topic-count">${languageResource.get("numTopics")}</label>
+                    <select id="topic-count" class="form-control">
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label>${languageResource.get("topicColorMode")}</label>
+
+                    <div class="color-option">
+                        <input type="radio" id="per-topic-colors" name="color-mode" value="per-topic">
+                        <label for="per-topic-colors">${languageResource.get("perTopic")}</label>
+                    </div>
+
+                    <div class="color-option">
+                        <input type="radio" id="gradient-range" name="color-mode" value="gradient">
+                        <label for="gradient-range">Gradient range</label>
+                    </div>
+
+                    <div class="color-pickers" style="display:none;">
+                        <div>
+                            <input type="color" id="gradient-start-color">
+                            <div class="color-label">Min</div>
+                        </div>
+                        <div>
+                            <input type="color" id="gradient-end-color">
+                            <div class="color-label">Max</div>
+                        </div>
+                    </div>
+
+                    <div class="key-topic-color-grid" style="display:none;">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="key-topics-setting-apply-btn">${languageResource.get("apply")}</button>
+                    <button class="key-topics-setting-reset-btn">${languageResource.get("reset")}</button>
+                </div>
             </div>
         </div>
 

@@ -128,8 +128,8 @@ var GraphVizHandler = (function () {
     }
 
 
-    GraphVizHandler.prototype.getColorForWeight = function (weight) {
-        return getColorForWeight(weight);
+    GraphVizHandler.prototype.getColorForWeight = function (weight, start = { r: 0, g: 0, b: 0 }, end = { r: 255, g: 255, b: 255 }) {
+        return getColorForWeight(weight, start, end);
     }
 
     GraphVizHandler.prototype.createSankeyChart = async function (target, title, linksData, nodesData,onClick = null) {
@@ -341,7 +341,18 @@ var GraphVizHandler = (function () {
                 type: 'value',
                 name: yLabel
             },
-
+            dataZoom: [
+                {
+                    type: 'slider',
+                    show: true,
+                    xAxisIndex: 0,
+                    
+                },
+                {
+                    type: 'inside',
+                    xAxisIndex: 0
+                }
+            ],
             series: []
         };
 
@@ -593,11 +604,14 @@ function getNewGraphVizHandler() {
     return new GraphVizHandler();
 }
 
-function getColorForWeight(weight) {
-    const r = Math.floor(255 * (1 - weight));
-    const g = Math.floor(200 * weight);
-    const b = 0;
-    return "rgba(" + r + ", " + g + ", " + b + ", 0.5)";
+function getColorForWeight(weight, start, end) {
+    if (!start || !end) return '#000000';
+
+    const r = Math.round(start.r + (end.r - start.r) * weight);
+    const g = Math.round(start.g + (end.g - start.g) * weight);
+    const b = Math.round(start.b + (end.b - start.b) * weight);
+
+    return 'rgba(' + r + ', ' + g + ', ' + b + ', 0.5)';
 }
 
 window.graphVizHandler = getNewGraphVizHandler();
