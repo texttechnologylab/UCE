@@ -4,17 +4,20 @@ let currentSelectedTopic = null;
 let currentTopicIndex = -1;
 let matchingTopics = [];
 
+let defaultTopicColorMap = getDefaultTopicColorMap();
 let defaultTopicSettings = {
     topicCount: 10,
-    colorMode: 'gradient', // 'per-topic' or 'gradient'
+    colorMode: 'per-topic', // 'per-topic' or 'gradient'
     gradientStartColor: '#ff0000',
-    gradientEndColor: '#00ff00'
+    gradientEndColor: '#00ff00',
+    topicColorMap: defaultTopicColorMap
 };
-const corpusId = $('.key-topic-settings-panel').data('id');
-const settingsKey = `settings:`+corpusId+`:topicSettings`;
-const topicColorMapKey = corpusId+`:topicColorMap`;
+
+const documentId = $('.reader-container').data('id');
+const settingsKey = `settings:`+documentId+`:topicSettings`;
+const topicColorMapKey = `settings:`+documentId+`:topicColorMap`;
 const topicSettings = JSON.parse(localStorage.getItem(settingsKey)) || defaultTopicSettings;
-const topicColorMap = JSON.parse(localStorage.getItem(topicColorMapKey)) || {};
+let topicColorMap = topicSettings.topicColorMap;
 
 /**
  * Handles the expanding and de-expanding of the side bar
@@ -1688,10 +1691,10 @@ function initializeTopicSettingsPanel() {
         topicSettings.colorMode = $('input[name="color-mode"]:checked').val() || 'per-topic';
         topicSettings.gradientStartColor = $('#gradient-start-color').val();
         topicSettings.gradientEndColor = $('#gradient-end-color').val();
+        topicSettings.topicColorMap = topicColorMap;
 
         $('.key-topic-settings-panel').hide();
         localStorage.setItem(settingsKey, JSON.stringify(topicSettings));
-        localStorage.setItem(topicColorMapKey, JSON.stringify(topicColorMap));
 
         loadDocumentTopics();
     });
