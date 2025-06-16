@@ -307,7 +307,13 @@
 
             </div>
             <div class="key-topic-settings-panel" data-id="${document.getCorpusId()}">
-                <h4>${languageResource.get("topicSettings")}</h4>
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h4 class="mb-0">${languageResource.get("topicSettings")}</h4>
+                    <div>
+                        <button class="save-topic-setting btn btn-light btn-sm mr-2" title="Save" data-toggle="tooltip" data-placement="top" data-original-title="${languageResource.get("saveTopicSettings")}"><i class="fas fa-save"></i></button>
+                        <button class="upload-topic-setting btn btn-light btn-sm" title="Upload" data-toggle="tooltip" data-placement="top" data-original-title="${languageResource.get("uploadTopicSettings")}"><i class="fas fa-upload"></i></button>
+                    </div>
+                </div>
 
                 <div class="setting-group">
                     <label for="topic-count">${languageResource.get("numTopics")}</label>

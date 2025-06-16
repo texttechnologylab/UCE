@@ -1741,6 +1741,80 @@ function initializeTopicSettingsPanel() {
         }
     });
 
+    $('.save-topic-setting').on('click', function(e) {
+        try {
+            const settings = JSON.parse(localStorage.getItem(settingsKey)) || defaultTopicSettings;
+            const colorMap = JSON.parse(localStorage.getItem(topicColorMapKey)) || defaultTopicColorMap;
+            const documentId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
+            if (!settings || !colorMap) {
+                showMessageModal("Input Error", "No topic settings found in local storage.");
+                return;
+            }
+
+            const jsonData = JSON.stringify({
+                settings: settings,
+                colorMap: colorMap,
+                documentId: documentId
+            }, null, 2);
+
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'topic-settings-' + documentId + '-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Error saving topic settings:', err);
+            showMessageModal("Save Error", "An error occurred while trying to save the file.");
+        }
+    });
+
+
+    $('.upload-topic-setting').on('click', function(e) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+
+        input.onchange = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    const currentDocumentId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
+                    if (data.documentId !== currentDocumentId) {
+                        showMessageModal("Invalid file", "The settings file does not match the current document.");
+                        return;
+                    }
+
+                    if (data.settings) {
+                        localStorage.setItem(settingsKey, JSON.stringify(data.settings));
+                    }
+
+                    showMessageModal("Setting Applied", "Settings successfully loaded and applied.");
+                    location.reload();
+
+                } catch (err) {
+                    console.error('Error reading settings file:', err);
+                    showMessageModal("Invalid File", "Could not parse the settings file. Please ensure it is a valid JSON file.");
+                }
+            };
+
+            reader.readAsText(file);
+        };
+
+        input.click();
+    });
+
+
     document.querySelectorAll('.key-topic-settings-panel').forEach(panel =>
         makeDraggable(panel, 'h4')
     );

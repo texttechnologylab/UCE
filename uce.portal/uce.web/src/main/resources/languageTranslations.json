@@ -482,5 +482,13 @@
   "reset": {
     "de-DE": "Zurücksetzen",
     "en-EN": "Reset"
+  },
+  "saveTopicSettings": {
+    "de-DE": "Thema Einstellungen speichern in Downloads",
+    "en-EN": "Save topic settings to Downloads"
+  },
+  "uploadTopicSettings": {
+    "de-DE": "Thema Einstellungen hochladen",
+    "en-EN": "Upload topic settings"
   }
 }
