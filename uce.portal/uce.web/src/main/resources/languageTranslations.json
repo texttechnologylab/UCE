@@ -478,5 +478,9 @@
   "apply": {
     "de-DE": "Anwenden",
     "en-EN": "Apply"
+  },
+  "reset": {
+    "de-DE": "Zurücksetzen",
+    "en-EN": "Reset"
   }
 }

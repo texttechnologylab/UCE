@@ -201,22 +201,23 @@ async function loadDocumentTopics() {
     $('.topics-loading').hide();
 
     const topicArray = sortedTopicArray();
+    if (topicSettings.colorMode === 'gradient') {
 
-    // Find max and min for normalization across ALL topics
-    const maxFreq = topicArray.length > 0 ? topicArray[0].frequency : 1;
-    const minFreq = topicArray.length > 0 ? topicArray[topicArray.length - 1].frequency : 0;
-    const freqRange = maxFreq - minFreq;
+        // Find max and min for normalization across ALL topics
+        const maxFreq = topicArray.length > 0 ? topicArray[0].frequency : 1;
+        const minFreq = topicArray.length > 0 ? topicArray[topicArray.length - 1].frequency : 0;
+        const freqRange = maxFreq - minFreq;
 
-    // Create color mapping for ALL topics
-    topicArray.forEach(function (topic) {
-        const normalizedFreq = freqRange > 0 ?
-            (topic.frequency - minFreq) / freqRange : 1;
+        // Create color mapping for ALL topics
+        topicArray.forEach(function (topic) {
+            const normalizedFreq = freqRange > 0 ?
+                (topic.frequency - minFreq) / freqRange : 1;
 
-        if (topicSettings.colorMode === 'gradient') {
             topicColorMap[topic.label] = window.graphVizHandler.getColorForWeight(normalizedFreq, hexToRgb(topicSettings.gradientStartColor), hexToRgb(topicSettings.gradientEndColor));
-        }
 
-    });
+
+        });
+    }
 
     // Take top N topics for display based on settings
     const topTopics = topicArray.slice(0, topicSettings.topicCount);
@@ -244,6 +245,27 @@ async function loadDocumentTopics() {
         // Hide the minimap since there are no topics
         $('.scrollbar-minimap').hide();
     }
+}
+
+function getDefaultTopicColorMap() {
+    const topics = new Set();
+    $('.colorable-topic').each(function() {
+        const topicValue = $(this).data('topic-value');
+        if (topicValue) {
+            topics.add(topicValue);
+        }
+    });
+
+    const topicArray = Array.from(topics);
+    const topicCount = topicArray.length;
+
+    const defaultTopicColorMap = {};
+    topicArray.forEach((topic, index) => {
+        const hue = (index * (360 / topicCount)) % 360;
+        defaultTopicColorMap[topic] = hslToRgba(hue, 70, 45, 0.6);
+    });
+
+    return defaultTopicColorMap;
 }
 
 function attachTopicClickHandlers() {
@@ -1696,6 +1718,19 @@ function initializeTopicSettingsPanel() {
         $('.key-topic-settings-panel').hide();
         localStorage.setItem(settingsKey, JSON.stringify(topicSettings));
 
+        loadDocumentTopics();
+    });
+
+    $('.key-topics-setting-reset-btn').on('click', function() {
+        topicSettings.topicCount = defaultTopicSettings.topicCount;
+        topicSettings.colorMode = defaultTopicSettings.colorMode;
+        topicSettings.gradientStartColor = defaultTopicSettings.gradientStartColor;
+        topicSettings.gradientEndColor = defaultTopicSettings.gradientEndColor;
+        topicSettings.topicColorMap = defaultTopicSettings.topicColorMap;
+        topicColorMap = topicSettings.topicColorMap;
+        $('.key-topic-settings-panel').hide();
+
+        localStorage.setItem(settingsKey, JSON.stringify(topicSettings));
         loadDocumentTopics();
     });
 

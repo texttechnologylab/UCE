@@ -343,7 +343,10 @@
                     </div>
                 </div>
 
-                <button class="key-topics-setting-apply-btn">${languageResource.get("apply")}</button>
+                <div style="display: flex; gap: 10px;">
+                    <button class="key-topics-setting-apply-btn">${languageResource.get("apply")}</button>
+                    <button class="key-topics-setting-reset-btn">${languageResource.get("reset")}</button>
+                </div>
             </div>
         </div>
 
