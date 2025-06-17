@@ -1,11 +1,13 @@
 package org.texttechnologylab;
 
+import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.uima.fit.testing.util.DisableLogging;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.SpringConfig;
+import org.texttechnologylab.config.UceConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.imp.ImportStatus;
@@ -18,6 +20,8 @@ import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -30,7 +34,7 @@ import java.util.logging.Level;
 public class App {
     private static final Logger logger = LogManager.getLogger(App.class);
 
-    public static void main(String[] args) throws DatabaseOperationException, ParseException {
+    public static void main(String[] args) throws DatabaseOperationException, ParseException, FileNotFoundException {
         // Disable the warning and other junk logs from the UIMA project.
         DisableLogging.enableLogging(Level.SEVERE);
 
@@ -58,6 +62,20 @@ public class App {
         var casView = cmd.getOptionValue("casView");
         var numThreads = 1;
         if (numThreadsStr != null) numThreads = Integer.parseInt(numThreadsStr);
+
+        // Also import uceConfig here
+        // TODO rethink configs
+        var gson = new Gson();
+        var configFile = cmd.getOptionValue("configFile");
+        var configJson = cmd.getOptionValue("configJson");
+        if (configFile != null && !configFile.isEmpty()) {
+            var reader = new FileReader(configFile);
+            SystemStatus.UceConfig = gson.fromJson(reader, UceConfig.class);
+            logger.info("Read UCE Config from path: " + configFile);
+        } else if (configJson != null && !configJson.isEmpty()) {
+            SystemStatus.UceConfig = gson.fromJson(configJson, UceConfig.class);
+            logger.info("Parsed UCE Config from JSON.");
+        }
 
         if (importerNumber != 1) {
             throw new InvalidParameterException("For now, the -importerNumber must always be 1, since this will be the only instance. Canceling.");
@@ -102,6 +120,8 @@ public class App {
         options.addOption("num", "importerNumber", true, "When starting multiple importers, assign an id to each instance by counting up from 1 to n.");
         options.addOption("t", "numThreads", true, "We do the import asynchronous. Decide with how many threads, e.g. 4-8. By default, this is single threaded.");
         options.addOption("view", "casView", true, "Name of the CAS view to import from. If not set, the default view (initial view) is used.");
+        options.addOption("cf", "configFile", true, "The filepath to the UceConfig.json file.");
+        options.addOption("cj", "configJson", true, "The json content of a UceConfig.json file.");
         return options;
     }
 }

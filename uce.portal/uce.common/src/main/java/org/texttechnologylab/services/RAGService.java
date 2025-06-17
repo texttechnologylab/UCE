@@ -697,11 +697,16 @@ public class RAGService {
                 .build();
 
         var url = config.getRAGWebserverBaseUrl() + "embed";
+        var embeddingBackend = config.getEmbeddingBackend();
+        var embeddingParams = config.getEmbeddingParameters();
+        var embeddingTimeout = config.getEmbeddingTimeout();
 
         // Prepare workload
         var gson = new Gson();
         var params = new HashMap<String, Object>();
         params.put("text", text);
+        params.put("backend", embeddingBackend);
+        params.put("config", embeddingParams);
         var jsonData = gson.toJson(params);
 
         // Create request
@@ -710,7 +715,7 @@ public class RAGService {
                 .uri(new URI(url))
                 .header("Content-Type", "application/json")
                 .POST(HttpRequest.BodyPublishers.ofString(jsonData))
-                .timeout(Duration.ofSeconds(2))
+                .timeout(Duration.ofSeconds(embeddingTimeout))
                 .build();
 
         // Send request and get response

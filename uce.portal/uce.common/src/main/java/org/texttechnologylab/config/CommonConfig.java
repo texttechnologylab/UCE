@@ -1,5 +1,6 @@
 package org.texttechnologylab.config;
 
+import com.google.gson.Gson;
 import org.texttechnologylab.models.geonames.FeatureCode;
 import org.texttechnologylab.utils.SystemStatus;
 
@@ -7,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class CommonConfig {
@@ -96,6 +98,35 @@ public class CommonConfig {
 
     public String getRagOpenAIApiKey() {
         return SystemStatus.UceConfig.getSettings().getRag().getApiKey();
+    }
+
+    public String getEmbeddingBackend() {
+        if (SystemStatus.UceConfig == null) {
+            return null;
+        }
+        return SystemStatus.UceConfig.getSettings().getEmbeddings().getBackend();
+    }
+
+    public Map<String, Object> getEmbeddingParameters() {
+        if (SystemStatus.UceConfig == null) {
+            return null;
+        }
+        return SystemStatus.UceConfig.getSettings().getEmbeddings().getParameters();
+    }
+
+    public String getEmbeddingParametersString() {
+        if (SystemStatus.UceConfig == null) {
+            return null;
+        }
+        return new Gson().toJson(getEmbeddingParameters());
+    }
+
+    public long getEmbeddingTimeout() {
+        if (SystemStatus.UceConfig == null) {
+            // Default was 2 seconds before the config was introduced
+            return 2;
+        }
+        return SystemStatus.UceConfig.getSettings().getEmbeddings().getTimeout();
     }
 
     public boolean getLogToDb() {
