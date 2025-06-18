@@ -55,7 +55,8 @@
   "settings": {
     "rag": {
       "model": "ChatGPT",
-      "apiKey": ""
+      "apiKey": "",
+      "url": "localhost:http://localhost:11434"
     },
     "analysis": {
       "enableAnalysisEngine": true

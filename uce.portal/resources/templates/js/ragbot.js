@@ -2,8 +2,11 @@
  * Start a new rag chat TODO: Outsource this into new prototype maybe
  */
 $('body').on('click', '.chat-window-container .start-new-chat-btn', function () {
+    const $select = $(this).prev('.ragbot-model-select');
+    const model = $select.get(0).options[$select.get(0).selectedIndex].getAttribute('data-id');
+
     $.ajax({
-        url: "/api/rag/new",
+        url: "/api/rag/new?model=" + encodeURIComponent(model),
         type: "GET",
         success: function (response) {
             $('.chat-window-container .ccontent').html(response);

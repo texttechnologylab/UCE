@@ -14,6 +14,7 @@ import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.rag.*;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
+import org.texttechnologylab.utils.SystemStatus;
 import spark.ModelAndView;
 import spark.Route;
 
@@ -109,7 +110,7 @@ public class RAGApi {
             // Now let's ask our rag llm
             String finalPrompt = prompt;
             var answer = ExceptionUtils.tryCatchLog(
-                    () -> ragService.postNewRAGPrompt(chatState.getMessages()),
+                    () -> ragService.postNewRAGPrompt(chatState.getMessages(), chatState.getModel()),
                     (ex) -> logger.error("Error getting the next response from our LLM RAG service. The prompt: " + finalPrompt, ex));
             if(answer == null) {
                 var languageResources = LanguageResources.fromRequest(request);
@@ -139,12 +140,18 @@ public class RAGApi {
      */
     public Route getNewRAGChat = ((request, response) -> {
         var model = new HashMap<String, Object>();
+        var ragModelId = ExceptionUtils.tryCatchLog(() -> request.queryParams("model"),
+                (ex) -> logger.error("Error: the chatting requires a 'model' query parameter. ", ex));
+        if(ragModelId == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        var ragModel = SystemStatus.UceConfig.getSettings().getRag().getModels().stream().filter(m -> m.getModel().equals(ragModelId)).findFirst();
+        if(ragModel.isEmpty()) return "The requested model isn't available in this UCE instance: " + ragModelId;
+
         try {
             // We need to know the language here
             var languageResources = LanguageResources.fromRequest(request);
 
             var ragState = new RAGChatState();
-            ragState.setModel(commonConfig.getRAGModel());
+            ragState.setModel(ragModel.get());
             ragState.setChatId(UUID.randomUUID());
             ragState.setLanguage(languageResources.getSupportedLanguage());
 
@@ -165,6 +172,7 @@ public class RAGApi {
 
         return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
     });
+
     public Route getSentenceEmbeddings = ((request, response) -> {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for sentence topics with entities. ", ex));

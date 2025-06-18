@@ -90,14 +90,6 @@ public class CommonConfig {
         return getProperty("rag.webserver.base.url");
     }
 
-    public String getRAGModel() {
-        return SystemStatus.UceConfig.getSettings().getRag().getModel();
-    }
-
-    public String getRagOpenAIApiKey() {
-        return SystemStatus.UceConfig.getSettings().getRag().getApiKey();
-    }
-
     public boolean getLogToDb() {
         return Boolean.parseBoolean(getProperty("log.db"));
     }

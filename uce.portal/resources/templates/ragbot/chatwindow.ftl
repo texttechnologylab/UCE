@@ -16,8 +16,23 @@
         </a>
     </div>
 
-    <div class="ccontent">
-        <button class="start-new-chat-btn text-center btn btn-primary rounded-0 w-100">${languageResource.get("startNewChat")}</button>
+    <div class="ccontent pt-3">
+        <div class="alert alert-warning">
+            Depending on the selected model and how frequently it is used, the response time may vary. For less frequently used models,
+            there may be an initial delay as the model needs to be loaded. Additionally, larger models may require more resources,
+            which can result in longer response times compared to smaller ones.
+        </div>
+        <div class="flexed align-items-center">
+            <button disabled class="btn btn-secondary rounded-0 mb-0 border-right-0">Model</button>
+            <select class="rounded-0 form-control ragbot-model-select mr-1">
+                <#list system.getSettings().getRag().getModels() as ragModel>
+                    <option data-id="${ragModel.getModel()}">${ragModel.getDisplayName()}</option>
+                </#list>
+            </select>
+            <button class="start-new-chat-btn text-center btn btn-primary rounded-0 w-auto no-text-wrap pl-3 pr-3 ml-1">
+                ${languageResource.get("startNewChat")} <i class="ml-1 fas fa-comments"></i>
+            </button>
+        </div>
     </div>
 
     <div class="cfooter position-relative">
