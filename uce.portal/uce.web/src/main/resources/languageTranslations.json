@@ -323,6 +323,10 @@
     "de-DE": "Neuen Chat starten",
     "en-EN": "Start a new chat"
   },
+  "ragBotRessourcesWarning": {
+    "de-DE": "Je nach ausgewähltem Modell und je nachdem, wie häufig es verwendet wird, kann die Reaktionszeit variieren. Bei weniger häufig verwendeten Modellen kann es zu einer anfänglichen Verzögerung kommen, da das Modell erst geladen werden muss. Außerdem können größere Modelle mehr Ressourcen erfordern, was zu längeren Antwortzeiten im Vergleich zu kleineren Modellen führen kann.",
+    "en-EN": "Depending on the selected model and how frequently it is used, the response time may vary. For less frequently used models, there may be an initial delay as the model needs to be loaded. Additionally, larger models may require more resources, which can result in longer response times compared to smaller ones."
+  },
   "ragBotGreetingMessage": {
     "de-DE": "Hallo! Ich bin dein virtueller Assistent rund um das Suchportal. Wenn du eine Frage zu einem bestimmten Thema hast, oder du über die Suche nicht die Dokumente findest, die du dir erhofft hattest, dann frag mich gerne.",
     "en-EN": "Hello, I'm your virtual assistant for the search portal. If you have a question about a specific topic, or if you can't find the documents you were hoping for via the search, then feel free to ask me."

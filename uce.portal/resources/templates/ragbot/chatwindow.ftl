@@ -18,9 +18,7 @@
 
     <div class="ccontent pt-3">
         <div class="alert alert-warning">
-            Depending on the selected model and how frequently it is used, the response time may vary. For less frequently used models,
-            there may be an initial delay as the model needs to be loaded. Additionally, larger models may require more resources,
-            which can result in longer response times compared to smaller ones.
+            ${languageResource.get("ragBotRessourcesWarning")}
         </div>
         <div class="flexed align-items-center">
             <button disabled class="btn btn-secondary rounded-0 mb-0 border-right-0">Model</button>
@@ -38,7 +36,8 @@
     <div class="cfooter position-relative">
         <div class="w-100 p-3">
             <div class="flexed align-items-center">
-                <textarea disabled class="form-control border-right-0 w-100 rounded-0 chat-user-input" placeholder="Chat..."></textarea>
+                <textarea disabled class="form-control border-right-0 w-100 rounded-0 chat-user-input"
+                          placeholder="Chat..."></textarea>
                 <button class="btn btn-primary send-message-btn">
                     <i class="fas fa-comment-alt"></i>
                 </button>
