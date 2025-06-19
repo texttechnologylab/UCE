@@ -96,6 +96,37 @@ services:
     networks:
       - app_net
 
+  uce-keycloak-auth:
+    container_name: uce-keycloak-auth
+    image: quay.io/keycloak/keycloak:26.2.5
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./keycloak/baeldung-keycloak-realm.json:/opt/keycloak/data/import/baeldung-keycloak-realm.json
+    command:
+      - start-dev
+      #- --import-realm
+      #- --import-path=/opt/keycloak/data/import/baeldung-keycloak-realm.json
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: admin
+      KC_HTTP_PORT: 8080
+      KC_HOSTNAME_URL: http://localhost:8080
+      KC_HOSTNAME_ADMIN_URL: http://localhost:8080
+      KC_HOSTNAME_STRICT_BACKCHANNEL: true
+      KC_HTTP_RELATIVE_PATH: /
+      KC_HTTP_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ['CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)new java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:8080/auth/health/live']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+
 networks:
   app_net:
     driver: bridge

@@ -34,6 +34,12 @@ public class CustomFreeMarkerEngine extends TemplateEngine {
             model.put("languageResource", languageResources);
         }
 
+        // Add the UceUser object to the model if available in the session
+        var uceUser = RequestContextHolder.getAuthenticatedUceUser();
+        if(uceUser != null){
+            model.put("uceUser", uceUser);
+        }
+
         try {
             return process(configuration, modelAndView.getViewName(), model);
         } catch (Exception e) {

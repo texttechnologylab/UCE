@@ -20,7 +20,7 @@ import spark.Route;
 
 import java.util.*;
 
-public class CorpusUniverseApi {
+public class CorpusUniverseApi implements UceApi {
     private static final Logger logger = LogManager.getLogger(CorpusUniverseApi.class);
     private ApplicationContext context;
     private RAGService ragService;

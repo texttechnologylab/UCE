@@ -295,6 +295,10 @@
     "de-DE": "Seite",
     "en-EN": "Page"
   },
+  "profile": {
+    "de-DE": "Profil",
+    "en-EN": "Profile"
+  },
   "corpora": {
     "de-DE": "Korpora",
     "en-EN": "Corpora"

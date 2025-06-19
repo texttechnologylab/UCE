@@ -1,5 +1,6 @@
 package org.texttechnologylab.config;
 
+import org.keycloak.authorization.client.Configuration;
 import org.texttechnologylab.models.geonames.FeatureCode;
 import org.texttechnologylab.utils.SystemStatus;
 
@@ -7,6 +8,7 @@ import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.Properties;
 
 public class CommonConfig {
@@ -90,6 +92,18 @@ public class CommonConfig {
         return getProperty("rag.webserver.base.url");
     }
 
+    public Configuration getKeyCloakConfiguration() {
+        return new Configuration(
+                getProperty("keycloak.auth_server_url"),
+                getProperty("keycloak.realm"),
+                getProperty("keycloak.client"),
+                Map.of("secret", getProperty("keycloak.credentials.secret")),
+                null
+        );
+    }
+
+    public String getKeycloakRedirectUrl(){return getProperty("keycloak.redirect_uri");}
+
     public boolean getLogToDb() {
         return Boolean.parseBoolean(getProperty("log.db"));
     }
@@ -110,13 +124,21 @@ public class CommonConfig {
         return getProperty("uce.version");
     }
 
-    public String getMinioEndpoint() { return getProperty("minio.endpoint");}
+    public String getMinioEndpoint() {
+        return getProperty("minio.endpoint");
+    }
 
-    public String getMinioBucket() { return getProperty("minio.bucket");}
+    public String getMinioBucket() {
+        return getProperty("minio.bucket");
+    }
 
-    public String getMinioKey() { return getProperty("minio.username");}
+    public String getMinioKey() {
+        return getProperty("minio.username");
+    }
 
-    public String getMinioSecret() { return getProperty("minio.pwd");}
+    public String getMinioSecret() {
+        return getProperty("minio.pwd");
+    }
 
     public List<FeatureCode> getGeoNamesFeatureCodesList() {
         return this.geoNamesFeatureCodes;

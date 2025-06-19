@@ -167,23 +167,50 @@
                         <a class="switch-view-btn btn text" data-id="search" data-trigger="hover" data-toggle="popover"
                            data-placement="bottom" data-content="Portal"><i class="fas fa-globe-europe color-prime"></i></a>
                         <a class="switch-view-btn btn text" data-id="lexicon" data-trigger="hover" data-toggle="popover"
-                           data-placement="bottom" data-content="${languageResource.get("lexicon")}"><i class="fas fa-atlas color-prime"></i></a>
-                        <a class="switch-view-btn btn text" data-id="timeline-map" data-trigger="hover" data-toggle="popover"
-                           data-placement="bottom" data-content="${languageResource.get("map")}"><i class="fas fa-map-marked-alt color-prime"></i></a>
+                           data-placement="bottom" data-content="${languageResource.get("lexicon")}"><i
+                                    class="fas fa-atlas color-prime"></i></a>
+                        <a class="switch-view-btn btn text" data-id="timeline-map" data-trigger="hover"
+                           data-toggle="popover"
+                           data-placement="bottom" data-content="${languageResource.get("map")}"><i
+                                    class="fas fa-map-marked-alt color-prime"></i></a>
                         <#if system.getSettings().getAnalysis().isEnableAnalysisEngine()>
-                            <a class="switch-view-btn btn text" data-id="analysis" data-trigger="hover" data-toggle="popover"
-                               data-placement="bottom" data-content="${languageResource.get("analysis")}"><i class="fas fa-chart-pie color-prime"></i>
+                            <a class="switch-view-btn btn text" data-id="analysis" data-trigger="hover"
+                               data-toggle="popover"
+                               data-placement="bottom" data-content="${languageResource.get("analysis")}"><i
+                                        class="fas fa-chart-pie color-prime"></i>
                             </a>
                         </#if>
                         <a class="switch-view-btn btn text" data-id="team" data-trigger="hover" data-toggle="popover"
-                           data-placement="bottom" data-content="${languageResource.get("team")}"><i class="fas fa-users color-prime"></i></a>
+                           data-placement="bottom" data-content="${languageResource.get("team")}"><i
+                                    class="fas fa-users color-prime"></i></a>
                     </div>
+
                     <select class="form-control bg-default rounded-0 color-prime border-right-0 large-font switch-language-select">
                         <option data-lang="en-EN">Englisch</option>
                         <option data-lang="de-DE">Deutsch</option>
                     </select>
                 </div>
             </div>
+
+            <div class="ml-1">
+                <#if uceUser?has_content>
+                    <div>
+                        <a class="user-profile-btn"
+                           href="http://localhost:8080/realms/uce/protocol/openid-connect/logout?post_logout_redirect_uri=http://localhost:4567/auth/logout&client_id=uce-web">
+                            ${uceUser.getAbbreviation()}
+                        </a>
+                    </div>
+                <#else>
+                    <div>
+                        <a class="user-profile-btn"
+                           href="http://localhost:8080/realms/uce/protocol/openid-connect/auth?client_id=uce-web&response_type=code&scope=openid&redirect_uri=http://localhost:4567/auth/login">
+                            <i class="fas fa-user"></i>
+                        </a>
+                        <p class="text-center mb-0 small-font w-100 text">Login</p>
+                    </div>
+                </#if>
+            </div>
+
         </div>
     </nav>
 
@@ -486,7 +513,8 @@
             <!-- add more footer here later -->
             <div class="col-sm-6 color-secondary w-100 m-0 flexed justify-content-center">
                 <div class="group-box bg-light mb-0">
-                    <h6 class="text-dark">Powered by the <a href="https://texttechnologylab.github.io/UCE/" target="_blank">Unified Corpus Explorer</a></h6>
+                    <h6 class="text-dark">Powered by the <a href="https://texttechnologylab.github.io/UCE/"
+                                                            target="_blank">Unified Corpus Explorer</a></h6>
                     <a href="https://github.com/texttechnologylab/UCE" target="_blank">
                         <img class="w-100" style="max-width: 125px" src="/img/logo.png"/>
                     </a>
