@@ -74,6 +74,7 @@
 
 <body>
 <#include "*/messageModal.ftl">
+<#include "*/auth/userShortProfile.ftl">
 
 <!-- The flow chart of the Linkable objects -->
 <div id="flow-chart-modal" class="display-none">
@@ -101,7 +102,6 @@
             </marker>
         </defs>
     </svg>
-
 </div>
 
 <div class="site-container">
@@ -114,7 +114,7 @@
         <div class="container-fluid flexed align-items-center justify-content-evenly">
             <div class="flexed h-100 pr-2">
                 <button class="btn switch-view-btn selected-nav-btn" data-id="landing">
-                    <img class="mb-0 logo" src="${system.getCorporate().getLogo()}">
+                    <img class="mb-0 logo" src="${uceConfig.getCorporate().getLogo()}">
                 </button>
             </div>
 
@@ -123,14 +123,16 @@
                 <div class="system-status-bar border-right">
                     <p class="mb-3 text-center text">System Status</p>
                     <div class="flexed align-items-center">
-                        <i class="fas fa-project-diagram ml-2 mr-2"
+                        <i class="fas fa-project-diagram ml-3 mr-1"
                            style="color: ${isSparqlAlive?string("var(--prime)", "darkgray")}"></i>
-                        <i class="fas fa-robot ml-2 mr-2"
+                        <i class="fas fa-robot ml-1 mr-1"
                            style="color: ${isRagAlive?string("var(--prime)", "darkgray")}"></i>
-                        <i class="fas fa-hdd ml-2 mr-2"
+                        <i class="fas fa-hdd ml-1 mr-1"
                            style="color: ${isS3StorageAlive?string("var(--prime)", "darkgray")}"></i>
-                        <i class="fas fa-database ml-2 mr-2"
+                        <i class="fas fa-database ml-1 mr-1"
                            style="color: ${isDbAlive?string("var(--prime)", "darkgray")}"></i>
+                        <i class="fas fa-key ml-1 mr-3"
+                           style="color: ${isAuthAlive?string("var(--prime)", "darkgray")}"></i>
                     </div>
                 </div>
 
@@ -173,7 +175,7 @@
                            data-toggle="popover"
                            data-placement="bottom" data-content="${languageResource.get("map")}"><i
                                     class="fas fa-map-marked-alt color-prime"></i></a>
-                        <#if system.getSettings().getAnalysis().isEnableAnalysisEngine()>
+                        <#if uceConfig.getSettings().getAnalysis().isEnableAnalysisEngine()>
                             <a class="switch-view-btn btn text" data-id="analysis" data-trigger="hover"
                                data-toggle="popover"
                                data-placement="bottom" data-content="${languageResource.get("analysis")}"><i
@@ -192,24 +194,28 @@
                 </div>
             </div>
 
-            <div class="ml-1">
-                <#if uceUser?has_content>
-                    <div>
-                        <a class="user-profile-btn"
-                           href="http://localhost:8080/realms/uce/protocol/openid-connect/logout?post_logout_redirect_uri=http://localhost:4567/auth/logout&client_id=uce-web">
-                            ${uceUser.getAbbreviation()}
-                        </a>
-                    </div>
-                <#else>
-                    <div>
-                        <a class="user-profile-btn"
-                           href="http://localhost:8080/realms/uce/protocol/openid-connect/auth?client_id=uce-web&response_type=code&scope=openid&redirect_uri=http://localhost:4567/auth/login">
-                            <i class="fas fa-user"></i>
-                        </a>
-                        <p class="text-center mb-0 small-font w-100 text">Login</p>
-                    </div>
-                </#if>
-            </div>
+            <#if uceConfig.authIsEnabled()>
+                <div class="ml-1">
+                    <#if uceUser?has_content>
+                        <div>
+                            <a class="user-profile-btn" href="#" onclick="$('.user-short-profile').show(50)"
+                               data-trigger="hover" data-toggle="popover"
+                               data-placement="bottom"
+                               data-content="Open your user profile">
+                                ${uceUser.getAbbreviation()}
+                            </a>
+                        </div>
+                    <#else>
+                        <div>
+                            <a class="user-profile-btn"
+                               href="${commonConf.getKeyCloakConfiguration().getAuthServerUrl()}/realms/uce/protocol/openid-connect/auth?client_id=uce-web&response_type=code&scope=openid&redirect_uri=${commonConf.getKeycloakRedirectUrl()}/login">
+                                <i class="fas fa-user"></i>
+                            </a>
+                            <p class="text-center mb-0 small-font w-100 text">Login</p>
+                        </div>
+                    </#if>
+                </div>
+            </#if>
 
         </div>
     </nav>
@@ -427,14 +433,14 @@
                     </h5>
 
                     <p class="mb-0 text text-center">
-                        ${system.getCorporate().getTeam().getDescription()}
+                        ${uceConfig.getCorporate().getTeam().getDescription()}
                     </p>
 
                     <hr class="mt-2 mb-4"/>
 
                     <div class="row d-flex align-items-stretch m-0 p-0">
-                        <#if (system.getCorporate().getTeam())?? && (system.getCorporate().getTeam().getMembers())??>
-                            <#list system.getCorporate().getTeam().getMembers() as member>
+                        <#if (uceConfig.getCorporate().getTeam())?? && (uceConfig.getCorporate().getTeam().getMembers())??>
+                            <#list uceConfig.getCorporate().getTeam().getMembers() as member>
                                 <div class="col-md-6 p-3 m-0 d-flex">
                                     <div class="team-member-card w-100 h-100">
                                         <div class="flexed align-items-center w-100 h-100">
@@ -494,15 +500,15 @@
                 <div class="group-box bg-light mb-0">
                     <h6 class="text-left color-prime">${languageResource.get("contact")}</h6>
                     <div class="small-font text-left">
-                        <p class="mb-0">${system.getCorporate().getContact().getName()}</p>
-                        <a href="mailto:${system.getCorporate().getContact().getEmail()}">
+                        <p class="mb-0">${uceConfig.getCorporate().getContact().getName()}</p>
+                        <a href="mailto:${uceConfig.getCorporate().getContact().getEmail()}">
                             <i class="fas fa-envelope mr-1"></i> Mail
                         </a>
                         <br/>
-                        <a target="_blank" href="${system.getCorporate().getContact().getWebsite()}">
+                        <a target="_blank" href="${uceConfig.getCorporate().getContact().getWebsite()}">
                             <i class="fas fa-globe-europe mr-1"></i> Website
                         </a>
-                        <p class="mb-0">${system.getCorporate().getContact().getAddress()}</p>
+                        <p class="mb-0">${uceConfig.getCorporate().getContact().getAddress()}</p>
                         <a class="mt-1" href="/imprint">
                             <i class="fas fa-gavel mr-1"></i> ${languageResource.get("imprint")}
                         </a>

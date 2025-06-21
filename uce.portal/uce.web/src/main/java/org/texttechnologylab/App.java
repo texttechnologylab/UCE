@@ -72,20 +72,6 @@ public class App {
         commonConfig = new CommonConfig();
         logger.info("Loaded the common config.");
 
-        //var authzClient = AuthzClient.create();
-        //var accessTokenResponse = authzClient.obtainAccessToken("kboenisc", "1234");
-        //String accessToken = accessTokenResponse.getToken();
-        //System.out.println("Access Token: " + accessToken);
-
-
-        //var authzClient = AuthzClient.create();
-        //var request = new AuthorizationRequest();
-        //request.addPermission("ragbot", "manage");
-        //var response = authzClient.authorization("kboenisc", "1234").authorize(request);
-        //String rpt = response.getToken();
-        //System.out.println("You got an RPT: " + rpt);
-
-
         logger.info("Adjusting UCE to the UceConfig...");
         ExceptionUtils.tryCatchLog(
                 () -> implementUceConfigurations(commonConfig),
@@ -239,6 +225,7 @@ public class App {
         forceLexicalization = cmd.hasOption("forceLexicalization");
         var configFile = cmd.getOptionValue("configFile");
         var configJson = cmd.getOptionValue("configJson");
+
         if (configFile != null && !configFile.isEmpty()) {
             var reader = new FileReader(configFile);
             SystemStatus.UceConfig = gson.fromJson(reader, UceConfig.class);
@@ -276,7 +263,10 @@ public class App {
                 MapApi.class, new MapApi(context, configuration),
                 AuthenticationApi.class, new AuthenticationApi(context, configuration)
         );
-        AuthenticationRouteRegister.registerApis(apis);
+        // If this instance has authentication, then we register our rules onto all routes.
+        if(SystemStatus.UceConfig.getSettings().getAuthentication().isActivated()){
+            AuthenticationRouteRegister.registerApis(apis);
+        }
         Renderer.freemarkerConfig = configuration;
 
         before((request, response) -> {
@@ -301,14 +291,19 @@ public class App {
                 request.raw().setAttribute("org.eclipse.jetty.multipartConfig", new MultipartConfigElement("/tmp"));
             }
 
+            // Always inject the current system config into all UI templates
+            RequestContextHolder.setUceConfigHolder(SystemStatus.UceConfig);
+
             // Check if the request contains a language parameter
             var languageResources = LanguageResources.fromRequest(request);
             response.header("Content-Language", languageResources.getDefaultLanguage());
             RequestContextHolder.setLanguageResources(languageResources);
 
-            // Check if we have an authenticated user in the session
-            var user = SessionManager.getUserFromRequest(request);
-            RequestContextHolder.setAuthenticatedUceUser(user);
+            // Check if we have an authenticated user in the session and inject it into the template
+            if(SystemStatus.UceConfig.getSettings().getAuthentication().isActivated()){
+                var user = SessionManager.getUserFromRequest(request);
+                RequestContextHolder.setAuthenticatedUceUser(user);
+            }
         });
 
         ModelResources modelResources = new ModelResources();
@@ -321,8 +316,9 @@ public class App {
                     .getAllCorpora()
                     .stream().map(Corpus::getViewModel)
                     .toList());
-            model.put("system", SystemStatus.UceConfig);
+            model.put("commonConf", commonConfig);
             model.put("isSparqlAlive", SystemStatus.JenaSparqlStatus.isAlive());
+            model.put("isAuthAlive", SystemStatus.AuthenticationService.isAlive());
             model.put("isDbAlive", SystemStatus.PostgresqlDbStatus.isAlive());
             model.put("isRagAlive", SystemStatus.RagServiceStatus.isAlive());
             model.put("isS3StorageAlive", SystemStatus.S3StorageStatus.isAlive());

@@ -6,6 +6,7 @@ import org.reflections.Reflections;
 import org.reflections.scanners.Scanners;
 import org.reflections.util.ConfigurationBuilder;
 import org.texttechnologylab.annotations.auth.Authentication;
+import org.texttechnologylab.freeMarker.Renderer;
 import org.texttechnologylab.routes.UceApi;
 import spark.Route;
 
@@ -31,9 +32,7 @@ public class AuthenticationRouteRegister {
      */
     public static void registerApis(Map<Class<? extends UceApi>, UceApi> apiInstances) {
         for (Map.Entry<Class<? extends UceApi>, UceApi> entry : apiInstances.entrySet()) {
-            Class<? extends UceApi> clazz = entry.getKey();
             UceApi instance = entry.getValue();
-
             try {
                 register(instance);
             } catch (Exception ex) {
@@ -63,7 +62,10 @@ public class AuthenticationRouteRegister {
                     if (auth.required() == Authentication.Requirement.LOGGED_IN) {
                         wrappedRoute = (req, res) -> {
                             if (req.session().attribute("uceUser") == null) {
-                                halt(401, "Unauthorized – Please log in");
+                                var model = new HashMap<String, Object>();
+                                model.put("information", "You need to be logged in.");
+
+                                halt(401, Renderer.renderToHTML("*/accessDenied.ftl", model));
                             }
                             return originalRoute.handle(req, res);
                         };

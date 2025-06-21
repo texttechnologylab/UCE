@@ -49,7 +49,6 @@ public class RAGApi implements UceApi {
 
         try {
             var plotAsHtml = db.getCorpusTsnePlotByCorpusId(corpusId).getPlotHtml();
-            //var plotAsHtml = ragService.getCorpusTsnePlot(corpusId);
             return plotAsHtml == null ? "" : plotAsHtml;
         } catch (Exception ex) {
             logger.error("Error fetching the tsne plot of corpus: " + corpusId, ex);
@@ -59,7 +58,7 @@ public class RAGApi implements UceApi {
 
     @Authentication(required = Authentication.Requirement.LOGGED_IN,
             route = Authentication.RouteTypes.POST,
-            path = "postUserMessage"
+            path = "/api/rag/postUserMessage"
     )
     /**
      * Receives a user message and handles and returns a new RAGChatState

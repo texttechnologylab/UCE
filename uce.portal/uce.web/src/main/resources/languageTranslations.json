@@ -299,6 +299,14 @@
     "de-DE": "Profil",
     "en-EN": "Profile"
   },
+  "noAccess": {
+    "de-DE": "Sie haben momentan keinen Zugriff auf diese Ressource.",
+    "en-EN": "You don't have access to this ressource right now."
+  },
+  "loginRequired": {
+    "de-DE": "Sie müssen eingeloggt sein, um auf diese Ressource zugreifen zu können.",
+    "en-EN": "You need to be logged in to access this ressource."
+  },
   "corpora": {
     "de-DE": "Korpora",
     "en-EN": "Corpora"

@@ -64,7 +64,7 @@ public class AuthenticationApi implements UceApi {
             var urlParameters = "grant_type=authorization_code"
                                 + "&code=" + URLEncoder.encode(code, StandardCharsets.UTF_8)
                                 + "&client_id=" + URLEncoder.encode(clientId, StandardCharsets.UTF_8)
-                                + "&redirect_uri=" + URLEncoder.encode(redirectUri + "login", StandardCharsets.UTF_8)
+                                + "&redirect_uri=" + URLEncoder.encode(redirectUri + "/login", StandardCharsets.UTF_8)
                                 + "&client_secret=" + URLEncoder.encode(commonConfig.getKeyCloakConfiguration().getCredentials().get("secret").toString(), StandardCharsets.UTF_8);
 
             // Token endpoint

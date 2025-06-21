@@ -254,6 +254,49 @@ nav .selected-nav-btn.text::before {
     border-color: gray;
 }
 
+.user-short-profile{
+    position: fixed;
+    top:0;
+    right:0;
+    width: 20vw;
+    min-width: 250px;
+    display: none;
+    max-width: 800px;
+    max-height: 100vh;
+    overflow-y: auto;
+    border-left:lightgray 1px solid;
+    border-bottom:lightgray 1px solid;
+    z-index: 10000;
+    background-color: white;
+    box-shadow: rgba(0, 0, 0, 0.25) 0px 12px 10px -10px;
+}
+
+.user-short-profile .header{
+    border-bottom: Lightgray 1px solid;
+    background-color: var(--default);
+    height: 90px;
+    display: flex;
+    width: 100%;
+    justify-content: stretch;
+    align-items: center;
+}
+
+.user-short-profile .user-icon{
+    height: 66px;
+    width: 66px;
+    display: flex;
+    position: absolute;
+    top:-33px;
+    left:calc(50% - 33px);
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    border:lightgray 1px solid;
+    background-color: white;
+    color:var(--prime) !important;
+    font-size: 27px;
+}
+
 .view {
     height: 100%;
     width: 100%;

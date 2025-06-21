@@ -1,21 +1,16 @@
 <div class="container">
 
-    <!--<div class="row m-0 p-0" style="height: 500px">
-        <div id="testDummy" class="col-6 m-0 p-2"></div>
-        <div id="testDummy2" class="col-6 m-0 p-2"></div>
-    </div>-->
-
     <!-- uce corporate data -->
     <div class="mt-5 uce-description">
         <div class="flexed align-items-center justify-content-between">
-            <h5 class="color-prime mb-0">${system.getMeta().getName()?trim!"-"}</h5>
+            <h5 class="color-prime mb-0">${uceConfig.getMeta().getName()?trim!"-"}</h5>
             <button class="btn" onclick="$(this).parent().next('.content').toggle(50)">
                 <i class="fas fa-info-circle color-prime large-font"></i>
             </button>
         </div>
         <div class="content display-none text block-text">
             <hr class="mt-3 mb-3"/>
-            ${system.getMeta().getDescription()!languageResource.get("noCorpusDescription")}
+            ${uceConfig.getMeta().getDescription()!languageResource.get("noCorpusDescription")}
         </div>
     </div>
 

@@ -102,15 +102,17 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      - ./keycloak/baeldung-keycloak-realm.json:/opt/keycloak/data/import/baeldung-keycloak-realm.json
+      - ./auth/uce-realm.json:/opt/keycloak/data/import/uce-realm.json
     command:
-      - start-dev
-      #- --import-realm
-      #- --import-path=/opt/keycloak/data/import/baeldung-keycloak-realm.json
+      - start
+      - --features=scripts
+      - --import-realm
+      - --import-path=/opt/keycloak/data/import/uce-realm.json
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: admin
       KC_HTTP_PORT: 8080
+      KC_HOSTNAME: localhost
       KC_HOSTNAME_URL: http://localhost:8080
       KC_HOSTNAME_ADMIN_URL: http://localhost:8080
       KC_HOSTNAME_STRICT_BACKCHANNEL: true
@@ -125,7 +127,6 @@ services:
       interval: 5s
       timeout: 5s
       retries: 20
-
 
 networks:
   app_net:

@@ -28,6 +28,9 @@ public class CustomFreeMarkerEngine extends TemplateEngine {
             model = new HashMap<>();
         }
 
+        // Always inject the uceConfig
+        model.put("uceConfig", RequestContextHolder.getUceConfig());
+
         // Add the LanguageResources object to the model if available in the request
         var languageResources = RequestContextHolder.getLanguageResources();
         if (languageResources != null) {

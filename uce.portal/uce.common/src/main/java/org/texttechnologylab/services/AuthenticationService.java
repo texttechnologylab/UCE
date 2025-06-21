@@ -23,6 +23,15 @@ public class AuthenticationService implements Authentication{
     private AuthzClient authzClient;
 
     public AuthenticationService(){
+        TestConnection();
+    }
+
+    public void TestConnection(){
+        if(!SystemStatus.UceConfig.authIsEnabled()){
+            SystemStatus.AuthenticationService = new HealthStatus(false, "Auth is disabled in this instance.", null);
+            return;
+        }
+
         try{
             this.authzClient = AuthzClient.create(commonConfig.getKeyCloakConfiguration());
             SystemStatus.AuthenticationService = new HealthStatus(true, "Connection successful.", null);
@@ -30,8 +39,6 @@ public class AuthenticationService implements Authentication{
             SystemStatus.AuthenticationService = new HealthStatus(false, "Unable to connect due to error: ", ex);
         }
     }
-
-    public void TestConnection(){}
 
     public boolean hasPermission(String token, String resource, String scope){
         return true;
