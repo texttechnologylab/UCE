@@ -208,7 +208,7 @@
                     <#else>
                         <div>
                             <a class="user-profile-btn"
-                               href="${commonConf.getKeyCloakConfiguration().getAuthServerUrl()}/realms/uce/protocol/openid-connect/auth?client_id=uce-web&response_type=code&scope=openid&redirect_uri=${commonConf.getKeycloakRedirectUrl()}/login">
+                               href="${uceConfig.getSettings().getAuthentication().getPublicUrl()}/realms/uce/protocol/openid-connect/auth?client_id=uce-web&response_type=code&scope=openid&redirect_uri=${uceConfig.getSettings().getAuthentication().getRedirectUrl()}/login">
                                 <i class="fas fa-user"></i>
                             </a>
                             <p class="text-center mb-0 small-font w-100 text">Login</p>
@@ -421,7 +421,15 @@
 
         <!-- analysis -->
         <div class="view display-none" data-id="analysis">
-            <#include "*/wiki/analysis.ftl" />
+            <#if !uceConfig.authIsEnabled() || uceUser?has_content>
+                <#include "*/wiki/analysis.ftl" />
+            <#else>
+                <div class="container pt-5">
+                    <div class="alert alert-danger mt-3 mb-3 text-center">
+                        <i class="fas fa-user-lock mr-1"></i> ${languageResource.get("loginRequired")}
+                    </div>
+                </div>
+            </#if>
         </div>
 
         <!-- team -->

@@ -1,7 +1,7 @@
 {
   "id": "e5daba70-5105-4aa6-84f4-83c6df975ebf",
   "realm": "uce",
-  "displayName": "The default realm for the Unified Corpus Explorer.",
+  "displayName": "Unified Corpus Explorer Authentication.",
   "displayNameHtml": "",
   "notBefore": 0,
   "defaultSignatureAlgorithm": "RS256",

@@ -19,7 +19,7 @@
                         <p class="mb-1 text-dark">${uceUser.getEmail()}</p>
                     </div>
                     <a class="btn btn-secondary rounded-0 mt-2 mb-0"
-                       href="${commonConf.getKeyCloakConfiguration().getAuthServerUrl()}/realms/uce/protocol/openid-connect/logout?post_logout_redirect_uri=${commonConf.getKeycloakRedirectUrl()}/logout&client_id=uce-web">
+                       href="${uceConfig.getSettings().getAuthentication().getPublicUrl()}/realms/uce/protocol/openid-connect/logout?post_logout_redirect_uri=${uceConfig.getSettings().getAuthentication().getRedirectUrl()}/logout&client_id=uce-web">
                         Logout
                     </a>
                 </div>

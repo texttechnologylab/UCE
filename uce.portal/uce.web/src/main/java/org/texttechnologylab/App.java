@@ -252,20 +252,9 @@ public class App {
     }
 
     private static void initSparkRoutes(ApplicationContext context) throws IOException {
-        Map<Class<? extends UceApi>, UceApi> apis = Map.of(
-                SearchApi.class, new SearchApi(context, configuration),
-                DocumentApi.class, new DocumentApi(context, configuration),
-                RAGApi.class, new RAGApi(context, configuration),
-                CorpusUniverseApi.class, new CorpusUniverseApi(context, configuration),
-                WikiApi.class, new WikiApi(context, configuration),
-                ImportExportApi.class, new ImportExportApi(context),
-                AnalysisApi.class, new AnalysisApi(context, configuration, DUUIInputCounter),
-                MapApi.class, new MapApi(context, configuration),
-                AuthenticationApi.class, new AuthenticationApi(context, configuration)
-        );
-        // If this instance has authentication, then we register our rules onto all routes.
-        if(SystemStatus.UceConfig.getSettings().getAuthentication().isActivated()){
-            AuthenticationRouteRegister.registerApis(apis);
+        var registry = new ApiRegistry(context, configuration, DUUIInputCounter);
+        if (SystemStatus.UceConfig.getSettings().getAuthentication().isActivated()) {
+            AuthenticationRouteRegister.registerApis(registry.getAll());
         }
         Renderer.freemarkerConfig = configuration;
 
@@ -341,10 +330,10 @@ public class App {
         }, new CustomFreeMarkerEngine(configuration));
 
         // A document reader view
-        get("/documentReader", ((DocumentApi)apis.get(DocumentApi.class)).getSingleDocumentReadView);
+        get("/documentReader", (registry.get(DocumentApi.class)).getSingleDocumentReadView);
 
         // A corpus World View
-        get("/globe", ((DocumentApi)apis.get(DocumentApi.class)).get3dGlobe);
+        get("/globe", (registry.get(DocumentApi.class)).get3dGlobe);
 
         // Define default exception handler. This shows an error view then in the body.
         ExceptionHandler<Exception> defaultExceptionHandler = (exception, request, response) -> {
@@ -354,8 +343,8 @@ public class App {
         };
 
         path("/auth", () -> {
-            get("/login", ((AuthenticationApi)apis.get(AuthenticationApi.class)).loginCallback);
-            get("/logout", ((AuthenticationApi)apis.get(AuthenticationApi.class)).logoutCallback);
+            get("/login", (registry.get(AuthenticationApi.class)).loginCallback);
+            get("/logout", (registry.get(AuthenticationApi.class)).logoutCallback);
         });
 
         // API routes
@@ -367,75 +356,75 @@ public class App {
             });
 
             path("/ie", () -> {
-                post("/upload/uima", ((ImportExportApi)apis.get(ImportExportApi.class)).uploadUIMA);
-                get("/download/uima", ((ImportExportApi)apis.get(ImportExportApi.class)).downloadUIMA);
+                post("/upload/uima", (registry.get(ImportExportApi.class)).uploadUIMA);
+                get("/download/uima", (registry.get(ImportExportApi.class)).downloadUIMA);
             });
 
             path("/wiki", () -> {
-                get("/page", ((WikiApi)apis.get(WikiApi.class)).getPage);
-                get("/annotation", ((WikiApi)apis.get(WikiApi.class)).getAnnotation);
+                get("/page", (registry.get(WikiApi.class)).getPage);
+                get("/annotation", (registry.get(WikiApi.class)).getAnnotation);
                 path("/linkable", () -> {
-                    post("/node", ((WikiApi)apis.get(WikiApi.class)).getLinkableNode);
+                    post("/node", (registry.get(WikiApi.class)).getLinkableNode);
                 });
                 path("/lexicon", () -> {
-                    post("/entries", ((WikiApi)apis.get(WikiApi.class)).getLexicon);
-                    post("/occurrences", ((WikiApi)apis.get(WikiApi.class)).getOccurrencesOfLexiconEntry);
+                    post("/entries", (registry.get(WikiApi.class)).getLexicon);
+                    post("/occurrences", (registry.get(WikiApi.class)).getOccurrencesOfLexiconEntry);
                 });
-                post("/queryOntology", ((WikiApi)apis.get(WikiApi.class)).queryOntology);
+                post("/queryOntology", (registry.get(WikiApi.class)).queryOntology);
             });
 
             path("/corpus", () -> {
-                get("/inspector", ((DocumentApi)apis.get(DocumentApi.class)).getCorpusInspectorView);
-                get("/documentsList", ((DocumentApi)apis.get(DocumentApi.class)).getDocumentListOfCorpus);
+                get("/inspector", (registry.get(DocumentApi.class)).getCorpusInspectorView);
+                get("/documentsList", (registry.get(DocumentApi.class)).getDocumentListOfCorpus);
                 path("/map", () -> {
-                    post("/linkedOccurrences", ((MapApi)apis.get(MapApi.class)).getLinkedOccurrences);
-                    post("/linkedOccurrenceClusters", ((MapApi)apis.get(MapApi.class)).getLinkedOccurrenceClusters);
+                    post("/linkedOccurrences", (registry.get(MapApi.class)).getLinkedOccurrences);
+                    post("/linkedOccurrenceClusters", (registry.get(MapApi.class)).getLinkedOccurrenceClusters);
                 });
             });
 
             path("/search", () -> {
-                post("/default", ((SearchApi)apis.get(SearchApi.class)).search);
-                post("/semanticRole", ((SearchApi)apis.get(SearchApi.class)).semanticRoleSearch);
-                post("/layered", ((SearchApi)apis.get(SearchApi.class)).layeredSearch);
-                get("/active/page", ((SearchApi)apis.get(SearchApi.class)).activeSearchPage);
-                get("/active/sort", ((SearchApi)apis.get(SearchApi.class)).activeSearchSort);
-                get("/semanticRole/builder", ((SearchApi)apis.get(SearchApi.class)).getSemanticRoleBuilderView);
+                post("/default", (registry.get(SearchApi.class)).search);
+                post("/semanticRole", (registry.get(SearchApi.class)).semanticRoleSearch);
+                post("/layered", (registry.get(SearchApi.class)).layeredSearch);
+                get("/active/page", (registry.get(SearchApi.class)).activeSearchPage);
+                get("/active/sort", (registry.get(SearchApi.class)).activeSearchSort);
+                get("/semanticRole/builder", (registry.get(SearchApi.class)).getSemanticRoleBuilderView);
             });
 
             path("/analysis", () -> {
-                post("/runPipeline", ((AnalysisApi)apis.get(AnalysisApi.class)).runPipeline);
-                get("/setHistory", ((AnalysisApi)apis.get(AnalysisApi.class)).setHistory);
-                post("/callHistory", ((AnalysisApi)apis.get(AnalysisApi.class)).callHistory);
-                post("/callHistoryText", ((AnalysisApi)apis.get(AnalysisApi.class)).callHistoryText);
+                post("/runPipeline", (registry.get(AnalysisApi.class)).runPipeline);
+                get("/setHistory", (registry.get(AnalysisApi.class)).setHistory);
+                post("/callHistory", (registry.get(AnalysisApi.class)).callHistory);
+                post("/callHistoryText", (registry.get(AnalysisApi.class)).callHistoryText);
             });
 
             path("/corpusUniverse", () -> {
                 // Gets a corpus universe view
-                get("/new", ((CorpusUniverseApi)apis.get(CorpusUniverseApi.class)).getCorpusUniverseView);
-                post("/fromSearch", ((CorpusUniverseApi)apis.get(CorpusUniverseApi.class)).fromSearch);
-                post("/fromCorpus", ((CorpusUniverseApi)apis.get(CorpusUniverseApi.class)).fromCorpus);
-                get("/nodeInspectorContent", ((CorpusUniverseApi)apis.get(CorpusUniverseApi.class)).getNodeInspectorContentView);
+                get("/new", (registry.get(CorpusUniverseApi.class)).getCorpusUniverseView);
+                post("/fromSearch", (registry.get(CorpusUniverseApi.class)).fromSearch);
+                post("/fromCorpus", (registry.get(CorpusUniverseApi.class)).fromCorpus);
+                get("/nodeInspectorContent", (registry.get(CorpusUniverseApi.class)).getNodeInspectorContentView);
             });
 
             path("/document", () -> {
-                get("/reader/pagesList", ((DocumentApi)apis.get(DocumentApi.class)).getPagesListView);
-                get("/uceMetadata", ((DocumentApi)apis.get(DocumentApi.class)).getUceMetadataOfDocument);
-                get("/topics", ((DocumentApi)apis.get(DocumentApi.class)).getDocumentTopics);
-                get("/page/taxon", ((DocumentApi)apis.get(DocumentApi.class)).getTaxonCountByPage);
-                get("/page/topics", ((DocumentApi)apis.get(DocumentApi.class)).getDocumentTopicDistributionByPage);
-                get("/page/topicEntityRelation", ((DocumentApi)apis.get(DocumentApi.class)).getSentenceTopicsWithEntities);
-                get("/page/topicWords", ((DocumentApi)apis.get(DocumentApi.class)).getTopicWordsByDocument);
-                get("/unifiedTopicSentenceMap", ((DocumentApi)apis.get(DocumentApi.class)).getUnifiedTopicToSentenceMap);
-                get("/page/namedEntities", ((DocumentApi)apis.get(DocumentApi.class)).getDocumentNamedEntitiesByPage);
-                get("/page/lemma", ((DocumentApi)apis.get(DocumentApi.class)).getDocumentLemmaByPage);
-                get("/page/geoname", ((DocumentApi)apis.get(DocumentApi.class)).getDocumentGeonameByPage);
+                get("/reader/pagesList", (registry.get(DocumentApi.class)).getPagesListView);
+                get("/uceMetadata", (registry.get(DocumentApi.class)).getUceMetadataOfDocument);
+                get("/topics", (registry.get(DocumentApi.class)).getDocumentTopics);
+                get("/page/taxon", (registry.get(DocumentApi.class)).getTaxonCountByPage);
+                get("/page/topics", (registry.get(DocumentApi.class)).getDocumentTopicDistributionByPage);
+                get("/page/topicEntityRelation", (registry.get(DocumentApi.class)).getSentenceTopicsWithEntities);
+                get("/page/topicWords", (registry.get(DocumentApi.class)).getTopicWordsByDocument);
+                get("/unifiedTopicSentenceMap", (registry.get(DocumentApi.class)).getUnifiedTopicToSentenceMap);
+                get("/page/namedEntities", (registry.get(DocumentApi.class)).getDocumentNamedEntitiesByPage);
+                get("/page/lemma", (registry.get(DocumentApi.class)).getDocumentLemmaByPage);
+                get("/page/geoname", (registry.get(DocumentApi.class)).getDocumentGeonameByPage);
             });
 
             path("/rag", () -> {
-                get("/new", ((RAGApi)apis.get(RAGApi.class)).getNewRAGChat);
-                post("/postUserMessage", ((RAGApi)apis.get(RAGApi.class)).postUserMessage);
-                get("/plotTsne", ((RAGApi)apis.get(RAGApi.class)).getTsnePlot);
-                get("/sentenceEmbeddings", ((RAGApi)apis.get(RAGApi.class)).getSentenceEmbeddings);
+                get("/new", (registry.get(RAGApi.class)).getNewRAGChat);
+                post("/postUserMessage", (registry.get(RAGApi.class)).postUserMessage);
+                get("/plotTsne", (registry.get(RAGApi.class)).getTsnePlot);
+                get("/sentenceEmbeddings", (registry.get(RAGApi.class)).getSentenceEmbeddings);
             });
         });
     }

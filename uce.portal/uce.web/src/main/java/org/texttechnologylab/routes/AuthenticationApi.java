@@ -12,6 +12,7 @@ import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.authentication.UceUser;
 import org.texttechnologylab.services.AuthenticationService;
 import org.texttechnologylab.utils.AuthenticationUtils;
+import org.texttechnologylab.utils.SystemStatus;
 import spark.ModelAndView;
 import spark.Route;
 
@@ -58,7 +59,7 @@ public class AuthenticationApi implements UceApi {
                 return "Missing authorization parameter 'code' - cannot verify login!";
             }
 
-            var redirectUri = commonConfig.getKeycloakRedirectUrl();
+            var redirectUri = SystemStatus.UceConfig.getSettings().getAuthentication().getRedirectUrl();
             var clientId = commonConfig.getKeyCloakConfiguration().getResource();
 
             var urlParameters = "grant_type=authorization_code"

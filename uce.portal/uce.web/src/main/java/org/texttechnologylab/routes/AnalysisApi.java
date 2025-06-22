@@ -4,6 +4,7 @@ import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.annotations.auth.Authentication;
 import org.texttechnologylab.models.dto.AnalysisRequestDto;
 import org.texttechnologylab.models.dto.HistoryRequestDto;
 import spark.Route;
@@ -33,7 +34,10 @@ public class AnalysisApi implements UceApi {
         this.counter = counter;
     }
 
-
+    @Authentication(required = Authentication.Requirement.LOGGED_IN,
+            route = Authentication.RouteTypes.POST,
+            path = "/api/analysis/runPipeline"
+    )
     public Route runPipeline = ((request, response) -> {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
@@ -82,6 +86,10 @@ public class AnalysisApi implements UceApi {
         }
     });
 
+    @Authentication(required = Authentication.Requirement.LOGGED_IN,
+            route = Authentication.RouteTypes.GET,
+            path = "/api/analysis/setHistory"
+    )
     public Route setHistory = ((request, response) -> {
         var model = new HashMap<String, Object>();
         try {
@@ -99,6 +107,10 @@ public class AnalysisApi implements UceApi {
         }
     });
 
+    @Authentication(required = Authentication.Requirement.LOGGED_IN,
+            route = Authentication.RouteTypes.POST,
+            path = "/api/analysis/callHistory"
+    )
     public Route callHistory = ((request, response) -> {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
@@ -140,6 +152,10 @@ public class AnalysisApi implements UceApi {
         }
     });
 
+    @Authentication(required = Authentication.Requirement.LOGGED_IN,
+            route = Authentication.RouteTypes.POST,
+            path = "/api/analysis/callHistoryText"
+    )
     public Route callHistoryText = ((request, response) -> {
         var model = new HashMap<String, Object>();
         var gson = new Gson();

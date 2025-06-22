@@ -102,8 +102,6 @@ public class CommonConfig {
         );
     }
 
-    public String getKeycloakRedirectUrl(){return getProperty("keycloak.redirect_uri");}
-
     public boolean getLogToDb() {
         return Boolean.parseBoolean(getProperty("log.db"));
     }

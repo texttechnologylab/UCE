@@ -27,7 +27,7 @@ public class AuthenticationService implements Authentication{
     }
 
     public void TestConnection(){
-        if(!SystemStatus.UceConfig.authIsEnabled()){
+        if(SystemStatus.UceConfig != null && !SystemStatus.UceConfig.authIsEnabled()){
             SystemStatus.AuthenticationService = new HealthStatus(false, "Auth is disabled in this instance.", null);
             return;
         }

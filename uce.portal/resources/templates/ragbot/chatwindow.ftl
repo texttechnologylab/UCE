@@ -36,7 +36,7 @@
     <#else>
         <div class="p-3">
             <div class="alert alert-danger">
-                <p class="mb-0 text-center">${languageResource.get("loginRequired")}</p>
+                <p class="mb-0 text-center"><i class="fas fa-user-lock mr-1"></i> ${languageResource.get("loginRequired")}</p>
             </div>
         </div>
     </#if>
