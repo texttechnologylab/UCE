@@ -83,7 +83,7 @@ public class Importer {
     private PostgresqlDataInterface_Impl db;
     private RAGService ragService;
     private JenaSparqlService jenaSparqlService;
-    private S3Storage s3Storage;
+    private S3StorageService s3StorageService;
     private String path;
     private String importId;
     private Integer importerNumber;
@@ -114,7 +114,7 @@ public class Importer {
         this.ragService = serviceContext.getBean(RAGService.class);
         this.lexiconService = serviceContext.getBean(LexiconService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
-        this.s3Storage = serviceContext.getBean(S3Storage.class);
+        this.s3StorageService = serviceContext.getBean(S3StorageService.class);
     }
 
     /**
@@ -431,17 +431,6 @@ public class Importer {
     }
 
     /**
-     * Upload input stream to minio s3 storage
-     *
-     * @param inputStream
-     * @param objectName
-     * @throws Exception
-     */
-    private void uploadInputStream(InputStream inputStream, String objectName) throws Exception {
-        this.s3Storage.uploadInputStream(inputStream, objectName, new HashMap<>());
-    }
-
-    /**
      * Convert a UIMA jCas to an OCRDocument
      */
     public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath) {
@@ -510,11 +499,14 @@ public class Importer {
 
             setMetadataTitleInfo(document, jCas, corpusConfig);
 
-            // For now, we skip this. This doesn't relly improve anything and is very costly.
-            //setCleanedFullText(document, jCas);
             if (corpusConfig.getOther().isEnableS3Storage()) {
+                var fileExtension = StringUtils.getFileExtension(filePath);
+                var contentType = StringUtils.getContentTypeByExtension(fileExtension);
+
+                var minioObjectName = this.s3StorageService.buildCasXmiObjectName(corpus.getId(), document.getDocumentId());
                 ExceptionUtils.tryCatchLog(
-                        () -> uploadInputStream(openInputStreamBasedOnExtension(filePath), document.getDocumentId()),
+                        () -> this.s3StorageService.uploadCasInputStream(
+                                Objects.requireNonNull(openInputStreamBasedOnExtension(filePath)), minioObjectName, contentType, new HashMap<>()),
                         (ex) -> logImportWarn("Was not able to upload XMI to S3 Storage!", ex, filePath));
             }
 
@@ -1471,17 +1463,17 @@ public class Importer {
                                 docSentenceEmbeddings.stream().map(DocumentSentenceEmbedding::getEmbedding).toList()),
                         (ex) -> logger.error("Error getting embedding dimension reductions in post processing a corpus.", ex));
 
-                if (reducedSEmbeddingDto == null || reducedSEmbeddingDto.getTsne2D() == null) continue;
-                // Store the tsne reduction in each sentence - this is basically now a 2D and 3D coordinate
-                for (var i = 0; i < reducedSEmbeddingDto.getTsne2D().length; i++) {
-                    docSentenceEmbeddings.get(i).setTsne2d(reducedSEmbeddingDto.getTsne2D()[i]);
-                    docSentenceEmbeddings.get(i).setTsne3d(reducedSEmbeddingDto.getTsne3D()[i]);
+                if (!(reducedSEmbeddingDto == null || reducedSEmbeddingDto.getTsne2D() == null)) {
+                    // Store the tsne reduction in each sentence - this is basically now a 2D and 3D coordinate
+                    for (var i = 0; i < reducedSEmbeddingDto.getTsne2D().length; i++) {
+                        docSentenceEmbeddings.get(i).setTsne2d(reducedSEmbeddingDto.getTsne2D()[i]);
+                        docSentenceEmbeddings.get(i).setTsne3d(reducedSEmbeddingDto.getTsne3D()[i]);
+                    }
+                    // Update the changes (Could be a bulk Update... let's see :-)
+                    docSentenceEmbeddings.forEach(de -> ExceptionUtils.tryCatchLog(
+                            () -> ragService.updateDocumentSentenceEmbedding(de),
+                            (ex) -> logger.error("Error updating and saving a document sentence embedding.", ex)));
                 }
-                // Update the changes (Could be a bulk Update... let's see :-)
-                docSentenceEmbeddings.forEach(de -> ExceptionUtils.tryCatchLog(
-                        () -> ragService.updateDocumentSentenceEmbedding(de),
-                        (ex) -> logger.error("Error updating and saving a document sentence embedding.", ex)));
-
 
                 // Get the complete list of document chunk embeddings of all documents
                 var docChunkEmbeddings = documents.stream()
@@ -1667,6 +1659,7 @@ public class Importer {
             logger.info("Embeddings...");
 
             // Sentence Embeddings
+            /* TODO: Dont see the sentence embeddings use case yet and they are really ressource heavy.
             var docHasSentenceEmbeddings = ExceptionUtils.tryCatchLog(
                     () -> ragService.documentHasDocumentSentenceEmbeddings(document.getId()),
                     (ex) -> logImportError("Error while checking if a document already has DocumentSentenceEmbeddings.", ex, filePath));
@@ -1684,7 +1677,7 @@ public class Importer {
                                 (ex) -> logImportError("Error saving a document sentence embeddings.", ex, filePath)
                         );
                     }
-            }
+            }*/
 
             // Chunk Embeddings
             var docHasChunkEmbeddings = ExceptionUtils.tryCatchLog(

@@ -1,18 +1,13 @@
 package org.texttechnologylab.routes;
 
-import com.google.gson.ExclusionStrategy;
-import com.google.gson.FieldAttributes;
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
+import com.google.gson.*;
 import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.hibernate.Hibernate;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.Renderer;
-import org.texttechnologylab.models.Linkable;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
@@ -20,7 +15,6 @@ import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.dto.LinkableNodeDto;
 import org.texttechnologylab.models.viewModels.wiki.CachedWikiPage;
 import org.texttechnologylab.services.*;
-import org.texttechnologylab.utils.ReflectionUtils;
 import org.texttechnologylab.utils.SystemStatus;
 import spark.ModelAndView;
 import spark.Route;
@@ -30,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class WikiApi {
+public class WikiApi implements UceApi {
 
     private static final Logger logger = LogManager.getLogger(WikiApi.class);
     private LexiconService lexiconService;
@@ -262,7 +256,11 @@ public class WikiApi {
             }
 
             model.put("entries", entries);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/lexicon/entryList.ftl"));
+            var renderedView = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "/wiki/lexicon/entryList.ftl"));
+            var result = new HashMap<String, Object>();
+            result.put("rendered", renderedView);
+            result.put("entries", entries);
+            return gson.toJson(result);
         } catch (Exception ex) {
             logger.error("Error getting entries from the lexicon - best refer to the last logged API call " +
                          "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
@@ -357,7 +355,8 @@ public class WikiApi {
             // jsonifiying it. If you find a solution for this - don't tell me, don't care.
             var pageText = ((UIMAAnnotation) linkableAnnotation).getPage().getCoveredText();
             var jsonTree = specialGson.toJsonTree(linkableAnnotation).getAsJsonObject();
-            if(linkableAnnotation instanceof WikiModel wikiModel) jsonTree.addProperty("wikiId", wikiModel.getWikiId());
+            if (linkableAnnotation instanceof WikiModel wikiModel)
+                jsonTree.addProperty("wikiId", wikiModel.getWikiId());
             if (jsonTree.has("page") && jsonTree.get("page").isJsonObject()) {
                 jsonTree.getAsJsonObject("page").addProperty("coveredText", pageText);
             }

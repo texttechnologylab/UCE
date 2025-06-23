@@ -2,8 +2,27 @@ SET session_replication_role = 'replica';
 
 DO $$
 DECLARE 
-    corpus_id INTEGER := 9;
+    corpus_id INTEGER := 5;
 BEGIN
+    DELETE FROM documentchunkembeddings 
+    USING document 
+    WHERE documentchunkembeddings.document_id = document.id AND document.corpusid = corpus_id;
+
+	DELETE FROM documentembeddings 
+    USING document 
+    WHERE documentembeddings.document_id = document.id AND document.corpusid = corpus_id;
+
+	DELETE FROM ucemetadata 
+    USING document 
+    WHERE ucemetadata.document_id = document.id AND document.corpusid = corpus_id;
+
+	DELETE FROM ucemetadatafilter 
+    WHERE ucemetadatafilter.corpusid = corpus_id;
+
+	DELETE FROM documentsentenceembeddings 
+    USING document 
+    WHERE documentsentenceembeddings.document_id = document.id AND document.corpusid = corpus_id;
+
     DELETE FROM biofidtaxon 
     USING document 
     WHERE biofidtaxon.document_id = document.id AND document.corpusid = corpus_id;

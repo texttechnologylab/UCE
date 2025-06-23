@@ -14,6 +14,10 @@ public class UceConfig {
     private CorporateConfig corporate;
     private SettingsConfig settings;
 
+    public boolean authIsEnabled(){
+        return settings.getAuthentication().isActivated();
+    }
+
     public static UceConfig fromJson(String uceConfigJson){
         var gson = new Gson();
         var config = gson.fromJson(uceConfigJson, UceConfig.class);

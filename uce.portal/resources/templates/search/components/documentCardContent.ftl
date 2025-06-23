@@ -38,7 +38,7 @@
                 <div class="flexed align-items-center">
                     <div class="flexed align-items-center">
                         <!-- We only show the 3d taxonomy dist if we have them annotated in the current corpus -->
-                        <#if corpusConfig?? && corpusConfig.getAnnotations().getTaxon().isBiofidOnthologyAnnotated()>
+                        <#if corpusConfig?? && corpusConfig.getAnnotations().getTaxon().isAnnotated() && corpusConfig.getAnnotations().isGeoNames()>
                             <a class="title-btn open-globe color-prime" data-type="document" data-trigger="hover"
                                data-toggle="popover"
                                data-placement="top"
@@ -157,7 +157,7 @@
                     <#assign displayStyle = (snippet?index != 0)?then('display: none;', '')>
                     <div class="snippet-content mt-1 mb-2 h-100 position-relative"
                          data-id="${snippet?index}" style="${displayStyle}">
-                        <div class="small-font text font-italic mr-2 word-break-word">
+                        <div class="small-font text mr-2 word-break-word">
                             ${snippet.getSnippet()}
                             <#if snippet.getPage()?has_content>
                                 <label class="display-none page-html">
@@ -198,20 +198,20 @@
                 <#if mainAnno??>
                     <#if offsetList??>
                         <div class="snippet-content position-relative">
-                            <div class="small-font text font-italic mr-2 word-break-word">
+                            <div class="small-font text mr-2 word-break-word">
                                 ${document.getFullTextSnippetOffsetList(offsetList)}...
                             </div>
                         </div>
                     <#else>
                         <div class="snippet-content position-relative">
-                            <div class="small-font text font-italic mr-2 word-break-word">
+                            <div class="small-font text mr-2 word-break-word">
                                 ${document.getFullTextSnippetAnnotationOffset(mainAnno)}...
                             </div>
                         </div>
                     </#if>
                 <#else>
                     <div class="snippet-content position-relative">
-                        <div class="small-font text font-italic mr-2 word-break-word">
+                        <div class="small-font text mr-2 word-break-word">
                             ${document.getFullTextSnippet(85)}...
                         </div>
                     </div>

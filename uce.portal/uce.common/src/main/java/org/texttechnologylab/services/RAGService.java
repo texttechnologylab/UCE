@@ -14,6 +14,7 @@ import com.google.gson.Gson;
 import com.pgvector.PGvector;
 import org.jsoup.HttpStatusException;
 import org.texttechnologylab.config.CommonConfig;
+import org.texttechnologylab.config.uceConfig.RAGModelConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.Document;
@@ -224,7 +225,7 @@ public class RAGService {
      *
      * @return
      */
-    public String postNewRAGPrompt(List<RAGChatMessage> chatHistory) throws URISyntaxException, IOException, InterruptedException {
+    public String postNewRAGPrompt(List<RAGChatMessage> chatHistory, RAGModelConfig modelConfig) throws URISyntaxException, IOException, InterruptedException {
         var httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .build();
@@ -236,8 +237,9 @@ public class RAGService {
         var gson = new Gson();
         var params = new HashMap<String, Object>();
 
-        params.put("model", config.getRAGModel());
-        params.put("apiKey", config.getRagOpenAIApiKey());
+        params.put("model", modelConfig.getModel());
+        params.put("apiKey", modelConfig.getApiKey());
+        params.put("url", modelConfig.getUrl());
 
         // Add the chat history
         var promptMessages = new ArrayList<HashMap<String, String>>();

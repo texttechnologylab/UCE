@@ -1,13 +1,16 @@
 package org.texttechnologylab.routes;
+
 import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.annotations.auth.Authentication;
 import org.texttechnologylab.models.dto.AnalysisRequestDto;
 import org.texttechnologylab.models.dto.HistoryRequestDto;
 import spark.Route;
 import com.google.gson.Gson;
 import org.texttechnologylab.*;
+
 import java.util.HashMap;
 import java.util.List;
 
@@ -17,12 +20,13 @@ import org.texttechnologylab.modules.DUUIInformation;
 import spark.ModelAndView;
 
 
-public class AnalysisApi {
+public class AnalysisApi implements UceApi {
     private static final Logger logger = LogManager.getLogger(AnalysisApi.class);
     private ApplicationContext context = null;
     private Configuration freemarkerConfig;
     private int counter = 0;
     History history = new History();
+
 
     public AnalysisApi(ApplicationContext context, Configuration freemarkerConfig, int counter) {
         this.context = context;
@@ -30,7 +34,10 @@ public class AnalysisApi {
         this.counter = counter;
     }
 
-
+    @Authentication(required = Authentication.Requirement.LOGGED_IN,
+            route = Authentication.RouteTypes.POST,
+            path = "/api/analysis/runPipeline"
+    )
     public Route runPipeline = ((request, response) -> {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
@@ -62,7 +69,7 @@ public class AnalysisApi {
             history.setModelGroupHashMap(String.valueOf(counter), DataRequest.getModelGroups());
             history.addInputText(String.valueOf(counter), inputText);
             history.addSelectedModels(String.valueOf(counter), selectedModels);
-            history.addInputClaim(String.valueOf(counter),inputClaim);
+            history.addInputClaim(String.valueOf(counter), inputClaim);
             history.addInputCoherence(String.valueOf(counter), inputCoherence);
             history.addInputStance(String.valueOf(counter), inputStance);
             history.addInputLLM(String.valueOf(counter), inputLLM);
@@ -79,6 +86,10 @@ public class AnalysisApi {
         }
     });
 
+    @Authentication(required = Authentication.Requirement.LOGGED_IN,
+            route = Authentication.RouteTypes.GET,
+            path = "/api/analysis/setHistory"
+    )
     public Route setHistory = ((request, response) -> {
         var model = new HashMap<String, Object>();
         try {
@@ -96,6 +107,10 @@ public class AnalysisApi {
         }
     });
 
+    @Authentication(required = Authentication.Requirement.LOGGED_IN,
+            route = Authentication.RouteTypes.POST,
+            path = "/api/analysis/callHistory"
+    )
     public Route callHistory = ((request, response) -> {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
@@ -107,7 +122,8 @@ public class AnalysisApi {
             model.put("historyID", historyID);
             DUUIInformation duuiInformation = history.getDuuiInformation(historyID);
             String inputText = history.getInputText(historyID);
-            List<String> selectedModels = history.getSelectedModels(historyID);;
+            List<String> selectedModels = history.getSelectedModels(historyID);
+            ;
             String inputClaim = history.getInputClaim(historyID);
             String inputCoherence = history.getInputCoherence(historyID);
             String inputStance = history.getInputStance(historyID);
@@ -136,6 +152,10 @@ public class AnalysisApi {
         }
     });
 
+    @Authentication(required = Authentication.Requirement.LOGGED_IN,
+            route = Authentication.RouteTypes.POST,
+            path = "/api/analysis/callHistoryText"
+    )
     public Route callHistoryText = ((request, response) -> {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
@@ -146,7 +166,8 @@ public class AnalysisApi {
             model.put("historyID", historyID);
             DUUIInformation duuiInformation = history.getDuuiInformation(historyID);
             String inputText = history.getInputText(historyID);
-            List<String> selectedModels = history.getSelectedModels(historyID);;
+            List<String> selectedModels = history.getSelectedModels(historyID);
+            ;
 
             model.put("DUUI", duuiInformation);
             model.put("SuccessRequest", true);

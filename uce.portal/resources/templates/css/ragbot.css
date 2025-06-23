@@ -31,7 +31,8 @@
     z-index: 9999;
     right: 0;
     bottom: 0;
-    width: 35vw;
+    width: 40vw;
+    max-width: 1000px;
     min-width: 400px;
     height: 100vh;
     background-color: ghostwhite;

@@ -60,7 +60,6 @@
     <script src="https://unpkg.com/leaflet-control-geocoder/dist/Control.Geocoder.js"></script>
     <!-- leaflet clusters and heatmap plugins -->
     <script src="js/visualization/cdns/leaflet-heat.js"></script>
-    <!--<script src="js/visualization/cdns/leaflet.markercluster.js"></script>-->
     <script src="https://unpkg.com/leaflet.markercluster@1.5.3/dist/leaflet.markercluster.js"></script>
 
     <!-- for Markdown blocks -->
@@ -75,6 +74,7 @@
 
 <body>
 <#include "*/messageModal.ftl">
+<#include "*/auth/userShortProfile.ftl">
 
 <!-- The flow chart of the Linkable objects -->
 <div id="flow-chart-modal" class="display-none">
@@ -102,7 +102,6 @@
             </marker>
         </defs>
     </svg>
-
 </div>
 
 <div class="site-container">
@@ -112,12 +111,11 @@
 
     <nav class="position-relative">
 
-        <div class="container-fluid flexed align-items-center justify-content-around">
+        <div class="container-fluid flexed align-items-center justify-content-evenly">
             <div class="flexed h-100 pr-2">
                 <button class="btn switch-view-btn selected-nav-btn" data-id="landing">
-                    <img class="mb-0 logo" src="${system.getCorporate().getLogo()}">
+                    <img class="mb-0 logo" src="${uceConfig.getCorporate().getLogo()}">
                 </button>
-                <p class="mb-0 ml-3 text xsmall-font align-self-center"><b>Version</b> <i>${uceVersion}</i></p>
             </div>
 
             <div class="flexed align-items-stretch">
@@ -125,12 +123,16 @@
                 <div class="system-status-bar border-right">
                     <p class="mb-3 text-center text">System Status</p>
                     <div class="flexed align-items-center">
-                        <i class="fas fa-project-diagram ml-3 mr-3"
+                        <i class="fas fa-project-diagram ml-3 mr-1"
                            style="color: ${isSparqlAlive?string("var(--prime)", "darkgray")}"></i>
-                        <i class="fas fa-robot ml-3 mr-3"
+                        <i class="fas fa-robot ml-1 mr-1"
                            style="color: ${isRagAlive?string("var(--prime)", "darkgray")}"></i>
-                        <i class="fas fa-database ml-3 mr-3"
+                        <i class="fas fa-hdd ml-1 mr-1"
+                           style="color: ${isS3StorageAlive?string("var(--prime)", "darkgray")}"></i>
+                        <i class="fas fa-database ml-1 mr-1"
                            style="color: ${isDbAlive?string("var(--prime)", "darkgray")}"></i>
+                        <i class="fas fa-key ml-1 mr-3"
+                           style="color: ${isAuthAlive?string("var(--prime)", "darkgray")}"></i>
                     </div>
                 </div>
 
@@ -164,26 +166,57 @@
                 <!-- right side buttons -->
                 <div class="flexed align-items-center nav-container">
                     <div class="flexed align-items-center nav-buttons">
-                        <a class="switch-view-btn btn text" data-id="search"><i
-                                    class="fas fa-globe-europe color-prime"></i> Portal</a>
-                        <a class="switch-view-btn btn text" data-id="lexicon"><i
-                                    class="fab fa-wikipedia-w color-prime"></i> ${languageResource.get("lexicon")}</a>
-                        <a class="switch-view-btn btn text" data-id="timeline-map"><i
-                                    class="fas fa-map-marked-alt color-prime"></i> ${languageResource.get("map")}</a>
-                        <#if system.getSettings().getAnalysis().isEnableAnalysisEngine()>
-                            <a class="switch-view-btn btn text" data-id="analysis"><i
-                                        class="fas fa-chart-pie color-prime"></i> ${languageResource.get("analysis")}
+                        <a class="switch-view-btn btn text" data-id="search" data-trigger="hover" data-toggle="popover"
+                           data-placement="bottom" data-content="Portal"><i class="fas fa-globe-europe color-prime"></i></a>
+                        <a class="switch-view-btn btn text" data-id="lexicon" data-trigger="hover" data-toggle="popover"
+                           data-placement="bottom" data-content="${languageResource.get("lexicon")}"><i
+                                    class="fas fa-atlas color-prime"></i></a>
+                        <a class="switch-view-btn btn text" data-id="timeline-map" data-trigger="hover"
+                           data-toggle="popover"
+                           data-placement="bottom" data-content="${languageResource.get("map")}"><i
+                                    class="fas fa-map-marked-alt color-prime"></i></a>
+                        <#if uceConfig.getSettings().getAnalysis().isEnableAnalysisEngine()>
+                            <a class="switch-view-btn btn text" data-id="analysis" data-trigger="hover"
+                               data-toggle="popover"
+                               data-placement="bottom" data-content="${languageResource.get("analysis")}"><i
+                                        class="fas fa-chart-pie color-prime"></i>
                             </a>
                         </#if>
-                        <a class="switch-view-btn btn text" data-id="team"><i
-                                    class="fas fa-users color-prime"></i> ${languageResource.get("team")}</a>
+                        <a class="switch-view-btn btn text" data-id="team" data-trigger="hover" data-toggle="popover"
+                           data-placement="bottom" data-content="${languageResource.get("team")}"><i
+                                    class="fas fa-users color-prime"></i></a>
                     </div>
+
                     <select class="form-control bg-default rounded-0 color-prime border-right-0 large-font switch-language-select">
                         <option data-lang="en-EN">Englisch</option>
                         <option data-lang="de-DE">Deutsch</option>
                     </select>
                 </div>
             </div>
+
+            <#if uceConfig.authIsEnabled()>
+                <div class="ml-1">
+                    <#if uceUser?has_content>
+                        <div>
+                            <a class="user-profile-btn" href="#" onclick="$('.user-short-profile').show(50)"
+                               data-trigger="hover" data-toggle="popover"
+                               data-placement="bottom"
+                               data-content="Open your user profile">
+                                ${uceUser.getAbbreviation()}
+                            </a>
+                        </div>
+                    <#else>
+                        <div>
+                            <a class="user-profile-btn"
+                               href="${uceConfig.getSettings().getAuthentication().getPublicUrl()}/realms/uce/protocol/openid-connect/auth?client_id=uce-web&response_type=code&scope=openid&redirect_uri=${uceConfig.getSettings().getAuthentication().getRedirectUrl()}/login">
+                                <i class="fas fa-user"></i>
+                            </a>
+                            <p class="text-center mb-0 small-font w-100 text">Login</p>
+                        </div>
+                    </#if>
+                </div>
+            </#if>
+
         </div>
     </nav>
 
@@ -388,26 +421,34 @@
 
         <!-- analysis -->
         <div class="view display-none" data-id="analysis">
-            <#include "*/wiki/analysis.ftl" />
+            <#if !uceConfig.authIsEnabled() || uceUser?has_content>
+                <#include "*/wiki/analysis.ftl" />
+            <#else>
+                <div class="container pt-5">
+                    <div class="alert alert-danger mt-3 mb-3 text-center">
+                        <i class="fas fa-user-lock mr-1"></i> ${languageResource.get("loginRequired")}
+                    </div>
+                </div>
+            </#if>
         </div>
 
         <!-- team -->
         <div class="view display-none" data-id="team">
-            <div class="container" style="margin-top: 5rem">
-                <div class="group-box bg-light">
+            <div class="container pb-5" style="margin-top: 5rem">
+                <div class="group-box bg-light mb-0">
                     <h5 class="color-prime text-center mb-2">
                         ${languageResource.get("team")}
                     </h5>
 
                     <p class="mb-0 text text-center">
-                        ${system.getCorporate().getTeam().getDescription()}
+                        ${uceConfig.getCorporate().getTeam().getDescription()}
                     </p>
 
                     <hr class="mt-2 mb-4"/>
 
                     <div class="row d-flex align-items-stretch m-0 p-0">
-                        <#if (system.getCorporate().getTeam())?? && (system.getCorporate().getTeam().getMembers())??>
-                            <#list system.getCorporate().getTeam().getMembers() as member>
+                        <#if (uceConfig.getCorporate().getTeam())?? && (uceConfig.getCorporate().getTeam().getMembers())??>
+                            <#list uceConfig.getCorporate().getTeam().getMembers() as member>
                                 <div class="col-md-6 p-3 m-0 d-flex">
                                     <div class="team-member-card w-100 h-100">
                                         <div class="flexed align-items-center w-100 h-100">
@@ -467,15 +508,15 @@
                 <div class="group-box bg-light mb-0">
                     <h6 class="text-left color-prime">${languageResource.get("contact")}</h6>
                     <div class="small-font text-left">
-                        <p class="mb-0">${system.getCorporate().getContact().getName()}</p>
-                        <a href="mailto:${system.getCorporate().getContact().getEmail()}">
+                        <p class="mb-0">${uceConfig.getCorporate().getContact().getName()}</p>
+                        <a href="mailto:${uceConfig.getCorporate().getContact().getEmail()}">
                             <i class="fas fa-envelope mr-1"></i> Mail
                         </a>
                         <br/>
-                        <a target="_blank" href="${system.getCorporate().getContact().getWebsite()}">
+                        <a target="_blank" href="${uceConfig.getCorporate().getContact().getWebsite()}">
                             <i class="fas fa-globe-europe mr-1"></i> Website
                         </a>
-                        <p class="mb-0">${system.getCorporate().getContact().getAddress()}</p>
+                        <p class="mb-0">${uceConfig.getCorporate().getContact().getAddress()}</p>
                         <a class="mt-1" href="/imprint">
                             <i class="fas fa-gavel mr-1"></i> ${languageResource.get("imprint")}
                         </a>
@@ -486,10 +527,12 @@
             <!-- add more footer here later -->
             <div class="col-sm-6 color-secondary w-100 m-0 flexed justify-content-center">
                 <div class="group-box bg-light mb-0">
-                    <h6 class="text-dark">Powered by Unified Corpus Explorer</h6>
+                    <h6 class="text-dark">Powered by the <a href="https://texttechnologylab.github.io/UCE/"
+                                                            target="_blank">Unified Corpus Explorer</a></h6>
                     <a href="https://github.com/texttechnologylab/UCE" target="_blank">
                         <img class="w-100" style="max-width: 125px" src="/img/logo.png"/>
                     </a>
+                    <p class="mb-0 text xsmall-font align-self-center"><b>Version</b> <i>${uceVersion}</i></p>
                 </div>
             </div>
 
@@ -511,9 +554,9 @@
     </div>
 </footer>
 
-<#--<script type="module">
+<script type="module">
     <#include "js/corpusUniverse.js">
-</script>-->
+</script>
 <script type="module">
     <#include "js/graphViz.js">
     <#include "js/flowViz.js">
@@ -528,4 +571,5 @@
     <#include "js/analysis.js">
     <#include "js/analysisAPI.js">
 </script>
+
 </html>

@@ -19,7 +19,7 @@ public final class SystemStatus {
     public static HealthStatus JenaSparqlStatus = new HealthStatus();
     public static HealthStatus PostgresqlDbStatus = new HealthStatus();
     public static HealthStatus RagServiceStatus = new HealthStatus();
-    public static HealthStatus UIMAService = new HealthStatus();
+    public static HealthStatus AuthenticationService = new HealthStatus();
     public static HealthStatus S3StorageStatus = new HealthStatus();
     public static boolean LexiconIsCalculating = false;
     public static UceConfig UceConfig = null;

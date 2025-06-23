@@ -173,7 +173,7 @@
                 <div class="tab-header">
                     <button class="tab-btn active" data-tab="navigator-tab">Navigator</button>
                     <button class="tab-btn" data-tab="visualization-tab">Visualization</button>
-                    <button class="tab-btn" data-tab="playground-tab">Playground</button>
+<#--                    <button class="tab-btn" data-tab="playground-tab">Playground</button>-->
 
                 </div>
 
@@ -225,9 +225,9 @@
                                 <button class="btn toggle-highlighting-btn" data-highlighted="true">
                                     <i class="fas fa-highlighter mr-2"></i> Toggle Highlighting
                                 </button>
-                                <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
-                                    <a href="${document.getMetadataTitleInfo().getPdfUrl()}" class="btn">
-                                        <i class="fas fa-file-pdf mr-2"></i> Download PDF
+                                <#if casDownloadName?has_content && casDownloadName != "">
+                                    <a href="/api/ie/download/uima?objectName=${casDownloadName}" class="btn">
+                                        <i class="fas fa-file-download mr-2"></i> Download XMI
                                     </a>
                                 </#if>
                             </div>
@@ -254,9 +254,17 @@
                     <#assign documentTopics = document.getUnifiedTopics()![]>
                     <div class="tab-pane" id="visualization-tab">
                         <div class="visualization-wrapper">
-                            <div class="visualization-content">
+                            <div class="visualization-spinner">
+                                <div class="visualization-spinner__icon">
+                                    <i class="fa fa-spinner fa-spin"></i>
+                                </div>
+                                <div class="visualization-spinner__text">
+                                    Loading visualization&hellip;
+                                </div>
+                            </div>
+                            <div class="visualization-content" id="viz-content" data-message="${languageResource.get('noDataAvailable')}">
                                 <div class="viz-panel" id="viz-panel-1">
-                                    <div id="vp-1" data-document-id="${document.id}"></div>
+                                    <div id="vp-1"></div>
                                 </div>
                                 <div class="viz-panel" id="viz-panel-2">
                                     <div id="vp-2" ></div>
@@ -265,7 +273,17 @@
                                     <div id="vp-3"></div>
                                 </div>
                                 <div class="viz-panel" id="viz-panel-4">
-                                    <div id="vp-4" data-document-text="${document.getFullText()}"></div>
+                                    <div id="vp-4-wrapper">
+                                        <div class="selector-container">
+                                            <label for="similarityTypeSelector">Similarity Type:</label>
+                                            <select id="similarityTypeSelector">
+                                                <option value="cosine" title="${languageResource.get('cosine')}">Cosine</option>
+                                                <option value="count" title="${languageResource.get('overlap')}">Shared Count</option>
+                                            </select>
+                                        </div>
+                                        <div id="vp-4"></div>
+                                    </div>
+
                                 </div>
                                 <div class="viz-panel" id="viz-panel-5">
                                     <div id="vp-5" ></div>

@@ -158,7 +158,7 @@
                                 <div class="content">
                                     <#include '*/search/components/documentCardContent.ftl' >
                                 </div>
-                                <div class="mt-3">
+                                <div class="mt-0 pl-3 pr-3 pb-3 pt-1">
                                     <p class="m-0 text-center w-100">
                                         <i class="color-secondary fas fa-vector-square"></i> Embedding
                                     </p>

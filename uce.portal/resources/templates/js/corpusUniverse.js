@@ -64,7 +64,6 @@ var CorpusUniverseHandler = (function () {
                 dataType: "json",
                 success: function (response) {
                     if(response.status === 500){
-                        // TODO: Show better error message
                         showMessageModal("Error", "Problem building corpus universe - aborting operation.")
                         return;
                     }

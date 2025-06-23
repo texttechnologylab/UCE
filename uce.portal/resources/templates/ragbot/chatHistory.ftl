@@ -24,7 +24,11 @@
             </div>
         </#if>
 
-        <p class="raw mb-0">${message.getMessage()}</p>
+        <#if message.getRole().name()?string == "USER">
+            <p class="raw mb-0">${message.getMessage()}</p>
+        <#else>
+            <md-block class="raw mb-0">${message.getMessage()}</md-block>
+        </#if>
     </div>
 </#list>
 

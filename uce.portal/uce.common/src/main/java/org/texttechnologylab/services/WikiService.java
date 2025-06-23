@@ -97,7 +97,7 @@ public class WikiService {
      */
     public UnifiedTopicWikiPageViewModel buildUnifiedTopicWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
         var viewModel = new UnifiedTopicWikiPageViewModel();
-        var unifiedTopic = db.getUnifiedTopicById(id);
+        var unifiedTopic = db.getInitializedUnifiedTopicById(id);
         viewModel.setWikiModel(unifiedTopic);
         viewModel.setDocument(db.getDocumentById(unifiedTopic.getDocument().getId()));
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
@@ -105,10 +105,8 @@ public class WikiService {
         viewModel.setAnnotationType("UnifiedTopic");
         viewModel.setTopics(unifiedTopic.getOrderedTopics("desc"));
 
-
         return viewModel;
     }
-
 
     /**
      * Gets a DocumentTopicDistributionWikiPageViewModel to render a Wikipage for that topic distribution

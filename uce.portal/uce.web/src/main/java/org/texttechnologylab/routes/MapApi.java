@@ -16,7 +16,7 @@ import java.sql.Date;
 import java.util.HashMap;
 import java.util.Map;
 
-public class MapApi {
+public class MapApi implements UceApi {
 
     private static final Logger logger = LogManager.getLogger(WikiApi.class);
     private Configuration freemarkerConfig;

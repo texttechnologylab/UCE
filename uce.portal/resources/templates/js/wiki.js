@@ -118,6 +118,7 @@ let WikiHandler = (function () {
         $.ajax({
             url: '/api/wiki/lexicon/entries',
             type: "POST",
+            dataType: "json",
             data: JSON.stringify({
                 skip: skip,
                 take: take,
@@ -130,7 +131,9 @@ let WikiHandler = (function () {
             contentType: "application/json",
             success: (response) => {
                 activatePopovers();
-                $('.lexicon-content-include').html(response);
+                console.log(response);
+                if(response.rendered) $('.lexicon-content-include').html(response.rendered);
+                else $('.lexicon-content-include').html(response);
                 this.updateLexiconPage();
             },
             error: (xhr, status, error) => {

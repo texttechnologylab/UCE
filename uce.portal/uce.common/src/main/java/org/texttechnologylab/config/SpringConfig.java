@@ -18,6 +18,9 @@ public class SpringConfig {
     }
 
     @Bean
+    public AuthenticationService authenticationService() {return new AuthenticationService();}
+
+    @Bean
     public MapService mapService() {
         return new MapService(databaseService());
     }
@@ -48,8 +51,8 @@ public class SpringConfig {
     }
 
     @Bean
-    public S3Storage s3Storage() {
-        return new S3Storage();
+    public S3StorageService s3Storage() {
+        return new S3StorageService();
     }
 
 }

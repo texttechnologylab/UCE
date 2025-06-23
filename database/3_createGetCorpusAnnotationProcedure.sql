@@ -40,10 +40,21 @@ BEGIN
             x.coveredtext, 
             COUNT(*) AS amount,
             'taxon' AS type
-        FROM taxon x
+        FROM gazetteertaxon x
+        WHERE x.document_id IN (SELECT d.id FROM document d WHERE d.corpusid = corpusid_val)
+        GROUP BY x.coveredtext
+
+        UNION ALL
+
+        SELECT 
+            x.coveredtext, 
+            COUNT(*) AS amount,
+            'taxon' AS type
+        FROM gnfindertaxon x
         WHERE x.document_id IN (SELECT d.id FROM document d WHERE d.corpusid = corpusid_val)
         GROUP BY x.coveredtext
     ),
+
 	
     combined_counts AS (
         SELECT coveredtext, amount, type FROM time_counts

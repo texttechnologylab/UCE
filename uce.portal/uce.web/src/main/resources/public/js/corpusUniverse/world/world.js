@@ -209,7 +209,9 @@ class World {
 
     focusNodeByDocumentId(documentId) {
         if (this.network === undefined || this.network.length === 0 || this.loading) return;
-        focusNode(this.network.getNodeByDocumentId(documentId).getObjectMesh(), this.network);
+        let node = this.network.getNodeByDocumentId(documentId);
+        if(!node) node = this.network.getNodes()[0];
+        focusNode(node.getObjectMesh(), this.network);
     }
 
     render() {

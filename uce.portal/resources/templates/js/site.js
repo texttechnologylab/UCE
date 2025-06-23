@@ -2,6 +2,14 @@ var selectedCorpus = -1;
 var currentView = undefined;
 var reloadTimelineMap = false;
 
+function generateUUID() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
+        var r = Math.random() * 16 | 0,
+            v = c == 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
 /**
  * Handles the clicking onto a navbar button
  */
@@ -36,7 +44,7 @@ function navigateToView(id) {
     // Special handles
     if (id === 'timeline-map') {
         if (reloadTimelineMap) {
-            setTimeout(function(){
+            setTimeout(function () {
                 const map = window.graphVizHandler.createUceMap(document.getElementById('uce-timeline-map'), true);
                 map.linkedTimelineMap(selectedCorpus);
             }, 750);
@@ -267,10 +275,6 @@ $(document).ready(function () {
     activatePopovers();
     reloadCorpusComponents();
     // Init the lexicon
-    window.wikiHandler.fetchLexiconEntries(0, 24);
-
-    // TODO: JUST TESTING
-    //const map = window.graphVizHandler.createUceMap(document.getElementById('uce-timeline-map'), true);
-    // map.linkedTimelineMap(9);
+    if (window.wikiHandler) window.wikiHandler.fetchLexiconEntries(0, 24);
 })
 

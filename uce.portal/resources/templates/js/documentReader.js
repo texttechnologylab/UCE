@@ -853,9 +853,11 @@ $(document).on('click', '.viz-nav-btn', function () {
         setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
     }
     if (target === '#viz-panel-3') {
-
+        setTimeout(() => renderSentenceTopicNetwork('vp-3'), 500);
     }
     if (target === '#viz-panel-4') {
+        $('.selector-container').hide();
+        setTimeout(() => renderTopicSimilarityMatrix('vp-4'), 500);
 
     }
     if (target === '#viz-panel-5') {
@@ -864,18 +866,288 @@ $(document).on('click', '.viz-nav-btn', function () {
     }
 });
 
+
+
+function renderSentenceTopicNetwork(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container || container.classList.contains('rendered')) return;
+
+    $('.visualization-spinner').show()
+    const documentId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
+
+    $.ajax({
+        url: `/api/document/unifiedTopicSentenceMap`,
+        method: 'GET',
+        data: { documentId },
+        dataType: 'json',
+        success: function (utToSentenceMapList) {
+            const utToSentenceMap = new Map();
+            const topicToSentences = {};
+
+            utToSentenceMapList.forEach(({ unifiedtopicId, sentenceId }) => {
+                const utId = unifiedtopicId.toString();
+                const sId = sentenceId.toString();
+                utToSentenceMap.set(utId, sId);
+                if (!topicToSentences[utId]) topicToSentences[utId] = [];
+                topicToSentences[utId].push(sId);
+            });
+
+            $.ajax({
+                url: `/api/rag/sentenceEmbeddings`,
+                method: 'GET',
+                data: { documentId },
+                dataType: 'json',
+                success: function (embeddings) {
+                    $('.visualization-spinner').hide()
+                    if (!embeddings || !Array.isArray(embeddings) || embeddings.length === 0) {
+                        const container = document.getElementById(containerId);
+                        if (container) {
+                            container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+                        }
+                        container.classList.add('rendered');
+                        return;
+                    }
+                    const sentenceEmbeddingMap = new Map();
+                    embeddings.forEach(({ sentenceId, tsne2d }) => {
+                        sentenceEmbeddingMap.set(sentenceId.toString(), tsne2d);
+                    });
+
+                    const nodes = [];
+                    const nodeSet = new Set();
+
+                    $('.colorable-topic').each(function () {
+                        const utId = this.id.replace('utopic-UT-', '');
+                        const topicValue = $(this).data('topic-value')?.toString();
+                        const text = $(this).data('wcovered').toString();
+                        if (!utToSentenceMap.has(utId)) return;
+                        const sentenceId = utToSentenceMap.get(utId);
+                        if (!sentenceEmbeddingMap.has(sentenceId)) return;
+
+                        if (nodeSet.has(sentenceId)) return;
+                        nodeSet.add(sentenceId);
+
+                        const [x, y] = sentenceEmbeddingMap.get(sentenceId);
+                        const color = topicColorMap[topicValue] || '#888';
+
+                        nodes.push({
+                            id: sentenceId,
+                            name: `Sentence `+utId,
+                            symbolSize: 20,
+                            x, y,
+                            itemStyle: { color },
+                            label: { show: false },
+                            tooltip: {
+                                confine: true, // prevent overflow
+
+                                textStyle: {
+                                    color: '#333',
+                                    overflow: 'truncate',  // enables word wrap
+                                    fontSize: 12,
+
+                                },
+                                formatter: () => {
+                                    return (
+                                        "<b>Sentence ID:</b> " + sentenceId + "<br>" +
+                                        "<b>Topic:</b> " + topicValue + "<br>" +
+                                        "<b>Text:</b> " + text
+                                    );
+                                }
+                            }
+                        });
+                    });
+
+                    const links = [];
+
+                    const k = 3;
+                    const embeddingArray = Array.from(sentenceEmbeddingMap.entries());
+
+                    function euclidean([x1, y1], [x2, y2]) {
+                        return Math.sqrt((x1 - x2) ** 2 + (y1 - y2) ** 2);
+                    }
+
+                    embeddingArray.forEach(([id1, vec1]) => {
+                        if (!nodeSet.has(id1)) return;
+
+                        const neighbors = embeddingArray
+                            .filter(([id2]) => id1 !== id2 && nodeSet.has(id2))
+                            .map(([id2, vec2]) => ({ id2, dist: euclidean(vec1, vec2) }))
+                            .sort((a, b) => a.dist - b.dist)
+                            .slice(0, k);
+
+                        neighbors.forEach(({ id2 }) => {
+                            links.push({
+                                source: id1,
+                                target: id2,
+                                lineStyle: { color: '#bbb', opacity: 0.2 }
+                            });
+                        });
+                    });
+
+                    const nodeDegreeMap = {};
+                    links.forEach(link => {
+                        nodeDegreeMap[link.source] = (nodeDegreeMap[link.source] || 0) + 1;
+                        nodeDegreeMap[link.target] = (nodeDegreeMap[link.target] || 0) + 1;
+                    });
+
+                    nodes.forEach(node => {
+                        const degree = nodeDegreeMap[node.id] || 0;
+                        node.symbolSize = 10 + degree * 2;
+                    });
+
+                    window.graphVizHandler.createNetworkGraph(
+                        containerId,
+                        '',
+                        nodes,
+                        links,
+                    null,
+                    function (params) {
+                        if (params.dataType === 'node') {
+                            const name = params.name.split('Sentence ')[1];
+                            $('.scrollbar-minimap').hide();
+                            hideTopicNavButtons();
+                            clearTopicColoring();
+                            $('.colorable-topic').each(function () {
+                                const topicValue = $(this).data('topic-value');
+                                const utId = this.id.replace('utopic-UT-', '');
+                                if (utId === name) {
+                                    $(this).css({
+                                        'background-color': topicColorMap[topicValue],
+                                        'border-radius': '3px',
+                                        'padding': '0 2px'
+                                    });
+                                    this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            });
+                        }
+                    });
+
+                    container.classList.add('rendered');
+                },
+                error: function () {
+                    console.error('Failed to get sentence embeddings');
+                }
+            });
+        },
+        error: function () {
+            console.error('Failed to get unified topic to sentence map');
+        }
+    });
+}
+
+function computeTopicSimilarityMatrix(data, type = "cosine") {
+    const topicLabels = data.map(t => t.topicLabel);
+    const wordProbMaps = data.map(t => t.words);
+    const allWords = new Set(data.flatMap(t => Object.keys(t.words)));
+
+    const matrix = [];
+
+    for (let i = 0; i < wordProbMaps.length; i++) {
+        for (let j = 0; j < wordProbMaps.length; j++) {
+            let score = 0;
+
+            if (type === "cosine") {
+                let dot = 0, normI = 0, normJ = 0;
+                for (const word of allWords) {
+                    const p1 = wordProbMaps[i][word] || 0;
+                    const p2 = wordProbMaps[j][word] || 0;
+                    dot += p1 * p2;
+                    normI += p1 * p1;
+                    normJ += p2 * p2;
+                }
+                score = (normI === 0 || normJ === 0) ? 0 : dot / (Math.sqrt(normI) * Math.sqrt(normJ));
+
+            } else if (type === "count") {
+                const wordsI = new Set(Object.keys(wordProbMaps[i]));
+                const wordsJ = new Set(Object.keys(wordProbMaps[j]));
+                const shared = [...wordsI].filter(w => wordsJ.has(w));
+                score = shared.length;
+            }
+
+            matrix.push([i, j, score]);
+        }
+    }
+
+    return {
+        labels: topicLabels,
+        matrix: matrix
+    };
+}
+
+
+
+function renderTopicSimilarityMatrix(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container || container.classList.contains('rendered')){
+        $('.selector-container').show();
+        return;
+    }
+    $('.visualization-spinner').show()
+    const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
+    $.get('/api/document/page/topicWords', { documentId: docId })
+        .then(data => {
+            $('.visualization-spinner').hide()
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+                }
+                container.classList.remove('rendered');
+                $('.selector-container').hide();
+                return;
+            }
+            $('.selector-container').show();
+            const similarityTypeSelector = document.getElementById('similarityTypeSelector');
+
+            function updateChart() {
+                const type = similarityTypeSelector.value;
+                const { labels, matrix } = computeTopicSimilarityMatrix(data, type);
+
+                const tooltipFormatter = function (params) {
+                    const xLabel = labels[params.data[0]];
+                    const yLabel = labels[params.data[1]];
+                    const value = type === "count" ? params.data[2] : params.data[2].toFixed(3);
+                   return xLabel + " & " + yLabel + "<br>" + (type.charAt(0).toUpperCase() + type.slice(1)) + ": " + value;
+                };
+
+                window.graphVizHandler.createHeatMap(
+                    containerId,
+                    "Topic Similarity (" + type + ")",
+                    matrix,
+                    labels,
+                    "Similarity (" + type + ")",
+                    tooltipFormatter
+                );
+
+            }
+
+            similarityTypeSelector.addEventListener('change', updateChart);
+            updateChart();
+            container.classList.add('rendered');
+        });
+}
+
+
 function renderTopicEntityChordDiagram(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
-    const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
-    const docId = rawValue ? parseInt(rawValue, 10) : null;
-    if (!docId) {
-        console.error("Missing or invalid documentId for Chord Diagram");
-        return;
-    }
+    $('.visualization-spinner').show()
+
+    const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
 
     $.get('/api/document/page/topicEntityRelation', { documentId: docId })
         .then(data => {
+            $('.visualization-spinner').hide()
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                const container = document.getElementById(containerId);
+                if (container) {
+                    container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+                }
+                container.classList.add('rendered');
+                return;
+            }
             const nodeMap = new Map();
             const nodes = [];
             const linkCounts = new Map();
@@ -893,8 +1165,8 @@ function renderTopicEntityChordDiagram(containerId) {
 
             // Step 1: build nodes
             data.forEach(item => {
-                const topic = item.topiclabel;
-                const entityType = item.entity_type;
+                const topic = item.topicLabel;
+                const entityType = item.entityType;
 
                 if (topic && !nodeMap.has(topic)) {
                     nodeMap.set(topic, nodeIndex++);
@@ -951,13 +1223,13 @@ function renderTopicEntityChordDiagram(containerId) {
                 const isEntity = node.category === 1;
 
                 const filtered = data.filter(item => {
-                    return isEntity ? item.entity_type === clickedNodeName : item.topiclabel === clickedNodeName;
+                    return isEntity ? item.entityType === clickedNodeName : item.topicLabel === clickedNodeName;
                 });
                 const aggMap = new Map();
 
                 filtered.forEach(item => {
                     // The other side of the relation
-                    const key = isEntity ? item.topiclabel : item.entity_type;
+                    const key = isEntity ? item.topicLabel : item.entityType;
                     if (key) {
                         aggMap.set(key, (aggMap.get(key) || 0) + 1);
                     }
@@ -1015,10 +1287,23 @@ function renderSentenceTopicSankey(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
 
+    $('.visualization-spinner').show()
+
+    const $colorableTopics = $('.colorable-topic');
+    if ($colorableTopics.length === 0) {
+        $('.visualization-spinner').hide()
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+        }
+        container.classList.add('rendered');
+        return;
+    }
+
     let sentenceTopicData = [];
     const topicFrequency = {};
 
-    $('.colorable-topic').each(function () {
+    $colorableTopics.each(function () {
         const topicValue = $(this).data('topic-value');
         const utId = parseInt(this.id.replace('utopic-UT-', ''));
 
@@ -1056,6 +1341,7 @@ function renderSentenceTopicSankey(containerId) {
         target: d.to,
         value: d.weight
     }));
+    $('.visualization-spinner').hide()
     window.graphVizHandler.createSankeyChart(containerId, 'Sentence-Topic Sankey Diagram', links, nodes, function (params) {
         if (params.dataType === 'node') {
             const name = params.name;
@@ -1096,32 +1382,67 @@ function renderTemporalExplorer(containerId) {
 
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
-
-    const rawValue = document.getElementById('vp-1')?.getAttribute('data-document-id');
-    const docId = rawValue ? parseInt(rawValue, 10) : null;
-    if (!docId) return console.error("Missing or invalid documentId");
+    $('.visualization-spinner').show()
+    const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
 
     const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
     const topicReq = $.get('/api/document/page/topics', { documentId: docId });
+    const entityReq = $.get('/api/document/page/namedEntities', { documentId: docId });
+    const lemmaReq = $.get('/api/document/page/lemma', { documentId: docId });
+    const geonameReq = $.get('/api/document/page/geoname', { documentId: docId });
 
-    Promise.all([taxonReq, topicReq]).then(([taxon, topics]) => {
+    Promise.all([taxonReq, topicReq, entityReq, lemmaReq, geonameReq]).then(([taxon, topics, entities, lemma, geoname]) => {
+        $('.visualization-spinner').hide()
+        if ((!taxon || taxon.length === 0) && (!topics || topics.length === 0) && (!entities || entities.length === 0) && (!lemma || lemma.length === 0 && !geoname || geoname.length === 0)) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+            }
+            container.classList.add('rendered');
+            return;
+        }
         const annotationSources = [
             {
-                key: 'taxon',
+                key: 'Taxon',
                 data: taxon,
-                pageField: 'page_id',
-                valueField: 'taxon_value',
+                pageField: 'pageId',
+                valueField: 'taxonValue',
                 label: 'Taxon',
                 color: '#91CC75',
                 transformValue: v => v.split('|')[0]
             },
             {
-                key: 'topics',
+                key: 'Topics',
                 data: topics,
-                pageField: 'page_id',
-                valueField: 'topiclabel',
+                pageField: 'pageId',
+                valueField: 'topicLabel',
                 label: 'Topics',
                 color: '#75ccc5'
+            }
+            ,
+            {
+                key: 'Named Entities',
+                data: entities,
+                pageField: 'pageId',
+                valueField: 'entityType',
+                label: 'Named Entities',
+                color: '#5470C6',
+            },
+            {
+                key: 'Lemmas',
+                data: lemma,
+                pageField: 'pageId',
+                valueField: 'coarseValue',
+                label: 'Lemmas',
+                color: '#ff9f7f',
+            },
+            {
+                key: 'Geonames',
+                data: geoname,
+                pageField: 'pageId',
+                valueField: 'geonameValue',
+                label: 'Geonames',
+                color: '#c680ff',
             }
         ];
 
@@ -1151,15 +1472,17 @@ function renderTemporalExplorer(containerId) {
                 if (!dataMap.has(page)) {
                     dataMap.set(page, {
                         page,
-                        taxon: new Set(),
-                        topics: new Set(),
-                        ne: new Set()
+                        Taxon: [],
+                        Topics: [],
+                        "Named Entities": [],
+                        Lemmas: [],
+                        Geonames: []
                     });
                 }
 
                 const value = item[valueField];
                 if (value) {
-                    dataMap.get(page)[key].add(transformValue ? transformValue(value) : value);
+                    dataMap.get(page)[key].push(transformValue ? transformValue(value) : value);
                 }
             });
         });
@@ -1169,7 +1492,7 @@ function renderTemporalExplorer(containerId) {
 
         const seriesData = annotationSources
             .map(({ key, label, color }) => {
-                const data = sorted.map(row => row[key]?.size || 0);
+                const data = sorted.map(row => row[key]?.length || 0);
                 const hasNonZero = data.some(count => count > 0);
                 return hasNonZero ? { name: label, data, color } : null;
             })
@@ -1185,14 +1508,17 @@ function renderTemporalExplorer(containerId) {
         // Tooltip formatter
         const tooltipFormatter = function (params) {
             const page = parseInt(params[0].axisValue);
+            const seriesNames = new Set(params.map(p => p.seriesName));
+
             const record = dataMap.get(page);
             if (!record) return 'Page ' + page + '<br/>No data.';
 
             let tooltipHtml = '<div><b>Page ' + page + '</b></div>';
 
             annotationSources.forEach(({ key, label, color }) => {
+                if (!seriesNames.has(label)) return;
                 const items = record[key];
-                if (!items || items.size === 0) return;
+                if (!items || items.length === 0) return;
 
                 const freq = {};
                 items.forEach(item => {

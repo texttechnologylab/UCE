@@ -15,19 +15,24 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.UCEMetadataValueType;
 import org.texttechnologylab.models.search.SearchType;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
+import org.texttechnologylab.services.S3StorageService;
 import spark.ModelAndView;
 import spark.Route;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
-public class DocumentApi {
+public class DocumentApi implements UceApi {
+    private S3StorageService s3StorageService;
     private PostgresqlDataInterface_Impl db;
     private static final Logger logger = LogManager.getLogger(DocumentApi.class);
     private Configuration freemarkerConfig;
+
     public DocumentApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
+        this.s3StorageService = serviceContext.getBean(S3StorageService.class);
         this.freemarkerConfig = freemarkerConfig;
     }
 
@@ -37,7 +42,7 @@ public class DocumentApi {
 
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId and hence can't return the metadata. ", ex));
-        if(documentId == null){
+        if (documentId == null) {
             model.put("information", languageResources.get("missingParameterError"));
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
@@ -46,7 +51,7 @@ public class DocumentApi {
             var uceMetadata = db.getUCEMetadataByDocumentId(documentId);
             var gson = new GsonBuilder().setPrettyPrinting().create();
             uceMetadata.forEach(m -> {
-                if(m.getValueType() == UCEMetadataValueType.JSON){
+                if (m.getValueType() == UCEMetadataValueType.JSON) {
                     var obj = gson.fromJson(m.getValue(), Object.class);
                     m.setValue(gson.toJson(obj));
                 }
@@ -66,13 +71,13 @@ public class DocumentApi {
 
         var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("corpusId")),
                 (ex) -> logger.error("Error: couldn't determine the corpusId and hence can't return the document list. ", ex));
-        if(corpusId == null){
+        if (corpusId == null) {
             model.put("information", languageResources.get("missingParameterError"));
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
         var page = ExceptionUtils.tryCatchLog(() -> Integer.parseInt(request.queryParams("page")),
                 (ex) -> logger.error("Error: couldn't determine the page, defaulting to page 1 then. ", ex));
-        if(page == null) page = 1;
+        if (page == null) page = 1;
 
         try {
             var take = 10;
@@ -88,8 +93,10 @@ public class DocumentApi {
 
         // Depending on the page, we returns JUST a rendered list of documents or
         // a view that contains the documents but also styles navigation and such
-        if(page == 1) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/corpusDocumentsList.ftl"));
-        else return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/documents.ftl"));
+        if (page == 1)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/corpusDocumentsList.ftl"));
+        else
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/documents.ftl"));
     });
 
     public Route getCorpusInspectorView = ((request, response) -> {
@@ -97,7 +104,8 @@ public class DocumentApi {
 
         var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
                 (ex) -> logger.error("Error: the url for the corpus inspector requires an 'id' query parameter that is the corpusId. ", ex));
-        if(corpusId == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (corpusId == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         try {
             var corpus = db.getCorpusById(corpusId);
@@ -121,7 +129,8 @@ public class DocumentApi {
 
         var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
                 (ex) -> logger.error("Error: the url for the document 3d globe requires an 'id' query parameter that is the document id.", ex));
-        if(id == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (id == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         try {
             // I've forgotten why I introduced this variable here?...
@@ -148,8 +157,9 @@ public class DocumentApi {
 
         var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
                 (ex) -> logger.error("Error: the url for the document reader requires an 'id' query parameter. " +
-                        "Document reader can't be built.", ex));
-        if(id == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+                                     "Document reader can't be built.", ex));
+        if (id == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         // Check if we have an searchId parameter. This is optional
         var searchId = ExceptionUtils.tryCatchLog(() -> request.queryParams("searchId"),
@@ -159,13 +169,19 @@ public class DocumentApi {
             var doc = db.getCompleteDocumentById(Long.parseLong(id), 0, 10);
             model.put("document", doc);
 
+            var corpus = db.getCorpusById(doc.getCorpusId());
+            var casDownloadName = s3StorageService.buildCasXmiObjectName(corpus.getId(), doc.getDocumentId());
+            var casDownloadExists = s3StorageService.objectExists(casDownloadName);
+            model.put("casDownloadName", casDownloadExists ? casDownloadName : "");
+
             // If this document was opened from an active search, we can highlight the search tokens in the text
             // This is only optional and works fine even without the search tokens.
-            if(searchId != null && SessionManager.ActiveSearches.containsKey(searchId)){
-                var activeSearchState = (SearchState)SessionManager.ActiveSearches.get(searchId);
+            if (searchId != null && SessionManager.ActiveSearches.containsKey(searchId)) {
+                var activeSearchState = (SearchState) SessionManager.ActiveSearches.get(searchId);
                 // For SRL Search, there are no search tokens really. We will handle that exclusively later.
-                if(activeSearchState.getSearchType() != SearchType.SEMANTICROLE || activeSearchState.getSearchType() != SearchType.NEG){
-                    model.put("searchTokens", String.join("[TOKEN]", activeSearchState.getSearchTokens()));
+                if (activeSearchState.getSearchType() != SearchType.SEMANTICROLE || activeSearchState.getSearchType() != SearchType.NEG) {
+                    if (activeSearchState.getSearchTokens() != null)
+                        model.put("searchTokens", String.join("[TOKEN]", activeSearchState.getSearchTokens()));
                 }
             }
         } catch (Exception ex) {
@@ -182,16 +198,17 @@ public class DocumentApi {
 
         var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
                 (ex) -> logger.error("Error: the url for the document pages list view requires an 'id' query parameter. ", ex));
-        if(id == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (id == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
-        try{
+        try {
             var skip = Integer.parseInt(request.queryParams("skip"));
             var doc = db.getCompleteDocumentById(Long.parseLong(id), skip, 10);
             var annotations = doc.getAllAnnotations(skip, 10);
             model.put("documentAnnotations", annotations);
             model.put("documentText", doc.getFullText());
             model.put("documentPages", doc.getPages(10, skip));
-        } catch (Exception ex){
+        } catch (Exception ex) {
             logger.error("Error getting the pages list view - either the document couldn't be fetched (id=" + id + ") or its annotations.", ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         }
@@ -203,7 +220,7 @@ public class DocumentApi {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for topics. ", ex));
 
-        if(documentId == null){
+        if (documentId == null) {
             response.status(400);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
         }
@@ -245,8 +262,8 @@ public class DocumentApi {
 
             for (Object[] row : taxonValuesAndCounts) {
                 var pageMap = new HashMap<String, Object>();
-                pageMap.put("page_id", row[0]);
-                pageMap.put("taxon_value", row[1]);
+                pageMap.put("pageId", row[0]);
+                pageMap.put("taxonValue", row[1]);
                 //var taxonValues = row[1].toString().replaceAll("[\\{\\}]", "").split(",");
                 //pageMap.put("taxon_values", taxonValues);
                 //pageMap.put("taxon_count", row[2]);
@@ -279,8 +296,8 @@ public class DocumentApi {
 
             for (Object[] row : topicDistPerPage) {
                 var pageMap = new HashMap<String, Object>();
-                pageMap.put("page_id", row[0]);
-                pageMap.put("topiclabel", row[1]);
+                pageMap.put("pageId", row[0]);
+                pageMap.put("topicLabel", row[1]);
                 result.add(pageMap);
             }
 
@@ -293,6 +310,102 @@ public class DocumentApi {
                     .render(new ModelAndView(Map.of("information", "Error retrieving document topics."), "defaultError.ftl"));
         }
     });
+
+    public Route getDocumentNamedEntitiesByPage = ((request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for entities. ", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+        }
+
+        try {
+            var entitiesPerPage = db.getNamedEntityValuesAndCountByPage(documentId);
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : entitiesPerPage) {
+                var pageMap = new HashMap<String, Object>();
+                pageMap.put("pageId", row[0]);
+                pageMap.put("entityValue", row[1]);
+                pageMap.put("entityType", row[2]);
+                result.add(pageMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+        } catch (Exception ex) {
+            logger.error("Error getting document entities.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving document entities."), "defaultError.ftl"));
+        }
+    });
+
+    public Route getDocumentLemmaByPage = ((request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for lemma. ", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+        }
+
+        try {
+            var lemmaPerPage = db.getLemmaByPage(documentId);
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : lemmaPerPage) {
+                var pageMap = new HashMap<String, Object>();
+                pageMap.put("pageId", row[0]);
+                pageMap.put("lemmaValue", row[1]);
+                pageMap.put("coarseValue", row[2]);
+                result.add(pageMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+        } catch (Exception ex) {
+            logger.error("Error getting document lemma.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving document lemma."), "defaultError.ftl"));
+        }
+    });
+
+    public Route getDocumentGeonameByPage = ((request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for geoname. ", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+        }
+
+        try {
+            var geonamePerPage = db.getGeonameByPage(documentId);
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : geonamePerPage) {
+                var pageMap = new HashMap<String, Object>();
+                pageMap.put("pageId", row[0]);
+                pageMap.put("geonameValue", row[1]);
+                result.add(pageMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+        } catch (Exception ex) {
+            logger.error("Error getting document geoname.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving document geoname."), "defaultError.ftl"));
+        }
+    });
+
 
     public Route getSentenceTopicsWithEntities = ((request, response) -> {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
@@ -310,8 +423,8 @@ public class DocumentApi {
 
             for (Object[] row : topicsWithEntities) {
                 var topicEntityMap = new HashMap<String, Object>();
-                topicEntityMap.put("topiclabel", row[0]);
-                topicEntityMap.put("entity_type", row[1]);
+                topicEntityMap.put("topicLabel", row[0]);
+                topicEntityMap.put("entityType", row[1]);
                 result.add(topicEntityMap);
             }
 
@@ -324,5 +437,82 @@ public class DocumentApi {
                     .render(new ModelAndView(Map.of("information", "Error retrieving sentence topics with entities."), "defaultError.ftl"));
         }
     });
+
+    public Route getTopicWordsByDocument = (request, response) -> {
+        Long documentId = ExceptionUtils.tryCatchLog(
+                () -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for topic words.", ex)
+        );
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for topic words"), "defaultError.ftl"));
+        }
+
+        try {
+            var topicWords = db.getTopicWordsByDocumentId(documentId);
+            var groupedResults = new HashMap<String, Map<String, Double>>();
+
+            for (Object[] row : topicWords) {
+                String topicLabel = (String) row[0];
+                String word = (String) row[1];
+                Double avgProbability = ((Number) row[2]).doubleValue();
+
+                groupedResults.computeIfAbsent(topicLabel, k -> new HashMap<>())
+                        .put(word, avgProbability);
+            }
+
+            var result = new ArrayList<Map<String, Object>>();
+            for (var entry : groupedResults.entrySet()) {
+                var topicMap = new HashMap<String, Object>();
+                topicMap.put("topicLabel", entry.getKey());
+                topicMap.put("words", entry.getValue());
+                result.add(topicMap);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+
+        } catch (Exception ex) {
+            logger.error("Error getting topic words by document ID.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving topic words."), "defaultError.ftl"));
+        }
+    };
+
+    public Route getUnifiedTopicToSentenceMap = (request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for unified topic to sentence mapping.", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for unified topic to sentence mapping"), "defaultError.ftl"));
+        }
+
+        try {
+            Map<Long, Long> mapping = db.getUnifiedTopicToSentenceMap(documentId);
+            List<Map<String, Object>> result = new ArrayList<>();
+
+            for (var entry : mapping.entrySet()) {
+                Map<String, Object> mapEntry = new HashMap<>();
+                mapEntry.put("unifiedtopicId", entry.getKey());
+                mapEntry.put("sentenceId", entry.getValue());
+                result.add(mapEntry);
+            }
+
+            response.type("application/json");
+            return new Gson().toJson(result);
+
+        } catch (Exception ex) {
+            logger.error("Error retrieving unified topic to sentence mapping.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving unified topic to sentence mapping."), "defaultError.ftl"));
+        }
+    };
+
 
 }
