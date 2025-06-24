@@ -21,7 +21,7 @@
                                 <li>
                                     <div class="tree-toggle">
                                         <i class="fas fa-chevron-right toggle-icon"></i>
-                                        <input type="checkbox" class="analysis-group-checkbox" id="group_${group_index}"/>
+                                        <input type="checkbox" class="nlp-group-checkbox analysis-group-checkbox" id="group_${group_index}" />
                                         <label class="analysis-group-label" for="group_${group_index}">${group.name} (${group.models?size})</label>
                                     </div>
                                     <ol class="nested">
@@ -29,7 +29,7 @@
                                             <li>
                                                 <div class="model-item">
                                                     <label for="${group.name?replace(" ", "_")}_${model.key?replace(" ", "_")}">
-                                                        <input type="checkbox" class="analysis-model-checkbox" id="${group.name?replace(" ", "_")}_${model.key?replace(" ", "_")}"/>
+                                                        <input type="checkbox" class="nlp-model-checkbox analysis-model-checkbox" id="${group.name?replace(" ", "_")}_${model.key?replace(" ", "_")}" />
                                                         ${model.name!model.key}
                                                     </label>
                                                 </div>
@@ -42,6 +42,49 @@
                     </li>
                 </ul>
             </div>
+
+            <div class="group-box card-shadow bg-light">
+                <h5 class="mb-0 mr-1 color-prime">TTLAB Scorer</h5>
+                <ul class="analysis-treeview">
+                    <#list ttlabScorer?keys as models>
+                        <#assign submodels = ttlabScorer[models]>
+                        <li>
+                            <div class="tree-toggle">
+                                <i class="fas fa-chevron-right toggle-icon"></i>
+                                <input type="checkbox" class="ttlab-group-checkbox analysis-group-checkbox" id="group_${models?index}" />
+                                <label class="analysis-group-label" for="group_${models?index}">${models} (${submodels?size})</label>
+                            </div>
+                            <ul class="nested">
+                                <#list submodels?keys as properties>
+                                    <#assign property = submodels[properties]>
+                                    <li>
+                                        <div class="tree-toggle">
+                                            <i class="fas fa-chevron-right toggle-icon"></i>
+                                            <input type="checkbox" class="ttlab-group-checkbox analysis-group-checkbox" id="subgroup_${properties?index}" />
+                                            <label class="analysis-group-label" for="subgroup_${properties?index}">${properties} (${property?size})</label>
+                                        </div>
+                                        <ol class="nested">
+                                            <#list property?keys as name>
+                                                <#assign keyname = property[name]>
+                                                <li>
+                                                    <div class="model-item">
+                                                        <label for="${keyname}">
+                                                            <input type="checkbox" class="ttlab-model-checkbox analysis-model-checkbox" id="ttlabscorer##${keyname}" />
+                                                            ${name}
+                                                        </label>
+                                                    </div>
+                                                </li>
+                                            </#list>
+                                        </ol>
+                                    </li>
+                                </#list>
+                            </ul>
+                        </li>
+                    </#list>
+                </ul>
+            </div>
+
+
             <div class="group-box card-shadow bg-light">
                 <h5 class="mb-0 mr-1 color-prime">${languageResource.get("history")}</h5>
                 <div id="analysis-result-history">

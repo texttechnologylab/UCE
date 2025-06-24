@@ -73,7 +73,6 @@ services:
     ports:
       - "8002:5432"
     volumes:
-      - ./../backups/2025-06-12-TTLab-Instance-Data/db-data:/var/lib/postgresql/data
       - ${POSTGRESQL_CONFIG}:/etc/postgresql.conf
     command: -c config_file=/etc/postgresql.conf
     networks:

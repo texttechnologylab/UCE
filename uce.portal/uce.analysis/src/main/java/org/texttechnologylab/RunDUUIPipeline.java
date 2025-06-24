@@ -24,6 +24,7 @@ public class RunDUUIPipeline {
         HashMap<String, ModelInfo> modelInfosMap = new HashMap<>();
         HashMap<String, String> urls = new HashMap<>();
         List<ModelInfo> modelInfosList = new ArrayList<>();
+        List<String> ttlabScorerGroups = new ArrayList<>();
         boolean isHateSpeech = false;
         boolean isSentiment = false;
         boolean isTopic = false;
@@ -37,6 +38,7 @@ public class RunDUUIPipeline {
         boolean isLLM = false;
         boolean isTA = false;
         boolean isOffensive = false;
+        boolean isTtlabScorer = false;
         for (String modelKey : modelGroups) {
             if (modelInfos.containsKey(modelKey)) {
                 ModelInfo modelInfo = modelInfos.get(modelKey);
@@ -88,6 +90,11 @@ public class RunDUUIPipeline {
                         isOffensive = true;
                         break;
                 }
+            }
+            if (modelKey.startsWith("ttlabscorer##")) {
+                String groupName = modelKey.replace("ttlabcorer##", "");
+                ttlabScorerGroups.add(groupName);
+                isTtlabScorer = true;
             }
         }
         DUUIPipeline pipeline = new DUUIPipeline();
@@ -176,6 +183,11 @@ public class RunDUUIPipeline {
         duuiInformation.setIsTA(isTA);
         // set offensive
         duuiInformation.setIsOffensive(isOffensive);
+        // set ttlab scorer
+        duuiInformation.setIsTtlabScorer(isTtlabScorer);
+        if (isTtlabScorer) {
+            duuiInformation.setTtlabScorerGroups(ttlabScorerGroups);
+        }
         return duuiInformation;
     }
 
