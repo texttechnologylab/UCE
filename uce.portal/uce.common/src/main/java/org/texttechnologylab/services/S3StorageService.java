@@ -63,6 +63,7 @@ public class S3StorageService {
                                      Map<String, String> metadata)
             throws Exception {
         // Buffer InputStream content to memory
+        objectName = objectName.replace("%20", " ");
         ByteArrayOutputStream baos = new ByteArrayOutputStream();
         byte[] buffer = new byte[1024];
         int bytesRead;
@@ -93,6 +94,7 @@ public class S3StorageService {
      */
     public InputStream downloadObject(String objectName) throws Exception {
         if(!SystemStatus.S3StorageStatus.isAlive()) return null;
+        objectName = objectName.replace("%20", " ");
         return minioClient.getObject(
                 GetObjectArgs.builder()
                         .bucket(config.getMinioBucket())
@@ -105,6 +107,7 @@ public class S3StorageService {
      */
     public String getContentTypeOfObject(String objectName) throws Exception {
         if(!SystemStatus.S3StorageStatus.isAlive()) return null;
+        objectName = objectName.replace("%20", " ");
         StatObjectResponse stat = minioClient.statObject(
                 StatObjectArgs.builder()
                         .bucket(config.getMinioBucket())
@@ -123,6 +126,8 @@ public class S3StorageService {
      */
     public JCas downloadAndLoadXmiToCas(String objectName) throws Exception {
         if(!SystemStatus.S3StorageStatus.isAlive()) return null;
+        objectName = objectName.replace("%20", " ");
+
         // Create a new JCas
         JCas jCas = JCasFactory.createJCas();
 
@@ -144,6 +149,7 @@ public class S3StorageService {
      */
     public boolean objectExists(String objectName) {
         if(!SystemStatus.S3StorageStatus.isAlive()) return false;
+        objectName = objectName.replace("%20", " ");
         try {
             this.minioClient.statObject(
                     StatObjectArgs.builder()
@@ -171,6 +177,7 @@ public class S3StorageService {
      */
     public void deleteObject(String objectName) throws Exception {
         if(!SystemStatus.S3StorageStatus.isAlive()) return;
+        objectName = objectName.replace("%20", " ");
         minioClient.removeObject(
                 RemoveObjectArgs.builder()
                         .bucket(config.getMinioBucket())
