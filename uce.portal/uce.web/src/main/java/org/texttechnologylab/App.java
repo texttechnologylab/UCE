@@ -87,9 +87,9 @@ public class App {
 
         // Execute the external database scripts
         logger.info("Executing external database scripts from " + commonConfig.getDatabaseScriptsLocation());
-        ExceptionUtils.tryCatchLog(
-                () -> SystemStatus.executeExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
-                (ex) -> logger.warn("Couldn't read the db scripts in the external database scripts folder; path wasn't found or other IO problems. ", ex));
+        //ExceptionUtils.tryCatchLog(
+        //        () -> SystemStatus.executeExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
+         //       (ex) -> logger.warn("Couldn't read the db scripts in the external database scripts folder; path wasn't found or other IO problems. ", ex));
         logger.info("Finished with executing external database scripts.");
 
         // Cleanup temporary db fragments for the LayeredSearch

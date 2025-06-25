@@ -10,8 +10,8 @@ let WikiHandler = (function () {
         selectedChar: '',
         searchInput: '',
         annotationFilters: [],
-        sortColumn: 'alphabet',
-        sortDirection: 'ASC',
+        sortColumn: 'occurrence',
+        sortDirection: 'DESC',
     }
 
     function WikiHandler() {
