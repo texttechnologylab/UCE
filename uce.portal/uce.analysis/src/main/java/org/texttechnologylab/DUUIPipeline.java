@@ -15,6 +15,7 @@ import org.hucompute.textimager.uima.type.category.CategoryCoveredTagged;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIRemoteDriver;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
+import org.texttechnologylab.modules.TTLabScorerInfo;
 import org.texttechnologylab.type.LLMPrompt;
 import org.texttechnologylab.type.LLMSystemPrompt;
 import org.texttechnologylab.typeClasses.*;
@@ -29,7 +30,6 @@ import java.util.*;
 
 import org.bson.Document;
 import org.texttechnologylab.type.LLMResult;
-import org.texttechnologylab.type.LLMPrompt;
 
 public class DUUIPipeline {
 
@@ -213,7 +213,7 @@ public class DUUIPipeline {
         return new Object[]{cas, sb};
     }
 
-    public Object[] getJCasResults(JCas cas, List<ModelInfo> modelGroups) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
+    public Object[] getJCasResults(JCas cas, List<ModelInfo> modelGroups, List<String> ttlabScorerGroups) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
         Sentences sentences = new Sentences();
         // set sentences
         Collection<Sentence> allSentences = JCasUtil.select(cas, Sentence.class);
@@ -230,7 +230,7 @@ public class DUUIPipeline {
         }
         TextClass textClass = new TextClass();
         for (ModelInfo modelGroup : modelGroups) {
-            Object [] extractedResults = getExtractedResults(cas, modelGroup, sentences, textClass);
+            Object [] extractedResults = getExtractedResults(cas, modelGroup, sentences, textClass, ttlabScorerGroups);
             sentences = (Sentences) extractedResults[0];
             textClass = (TextClass) extractedResults[1];
         }
@@ -246,10 +246,47 @@ public class DUUIPipeline {
         return new Object[]{sentences, textClass};
     }
 
-    public Object[] getExtractedResults(JCas cas, ModelInfo modelInfo, Sentences sentences, TextClass textClass) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
+    public Object[] getExtractedResults(JCas cas, ModelInfo modelInfo, Sentences sentences, TextClass textClass, List<String> ttlabScorerGroups) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
         String btName = "Bert Token";
         String ACName = "Auto Correlation";
+        TTLabScorerInfo ttLabScorerInfo = new TTLabScorerInfo();
         switch (modelInfo.getVariant()) {
+            case "ttlabscorer":
+                List<String> UsedSubmodels = new ArrayList<>();
+                LinkedHashMap<String, TAClass> ttlabScores_map = new LinkedHashMap<>();
+                Collection<TAscore> ttlabScores = JCasUtil.select(cas, TAscore.class);
+                LinkedHashMap<String, LinkedHashMap<String, String>> taMapNames = ttLabScorerInfo.getTAMapNames();
+                LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<String, String>>> taInputMap = ttLabScorerInfo.getTaInputMap();
+                for (TAscore taScore : ttlabScores) {
+                    String name = taScore.getName();
+                    String groupName = taScore.getGroup();
+                    String nameWithoutPrefix = "";
+                    double score = taScore.getScore();
+                    if (ttlabScorerGroups.contains(name)) {
+                        String groupNameMap = taMapNames.get("properties").get(name);
+                        String labelName = taMapNames.get("labels").get(name);
+                        String submodelNameMap = taMapNames.get("submodels").get(groupNameMap);
+                        if (!submodelNameMap.equals(modelInfo.getName()))
+                            continue; // skip if submodel name does not match modelInfo name
+                        if (!UsedSubmodels.contains(submodelNameMap)) {
+                            UsedSubmodels.add(submodelNameMap);
+                        }
+                        TAInput ttlabInput = new TAInput();
+                        ttlabInput.setName(labelName);
+                        ttlabInput.setScore(score);
+                        if (!ttlabScores_map.containsKey(groupNameMap)) {
+                            TAClass taClass = new TAClass();
+                            taClass.setModelInfo(modelInfo);
+                            taClass.setGroupName(groupNameMap);
+                            ttlabScores_map.put(groupNameMap, taClass);
+                        }
+                        ttlabScores_map.get(groupNameMap).addTaInput(ttlabInput);
+                    }
+                }
+                for (Map.Entry<String, TAClass> entry : ttlabScores_map.entrySet()) {
+                    TAClass taClass = entry.getValue();
+                    textClass.addAVGTA(taClass);
+                }
             case "Topic":
                 Collection<Topic> allTopics = JCasUtil.select(cas, Topic.class);
                 for (Topic topic : allTopics) {
@@ -277,7 +314,7 @@ public class DUUIPipeline {
                 break;
             case "TA":
                 Collection<TAscore> taScores = JCasUtil.select(cas, TAscore.class);
-                HashMap<String, TAClass> taScores_map = new HashMap<>();
+                LinkedHashMap<String, TAClass> taScores_map = new LinkedHashMap<>();
                 boolean chosen = false;
                 for (TAscore taScore : taScores) {
                     String name = taScore.getName();

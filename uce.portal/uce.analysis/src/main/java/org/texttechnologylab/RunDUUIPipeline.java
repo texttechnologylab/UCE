@@ -8,10 +8,7 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.typeClasses.TextClass;
 import org.texttechnologylab.modules.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 
 public class RunDUUIPipeline {
@@ -39,6 +36,12 @@ public class RunDUUIPipeline {
         boolean isTA = false;
         boolean isOffensive = false;
         boolean isTtlabScorer = false;
+        TTLabScorerInfo ttlabModelInfo = new TTLabScorerInfo();
+        List<String> ttlabModelGroupNames = new ArrayList<>();
+        LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<String, String>>> taInputMap = ttlabModelInfo.getTaInputMap();
+        LinkedHashMap<String, LinkedHashMap<String, String>> taNameMap = ttlabModelInfo.getTAMapNames();
+        LinkedHashMap<String, String> ttlabSubModels = taNameMap.get("submodels");
+        LinkedHashMap<String, String> ttlabProperties = taNameMap.get("properties");
         for (String modelKey : modelGroups) {
             if (modelInfos.containsKey(modelKey)) {
                 ModelInfo modelInfo = modelInfos.get(modelKey);
@@ -92,8 +95,20 @@ public class RunDUUIPipeline {
                 }
             }
             if (modelKey.startsWith("ttlabscorer##")) {
-                String groupName = modelKey.replace("ttlabcorer##", "");
-                ttlabScorerGroups.add(groupName);
+                String property = modelKey.replace("ttlabscorer##", "");
+                ttlabScorerGroups.add(property);
+                String ttlabModelGroupName = ttlabProperties.get(property);
+                String ttlabSubModelName = ttlabSubModels.get(ttlabModelGroupName);
+                if (!ttlabModelGroupNames.contains(ttlabSubModelName)){
+                    ttlabModelGroupNames.add(ttlabSubModelName);
+                    ModelInfo ttlabmodelInfo = ttlabModelInfo.getModelInfo();
+                    ttlabmodelInfo.setName(ttlabSubModelName);
+                    ttlabmodelInfo.setMainTool("TTLAB Scorer");
+                    ttlabmodelInfo.setKey(ttlabSubModelName);
+                    modelInfosList.add(ttlabmodelInfo);
+                    String modelKeyName = ttlabmodelInfo.getMainTool().replace(" ", "_")+"_"+ttlabmodelInfo.getKey().replace(" ", "_");
+                    modelInfosMap.put(modelKeyName, ttlabmodelInfo);
+                }
                 isTtlabScorer = true;
             }
         }
@@ -154,7 +169,7 @@ public class RunDUUIPipeline {
         DUUIComposer composer = pipeline.setComposer(modelInfosMap);
         JCas result = pipeline.runPipeline(cas, composer);
         // get results
-        Object[] results = pipeline.getJCasResults(result, modelInfosList);
+        Object[] results = pipeline.getJCasResults(result, modelInfosList, ttlabScorerGroups);
         // print results
         Sentences sentences = (Sentences) results[0];
         TextClass textClass = (TextClass) results[1];

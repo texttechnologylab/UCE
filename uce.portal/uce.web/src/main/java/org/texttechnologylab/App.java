@@ -29,7 +29,6 @@ import org.texttechnologylab.routes.*;
 import org.texttechnologylab.services.LexiconService;
 import org.texttechnologylab.services.MapService;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
-import org.texttechnologylab.typeClasses.TtlabScorer;
 import org.texttechnologylab.utils.ImageUtils;
 import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
@@ -105,7 +104,7 @@ public class App {
         // Load in and test the model resources for the Analysis Engine
         if(SystemStatus.UceConfig.getSettings().getAnalysis().isEnableAnalysisEngine()){
             var modelResources = new ModelResources();
-            var ttlabScorer = new TtlabScorer();
+            var ttlabScorer = new TTLabScorerInfo();
             logger.info("Testing the model resources:");
         }
 
