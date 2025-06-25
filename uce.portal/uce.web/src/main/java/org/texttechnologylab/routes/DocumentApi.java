@@ -24,7 +24,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DocumentApi {
+public class DocumentApi implements UceApi {
     private S3StorageService s3StorageService;
     private PostgresqlDataInterface_Impl db;
     private static final Logger logger = LogManager.getLogger(DocumentApi.class);

@@ -1024,7 +1024,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         foundSnippets.forEach((key, snippetList) -> {
                             for (PageSnippet snippet : snippetList) {
                                 // Modify the value (example: changing content)
-                                snippet.setSnippet(StringUtils.getHtmlText(snippet.getSnippet()));
+                                snippet.setSnippet(snippet.getSnippet());
                             }
                         });
                         search.setSearchSnippets(foundSnippets);
@@ -1435,12 +1435,23 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public void saveOrUpdateManyAnnotationLinks(List<AnnotationLink> links) throws DatabaseOperationException {
-        executeOperationSafely((session -> {
-            for (var link : links) {
-                session.saveOrUpdate(link);
+        final int BATCH_SIZE = 1000;
+        // Since the links go in the hundred of millions for giant documents, we have to chunk the bulk inserts...
+        executeOperationSafely(session -> {
+            for (int i = 0; i < links.size(); i++) {
+                session.saveOrUpdate(links.get(i));
+
+                // Flush and clear the session every BATCH_SIZE records
+                if (i % BATCH_SIZE == 0 && i > 0) {
+                    session.flush();
+                    session.clear();
+                }
             }
+
+            session.flush();
+            session.clear();
             return null;
-        }));
+        });
     }
 
     public void saveOrUpdateManyDocumentToAnnotationLinks(List<DocumentToAnnotationLink> links) throws DatabaseOperationException {

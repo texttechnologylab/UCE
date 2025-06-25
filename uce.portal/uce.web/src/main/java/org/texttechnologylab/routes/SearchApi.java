@@ -21,7 +21,7 @@ import spark.Route;
 
 import java.util.*;
 
-public class SearchApi {
+public class SearchApi implements UceApi {
     private static final Logger logger = LogManager.getLogger(SearchApi.class);
     private ApplicationContext context = null;
     private PostgresqlDataInterface_Impl db = null;

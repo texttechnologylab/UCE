@@ -18,6 +18,9 @@ public class SpringConfig {
     }
 
     @Bean
+    public AuthenticationService authenticationService() {return new AuthenticationService();}
+
+    @Bean
     public MapService mapService() {
         return new MapService(databaseService());
     }

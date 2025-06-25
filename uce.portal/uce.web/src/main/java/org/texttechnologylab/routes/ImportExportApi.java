@@ -14,7 +14,7 @@ import spark.Route;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.CompletableFuture;
 
-public class ImportExportApi {
+public class ImportExportApi implements UceApi {
 
     private S3StorageService s3StorageService;
     private PostgresqlDataInterface_Impl db;

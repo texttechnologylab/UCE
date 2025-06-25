@@ -150,8 +150,22 @@ body {
 
 .document-content *{
     font-family: Courier  !important;
-    font-size: large;
     word-break: break-word;
+}
+
+.document-content p,
+.document-content label,
+.document-content span{
+    font-size: 16px;
+}
+
+.document-content h5,
+.document-content h4,
+.document-content h3,
+.document-content h2,
+.document-content h1{
+    color:rgba(0, 0, 0, 0.6);
+    font-weight: bold;
 }
 
 .document-content p {

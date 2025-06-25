@@ -182,17 +182,6 @@
             </#if>
         </#macro>
 
-        <#--
-        <#macro renderFallback document>
-            <#if document?has_content>
-                <div class="snippet-content position-relative">
-                    <div class="mb-0 small-font text font-italic mr-2 block-text">
-                        ${document.getFullTextSnippet(85)}...
-                    </div>
-                </div>
-            </#if>
-        </#macro>
-        -->
         <#macro renderFallback document>
             <#if document?has_content>
                 <#if mainAnno??>

@@ -175,7 +175,6 @@ $(document).ready(function () {
 
     // Highlight potential search terms for the first 10 pages
     for (let i = 1; i < 11; i++) searchPotentialSearchTokensInPage(i);
-
 });
 
 function sortedTopicArray(){
@@ -328,7 +327,7 @@ async function lazyLoadPages() {
     const id = $readerContainer.data('id');
     const pagesCount = $readerContainer.data('pagescount');
 
-    for (let i = 10; i <= pagesCount; i += 10) {
+    for (let i = 0; i <= pagesCount; i += 10) {
         const $loadedPagesCount = $('.site-container .loaded-pages-count');
         $loadedPagesCount.html(i);
 
