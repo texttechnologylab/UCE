@@ -331,44 +331,75 @@
                         </div>
                     </div>
                 </#if>
+<#--                <#if DUUI.isTtlabScorer>-->
+<#--                    <div class="border p-2 mb-2 bg-light">-->
+<#--                        <h6 class="mb-0 mr-1 color-prime">TTLab Scorer Analysis</h6>-->
+<#--                        <div class="analysis-ta-container">-->
+<#--                            <#if DUUI.textInformation?has_content>-->
+<#--                            &lt;#&ndash; Check if taAVG is not empty &ndash;&gt;-->
+<#--                                <#if DUUI.textInformation.taScoreAVG?has_content>-->
+<#--                                    <#list DUUI.textInformation.taScoreAVG as model>-->
+<#--                                        <div class="analysis-ta-card">-->
+<#--                                            <div class="analysis-ta-card-title">${model.getGroupName()}-->
+<#--                                                <button-->
+<#--                                                        class="ta-collapse-toggle-btn"-->
+<#--                                                        aria-expanded="true"-->
+<#--                                                        aria-label="Toggle TA details"-->
+<#--                                                        onclick="toggleCard(this)"-->
+<#--                                                >-->
+<#--                                                    ▼-->
+<#--                                                </button>-->
+<#--                                            </div>-->
+<#--                                            <div class="analysis-ta-grid">-->
+<#--                                                <#list model.taInputs as taInput>-->
+<#--                                                    <#assign opacity = taInput.getScore()?string?replace(",", ".")>-->
+<#--                                                    <div class="analysis-ta-entry" style="background-color: rgba(0, 200, 200, ${opacity});">-->
+<#--                                                        <div class="analysis-ta-score">${taInput.getName()}: ${taInput.getScore()}</div>-->
+<#--                                                    </div>-->
+<#--                                                </#list>-->
+<#--                                            </div>-->
+<#--                                        </div>-->
+<#--                                    </#list>-->
+<#--                                <#else>-->
+<#--                                    <p><strong>Keine TA Analyse</strong></p>-->
+<#--                                </#if>-->
+<#--                            <#else>-->
+<#--                                <p><strong>Keine TA Analyse</strong></p>-->
+<#--                            </#if>-->
+<#--                        </div>-->
+<#--                    </div>-->
+<#--                </#if>-->
                 <#if DUUI.isTtlabScorer>
                     <div class="border p-2 mb-2 bg-light">
                         <h6 class="mb-0 mr-1 color-prime">TTLab Scorer Analysis</h6>
                         <div class="analysis-ta-container">
-                            <#if DUUI.textInformation?has_content>
-                            <#-- Check if taAVG is not empty -->
-                                <#if DUUI.textInformation.taScoreAVG?has_content>
-                                    <#list DUUI.textInformation.taScoreAVG as model>
-                                        <div class="analysis-ta-card">
-                                            <div class="analysis-ta-card-title">${model.getGroupName()}
-                                                <button
-                                                        class="ta-collapse-toggle-btn"
-                                                        aria-expanded="true"
-                                                        aria-label="Toggle TA details"
-                                                        onclick="toggleCard(this)"
-                                                >
-                                                    ▼
-                                                </button>
-                                            </div>
-                                            <div class="analysis-ta-grid">
-                                                <#list model.taInputs as taInput>
-                                                    <#assign opacity = taInput.getScore()?string?replace(",", ".")>
-                                                    <div class="analysis-ta-entry" style="background-color: rgba(0, 200, 200, ${opacity});">
-                                                        <div class="analysis-ta-score">${taInput.getName()}: ${taInput.getScore()}</div>
-                                                    </div>
-                                                </#list>
-                                            </div>
-                                        </div>
-                                    </#list>
-                                <#else>
-                                    <p><strong>Keine TA Analyse</strong></p>
-                                </#if>
+
+                            <#if DUUI.textInformation?has_content && DUUI.textInformation.taScoreAVG?has_content>
+
+                                <div id="ta-tabulator-table" style="height: 300px; width: 300px">
+
+                                    <script>
+                                        window.ttlabTableData = [
+                                            <#list DUUI.textInformation.taScoreAVG as model>
+                                            <#list model.taInputs as taInput>
+                                            {
+                                                model: "${model.getGroupName()?js_string}",
+                                                name: "${taInput.getName()?js_string}",
+                                                score: ${taInput.getScore()?c}
+                                            }<#if !taInput?is_last || !model?is_last>,</#if>
+                                            </#list>
+                                            </#list>
+                                        ];
+                                    </script>
+                                </div>
                             <#else>
                                 <p><strong>Keine TA Analyse</strong></p>
                             </#if>
+
                         </div>
                     </div>
                 </#if>
+
             <#else>
                 <p><strong>Kein Model</strong></p>
             </#if>

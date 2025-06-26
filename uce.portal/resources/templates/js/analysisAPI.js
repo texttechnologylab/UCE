@@ -95,6 +95,7 @@ async function runAnalysisPipeline() {
         contentType: "application/json",
         success: function(firstResponse) {
             console.log(firstResponse);
+            showTabulatorTable();
             $('#analysis-result-container').html(firstResponse);
         },
         error: function(xhr, status, error) {
@@ -174,3 +175,29 @@ $('body').on('click', '[id^="history-"]', function() {
         }
     });
 });
+
+function showTabulatorTable() {
+    if (typeof window.ttlabTableData !== 'undefined' && window.ttlabTableData.length > 0) {
+        var table = new Tabulator("#ta-tabulator-table", {
+            data: window.ttlabTableData,
+            layout: "fitColumns",
+            columns: [
+                { title: "Modell", field: "model" },
+                {
+                    title: "Name",
+                    field: "name",
+                    formatter: function(cell) {
+                        return '<span style="color:blue;cursor:pointer;text-decoration:underline">' + cell.getValue() + '</span>';
+                    },
+                    cellClick: function(e, cell) {
+                        alert("Name geklickt: " + cell.getValue());
+                    }
+                },
+                { title: "Score", field: "score" }
+            ],
+        });
+        console.log(table);
+    } else {
+        console.warn("Ttlab Table Data nicht gefunden oder leer.");
+    }
+}
