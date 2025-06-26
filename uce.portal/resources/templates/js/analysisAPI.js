@@ -95,8 +95,15 @@ async function runAnalysisPipeline() {
         contentType: "application/json",
         success: function(firstResponse) {
             console.log(firstResponse);
-            showTabulatorTable();
             $('#analysis-result-container').html(firstResponse);
+            // Warte, bis das Div wirklich im DOM ist
+            requestAnimationFrame(() => {
+                if (document.querySelector('[id^="ttlab-scorer-table-"]')) {
+                    showAllTtlabScorerTables();
+                } else {
+                    console.warn("Kein Div mit id 'ttlab-scorer-table-*' gefunden.");
+                }
+            });
         },
         error: function(xhr, status, error) {
             console.error(xhr.responseText);
@@ -178,7 +185,7 @@ $('body').on('click', '[id^="history-"]', function() {
 
 function showTabulatorTable() {
     if (typeof window.ttlabTableData !== 'undefined' && window.ttlabTableData.length > 0) {
-        var table = new Tabulator("#ta-tabulator-table", {
+        var table = new Tabulator("#ttlab-scorer-table", {
             data: window.ttlabTableData,
             layout: "fitColumns",
             columns: [
@@ -201,3 +208,99 @@ function showTabulatorTable() {
         console.warn("Ttlab Table Data nicht gefunden oder leer.");
     }
 }
+
+function showAllTtlabScorerTables() {
+    if (typeof window.ttlabTableDataByModel !== 'undefined') {
+        window.ttlabTables = {};
+
+        Object.keys(window.ttlabTableDataByModel).forEach(function (key) {
+            const data = window.ttlabTableDataByModel[key];
+            const tableId = "ttlab-scorer-table-" + key;
+            const selector = "#" + tableId;
+            const container = document.querySelector(selector);
+
+            if (data.length > 0 && container) {
+                const table = new Tabulator(selector, {
+                    data: data,
+                    layout: "fitDataFill",
+                    // height: "100%",
+                    // maxHeight: "400px",
+                    resizableRows: true,
+                    resizableRowGuide: true,
+                    resizableColumnGuide: true,
+                    columnDefaults: {
+                        resizable: true,
+                    },
+                    columns: [
+                        { title: "Modell", field: "model" },
+                        {
+                            title: "Name",
+                            field: "name",
+                            formatter: function (cell) {
+                                return '<span style="color:blue;cursor:pointer;text-decoration:underline">' + cell.getValue() + '</span>';
+                            },
+                            cellClick: function (e, cell) {
+                                alert("Name geklickt: " + cell.getValue());
+                            }
+                        },
+                        { title: "Score", field: "score" }
+                    ]
+                });
+
+                window.ttlabTables[key] = table;
+
+                const buttonWrapper = document.createElement("div");
+                buttonWrapper.className = "ttlab-scorer-download-buttons";
+                buttonWrapper.dataset.tableId = key;
+
+                ["json", "tsv", "xlsx"].forEach(format => {
+                    const btn = document.createElement("button");
+                    btn.textContent = format.toUpperCase();
+                    btn.className = "ttlab-download-btn";
+                    btn.dataset.format = format;
+                    buttonWrapper.appendChild(btn);
+                });
+
+                container.insertAdjacentElement("afterend", buttonWrapper);
+            } else {
+                console.warn(`Keine Daten oder kein Container für Modell #` + key);
+            }
+        });
+
+        document.addEventListener("click", function (event) {
+            if (event.target.classList.contains("ttlab-download-btn")) {
+                const format = event.target.dataset.format;
+                const parent = event.target.closest(".ttlab-scorer-download-buttons");
+                const tableKey = parent.dataset.tableId;
+                const table = window.ttlabTables[tableKey];
+
+                if (!table) {
+                    console.error("Tabulator Instanz nicht gefunden für ID", tableKey);
+                    return;
+                }
+
+                const filename = "ttlab-scorer-" + tableKey + "." + format;
+
+                switch (format) {
+                    case "json":
+                        table.download("json", filename);
+                        break;
+                    case "tsv":
+                        table.download("csv", filename, { delimiter: "\t" });
+                        break;
+                    case "xlsx":
+                        table.download("xlsx", filename, { sheetName: "Scorer Data" });
+                        break;
+                    default:
+                        console.warn("Unbekanntes Format:", format);
+                }
+            }
+        });
+    } else {
+        console.warn("ttlabTableDataByModel ist nicht definiert.");
+    }
+}
+
+
+
+

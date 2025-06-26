@@ -976,6 +976,132 @@
     transform: rotate(-90deg);
 }
 
+.ttlab-scorer-container {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.ttlab-scorer-card {
+    display: flex;
+    flex: 1 1 100%;
+    flex-direction: column;
+    padding: 20px;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.ttlab-scorer-grid {
+    max-height: 400px;
+    overflow-y: auto;
+    overflow-x: auto;
+    resize: vertical;
+    padding-right: 10px;
+}
+
+.ttlab-scorer-table {
+    min-height: 120px;
+    height: 120px;
+    /*max-height: 400px;*/
+    overflow-y: auto;
+    resize: vertical;
+}
+
+.ttlab-scorer-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.2);
+}
+
+.ttlab-scorer-card-title {
+    font-size: 1.6em;
+    margin-bottom: 20px;
+    color: #343a40;
+    border-bottom: 2px solid #007bff;
+    padding-bottom: 8px;
+}
+
+.ttlab-scorer-entry {
+    display: inline-block;
+    width: calc(32.333% - 16px);
+    margin-right: 16px;
+    border-radius: 10px;
+    padding: 16px;
+    text-align: center;
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+    transition: background-color 0.3s, transform 0.3s;
+    margin-bottom: 16px;
+}
+
+.ttlab-scorer-entry:hover {
+    transform: translateY(-3px);
+}
+
+.ttlab-scorer-name {
+    font-size: 1.1em;
+    font-weight: bold;
+    color: #343a40;
+    margin-bottom: 8px;
+    text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.ttlab-scorer-score {
+    display: inline-block;
+    margin-top: 4px;
+    font-size: 0.9em;
+    font-weight: bold;
+    color: #343a40;
+}
+
+.ttlab-scorer-collapse-btn {
+    background: none;
+    border: none;
+    font-size: 1.2em;
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.ttlab-scorer-card.collapsed .ttlab-scorer-grid {
+    display: none;
+}
+
+.ttlab-scorer-card.collapsed .ttlab-scorer-collapse-btn {
+    transform: rotate(-90deg);
+}
+
+.ttlab-scorer-table-wrapper {
+    margin-bottom: 30px;
+    padding: 10px;
+    border: 1px solid #ccc;
+    border-radius: 10px;
+}
+
+.ttlab-scorer-buttons {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.ttlab-scorer-download-buttons {
+    margin-top: 10px;
+    display: flex;
+    gap: 10px;
+}
+.ttlab-download-btn {
+    padding: 6px 12px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+.ttlab-download-btn:hover {
+    background-color: #0056b3;
+}
+
+
+
+
+
 
 
 

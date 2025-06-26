@@ -371,27 +371,43 @@
 <#--                </#if>-->
                 <#if DUUI.isTtlabScorer>
                     <div class="border p-2 mb-2 bg-light">
-                        <h6 class="mb-0 mr-1 color-prime">TTLab Scorer Analysis</h6>
-                        <div class="analysis-ta-container">
+                        <h6 class="mb-0 mr-1 ttlab-scorer-color-primary">TTLab Scorer Analysis</h6>
+                        <div class="ttlab-scorer-container">
 
                             <#if DUUI.textInformation?has_content && DUUI.textInformation.taScoreAVG?has_content>
+                                <script>
+                                    window.ttlabTableDataByModel = {};
+                                </script>
 
-                                <div id="ta-tabulator-table" style="height: 300px; width: 300px">
+                            <#list DUUI.textInformation.taScoreAVG as model>
+                                <div class="ttlab-scorer-box">
+                                    <h6 class="ttlab-scorer-color-primary">${model.getGroupName()?html}</h6>
+
+                                    <div class="ttlab-scorer-table-wrapper">
+                                        <div class="ttlab-scorer-buttons" data-tablekey="${model_index}">
+<#--                                            <button class="ttlab-download-btn" data-format="json" data-tablekey="${model_index}">JSON</button>-->
+<#--                                            <button class="ttlab-download-btn" data-format="tsv" data-tablekey="${model_index}">TSV</button>-->
+<#--                                            <button class="ttlab-download-btn" data-format="xlsx" data-tablekey="${model_index}">XLSX</button>-->
+                                        </div>
+
+                                        <div id="ttlab-scorer-table-${model_index}" class="ttlab-scorer-table"></div>
+                                    </div>
 
                                     <script>
-                                        window.ttlabTableData = [
-                                            <#list DUUI.textInformation.taScoreAVG as model>
+                                        window.ttlabTableDataByModel["${model_index}"] = [
                                             <#list model.taInputs as taInput>
                                             {
                                                 model: "${model.getGroupName()?js_string}",
                                                 name: "${taInput.getName()?js_string}",
                                                 score: ${taInput.getScore()?c}
-                                            }<#if !taInput?is_last || !model?is_last>,</#if>
-                                            </#list>
+                                            }<#if !taInput?is_last>,</#if>
                                             </#list>
                                         ];
                                     </script>
                                 </div>
+                            </#list>
+
+
                             <#else>
                                 <p><strong>Keine TA Analyse</strong></p>
                             </#if>
@@ -399,6 +415,9 @@
                         </div>
                     </div>
                 </#if>
+
+
+
 
             <#else>
                 <p><strong>Kein Model</strong></p>
