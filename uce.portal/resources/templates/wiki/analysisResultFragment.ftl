@@ -406,6 +406,10 @@
                                     </script>
                                 </div>
                             </#list>
+                                <div id="scatter-container" style="position: relative; width: 600px; min-width: 400px; height: 450px; min-height: 300px; border: 1px solid #ccc; padding: 15px; background: #fff; resize: both; overflow: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-radius: 8px; display: none">
+                                    <button id="close-scatter" style="position: absolute; top: 5px; right: 5px; background: #ff5c5c; border: none; color: white; padding: 5px 10px; cursor: pointer; border-radius: 3px;">✕</button>
+                                    <canvas id="ttlab-scatter-chart" height="400" style="width: 100%; height: 100%; display: block;"></canvas>
+                                </div>
 
 
                             <#else>

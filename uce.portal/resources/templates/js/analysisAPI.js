@@ -209,6 +209,17 @@ function showTabulatorTable() {
     }
 }
 
+let selectedNames = [];
+let chartInstance = null;
+
+// Beispielhafte Referenzdaten (kannst du später dynamisch ersetzen)
+const referencePoints = [
+    { id: "doc1", x: 0.2, y: 0.5 },
+    { id: "doc2", x: 0.7, y: 0.8 },
+    { id: "doc3", x: -0.3, y: 1.2 },
+    { id: "doc4", x: 1.4, y: -0.2 }
+];
+
 function showAllTtlabScorerTables() {
     if (typeof window.ttlabTableDataByModel !== 'undefined') {
         window.ttlabTables = {};
@@ -223,8 +234,6 @@ function showAllTtlabScorerTables() {
                 const table = new Tabulator(selector, {
                     data: data,
                     layout: "fitDataFill",
-                    // height: "100%",
-                    // maxHeight: "400px",
                     resizableRows: true,
                     resizableRowGuide: true,
                     resizableColumnGuide: true,
@@ -240,66 +249,188 @@ function showAllTtlabScorerTables() {
                                 return '<span style="color:blue;cursor:pointer;text-decoration:underline">' + cell.getValue() + '</span>';
                             },
                             cellClick: function (e, cell) {
-                                alert("Name geklickt: " + cell.getValue());
+                                const row = cell.getRow().getData();
+                                handleNameSelection(row.name, row.score);
                             }
                         },
                         { title: "Score", field: "score" }
                     ]
                 });
+                // const table = new Tabulator(selector, {
+                //     data: data,
+                //     layout: "fitDataFill",
+                //     resizableRows: true,
+                //     resizableRowGuide: true,
+                //     resizableColumnGuide: true,
+                //     columnDefaults: {
+                //         resizable: true,
+                //     },
+                //     columns: [
+                //         { title: "Modell", field: "model" },
+                //         {
+                //             title: "Name",
+                //             field: "name",
+                //             formatter: function (cell) {
+                //                 return '<span style="color:blue;cursor:pointer;text-decoration:underline">' + cell.getValue() + '</span>';
+                //             }
+                //             // cellClick: kann entfernt werden, da wir rowClick benutzen
+                //         },
+                //         { title: "Score", field: "score" }
+                //     ],
+                //     rowClick: function (e, row) {
+                //         const rowData = row.getData();
+                //         handleNameSelection(rowData.name, rowData.score);
+                //     }
+                // });
 
                 window.ttlabTables[key] = table;
-
-                const buttonWrapper = document.createElement("div");
-                buttonWrapper.className = "ttlab-scorer-download-buttons";
-                buttonWrapper.dataset.tableId = key;
-
-                ["json", "tsv", "xlsx"].forEach(format => {
-                    const btn = document.createElement("button");
-                    btn.textContent = format.toUpperCase();
-                    btn.className = "ttlab-download-btn";
-                    btn.dataset.format = format;
-                    buttonWrapper.appendChild(btn);
-                });
-
-                container.insertAdjacentElement("afterend", buttonWrapper);
-            } else {
-                console.warn(`Keine Daten oder kein Container für Modell #` + key);
             }
         });
-
-        document.addEventListener("click", function (event) {
-            if (event.target.classList.contains("ttlab-download-btn")) {
-                const format = event.target.dataset.format;
-                const parent = event.target.closest(".ttlab-scorer-download-buttons");
-                const tableKey = parent.dataset.tableId;
-                const table = window.ttlabTables[tableKey];
-
-                if (!table) {
-                    console.error("Tabulator Instanz nicht gefunden für ID", tableKey);
-                    return;
-                }
-
-                const filename = "ttlab-scorer-" + tableKey + "." + format;
-
-                switch (format) {
-                    case "json":
-                        table.download("json", filename);
-                        break;
-                    case "tsv":
-                        table.download("csv", filename, { delimiter: "\t" });
-                        break;
-                    case "xlsx":
-                        table.download("xlsx", filename, { sheetName: "Scorer Data" });
-                        break;
-                    default:
-                        console.warn("Unbekanntes Format:", format);
-                }
-            }
-        });
-    } else {
-        console.warn("ttlabTableDataByModel ist nicht definiert.");
     }
 }
+
+function handleNameSelection(name, score) {
+    selectedNames.push({ name, score });
+
+    if (selectedNames.length === 2) {
+        updateCorpusScatterPlot();
+    } else if (selectedNames.length > 2) {
+        selectedNames = selectedNames.slice(-2); // nur die letzten zwei behalten
+        updateCorpusScatterPlot();
+    }
+}
+
+function updateCorpusScatterPlot() {
+    if (selectedNames.length < 2) return;
+
+    const container = document.getElementById('scatter-container');
+    if (container.style.display === 'none') {
+        container.style.display = 'block';
+    }
+
+    const xName = selectedNames[1].name;
+    const yName = selectedNames[0].name;
+    const xScore = selectedNames[1].score;
+    const yScore = selectedNames[0].score;
+
+    const userPoint = { id: "origin", x: xScore, y: yScore };
+
+    const allPoints = [...referencePoints, userPoint];
+
+    const xValues = allPoints.map(p => p.x);
+    const yValues = allPoints.map(p => p.y);
+
+    const pad = (min, max) => {
+        const range = max - min || 1;
+        return {
+            min: min - range * 0.05,
+            max: max + range * 0.05
+        };
+    };
+
+    const xScale = pad(Math.min(...xValues), Math.max(...xValues));
+    const yScale = pad(Math.min(...yValues), Math.max(...yValues));
+
+    const datasets = [
+        {
+            label: "Referenzpunkte",
+            data: referencePoints.map(p => ({ x: p.x, y: p.y, id: p.id })),
+            backgroundColor: "rgba(54, 162, 235, 0.6)",
+            pointRadius: 5,
+            pointHoverRadius: 7
+        },
+        {
+            label: "Ursprungspunkt",
+            data: [{ x: userPoint.x, y: userPoint.y, id: "Ursprung" }],
+            backgroundColor: "rgba(255, 99, 132, 1)",
+            pointRadius: 7,
+            pointHoverRadius: 9
+        }
+    ];
+
+    const canvas = document.getElementById("ttlab-scatter-chart");
+
+    // const container = document.getElementById("scatter-container");
+    const minWidth = 400;
+    const minHeight = 300;
+    const style = getComputedStyle(container);
+    const width = Math.max(container.clientWidth, minWidth);
+    const height = Math.max(container.clientHeight, minHeight);
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = width * dpr;
+    canvas.height = height * dpr;
+    canvas.style.width = width + "px";
+    canvas.style.height = height + "px";
+
+    const ctx = canvas.getContext("2d");
+    ctx.setTransform(dpr, 0, 0, dpr, 0, 0); // für DPI Skalierung
+
+
+    if (chartInstance) chartInstance.destroy();
+
+    chartInstance = new Chart(ctx, {
+        type: "scatter",
+        data: { datasets },
+        options: {
+            responsive: true,
+            plugins: {
+                tooltip: {
+                    callbacks: {
+                        label: function (context) {
+                            const { x, y, id } = context.raw;
+                            return id + " (x: " + x.toFixed(3) + ", y: " + y.toFixed(3) + ")";
+                        }
+                    }
+                },
+                legend: {
+                    position: "top"
+                },
+                title: {
+                    display: true,
+                    text: "Vergleich: " + xName + " (X) vs. " + yName + " (Y)"
+                }
+            },
+            scales: {
+                x: {
+                    title: { display: true, text: xName },
+                    min: xScale.min,
+                    max: xScale.max,
+                    grid: {
+                        color: (ctx) => ctx.tick.value === 0 ? '#000000' : 'rgba(0,0,0,0.1)', // x=0 Linie schwarz
+                        lineWidth: (ctx) => ctx.tick.value === 0 ? 2 : 1
+                    }
+                },
+                y: {
+                    title: { display: true, text: yName },
+                    min: yScale.min,
+                    max: yScale.max,
+                    grid: {
+                        color: (ctx) => ctx.tick.value === 0 ? '#000000' : 'rgba(0,0,0,0.1)', // y=0 Linie schwarz
+                        lineWidth: (ctx) => ctx.tick.value === 0 ? 2 : 1
+                    }
+                }
+            }
+
+        }
+    });
+}
+
+
+document.body.addEventListener('click', function (e) {
+    if (e.target && e.target.id === 'close-scatter') {
+        const container = document.getElementById('scatter-container');
+        if (container) {
+            container.style.display = 'none';
+            selectedNames = [];
+            chartInstance = null;
+        }
+    }
+});
+
+
+
+
+
 
 
 

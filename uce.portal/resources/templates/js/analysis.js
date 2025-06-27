@@ -1,8 +1,7 @@
+// Toggle auf- und zuklappen
 document.querySelectorAll('.tree-toggle').forEach(toggle => {
     toggle.addEventListener('click', function (e) {
-        if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'label') {
-            return;
-        }
+        if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'label') return;
 
         const parent = this.parentElement;
         const nested = parent.querySelector('.nested');
@@ -13,55 +12,66 @@ document.querySelectorAll('.tree-toggle').forEach(toggle => {
     });
 });
 
-
+// Master-Checkbox
 const nlpMasterCheckbox = document.getElementById('all-analysis-models-checkbox');
 
 nlpMasterCheckbox.addEventListener('change', function () {
-    const allNlpCheckboxes = document.querySelectorAll('.nlp-group-checkbox, .nlp-model-checkbox');
-    allNlpCheckboxes.forEach(cb => cb.checked = this.checked);
-    updateNlpMasterCheckbox();
+    const allCheckboxes = document.querySelectorAll(
+        '.nlp-group-checkbox, .nlp-model-checkbox, .ttlab-group-checkbox, .ttlab-subgroup-checkbox, .ttlab-model-checkbox'
+    );
+    allCheckboxes.forEach(cb => cb.checked = this.checked);
+
+    // Alles zurücksetzen
+    document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.indeterminate = false);
     updateAllFieldVisibilities();
 });
 
+// NLP Gruppen-Checkbox
 document.querySelectorAll('.nlp-group-checkbox').forEach(groupCheckbox => {
     groupCheckbox.addEventListener('change', function (e) {
         const groupItem = this.closest('li');
         const modelCheckboxes = groupItem.querySelectorAll('.nlp-model-checkbox');
         modelCheckboxes.forEach(cb => cb.checked = this.checked);
-        updateNlpMasterCheckbox();
+        updateNlpGroupState(this);
         updateAllFieldVisibilities();
         e.stopPropagation();
     });
 });
 
+// NLP Modell-Checkbox
 document.querySelectorAll('.nlp-model-checkbox').forEach(modelCheckbox => {
     modelCheckbox.addEventListener('change', function (e) {
-        const groupItem = this.closest('ol.nested').closest('li');
-        const groupCheckbox = groupItem.querySelector('.nlp-group-checkbox');
-        const modelCheckboxes = groupItem.querySelectorAll('.nlp-model-checkbox');
-
-        const allChecked = Array.from(modelCheckboxes).every(cb => cb.checked);
-        const noneChecked = Array.from(modelCheckboxes).every(cb => !cb.checked);
-
-        if (allChecked) {
-            groupCheckbox.checked = true;
-            groupCheckbox.indeterminate = false;
-        } else if (noneChecked) {
-            groupCheckbox.checked = false;
-            groupCheckbox.indeterminate = false;
-        } else {
-            groupCheckbox.checked = false;
-            groupCheckbox.indeterminate = true;
-        }
-
-        updateNlpMasterCheckbox();
+        updateNlpGroupState(this);
         updateAllFieldVisibilities();
         e.stopPropagation();
     });
 });
 
+function updateNlpGroupState(changedCheckbox) {
+    const groupItem = changedCheckbox.closest('ol.nested')?.closest('li');
+    if (!groupItem) return;
+    const groupCheckbox = groupItem.querySelector('.nlp-group-checkbox');
+    const modelCheckboxes = groupItem.querySelectorAll('.nlp-model-checkbox');
+
+    const allChecked = Array.from(modelCheckboxes).every(cb => cb.checked);
+    const noneChecked = Array.from(modelCheckboxes).every(cb => !cb.checked);
+
+    if (allChecked) {
+        groupCheckbox.checked = true;
+        groupCheckbox.indeterminate = false;
+    } else if (noneChecked) {
+        groupCheckbox.checked = false;
+        groupCheckbox.indeterminate = false;
+    } else {
+        groupCheckbox.checked = false;
+        groupCheckbox.indeterminate = true;
+    }
+
+    updateNlpMasterCheckbox();
+}
+
 function updateNlpMasterCheckbox() {
-    const groupCheckboxes = document.querySelectorAll('.nlp-group-checkbox');
+    const groupCheckboxes = document.querySelectorAll('.nlp-group-checkbox, .ttlab-group-checkbox');
     const total = groupCheckboxes.length;
     const checked = Array.from(groupCheckboxes).filter(cb => cb.checked).length;
     const indeterminate = Array.from(groupCheckboxes).some(cb => cb.indeterminate);
@@ -78,50 +88,65 @@ function updateNlpMasterCheckbox() {
     }
 }
 
-
-document.querySelectorAll('.ttlab-group-checkbox').forEach(groupCheckbox => {
+// TTLAB Gruppen und Modelle
+document.querySelectorAll('.ttlab-group-checkbox, .ttlab-subgroup-checkbox').forEach(groupCheckbox => {
     groupCheckbox.addEventListener('change', function (e) {
         const groupItem = this.closest('li');
-        const modelCheckboxes = groupItem.querySelectorAll('.ttlab-model-checkbox');
-        modelCheckboxes.forEach(cb => cb.checked = this.checked);
+        const childCheckboxes = groupItem.querySelectorAll('input[type="checkbox"]');
+        childCheckboxes.forEach(cb => cb.checked = this.checked);
+        updateTtlabParentCheckboxStates(this);
+        updateNlpMasterCheckbox();
         e.stopPropagation();
     });
 });
 
 document.querySelectorAll('.ttlab-model-checkbox').forEach(modelCheckbox => {
     modelCheckbox.addEventListener('change', function (e) {
-        const groupItem = this.closest('ol.nested').closest('li');
-        const groupCheckbox = groupItem.querySelector('.ttlab-group-checkbox');
-        const modelCheckboxes = groupItem.querySelectorAll('.ttlab-model-checkbox');
-
-        const allChecked = Array.from(modelCheckboxes).every(cb => cb.checked);
-        const noneChecked = Array.from(modelCheckboxes).every(cb => !cb.checked);
-
-        if (allChecked) {
-            groupCheckbox.checked = true;
-            groupCheckbox.indeterminate = false;
-        } else if (noneChecked) {
-            groupCheckbox.checked = false;
-            groupCheckbox.indeterminate = false;
-        } else {
-            groupCheckbox.checked = false;
-            groupCheckbox.indeterminate = true;
-        }
-
+        updateTtlabParentCheckboxStates(this);
+        updateNlpMasterCheckbox();
         e.stopPropagation();
     });
 });
 
+function updateTtlabParentCheckboxStates(checkbox) {
+    let current = checkbox.closest('ul.nested, ol.nested');
+    while (current) {
+        const parentLi = current.closest('li');
+        const parentCheckbox = parentLi?.querySelector('input[type="checkbox"]:not(.ttlab-model-checkbox)');
 
+        if (parentCheckbox) {
+            const relevantCheckboxes = current.querySelectorAll('input[type="checkbox"]:not(.tree-toggle input)');
+            const childCheckboxes = Array.from(relevantCheckboxes).filter(cb => cb !== parentCheckbox && cb.closest('li') === cb.closest('li'));
+
+            const allChecked = childCheckboxes.every(cb => cb.checked);
+            const noneChecked = childCheckboxes.every(cb => !cb.checked);
+
+            if (allChecked) {
+                parentCheckbox.checked = true;
+                parentCheckbox.indeterminate = false;
+            } else if (noneChecked) {
+                parentCheckbox.checked = false;
+                parentCheckbox.indeterminate = false;
+            } else {
+                parentCheckbox.checked = false;
+                parentCheckbox.indeterminate = true;
+            }
+        }
+
+        current = parentLi?.closest('ul.nested, ol.nested');
+    }
+}
+
+// Sichtbarkeit bestimmter Eingabefelder basierend auf Checkboxen
 function updateAllFieldVisibilities() {
     updateFieldVisibility('factchecking', 'claim-field-wrapper', 'claim-text');
-    updateFieldVisibility('cohesion ', 'text-field-wrapper', 'input-text');
-    updateFieldVisibility('stance ', 'stance-field-wrapper', 'stance-text');
+    updateFieldVisibility('cohesion', 'text-field-wrapper', 'input-text');
+    updateFieldVisibility('stance', 'stance-field-wrapper', 'stance-text');
     updateFieldVisibility('llm', 'llm-field-wrapper', 'llm-text');
 }
 
 function updateFieldVisibility(keyword, wrapperId, inputId) {
-    const checkboxes = document.querySelectorAll('.nlp-model-checkbox');
+    const checkboxes = document.querySelectorAll('.nlp-model-checkbox, .ttlab-model-checkbox');
     const anyChecked = Array.from(checkboxes).some(cb => cb.id.toLowerCase().includes(keyword) && cb.checked);
     const wrapper = document.getElementById(wrapperId);
 
@@ -134,13 +159,12 @@ function updateFieldVisibility(keyword, wrapperId, inputId) {
     }
 }
 
+// Upload-Button
 const uploadBtn = document.getElementById('analysis-upload-btn');
 const fileInput = document.getElementById('file-input');
 const textarea = document.getElementById('analysis-input');
 
-uploadBtn.addEventListener('click', () => {
-    fileInput.click();
-});
+uploadBtn.addEventListener('click', () => fileInput.click());
 
 fileInput.addEventListener('change', () => {
     const file = fileInput.files[0];
@@ -154,11 +178,69 @@ fileInput.addEventListener('change', () => {
     }
 });
 
+// Sidebar ein-/ausklappen
+function toggleSidebar(id) {
+    const section = document.getElementById(id);
+    if (!section) return;
+
+    const isVisible = section.style.display === "block";
+    section.style.display = isVisible ? "none" : "block";
+}
+
+// Karten zusammenklappen
 function toggleCard(button) {
     const card = button.closest('.analysis-ta-card');
     const isCollapsed = card.classList.toggle('collapsed');
     button.setAttribute('aria-expanded', !isCollapsed);
 }
+
+// Sidebar-Sektionen anfangs ausblenden
+document.getElementById('nlp-tools').style.display = 'none';
+document.getElementById('history').style.display = 'none';
+
+// Drag and drop für Sektionen
+const container = document.getElementById('analysis-main-content');
+let draggedEl = null;
+
+document.querySelectorAll('.draggable-section').forEach(section => {
+    section.addEventListener('dragstart', () => {
+        draggedEl = section;
+        section.classList.add('dragging');
+    });
+
+    section.addEventListener('dragend', () => {
+        draggedEl = null;
+        section.classList.remove('dragging');
+        document.querySelectorAll('.draggable-section').forEach(el => el.classList.remove('drag-over'));
+    });
+
+    section.addEventListener('dragover', (e) => {
+        e.preventDefault();
+        if (section !== draggedEl) {
+            section.classList.add('drag-over');
+        }
+    });
+
+    section.addEventListener('dragleave', () => {
+        section.classList.remove('drag-over');
+    });
+
+    section.addEventListener('drop', (e) => {
+        e.preventDefault();
+        if (section !== draggedEl) {
+            section.classList.remove('drag-over');
+            const allSections = Array.from(container.children);
+            const draggedIndex = allSections.indexOf(draggedEl);
+            const dropIndex = allSections.indexOf(section);
+
+            if (draggedIndex < dropIndex) {
+                container.insertBefore(draggedEl, section.nextSibling);
+            } else {
+                container.insertBefore(draggedEl, section);
+            }
+        }
+    });
+});
 
 document.querySelectorAll('.ta-collapse-toggle-btn').forEach(button => {
     button.addEventListener('click', function (e) {

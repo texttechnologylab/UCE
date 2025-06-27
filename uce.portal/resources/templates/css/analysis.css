@@ -1,3 +1,98 @@
+.resizable-container {
+    display: flex;
+    height: 100%;
+    position: relative;
+}
+
+.draggable-section.dragging {
+    opacity: 0.5;
+}
+
+.draggable-section.drag-over {
+    border-top: 2px dashed #007BFF;
+}
+
+
+/* Sidebar-Container links */
+.analysis-sidebar-toggle {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    background: linear-gradient(to bottom, #2c3e50, #34495e);
+    padding: 12px 0;
+    border-right: 2px solid #1f2c38;
+    width: 30px;
+    flex-shrink: 0;
+    box-shadow: 2px 0 6px rgba(0, 0, 0, 0.1);
+}
+
+/* Icon-Buttons */
+.analysis-toggle-btn {
+    background: none;
+    border: none;
+    color: #ecf0f1;
+    font-size: 22px;
+    margin: 14px 0;
+    cursor: pointer;
+    position: relative;
+    transition: color 0.3s ease;
+}
+
+/* Tooltip bei Hover */
+.analysis-toggle-btn[title]::after {
+    content: attr(title);
+    position: absolute;
+    left: 60px;
+    top: 50%;
+    transform: translateY(-50%);
+    background-color: #333;
+    color: #fff;
+    padding: 5px 10px;
+    border-radius: 6px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    font-size: 13px;
+    z-index: 10;
+}
+
+/* Tooltip sichtbar machen */
+.analysis-toggle-btn:hover::after {
+    opacity: 1;
+}
+
+/* Hover-Effekt Icon */
+.analysis-toggle-btn:hover {
+    color: #1abc9c;
+    transform: scale(1.1);
+}
+
+
+/* Rechte Hauptinhalte neben der Sidebar */
+.analysis-main-content {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+/* Abschnitte innerhalb der rechten Fläche */
+.analysis-sidebar-section {
+    display: none; /* Per JS steuerbar */
+    margin-bottom: 1rem;
+}
+
+.analysis-toggle-btn.active {
+    color: #1abc9c;
+    border-left: 3px solid #1abc9c;
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+
+
+
 .analysis-result-container {
     margin-top: 50px;
     min-height: 50vh;
@@ -17,71 +112,48 @@
     max-height: 99999vh !important;
 }
 
-.analysis-view{
-    padding-bottom: 2rem;
-}
-
-.analysis-view *{
-    font-family: "Times New Roman", serif;
-}
-
-.analysis-view header{
-    width: 100%;
-    border-bottom: 1px lightgrey solid;
-    padding-top: 2rem;
-    padding-bottom: 2rem;
-}
-
-.analysis-view .search-analysis-input{
-    max-width: 300px;
-    flex-grow: 1;
-    padding: 8px;
-}
-
-.analysis-view .search-analysis-btn{
-    height: 100%;
-    color:var(--prime);
-    padding-right: 12px;
-    padding-left: 12px;
-}
-
-.analysis-view .search-block {
-    flex-grow: 1;
-}
-
-.analysis-view .search-block .flexed {
-    display: flex;
-    align-items: center;
-    width: 100%;
-    gap: 5px;
-}
-
+/* Treeview scrollfähig in X-Richtung */
 .analysis-treeview {
-    font-family: sans-serif;
-    font-size: 14px;
+    font-family: "Segoe UI", Tahoma, sans-serif;
+    font-size: 13px;
     list-style-type: none;
     padding-left: 0;
+    color: #000;
+    overflow-x: auto;
+    overflow-y: hidden;
+    white-space: nowrap;
+    display: inline-block;
+    min-width: max-content;
 }
 
+/* Wrapper für Scrollbereich */
+.treeview-wrapper {
+    overflow-x: auto;
+    max-width: 100%;
+}
+
+/* Standard-Styling */
 .analysis-treeview li {
-    margin-bottom: 0.4rem;
+    margin: 0;
+    padding: 2px 0;
 }
 
+/* Gruppen-/Ordnerzeile */
 .analysis-treeview .tree-toggle {
-    cursor: pointer;
     display: flex;
     align-items: center;
-    padding: 0.5rem 1rem;
-    background-color: white; /* Bootstrap Primary */
-    color: var(--prime);
-    border-radius: 0.375rem; /* Bootstrap-like border-radius */
-    transition: background-color 0.2s, box-shadow 0.2s;
+    gap: 6px;
+    padding: 2px 4px;
+    color: #000;
+    background-color: transparent;
+    border: none;
+    border-radius: 0;
     user-select: none;
+    white-space: nowrap;
 }
 
 .analysis-treeview .tree-toggle:hover {
-    background-color: lightgrey; /* Bootstrap Primary hover */
-    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);
+    background-color: #e5f1fb;
 }
 
 .analysis-treeview .tree-toggle input[type="checkbox"] {
@@ -90,46 +162,186 @@
 
 .analysis-treeview .tree-toggle label {
     margin: 0;
+    padding: 0;
 }
 
-.analysis-treeview .tree-toggle .toggle-icon {
-    margin-right: 0.5rem;
-    transition: transform 0.3s ease;
+/* Ordner-Symbol statt Pfeile */
+.analysis-treeview .toggle-icon {
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 16px;
+    height: 16px;
 }
 
-.analysis-treeview .toggle-icon.open {
-    transform: rotate(90deg);
+.analysis-treeview .toggle-icon::before {
+    content: "\1F4C1"; /* 📁 geschlossen */
 }
 
+.analysis-treeview .toggle-icon.open::before {
+    content: "\1F4C2"; /* 📂 offen */
+}
+
+/* Einrückung verschachtelter Listen */
 .analysis-treeview .nested {
     display: none;
-    padding-left: 1.2em;
-    margin-top: 0.3em;
+    padding-left: 1.2rem;
+    margin: 2px 0 0 10px;
+    border-left: 1px dotted #ccc;
 }
 
 .analysis-treeview .nested.active {
     display: block;
 }
 
-/* Slightly smaller and more subtle model items */
+/* Model-Zeile */
+.analysis-treeview .model-item {
+    display: flex;
+    align-items: center;
+    padding: 2px 4px;
+    white-space: nowrap;
+}
+
 .analysis-treeview .model-item label {
     display: flex;
     align-items: center;
-    padding: 0.3rem 0.8rem;
-    background-color: #e9ecef;
-    color: #212529;
-    border-radius: 0.375rem;
-    margin: 0.2rem 0;
-    transition: background-color 0.2s;
+    gap: 6px;
+    margin: 0;
+    padding: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
-.analysis-treeview .model-item label:hover {
-    background-color: #d3d9df;
-}
-
+/* Modell-Checkbox-Abstand */
 .analysis-treeview .model-item input[type="checkbox"] {
-    margin-right: 0.5rem;
+    margin-right: 0.4rem;
 }
+
+/*!* Optional: Nummerierung entfernen, falls nicht gewünscht *!*/
+/*.analysis-treeview ol {*/
+/*    list-style: none;*/
+/*    padding-left: 0;*/
+/*    margin: 0;*/
+/*}*/
+
+
+
+
+/*.analysis-view{*/
+/*    padding-bottom: 2rem;*/
+/*}*/
+
+/*.analysis-view *{*/
+/*    font-family: "Times New Roman", serif;*/
+/*}*/
+
+/*.analysis-view header{*/
+/*    width: 100%;*/
+/*    border-bottom: 1px lightgrey solid;*/
+/*    padding-top: 2rem;*/
+/*    padding-bottom: 2rem;*/
+/*}*/
+
+/*.analysis-view .search-analysis-input{*/
+/*    max-width: 300px;*/
+/*    flex-grow: 1;*/
+/*    padding: 8px;*/
+/*}*/
+
+/*.analysis-view .search-analysis-btn{*/
+/*    height: 100%;*/
+/*    color:var(--prime);*/
+/*    padding-right: 12px;*/
+/*    padding-left: 12px;*/
+/*}*/
+
+/*.analysis-view .search-block {*/
+/*    flex-grow: 1;*/
+/*}*/
+
+/*.analysis-view .search-block .flexed {*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    width: 100%;*/
+/*    gap: 5px;*/
+/*}*/
+
+/*.analysis-treeview {*/
+/*    font-family: sans-serif;*/
+/*    font-size: 14px;*/
+/*    list-style-type: none;*/
+/*    padding-left: 0;*/
+/*}*/
+
+/*.analysis-treeview li {*/
+/*    margin-bottom: 0.4rem;*/
+/*}*/
+
+/*.analysis-treeview .tree-toggle {*/
+/*    cursor: pointer;*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    padding: 0.5rem 1rem;*/
+/*    background-color: white; !* Bootstrap Primary *!*/
+/*    color: var(--prime);*/
+/*    border-radius: 0.375rem; !* Bootstrap-like border-radius *!*/
+/*    transition: background-color 0.2s, box-shadow 0.2s;*/
+/*    user-select: none;*/
+/*}*/
+
+/*.analysis-treeview .tree-toggle:hover {*/
+/*    background-color: lightgrey; !* Bootstrap Primary hover *!*/
+/*    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);*/
+/*}*/
+
+/*.analysis-treeview .tree-toggle input[type="checkbox"] {*/
+/*    margin-right: 0.5rem;*/
+/*}*/
+
+/*.analysis-treeview .tree-toggle label {*/
+/*    margin: 0;*/
+/*}*/
+
+/*.analysis-treeview .tree-toggle .toggle-icon {*/
+/*    margin-right: 0.5rem;*/
+/*    transition: transform 0.3s ease;*/
+/*}*/
+
+/*.analysis-treeview .toggle-icon.open {*/
+/*    transform: rotate(90deg);*/
+/*}*/
+
+/*.analysis-treeview .nested {*/
+/*    display: none;*/
+/*    padding-left: 1.2em;*/
+/*    margin-top: 0.3em;*/
+/*}*/
+
+/*.analysis-treeview .nested.active {*/
+/*    display: block;*/
+/*}*/
+
+/*!* Slightly smaller and more subtle model items *!*/
+/*.analysis-treeview .model-item label {*/
+/*    display: flex;*/
+/*    align-items: center;*/
+/*    padding: 0.3rem 0.8rem;*/
+/*    background-color: #e9ecef;*/
+/*    color: #212529;*/
+/*    border-radius: 0.375rem;*/
+/*    margin: 0.2rem 0;*/
+/*    transition: background-color 0.2s;*/
+/*}*/
+
+/*.analysis-treeview .model-item label:hover {*/
+/*    background-color: #d3d9df;*/
+/*}*/
+
+/*.analysis-treeview .model-item input[type="checkbox"] {*/
+/*    margin-right: 0.5rem;*/
+/*}*/
 
 .grow-text {
     display: flex;
@@ -1096,6 +1308,15 @@
 }
 .ttlab-download-btn:hover {
     background-color: #0056b3;
+}
+
+.ttlab-scorer-table .tabulator-row.tabulator-selected {
+    background-color: #d0e9ff !important;
+}
+
+.ttlab-scorer-table .tabulator-row:hover {
+    background-color: #f0f8ff;
+    cursor: pointer;
 }
 
 
