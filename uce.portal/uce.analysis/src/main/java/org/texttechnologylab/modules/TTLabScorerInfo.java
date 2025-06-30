@@ -52,8 +52,6 @@ public class TTLabScorerInfo {
         LinkedHashMap<String, String> AllScores_bt_radc = new LinkedHashMap<>();
         LinkedHashMap<String, String> AllScores_bsac = new LinkedHashMap<>();
         LinkedHashMap<String, String> AllScores_bsadc = new LinkedHashMap<>();
-        LinkedHashMap<String, String> AllScores_bsradc = new LinkedHashMap<>();
-        LinkedHashMap<String, String> AllScores_bsrac = new LinkedHashMap<>();
         LinkedHashMap<String, String> AllScores_mu = new LinkedHashMap<>();
         LinkedHashMap<String, String> AllScores_H = new LinkedHashMap<>();
         LinkedHashMap<String, String> AllScores_G = new LinkedHashMap<>();
@@ -163,6 +161,7 @@ public class TTLabScorerInfo {
             MapShortNames.put("btac" + i, "lag" + i);
             MapShortNames.put("bt_prod_ac" + i, "lag" + i);
             MapShortNames.put("bt_first_ac" + i, "lag" + i);
+            MapShortNames.put("bt_mean_ac" + i, "lag" + i);
             MapShortNames.put("bt_min_ac" + i, "lag" + i);
             MapShortNames.put("bt_max_ac" + i, "lag" + i);
 
@@ -180,11 +179,15 @@ public class TTLabScorerInfo {
             MapShortNames.put("bt_max_adc" + i, "lag" + i);
         }
         for (int i = 1; i < 11; i++) {
-            taNames.put("bsrac" + i, "Autocorrelation of BERT sentence probabilities");
-            taNames.put("bsradc" + i, "Auto Distance Correlation of BERT sentence probabilities");
-            MapShortNames.put("bsrac" + i, "lag" + i);
-            MapShortNames.put("bsradc" + i, "lag" + i);
+            taNames.put("bsac" + i, "Autocorrelation of BERT sentence probabilities");
+            taNames.put("bsadc" + i, "Auto Distance Correlation of BERT sentence probabilities");
+            MapShortNames.put("bsac" + i, "lag" + i);
+            MapShortNames.put("bsadc" + i, "lag" + i);
         }
+        MapShortNames.put("bsrac", "recursive");
+        MapShortNames.put("bsradc", "recursive");
+        taNames.put("bsrac", "Autocorrelation of BERT sentence probabilities");
+        taNames.put("bsradc", "Auto Distance Correlation of BERT sentence probabilities");
         for(String syntaticFeature : syntaticFeatures) {
             taNames.put(syntaticFeature+"mu", "Syntactic Mean Aggregated Features");
             taNames.put(syntaticFeature+"H", "Syntactic Entropy Aggregated Features");
@@ -234,11 +237,6 @@ public class TTLabScorerInfo {
         MapShortNames.put("bt_min_radc", "subword minimum aggregation");
         MapShortNames.put("bt_max_radc", "subword maximum aggregation");
 
-        taNames.put("bsrac", "Recursive Autocorrelation of BERT sentence probabilities");
-        taNames.put("bsradc", "Recursive Auto Distance Correlation of BERT sentence probabilities");
-
-        MapShortNames.put("bsrac", "recursive");
-        MapShortNames.put("bsradc", "recursive");
         taMapNames.put("properties", taNames);
         LinkedHashMap<String, String> submodels = new LinkedHashMap<>();
 

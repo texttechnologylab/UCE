@@ -2,7 +2,11 @@ package org.texttechnologylab.typeClasses;
 
 import org.texttechnologylab.modules.ModelInfo;
 
+import java.util.ArrayList;
+
 public class ReadabilityClass {
+    private String groupName;
+    private ArrayList<ReadabilityInput> readabilityInputs = new ArrayList<>();
     private double FleschKincaid;
     private double Flesch;
     private double GunningFog;
@@ -14,6 +18,24 @@ public class ReadabilityClass {
     private double Spache;
 
     private ModelInfo modelInfo;
+
+    public String getGroupName() {
+        return groupName;
+    }
+    public void setGroupName(String groupName) {
+        this.groupName = groupName;
+    }
+    public ArrayList<ReadabilityInput> getReadabilityInputs() {
+        return readabilityInputs;
+    }
+    public void setReadabilityInputs(ArrayList<ReadabilityInput> readabilityInputs) {
+        this.readabilityInputs = readabilityInputs;
+    }
+    public void addReadabilityInput(ReadabilityInput readabilityInput) {
+        this.readabilityInputs.add(readabilityInput);
+    }
+
+
 
     public double getFleschKincaid() {
         return FleschKincaid;
