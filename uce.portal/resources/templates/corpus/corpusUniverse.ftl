@@ -85,8 +85,6 @@
 
 </div>
 
-
-
 <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 <script
         src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"
@@ -122,13 +120,13 @@
     /**
      * Init the universe
      */
-    $(document).ready(async function(){
+    $(document).ready(async function () {
         currentCorpusUniverseHandler = getNewCorpusUniverseHandler;
 
         const params = $('#inputs-parameters');
         const corpusId = params.data('corpusid');
         const currentCenterAsString = params.data('currentcenter');
-        if(corpusId === undefined || corpusId === '') {
+        if (corpusId === undefined || corpusId === '') {
             console.error('Cant build universe as the corpus id was invalid.');
             return;
         }

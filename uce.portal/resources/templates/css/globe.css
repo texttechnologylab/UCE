@@ -72,7 +72,7 @@
 
 .inspector-container .content .occurrences{
     display: flex;
-    height: 300px;
+    height: 150px;
     width: 100%;
     position: relative;
     white-space: nowrap; /* Prevent items from wrapping */

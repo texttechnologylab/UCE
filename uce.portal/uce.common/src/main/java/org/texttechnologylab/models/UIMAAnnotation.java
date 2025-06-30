@@ -52,7 +52,10 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
     private Long pageId;
 
     public String getCoveredText() {
-        return coveredText;
+        if (coveredText == null) {
+            return ""; // Or return an empty string "" if that's preferred
+        }
+        return coveredText.replaceAll("<", "");
     }
 
     public String getCoveredHtmlText(){
@@ -165,7 +168,6 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 continue;
             }
 
-
             var start = annotation.getBegin() - offset - errorOffset;
             var end = annotation.getEnd() - offset - errorOffset;
 
@@ -211,6 +213,8 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
 
         // We apply some heuristic post-processing to make the text more readable.
         //return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
+        //return StringUtils.CleanText(finalText.toString());
+        //return coveredText;
         return StringUtils.replaceCharacterOutsideSpan(StringUtils.replaceCharacterOutsideSpan(StringUtils.CleanText(finalText.toString()), '\n', "<br/>"), ' ', "&nbsp;");
     }
 
@@ -228,7 +232,7 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             return String.format("<span class='multi-annotation' title='%1$s'>" +
                     "<div class='multi-annotation-popup'>" +
                     btnsHtml.toString().replace("%", "%%") +
-                    "</div>", UUID.randomUUID());
+                    "</div><span class='ruby-text'>", UUID.randomUUID());
         }
     }
 

@@ -17,7 +17,7 @@ import java.util.List;
 public class RunDUUIPipeline {
 
 
-    public DUUIInformation getModelResources(List<String> modelGroups, String inputText, String claim, String coherenceText, String stanceText) throws Exception {
+    public DUUIInformation getModelResources(List<String> modelGroups, String inputText, String claim, String coherenceText, String stanceText, String systemPrompt) throws Exception {
         ModelResources modelResources = new ModelResources();
         List<ModelGroup> modelGroupsList = modelResources.getGroupedModelObjects();
         HashMap<String, ModelInfo> modelInfos = modelResources.getGroupMap();
@@ -34,6 +34,9 @@ public class RunDUUIPipeline {
         boolean specialModel = false;
         boolean isStance = false;
         boolean isReadability = false;
+        boolean isLLM = false;
+        boolean isTA = false;
+        boolean isOffensive = false;
         for (String modelKey : modelGroups) {
             if (modelInfos.containsKey(modelKey)) {
                 ModelInfo modelInfo = modelInfos.get(modelKey);
@@ -73,6 +76,16 @@ public class RunDUUIPipeline {
                         break;
                     case "Readability":
                         isReadability = true;
+                        break;
+                    case "LLM":
+                        specialModel = true;
+                        isLLM = true;
+                        break;
+                    case "TA":
+                        isTA = true;
+                        break;
+                    case "Offensive":
+                        isOffensive = true;
                         break;
                 }
             }
@@ -118,6 +131,12 @@ public class RunDUUIPipeline {
                 newCas = (JCas) output_stance[0];
                 sb = (StringBuilder) output_stance[1];
             }
+            // LLM
+            if (isLLM) {
+                Object[] output_llm = pipeline.setPrompt(newCas, systemPrompt, sb);
+                newCas = (JCas) output_llm[0];
+                sb = (StringBuilder) output_llm[1];
+            }
             text = sb.toString();
             // set document text
             newCas.setDocumentText(text);
@@ -151,6 +170,12 @@ public class RunDUUIPipeline {
         duuiInformation.setIsStance(isStance);
         // set readability
         duuiInformation.setIsReadability(isReadability);
+        // set LLM
+        duuiInformation.setIsLLM(isLLM);
+        // set TA
+        duuiInformation.setIsTA(isTA);
+        // set offensive
+        duuiInformation.setIsOffensive(isOffensive);
         return duuiInformation;
     }
 
@@ -171,7 +196,8 @@ public class RunDUUIPipeline {
         String claim = "Lionel Messi hat ein Tor geschossen";
         String coherenceText = "Das ist ein Text, welches über Sport und Fußball handelt. Der Fußball Lionel Messi hat in der 25min. ein Tor gegen Real Madrid geschossen! Dadruch hat Barcelona gewonnen.";
         String stanceText = "The author of this tweet {} Trump.";
-        DUUIInformation duuiInformation = new RunDUUIPipeline().getModelResources(modelGroupNames, inputText, claim, coherenceText, stanceText);
+        String systemPrompt = "You are a helpful assistant that analyzes text and provides insights based on the provided models.";
+        DUUIInformation duuiInformation = new RunDUUIPipeline().getModelResources(modelGroupNames, inputText, claim, coherenceText, stanceText, systemPrompt);
 
     }
 

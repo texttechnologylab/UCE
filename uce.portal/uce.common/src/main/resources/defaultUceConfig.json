@@ -54,11 +54,32 @@
   },
   "settings": {
     "rag": {
-      "model": "ChatGPT",
-      "apiKey": ""
+      "models": [
+        {
+          "model": "ollama/gemma3:latest",
+          "url": "http://ollama.llm.texttechnologylab.org/",
+          "apiKey": "",
+          "displayName": "Gemma3 (4.3B - Google)"
+        },
+        {
+          "model": "ollama/deepseek-r1:latest",
+          "url": "http://ollama.llm.texttechnologylab.org/",
+          "apiKey": "",
+          "displayName": "DeepSeek-R1 (7.6B - DeepSeek)"
+        },
+        {
+          "model": "ollama/llama3.2:latest",
+          "url": "http://ollama.llm.texttechnologylab.org/",
+          "apiKey": "",
+          "displayName": "Llama (3.2B - Meta)"
+        }
+      ]
     },
     "analysis": {
       "enableAnalysisEngine": true
+    },
+    "authentication": {
+      "isActivated": false
     }
   }
 }

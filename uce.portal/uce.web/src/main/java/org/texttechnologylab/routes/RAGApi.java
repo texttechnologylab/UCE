@@ -7,22 +7,21 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.LanguageResources;
+import org.texttechnologylab.annotations.auth.Authentication;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Document;
-import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
-import org.texttechnologylab.models.rag.RAGChatMessage;
-import org.texttechnologylab.models.rag.RAGChatState;
-import org.texttechnologylab.models.rag.Roles;
+import org.texttechnologylab.models.rag.*;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
+import org.texttechnologylab.utils.SystemStatus;
 import spark.ModelAndView;
 import spark.Route;
 
 import java.util.*;
 
-public class RAGApi {
+public class RAGApi implements UceApi {
     private static final Logger logger = LogManager.getLogger(RAGApi.class);
     private Configuration freemarkerConfig;
     private RAGService ragService;
@@ -45,11 +44,11 @@ public class RAGApi {
 
         var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("corpusId")),
                 (ex) -> logger.error("Error: the url for the tsne plot requires a 'corpusId' query parameter. ", ex));
-        if(corpusId == null) return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (corpusId == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
         try {
             var plotAsHtml = db.getCorpusTsnePlotByCorpusId(corpusId).getPlotHtml();
-            //var plotAsHtml = ragService.getCorpusTsnePlot(corpusId);
             return plotAsHtml == null ? "" : plotAsHtml;
         } catch (Exception ex) {
             logger.error("Error fetching the tsne plot of corpus: " + corpusId, ex);
@@ -57,6 +56,10 @@ public class RAGApi {
         }
     });
 
+    @Authentication(required = Authentication.Requirement.LOGGED_IN,
+            route = Authentication.RouteTypes.POST,
+            path = "/api/rag/postUserMessage"
+    )
     /**
      * Receives a user message and handles and returns a new RAGChatState
      */
@@ -72,7 +75,7 @@ public class RAGApi {
             // TODO: This also needs some form of periodic cleanup. I could have used websockets, but at the time,
             // noone really knew if this feature is even needed or applicable. Websocket introduced more complexity to client
             // and server so we scraped it. For the future, it may be a good idea though.
-            if (!activeRagChatStates.containsKey(stateId)){
+            if (!activeRagChatStates.containsKey(stateId)) {
                 logger.error("Error fetching the active rag chat states - state not found for stateId: " + stateId);
                 return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
             }
@@ -93,7 +96,7 @@ public class RAGApi {
             var contextNeeded = ExceptionUtils.tryCatchLog(
                     () -> ragService.postRAGContextNeeded(userMessage),
                     (ex) -> logger.error("Error getting the ContextNeeded info from the rag service.", ex));
-            if(contextNeeded == null) contextNeeded = 1;
+            if (contextNeeded == null) contextNeeded = 1;
 
             List<DocumentChunkEmbedding> nearestDocumentChunkEmbeddings = new ArrayList<>();
             List<Document> foundDocuments = new ArrayList<Document>();
@@ -112,9 +115,9 @@ public class RAGApi {
             // Now let's ask our rag llm
             String finalPrompt = prompt;
             var answer = ExceptionUtils.tryCatchLog(
-                    () -> ragService.postNewRAGPrompt(chatState.getMessages()),
+                    () -> ragService.postNewRAGPrompt(chatState.getMessages(), chatState.getModel()),
                     (ex) -> logger.error("Error getting the next response from our LLM RAG service. The prompt: " + finalPrompt, ex));
-            if(answer == null) {
+            if (answer == null) {
                 var languageResources = LanguageResources.fromRequest(request);
                 answer = languageResources.get("ragBotErrorMessage");
             }
@@ -137,17 +140,28 @@ public class RAGApi {
         return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
     });
 
+    @Authentication(required = Authentication.Requirement.LOGGED_IN,
+            route = Authentication.RouteTypes.GET,
+            path = "/api/rag/new"
+    )
     /**
      * Returns an empty chat alongside its chatHistory view
      */
     public Route getNewRAGChat = ((request, response) -> {
         var model = new HashMap<String, Object>();
+        var ragModelId = ExceptionUtils.tryCatchLog(() -> request.queryParams("model"),
+                (ex) -> logger.error("Error: the chatting requires a 'model' query parameter. ", ex));
+        if (ragModelId == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        var ragModel = SystemStatus.UceConfig.getSettings().getRag().getModels().stream().filter(m -> m.getModel().equals(ragModelId)).findFirst();
+        if (ragModel.isEmpty()) return "The requested model isn't available in this UCE instance: " + ragModelId;
+
         try {
             // We need to know the language here
             var languageResources = LanguageResources.fromRequest(request);
 
             var ragState = new RAGChatState();
-            ragState.setModel(commonConfig.getRAGModel());
+            ragState.setModel(ragModel.get());
             ragState.setChatId(UUID.randomUUID());
             ragState.setLanguage(languageResources.getSupportedLanguage());
 
@@ -167,6 +181,40 @@ public class RAGApi {
         }
 
         return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
+    });
+
+    public Route getSentenceEmbeddings = ((request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for sentence topics with entities. ", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for fetching sentence embeddings"), "defaultError.ftl"));
+        }
+
+        try {
+
+            ArrayList<DocumentSentenceEmbedding> result =
+                    ragService.getDocumentSentenceEmbeddingsOfDocument(documentId);
+
+            List<Map<String, Object>> simplified = result.stream()
+                    .map(e -> {
+                        Map<String, Object> map = new HashMap<>();
+                        map.put("sentenceId", e.getSentence_id());
+                        map.put("tsne2d", e.getTsne2d());
+                        return map;
+                    })
+                    .toList();
+
+            response.type("application/json");
+            return new Gson().toJson(simplified);
+        } catch (Exception ex) {
+            logger.error("Error getting sentence embeddings.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving sentence embeddings."), "defaultError.ftl"));
+        }
     });
 
 }

@@ -280,7 +280,9 @@ def rag_complete():
         print(data)
         messages = data['promptMessages']
         api_key = data['apiKey']
-        result['message'] = get_instruct_model().complete(messages, api_key)
+        model = data['model']
+        url = data['url']
+        result['message'] = get_instruct_model(model, url).complete(messages, api_key)
         result['status'] = 200
     except Exception as ex:
         result['message'] = "There was an exception caught while trying to complete the chat: " + str(ex)
@@ -305,11 +307,11 @@ def get_embedding_model(backend: Union[str, None] = None, config: Union[Dict, No
         current_app.config[keyname] = Embedder(backend, config)
     return current_app.config[keyname]
 
-def get_instruct_model():
+def get_instruct_model(model_name, url):
     '''Gets the llm that has the actual conversation'''
-    if 'instruct_model' not in current_app.config:
-        current_app.config['instruct_model'] = InstructLLM('ChatGPT')
-    return current_app.config['instruct_model']
+    if model_name not in current_app.config:
+        current_app.config[model_name] = InstructLLM(model_name, url)
+    return current_app.config[model_name]
 
 def get_CCCBERT_model():
     '''Gets the CCC-BERT model to check whether we need context or not'''

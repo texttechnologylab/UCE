@@ -18,6 +18,8 @@ public class History {
 
     private HashMap<String, String> inputStanceHashMap = new HashMap<>();
 
+    private HashMap<String, String> inputLLMHashMap = new HashMap<>();
+
     public HashMap<String, DUUIInformation> getDuuiInformationHashMap() {
         return duuiInformationHashMap;
     }
@@ -84,6 +86,11 @@ public class History {
     public void addInputClaim(String id, String inputClaim) {
         this.inputClaimHashMap.put(id, inputClaim);
     }
+
+   public void addInputLLM(String id, String inputLLM) {
+        this.inputLLMHashMap.put(id, inputLLM);
+    }
+
     public void addSelectedModels(String id, List<String> selectedModels) {
         this.selectedModelsHashMap.put(id, selectedModels);
     }
@@ -102,6 +109,10 @@ public class History {
 
     public String getInputClaim(String id) {
         return this.inputClaimHashMap.get(id);
+    }
+
+   public String getInputLLM(String id) {
+        return this.inputLLMHashMap.get(id);
     }
 
     public List<String> getSelectedModels(String id) {

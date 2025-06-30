@@ -52,6 +52,18 @@
             <artifactId>spring-context</artifactId>
             <version>6.1.3</version>
         </dependency>
+        <!-- for keycloak authentication -->
+        <dependency>
+            <groupId>org.keycloak</groupId>
+            <artifactId>keycloak-authz-client</artifactId>
+            <version>26.0.5</version>
+        </dependency>
+        <!-- https://mvnrepository.com/artifact/io.jsonwebtoken/jjwt-api -->
+        <dependency>
+            <groupId>io.jsonwebtoken</groupId>
+            <artifactId>jjwt-api</artifactId>
+            <version>0.12.6</version>
+        </dependency>
 
         <!-- logging -->
         <dependency>
@@ -174,16 +186,16 @@
             <version>1.3.2</version>
         </dependency>
 
-        <dependency>
-            <groupId>com.github.texttechnologylab</groupId>
-            <artifactId>UIMATypeSystem</artifactId>
-            <version>1c31dddaf</version>
-        </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.github.texttechnologylab</groupId>-->
+<!--            <artifactId>UIMATypeSystem</artifactId>-->
+<!--            <version>1c31dddaf</version>-->
+<!--        </dependency>-->
 
         <dependency>
-            <groupId>com.github.texttechnologylab</groupId>
+            <groupId>com.github.mevbagci</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>1c31dddaf</version>
+            <version>3.0.13</version>
         </dependency>
       
         <dependency>

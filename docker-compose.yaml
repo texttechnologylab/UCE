@@ -9,7 +9,7 @@ services:
 
   uce-fuseki-sparql:
     container_name: uce-fuseki-sparql
-    image: fuseki
+    image: docker.texttechnologylab.org/uce/uce-fuseki-sparql:0.0.1
     ports:
       - "8030:5430"
     volumes:
@@ -65,19 +65,21 @@ services:
 
   uce-postgresql-db:
     container_name: uce-postgresql-db
-    #image: pgvector/pgvector:pg16 # Old image
     image: docker.texttechnologylab.org/uce/uce-postgresql:0.0.1
-    shm_size: 1g
     environment:
       POSTGRES_DB: uce
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: 1234 
     ports:
       - "8002:5432"
+    volumes:
+      #- ./../backups/2025-06-12-TTLab-Instance-Data/db-data:/var/lib/postgresql/data
+      - ${POSTGRESQL_CONFIG}:/etc/postgresql.conf
+    command: -c config_file=/etc/postgresql.conf
     networks:
       - app_net
       
-  minio:
+  uce-minio-storage:
     image: minio/minio
     container_name: minio
     ports:
@@ -87,8 +89,42 @@ services:
       - MINIO_ROOT_USER=admin
       - MINIO_ROOT_PASSWORD=12345678
     volumes:
-      - minio-data:/data
+      - ${MINIO_STORAGE_DATA}:/data
     command: server /data --console-address ":9001"
+    networks:
+      - app_net
+
+  uce-keycloak-auth:
+    container_name: uce-keycloak-auth
+    image: quay.io/keycloak/keycloak:26.2.5
+    ports:
+      - "8080:8080"
+    volumes:
+      - ${KC_REALM_IMPORT_PATH}:/opt/keycloak/data/import/uce-realm.json
+    command:
+      - start
+      - --features=scripts
+      - --import-realm
+      - --import-path=/opt/keycloak/data/import/uce-realm.json
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USERNAME}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PW}
+      KC_HOSTNAME_STRICT_BACKCHANNEL: true
+      KC_HOSTNAME_STRICT: false
+      KC_HTTP_RELATIVE_PATH: /
+      KC_HTTP_ENABLED: true
+      KC_HEALTH_ENABLED: true
+      KC_METRICS_ENABLED: true
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      test: ['CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)new java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:8080/auth/health/live']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - app_net
+
 networks:
   app_net:
     driver: bridge

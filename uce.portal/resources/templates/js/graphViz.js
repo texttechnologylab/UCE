@@ -253,6 +253,339 @@ var GraphVizHandler = (function () {
         return echart;
     };
 
+    GraphVizHandler.prototype.createMiniBarChart = function ({
+                                                                 data = [],                   // Array of [label, value]
+                                                                 title = '',                  // Chart title
+                                                                 labelPrefix = '',            // Optional prefix for title like "Topics for"
+                                                                 labelHighlight = '',         // The highlighted part (e.g., entity/topic name)
+                                                                 primaryColor = '#5470C6',    // Default bar color
+                                                                 secondaryColor = '#91CC75',  // Alternate bar color
+                                                                 usePrimaryForEntity = false, // Toggle color logic
+                                                                 barHeight = 10,              // Height of bars in px
+                                                                 maxBarWidth = 100,           // Max bar width in px
+                                                                 minLabelWidth = 70,          // Width of label column in px
+                                                                 fontSize = 10                // Font size for values
+                                                             } = {}) {
+        // This function creates a simple mini bar chart in HTML which can be used in tooltips or small displays as hover actions.
+
+        const maxVal = Math.max(...data.map(([_, v]) => v)) || 1;
+
+        const barsHtml = data.map(([label, value]) => {
+            const width = Math.round((value / maxVal) * maxBarWidth);
+            return (
+                '<div style="margin:2px 0; display:flex; align-items:center;">' +
+                '<span style="display:inline-block;min-width:' + minLabelWidth + 'px;vertical-align:middle;">' + label + '</span>' +
+                '<span style="display:inline-block;height:' + barHeight + 'px;width:' + width + 'px;margin-left:5px;background:' + (usePrimaryForEntity ? primaryColor : secondaryColor) + ';vertical-align:middle;"></span>' +
+                '<span style="font-size:' + fontSize + 'px;margin-left:5px;vertical-align:middle;">' + value + '</span>' +
+                '</div>'
+            );
+        }).join('');
+
+        const fullTitle = '<i>' + labelPrefix + '</i>';
+
+        return (
+            '<div style="min-width:200px;">' +
+            '<div style="margin-bottom:6px;">' + (title || fullTitle) + '</div>' +
+            (barsHtml || '<div style="color:#888;">No associations</div>') +
+            '</div>'
+        );
+
+    }
+
+    GraphVizHandler.prototype.createBarLineChart = async function (
+        target,
+        title,
+        config,
+        tooltipFormatter,
+        onClick = null
+    ) {
+        const chartId = generateUUID();
+
+        const {
+            xData,
+            seriesData,
+            yLabel = 'Count'
+        } = config;
+
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                enterable: true,
+                backgroundColor: '#fff',
+                borderColor: '#ccc',
+                borderWidth: 1,
+                textStyle: {
+                    color: '#000',
+                    fontSize: 12
+                },
+                formatter: tooltipFormatter
+            },
+
+            title: {
+                text: title,
+                left: 'center'
+            },
+
+            legend: {
+                data: seriesData.map(s => s.name),
+                top: 'auto'
+            },
+
+            xAxis: {
+                type: 'category',
+                name: 'X',
+                data: xData
+            },
+
+            yAxis: {
+                type: 'value',
+                name: yLabel
+            },
+
+            series: []
+        };
+
+        seriesData.forEach(s => {
+            option.series.push({
+                name: s.name,
+                type: 'bar',
+                data: s.data,
+                itemStyle: {
+                    color: s.color,
+                    opacity: 0.15
+                },
+                barGap: '-100%',
+                z: 1
+            });
+
+            option.series.push({
+                name: s.name,
+                type: 'line',
+                data: s.data,
+                symbol: 'circle',
+                symbolSize: 10,
+                lineStyle: { width: 3, color: s.color },
+                itemStyle: { color: s.color },
+                z: 2
+            });
+        });
+
+        const echart = new ECharts(target, option);
+        this.activeCharts[chartId] = echart;
+
+        if (onClick && typeof onClick === 'function') {
+            echart.getInstance().on('click', onClick);
+        }
+
+        return echart;
+    };
+
+
+    GraphVizHandler.prototype.createChordChart = async function (
+        target,
+        title,
+        data,
+        tooltipFormatter = null,
+        onClick = null
+    ) {
+        const chartId = generateUUID();
+        const hasGraphData = data.nodes && data.links && data.categories;
+
+        const option = {
+            title: { text: title, left: 'center' },
+            tooltip: {
+                trigger: 'item',
+                enterable: hasGraphData,
+                formatter: hasGraphData
+                    ? tooltipFormatter
+                    : function (params) {
+                        if (params.dataType === 'edge') {
+                            return params.data.source + ' → ' + params.data.target + ': <b>' + params.data.value + '</b>';
+                        }
+                        return params.name;
+                    }
+            },
+            legend: hasGraphData ? {
+                data: data.categories.map(c => c.name),
+                left: '10px',
+                orient: 'vertical',
+                position: 'right'
+            } : undefined,
+            series: hasGraphData ? [{
+                type: 'graph',
+                layout: 'circular',
+                circular: { rotateLabel: true },
+                data: data.nodes,
+                links: data.links,
+                categories: data.categories,
+                roam: true,
+                label: { rotate: 90, show: true },
+                itemStyle: { borderWidth: 1, borderColor: '#aaa' },
+                lineStyle: { opacity: 0.5, width: 2, curveness: 0.3 },
+                emphasis: { focus: 'adjacency', label: { show: true } }
+            }] : {
+                type: 'chord',
+                data: data.nodes,
+                links: data.links,
+                emphasis: {
+                    focus: 'adjacency',
+                    label: {
+                        show: true,
+                        color: '#000'
+                    }
+                },
+                itemStyle: {
+                    borderWidth: 1,
+                    borderColor: '#fff'
+                }
+            }
+        };
+
+        const echart = new ECharts(target, option);
+        this.activeCharts[chartId] = echart;
+
+        echart.getInstance().on('click', function (params) {
+            if (onClick && typeof onClick === 'function') {
+                onClick(params);
+            }
+        });
+
+        return echart;
+    };
+
+    GraphVizHandler.prototype.createHeatMap = async function (
+        target,
+        title,
+        matrix,
+        labels,
+        series_name= null,
+        tooltipFormatter = null,
+        onClick = null
+    ) {
+        const chartId = generateUUID();
+        const option = {
+            title: {
+                text: title,
+                left: 'center'
+            },
+            tooltip: {
+                position: 'top',
+                formatter: tooltipFormatter,
+            },
+            grid: {
+                left: '15%',
+                bottom: '15%',
+                containLabel: true
+            },
+            xAxis: {
+                type: 'category',
+                data: labels,
+                splitArea: {
+                    show: true
+                },
+                axisLabel: {
+                    rotate: 45
+                }
+            },
+            yAxis: {
+                type: 'category',
+                data: labels,
+                splitArea: {
+                    show: true
+                }
+            },
+            visualMap: {
+                min: 0,
+                max: Math.max(...matrix.map(d => d[2])),
+                calculable: true,
+                orient: 'horizontal',
+                left: 'center',
+                bottom: '5%'
+            },
+            series: [{
+                name: series_name || 'Heatmap',
+                type: 'heatmap',
+                data: matrix,
+                roam: true,
+                label: {
+                    show: false
+                },
+                emphasis: {
+                    itemStyle: {
+                        shadowBlur: 10,
+                        shadowColor: 'rgba(0, 0, 0, 0.5)'
+                    }
+                }
+            }]
+        };
+
+        const echart = new ECharts(target, option);
+        this.activeCharts[chartId] = echart;
+
+        echart.getInstance().on('click', function (params) {
+            if (onClick && typeof onClick === 'function') {
+                onClick(params);
+            }
+        });
+
+        return echart;
+    };
+
+    GraphVizHandler.prototype.createNetworkGraph = async function (
+        target,
+        title,
+        nodes,
+        links,
+        tooltipFormatter = null,
+        onClick = null
+    ) {
+        const chartId = generateUUID();
+        const option = {
+            title: { text: '', left: 'center' },
+            tooltip: {},
+            xAxis: { show: false, min: 'dataMin', max: 'dataMax' },
+            yAxis: { show: false, min: 'dataMin', max: 'dataMax' },
+            animationDuration: 1500,
+            animationEasingUpdate: 'quinticInOut',
+            series: [{
+                type: 'graph',
+                layout: 'force',
+                draggable: true,
+                force: {
+                    edgeLength: 5,
+                    repulsion: 10,
+                    gravity: 0.5
+                },
+                data: nodes,
+                edges: links,
+                roam: true,
+                symbolSize: 10,
+                label: { show: false },
+                emphasis: {
+                    focus: 'adjacency',
+                    lineStyle: {
+                        width: 10
+                    }
+                },
+
+                itemStyle: { borderColor: '#fff', borderWidth: 1 }
+            }]
+        };
+
+
+        const echart = new ECharts(target, option);
+        this.activeCharts[chartId] = echart;
+
+        echart.getInstance().on('click', function (params) {
+            if (onClick && typeof onClick === 'function') {
+                onClick(params);
+            }
+        });
+
+        return echart;
+    };
+
+
     return GraphVizHandler;
 }());
 

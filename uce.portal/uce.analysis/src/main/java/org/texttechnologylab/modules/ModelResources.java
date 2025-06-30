@@ -2,6 +2,7 @@ package org.texttechnologylab.modules;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
+import com.influxdb.client.service.CellsService;
 import org.bson.Document;
 
 import java.io.BufferedReader;
@@ -56,6 +57,8 @@ public final class ModelResources {
             model.setMap(modelData.get("map"));
             model.setVariant(modelData.get("Variant"));
             model.setModelType(modelData.get("type"));
+            model.setUrlParameter(modelData.getOrDefault("url-Parameter", ""));
+            model.setPortParameter(modelData.getOrDefault("port-Parameter", "0"));
             model.setMainTool(mainTool);
             String modelkeyName = mainTool.replace(" ", "_")+"_"+modelKey.replace(" ", "_");
             groupMap2.put(modelkeyName, model);

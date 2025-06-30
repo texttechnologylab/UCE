@@ -1,5 +1,6 @@
 package org.texttechnologylab;
 
+import com.google.gson.Gson;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.uima.UIMAException;
@@ -14,6 +15,8 @@ import org.hucompute.textimager.uima.type.category.CategoryCoveredTagged;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIRemoteDriver;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
+import org.texttechnologylab.type.LLMPrompt;
+import org.texttechnologylab.type.LLMSystemPrompt;
 import org.texttechnologylab.typeClasses.*;
 import org.texttechnologylab.annotation.*;
 import org.texttechnologylab.modules.ModelInfo;
@@ -25,7 +28,10 @@ import java.net.URISyntaxException;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.List;
+import org.bson.Document;
 import java.util.Map;
+import org.texttechnologylab.type.LLMResult;
+import org.texttechnologylab.type.LLMPrompt;
 
 public class DUUIPipeline {
 
@@ -72,6 +78,17 @@ public class DUUIPipeline {
                             new DUUIRemoteDriver.Component(url.getValue().getUrl())
                                     .withParameter("chatgpt_key", "")
                     );
+                    break;
+                case "LLM":
+                    composer.add(
+                            new DUUIRemoteDriver.Component(url.getValue().getUrl())
+                                    .withParameter("seed", "42")
+                                    .withParameter("model_name", url.getValue().getMap())
+                                    .withParameter("url", url.getValue().getUrlParameter())
+                                    .withParameter("temperature", "1")
+                                    .withParameter("port", url.getValue().getPortParameter())
+                    );
+                    break;
                 default:
                     composer.add(
                             new DUUIRemoteDriver.Component(url.getValue().getUrl())
@@ -177,6 +194,23 @@ public class DUUIPipeline {
         return new Object[]{cas, sb};
     }
 
+    public Object[] setPrompt(JCas cas, String systemPrompt ,StringBuilder sb) throws UIMAException {
+        int firstBegin = 0;
+        int lastEnd = sb.length();
+        LLMPrompt promptAnnotation = new LLMPrompt(cas, firstBegin, lastEnd);
+        String promptText = sb.toString();
+        promptAnnotation.setPrompt(promptText);
+        if (systemPrompt != "") {
+            LLMSystemPrompt systemPromptAnnotation = new LLMSystemPrompt(cas, sb.length(), sb.length()+systemPrompt.length());
+            sb.append(systemPrompt).append(" ");
+            systemPromptAnnotation.setMessage(systemPrompt);
+            systemPromptAnnotation.addToIndexes();
+            promptAnnotation.setSystemPrompt(systemPromptAnnotation);
+        }
+        promptAnnotation.addToIndexes();
+        return new Object[]{cas, sb};
+    }
+
     public Object[] getJCasResults(JCas cas, List<ModelInfo> modelGroups) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
         Sentences sentences = new Sentences();
         // set sentences
@@ -206,6 +240,7 @@ public class DUUIPipeline {
         textClass.computeAVGFact();
         textClass.computeAVGCoherence();
         textClass.computeAVGStance();
+        textClass.computeAVGOffensive();
         return new Object[]{sentences, textClass};
     }
 
@@ -234,6 +269,31 @@ public class DUUIPipeline {
                     }
                     sentences.getSentence(Integer.toString(begin), Integer.toString(end)).addTopic(topicClass);
                     textClass.addTopic(modelInfo, topicClass);
+                }
+                break;
+            case "Offensive":
+                Collection<OffensiveSpeech> allOffensive = JCasUtil.select(cas, OffensiveSpeech.class);
+                for (OffensiveSpeech offensive : allOffensive) {
+                    OffensiveClass offensiveClass = new OffensiveClass();
+                    int begin = offensive.getBegin();
+                    int end = offensive.getEnd();
+                    FSArray<AnnotationComment> offensives_all = offensive.getOffensives();
+                    String model_name = offensive.getModel().getModelName();
+                    offensiveClass.setModelInfo(modelInfo);
+                    // model_name must be the same as modelInfo.getmap
+                    if (!model_name.equals(modelInfo.getMap())) {
+                        continue;
+                    }
+                    for (AnnotationComment annotationComment: offensives_all) {
+                        String keyOffensive = annotationComment.getKey();
+                        String valueOffensive = annotationComment.getValue();
+                        OffensiveInput offensiveInput = new OffensiveInput();
+                        offensiveInput.setKey(keyOffensive);
+                        offensiveInput.setScore(Double.parseDouble(valueOffensive));
+                        offensiveClass.addOffensive(offensiveInput);
+                    }
+                    sentences.getSentence(Integer.toString(begin), Integer.toString(end)).addOffensive(offensiveClass);
+                    textClass.addOffensive(modelInfo, offensiveClass);
                 }
                 break;
             case "Emotion":
@@ -473,6 +533,62 @@ public class DUUIPipeline {
                 }
                 readabilityClass.setModelInfo(modelInfo);
                 textClass.addReadability(readabilityClass);
+                break;
+            case "TA":
+                Collection<TAscore> taScores = JCasUtil.select(cas, TAscore.class);
+                HashMap<String, TAClass> taScores_map = new HashMap<>();
+                for (TAscore taScore : taScores) {
+                    String name = taScore.getName();
+                    String groupName = taScore.getGroup();
+                    double score = taScore.getScore();
+                    TAInput taInput = new TAInput();
+                    taInput.setName(name);
+                    taInput.setScore(score);
+                    if (!taScores_map.containsKey(groupName)) {
+                        TAClass taClass = new TAClass();
+                        taClass.setGroupName(groupName);
+                        taClass.setModelInfo(modelInfo);
+                        taScores_map.put(groupName, taClass);
+                    }
+                    taScores_map.get(groupName).addTaInput(taInput);
+                }
+                for (Map.Entry<String, TAClass> entry : taScores_map.entrySet()) {
+                    TAClass taClass = entry.getValue();
+                    textClass.addAVGTA(taClass);
+                }
+                break;
+            case "LLM":
+                Collection<LLMResult> llmResults = JCasUtil.select(cas, LLMResult.class);
+                for (LLMResult llmResult : llmResults) {
+                    String content = llmResult.getContent();
+                    String output = "";
+                    if (content.contains("<think>")&&content.contains("</think>")) {
+                        output = content.split("</think>")[1].trim();
+                    }
+                    else{
+                        output = content;
+                    }
+                    // \n to html line break
+                    output = output.replace("\n", "<br>");
+                    LLMPrompt llmPrompt = llmResult.getPrompt();
+                    String json_result = llmResult.getResult();
+                    String json_metadata = llmResult.getMeta();
+                    // String to Json
+                    Gson gson = new Gson();
+                    Document resultDocument = gson.fromJson(json_result, Document.class);
+                    Document metadataDocument = gson.fromJson(json_metadata, Document.class);
+                    double duration = metadataDocument.get("duration", Double.class);
+                    String modelName = metadataDocument.get("model_name", String.class);
+                    String systemPrompt = llmPrompt.getSystemPrompt().getMessage();
+                    LLMClass llmClass = new LLMClass();
+                    llmClass.setDuration(duration);
+                    llmClass.setSystemPrompt(systemPrompt);
+                    llmClass.setModelName(modelName);
+                    llmClass.setResult(output);
+                    llmClass.setModelInfo(modelInfo);
+                    textClass.addLLM(modelInfo, llmClass);
+                    textClass.addAVGLLM(llmClass);
+                }
                 break;
         }
         return new Object[]{sentences, textClass};

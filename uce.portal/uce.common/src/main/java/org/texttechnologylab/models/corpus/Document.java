@@ -32,6 +32,7 @@ import org.texttechnologylab.utils.StringUtils;
 import javax.persistence.*;
 import java.util.*;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 @Entity
 @Table(name = "document")
@@ -264,7 +265,9 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         if (fullText == null || fullText.isEmpty()) {
             return "";
         }
-        var words = Arrays.stream(fullText.trim().split("\\s+")).toList();
+        // Opening HTML Tags may cause the UI HTML to break!
+        var cleaned = fullText.replace("<", "");
+        var words = Arrays.stream(cleaned.trim().split("\\s+")).toList();
         // Take the first 30 words
         StringBuilder result = new StringBuilder();
         int count = 0;
@@ -331,6 +334,10 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         return null;
     }
 
+    public List<Taxon> getAllTaxa(){
+        return Stream.concat(this.gazetteerTaxons.stream(), this.gnFinderTaxons.stream()).toList();
+    }
+
     /**
      * Gets all objects of type UIMAAnnotation of this document
      *
@@ -363,7 +370,8 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     }
 
     public void setFullText(String fullText) {
-        this.fullText = fullText.replaceAll("<", "");
+        // this.fullText = fullText.replaceAll("<", "");
+        this.fullText = fullText;
     }
 
     public List<Page> getPages() {

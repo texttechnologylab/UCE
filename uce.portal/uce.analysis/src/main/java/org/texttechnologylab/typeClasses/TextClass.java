@@ -1,5 +1,4 @@
 package org.texttechnologylab.typeClasses;
-
 import org.texttechnologylab.modules.ModelInfo;
 
 import java.util.ArrayList;
@@ -8,6 +7,7 @@ import java.util.HashMap;
 public class TextClass {
 
     private HashMap<ModelInfo, ArrayList<TopicClass>> topics = new HashMap<>();
+    private HashMap<ModelInfo, ArrayList<OffensiveClass>> offensives = new HashMap<>();
     private HashMap<ModelInfo, ArrayList<HateClass>> hate = new HashMap<>();
     private HashMap<ModelInfo, ArrayList<SentimentClass>> sentiment = new HashMap<>();
     private HashMap<ModelInfo, ArrayList<ToxicClass>> toxic = new HashMap<>();
@@ -17,10 +17,12 @@ public class TextClass {
 
     private HashMap<ModelInfo, ArrayList<CoherenceClass>> coherence = new HashMap<>();
     private HashMap<ModelInfo, ArrayList<StanceClass>> stance = new HashMap<>();
+    private HashMap<ModelInfo, LLMClass> llm = new HashMap<>();
 
     private ArrayList<HateClass> hateAVG = new ArrayList<>();
     private ArrayList<SentimentClass> sentimentAVG = new ArrayList<>();
     private ArrayList<TopicClass> topicAVG = new ArrayList<>();
+    private ArrayList<OffensiveClass> offensiveAVG = new ArrayList<>();
     private ArrayList<ToxicClass> toxicAVG = new ArrayList<>();
     private ArrayList<EmotionClass> emotionAVG = new ArrayList<>();
     private ArrayList<FactClass> factAVG = new ArrayList<>();
@@ -28,8 +30,11 @@ public class TextClass {
     private ArrayList<CoherenceClass> coherenceAVG = new ArrayList<>();
     private ArrayList<StanceClass> stanceAVG = new ArrayList<>();
     private ArrayList<ReadabilityClass> readabilityAVG = new ArrayList<>();
+    private ArrayList<LLMClass> llmAVG = new ArrayList<>();
+    private ArrayList<TAClass> taScoreAVG = new ArrayList<>();
 
     private ArrayList<ModelInfo> topicsModels = new ArrayList<>();
+    private ArrayList<ModelInfo> offensivesModels = new ArrayList<>();
     private ArrayList<ModelInfo> hateModels = new ArrayList<>();
     private ArrayList<ModelInfo> sentimentModels = new ArrayList<>();
     private ArrayList<ModelInfo> toxicModels = new ArrayList<>();
@@ -40,6 +45,8 @@ public class TextClass {
 
     private ArrayList<ModelInfo> coherenceModels = new ArrayList<>();
     private ArrayList<ModelInfo> readabilityModels = new ArrayList<>();
+    private ArrayList<ModelInfo> taModels = new ArrayList<>();
+    private ArrayList<ModelInfo> llmModels = new ArrayList<>();
 
     private ClaimClass claim = new ClaimClass();
 
@@ -53,6 +60,16 @@ public class TextClass {
         this.topics.get(model).add(topic);
         if (!this.topicsModels.contains(model)) {
             this.topicsModels.add(model);
+        }
+    }
+
+    public void addOffensive(ModelInfo model, OffensiveClass offensive) {
+        if (!this.offensives.containsKey(model)) {
+            this.offensives.put(model, new ArrayList<>());
+        }
+        this.offensives.get(model).add(offensive);
+        if (!this.offensivesModels.contains(model)) {
+            this.offensivesModels.add(model);
         }
     }
 
@@ -96,11 +113,25 @@ public class TextClass {
         }
     }
 
+    public void addLLM(ModelInfo model, LLMClass llm) {
+        this.llm.put(model, llm);
+        if (!this.llmModels.contains(model)) {
+            this.llmModels.add(model);
+        }
+    }
+
     public ArrayList<TopicClass> getTopic(ModelInfo model) {
         if (!this.topics.containsKey(model)) {
             return new ArrayList<>();
         }
         return this.topics.get(model);
+    }
+
+    public ArrayList<OffensiveClass> getOffensive(ModelInfo model) {
+        if (!this.offensives.containsKey(model)) {
+            return new ArrayList<>();
+        }
+        return this.offensives.get(model);
     }
 
     public ArrayList<EmotionClass> getEmotion(ModelInfo model) {
@@ -224,6 +255,14 @@ public class TextClass {
         this.toxicModels.remove(model);
     }
 
+    public void addAVGLLM(LLMClass llm) {
+        this.llmAVG.add(llm);
+    }
+
+    public void addAVGTA(TAClass ta) {
+        this.taScoreAVG.add(ta);
+    }
+
 
 
     public HashMap<ModelInfo, ArrayList<TopicClass>> getTopics() {
@@ -290,6 +329,32 @@ public class TextClass {
             avgTopic.setTopics(avgTopics);
             avgTopic.setModelInfo(model);
             this.topicAVG.add(avgTopic);
+        }
+    }
+
+    public void computeAVGOffensive(){
+        for (ModelInfo model : this.offensives.keySet()) {
+            HashMap<String, Double> offensiveScores = new HashMap<>();
+            ArrayList<OffensiveClass> offensiveList = this.offensives.get(model);
+            for (OffensiveClass offensive : offensiveList) {
+                ArrayList<OffensiveInput> offensives = offensive.getOffensives();
+                for (OffensiveInput offensiveInput : offensives) {
+                    String key = offensiveInput.getKey();
+                    double score = offensiveInput.getScore();
+                    offensiveScores.put(key, offensiveScores.getOrDefault(key, 0.0) + score);
+                }
+            }
+            OffensiveClass avgOffensive = new OffensiveClass();
+            ArrayList<OffensiveInput> avgOffensives = new ArrayList<>();
+            for (String key : offensiveScores.keySet()) {
+                OffensiveInput offensiveInput = new OffensiveInput();
+                offensiveInput.setKey(key);
+                offensiveInput.setScore(offensiveScores.get(key) / offensiveList.size());
+                avgOffensives.add(offensiveInput);
+            }
+            avgOffensive.setOffensives(avgOffensives);
+            avgOffensive.setModelInfo(model);
+            this.offensiveAVG.add(avgOffensive);
         }
     }
 
@@ -411,6 +476,18 @@ public class TextClass {
         return topicAVG;
     }
 
+    public ArrayList<OffensiveClass> getOffensiveAVG() {
+        return offensiveAVG;
+    }
+
+    public ArrayList<LLMClass> getLlmAVG() {
+        return llmAVG;
+    }
+
+    public ArrayList<TAClass> getTaScoreAVG() {
+        return taScoreAVG;
+    }
+
     public ArrayList<ToxicClass> getToxicAVG() {
         return toxicAVG;
     }
@@ -461,5 +538,20 @@ public class TextClass {
 
     public void setReadabilityModels(ArrayList<ModelInfo> readabilityModels) {
         this.readabilityModels = readabilityModels;
+    }
+
+    public ArrayList<ModelInfo> getLLModels() {
+        return llmModels;
+    }
+
+    public void setLLModels(ArrayList<ModelInfo> llmModels) {
+        this.llmModels = llmModels;
+    }
+
+    public ArrayList<ModelInfo> getTaModels() {
+        return taModels;
+    }
+    public void setTaModels(ArrayList<ModelInfo> taModels) {
+        this.taModels = taModels;
     }
 }

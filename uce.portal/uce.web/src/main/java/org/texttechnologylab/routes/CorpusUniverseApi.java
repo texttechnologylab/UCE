@@ -20,7 +20,7 @@ import spark.Route;
 
 import java.util.*;
 
-public class CorpusUniverseApi {
+public class CorpusUniverseApi implements UceApi {
     private static final Logger logger = LogManager.getLogger(CorpusUniverseApi.class);
     private ApplicationContext context;
     private RAGService ragService;
@@ -98,7 +98,7 @@ public class CorpusUniverseApi {
             case DOCUMENTS:
                 // First get the closest document embeddings to the current center
                 var docEmbeddings = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 100, corpusId),
+                        () -> ragService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 1000, corpusId),
                         (ex) -> logger.error("Error getting the closest 3d document embeddings.", ex));
                 if (docEmbeddings == null) {
                     result.replace("status", 500);
