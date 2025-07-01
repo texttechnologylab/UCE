@@ -237,36 +237,48 @@
                         <div class="analysis-readabilitys-container">
                             <#list DUUI.textInformation.readabilityAVG as model>
                                 <div class="analysis-readability-card">
-                                    <div class="analysis-readability-card-title">${model.getModelInfo().getName()}</div>
-                                    <div class="analysis-readabilitys-grid">
-                                        <div class="analysis-readability-entry analysis-readability-fleschkincaid">
-                                            <div class="analysis-readability-score">Flesch Kincaid: ${model.getFleschKincaid()}</div>
+                                    <#if model.getModelInfo().getName()="Readability (EN)">
+                                        <div class="analysis-readability-card-title">${model.getModelInfo().getName()}</div>
+                                        <div class="analysis-readabilitys-grid">
+                                            <div class="analysis-readability-entry analysis-readability-fleschkincaid">
+                                                <div class="analysis-readability-score">Flesch Kincaid: ${model.getFleschKincaid()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-flesch">
+                                                <div class="analysis-readability-score">Flesch: ${model.getFlesch()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-gunningfog">
+                                                <div class="analysis-readability-score">Gunning Fog: ${model.getGunningFog()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-colemanliau">
+                                                <div class="analysis-readability-score">Coleman Liau: ${model.getColemanLiau()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-dalechall">
+                                                <div class="analysis-readability-score">Dale Chall: ${model.getDaleChall()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-ari">
+                                                <div class="analysis-readability-score">ARI: ${model.getARI()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-linsearwrite">
+                                                <div class="analysis-readability-score">Linsear Write: ${model.getLinsearWrite()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-smog">
+                                                <div class="analysis-readability-score">SMOG: ${model.getSMOG()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-spache">
+                                                <div class="analysis-readability-score">Spache: ${model.getSpache()}</div>
+                                            </div>
                                         </div>
-                                        <div class="analysis-readability-entry analysis-readability-flesch">
-                                            <div class="analysis-readability-score">Flesch: ${model.getFlesch()}</div>
+                                    <#else>
+                                        <div class="analysis-readability-card-title">${model.getGroupName()}</div>
+                                        <div class="analysis-readabilitys-grid">
+                                            <#list model.readabilityInputs as readabilityInput>
+                                                <#assign opacity = readabilityInput.getScore()?string?replace(",", ".")>
+                                                <div class="analysis-readability-entry" style="background-color: rgba(0, 200, 200, ${opacity});">
+                                                    <div class="analysis-readability-score">${readabilityInput.getName()}: ${readabilityInput.getScore()}</div>
+                                                </div>
+                                            </#list>
                                         </div>
-                                        <div class="analysis-readability-entry analysis-readability-gunningfog">
-                                            <div class="analysis-readability-score">Gunning Fog: ${model.getGunningFog()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-colemanliau">
-                                            <div class="analysis-readability-score">Coleman Liau: ${model.getColemanLiau()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-dalechall">
-                                            <div class="analysis-readability-score">Dale Chall: ${model.getDaleChall()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-ari">
-                                            <div class="analysis-readability-score">ARI: ${model.getARI()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-linsearwrite">
-                                            <div class="analysis-readability-score">Linsear Write: ${model.getLinsearWrite()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-smog">
-                                            <div class="analysis-readability-score">SMOG: ${model.getSMOG()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-spache">
-                                            <div class="analysis-readability-score">Spache: ${model.getSpache()}</div>
-                                        </div>
-                                    </div>
+                                    </#if>
                                 </div>
                             </#list>
                         </div>

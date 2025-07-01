@@ -1143,6 +1143,39 @@
     "Variant": "Readability",
     "type": "Readability"
   },
+  "Textstat (EN)": {
+    "url": "http://readability-textstat.service.component.duui.texttechnologylab.org/",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-readability",
+    "huggingface": "",
+    "paper": "",
+    "map": "Textstat",
+    "Name": "Textstat (EN)",
+    "Main Tool": "Text Readability",
+    "Variant": "Readability",
+    "type": "Readability"
+  },
+  "Diversity (EN)": {
+    "url": "http://readability-diversity.service.component.duui.texttechnologylab.org/",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-readability",
+    "huggingface": "",
+    "paper": "",
+    "map": "Diversity",
+    "Name": "Diversity (EN)",
+    "Main Tool": "Text Readability",
+    "Variant": "Readability",
+    "type": "Readability"
+  },
+  "Readability Advance (EN)": {
+    "url": "http://readability-readability.service.component.duui.texttechnologylab.org/",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-readability",
+    "huggingface": "",
+    "paper": "",
+    "map": "Readability",
+    "Name": "Readability Advance (EN)",
+    "Main Tool": "Text Readability",
+    "Variant": "Readability",
+    "type": "Readability"
+  },
   "TTLAB Cohesion-l BERT Token Auto Correlation": {
     "url": "http://ta.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-TAScore",

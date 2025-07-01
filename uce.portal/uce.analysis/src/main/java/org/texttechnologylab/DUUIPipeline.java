@@ -3,6 +3,7 @@ package org.texttechnologylab;
 import com.google.gson.Gson;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.commons.compress.compressors.CompressorException;
+import org.apache.jena.mem.SparseArraySubSpliterator;
 import org.apache.uima.UIMAException;
 import org.apache.uima.cas.CASException;
 import org.apache.uima.fit.factory.JCasFactory;
@@ -788,45 +789,76 @@ public class DUUIPipeline {
                 break;
             case "Readability":
                 ReadabilityClass readabilityClass = new ReadabilityClass();
-                for (CategoryCoveredTagged category : JCasUtil.select(cas, CategoryCoveredTagged.class)) {
-                    String model_name = "Readability";
-                    if (!model_name.equals(modelInfo.getMap())) {
-                        continue;
+                LinkedHashMap<String, ReadabilityClass> readability_map = new LinkedHashMap<>();
+                if (!("Readability (EN)".equals(modelInfo.getName()))) {
+                    String model_name = modelInfo.getName();
+                    Collection<ReadabilityAdvance> all_readability_advance = JCasUtil.select(cas, ReadabilityAdvance.class);
+                    for (ReadabilityAdvance readabilityAdvance : all_readability_advance){
+                        if (!modelInfo.getMap().equals(readabilityAdvance.getModel().getModelName())) {
+                            continue;
+                        }
+                        String readability_group_name = readabilityAdvance.getGroupName();
+                        String groupName_input = model_name + " " + readability_group_name;
+                        ReadabilityClass readabilityAdvanceClass = new ReadabilityClass();
+                        readabilityAdvanceClass.setModelInfo(modelInfo);
+                        readabilityAdvanceClass.setGroupName(groupName_input);
+                        FSArray<AnnotationComment> readability_sentences = readabilityAdvance.getTextReadabilities();
+                        for (AnnotationComment comment_i : readability_sentences) {
+                            String key = comment_i.getKey();
+                            String value = comment_i.getValue();
+                            ReadabilityInput readabilityInput = new ReadabilityInput();
+                            readabilityInput.setName(key);
+                            readabilityInput.setScore(Double.parseDouble(value));
+                            readabilityAdvanceClass.addReadabilityInput(readabilityInput);
+                        }
+                        readability_map.put(groupName_input, readabilityAdvanceClass);
                     }
-                    String categoryName = category.getValue();
-                    double categoryScore = category.getScore();
-                    switch (categoryName) {
-                        case "flesch_kincaid":
-                            readabilityClass.setFleschKincaid(categoryScore);
-                            break;
-                        case "flesch":
-                            readabilityClass.setFlesch(categoryScore);
-                            break;
-                        case "smog":
-                            readabilityClass.setSMOG(categoryScore);
-                            break;
-                        case "dale_chall":
-                            readabilityClass.setDaleChall(categoryScore);
-                            break;
-                        case "gunning_fog":
-                            readabilityClass.setGunningFog(categoryScore);
-                            break;
-                        case "coleman_liau":
-                            readabilityClass.setColemanLiau(categoryScore);
-                            break;
-                        case "ari":
-                            readabilityClass.setARI(categoryScore);
-                            break;
-                        case "linsear_write":
-                            readabilityClass.setLinsearWrite(categoryScore);
-                            break;
-                        case "spache":
-                            readabilityClass.setSpache(categoryScore);
-                            break;
+                    for (Map.Entry<String, ReadabilityClass> entry : readability_map.entrySet()) {
+                        ReadabilityClass readabilityAdvanceClass = entry.getValue();
+                        textClass.addReadability(readabilityAdvanceClass);
                     }
                 }
-                readabilityClass.setModelInfo(modelInfo);
-                textClass.addReadability(readabilityClass);
+                else{
+                    for (CategoryCoveredTagged category : JCasUtil.select(cas, CategoryCoveredTagged.class)) {
+                        String model_name = "Readability";
+                        if (!model_name.equals(modelInfo.getMap())) {
+                            continue;
+                        }
+                        String categoryName = category.getValue();
+                        double categoryScore = category.getScore();
+                        switch (categoryName) {
+                            case "flesch_kincaid":
+                                readabilityClass.setFleschKincaid(categoryScore);
+                                break;
+                            case "flesch":
+                                readabilityClass.setFlesch(categoryScore);
+                                break;
+                            case "smog":
+                                readabilityClass.setSMOG(categoryScore);
+                                break;
+                            case "dale_chall":
+                                readabilityClass.setDaleChall(categoryScore);
+                                break;
+                            case "gunning_fog":
+                                readabilityClass.setGunningFog(categoryScore);
+                                break;
+                            case "coleman_liau":
+                                readabilityClass.setColemanLiau(categoryScore);
+                                break;
+                            case "ari":
+                                readabilityClass.setARI(categoryScore);
+                                break;
+                            case "linsear_write":
+                                readabilityClass.setLinsearWrite(categoryScore);
+                                break;
+                            case "spache":
+                                readabilityClass.setSpache(categoryScore);
+                                break;
+                        }
+                    }
+                    readabilityClass.setModelInfo(modelInfo);
+                    textClass.addReadability(readabilityClass);
+                }
                 break;
             case "LLM":
                 Collection<LLMResult> llmResults = JCasUtil.select(cas, LLMResult.class);
