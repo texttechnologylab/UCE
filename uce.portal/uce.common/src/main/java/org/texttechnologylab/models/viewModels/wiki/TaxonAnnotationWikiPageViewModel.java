@@ -13,6 +13,13 @@ public class TaxonAnnotationWikiPageViewModel extends NamedEntityAnnotationWikiP
     @Setter
     private List<String> alternativeNames;
 
+    /**
+     * The odds that this recognized taxon is correct. Only applied to GNFinder taxa.
+     */
+    @Getter
+    @Setter
+    private double odds;
+
     @Getter
     @Setter
     private List<GbifOccurrence> gbifOccurrences;

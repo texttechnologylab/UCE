@@ -165,12 +165,13 @@ let WikiHandler = (function () {
     }
 
     WikiHandler.prototype.fetchLexiconEntryOccurrences = function (coveredText, type, skip, $target) {
+        console.log(coveredText);
         $.ajax({
             url: "/api/wiki/lexicon/occurrences",
             type: "POST",
             contentType: "application/json",
             data: JSON.stringify({
-                coveredText: coveredText,
+                coveredText: String(coveredText),
                 type: type,
                 skip: skip,
                 take: this.occurrencesTake
@@ -232,7 +233,7 @@ let WikiHandler = (function () {
 
     WikiHandler.prototype.handleAnnotationClicked = function ($wikiEl) {
         const wid = $wikiEl.data('wid');
-        let coveredText = $wikiEl.data('wcovered');
+        let coveredText = String($wikiEl.data('wcovered'));
         if (coveredText === undefined || coveredText === '') {
             coveredText = $wikiEl.html();
         }

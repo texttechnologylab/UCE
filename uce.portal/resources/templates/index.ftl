@@ -408,7 +408,10 @@
             <!-- Header -->
             <header class="container-fluid card-shadow bg-lightgray">
                 <div class="container flexed align-items-center justify-content-between">
-                    <h3 class="text-center mb-0 mr-1 color-prime">Linked-Corpus Map</h3>
+                    <div class="flexed align-items-baseline">
+                        <h3 class="text-center mb-0 mr-1 color-prime">Linked-Corpus Map</h3>
+                        <h5 class="font-italic mb-0 text ml-1">(Beta)</h5>
+                    </div>
                     <a class="w-rounded-btn mb-0 mr-0 ml-2 mt-0" href="#uce-timeline-map">
                         <i class="fas fa-angle-double-down"></i>
                     </a>
