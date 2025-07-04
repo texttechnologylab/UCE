@@ -347,18 +347,6 @@ public class StringUtils {
         return matcher.replaceAll("bio:$1");
     }
 
-    public static final String[] TIME_COMMANDS = {"Y::", "M::", "D::", "S::"};
-
-    public static String GetFullTimeUnitByCode(String code) {
-        return switch (code) {
-            case "Y" -> "year";
-            case "M" -> "month";
-            case "D" -> "day";
-            case "S" -> "season";
-            default -> null;
-        };
-    }
-
     public static String mergeBoldTags(String input) {
         StringBuilder result = new StringBuilder();
         boolean inBold = false;

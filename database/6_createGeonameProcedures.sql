@@ -53,16 +53,17 @@ SELECT
 	al.fromannotationtypetable,
     COUNT(*) AS context_count
 FROM annotationlink al
-JOIN geoname g ON g.id = al.toid
-LEFT JOIN (
+JOIN geoname g ON g.id = al.toid AND al.toannotationtypetable = 'geoname'
+INNER JOIN (
     SELECT al1.fromid, t.date
     FROM annotationlink al1
-    JOIN time t ON al1.toid = t.id
+    JOIN time t ON al1.toid = t.id and al1.toannotationtypetable = 'time'
     WHERE al1.linkid = 'context' AND t.date IS NOT NULL
 ) t ON al.fromid = t.fromid
-WHERE al.linkid = 'context' --and al.fromannotationtypetable != 'namedEntity' 
+WHERE al.linkid = 'context' and al.fromannotationtypetable != 'namedEntity' 
 GROUP BY
     g.id, g.name, g.location_geom, al.corpusid, t.date, al.fromannotationtypetable;
+	
 
 -- Query geoname markers on the premise of the annotationlink connection geoname -> annotation -> time
 CREATE OR REPLACE FUNCTION uce_query_geoname_timeline_links(
@@ -74,7 +75,8 @@ CREATE OR REPLACE FUNCTION uce_query_geoname_timeline_links(
     to_date DATE DEFAULT NULL,
     corpus BIGINT DEFAULT NULL,
     skip INTEGER DEFAULT 0,
-    take INTEGER DEFAULT NULL
+    take INTEGER DEFAULT NULL,
+    from_annotation_type_table TEXT DEFAULT NULL
 )
 RETURNS TABLE (
     lat DOUBLE PRECISION,
@@ -103,15 +105,23 @@ BEGIN
         t.date,
         t.coveredtext AS datecoveredtext
     FROM geoname g
-    JOIN annotationlink al ON al.toid = g.id AND al.corpusid = corpus
-    LEFT JOIN (
+    JOIN annotationlink al 
+		ON al.toid = g.id 
+		AND al.toannotationtypetable = 'geoname'
+		AND al.corpusid = corpus
+    INNER JOIN (
         SELECT al1.fromid, t.date, t.coveredtext 
         FROM annotationlink al1
-        JOIN time t ON al1.toid = t.id
-        WHERE al1.linkid = 'context' AND t.date IS NOT NULL
+        JOIN time t ON al1.toid = t.id and al1.toannotationtypetable = 'time'
+        WHERE al1.linkid = 'context' AND t.date IS NOT NULL AND al1.corpusid = corpus
     ) t ON al.fromid = t.fromid
     WHERE al.linkid = 'context' 
-      --AND al.fromannotationtypetable != 'namedEntity' 
+      AND al.fromannotationtypetable != 'namedEntity'
+      AND (
+        from_annotation_type_table IS NULL 
+        OR
+        al.fromannotationtypetable = from_annotation_type_table 
+      ) 
       AND ST_Within(
             g.location_geom,
             ST_MakeEnvelope(min_lng, min_lat, max_lng, max_lat, 4326)
@@ -161,7 +171,7 @@ BEGIN
         )
 
         -- For now, no named entities
-        --AND fromannotationtypetable != 'namedEntity' 
+        AND fromannotationtypetable != 'namedEntity' 
 
         -- Filter by date range
         AND (

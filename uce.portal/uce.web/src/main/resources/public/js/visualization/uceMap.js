@@ -14,7 +14,9 @@ class UCEMap {
         this.$container.addClass('uce-map');
         this.$container.append(`
         <div class="full-loader">
-            <div class="simple-loader"><p class="p-2 m-0 text-center w-100 color-prime font-italic">Fetching Occurrences</p></div>
+            <div class="simple-loader"><p class="p-2 m-0 text-center w-100 color-prime font-italic">
+                Fetching Occurrences <br/> <span class="text small-font">(Depending on the timeline, this might take a moment...)</span>
+            </p></div>
         </div>`);
         this.$container.append(`
         <div class="map-ui-container p-2">
@@ -66,16 +68,16 @@ class UCEMap {
                     <div class="flexed align-items-center justify-content-between mb-2">
                         <label class="w-100 mb-0">Timeline</label>
                         <div class="custom-control custom-switch" style="margin-right: -6px">
-                            <input type="checkbox" class="custom-control-input" id="timeline-switch">
+                            <input type="checkbox" class="custom-control-input" id="timeline-switch" checked>
                             <label class="mb-0 custom-control-label flexed align-items-center"
                                    for="timeline-switch">
                             </label>
                         </div>
                     </div>
                     <div>
-                        <input class="form-control w-100" data-type="from" type="date" value="1700-01-01"/>
+                        <input class="form-control w-100" data-type="from" type="date" value="1800-01-01"/>
                         <label class="w-100 text-center mt-2 mb-2"><i class="fas fa-long-arrow-alt-down"></i></label>
-                        <input class="form-control w-100" data-type="to" type="date" value="2000-01-01"/>
+                        <input class="form-control w-100" data-type="to" type="date" value="1900-01-01"/>
                         <div class="w-100 flexed justify-content-center mt-2">
                             <button class="btn btn-prime p-1 mt-2 submit-time-btn"><i class="fas fa-check"></i></button>
                         </div>
@@ -83,7 +85,14 @@ class UCEMap {
                 </div>
                 <!-- List of annotation links -->
                 <div class="group-box bg-default p-0">
-                    <label class="text-center w-100 p-2">Occurrences</label>
+                    <div class="flexed align-items-center p-2 mt-1 justify-content-between">
+                        <p class="text-left w-100 pb-0 mb-0 text-left color-prime">Occurrences</p>
+                        <select id="occurrence-link-category-select" class="form-control mb-0">
+                            <option data-id="all">All</option>                        
+                            <option data-id="gnfindertaxon">GNFinderTaxon</option>                        
+                            <option data-id="gazetteertaxon">GazetteerTaxon</option>                        
+                        </select>
+                    </div>
                     <div class="occurrences-list p-2">
                         <div class="alert alert-info mb-0">
                             <p class="mb-0 text small-font w-100 text-center">None selected.</p>
@@ -101,17 +110,32 @@ class UCEMap {
         this.$linkedMapNavigator = this.$container.find('.linked-map-navigator');
         this.$linkedMapNavigator.find('#timeline-switch').on('change', () => this.fetchAndRenderTimelineNodes());
         this.$linkedMapNavigator.find('.timeline-inputs .submit-time-btn').on('click', () => this.fetchAndRenderTimelineNodes());
+        this.$linkedMapNavigator.find('#occurrence-link-category-select').on('change', () => this.handleLoadMarkerOccurrence(
+            this.selectedMarkerPayload.minLng,
+            this.selectedMarkerPayload.maxLng,
+            this.selectedMarkerPayload.minLat,
+            this.selectedMarkerPayload.maxLat,
+        ));
         this.$linkedMapNavigator.find('button.load-more-occurrences').on('click', function () {
             if (!ctx.selectedMarkerPayload) return;
             ctx.selectedMarkerPayload.skip += ctx.selectedMarkerPayload.take;
+            ctx.selectedMarkerPayload.category = ctx.getSelectedOccurrenceCategory();
             ctx.renderTimelineOccurrences(ctx.selectedMarkerPayload);
         });
 
         this.fetchAndRenderTimelineNodes();
     }
 
+    getSelectedOccurrenceCategory(){
+        const $categorySelect = $('#occurrence-link-category-select');
+        let category = $categorySelect.get(0).options[$categorySelect.get(0).selectedIndex].getAttribute('data-id');
+        if(category === undefined || category === 'all') category = null;
+        return category;
+    }
+
     buildPayload() {
         const zoom = this.twoDimMap.getZoom();
+
         return {
             minLat: -90,
             maxLat: 90,
@@ -125,6 +149,7 @@ class UCEMap {
             toDate: this.$linkedMapNavigator.find('#timeline-switch').is(':checked')
                 ? this.$linkedMapNavigator.find('.timeline-inputs input[data-type="to"]').val()
                 : null,
+            category: this.getSelectedOccurrenceCategory()
         };
     }
 
@@ -165,25 +190,33 @@ class UCEMap {
 
             // Attach to the on click events
             marker.on('click', function (e) {
-                // When clicked, we simply list all the annotations of that cluster.
-                let payload = ctx.buildPayload();
-                payload.minLng = d.longitude - 0.0001;
-                payload.maxLng = d.longitude + 0.0001;
-                payload.minLat = d.latitude - 0.0001;
-                payload.maxLat = d.latitude + 0.0001;
-                payload['take'] = 25;
-                payload['skip'] = 0;
-                ctx.selectedMarkerPayload = payload;
-                // Clear the list of the previous occurrences
-                const $listContainer = ctx.$linkedMapNavigator.find('.occurrences-list');
-                $listContainer.html('');
-                ctx.renderTimelineOccurrences(payload);
+                ctx.handleLoadMarkerOccurrence(
+                    d.longitude - 0.0001,
+                    d.longitude + 0.0001,
+                    d.latitude - 0.0001,
+                    d.latitude + 0.0001);
             });
 
             this.timelineClusters.addLayer(marker);
         });
 
         this.twoDimMap.addLayer(this.timelineClusters);
+    }
+
+    handleLoadMarkerOccurrence(minLng, maxLng, minLat, maxLat){
+        // When clicked, we simply list all the annotations of that cluster.
+        let payload = this.buildPayload();
+        payload.minLng = minLng;
+        payload.maxLng = maxLng;
+        payload.minLat = minLat;
+        payload.maxLat = maxLat;
+        payload['take'] = 25;
+        payload['skip'] = 0;
+        this.selectedMarkerPayload = payload;
+        // Clear the list of the previous occurrences
+        const $listContainer = this.$linkedMapNavigator.find('.occurrences-list');
+        $listContainer.html('');
+        this.renderTimelineOccurrences(payload);
     }
 
     renderTimelineOccurrences(payload) {
@@ -236,9 +269,9 @@ class UCEMap {
                             const highlights = [
                                 $card.find('span[data-type="label"]').html(),
                                 $card.find('span[data-type="location"]').html(),
-                                $card.find('span[data-type="date"]').html()
+                                String($card.find('span[data-type="date"]').html())
                             ]
-                            openInExpandedTextView(data.coveredText, data.page.coveredText, highlights, data.wikiId, data.coveredText);
+                            openInExpandedTextView(String(data.coveredText), String(data.page.coveredText), highlights, data.wikiId, String(data.coveredText));
                         })
                         .catch(err => showMessageModal("Error", "There was an error fetching the information of that occurrence."));
                 });

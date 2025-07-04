@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
+    <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
     <style>
         <#include "*/css/site.css">
         <#include "*/css/simple-loader.css">
@@ -27,12 +28,14 @@
         <#include "*/css/leaflet/MarkerCluster.css">
         <#include "*/css/leaflet/MarkerCluster.Default.css">
     </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script
             src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"
             integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
@@ -408,7 +411,10 @@
             <!-- Header -->
             <header class="container-fluid card-shadow bg-lightgray">
                 <div class="container flexed align-items-center justify-content-between">
-                    <h3 class="text-center mb-0 mr-1 color-prime">Linked-Corpus Map</h3>
+                    <div class="flexed align-items-baseline">
+                        <h3 class="text-center mb-0 mr-1 color-prime">Linked-Corpus Map</h3>
+                        <h5 class="font-italic mb-0 text ml-1">(Beta)</h5>
+                    </div>
                     <a class="w-rounded-btn mb-0 mr-0 ml-2 mt-0" href="#uce-timeline-map">
                         <i class="fas fa-angle-double-down"></i>
                     </a>

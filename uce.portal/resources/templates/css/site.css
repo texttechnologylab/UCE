@@ -15,6 +15,10 @@ a:disabled {
     opacity: 0.3 !important;
 }
 
+.overflow-x{
+    overflow-x:auto;
+}
+
 .site-container {
     background-color: rgb(245, 245, 247);
     min-height: 100vh !important;

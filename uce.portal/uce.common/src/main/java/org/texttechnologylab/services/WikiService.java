@@ -8,6 +8,7 @@ import org.texttechnologylab.models.corpus.KeywordDistribution;
 import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.viewModels.wiki.*;
 import org.texttechnologylab.states.KeywordInContextState;
+import org.texttechnologylab.utils.MathUtils;
 import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
 
@@ -169,6 +170,9 @@ public class WikiService {
         viewModel.setAnnotatedBy(clazz.getSimpleName());
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(taxon.getBegin(), taxon.getEnd(), taxon.getDocumentId()));
         viewModel.setWikiModel(taxon);
+        viewModel.setOdds(-1);
+        if(clazz == GnFinderTaxon.class)
+            viewModel.setOdds(MathUtils.log10OddsToProbability(((GnFinderTaxon)taxon).getOddsLog10()));
         // We are not interested in the standard w3 XML triplets
         var biofidUrl = StringUtils.BIOFID_URL_BASE + taxon.getRecordId();
         viewModel.setNextRDFNodes(
