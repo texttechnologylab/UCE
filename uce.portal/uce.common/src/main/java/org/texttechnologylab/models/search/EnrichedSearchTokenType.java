@@ -6,5 +6,7 @@ public enum EnrichedSearchTokenType {
     TAXON,
     TAXON_COMMAND,
     LOCATION,
-    LOCATION_COMMAND
+    LOCATION_COMMAND,
+    TIME,
+    TIME_COMMAND
 }

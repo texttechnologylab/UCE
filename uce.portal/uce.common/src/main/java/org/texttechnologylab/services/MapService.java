@@ -33,8 +33,9 @@ public class MapService {
                                                   java.sql.Date toDate,
                                                   long corpusId,
                                                   int skip,
-                                                  int take) throws DatabaseOperationException {
-        return db.getGeonameTimelineLinks(minLng, minLat, maxLng, maxLat, fromDate, toDate, corpusId, skip, take);
+                                                  int take,
+                                                  String fromAnnotationTypeTable) throws DatabaseOperationException {
+        return db.getGeonameTimelineLinks(minLng, minLat, maxLng, maxLat, fromDate, toDate, corpusId, skip, take, fromAnnotationTypeTable);
     }
 
     /**

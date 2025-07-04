@@ -27,7 +27,18 @@ public class EnrichedSearchQuery {
     // https://en.wikipedia.org/wiki/Taxonomic_rank#:~:text=Main%20ranks,-In%20his%20landmark&text=Today%2C%20the%20nomenclature%20is%20regulated,family%2C%20genus%2C%20and%20species.
     public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::"};
     public static final String[] LOCATION_COMMANDS = {"LOC::", "R::"};
-    public static final String[] ENRICHMENT_COMMANDS = ArrayUtils.addAll(TAX_RANKS, LOCATION_COMMANDS);
+    public static final String[] TIME_COMMANDS = {"Y::", "M::", "D::", "S::", "T::"};
+
+    public static String getFullTimeUnitByCode(String code) {
+        return switch (code) {
+            case "Y" -> "year";
+            case "M" -> "month";
+            case "D" -> "day";
+            case "S" -> "season";
+            case "T" -> "range";
+            default -> null;
+        };
+    }
 
     private final PostgresqlDataInterface_Impl db;
     private final JenaSparqlService jenaSparqlService;
@@ -40,6 +51,7 @@ public class EnrichedSearchQuery {
     private List<EnrichedSearchToken> enrichedSearchTokens;
     private boolean parseTaxonomy;
     private boolean parseGeonames;
+    private boolean parseTimes;
 
     public EnrichedSearchQuery(String query,
                                PostgresqlDataInterface_Impl db,
@@ -74,6 +86,8 @@ public class EnrichedSearchQuery {
             // First we try to parse the command for potential enrichment
             if (shouldHandleLocationCommand(cleanedToken, corpusVm)) {
                 isEnriched = handleLocationCommand(cleanedToken, enrichedToken, enrichedSearchQuery, delimiter, or, corpusVm.getCorpus().getId());
+            } else if (shouldHandleTimeCommand(cleanedToken, corpusVm)) {
+                isEnriched = handleTimesCommand(cleanedToken, enrichedToken, enrichedSearchQuery, delimiter, or, corpusVm.getCorpus().getId());
             } else if (shouldHandleTaxonomicCommand(cleanedToken)) {
                 isEnriched = handleTaxonomicCommand(cleanedToken, enrichedToken, enrichedSearchQuery, delimiter, or);
             }
@@ -109,16 +123,22 @@ public class EnrichedSearchQuery {
         return cleaned.contains("__") ? cleaned.replaceAll("__", " ") : cleaned;
     }
 
+    private boolean shouldHandleTimeCommand(String token, @NotNull CorpusViewModel corpusVm) {
+        return corpusVm.getCorpusConfig().getAnnotations().isTime()
+               && this.parseTimes
+               && Stream.of(TIME_COMMANDS).anyMatch(token::startsWith);
+    }
+
     private boolean shouldHandleLocationCommand(String token, @NotNull CorpusViewModel corpusVm) {
         return corpusVm.getCorpusConfig().getAnnotations().isGeoNames()
-                && this.parseGeonames
-                && Stream.of(LOCATION_COMMANDS).anyMatch(token::startsWith);
+               && this.parseGeonames
+               && Stream.of(LOCATION_COMMANDS).anyMatch(token::startsWith);
     }
 
     private boolean shouldHandleTaxonomicCommand(String token) {
         return SystemStatus.JenaSparqlStatus.isAlive()
-                && this.parseTaxonomy
-                && Stream.of(TAX_RANKS).anyMatch(token::startsWith);
+               && this.parseTaxonomy
+               && Stream.of(TAX_RANKS).anyMatch(token::startsWith);
     }
 
     private boolean handleLocationCommand(@NotNull String token,
@@ -141,14 +161,14 @@ public class EnrichedSearchQuery {
         if (command.equals("R::")) {
             // Syntax should be R::lng=5;lat=70;r=1000
             var locationDto = parseLocationRadiusCommand(value);
-            geoNames = db.getDistinctGeonamesNamesByRadius(locationDto.getLongitude(), locationDto.getLatitude(), locationDto.getRadius(), corpusId, 100);
+            geoNames = db.getDistinctGeonamesNamesByRadius(locationDto.getLongitude(), locationDto.getLatitude(), locationDto.getRadius(), corpusId, 200);
         } else if (command.equals("LOC::")) {
             // The syntax should be  LOC::<FEATURE_CLASS>.<FEATURE_CODE>, so e.g.: LOC::A.ADMS
             var split = value.split("\\.");
             var featureClass = split[0];
             var featureCode = "";
             if (split.length > 1) featureCode = split[1];
-            geoNames = db.getDistinctGeonamesNamesByFeatureCode(GeoNameFeatureClass.valueOf(featureClass), featureCode, corpusId, 100);
+            geoNames = db.getDistinctGeonamesNamesByFeatureCode(GeoNameFeatureClass.valueOf(featureClass), featureCode, corpusId, 200);
         }
 
         if (geoNames.isEmpty()) {
@@ -166,6 +186,57 @@ public class EnrichedSearchQuery {
         if (input.startsWith("R::")) input = input.replace("R::", "");
         return LocationDto.fromCommandString(input);
     }
+
+    private boolean handleTimesCommand(
+            @NotNull String token,
+            @NotNull EnrichedSearchToken enrichedToken,
+            StringBuilder query,
+            String delimiter,
+            String or,
+            long corpusId
+    ) throws DatabaseOperationException {
+        enrichedToken.setType(EnrichedSearchTokenType.TIME_COMMAND);
+
+        var command = token.substring(0, 3);
+        var value = StringUtils.removeSpecialCharactersAtEdges(token.substring(3));
+        enrichedToken.setValue(value);
+
+        var unitCode = command.replace("::", "");
+        var unitName = getFullTimeUnitByCode(unitCode).toLowerCase();
+
+        String condition;
+
+        if (!unitName.equals("range")) {
+            // For units like year, month, day, season
+            var formattedValue = unitName.equals("year") ? value : "'" + value + "'";
+            condition = String.format("t.%s = %s AND t.pageId IS NOT NULL", unitName, formattedValue);
+        } else if (value.contains("-")) {
+            // Handle range like 2010-2020
+            var split = value.split("-");
+            var from = split[0].trim();
+            var to = split[1].trim();
+            condition = String.format("t.year >= %s AND t.year <= %s AND t.pageId IS NOT NULL", from, to);
+        } else {
+            // Invalid or unsupported format
+            condition = "1=0"; // will return nothing
+        }
+
+        var matchedCoveredTexts = db.getDistinctTimesByCondition(condition, corpusId, 200);
+
+        if (matchedCoveredTexts == null || matchedCoveredTexts.isEmpty()) {
+            query.append(delimiter).append(value).append(delimiter).append(" ");
+        } else {
+            appendEnrichedNames(query, matchedCoveredTexts, value, delimiter, or);
+            enrichedToken.setChildren(
+                    matchedCoveredTexts.stream()
+                            .map(n -> new EnrichedSearchToken(n, EnrichedSearchTokenType.TAXON))
+                            .toList()
+            );
+        }
+
+        return true;
+    }
+
 
     private boolean handleTaxonomicCommand(@NotNull String token,
                                            @NotNull EnrichedSearchToken enrichedToken,
@@ -222,18 +293,23 @@ public class EnrichedSearchQuery {
                                      String delimiter,
                                      String or) {
         query.append(" ( ");
-        if (!original.isEmpty())query.append(original).append(or);
+        if (!original.isEmpty()) query.append(original).append(or);
         query.append(delimiter)
                 .append(String.join(or + delimiter, names.stream().map(n -> n.replace("'", "") + delimiter).toList()))
                 .append(" ) ");
     }
 
     public EnrichedSearchQuery withAll() {
-        return this.withTaxonomy().withGeonames();
+        return this.withTaxonomy().withGeonames().withTimes();
     }
 
     public EnrichedSearchQuery withTaxonomy() {
         this.parseTaxonomy = true;
+        return this;
+    }
+
+    public EnrichedSearchQuery withTimes() {
+        this.parseTimes = true;
         return this;
     }
 

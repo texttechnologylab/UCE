@@ -20,6 +20,7 @@ import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.Time;
 import org.texttechnologylab.models.corpus.links.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.dto.map.MapClusterDto;
@@ -42,10 +43,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
-import java.sql.Array;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 import java.util.function.Function;
 
@@ -123,9 +121,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                        java.sql.Date toDate,
                                                        long corpusId,
                                                        int skip,
-                                                       int take) throws DatabaseOperationException {
+                                                       int take,
+                                                       String fromAnnotationTypeTable) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
-            try (var storedProcedure = connection.prepareCall("{call uce_query_geoname_timeline_links" + "(?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            try (var storedProcedure = connection.prepareCall("{call uce_query_geoname_timeline_links" + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
                 storedProcedure.setDouble(1, minLng);
                 storedProcedure.setDouble(2, minLat);
                 storedProcedure.setDouble(3, maxLng);
@@ -135,6 +134,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 storedProcedure.setInt(7, (int) corpusId);
                 storedProcedure.setInt(8, skip);
                 storedProcedure.setInt(9, take);
+                storedProcedure.setString(10, fromAnnotationTypeTable);
 
                 var result = storedProcedure.executeQuery();
                 var points = new ArrayList<PointDto>();
@@ -1024,7 +1024,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         foundSnippets.forEach((key, snippetList) -> {
                             for (PageSnippet snippet : snippetList) {
                                 // Modify the value (example: changing content)
-                                snippet.setSnippet(StringUtils.getHtmlText(snippet.getSnippet()));
+                                snippet.setSnippet(snippet.getSnippet());
                             }
                         });
                         search.setSearchSnippets(foundSnippets);
@@ -1183,6 +1183,22 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 initializeCompleteDocument(doc, 0, 999999);
             }
             return doc;
+        });
+    }
+
+    public List<String> getDistinctTimesByCondition(String condition, long corpusId, int limit) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            // Construct HQL dynamically (THIS IS UNSAFE BECAUSE OF THE CONDITION INSERTION)
+            String hql = "SELECT DISTINCT t.coveredText " +
+                         "FROM Time t " +
+                         "JOIN Document d ON t.documentId = d.id " +
+                         "WHERE " + condition + " AND d.corpusId = :corpusId";
+
+            var query = session.createQuery(hql, String.class);
+            query.setParameter("corpusId", corpusId);
+            query.setMaxResults(limit);
+
+            return query.getResultList();
         });
     }
 
@@ -1435,12 +1451,23 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public void saveOrUpdateManyAnnotationLinks(List<AnnotationLink> links) throws DatabaseOperationException {
-        executeOperationSafely((session -> {
-            for (var link : links) {
-                session.saveOrUpdate(link);
+        final int BATCH_SIZE = 1000;
+        // Since the links go in the hundred of millions for giant documents, we have to chunk the bulk inserts...
+        executeOperationSafely(session -> {
+            for (int i = 0; i < links.size(); i++) {
+                session.saveOrUpdate(links.get(i));
+
+                // Flush and clear the session every BATCH_SIZE records
+                if (i % BATCH_SIZE == 0 && i > 0) {
+                    session.flush();
+                    session.clear();
+                }
             }
+
+            session.flush();
+            session.clear();
             return null;
-        }));
+        });
     }
 
     public void saveOrUpdateManyDocumentToAnnotationLinks(List<DocumentToAnnotationLink> links) throws DatabaseOperationException {

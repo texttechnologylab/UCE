@@ -265,7 +265,9 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         if (fullText == null || fullText.isEmpty()) {
             return "";
         }
-        var words = Arrays.stream(fullText.trim().split("\\s+")).toList();
+        // Opening HTML Tags may cause the UI HTML to break!
+        var cleaned = fullText.replace("<", "");
+        var words = Arrays.stream(cleaned.trim().split("\\s+")).toList();
         // Take the first 30 words
         StringBuilder result = new StringBuilder();
         int count = 0;

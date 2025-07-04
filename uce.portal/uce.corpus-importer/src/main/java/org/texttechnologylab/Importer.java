@@ -1822,6 +1822,8 @@ public class Importer {
         }
 
         logImportInfo("Successfully post processed document " + filePath, LogStatus.SAVED, filePath, System.currentTimeMillis() - start);
+        document.setPostProcessed(true);
+        ExceptionUtils.tryCatchLog(() -> db.updateDocument(document), (ex) -> logImportError("Couldn't save the document postprocessing flag", ex, filePath));
     }
 
     /**

@@ -50,6 +50,21 @@
     <script src="js/visualization/cdns/drawflow-last.js"></script>
     <script type="module" src="js/md-block.js"></script>
 
+    <!-- for rendering markdown to HTML, use the markdown-viewer box -->
+    <script src="https://cdn.jsdelivr.net/npm/markdown-it/dist/markdown-it.min.js"></script>
+    <script>
+        // Using https://github.com/markdown-it/markdown-it
+        class MarkdownViewer extends HTMLElement {
+            connectedCallback() {
+                const raw = this.textContent;
+                const md = window.markdownit({ html: true });
+                const rendered = md.render(raw);
+                this.innerHTML = md.render(rendered);
+            }
+        }
+        customElements.define('markdown-viewer', MarkdownViewer);
+    </script>
+
     <title>${document.getDocumentTitle()}</title>
 </head>
 
@@ -150,10 +165,7 @@
                         <#include '*/reader/components/viewerPdf.ftl' />
                     <#else>
                         <div class="document-content">
-                            <#assign documentPages = document.getPages(10, 0)>
-                            <#assign documentText = document.getFullText()>
-                            <#assign documentAnnotations = document.getAllAnnotations(0, 10)>
-                            <#include '*/reader/components/pagesList.ftl' />
+                            <!-- Here we lazily load in the pages -->
                         </div>
                         <!-- Scrollbar Minimap -->
                         <div class="scrollbar-minimap">
@@ -322,5 +334,6 @@
     <#include "*/js/documentReader.js">
     <#include "*/js/customContextMenu.js">
 </script>
+
 
 </html>

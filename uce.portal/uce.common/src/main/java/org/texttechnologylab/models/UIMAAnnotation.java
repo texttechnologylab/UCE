@@ -213,6 +213,8 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
 
         // We apply some heuristic post-processing to make the text more readable.
         //return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
+        //return StringUtils.CleanText(finalText.toString());
+        //return coveredText;
         return StringUtils.replaceCharacterOutsideSpan(StringUtils.replaceCharacterOutsideSpan(StringUtils.CleanText(finalText.toString()), '\n', "<br/>"), ' ', "&nbsp;");
     }
 
