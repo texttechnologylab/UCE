@@ -24,6 +24,7 @@ import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.UCELog;
 import org.texttechnologylab.modules.ModelGroup;
 import org.texttechnologylab.modules.ModelResources;
+import org.texttechnologylab.modules.TTLabScorerInfo;
 import org.texttechnologylab.routes.*;
 import org.texttechnologylab.services.LexiconService;
 import org.texttechnologylab.services.MapService;
@@ -38,10 +39,7 @@ import javax.servlet.MultipartConfigElement;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static spark.Spark.*;
@@ -106,6 +104,7 @@ public class App {
         // Load in and test the model resources for the Analysis Engine
         if(SystemStatus.UceConfig.getSettings().getAnalysis().isEnableAnalysisEngine()){
             var modelResources = new ModelResources();
+            var ttlabScorer = new TTLabScorerInfo();
             logger.info("Testing the model resources:");
         }
 
@@ -296,6 +295,8 @@ public class App {
         });
 
         ModelResources modelResources = new ModelResources();
+        TTLabScorerInfo ttlabScorer = new TTLabScorerInfo();
+        LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<String, String>>> taInputMap = ttlabScorer.getTaInputMap();
         List<ModelGroup> groups = modelResources.getGroupedModelObjects();
         // Landing page
         get("/", (request, response) -> {
@@ -317,6 +318,7 @@ public class App {
             model.put("lexiconizableAnnotations", LexiconService.lexiconizableAnnotations);
             model.put("uceVersion", commonConfig.getUceVersion());
             model.put("modelGroups", groups);
+            model.put("ttlabScorer", taInputMap);
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");
