@@ -51,7 +51,6 @@
                                                 </li>
                                             </#list>
 
-                                            <!-- TTLAB Scorer als letzter Eintrag unter Models -->
                                             <li>
                                                 <div class="tree-toggle">
                                                     <i class="toggle-icon"></i>

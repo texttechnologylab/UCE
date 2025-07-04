@@ -541,7 +541,6 @@ public class DUUIPipeline {
                             }
                         }
                         case "TAScore" -> {
-                            // TAScore is a special case, it has no prefix
                             add = true;
                         }
                         default -> {

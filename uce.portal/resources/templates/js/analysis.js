@@ -1,4 +1,4 @@
-// Toggle auf- und zuklappen
+// Toggle Sidebar
 document.querySelectorAll('.tree-toggle').forEach(toggle => {
     toggle.addEventListener('click', function (e) {
         if (e.target.tagName.toLowerCase() === 'input' || e.target.tagName.toLowerCase() === 'label') return;
@@ -21,12 +21,12 @@ nlpMasterCheckbox.addEventListener('change', function () {
     );
     allCheckboxes.forEach(cb => cb.checked = this.checked);
 
-    // Alles zurücksetzen
+    // Set indeterminate state to false for all checkboxes
     document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.indeterminate = false);
     updateAllFieldVisibilities();
 });
 
-// NLP Gruppen-Checkbox
+// NLP Group-Checkbox
 document.querySelectorAll('.nlp-group-checkbox').forEach(groupCheckbox => {
     groupCheckbox.addEventListener('change', function (e) {
         const groupItem = this.closest('li');
@@ -88,7 +88,7 @@ function updateNlpMasterCheckbox() {
     }
 }
 
-// TTLAB Gruppen und Modelle
+// TTLAB Checkboxes
 document.querySelectorAll('.ttlab-group-checkbox, .ttlab-subgroup-checkbox').forEach(groupCheckbox => {
     groupCheckbox.addEventListener('change', function (e) {
         const groupItem = this.closest('li');
@@ -137,7 +137,7 @@ function updateTtlabParentCheckboxStates(checkbox) {
     }
 }
 
-// Sichtbarkeit bestimmter Eingabefelder basierend auf Checkboxen
+// Update visibility of fields based on checkbox states
 function updateAllFieldVisibilities() {
     updateFieldVisibility('factchecking', 'claim-field-wrapper', 'claim-text');
     updateFieldVisibility('cohesion', 'text-field-wrapper', 'input-text');
@@ -178,7 +178,7 @@ fileInput.addEventListener('change', () => {
     }
 });
 
-// Sidebar ein-/ausklappen
+// Sidebar open/close
 function toggleSidebar(id) {
     const section = document.getElementById(id);
     if (!section) return;
@@ -187,18 +187,18 @@ function toggleSidebar(id) {
     section.style.display = isVisible ? "none" : "block";
 }
 
-// Karten zusammenklappen
+// Toggle Card Collapse
 function toggleCard(button) {
     const card = button.closest('.analysis-ta-card');
     const isCollapsed = card.classList.toggle('collapsed');
     button.setAttribute('aria-expanded', !isCollapsed);
 }
 
-// Sidebar-Sektionen anfangs ausblenden
+// Sidebar-Sections initial display
 document.getElementById('nlp-tools').style.display = 'none';
 document.getElementById('history').style.display = 'none';
 
-// Drag and drop für Sektionen
+// Drag and drop for draggable sections
 const container = document.getElementById('analysis-main-content');
 let draggedEl = null;
 

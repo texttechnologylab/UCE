@@ -38,7 +38,7 @@
     transition: color 0.3s ease;
 }
 
-/* Tooltip bei Hover */
+/* Tooltip by hover */
 .analysis-toggle-btn[title]::after {
     content: attr(title);
     position: absolute;
@@ -57,19 +57,19 @@
     z-index: 10;
 }
 
-/* Tooltip sichtbar machen */
+/* Tooltip visible on hover */
 .analysis-toggle-btn:hover::after {
     opacity: 1;
 }
 
-/* Hover-Effekt Icon */
+/* Hover-effect */
 .analysis-toggle-btn:hover {
     color: #1abc9c;
     transform: scale(1.1);
 }
 
 
-/* Rechte Hauptinhalte neben der Sidebar */
+/* Right Area */
 .analysis-main-content {
     display: flex;
     flex-direction: column;
@@ -78,9 +78,9 @@
     overflow-y: auto;
 }
 
-/* Abschnitte innerhalb der rechten Fläche */
+/* Sidebar-Section */
 .analysis-sidebar-section {
-    display: none; /* Per JS steuerbar */
+    display: none; /* Per JS control */
     margin-bottom: 1rem;
 }
 
@@ -112,7 +112,7 @@
     max-height: 99999vh !important;
 }
 
-/* Treeview scrollfähig in X-Richtung */
+/* Treeview scrolling */
 .analysis-treeview {
     font-family: "Segoe UI", Tahoma, sans-serif;
     font-size: 13px;
@@ -126,7 +126,7 @@
     min-width: max-content;
 }
 
-/* Wrapper für Scrollbereich */
+/* Wrapper for horizontal scrolling */
 .treeview-wrapper {
     overflow-x: auto;
     max-width: 100%;
@@ -138,7 +138,7 @@
     padding: 2px 0;
 }
 
-/* Gruppen-/Ordnerzeile */
+/* Gruppen- and Model-Checkboxes */
 .analysis-treeview .tree-toggle {
     display: flex;
     align-items: center;
@@ -165,7 +165,7 @@
     padding: 0;
 }
 
-/* Ordner-Symbol statt Pfeile */
+/* Ordner-Icon */
 .analysis-treeview .toggle-icon {
     font-size: 14px;
     display: flex;
@@ -176,14 +176,14 @@
 }
 
 .analysis-treeview .toggle-icon::before {
-    content: "\1F4C1"; /* 📁 geschlossen */
+    content: "\1F4C1"; /* 📁 closed */
 }
 
 .analysis-treeview .toggle-icon.open::before {
-    content: "\1F4C2"; /* 📂 offen */
+    content: "\1F4C2"; /* 📂 open */
 }
 
-/* Einrückung verschachtelter Listen */
+/* Nested-Elements */
 .analysis-treeview .nested {
     display: none;
     padding-left: 1.2rem;
@@ -195,7 +195,7 @@
     display: block;
 }
 
-/* Model-Zeile */
+/* Model-rows */
 .analysis-treeview .model-item {
     display: flex;
     align-items: center;
@@ -214,134 +214,10 @@
     text-overflow: ellipsis;
 }
 
-/* Modell-Checkbox-Abstand */
+/* Modell-Checkboxes */
 .analysis-treeview .model-item input[type="checkbox"] {
     margin-right: 0.4rem;
 }
-
-/*!* Optional: Nummerierung entfernen, falls nicht gewünscht *!*/
-/*.analysis-treeview ol {*/
-/*    list-style: none;*/
-/*    padding-left: 0;*/
-/*    margin: 0;*/
-/*}*/
-
-
-
-
-/*.analysis-view{*/
-/*    padding-bottom: 2rem;*/
-/*}*/
-
-/*.analysis-view *{*/
-/*    font-family: "Times New Roman", serif;*/
-/*}*/
-
-/*.analysis-view header{*/
-/*    width: 100%;*/
-/*    border-bottom: 1px lightgrey solid;*/
-/*    padding-top: 2rem;*/
-/*    padding-bottom: 2rem;*/
-/*}*/
-
-/*.analysis-view .search-analysis-input{*/
-/*    max-width: 300px;*/
-/*    flex-grow: 1;*/
-/*    padding: 8px;*/
-/*}*/
-
-/*.analysis-view .search-analysis-btn{*/
-/*    height: 100%;*/
-/*    color:var(--prime);*/
-/*    padding-right: 12px;*/
-/*    padding-left: 12px;*/
-/*}*/
-
-/*.analysis-view .search-block {*/
-/*    flex-grow: 1;*/
-/*}*/
-
-/*.analysis-view .search-block .flexed {*/
-/*    display: flex;*/
-/*    align-items: center;*/
-/*    width: 100%;*/
-/*    gap: 5px;*/
-/*}*/
-
-/*.analysis-treeview {*/
-/*    font-family: sans-serif;*/
-/*    font-size: 14px;*/
-/*    list-style-type: none;*/
-/*    padding-left: 0;*/
-/*}*/
-
-/*.analysis-treeview li {*/
-/*    margin-bottom: 0.4rem;*/
-/*}*/
-
-/*.analysis-treeview .tree-toggle {*/
-/*    cursor: pointer;*/
-/*    display: flex;*/
-/*    align-items: center;*/
-/*    padding: 0.5rem 1rem;*/
-/*    background-color: white; !* Bootstrap Primary *!*/
-/*    color: var(--prime);*/
-/*    border-radius: 0.375rem; !* Bootstrap-like border-radius *!*/
-/*    transition: background-color 0.2s, box-shadow 0.2s;*/
-/*    user-select: none;*/
-/*}*/
-
-/*.analysis-treeview .tree-toggle:hover {*/
-/*    background-color: lightgrey; !* Bootstrap Primary hover *!*/
-/*    box-shadow: 0 0 0 0.2rem rgba(13, 110, 253, 0.25);*/
-/*}*/
-
-/*.analysis-treeview .tree-toggle input[type="checkbox"] {*/
-/*    margin-right: 0.5rem;*/
-/*}*/
-
-/*.analysis-treeview .tree-toggle label {*/
-/*    margin: 0;*/
-/*}*/
-
-/*.analysis-treeview .tree-toggle .toggle-icon {*/
-/*    margin-right: 0.5rem;*/
-/*    transition: transform 0.3s ease;*/
-/*}*/
-
-/*.analysis-treeview .toggle-icon.open {*/
-/*    transform: rotate(90deg);*/
-/*}*/
-
-/*.analysis-treeview .nested {*/
-/*    display: none;*/
-/*    padding-left: 1.2em;*/
-/*    margin-top: 0.3em;*/
-/*}*/
-
-/*.analysis-treeview .nested.active {*/
-/*    display: block;*/
-/*}*/
-
-/*!* Slightly smaller and more subtle model items *!*/
-/*.analysis-treeview .model-item label {*/
-/*    display: flex;*/
-/*    align-items: center;*/
-/*    padding: 0.3rem 0.8rem;*/
-/*    background-color: #e9ecef;*/
-/*    color: #212529;*/
-/*    border-radius: 0.375rem;*/
-/*    margin: 0.2rem 0;*/
-/*    transition: background-color 0.2s;*/
-/*}*/
-
-/*.analysis-treeview .model-item label:hover {*/
-/*    background-color: #d3d9df;*/
-/*}*/
-
-/*.analysis-treeview .model-item input[type="checkbox"] {*/
-/*    margin-right: 0.5rem;*/
-/*}*/
 
 .grow-text {
     display: flex;

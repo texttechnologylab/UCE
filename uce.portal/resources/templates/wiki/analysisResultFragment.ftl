@@ -10,7 +10,6 @@
                                     <div class="analysis-topic-card-title">${model.getModelInfo().getName()}</div>
                                     <div class="analysis-topics-grid">
                                         <#list model.topics as topic>
-                                        <#-- Berechne die Transparenz basierend auf dem Score (zwischen 0 und 1) -->
                                             <#assign opacity = topic.getScore()?string?replace(",", ".")>
                                             <div class="analysis-topic-entry" style="background-color: rgba(0, 200, 200, ${opacity});">
                                                 <div class="analysis-topic-score">${topic.getKey()}: ${topic.getScore()}</div>
@@ -29,12 +28,9 @@
                             <#list DUUI.textInformation.sentimentAVG as model>
                             <div class="analysis-sentiment-card">
                                 <div class="analysis-sentiment-card-title">${model.getModelInfo().getName()}</div>
-    <#--                            <p><strong>${model.getModelInfo().getName()}</strong></p>-->
                                 <#assign positiveOpacity = model.getPositive()?string?replace(",", ".")>
                                 <#assign neutralOpacity = model.getNeutral()?string?replace(",", ".")>
                                 <#assign negativeOpacity = model.getNegative()?string?replace(",", ".")>
-
-                                <!-- Anzeige der verschiedenen Sentiment-Werte -->
                                 <div class="analysis-sentiment-entry" style="background-color: rgba(0, 255, 0, ${positiveOpacity});">
                                     <div class="analysis-sentiment-score">AVG Positive: ${model.getPositive()}</div>
                                 </div>
@@ -104,7 +100,6 @@
                                     <div class="analysis-offensive-card-title">${model.getModelInfo().getName()}</div>
                                     <div class="analysis-offensives-grid">
                                         <#list model.offensives as offensive>
-                                        <#-- Berechne die Transparenz basierend auf dem Score (zwischen 0 und 1) -->
                                             <#assign opacity = offensive.getScore()?string?replace(",", ".")>
                                             <div class="analysis-offensive-entry" style="background-color: rgba(0, 200, 200, ${opacity});">
                                                 <div class="analysis-offensive-score">${offensive.getKey()}: ${offensive.getScore()}</div>
@@ -215,7 +210,6 @@
                                     <#assign oppoaseOpacity = model.getOppose()?string?replace(",", ".")>
                                     <#assign neutralOpacity = model.getNeutral()?string?replace(",", ".")>
 
-                                    <!-- Anzeige der verschiedenen Sentiment-Werte -->
                                     <div class="analysis-stance-entry" style="background-color: rgba(0, 255, 0, ${supportOpacity});">
                                         <div class="analysis-stance-score">AVG Support: ${model.getSupport()}</div>
                                     </div>
@@ -425,7 +419,7 @@
 
 
                             <#else>
-                                <p><strong>Keine TA Analyse</strong></p>
+                                <p><strong>No TTLab Scorer Analysis</strong></p>
                             </#if>
 
                         </div>
@@ -436,8 +430,8 @@
 
 
             <#else>
-                <p><strong>Kein Model</strong></p>
+                <p><strong>No Model</strong></p>
             </#if>
         <#else>
-            <p><em>Keine Ausgabe</em></p>
+            <p><em>No Output</em></p>
         </#if>
