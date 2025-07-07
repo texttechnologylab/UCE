@@ -42,13 +42,13 @@
         <dependency>
             <groupId>com.github.mevbagci</groupId>
             <artifactId>DockerUnifiedUIMAInterface</artifactId>
-            <version>82b77143aa8a192dece1c001e0c52791bdeac37a</version>
+            <version>1.5.2</version>
         </dependency>
 
         <dependency>
             <groupId>com.github.mevbagci</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>3.0.16</version>
+            <version>3.0.17</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.springframework/spring-beans -->

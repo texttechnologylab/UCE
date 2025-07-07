@@ -95,6 +95,39 @@
                                                     </#list>
                                                 </ul>
                                             </li>
+                                            <li>
+                                                <div class="tree-toggle">
+                                                    <i class="toggle-icon"></i>
+                                                    <input type="checkbox" class="ttlab-group-checkbox analysis-group-checkbox" id="group_cohmetrix"/>
+                                                    <label class="analysis-group-label" for="group_ttlab_scorer">Coh-Metrix (${cohMetrix?size})</label>
+                                                </div>
+                                                <ul class="nested">
+                                                    <#list cohMetrix?keys as models>
+                                                        <#assign cohgroups = cohMetrix[models]>
+                                                        <li>
+                                                            <div class="tree-toggle">
+                                                                <i class="toggle-icon"></i>
+                                                                <input type="checkbox" class="ttlab-subgroup-checkbox analysis-group-checkbox" id="group_${models?index}" />
+                                                                <label class="analysis-group-label" for="group_${models?index}">${models} (${cohgroups?size})</label>
+                                                            </div>
+                                                            <ol class="nested">
+                                                                <#list cohgroups?keys as labels>
+                                                                    <#assign label_i = cohgroups[labels]>
+                                                                    <#assign label_name = label_i["label"]>
+                                                                    <li>
+                                                                        <div class="model-item">
+                                                                            <label for="${label_name}">
+                                                                                <input type="checkbox" class="ttlab-model-checkbox analysis-model-checkbox" id="cohmetrix##${label_name}"/>
+                                                                                ${label_name}
+                                                                            </label>
+                                                                        </div>
+                                                                    </li>
+                                                                </#list>
+                                                            </ol>
+                                                        </li>
+                                                    </#list>
+                                                </ul>
+                                            </li>
                                             <!-- Ende TTLAB Scorer -->
                                         </ul>
                                     </li>
