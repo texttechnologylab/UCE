@@ -9,6 +9,8 @@ import java.net.http.HttpResponse;
 import java.sql.*;
 import java.time.Duration;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
 import com.pgvector.PGvector;
@@ -21,12 +23,11 @@ import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.models.corpus.KeywordDistribution;
 import org.texttechnologylab.models.corpus.Sentence;
 import org.texttechnologylab.models.dto.*;
-import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
-import org.texttechnologylab.models.rag.DocumentEmbedding;
-import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
-import org.texttechnologylab.models.rag.RAGChatMessage;
+import org.texttechnologylab.models.rag.*;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.SystemStatus;
+
+import static org.texttechnologylab.models.rag.RAGChatMessage.cleanThinkTag;
 
 /**
  * Service class for RAG: Retrieval Augmented Generation
@@ -35,6 +36,8 @@ public class RAGService {
     private PostgresqlDataInterface_Impl postgresqlDataInterfaceImpl = null;
     private Connection vectorDbConnection = null;
     private CommonConfig config;
+
+    static final Pattern patternAmount = Pattern.compile("\\d+");
 
     public RAGService(PostgresqlDataInterface_Impl postgresqlDataInterfaceImpl) {
         this.postgresqlDataInterfaceImpl = postgresqlDataInterfaceImpl;
@@ -178,6 +181,117 @@ public class RAGService {
                 "Webservice replied with an internally wrong status code, something went wrong there: " + plotTsneDto.getStatus(), statusCode, url);
 
         return plotTsneDto.getPlot();
+    }
+
+    public String postRAGDocTitle(String userMessage, String part, RAGModelConfig modelConfig) throws URISyntaxException, IOException, InterruptedException {
+        var httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .build();
+
+        var url = config.getRAGWebserverBaseUrl() + "rag/complete";
+        var config = new CommonConfig();
+
+        // Prepare workload
+        var gson = new Gson();
+        var params = new HashMap<String, Object>();
+
+        params.put("model", modelConfig.getModel());
+        params.put("apiKey", modelConfig.getApiKey());
+        params.put("url", modelConfig.getUrl());
+
+        // Add the chat history
+        var promptMessages = new ArrayList<HashMap<String, String>>();
+        {
+            var promptMessage = new HashMap<String, String>();
+            promptMessage.put("role", Roles.SYSTEM.name().toLowerCase());
+            promptMessage.put("content", "You are a helpful assistant that analyzes user messages given as ###Message to determine if the user specifies or mentions a document " + part + ". Extract the first " + part + " without any changes. This step prepares the system to retrieve the requested documents based on its " + part + " for the next stage.\nOnly return the first " + part + " the user wants AND NOTHING ELSE. If nothing is mentioned or implied, return null.");
+            promptMessages.add(promptMessage);
+            params.put("promptMessages", promptMessages);
+        }
+        {
+            var promptMessage = new HashMap<String, String>();
+            promptMessage.put("role", Roles.USER.name().toLowerCase());
+            promptMessage.put("content", "###Message: " + userMessage + "\n\nYour task: Extract ONLY the first " + part + " of the document the user mentions in this message AND NOTHING ELSE. If nothing is mentioned, return null.");
+            promptMessages.add(promptMessage);
+            params.put("promptMessages", promptMessages);
+        }
+        var jsonData = gson.toJson(params);
+
+        // Create request
+        var request = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonData))
+                .build();
+        // Send request and get response
+        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        var statusCode = response.statusCode();
+        if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
+
+        var responseBody = response.body();
+        var ragCompleteDto = gson.fromJson(responseBody, RAGCompleteDto.class);
+        if (ragCompleteDto.getStatus() != 200) throw new HttpStatusException(
+                "Webservice replied with an internally wrong status code, something went wrong there: " + ragCompleteDto.getStatus(), statusCode, url);
+
+        return cleanThinkTag(ragCompleteDto.getMessage());
+    }
+
+    public Integer postRAGAmountDocs(String userMessage, RAGModelConfig modelConfig) throws URISyntaxException, IOException, InterruptedException {
+        var httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .build();
+
+        var url = config.getRAGWebserverBaseUrl() + "rag/complete";
+        var config = new CommonConfig();
+
+        // Prepare workload
+        var gson = new Gson();
+        var params = new HashMap<String, Object>();
+
+        params.put("model", modelConfig.getModel());
+        params.put("apiKey", modelConfig.getApiKey());
+        params.put("url", modelConfig.getUrl());
+
+        // Add the chat history
+        var promptMessages = new ArrayList<HashMap<String, String>>();
+        {
+            var promptMessage = new HashMap<String, String>();
+            promptMessage.put("role", Roles.SYSTEM.name().toLowerCase());
+            promptMessage.put("content", "You are a helpful assistant that analyzes user messages given as ###Message to determine if the user specifies a desired number of documents or articles. Extract the number if provided (e.g., \"a few\", \"3\", \"top 5\", \"several\") and normalize it into an exact count when possible. This step prepares the system to retrieve the requested number of relevant documents for the next stage.\nOnly return the number of documents the user wants. If no number is mentioned or implied, return null.");
+            promptMessages.add(promptMessage);
+            params.put("promptMessages", promptMessages);
+        }
+        {
+            var promptMessage = new HashMap<String, String>();
+            promptMessage.put("role", Roles.USER.name().toLowerCase());
+            promptMessage.put("content", "###Message: " + userMessage + "\n\nExtract the number of documents the user wants from this message. If no number is mentioned, return null.");
+            promptMessages.add(promptMessage);
+            params.put("promptMessages", promptMessages);
+        }
+        var jsonData = gson.toJson(params);
+
+        // Create request
+        var request = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonData))
+                .build();
+        // Send request and get response
+        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        var statusCode = response.statusCode();
+        if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
+
+        var responseBody = response.body();
+        var ragCompleteDto = gson.fromJson(responseBody, RAGCompleteDto.class);
+        if (ragCompleteDto.getStatus() != 200) throw new HttpStatusException(
+                "Webservice replied with an internally wrong status code, something went wrong there: " + ragCompleteDto.getStatus(), statusCode, url);
+
+        Matcher matcher = patternAmount.matcher(cleanThinkTag(ragCompleteDto.getMessage()));
+        if (matcher.find()) {
+            return Integer.valueOf(matcher.group());
+        }
+
+        return null;
     }
 
     /**

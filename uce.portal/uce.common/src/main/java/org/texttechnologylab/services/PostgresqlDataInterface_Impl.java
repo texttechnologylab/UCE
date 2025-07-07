@@ -1134,6 +1134,30 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public Document getFirstDocumentByTitle(String title, boolean like) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var cq = cb.createQuery(Document.class);
+            var root = cq.from(Document.class);
+
+            if (like) {
+                cq.select(root).where(cb.like(root.get("documentTitle"), "%" + title + "%"));
+            }
+            else{
+                cq.select(root).where(cb.equal(root.get("documentTitle"), title));
+            }
+
+            var query = session.createQuery(cq);
+            query.setMaxResults(1);
+            var doc = query.uniqueResult();
+            if (doc != null) {
+                Hibernate.initialize(doc.getPages());
+                Hibernate.initialize(doc.getUceMetadata());
+            }
+            return doc;
+        });
+    }
+
     public Page getPageById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var page = session.get(Page.class, id);

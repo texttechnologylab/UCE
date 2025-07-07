@@ -127,7 +127,7 @@ public class CommonConfig {
     public long getEmbeddingTimeout() {
         if (SystemStatus.UceConfig == null) {
             // Default was 2 seconds before the config was introduced
-            return 2;
+            return 200;
         }
         return SystemStatus.UceConfig.getSettings().getEmbeddings().getTimeout();
     }

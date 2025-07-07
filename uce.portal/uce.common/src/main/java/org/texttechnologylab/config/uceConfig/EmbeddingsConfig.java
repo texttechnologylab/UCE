@@ -30,6 +30,6 @@ public class EmbeddingsConfig {
     private Map<String, Object> parameters;
 
     // Request timeout in seconds
-    private long timeout = 2;
+    private long timeout = 200;
 
 }
