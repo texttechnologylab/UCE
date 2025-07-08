@@ -1175,5 +1175,73 @@
     "Main Tool": "Text Readability",
     "Variant": "Readability",
     "type": "Readability"
+  },
+  "TTLAB Cohesion-l BERT Token Auto Correlation": {
+    "url": "http://ta.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-TAScore",
+    "huggingface": "",
+    "paper": "",
+    "map": "TA",
+    "Name": "TTLAB Cohesion-l BERT Token Auto Correlation",
+    "Main Tool": "TTLAB Text Scorer",
+    "Variant": "TA",
+    "type": "TA"
+  },
+  "TTLAB Cohesion-l BERT Token Auto-Distance-Correlation": {
+    "url": "http://ta.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-TAScore",
+    "huggingface": "",
+    "paper": "",
+    "map": "TA",
+    "Name": "TTLAB Cohesion-l BERT Token Auto-Distance-Correlation",
+    "Main Tool": "TTLAB Text Scorer",
+    "Variant": "TA",
+    "type": "TA"
+  },
+  "TTLAB Syntactic Features": {
+    "url": "http://ta.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-TAScore",
+    "huggingface": "",
+    "paper": "",
+    "map": "TA",
+    "Name": "TTLAB Syntactic Features",
+    "Main Tool": "TTLAB Text Scorer",
+    "Variant": "TA",
+    "type": "TA"
+  },
+  "TTLAB Cohesion-s BERT Sentence Auto Correlation & Auto-Distance-Correlation": {
+    "url": "http://ta.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-TAScore",
+    "huggingface": "",
+    "paper": "",
+    "map": "TA",
+    "Name": "TTLAB Cohesion-s BERT Sentence Auto Correlation & Auto-Distance-Correlation",
+    "Main Tool": "TTLAB Text Scorer",
+    "Variant": "TA",
+    "type": "TA"
+  },
+  "TTLAB Cohesion BERT Others": {
+    "url": "http://ta.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-TAScore",
+    "huggingface": "",
+    "paper": "",
+    "map": "TA",
+    "Name": "TTLAB Cohesion BERT Others",
+    "Main Tool": "TTLAB Text Scorer",
+    "Variant": "TA",
+    "type": "TA"
+  },
+  "LLM DeepSeek-R1": {
+    "url": "http://llm.service.component.duui.texttechnologylab.org",
+    "github": "https://github.com/mevbagci/duui-uima/tree/main/duui-llm",
+    "huggingface": "",
+    "paper": "",
+    "map": "test:DeepSeek-R1",
+    "Name": "LLM DeepSeek-R1",
+    "Main Tool": "LLM",
+    "Variant": "LLM",
+    "type": "LLM",
+    "url-Parameter": "gondor.hucompute.org",
+    "port-Parameter": "11434"
   }
 }

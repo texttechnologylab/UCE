@@ -449,16 +449,21 @@ function showAllCohmetrixTables() {
             if (data.length > 0 && container) {
                 const table = new Tabulator(selector, {
                     data: data,
-                    layout: "fitDataFill",
+                    // layout: "fitDataFill",
+                    layout: "fitDataTable",
+                    responsiveLayout: false,
                     resizableRows: true,
                     columnDefaults: {
                         resizable: true
                     },
                     columns: [
-                        { title: "Modell", field: "model" },
+                        { title: "Modell", field: "model", widthGrow: 2  },
                         {
                             title: "Name",
                             field: "name",
+                            widthGrow: 1
+                        },
+                        { title: "Score", field: "score", widthGrow: 1,
                             formatter: function (cell) {
                                 return '<span style="color:green;cursor:pointer;text-decoration:underline">' + cell.getValue() + '</span>';
                             },
@@ -467,8 +472,7 @@ function showAllCohmetrixTables() {
                                 console.log("Coh-Metrix geklickt:", row.name, row.score);
                             }
                         },
-                        { title: "Score", field: "score" },
-                        { title: "Description", field: "description" },
+                        { title: "Description", field: "description", widthGrow: 3  },
                     ]
                 });
 
