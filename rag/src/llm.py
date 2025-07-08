@@ -61,7 +61,11 @@ class OllamaModel:
             json={
                 "model": self.model_name,
                 "prompt": prompt,
-                "stream": False
+                "stream": False,
+                "options": {
+                  "num_ctx": 8096,
+                  "keep_alive": "60m"
+                }
             }
         )
 

@@ -208,7 +208,7 @@ public class RAGApi implements UceApi {
                     contextText.append("The following documents contain information, ordered by relevance.\n\n");
                     int docInd = 0;
                     for (var nearestDocumentChunkEmbedding : nearestDocumentChunkEmbeddings) {
-                        if (docInd >= amountOfDocs) break; // TODO this should not happen?!
+                        if (docInd >= foundDocuments.size()) break; // TODO this should not happen?!
                         Document doc = foundDocuments.get(docInd);
                         docInd++;
                         contextText.append("Document #").append(docInd).append("\n");
