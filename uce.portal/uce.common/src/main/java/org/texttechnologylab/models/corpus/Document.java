@@ -246,7 +246,33 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     }
 
     public List<UCEMetadata> getUceMetadataWithoutJson() {
-        return getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON).toList();
+        return getUceMetadata()
+                .stream()
+                .filter(u -> u.getValueType() != UCEMetadataValueType.JSON)
+                .sorted(Comparator
+                        .comparing(UCEMetadata::getValueType)
+                        .thenComparing(filter -> {
+                            // Try to extract a number in the beginning of the key
+                            String key = filter.getKey();
+
+                            // TODO this is a special case for Coh-Metrix, should be generalized
+                            // TODO duplicated in "Corpus getUceMetadataFilters"
+                            if (key.contains(":")) {
+                                String[] parts = key.split(":");
+                                if (parts.length > 1) {
+                                    try {
+                                        int number = Integer.parseInt(parts[0].trim());
+                                        return String.format("%05d", number);
+                                    } catch (NumberFormatException e) {
+                                        // return the original key on error
+                                    }
+                                }
+                            }
+
+                            return key;
+                        })
+                )
+                .toList();
     }
 
     public List<UCEMetadata> getUceMetadata() {

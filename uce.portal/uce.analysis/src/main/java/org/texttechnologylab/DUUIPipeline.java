@@ -133,7 +133,7 @@ public class DUUIPipeline {
 
     public JCas getSentences(JCas cas) throws Exception {
         HashMap<String, String> spacyUrls = new HashMap<>();
-        spacyUrls.put("Spacy", "http://127.0.0.1:30115");
+        spacyUrls.put("Spacy", "http://spacy-cohmetrix.service.component.duui.texttechnologylab.org");
 //        spacyUrls.put("Spacy", "http://spacy.service.component.duui.texttechnologylab.org");
         spacyUrls.put("Syntok", "http://paragraph-syntok.service.component.duui.texttechnologylab.org/");
         DUUIComposer composer = setListComposer(spacyUrls);
