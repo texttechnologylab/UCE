@@ -16,7 +16,6 @@ public class DocumentAnnotationWikiPageViewModel extends AnnotationWikiPageViewM
     public List<UCEMetadata> getUceMetadata() {
         return uceMetadata
                 .stream()
-                .filter(u -> u.getValueType() != UCEMetadataValueType.JSON)
                 .sorted(Comparator
                         .comparing(UCEMetadata::getValueType)
                         .thenComparing(filter -> {

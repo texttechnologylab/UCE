@@ -11,7 +11,7 @@ import org.texttechnologylab.utils.StringUtils;
 import javax.persistence.Column;
 import javax.persistence.Entity;
 import javax.persistence.Table;
-import java.util.ArrayList;
+import java.util.Comparator;
 import java.util.List;
 
 @Entity
@@ -33,7 +33,33 @@ public class UCEMetadata extends ModelBase {
         if (jsonString == null || jsonString.isBlank()) return null;
 
         var beautifier = new JsonBeautifier();
-        return beautifier.parseJsonToViewModel(jsonString);
+        return beautifier
+                .parseJsonToViewModel(jsonString)
+                .stream()
+                .sorted(Comparator
+                        .comparing(JsonViewModel::getValueType)
+                        .thenComparing(filter -> {
+                            // Try to extract a number in the beginning of the key
+                            String key = filter.getKey();
+
+                            // TODO this is a special case for Coh-Metrix, should be generalized
+                            // TODO duplicated in "Corpus getUceMetadataFilters"
+                            if (key.contains(":")) {
+                                String[] parts = key.split(":");
+                                if (parts.length > 1) {
+                                    try {
+                                        int number = Integer.parseInt(parts[0].trim());
+                                        return String.format("%05d", number);
+                                    } catch (NumberFormatException e) {
+                                        // return the original key on error
+                                    }
+                                }
+                            }
+
+                            return key;
+                        })
+                )
+                .toList();
     }
 
     public long getDocumentId() {
