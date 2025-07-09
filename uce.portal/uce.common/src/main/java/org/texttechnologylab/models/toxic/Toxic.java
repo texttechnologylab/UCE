@@ -9,7 +9,10 @@ import javax.persistence.*;
 @Entity
 @Table(name = "toxic")
 public class Toxic extends UIMAAnnotation implements WikiModel {
-
+    @Column(name = "toxic", nullable = false)
+    private double toxic;
+    @Column(name = "non_toxic", nullable = false)
+    private double nonToxic;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "document_id", nullable = false)
@@ -28,6 +31,22 @@ public class Toxic extends UIMAAnnotation implements WikiModel {
         setCoveredText(coveredText);
     }
 
+    public double getToxic() {
+        return toxic;
+    }
+
+    public void setToxic(double newToxic) {
+        this.toxic = newToxic;
+    }
+
+    public double getNonToxic() {
+        return nonToxic;
+    }
+
+    public void setNonToxic(double nonToxic) {
+        this.nonToxic = nonToxic;
+    }
+
     public Document getDocument() {
         return document;
     }
@@ -40,5 +59,4 @@ public class Toxic extends UIMAAnnotation implements WikiModel {
     public String getWikiId() {
         return "UT" + "-" + this.getId();
     }
-
 }
