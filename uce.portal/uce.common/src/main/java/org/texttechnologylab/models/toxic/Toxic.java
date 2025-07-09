@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.toxic;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
@@ -8,6 +9,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "toxic")
+@Typesystem(types = {org.texttechnologylab.annotation.Toxic.class})
 public class Toxic extends UIMAAnnotation implements WikiModel {
     @Column(name = "toxic", nullable = false)
     private double toxic;
@@ -34,7 +36,6 @@ public class Toxic extends UIMAAnnotation implements WikiModel {
     public double getToxic() {
         return toxic;
     }
-
     public void setToxic(double newToxic) {
         this.toxic = newToxic;
     }
