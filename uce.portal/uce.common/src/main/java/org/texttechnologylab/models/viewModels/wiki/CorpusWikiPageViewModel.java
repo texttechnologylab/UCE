@@ -1,5 +1,7 @@
 package org.texttechnologylab.models.viewModels.wiki;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.UCEMetadataValueType;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -12,6 +14,9 @@ import java.util.Map;
 
 public class CorpusWikiPageViewModel extends AnnotationWikiPageViewModel {
 
+    @Getter
+    @Setter
+    private int pagesCount;
     private int documentsCount;
     private List<TopicWord> normalizedTopicWords;
 

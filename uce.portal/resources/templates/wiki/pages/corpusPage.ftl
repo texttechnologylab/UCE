@@ -44,7 +44,7 @@
                     <#assign corpus = vm.getCorpus().getCorpus()>
                     <#assign corpusConfig = vm.getCorpus().getCorpusConfig()>
                     <#assign documentsCount = vm.getDocumentsCount()>
-
+                    <#assign pagesCount = vm.getPagesCount()>
 
                     <div class="group-box rounded-0 bg-lightgray card-shadow mb-0 border-bottom-0 border-top-0">
                         <#include "*/corpus/components/corpusMetadata.ftl"/>

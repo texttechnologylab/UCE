@@ -2,7 +2,6 @@ package org.texttechnologylab.modules;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
-import com.influxdb.client.service.CellsService;
 import org.bson.Document;
 
 import java.io.BufferedReader;

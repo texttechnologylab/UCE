@@ -474,7 +474,8 @@ public class Importer {
                 if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
                     postProccessDocument(existingDoc, corpus, filePath);
-                }
+                } else
+                    logger.info("Document was already post-processed.");
                 logger.info("Done.");
                 return null;
             }

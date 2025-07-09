@@ -215,6 +215,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    @SuppressWarnings("deprecation")
+    public int countPagesInCorpus(long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(Page.class, "page");
+            criteria.createAlias("page.document", "document");
+            criteria.add(Restrictions.eq("document.corpusId", corpusId));
+            criteria.setProjection(Projections.rowCount());
+            return Math.toIntExact((Long) criteria.uniqueResult());
+        });
+    }
+
     public boolean documentExists(long corpusId, String documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteriaBuilder = session.getCriteriaBuilder();
@@ -1162,7 +1173,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-
     public Document getDocumentByCorpusAndDocumentId(long corpusId, String documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var cb = session.getCriteriaBuilder();
@@ -1180,7 +1190,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             Document doc = session.createQuery(criteriaQuery).uniqueResult();
 
             if (doc != null) {
-                initializeCompleteDocument(doc, 0, 999999);
+                //initializeCompleteDocument(doc, 0, 999999);
             }
             return doc;
         });
@@ -1265,18 +1275,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public GeoName getGeoNameAnnotationById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(GeoName.class, id));
-    }
-
-    public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(Time.class, id));
-    }
-
-    public Sentence getSentenceAnnotationById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(Sentence.class, id));
-    }
-
     public long countLexiconEntries() throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
@@ -1292,29 +1290,74 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(NamedEntity.class, id));
+        return executeOperationSafely((session) -> {
+            var entity = session.get(NamedEntity.class, id);
+            Hibernate.initialize(entity.getPage());
+            return entity;
+        });
     }
 
     public GazetteerTaxon getGazetteerTaxonById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(GazetteerTaxon.class, id));
+        return executeOperationSafely((session) -> {
+            var taxon = session.get(GazetteerTaxon.class, id);
+            Hibernate.initialize(taxon.getPage());
+            return taxon;
+        });
     }
 
     public GnFinderTaxon getGnFinderTaxonById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(GnFinderTaxon.class, id));
+        return executeOperationSafely((session) -> {
+            var taxon = session.get(GnFinderTaxon.class, id);
+            Hibernate.initialize(taxon.getPage());
+            return taxon;
+        });
     }
 
     public BiofidTaxon getBiofidTaxonById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(BiofidTaxon.class, id));
+        return executeOperationSafely((session) -> {
+            var taxon = session.get(BiofidTaxon.class, id);
+            Hibernate.initialize(taxon.getPage());
+            return taxon;
+        });
+    }
+
+    public GeoName getGeoNameAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var geo = session.get(GeoName.class, id);
+            Hibernate.initialize(geo.getPage());
+            return geo;
+        });
+    }
+
+    public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var time = session.get(Time.class, id);
+            Hibernate.initialize(time.getPage());
+            return time;
+        });
+    }
+
+    public Sentence getSentenceAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var sentence = session.get(Sentence.class, id);
+            Hibernate.initialize(sentence.getPage());
+            return sentence;
+        });
     }
 
     public Lemma getLemmaById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(Lemma.class, id));
+        return executeOperationSafely((session) -> {
+            var lemma = session.get(Lemma.class, id);
+            Hibernate.initialize(lemma.getPage());
+            return lemma;
+        });
     }
 
     public CompleteNegation getCompleteNegationById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var neg = session.get(CompleteNegation.class, id);
             Hibernate.initialize(neg);
+            Hibernate.initialize(neg.getPage());
             return neg;
         });
     }
@@ -1330,6 +1373,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             try {
                 CompleteNegation neg = query.getSingleResult();
                 Hibernate.initialize(neg); // Ensure lazy-loaded properties are initialized
+                Hibernate.initialize(neg.getPage());
                 return neg;
             } catch (NoResultException e) {
                 return null; // Or throw an exception if no result is an error case
