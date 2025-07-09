@@ -26,6 +26,7 @@ import org.texttechnologylab.models.search.PageSnippet;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.UnifiedTopic;
+import org.texttechnologylab.models.toxic.Toxic;
 import org.texttechnologylab.utils.FreemarkerUtils;
 import org.texttechnologylab.utils.StringUtils;
 
@@ -217,6 +218,12 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<UnifiedTopic> unifiedTopics;
+
+    @Setter
+    @Getter
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
+    private List<Toxic> toxics;
 
     public Document() {
         metadataTitleInfo = new MetadataTitleInfo();
