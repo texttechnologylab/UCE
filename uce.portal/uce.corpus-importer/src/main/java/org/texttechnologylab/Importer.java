@@ -1430,6 +1430,8 @@ public class Importer {
             toxic.setNonToxic(t.getNonToxic());
             toxics.add(toxic);
         });
+
+        document.setToxics(toxics);
     }
 
     /**
