@@ -19,6 +19,7 @@ import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.annotation.AnnotationComment;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.geonames.GeoNamesEntity;
 import org.texttechnologylab.annotation.link.*;
@@ -43,6 +44,7 @@ import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.LogStatus;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
 import org.texttechnologylab.models.topic.TopicValueBase;
@@ -140,13 +142,13 @@ public class Importer {
     public void start(int numThreads) throws DatabaseOperationException {
         logger.info(
                 "\n _   _ _____  _____   _____                           _   \n" +
-                "| | | /  __ \\|  ___| |_   _|                         | |  \n" +
-                "| | | | /  \\/| |__     | | _ __ ___  _ __   ___  _ __| |_ \n" +
-                "| | | | |    |  __|    | || '_ ` _ \\| '_ \\ / _ \\| '__| __|\n" +
-                "| |_| | \\__/\\| |___   _| || | | | | | |_) | (_) | |  | |_ \n" +
-                " \\___/ \\____/\\____/   \\___/_| |_| |_| .__/ \\___/|_|   \\__|\n" +
-                "                                    | |                   \n" +
-                "                                    |_|"
+                        "| | | /  __ \\|  ___| |_   _|                         | |  \n" +
+                        "| | | | /  \\/| |__     | | _ __ ___  _ __   ___  _ __| |_ \n" +
+                        "| | | | |    |  __|    | || '_ ` _ \\| '_ \\ / _ \\| '__| __|\n" +
+                        "| |_| | \\__/\\| |___   _| || | | | | | |_) | (_) | |  | |_ \n" +
+                        " \\___/ \\____/\\____/   \\___/_| |_| |_| .__/ \\___/|_|   \\__|\n" +
+                        "                                    | |                   \n" +
+                        "                                    |_|"
         );
         logger.info("===========> Global Import Id: " + importId);
         logger.info("===========> Importer Number: " + importerNumber);
@@ -208,7 +210,7 @@ public class Importer {
                 final var corpusConfig1 = corpusConfig; // This sucks so hard - why doesn't java just do this itself if needed?
                 var existingCorpus = ExceptionUtils.tryCatchLog(() -> db.getCorpusByName(corpusConfig1.getName()),
                         (ex) -> logger.error("Error getting an existing corpus by name. The corpus config should probably be changed " +
-                                             "to not add to existing corpus then.", ex));
+                                "to not add to existing corpus then.", ex));
 
                 if (existingCorpus != null) { // If we have the corpus, use that. Else store the new corpus.
                     corpus = existingCorpus;
@@ -468,7 +470,7 @@ public class Importer {
             var exists = db.documentExists(corpus.getId(), document.getDocumentId());
             if (exists) {
                 logger.info("Document with id " + document.getDocumentId()
-                            + " already exists in the corpus " + corpus.getId() + ".");
+                        + " already exists in the corpus " + corpus.getId() + ".");
                 logger.info("Checking if that document was also post-processed yet...");
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
                 if (!existingDoc.isPostProcessed()) {
@@ -824,8 +826,8 @@ public class Importer {
             if (documentAnnotation != null) {
                 try {
                     metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
-                                                   + documentAnnotation.getDateMonth() + "."
-                                                   + documentAnnotation.getDateYear());
+                            + documentAnnotation.getDateMonth() + "."
+                            + documentAnnotation.getDateYear());
                     metadataTitleInfo.setAuthor(documentAnnotation.getAuthor());
                 } catch (Exception ex) {
                     logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
@@ -1416,7 +1418,41 @@ public class Importer {
     }
 
     private void setOffensiveSpeech(Document document, JCas jCas) {
+        List<OffensiveSpeech> offensiveSpeeches = new ArrayList<>();
 
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.OffensiveSpeech.class).forEach(os -> {
+            OffensiveSpeech offensiveSpeech = new OffensiveSpeech(os.getBegin(), os.getEnd());
+            offensiveSpeech.setDocument(document);
+            offensiveSpeech.setCoveredText(os.getCoveredText());
+
+            FSArray<AnnotationComment> offensives = os.getOffensives();
+            if (offensives == null) {
+                logger.warn("OffensiveSpeech annotation without offensives found. Skipping this annotation.");
+                return;
+            }
+            if (offensives.size() != 2) {
+                logger.warn("OffensiveSpeech annotation with " + offensives.size() + " offensives found. Expected 2. Skipping this annotation.");
+                return;
+            }
+            final String offensiveKey = "Offensive";
+            final String nonOffensiveKey = "Not Offensive";
+            OptionalDouble offensiveScore = offensives.stream()
+                    .filter(oc -> oc.getKey().equals(offensiveKey))
+                    .map(AnnotationComment::getValue)
+                    .mapToDouble(Double::parseDouble)
+                    .findFirst();
+            OptionalDouble nonOffensiveScore = offensives.stream()
+                    .filter(oc -> oc.getKey().equals(nonOffensiveKey))
+                    .map(AnnotationComment::getValue)
+                    .mapToDouble(Double::parseDouble).findFirst();
+            if (offensiveScore.isEmpty() || nonOffensiveScore.isEmpty()) {
+                logger.warn("OffensiveSpeech annotation without offensive or non-offensive score found. Skipping this annotation.");
+                return;
+            }
+            offensiveSpeech.setOffensive(offensiveScore.getAsDouble());
+            offensiveSpeech.setNonOffensive(nonOffensiveScore.getAsDouble());
+            offensiveSpeeches.add(offensiveSpeech);
+        });
     }
 
     /**
