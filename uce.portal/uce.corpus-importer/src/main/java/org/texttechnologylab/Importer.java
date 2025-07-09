@@ -49,6 +49,7 @@ import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.topic.UnifiedTopic;
+import org.texttechnologylab.models.toxic.Toxic;
 import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.*;
 import org.texttechnologylab.models.negation.CompleteNegation;
@@ -1419,6 +1420,16 @@ public class Importer {
      * Selects and sets the toxicities to a document.
      */
     private void setToxic(Document document, JCas jCas) {
+        List<Toxic> toxics = new ArrayList<>();
+
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.Toxic.class).forEach(t -> {
+            Toxic toxic = new Toxic(t.getBegin(), t.getEnd());
+            toxic.setDocument(document);
+            toxic.setCoveredText(t.getCoveredText());
+            toxic.setToxic(t.getToxic());
+            toxic.setNonToxic(t.getNonToxic());
+            toxics.add(toxic);
+        });
     }
 
     /**
