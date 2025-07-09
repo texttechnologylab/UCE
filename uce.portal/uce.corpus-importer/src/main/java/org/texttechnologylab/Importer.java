@@ -566,6 +566,11 @@ public class Importer {
                         () -> setUnifiedTopic(document, jCas),
                         (ex) -> logImportWarn("This file should have contained UnifiedTopic annotations, but selecting them caused an error.", ex, filePath));
 
+            if (corpusConfig.getAnnotations().isToxic())
+                ExceptionUtils.tryCatchLog(
+                        () -> setToxic(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained Toxic annotations, but selecting them caused an error.", ex, filePath));
+
             // Keep this at the end of the annotation setting, as they might require previous annotations. Order matter here!
             if (corpusConfig.getAnnotations().isLogicalLinks())
                 ExceptionUtils.tryCatchLog(
@@ -1408,6 +1413,12 @@ public class Importer {
         });
 
         document.setUnifiedTopics(unifiedTopics);
+    }
+
+    /**
+     * Selects and sets the toxicities to a document.
+     */
+    private void setToxic(Document document, JCas jCas) {
     }
 
     /**
