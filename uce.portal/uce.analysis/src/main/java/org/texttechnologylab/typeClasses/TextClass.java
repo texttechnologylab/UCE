@@ -3,21 +3,22 @@ import org.texttechnologylab.modules.ModelInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class TextClass {
 
-    private HashMap<ModelInfo, ArrayList<TopicClass>> topics = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<OffensiveClass>> offensives = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<HateClass>> hate = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<SentimentClass>> sentiment = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<ToxicClass>> toxic = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<EmotionClass>> emotions = new HashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<TopicClass>> topics = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<OffensiveClass>> offensives = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<HateClass>> hate = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<SentimentClass>> sentiment = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<ToxicClass>> toxic = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<EmotionClass>> emotions = new LinkedHashMap<>();
 
-    private HashMap<ModelInfo, ArrayList<FactClass>> facts = new HashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<FactClass>> facts = new LinkedHashMap<>();
 
-    private HashMap<ModelInfo, ArrayList<CoherenceClass>> coherence = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<StanceClass>> stance = new HashMap<>();
-    private HashMap<ModelInfo, LLMClass> llm = new HashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<CoherenceClass>> coherence = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<StanceClass>> stance = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, LLMClass> llm = new LinkedHashMap<>();
 
     private ArrayList<HateClass> hateAVG = new ArrayList<>();
     private ArrayList<SentimentClass> sentimentAVG = new ArrayList<>();

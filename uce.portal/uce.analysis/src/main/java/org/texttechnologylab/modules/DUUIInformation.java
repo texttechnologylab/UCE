@@ -38,6 +38,10 @@ public class DUUIInformation {
 
     private Boolean isOffensive = false;
 
+    private Boolean isTtlabScorer = false;
+
+    private List<String> ttlabScorerGroups;
+
     public DUUIInformation(Sentences sentence, TextClass textInformation, List<ModelGroup> modelGroups, HashMap<String, ModelInfo> modelInfos) {
         this.sentence = sentence;
         this.textInformation = textInformation;
@@ -175,4 +179,18 @@ public class DUUIInformation {
         return isLLM;
     }
 
+    public void setIsTtlabScorer(boolean isTtlabScorer) {
+        this.isTtlabScorer = isTtlabScorer;
+    }
+    public Boolean getIsTtlabScorer() {
+        return isTtlabScorer;
+    }
+
+    public List<String> getTtlabScorerGroups() {
+        return ttlabScorerGroups;
+    }
+
+    public void setTtlabScorerGroups(List<String> ttlabScorerGroups) {
+        this.ttlabScorerGroups = ttlabScorerGroups;
+    }
 }
