@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.offensiveSpeech;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
@@ -8,6 +9,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "offensive-speech")
+@Typesystem(types = {org.texttechnologylab.annotation.OffensiveSpeech.class})
 public class OffensiveSpeech extends UIMAAnnotation implements WikiModel {
 
 
