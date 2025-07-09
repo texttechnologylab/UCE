@@ -1453,6 +1453,8 @@ public class Importer {
             offensiveSpeech.setNonOffensive(nonOffensiveScore.getAsDouble());
             offensiveSpeeches.add(offensiveSpeech);
         });
+
+        document.setOffensiveSpeeches(offensiveSpeeches);
     }
 
     /**
