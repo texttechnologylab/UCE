@@ -368,6 +368,8 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         annotations.addAll(events.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         // unifiedTopics
         annotations.addAll(unifiedTopics.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        // emotions
+        annotations.addAll(emotions.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
 
         annotations.sort(Comparator.comparingInt(UIMAAnnotation::getBegin));
         return annotations;

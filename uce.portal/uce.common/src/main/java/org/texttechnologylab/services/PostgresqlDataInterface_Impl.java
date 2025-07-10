@@ -2116,6 +2116,16 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             Hibernate.initialize(topic.getTopics());
         }
 
+        // emotion
+        Hibernate.initialize(doc.getEmotions());
+
+        for (var emotion : doc.getEmotions()) {
+            Hibernate.initialize(emotion.getEmotionValues());
+            for (var ev : emotion.getEmotionValues()) {
+                Hibernate.initialize(ev.getEmotionType());
+            }
+        }
+
         for (var link : doc.getWikipediaLinks()) {
             Hibernate.initialize(link.getWikiDataHyponyms());
         }

@@ -1,21 +1,18 @@
 package org.texttechnologylab.models;
 
-import io.micrometer.common.lang.Nullable;
 import lombok.Getter;
 import lombok.Setter;
-import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.AnnotationLink;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
-import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
+import org.texttechnologylab.models.emotion.Emotion;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @MappedSuperclass
 public class UIMAAnnotation extends ModelBase implements Linkable {
@@ -128,6 +125,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         Map<Integer, String> topicMarkers = new TreeMap<>();
         Map<Integer, String> topicCoverWrappersStart = new TreeMap<>();
         Map<Integer, String> topicCoverWrappersEnd = new TreeMap<>();
+        Map<Integer, String> emotionMarkers = new TreeMap<>();
+        Map<Integer, String> emotionCoverWrappersStart = new TreeMap<>();
+        Map<Integer, String> emotionCoverWrappersEnd = new TreeMap<>();
 
 
         for (var annotation : annotations) {
@@ -168,6 +168,17 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 continue;
             }
 
+            if (annotation instanceof Emotion emotion) {
+                var start = emotion.getBegin() - offset - errorOffset;
+                var end = emotion.getEnd() - offset - errorOffset;
+
+                emotionCoverWrappersStart.put(start, emotion.generateEmotionCoveredStartSpan());
+                emotionCoverWrappersEnd.put(end, "</span>");
+
+                emotionMarkers.put(end, emotion.generateEmotionMarker());
+                continue;
+            }
+
             var start = annotation.getBegin() - offset - errorOffset;
             var end = annotation.getEnd() - offset - errorOffset;
 
@@ -187,6 +198,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             if (topicCoverWrappersEnd.containsKey(i)) {
                 finalText.append(topicCoverWrappersEnd.get(i));
             }
+            if (emotionCoverWrappersEnd.containsKey(i)) {
+                finalText.append(emotionCoverWrappersEnd.get(i));
+            }
             if (endTags.containsKey(i)) {
                 //finalText.append(endTags.get(i).getFirst());
                 for (var tag : endTags.get(i)) {
@@ -195,6 +209,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
 
             // Insert start spans
+            if (emotionCoverWrappersStart.containsKey(i)) {
+                finalText.append(emotionCoverWrappersStart.get(i));
+            }
             if (topicCoverWrappersStart.containsKey(i)) {
                 finalText.append(topicCoverWrappersStart.get(i));
             }
@@ -202,6 +219,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             // Insert marker after character
             if (topicMarkers.containsKey(i)) {
                 finalText.append(topicMarkers.get(i));
+            }
+            if (emotionMarkers.containsKey(i)) {
+                finalText.append(emotionMarkers.get(i));
             }
             if (startTags.containsKey(i)) {
                 finalText.append(generateMultiHTMLTag(startTags.get(i)));
