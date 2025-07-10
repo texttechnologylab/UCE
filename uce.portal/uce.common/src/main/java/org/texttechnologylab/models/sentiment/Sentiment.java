@@ -2,6 +2,7 @@ package org.texttechnologylab.models.sentiment;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
@@ -10,6 +11,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "sentiment")
+@Typesystem(types = {org.texttechnologylab.annotation.SentimentBert.class})
 public class Sentiment extends UIMAAnnotation implements WikiModel {
 
     @Getter
