@@ -19,6 +19,7 @@ import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.annotation.AnnotationComment;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.geonames.GeoNamesEntity;
 import org.texttechnologylab.annotation.link.*;
@@ -39,6 +40,9 @@ import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.corpus.ocr.OCRPageAdapterImpl;
 import org.texttechnologylab.models.corpus.ocr.PageAdapter;
 import org.texttechnologylab.models.corpus.ocr.PageAdapterImpl;
+import org.texttechnologylab.models.emotion.Emotion;
+import org.texttechnologylab.models.emotion.EmotionType;
+import org.texttechnologylab.models.emotion.EmotionValue;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.LogStatus;
@@ -1419,7 +1423,40 @@ public class Importer {
      * Selects and sets the emotions to a document
      */
     private void setEmotion(Document document, JCas jCas) {
+        List<Emotion> emotions = new ArrayList<>();
 
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.Emotion.class).forEach(e -> {
+            Emotion emotion = new Emotion(e.getBegin(), e.getEnd());
+            emotion.setDocument(document);
+
+            FSArray<AnnotationComment> emotionAnnotations = e.getEmotions();
+            List<EmotionValue> emotionValues = new ArrayList<>();
+            for (AnnotationComment emotionAnnotation : emotionAnnotations) {
+                String emotionName = emotionAnnotation.getKey();
+                EmotionType emotionType;
+                try {
+                    emotionType = db.getOrCreateEmotionTypeByName(emotionName);
+                } catch (DatabaseOperationException ex) {
+                    logger.error("Error while getting or creating emotion type for name: " + emotionName, ex);
+                    continue;
+                }
+                String rawValue = emotionAnnotation.getValue();
+                double value;
+                try {
+                    value = Double.parseDouble(rawValue);
+                } catch (NumberFormatException ex) {
+                    logger.warn("Invalid emotion value for " + emotionName + ": " + rawValue + ". Skipping this emotion.", ex);
+                    continue;
+                }
+                EmotionValue emotionValue = new EmotionValue(emotionType, emotion, value);
+                emotionValues.add(emotionValue);
+            }
+            emotion.setEmotionValues(emotionValues);
+
+            emotions.add(emotion);
+        });
+
+        document.setEmotions(emotions);
     }
 
     /**
