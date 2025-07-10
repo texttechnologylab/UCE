@@ -13,6 +13,9 @@ import org.texttechnologylab.models.corpus.links.AnnotationLink;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
+import org.texttechnologylab.models.emotion.Emotion;
+import org.texttechnologylab.models.emotion.EmotionType;
+import org.texttechnologylab.models.emotion.EmotionValue;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
@@ -80,6 +83,10 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(TopicWord.class);
         metadataSources.addAnnotatedClass(TopicValueBase.class);
         metadataSources.addAnnotatedClass(TopicValueBaseWithScore.class);
+        // emotion
+        metadataSources.addAnnotatedClass(Emotion.class);
+        metadataSources.addAnnotatedClass(EmotionValue.class);
+        metadataSources.addAnnotatedClass(EmotionType.class);
 
         metadataSources.addAnnotatedClass(DocumentTopThreeTopics.class);
         var metadata = metadataSources.buildMetadata();
