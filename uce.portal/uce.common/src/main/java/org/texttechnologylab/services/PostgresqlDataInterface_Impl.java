@@ -1907,6 +1907,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public List<Object[]> getDocumentEmotionsOrdered(long documentId) throws DatabaseOperationException {
         class EmotionEntry {
+            long emotionId;
             long emotionType;
             double emotionValue;
         }
@@ -1937,6 +1938,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 }
 
                 EmotionEntry entry = new EmotionEntry();
+                entry.emotionId = emotionId;
                 entry.emotionType = emotionType;
                 entry.emotionValue = emotionValue;
 
@@ -1946,7 +1948,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     .map(emotionMap::get)
                     .map(e -> e.stream().map(entry -> Map.of(
                             "emotionType", entry.emotionType,
-                            "emotionValue", entry.emotionValue
+                            "emotionValue", entry.emotionValue,
+                            "emotionId", entry.emotionId
                     )).toArray())
                     .toList();
         });

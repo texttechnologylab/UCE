@@ -1437,7 +1437,7 @@ function renderEmotionDevelopment(containerId) {
                 const emotionType = emotionData.emotionTypes.find(e => e.id === emotion.emotionType);
                 tooltipContent += '<span style="color:' + (emotionColors[emotion.emotionType] || '#888') + ';">' + emotionType.name + '</span>: ' + emotion.emotionValue.toFixed(2) + '<br>';
             }
-            const elementId = 'emot-E-' + (index + 1);
+            const elementId = 'emot-E-' + data[0].emotionId;
             const element = document.getElementById(elementId);
             if (element) {
                 tooltipContent += '<span style="color:#888;">Content: </span><br>';
@@ -1454,7 +1454,8 @@ function renderEmotionDevelopment(containerId) {
             tooltipFormatter,
             function (params) {
                 const index = params.dataIndex;
-                const elementId = 'emot-E-' + (index + 1);
+                const emotionId = emotionData.emotionData[index][0].emotionId;
+                const elementId = 'emot-E-' + emotionId;
                 const element = document.getElementById(elementId);
                 if (element) {
                     element.scrollIntoView({behavior: 'smooth', block: 'center'});
