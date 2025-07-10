@@ -566,6 +566,12 @@ public class Importer {
                         () -> setUnifiedTopic(document, jCas),
                         (ex) -> logImportWarn("This file should have contained UnifiedTopic annotations, but selecting them caused an error.", ex, filePath));
 
+            if (corpusConfig.getAnnotations().isSentiment())
+                ExceptionUtils.tryCatchLog(
+                        () -> setSentiment(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained sentiment annotations, but selecting them caused an error.", ex, filePath));
+
+
             // Keep this at the end of the annotation setting, as they might require previous annotations. Order matter here!
             if (corpusConfig.getAnnotations().isLogicalLinks())
                 ExceptionUtils.tryCatchLog(
@@ -1408,6 +1414,10 @@ public class Importer {
         });
 
         document.setUnifiedTopics(unifiedTopics);
+    }
+
+    private void setSentiment(Document document, JCas jCas){
+
     }
 
     /**
