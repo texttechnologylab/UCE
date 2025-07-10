@@ -1397,7 +1397,7 @@ function renderEmotionDevelopment(containerId) {
         }
 
         const emotionColors = {};
-        emotionData.emotionTypes.forEach((emotionType, index) => {
+        [...emotionData.emotionTypes].sort((a, b) => a.name.localeCompare(b.name)).forEach((emotionType, index) => {
             const hue = (index * 360 / emotionData.emotionTypes.length) % 360;
             emotionColors[emotionType.id] = 'hsl(' + hue + ', 70%, 50%)';
         });
