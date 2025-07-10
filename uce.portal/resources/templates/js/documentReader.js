@@ -1407,7 +1407,7 @@ function renderEmotionDevelopment(containerId) {
             const emotionName = emotionType.name;
             const emotionValues = emotionData.emotionData.map(pageData => {
                 const emotionValue = pageData.find(e => e.emotionType === emotionId);
-                return emotionValue ? (emotionValue.emotionValue * 100) : 0;
+                return emotionValue ? emotionValue.emotionValue : 0;
             });
             return {
                 name: emotionName,
@@ -1430,8 +1430,14 @@ function renderEmotionDevelopment(containerId) {
             yLabel: 'Emotion Value',
         };
         const tooltipFormatter = function (params) {
-            console.log(params);
-            return 'Test';
+            const index = params[0].dataIndex;
+            const data = [...emotionData.emotionData[index]].sort((a, b) => b.emotionValue - a.emotionValue);
+            let tooltipContent = '<b>Emotion Change '+ (index + 1) + '</b><br>';
+            for (const emotion of data) {
+                const emotionType = emotionData.emotionTypes.find(e => e.id === emotion.emotionType);
+                tooltipContent += '<span style="color:' + (emotionColors[emotion.emotionType] || '#888') + ';">' + emotionType.name + '</span>: ' + emotion.emotionValue.toFixed(2) + '<br>';
+            }
+            return tooltipContent;
         };
 
         window.graphVizHandler.createLineChart(
