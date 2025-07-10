@@ -1479,6 +1479,9 @@ function renderEmotionDevelopment(containerId) {
                 const element = $('#' + elementId);
                 element.removeClass('highlight');
             });
+            $(container).on('mouseout', function () {
+                $('.emotion-covered.highlight').removeClass('highlight');
+            });
         });
 
         container.classList.add('rendered');
