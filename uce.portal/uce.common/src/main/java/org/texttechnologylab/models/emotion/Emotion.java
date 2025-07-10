@@ -50,7 +50,7 @@ public class Emotion extends UIMAAnnotation implements WikiModel {
 
     @Override
     public String getWikiId() {
-        return "UT" + "-" + this.getId();
+        return "E" + "-" + this.getId();
     }
 
 }
