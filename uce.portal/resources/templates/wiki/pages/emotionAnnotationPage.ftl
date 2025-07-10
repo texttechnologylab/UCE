@@ -52,9 +52,4 @@
         </#if>
     </div>
 
-    <!-- kwic view -->
-    <div class="mt-3">
-        <#include "*/wiki/components/kwic.ftl">
-    </div>
-
 </div>
