@@ -1,6 +1,7 @@
 package org.texttechnologylab.models.emotion;
 
 import lombok.Getter;
+import lombok.Setter;
 import org.texttechnologylab.models.ModelBase;
 
 import javax.persistence.Column;
@@ -12,6 +13,7 @@ import javax.persistence.Table;
 public class EmotionType extends ModelBase {
 
     @Getter
+    @Setter
     @Column(name = "name", nullable = false, unique = true)
     private String name;
 
