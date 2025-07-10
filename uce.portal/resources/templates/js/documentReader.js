@@ -1432,7 +1432,7 @@ function renderEmotionDevelopment(containerId) {
         const tooltipFormatter = function (params) {
             const index = params[0].dataIndex;
             const data = [...emotionData.emotionData[index]].sort((a, b) => b.emotionValue - a.emotionValue);
-            let tooltipContent = '<b>Emotion Change '+ (index + 1) + '</b><br>';
+            let tooltipContent = '<b>Emotion Change ' + (index + 1) + '</b><br>';
             for (const emotion of data) {
                 const emotionType = emotionData.emotionTypes.find(e => e.id === emotion.emotionType);
                 tooltipContent += '<span style="color:' + (emotionColors[emotion.emotionType] || '#888') + ';">' + emotionType.name + '</span>: ' + emotion.emotionValue.toFixed(2) + '<br>';
@@ -1446,7 +1446,15 @@ function renderEmotionDevelopment(containerId) {
             chartConfig,
             tooltipFormatter,
             function (params) {
-                // do nothing
+                const index = params.dataIndex;
+                const elementId = 'emot-E-' + (index + 1);
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    clearTopicColoring();
+                    hideTopicNavButtons();
+                    $('.scrollbar-minimap').hide();
+                }
             }
         );
 
