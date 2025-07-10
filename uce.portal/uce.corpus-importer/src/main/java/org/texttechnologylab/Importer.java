@@ -1448,10 +1448,16 @@ public class Importer {
                     logger.warn("Invalid emotion value for " + emotionName + ": " + rawValue + ". Skipping this emotion.", ex);
                     continue;
                 }
-                EmotionValue emotionValue = new EmotionValue(emotionType, emotion, value);
+                EmotionValue emotionValue = new EmotionValue(e.getBegin(), e.getEnd());
+                emotionValue.setDocument(document);
+                emotionValue.setEmotion(emotion);
+                emotionValue.setEmotionType(emotionType);
+                emotionValue.setValue(value);
+                emotionValue.setCoveredText(e.getCoveredText());
                 emotionValues.add(emotionValue);
             }
             emotion.setEmotionValues(emotionValues);
+            emotion.setCoveredText(e.getCoveredText());
 
             emotions.add(emotion);
         });
