@@ -58,6 +58,6 @@ public class Toxic extends UIMAAnnotation implements WikiModel {
 
     @Override
     public String getWikiId() {
-        return "UT" + "-" + this.getId();
+        return "T" + "-" + this.getId();
     }
 }
