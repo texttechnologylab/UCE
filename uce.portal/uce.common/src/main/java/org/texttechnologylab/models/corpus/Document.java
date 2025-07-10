@@ -19,10 +19,8 @@ import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
-import org.texttechnologylab.models.corpus.links.Link;
+import org.texttechnologylab.models.emotion.Emotion;
 import org.texttechnologylab.models.negation.*;
-import org.texttechnologylab.models.search.AnnotationSearchResult;
-import org.texttechnologylab.models.search.PageSnippet;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.UnifiedTopic;
@@ -217,6 +215,12 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<UnifiedTopic> unifiedTopics;
+
+    @Setter
+    @Getter
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
+    private List<Emotion> emotions;
 
     public Document() {
         metadataTitleInfo = new MetadataTitleInfo();
