@@ -379,6 +379,81 @@ var GraphVizHandler = (function () {
 
         return echart;
     };
+    GraphVizHandler.prototype.createLineChart = async function (
+        target,
+        title,
+        config,
+        tooltipFormatter,
+        onClick = null
+    ) {
+        const chartId = generateUUID();
+
+        const {
+            xData,
+            seriesData,
+            yLabel = 'Count'
+        } = config;
+
+        const option = {
+            tooltip: {
+                trigger: 'axis',
+                enterable: true,
+                backgroundColor: '#fff',
+                borderColor: '#ccc',
+                borderWidth: 1,
+                textStyle: {
+                    color: '#000',
+                    fontSize: 12
+                },
+                formatter: tooltipFormatter
+            },
+
+            title: {
+                text: title,
+                left: 'center'
+            },
+
+            legend: {
+                data: seriesData.map(s => s.name),
+                top: 'auto'
+            },
+
+            xAxis: {
+                type: 'category',
+                name: 'X',
+                data: xData
+            },
+
+            yAxis: {
+                type: 'value',
+                name: yLabel
+            },
+
+            series: []
+        };
+
+        seriesData.forEach(s => {
+            option.series.push({
+                name: s.name,
+                type: 'line',
+                data: s.data,
+                symbol: 'circle',
+                symbolSize: 10,
+                lineStyle: { width: 3, color: s.color },
+                itemStyle: { color: s.color },
+                z: 2
+            });
+        });
+
+        const echart = new ECharts(target, option);
+        this.activeCharts[chartId] = echart;
+
+        if (onClick && typeof onClick === 'function') {
+            echart.getInstance().on('click', onClick);
+        }
+
+        return echart;
+    };
 
 
     GraphVizHandler.prototype.createChordChart = async function (

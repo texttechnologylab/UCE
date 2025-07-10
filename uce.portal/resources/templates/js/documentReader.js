@@ -1429,13 +1429,12 @@ function renderEmotionDevelopment(containerId) {
             seriesData: seriesData,
             yLabel: 'Emotion Value',
         };
-        console.log(chartConfig);
         const tooltipFormatter = function (params) {
             console.log(params);
             return 'Test';
         };
 
-        window.graphVizHandler.createBarLineChart(
+        window.graphVizHandler.createLineChart(
             containerId,
             '',
             chartConfig,
@@ -1443,16 +1442,7 @@ function renderEmotionDevelopment(containerId) {
             function (params) {
                 // do nothing
             }
-        ).then(chart => {
-           console.log('Emotion development chart created successfully:', chart);
-        }).catch(err => {
-            console.error('Error creating emotion development chart:', err);
-            $('.visualization-spinner').hide();
-            const container = document.getElementById(containerId);
-            if (container) {
-                container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
-            }
-        });
+        );
 
         container.classList.add('rendered');
     }).catch(() => {
