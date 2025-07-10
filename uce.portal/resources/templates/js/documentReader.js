@@ -1464,7 +1464,22 @@ function renderEmotionDevelopment(containerId) {
                     $('.scrollbar-minimap').hide();
                 }
             }
-        );
+        ).then(chart=> {
+            chart.getInstance().on('mouseover', function (params) {
+                // remove previous highlights to be safe
+                $('.emotion-covered.highlight').removeClass('highlight');
+                const index = params.dataIndex;
+                const elementId = 'emot-E-' + emotionData.emotionData[index][0].emotionId;
+                const element = $('#' + elementId);
+                element.addClass('highlight');
+            });
+            chart.getInstance().on('mouseout', function (params) {
+                const index = params.dataIndex;
+                const elementId = 'emot-E-' + emotionData.emotionData[index][0].emotionId;
+                const element = $('#' + elementId);
+                element.removeClass('highlight');
+            });
+        });
 
         container.classList.add('rendered');
     }).catch(() => {
