@@ -157,7 +157,7 @@ public class DocumentApi implements UceApi {
 
         var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
                 (ex) -> logger.error("Error: the url for the document reader requires an 'id' query parameter. " +
-                                     "Document reader can't be built.", ex));
+                        "Document reader can't be built.", ex));
         if (id == null)
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
@@ -406,7 +406,6 @@ public class DocumentApi implements UceApi {
         }
     });
 
-
     public Route getSentenceTopicsWithEntities = ((request, response) -> {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for sentence topics with entities. ", ex));
@@ -514,5 +513,30 @@ public class DocumentApi implements UceApi {
         }
     };
 
+    public Route getDocumentEmotionDevelopment = (request, response) -> {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for emotion development.", ex));
+
+        if (documentId == null) {
+            response.status(400);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for emotion development"), "defaultError.ftl"));
+        }
+
+        try {
+            var emotionData = db.getDocumentEmotionsOrdered(documentId);
+            var emotionTypes = db.getEmotionTypes();
+            Map<String, Object> emotionDevelopment = new HashMap<>();
+            emotionDevelopment.put("emotionTypes", emotionTypes);
+            emotionDevelopment.put("emotionData", emotionData);
+            response.type("application/json");
+            return new Gson().toJson(emotionDevelopment);
+        } catch (Exception ex) {
+            logger.error("Error retrieving document emotion development.", ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig)
+                    .render(new ModelAndView(Map.of("information", "Error retrieving document emotion development."), "defaultError.ftl"));
+        }
+    };
 
 }

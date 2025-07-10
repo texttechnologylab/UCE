@@ -1905,6 +1905,70 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<Object[]> getDocumentEmotionsOrdered(long documentId) throws DatabaseOperationException {
+        class EmotionEntry {
+            long emotionType;
+            double emotionValue;
+        }
+        return executeOperationSafely((session) -> {
+            String sql = """
+                    SELECT e.id AS emotionId,
+                           ev.emotion_type_id AS emotionType,
+                           ev.value AS emotionValue
+                    FROM emotion e
+                    JOIN emotion_value ev ON e.id = ev.emotion_id
+                    WHERE e.document_id = :documentId
+                    ORDER BY e.beginn, e.endd
+                    """;
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId);
+
+            var result = query.getResultList();
+            List<Long> emotionIds = new ArrayList<>();
+            Map<Long, List<EmotionEntry>> emotionMap = new HashMap<>();
+            for (Object raw : result) {
+                Object[] row = (Object[]) raw;
+                long emotionId = ((Number) row[0]).longValue();
+                long emotionType = ((Number) row[1]).longValue();
+                double emotionValue = ((Number) row[2]).doubleValue();
+
+                if (!emotionIds.contains(emotionId)) {
+                    emotionIds.add(emotionId);
+                }
+
+                EmotionEntry entry = new EmotionEntry();
+                entry.emotionType = emotionType;
+                entry.emotionValue = emotionValue;
+
+                emotionMap.computeIfAbsent(emotionId, k -> new ArrayList<>()).add(entry);
+            }
+            return emotionIds.stream()
+                    .map(emotionMap::get)
+                    .map(e -> e.stream().map(entry -> Map.of(
+                            "emotionType", entry.emotionType,
+                            "emotionValue", entry.emotionValue
+                    )).toArray())
+                    .toList();
+        });
+    }
+
+    public List<Object> getEmotionTypes() throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = "SELECT id, name FROM emotion_type ORDER BY name";
+            var query = session.createNativeQuery(sql);
+            //noinspection unchecked
+            return query.getResultList().stream()
+                    .map(result -> {
+                        Object[] row = (Object[]) result;
+                        return Map.of(
+                                "id", ((Number) row[0]).longValue(),
+                                "name", (String) row[1]
+                        );
+                    })
+                    .toList();
+        });
+    }
+
     public List<Object[]> getGeonameByPage(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = "SELECT gn.page_id, gn.coveredtext AS geoname_value " +

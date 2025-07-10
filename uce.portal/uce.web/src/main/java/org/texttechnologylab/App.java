@@ -8,8 +8,6 @@ import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.keycloak.authorization.client.AuthzClient;
-import org.keycloak.representations.idm.authorization.AuthorizationRequest;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.auth.AuthenticationRouteRegister;
@@ -19,7 +17,6 @@ import org.texttechnologylab.config.UceConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.Renderer;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
-import org.texttechnologylab.models.authentication.UceUser;
 import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.UCELog;
 import org.texttechnologylab.modules.ModelGroup;
@@ -39,7 +36,10 @@ import javax.servlet.MultipartConfigElement;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.*;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
 
 import static spark.Spark.*;
@@ -420,6 +420,7 @@ public class App {
                 get("/page/namedEntities", (registry.get(DocumentApi.class)).getDocumentNamedEntitiesByPage);
                 get("/page/lemma", (registry.get(DocumentApi.class)).getDocumentLemmaByPage);
                 get("/page/geoname", (registry.get(DocumentApi.class)).getDocumentGeonameByPage);
+                get("/page/emotionDev", (registry.get(DocumentApi.class)).getDocumentEmotionDevelopment);
             });
 
             path("/rag", () -> {

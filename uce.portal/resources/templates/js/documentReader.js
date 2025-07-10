@@ -370,8 +370,7 @@ function colorUnifiedTopics(selectedTopic) {
 
     if ($selectedTopicTag.length === 0) {
         color = topicColorMap[selectedTopic];
-    }
-    else{
+    } else {
         color = $selectedTopicTag.css('background-color');
     }
 
@@ -477,16 +476,16 @@ function updateTopicNavButtonStates() {
 function initScrollbarMinimap() {
     setTimeout(updateMinimapMarkers, 500);
 
-    $(window).on('scroll', function() {
+    $(window).on('scroll', function () {
         updateMinimapScroll();
     });
 
-    $(window).on('resize', function() {
+    $(window).on('resize', function () {
         updateMinimapMarkers();
         updateMinimapScroll();
     });
 
-    $('.scrollbar-minimap').on('click', function(e) {
+    $('.scrollbar-minimap').on('click', function (e) {
         const clickPosition = (e.pageY - $(this).offset().top) / $(this).height();
         const dimensions = getMinimapDimensions();
         const documentPosition = minimapToDocumentPosition(clickPosition * dimensions.minimapHeight, dimensions);
@@ -497,7 +496,7 @@ function initScrollbarMinimap() {
         }, 300);
     });
 
-    $(document).on('mouseenter', '.minimap-marker', function(e) {
+    $(document).on('mouseenter', '.minimap-marker', function (e) {
         const $marker = $(this);
         const $preview = $('.minimap-preview');
         const $previewContent = $('.preview-content');
@@ -513,14 +512,14 @@ function initScrollbarMinimap() {
             const markerTop = parseFloat($marker.css('top'));
             const approximateDocumentPosition = minimapToDocumentPosition(markerTop, dimensions);
 
-            const $topicElements = $('.colorable-topic').filter(function() {
+            const $topicElements = $('.colorable-topic').filter(function () {
                 return $(this).data('topic-value') === topicValue;
             });
 
             let closestElement = null;
             let minDistance = Number.MAX_VALUE;
 
-            $topicElements.each(function() {
+            $topicElements.each(function () {
                 const $element = $(this);
                 const elementOffset = $element.offset();
 
@@ -547,7 +546,7 @@ function initScrollbarMinimap() {
 
                 const coveredText = closestElement.data('wcovered');
                 if (coveredText) {
-                    previewText =  coveredText;
+                    previewText = coveredText;
                 }
             }
             if (previewTitle) {
@@ -580,11 +579,11 @@ function initScrollbarMinimap() {
         }
     });
 
-    $(document).on('mouseleave', '.minimap-marker', function() {
+    $(document).on('mouseleave', '.minimap-marker', function () {
         $('.minimap-preview').hide();
     });
 
-    $('.scrollbar-minimap').on('mouseleave', function() {
+    $('.scrollbar-minimap').on('mouseleave', function () {
         $('.minimap-preview').hide();
     });
 }
@@ -592,10 +591,10 @@ function initScrollbarMinimap() {
 function updateMinimapMarkers() {
     const $minimap = $('.minimap-markers');
     const dimensions = getMinimapDimensions();
-    
+
     $minimap.empty();
 
-    $('.document-content .page').each(function(index) {
+    $('.document-content .page').each(function (index) {
         const $page = $(this);
 
         if (!$page.attr('id')) {
@@ -628,7 +627,7 @@ function addAllTopicMarkersToMinimap() {
     const dimensions = getMinimapDimensions();
     const topicPositions = {};
 
-    $('.colorable-topic').each(function() {
+    $('.colorable-topic').each(function () {
         const $topic = $(this);
         const topicValue = $topic.data('topic-value');
 
@@ -651,7 +650,7 @@ function addAllTopicMarkersToMinimap() {
         }
     });
 
-    Object.keys(topicPositions).forEach(function(position) {
+    Object.keys(topicPositions).forEach(function (position) {
         const pos = parseInt(position);
         const topicData = topicPositions[pos];
         const topicValues = Object.keys(topicData.topics);
@@ -673,7 +672,7 @@ function addAllTopicMarkersToMinimap() {
     });
 }
 
-function updateTopicMarkersOnMinimap(selectedTopic=null) {
+function updateTopicMarkersOnMinimap(selectedTopic = null) {
     const $minimap = $('.minimap-markers');
     const dimensions = getMinimapDimensions();
 
@@ -685,7 +684,7 @@ function updateTopicMarkersOnMinimap(selectedTopic=null) {
     const activeTopic = selectedTopic ? selectedTopic : $activeTopic.data('topic');
     const topicColor = topicColorMap[activeTopic];
 
-    $('.colorable-topic').each(function() {
+    $('.colorable-topic').each(function () {
         const $topic = $(this);
         const topicValue = $topic.data('topic-value');
 
@@ -718,18 +717,18 @@ function getMinimapDimensions() {
 }
 
 function documentToMinimapPosition(documentPos, dimensions) {
-    const { documentHeight, minimapHeight } = dimensions || getMinimapDimensions();
+    const {documentHeight, minimapHeight} = dimensions || getMinimapDimensions();
     return (documentPos / documentHeight) * minimapHeight;
 }
 
 function minimapToDocumentPosition(minimapPos, dimensions) {
-    const { documentHeight, minimapHeight } = dimensions || getMinimapDimensions();
+    const {documentHeight, minimapHeight} = dimensions || getMinimapDimensions();
     return (minimapPos / minimapHeight) * documentHeight;
 }
 
 function createMinimapMarker(options) {
-    const { top, height, color, elementId, topic, className } = options;
-    
+    const {top, height, color, elementId, topic, className} = options;
+
     const $marker = $('<div></div>')
         .addClass('minimap-marker')
         .addClass(className || '')
@@ -738,10 +737,10 @@ function createMinimapMarker(options) {
             'height': Math.max(2, height) + 'px',
             'background-color': color || '#ccc'
         });
-    
+
     if (elementId) $marker.attr('data-element-id', elementId);
     if (topic) $marker.attr('data-topic', topic);
-    
+
     return $marker;
 }
 
@@ -814,7 +813,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             $('.scrollbar-minimap').hide();
             sideBar.classList.add('visualization-expanded');
         } else {
-            setTimeout(updateFloatingUIPositions,500) ;
+            setTimeout(updateFloatingUIPositions, 500);
             currentSelectedTopic = null;
             sideBar.classList.remove('visualization-expanded');
             $('.scrollbar-minimap').show();
@@ -863,8 +862,10 @@ $(document).on('click', '.viz-nav-btn', function () {
         setTimeout(() => renderSentenceTopicSankey('vp-5'), 500);
 
     }
+    if (target === '#viz-panel-6') {
+        setTimeout(() => renderEmotionDevelopment('vp-6'), 500);
+    }
 });
-
 
 
 function renderSentenceTopicNetwork(containerId) {
@@ -878,13 +879,13 @@ function renderSentenceTopicNetwork(containerId) {
     $.ajax({
         url: `/api/document/unifiedTopicSentenceMap`,
         method: 'GET',
-        data: { documentId },
+        data: {documentId},
         dataType: 'json',
         success: function (utToSentenceMapList) {
             const utToSentenceMap = new Map();
             const topicToSentences = {};
 
-            utToSentenceMapList.forEach(({ unifiedtopicId, sentenceId }) => {
+            utToSentenceMapList.forEach(({unifiedtopicId, sentenceId}) => {
                 const utId = unifiedtopicId.toString();
                 const sId = sentenceId.toString();
                 utToSentenceMap.set(utId, sId);
@@ -895,7 +896,7 @@ function renderSentenceTopicNetwork(containerId) {
             $.ajax({
                 url: `/api/rag/sentenceEmbeddings`,
                 method: 'GET',
-                data: { documentId },
+                data: {documentId},
                 dataType: 'json',
                 success: function (embeddings) {
                     $('.visualization-spinner').hide()
@@ -908,7 +909,7 @@ function renderSentenceTopicNetwork(containerId) {
                         return;
                     }
                     const sentenceEmbeddingMap = new Map();
-                    embeddings.forEach(({ sentenceId, tsne2d }) => {
+                    embeddings.forEach(({sentenceId, tsne2d}) => {
                         sentenceEmbeddingMap.set(sentenceId.toString(), tsne2d);
                     });
 
@@ -931,11 +932,11 @@ function renderSentenceTopicNetwork(containerId) {
 
                         nodes.push({
                             id: sentenceId,
-                            name: `Sentence `+utId,
+                            name: `Sentence ` + utId,
                             symbolSize: 20,
                             x, y,
-                            itemStyle: { color },
-                            label: { show: false },
+                            itemStyle: {color},
+                            label: {show: false},
                             tooltip: {
                                 confine: true, // prevent overflow
 
@@ -970,15 +971,15 @@ function renderSentenceTopicNetwork(containerId) {
 
                         const neighbors = embeddingArray
                             .filter(([id2]) => id1 !== id2 && nodeSet.has(id2))
-                            .map(([id2, vec2]) => ({ id2, dist: euclidean(vec1, vec2) }))
+                            .map(([id2, vec2]) => ({id2, dist: euclidean(vec1, vec2)}))
                             .sort((a, b) => a.dist - b.dist)
                             .slice(0, k);
 
-                        neighbors.forEach(({ id2 }) => {
+                        neighbors.forEach(({id2}) => {
                             links.push({
                                 source: id1,
                                 target: id2,
-                                lineStyle: { color: '#bbb', opacity: 0.2 }
+                                lineStyle: {color: '#bbb', opacity: 0.2}
                             });
                         });
                     });
@@ -999,27 +1000,27 @@ function renderSentenceTopicNetwork(containerId) {
                         '',
                         nodes,
                         links,
-                    null,
-                    function (params) {
-                        if (params.dataType === 'node') {
-                            const name = params.name.split('Sentence ')[1];
-                            $('.scrollbar-minimap').hide();
-                            hideTopicNavButtons();
-                            clearTopicColoring();
-                            $('.colorable-topic').each(function () {
-                                const topicValue = $(this).data('topic-value');
-                                const utId = this.id.replace('utopic-UT-', '');
-                                if (utId === name) {
-                                    $(this).css({
-                                        'background-color': topicColorMap[topicValue],
-                                        'border-radius': '3px',
-                                        'padding': '0 2px'
-                                    });
-                                    this.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                                }
-                            });
-                        }
-                    });
+                        null,
+                        function (params) {
+                            if (params.dataType === 'node') {
+                                const name = params.name.split('Sentence ')[1];
+                                $('.scrollbar-minimap').hide();
+                                hideTopicNavButtons();
+                                clearTopicColoring();
+                                $('.colorable-topic').each(function () {
+                                    const topicValue = $(this).data('topic-value');
+                                    const utId = this.id.replace('utopic-UT-', '');
+                                    if (utId === name) {
+                                        $(this).css({
+                                            'background-color': topicColorMap[topicValue],
+                                            'border-radius': '3px',
+                                            'padding': '0 2px'
+                                        });
+                                        this.scrollIntoView({behavior: 'smooth', block: 'center'});
+                                    }
+                                });
+                            }
+                        });
 
                     container.classList.add('rendered');
                 },
@@ -1074,17 +1075,16 @@ function computeTopicSimilarityMatrix(data, type = "cosine") {
 }
 
 
-
 function renderTopicSimilarityMatrix(containerId) {
     const container = document.getElementById(containerId);
-    if (!container || container.classList.contains('rendered')){
+    if (!container || container.classList.contains('rendered')) {
         $('.selector-container').show();
         return;
     }
     $('.visualization-spinner').show()
     const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
 
-    $.get('/api/document/page/topicWords', { documentId: docId })
+    $.get('/api/document/page/topicWords', {documentId: docId})
         .then(data => {
             $('.visualization-spinner').hide()
             if (!data || !Array.isArray(data) || data.length === 0) {
@@ -1101,13 +1101,13 @@ function renderTopicSimilarityMatrix(containerId) {
 
             function updateChart() {
                 const type = similarityTypeSelector.value;
-                const { labels, matrix } = computeTopicSimilarityMatrix(data, type);
+                const {labels, matrix} = computeTopicSimilarityMatrix(data, type);
 
                 const tooltipFormatter = function (params) {
                     const xLabel = labels[params.data[0]];
                     const yLabel = labels[params.data[1]];
                     const value = type === "count" ? params.data[2] : params.data[2].toFixed(3);
-                   return xLabel + " & " + yLabel + "<br>" + (type.charAt(0).toUpperCase() + type.slice(1)) + ": " + value;
+                    return xLabel + " & " + yLabel + "<br>" + (type.charAt(0).toUpperCase() + type.slice(1)) + ": " + value;
                 };
 
                 window.graphVizHandler.createHeatMap(
@@ -1136,7 +1136,7 @@ function renderTopicEntityChordDiagram(containerId) {
     const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
 
 
-    $.get('/api/document/page/topicEntityRelation', { documentId: docId })
+    $.get('/api/document/page/topicEntityRelation', {documentId: docId})
         .then(data => {
             $('.visualization-spinner').hide()
             if (!data || !Array.isArray(data) || data.length === 0) {
@@ -1154,8 +1154,8 @@ function renderTopicEntityChordDiagram(containerId) {
             let nodeIndex = 0;
 
             const categories = [
-                { name: 'Topic', itemStyle: { color: '#5470C6' } },
-                { name: 'Entity', itemStyle: { color: '#91CC75' } }
+                {name: 'Topic', itemStyle: {color: '#5470C6'}},
+                {name: 'Entity', itemStyle: {color: '#91CC75'}}
             ];
 
             function getCategory(name, isEntity) {
@@ -1169,11 +1169,11 @@ function renderTopicEntityChordDiagram(containerId) {
 
                 if (topic && !nodeMap.has(topic)) {
                     nodeMap.set(topic, nodeIndex++);
-                    nodes.push({ name: topic, value: 0, category: getCategory(topic, false) });
+                    nodes.push({name: topic, value: 0, category: getCategory(topic, false)});
                 }
                 if (entityType && !nodeMap.has(entityType)) {
                     nodeMap.set(entityType, nodeIndex++);
-                    nodes.push({ name: entityType, value: 0, category: getCategory(entityType, true) });
+                    nodes.push({name: entityType, value: 0, category: getCategory(entityType, true)});
                 }
 
                 // Step 2: count link frequency as weight
@@ -1262,7 +1262,7 @@ function renderTopicEntityChordDiagram(containerId) {
                     const pageNumber = params.name;
                     const pageElement = document.querySelector('.page[data-id="' + pageNumber + '"]');
                     if (pageElement) {
-                        pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        pageElement.scrollIntoView({behavior: 'smooth', block: 'start'});
                     } else {
                         console.error(`Page ` + pageNumber + ` not found.`);
                     }
@@ -1364,7 +1364,7 @@ function renderSentenceTopicSankey(containerId) {
                             'border-radius': '3px',
                             'padding': '0 2px'
                         });
-                        this.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                        this.scrollIntoView({behavior: 'smooth', block: 'center'});
                     }
                 });
             }
@@ -1377,6 +1377,94 @@ function renderSentenceTopicSankey(containerId) {
     });
 }
 
+function renderEmotionDevelopment(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container || container.classList.contains('rendered')) return;
+
+    $('.visualization-spinner').show();
+    const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
+    const emotionReq = $.get('/api/document/page/emotionDev', {documentId: docId});
+    emotionReq.then(emotionData => {
+        $('.visualization-spinner').hide();
+        if (!emotionData || typeof emotionData !== 'object' || !("emotionTypes" in emotionData) || !Array.isArray(emotionData.emotionTypes) || emotionData.emotionTypes.length === 0 || !("emotionData" in emotionData) || !Array.isArray(emotionData.emotionData) || emotionData.emotionData.length === 0) {
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+            }
+            container.classList.add('rendered');
+            return;
+        }
+
+        const emotionColors = {};
+        emotionData.emotionTypes.forEach((emotionType, index) => {
+            const hue = (index * 360 / emotionData.emotionTypes.length) % 360;
+            emotionColors[emotionType.id] = 'hsl(' + hue + ', 70%, 50%)';
+        });
+
+        const seriesData = emotionData.emotionTypes.map(emotionType => {
+            const emotionId = emotionType.id;
+            const emotionName = emotionType.name;
+            const emotionValues = emotionData.emotionData.map(pageData => {
+                const emotionValue = pageData.find(e => e.emotionType === emotionId);
+                return emotionValue ? (emotionValue.emotionValue * 100) : 0;
+            });
+            return {
+                name: emotionName,
+                type: 'bar',
+                data: emotionValues,
+                color: emotionColors[emotionId] || '#888',
+                smooth: true,
+                lineStyle: {
+                    width: 2
+                },
+                itemStyle: {
+                    borderWidth: 1
+                }
+            };
+        });
+        const xData = emotionData.emotionData.map((_, index) => index + 1);
+        const chartConfig = {
+            xData: xData,
+            seriesData: seriesData,
+            yLabel: 'Emotion Value',
+        };
+        console.log(chartConfig);
+        const tooltipFormatter = function (params) {
+            console.log(params);
+            return 'Test';
+        };
+
+        window.graphVizHandler.createBarLineChart(
+            containerId,
+            '',
+            chartConfig,
+            tooltipFormatter,
+            function (params) {
+                // do nothing
+            }
+        ).then(chart => {
+           console.log('Emotion development chart created successfully:', chart);
+        }).catch(err => {
+            console.error('Error creating emotion development chart:', err);
+            $('.visualization-spinner').hide();
+            const container = document.getElementById(containerId);
+            if (container) {
+                container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+            }
+        });
+
+        container.classList.add('rendered');
+    }).catch(() => {
+        $('.visualization-spinner').hide();
+        const container = document.getElementById(containerId);
+        if (container) {
+            container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
+        }
+        container.classList.add('rendered');
+    });
+}
+
 function renderTemporalExplorer(containerId) {
 
     const container = document.getElementById(containerId);
@@ -1384,11 +1472,11 @@ function renderTemporalExplorer(containerId) {
     $('.visualization-spinner').show()
     const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
 
-    const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
-    const topicReq = $.get('/api/document/page/topics', { documentId: docId });
-    const entityReq = $.get('/api/document/page/namedEntities', { documentId: docId });
-    const lemmaReq = $.get('/api/document/page/lemma', { documentId: docId });
-    const geonameReq = $.get('/api/document/page/geoname', { documentId: docId });
+    const taxonReq = $.get('/api/document/page/taxon', {documentId: docId});
+    const topicReq = $.get('/api/document/page/topics', {documentId: docId});
+    const entityReq = $.get('/api/document/page/namedEntities', {documentId: docId});
+    const lemmaReq = $.get('/api/document/page/lemma', {documentId: docId});
+    const geonameReq = $.get('/api/document/page/geoname', {documentId: docId});
 
     Promise.all([taxonReq, topicReq, entityReq, lemmaReq, geonameReq]).then(([taxon, topics, entities, lemma, geoname]) => {
         $('.visualization-spinner').hide()
@@ -1447,7 +1535,7 @@ function renderTemporalExplorer(containerId) {
 
         // Collect unique sorted page IDs
         const rawPageIds = [];
-        annotationSources.forEach(({ data, pageField }) => {
+        annotationSources.forEach(({data, pageField}) => {
             data.forEach(d => {
                 const pid = parseInt(d[pageField]);
                 if (!isNaN(pid)) rawPageIds.push(pid);
@@ -1462,7 +1550,7 @@ function renderTemporalExplorer(containerId) {
 
         const dataMap = new Map();
 
-        annotationSources.forEach(({ key, data, pageField, valueField, transformValue }) => {
+        annotationSources.forEach(({key, data, pageField, valueField, transformValue}) => {
             data.forEach(item => {
                 const pid = parseInt(item[pageField]);
                 const page = pageIdToPageNumber.get(pid);
@@ -1490,10 +1578,10 @@ function renderTemporalExplorer(containerId) {
         const pages = sorted.map(row => row.page);
 
         const seriesData = annotationSources
-            .map(({ key, label, color }) => {
+            .map(({key, label, color}) => {
                 const data = sorted.map(row => row[key]?.length || 0);
                 const hasNonZero = data.some(count => count > 0);
-                return hasNonZero ? { name: label, data, color } : null;
+                return hasNonZero ? {name: label, data, color} : null;
             })
             .filter(d => d !== null);
 
@@ -1514,7 +1602,7 @@ function renderTemporalExplorer(containerId) {
 
             let tooltipHtml = '<div><b>Page ' + page + '</b></div>';
 
-            annotationSources.forEach(({ key, label, color }) => {
+            annotationSources.forEach(({key, label, color}) => {
                 if (!seriesNames.has(label)) return;
                 const items = record[key];
                 if (!items || items.length === 0) return;
@@ -1555,7 +1643,7 @@ function renderTemporalExplorer(containerId) {
                 const pageNumber = params.name;
                 const pageElement = document.querySelector('.page[data-id="' + pageNumber + '"]');
                 if (pageElement) {
-                    pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                    pageElement.scrollIntoView({behavior: 'smooth', block: 'start'});
                 } else {
                     console.error(`Page ` + pageNumber + ` not found.`);
                 }
