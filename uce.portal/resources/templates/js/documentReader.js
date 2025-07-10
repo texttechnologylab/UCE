@@ -1432,10 +1432,17 @@ function renderEmotionDevelopment(containerId) {
         const tooltipFormatter = function (params) {
             const index = params[0].dataIndex;
             const data = [...emotionData.emotionData[index]].sort((a, b) => b.emotionValue - a.emotionValue);
-            let tooltipContent = '<b>Emotion Change ' + (index + 1) + '</b><br>';
+            let tooltipContent = '<b>Emotion Segment ' + (index + 1) + '</b><br>';
             for (const emotion of data) {
                 const emotionType = emotionData.emotionTypes.find(e => e.id === emotion.emotionType);
                 tooltipContent += '<span style="color:' + (emotionColors[emotion.emotionType] || '#888') + ';">' + emotionType.name + '</span>: ' + emotion.emotionValue.toFixed(2) + '<br>';
+            }
+            const elementId = 'emot-E-' + (index + 1);
+            const element = document.getElementById(elementId);
+            if (element) {
+                tooltipContent += '<span style="color:#888;">Content: </span><br>';
+                const content = $(element).attr('data-wcovered');
+                tooltipContent += '<span style="color:#333;max-width: 500px;display: inline-block;overflow: hidden;text-overflow: ellipsis;">' + content + '</span>';
             }
             return tooltipContent;
         };
