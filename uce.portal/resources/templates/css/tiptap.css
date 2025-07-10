@@ -1,0 +1,40 @@
+/* container for the floating editor */
+.tiptap-editor-container {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 80%;
+    max-width: 800px;
+    background: white;
+    border: 2px solid var(--prime-color);
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+    z-index: 10000;
+    display: none;
+}
+
+/* actual editor area */
+.tiptap-editor {
+    padding: 1.5rem;
+    min-height: 300px;
+    max-height: 70vh;
+    overflow-y: auto;
+    background: #fff;
+}
+
+/* editor toolbar */
+.tiptap-toolbar {
+    background: #f8f9fa;
+    padding: 0.5rem;
+    border-bottom: 1px solid #eee;
+    display: flex;
+    gap: 5px;
+    flex-wrap: wrap;
+}
+
+.tiptap-toolbar button i {
+    font-size: 1rem;
+    width: 1rem;
+    height: 1rem;
+}

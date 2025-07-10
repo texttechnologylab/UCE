@@ -18,6 +18,7 @@
         <#include "*/css/wiki.css">
         <#include "*/css/drawflow.css">
         <#include "*/css/bg-anim.css">
+        <#include "*/css/tiptap.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
@@ -49,6 +50,9 @@
     <script src="js/visualization/cdns/d3js-790.js"></script>
     <script src="js/visualization/cdns/drawflow-last.js"></script>
     <script type="module" src="js/md-block.js"></script>
+
+    <!-- text editor scripts -->
+    <script src="/js/dist/tiptap-bundle.js"></script>
 
     <title>${document.getDocumentTitle()}</title>
 </head>
@@ -225,6 +229,9 @@
                                 <button class="btn toggle-highlighting-btn" data-highlighted="true">
                                     <i class="fas fa-highlighter mr-2"></i> Toggle Highlighting
                                 </button>
+                                <button class="btn edit-document-btn">
+                                    <i class="fas fa-edit mr-2"></i> Edit Document
+                                </button>
                                 <#if casDownloadName?has_content && casDownloadName != "">
                                     <a href="/api/ie/download/uima?objectName=${casDownloadName}" class="btn">
                                         <i class="fas fa-file-download mr-2"></i> Download XMI
@@ -307,7 +314,7 @@
 
     </div>
 </div>
-</body>
+        </body>
 
 <#--<script type="module">
     <#include "*/js/corpusUniverse.js">

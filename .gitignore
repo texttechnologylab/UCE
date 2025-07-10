@@ -10,6 +10,9 @@ documentation/venv
 ### Logging ###
 uce.portal/logs/
 
+### Node Modules ###
+uce.portal/uce.web/node_modules/
+
 ### Sensible Configs ###
 /uce.portal/uce.common/src/main/resources/uceConfig.json
 
@@ -53,3 +56,14 @@ build/
 /rag/src/cBERT/data
 /rag/src/cBERT/models
 __pycache__
+
+### Log files ###
+*.log
+/uce-importer_logs.txt
+/uce.portal/uce.web/logs/
+
+### Build output ###
+/uce.portal/uce.web/src/main/resources/public/js/dist/
+
+### Cache ###
+/uce.portal/resources/templates/.parcel-cache/

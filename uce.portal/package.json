@@ -1,0 +1,13 @@
+{
+  "scripts": {
+    "build:web": "cd uce.web && npm install && npm run build",
+    "dev": "cd uce.web && npm run dev"
+  },
+  "name": "uce.portal",
+  "version": "1.0.0",
+  "main": "webpack.config.js",
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": "UCE portal root package"
+}
