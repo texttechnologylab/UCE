@@ -1,5 +1,6 @@
 package org.texttechnologylab.models.emotion;
 
+import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
@@ -8,6 +9,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "emotion")
+@Typesystem(types = {org.texttechnologylab.annotation.Emotion.class})
 public class Emotion extends UIMAAnnotation implements WikiModel {
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
