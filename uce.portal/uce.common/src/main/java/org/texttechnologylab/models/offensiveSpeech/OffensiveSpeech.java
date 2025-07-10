@@ -54,7 +54,7 @@ public class OffensiveSpeech extends UIMAAnnotation implements WikiModel {
 
     @Override
     public String getWikiId() {
-        return "UT" + "-" + this.getId();
+        return "OS" + "-" + this.getId();
     }
 
 }
