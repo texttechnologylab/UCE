@@ -88,6 +88,10 @@
     border-left-color: lightpink;
 }
 
+.lexicon-view .lexicon-entry[data-type="emotion"] {
+    border-left-color: darkorange;
+}
+
 .lexicon-view .lexicon-entry[data-type="geoname"] {
     border-left-color: dodgerblue;
 }

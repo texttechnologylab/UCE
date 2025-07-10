@@ -1359,6 +1359,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public Emotion getInitializedEmotionById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var emotion = session.get(Emotion.class, id);
+            Hibernate.initialize(emotion.getEmotionValues());
+            for (var ev : emotion.getEmotionValues()) {
+                Hibernate.initialize(ev.getEmotionType());
+            }
+            return emotion;
+        });
+    }
+
     public EmotionType getEmotionTypeById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.get(EmotionType.class, id));
     }

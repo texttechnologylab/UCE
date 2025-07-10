@@ -109,6 +109,18 @@ public class WikiService {
         return viewModel;
     }
 
+    public EmotionWikiPageViewModel buildEmotionWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new EmotionWikiPageViewModel();
+        var emotion = db.getInitializedEmotionById(id);
+        viewModel.setWikiModel(emotion);
+        viewModel.setDocument(db.getDocumentById(emotion.getDocumentId()));
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("Emotion");
+
+        return viewModel;
+    }
+
     /**
      * Gets a DocumentTopicDistributionWikiPageViewModel to render a Wikipage for that topic distribution
      */

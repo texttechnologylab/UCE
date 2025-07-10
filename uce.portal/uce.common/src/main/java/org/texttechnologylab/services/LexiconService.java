@@ -1,6 +1,5 @@
 package org.texttechnologylab.services;
 
-import io.micrometer.common.lang.Nullable;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.stereotype.Service;
@@ -8,19 +7,16 @@ import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.UIMAAnnotation;
-import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.emotion.Emotion;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.viewModels.lexicon.LexiconOccurrenceViewModel;
-import org.texttechnologylab.utils.SystemStatus;
 
 import javax.persistence.Table;
-import java.sql.Array;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 
 @Service
@@ -47,7 +43,8 @@ public class LexiconService {
                     Cue.class,
                     Scope.class,
                     XScope.class,
-                    UnifiedTopic.class));
+                    UnifiedTopic.class,
+                    Emotion.class));
 
     public LexiconService(PostgresqlDataInterface_Impl db) {
         this.db = db;

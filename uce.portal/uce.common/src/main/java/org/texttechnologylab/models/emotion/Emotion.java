@@ -8,6 +8,7 @@ import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.utils.Pair;
 
 import javax.persistence.*;
 import java.util.List;
@@ -46,6 +47,10 @@ public class Emotion extends UIMAAnnotation implements WikiModel {
 
     public void setDocument(Document document) {
         this.document = document;
+    }
+
+    public List<Pair<String, Double>> collectEmotionValues() {
+        return this.emotionValues.stream().map(ev -> new Pair<>(ev.getEmotionType().getName(), ev.getValue())).toList();
     }
 
     @Override
