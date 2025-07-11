@@ -31,6 +31,7 @@ import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
+import org.texttechnologylab.models.sentiment.Sentiment;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.topic.UnifiedTopic;
@@ -1353,6 +1354,13 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 Hibernate.initialize(t.getWords());
             }
             return topic;
+        });
+    }
+
+    public Sentiment getInitializedSentimentById(long id) throws DatabaseOperationException{
+        return executeOperationSafely((session) -> {
+            var sent = session.get(Sentiment.class, id);
+            return sent;
         });
     }
 

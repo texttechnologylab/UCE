@@ -109,6 +109,18 @@ public class WikiService {
         return viewModel;
     }
 
+    public SentimentWikiPageViewModel buildSentimentWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new SentimentWikiPageViewModel();
+        var sentiment = db.getInitializedSentimentById(id);
+        viewModel.setWikiModel(sentiment);
+        viewModel.setDocument(db.getDocumentById(sentiment.getDocumentId()));
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("Sentiment");
+
+        return viewModel;
+    }
+
     /**
      * Gets a DocumentTopicDistributionWikiPageViewModel to render a Wikipage for that topic distribution
      */

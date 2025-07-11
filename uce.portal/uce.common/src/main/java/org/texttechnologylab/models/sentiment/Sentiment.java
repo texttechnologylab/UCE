@@ -6,8 +6,11 @@ import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.utils.Pair;
 
 import javax.persistence.*;
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "sentiment")
@@ -63,5 +66,13 @@ public class Sentiment extends UIMAAnnotation implements WikiModel {
     @Override
     public String getWikiId() {
         return "S" + "-" + this.getId();
+    }
+
+    public List<Pair<String, String>> loopThroughProperties() {
+        return List.of(
+                new Pair<>("probability positive", Double.toString(probabilityPositive)),
+                new Pair<>("probability negative", Double.toString(probabilityNegative)),
+                new Pair<>("probability neutral", Double.toString(probabilityNeutral))
+        );
     }
 }

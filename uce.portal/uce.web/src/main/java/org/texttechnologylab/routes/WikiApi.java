@@ -165,6 +165,9 @@ public class WikiApi implements UceApi {
             } else if (type.startsWith("DTR")) {
                 model.put("vm", wikiService.buildTopicWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/topicPage.ftl";
+            } else if (type.startsWith("S")) {
+                model.put("vm", wikiService.buildSentimentWikiPageViewModel(id, coveredText));
+                renderView = "/wiki/pages/sentimentAnnotationPage.ftl";
             } else {
                 // The type part of the wikiId was unknown. Throw an error.
                 logger.warn("Someone tried to query a wiki page of a type that does not exist in UCE. This shouldn't happen.");
