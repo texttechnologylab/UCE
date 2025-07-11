@@ -45,6 +45,7 @@ import org.texttechnologylab.models.imp.LogStatus;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
+import org.texttechnologylab.models.sentiment.Sentiment;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -1417,7 +1418,21 @@ public class Importer {
     }
 
     private void setSentiment(Document document, JCas jCas){
+        List<Sentiment> sentiments = new ArrayList<>();
 
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.SentimentModel.class).forEach(s -> {
+            Sentiment sentiment = new Sentiment(s.getBegin(), s.getEnd());
+            sentiment.setDocument(document);
+
+            sentiment.setSentiment(s.getSentiment());
+            sentiment.setProbabilityPositive(s.getProbabilityPositive());
+            sentiment.setProbabilityNegative(s.getProbabilityNegative());
+            sentiment.setProbabilityNeutral(s.getProbabilityNeutral());
+
+            sentiment.setCoveredText(s.getCoveredText());
+            sentiments.add(sentiment);
+        });
+        document.setSentiments(sentiments);
     }
 
     /**
