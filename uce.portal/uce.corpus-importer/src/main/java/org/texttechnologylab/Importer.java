@@ -20,6 +20,7 @@ import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotation.DocumentAnnotation;
+import org.texttechnologylab.annotation.SentimentModel;
 import org.texttechnologylab.annotation.geonames.GeoNamesEntity;
 import org.texttechnologylab.annotation.link.*;
 import org.texttechnologylab.annotation.ocr.*;
@@ -391,7 +392,7 @@ public class Importer {
 
             return XMIToDocument(jCas, corpus, filename);
         } catch (Exception ex) {
-            logger.error("Error while reading an annotated xmi file to a cas and transforming it into a document:", ex);
+            logger.error("Error while reading the annotated xmi file " + filename + " to a cas and transforming it into a document:", ex);
             return null;
         }
     }
@@ -532,6 +533,11 @@ public class Importer {
                         () -> setGeoNames(document, jCas),
                         (ex) -> logImportWarn("This file should have contained GeoNames annotations, but selecting them caused an error.", ex, filePath));
 
+            if (corpusConfig.getAnnotations().isSentiment())
+                ExceptionUtils.tryCatchLog(
+                        () -> setSentiments(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained Sentiment annotations, but selecting them caused an error.", ex, filePath));
+
             if (corpusConfig.getAnnotations().isLemma())
                 ExceptionUtils.tryCatchLog(
                         () -> setLemmata(document, jCas),
@@ -587,6 +593,27 @@ public class Importer {
         } finally {
             logger.info("Finished with importing that CAS.\n\n\n");
         }
+    }
+
+    /**
+     * Selects and sets the sentiment of a document
+     */
+    private void setSentiments(Document document, JCas jCas){
+        var sentiments = new ArrayList<Sentiment>();
+        JCasUtil.select(jCas, SentimentModel.class).forEach(s -> {
+            var sentiment = new Sentiment(s.getBegin(), s.getEnd());
+            sentiment.setCoveredText(s.getCoveredText());
+            sentiment.setPositive(s.getProbabilityPositive());
+            sentiment.setNeutral(s.getProbabilityNeutral());
+            sentiment.setNegative(s.getProbabilityNegative());
+            var meta = s.getModel();
+            if(meta != null) sentiment.setModel(meta.getModelName() + "__v::" + meta.getModelVersion());
+
+            sentiments.add(sentiment);
+        });
+
+        document.setSentiments(sentiments);
+        logger.info("Setting Sentiments done.");
     }
 
     /**
@@ -906,9 +933,16 @@ public class Importer {
     }
 
     private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage) {
-        // Set the pages for the different annotations - this is pretty horrible, but I cant be bothered right now.
+        // Set the pages for the different annotations - this is freaking horrible, but I cant be bothered right now.
+        // Update: Someone please release me from this horror that is this code.
         if (document.getSentences() != null) {
             for (var anno : document.getSentences().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getSentiments() != null) {
+            for (var anno : document.getSentiments().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
                 anno.setPage(page);
             }

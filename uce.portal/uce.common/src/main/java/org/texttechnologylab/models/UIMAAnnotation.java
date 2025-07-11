@@ -58,7 +58,7 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         return coveredText.replaceAll("<", "");
     }
 
-    public String getCoveredHtmlText(){
+    public String getCoveredHtmlText() {
         return coveredText.replaceAll(" ", "&nbsp;").replaceAll("\n", "<br/>");
     }
 
@@ -125,34 +125,38 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         // We build start and end of the annotations and store them in the TreeMap
         Map<Integer, List<UIMAAnnotation>> startTags = new TreeMap<>();
         Map<Integer, List<String>> endTags = new TreeMap<>();
+        // These topic and sentiment annotations are special cases.
+        // But we can easily cleanup this code, it's redundant.
         Map<Integer, String> topicMarkers = new TreeMap<>();
         Map<Integer, String> topicCoverWrappersStart = new TreeMap<>();
         Map<Integer, String> topicCoverWrappersEnd = new TreeMap<>();
-
+        Map<Integer, String> sentimentCoverWrappersStart = new TreeMap<>();
+        Map<Integer, String> sentimentCoverWrappersEnd = new TreeMap<>();
+        Map<Integer, String> sentimentMarkers = new TreeMap<>();
 
         for (var annotation : annotations) {
-            if(annotation.getCoveredText() == null){
+            if (annotation.getCoveredText() == null) {
                 //errorOffset += 1;
                 continue;
             }
-            if(annotation.getBegin() < getBegin() && annotation.getEnd() < getBegin()){
-                if(annotation.getCoveredText().isEmpty()){
+            if (annotation.getBegin() < getBegin() && annotation.getEnd() < getBegin()) {
+                if (annotation.getCoveredText().isEmpty()) {
                     errorOffset += 1;
                     continue;
                 }
             }
 
-            if (annotation.getBegin() < getBegin()
-                    || annotation.getEnd() > getEnd()
-                    || annotation.getBegin() == annotation.getEnd()) {
-                continue;
-            }
+            //if (annotation.getBegin() < getBegin()
+            //    || annotation.getEnd() > getEnd()
+            //    || annotation.getBegin() == annotation.getEnd()) {
+            //    continue;
+            //}
 
             // So sometimes, we have broken annotations have a supposed length of "1" but really,
             // they don't as they are empty. This screws up our begin and ends though! Hence, when we
             // meet an empty annotation, track it and substract a single value of the begins and ends!
 
-            if(annotation.getCoveredText().isEmpty()){
+            if (annotation.getCoveredText().isEmpty()) {
                 errorOffset += 1;
                 continue;
             }
@@ -165,6 +169,32 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 topicCoverWrappersEnd.put(end, "</span>");
 
                 topicMarkers.put(end, topic.generateTopicMarker());
+                continue;
+            }
+
+            if (annotation instanceof Sentiment sentiment) {
+                var start = sentiment.getBegin() - offset - errorOffset;
+                var end = sentiment.getEnd() - offset - errorOffset;
+                var sentimentColor = sentiment.getPrimaryColor();
+                var bgRgba = String.format(
+                        Locale.US,
+                        "rgba(%d, %d, %d, %.2f)",
+                        sentimentColor.getRed(),
+                        sentimentColor.getGreen(),
+                        sentimentColor.getBlue(),
+                        sentiment.getPrimaryValue() - 0.175 // make the highest colors less popping
+                );
+                var color = "white";
+                if(sentiment.getPrimaryValue() < 0.6) color = "var(--dark)";
+
+                var s = String.format(
+                        "<span class='sentiment' " +
+                        "style='background-color: %4$s; color:%5$s' data-type='%3$s' title='%1$s' data-wid='%2$s' data-wcovered='' " +
+                        "data-trigger='hover' data-toggle='popover' data-placement='right' data-html='true' data-content='%6$s'>",
+                        "Sentiment: " + sentiment.getWikiId(), sentiment.getWikiId(), sentiment.getPrimaryType().toUpperCase(), bgRgba, color, sentiment.getDescription());
+                sentimentCoverWrappersStart.put(start, s);
+                sentimentCoverWrappersEnd.put(end, "</span>");
+                sentimentMarkers.put(end, sentiment.generateSentimentMarker());
                 continue;
             }
 
@@ -182,10 +212,26 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         // Build the final HTML string in a single pass
         var finalText = new StringBuilder();
 
+        // If a sentiment started on the previous page, it has a key less than 0
+        var firstSentimentOpt = sentimentCoverWrappersStart
+                .keySet()
+                .stream()
+                .filter(k -> k < 0)
+                .max(Integer::compareTo);
+
+        firstSentimentOpt.ifPresent(firstSentiment -> {
+            finalText.append(sentimentCoverWrappersStart.get(firstSentiment));
+            sentimentCoverWrappersStart.remove(firstSentiment);
+        });
+
         for (int i = 0; i < coveredText.length(); i++) {
             // Insert end spans first
             if (topicCoverWrappersEnd.containsKey(i)) {
                 finalText.append(topicCoverWrappersEnd.get(i));
+            }
+            if (sentimentCoverWrappersEnd.containsKey(i)) {
+                finalText.append(sentimentCoverWrappersEnd.get(i));
+                sentimentCoverWrappersEnd.remove(i);
             }
             if (endTags.containsKey(i)) {
                 //finalText.append(endTags.get(i).getFirst());
@@ -198,6 +244,10 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             if (topicCoverWrappersStart.containsKey(i)) {
                 finalText.append(topicCoverWrappersStart.get(i));
             }
+            if (sentimentCoverWrappersStart.containsKey(i)) {
+                finalText.append(sentimentCoverWrappersStart.get(i));
+                sentimentCoverWrappersStart.remove(i);
+            }
 
             // Insert marker after character
             if (topicMarkers.containsKey(i)) {
@@ -209,6 +259,11 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
 
             // Append the current character
             finalText.append(coveredText.charAt(i));
+        }
+
+        // If the sentiment goes over the page, we need to close all non-closed tags that are left
+        for(var entry:sentimentCoverWrappersEnd.entrySet()){
+            finalText.append(entry.getValue());
         }
 
         // We apply some heuristic post-processing to make the text more readable.
@@ -230,9 +285,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
 
             return String.format("<span class='multi-annotation' title='%1$s'>" +
-                    "<div class='multi-annotation-popup'>" +
-                    btnsHtml.toString().replace("%", "%%") +
-                    "</div><span class='ruby-text'>", UUID.randomUUID());
+                                 "<div class='multi-annotation-popup'>" +
+                                 btnsHtml.toString().replace("%", "%%") +
+                                 "</div><span class='ruby-text'>", UUID.randomUUID());
         }
     }
 
@@ -242,11 +297,11 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu ne-%1$s' title='%2$s' data-wid='%3$s' data-wcovered='%4$s'>",
                     ne.getType(), includeTitle ? ne.getCoveredText() : "", ne.getWikiId(), ne.getCoveredText());
-        } else if(annotation instanceof GeoName geoName){
+        } else if (annotation instanceof GeoName geoName) {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu geoname' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
                     includeTitle ? geoName.getName() : "", geoName.getWikiId(), geoName.getCoveredText());
-        }else if (annotation instanceof Time time) {
+        } else if (annotation instanceof Time time) {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu time' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
                     includeTitle ? time.getCoveredText() : "", time.getWikiId(), time.getCoveredText());

@@ -110,6 +110,12 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @JoinColumn(name = "document_Id")
     private List<GeoName> geoNames;
 
+    @Setter
+    @Getter
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
+    private List<Sentiment> sentiments;
+
     @Getter
     @Setter
     @OneToMany(cascade = CascadeType.ALL)
@@ -353,6 +359,12 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         annotations.addAll(namedEntities.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(geoNames.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(times.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        annotations.addAll(sentiments.stream()
+                .filter(a ->
+                    (a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd)
+                    || (a.getBegin() >= pagesBegin && a.getEnd() >= pagesEnd)
+                    || (a.getBegin() <= pagesBegin && a.getEnd() <= pagesEnd))
+                .toList());
         annotations.addAll(wikipediaLinks.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(lemmas.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         // negations TODO: completeNegations do not have start and end so far -> could cause problems?
