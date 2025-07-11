@@ -11,7 +11,7 @@ import javax.persistence.*;
 
 @Entity
 @Table(name = "sentiment")
-@Typesystem(types = {org.texttechnologylab.annotation.SentimentBert.class})
+@Typesystem(types = {org.texttechnologylab.annotation.SentimentModel.class})
 public class Sentiment extends UIMAAnnotation implements WikiModel {
 
     @Getter
