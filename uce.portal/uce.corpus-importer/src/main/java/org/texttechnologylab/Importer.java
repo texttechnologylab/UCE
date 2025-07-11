@@ -998,6 +998,12 @@ public class Importer {
                 anno.setPage(page);
             }
         }
+        if (document.getSentiments() != null) {
+            for (var anno: document.getSentiments().stream().filter(s ->
+                    (s.getBegin() >= page.getBegin() && s.getEnd() <= page.getEnd()) || (s.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
     }
 
     /**
