@@ -2092,6 +2092,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getNamedEntities());
         Hibernate.initialize(doc.getGeoNames());
         Hibernate.initialize(doc.getSentiments());
+        Hibernate.initialize(doc.getEmotions());
+        for(var emote:doc.getEmotions()) Hibernate.initialize(emote.getFeelings());
         Hibernate.initialize(doc.getBiofidTaxons());
         Hibernate.initialize(doc.getGazetteerTaxons());
         Hibernate.initialize(doc.getGnFinderTaxons());

@@ -16,6 +16,7 @@ import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
+import org.texttechnologylab.models.corpus.emotion.Emotion;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
@@ -115,6 +116,12 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<Sentiment> sentiments;
+
+    @Setter
+    @Getter
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
+    private List<Emotion> emotions;
 
     @Getter
     @Setter
@@ -359,12 +366,9 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         annotations.addAll(namedEntities.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(geoNames.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(times.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
-        annotations.addAll(sentiments.stream()
-                .filter(a ->
-                    (a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd)
-                    || (a.getBegin() >= pagesBegin && a.getEnd() >= pagesEnd)
-                    || (a.getBegin() <= pagesBegin && a.getEnd() <= pagesEnd))
-                .toList());
+        var pageOverlap = 400;
+        annotations.addAll(sentiments.stream().filter(a -> a.getBegin() + pageOverlap >= pagesBegin && a.getEnd() - pageOverlap <= pagesEnd).toList());
+        annotations.addAll(emotions.stream().filter(a -> a.getBegin() + pageOverlap >= pagesBegin && a.getEnd() - pageOverlap <= pagesEnd).toList());
         annotations.addAll(wikipediaLinks.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(lemmas.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         // negations TODO: completeNegations do not have start and end so far -> could cause problems?

@@ -18,6 +18,7 @@ public class CorpusAnnotationConfig {
     private boolean lemma;
     private boolean namedEntity;
     private boolean sentiment;
+    private boolean emotion;
     private boolean geoNames;
     private boolean sentence;
     private boolean time;

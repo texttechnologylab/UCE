@@ -53,8 +53,8 @@ public class Sentiment extends UIMAAnnotation implements WikiModel {
 
     public String generateSentimentMarker() {
         return String.format(
-                "<span class='open-wiki-page annotation custom-context-menu annotation-marker sentiment-marker' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>S</span>",
-                this.getPrimaryType(), this.getWikiId(), this.getPrimaryValue());
+                "<span class='open-wiki-page annotation custom-context-menu annotation-marker sentiment-marker' title='%1$s' data-wid='%2$s' data-wcovered=''>S</span>",
+                this.getPrimaryType(), this.getWikiId());
     }
 
     public String getDescription() {

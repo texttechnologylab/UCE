@@ -9,6 +9,8 @@ import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.emotion.Emotion;
+import org.texttechnologylab.models.corpus.emotion.Feeling;
 import org.texttechnologylab.models.corpus.links.AnnotationLink;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
@@ -51,6 +53,8 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(DocumentKeywordDistribution.class);
         metadataSources.addAnnotatedClass(NamedEntity.class);
         metadataSources.addAnnotatedClass(Sentiment.class);
+        metadataSources.addAnnotatedClass(Emotion.class);
+        metadataSources.addAnnotatedClass(Feeling.class);
         metadataSources.addAnnotatedClass(GeoName.class);
         metadataSources.addAnnotatedClass(Paragraph.class);
         metadataSources.addAnnotatedClass(Sentence.class);
