@@ -1,12 +1,10 @@
 package org.texttechnologylab.models.viewModels.wiki;
 
 import org.texttechnologylab.models.corpus.UCEMetadata;
+import org.texttechnologylab.models.corpus.UCEMetadataValueType;
 import org.texttechnologylab.models.topic.TopicWord;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class DocumentAnnotationWikiPageViewModel extends AnnotationWikiPageViewModel{
 
@@ -16,7 +14,32 @@ public class DocumentAnnotationWikiPageViewModel extends AnnotationWikiPageViewM
     private List<Object[]> similarDocuments;
 
     public List<UCEMetadata> getUceMetadata() {
-        return uceMetadata;
+        return uceMetadata
+                .stream()
+                .sorted(Comparator
+                        .comparing(UCEMetadata::getValueType)
+                        .thenComparing(filter -> {
+                            // Try to extract a number in the beginning of the key
+                            String key = filter.getKey();
+
+                            // TODO this is a special case for Coh-Metrix, should be generalized
+                            // TODO duplicated in "Corpus getUceMetadataFilters"
+                            if (key.contains(":")) {
+                                String[] parts = key.split(":");
+                                if (parts.length > 1) {
+                                    try {
+                                        int number = Integer.parseInt(parts[0].trim());
+                                        return String.format("%05d", number);
+                                    } catch (NumberFormatException e) {
+                                        // return the original key on error
+                                    }
+                                }
+                            }
+
+                            return key;
+                        })
+                )
+                .toList();
     }
 
     public void setUceMetadata(List<UCEMetadata> uceMetadata) {

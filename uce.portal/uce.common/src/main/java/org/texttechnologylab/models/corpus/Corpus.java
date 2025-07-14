@@ -37,7 +37,30 @@ public class Corpus extends ModelBase implements WikiModel {
 
     public List<UCEMetadataFilter> getUceMetadataFilters() {
         if(uceMetadataFilters == null) return new ArrayList<>();
-        uceMetadataFilters.sort(Comparator.comparing(UCEMetadataFilter::getValueType));
+        uceMetadataFilters.sort(
+                Comparator
+                        .comparing(UCEMetadataFilter::getValueType)
+                        .thenComparing(filter -> {
+                            // Try to extract a number in the beginning of the key
+                            String key = filter.getKey();
+
+                            // TODO this is a special case for Coh-Metrix, should be generalized
+                            // TODO duplicated in "Document getUceMetadataWithoutJson"
+                            if (key.contains(":")) {
+                                String[] parts = key.split(":");
+                                if (parts.length > 1) {
+                                    try {
+                                        int number = Integer.parseInt(parts[0].trim());
+                                        return String.format("%05d", number);
+                                    } catch (NumberFormatException e) {
+                                        // return the original key on error
+                                    }
+                                }
+                            }
+
+                            return key;
+                        })
+        );
         return uceMetadataFilters;
     }
 

@@ -98,10 +98,19 @@ async function runAnalysisPipeline() {
             $('#analysis-result-container').html(firstResponse);
             // Warte, bis das Div wirklich im DOM ist
             requestAnimationFrame(() => {
-                if (document.querySelector('[id^="ttlab-scorer-table-"]')) {
+                let hasTtlab = document.querySelector('[id^="ttlab-scorer-table-"]');
+                let hasCohmetrix = document.querySelector('[id^="cohmetrix-table-"]');
+
+                if (hasTtlab) {
                     showAllTtlabScorerTables();
                 } else {
                     console.warn("Kein Div mit id 'ttlab-scorer-table-*' gefunden.");
+                }
+
+                if (hasCohmetrix) {
+                    showAllCohmetrixTables();
+                } else {
+                    console.warn("Kein Div mit id 'cohmetrix-table-*' gefunden.");
                 }
             });
         },
@@ -426,6 +435,57 @@ document.body.addEventListener('click', function (e) {
         }
     }
 });
+
+function showAllCohmetrixTables() {
+    if (typeof window.cohmetrixTableDataByModel !== 'undefined') {
+        window.cohmetrixTables = {};
+
+        Object.keys(window.cohmetrixTableDataByModel).forEach(function (key) {
+            const data = window.cohmetrixTableDataByModel[key];
+            const tableId = "cohmetrix-table-" + key;
+            const selector = "#" + tableId;
+            const container = document.querySelector(selector);
+
+            if (data.length > 0 && container) {
+                const table = new Tabulator(selector, {
+                    data: data,
+                    // layout: "fitDataFill",
+                    layout: "fitDataTable",
+                    responsiveLayout: false,
+                    resizableRows: true,
+                    columnDefaults: {
+                        resizable: true
+                    },
+                    columns: [
+                        { title: "Modell", field: "model", widthGrow: 2  },
+                        {
+                            title: "Name",
+                            field: "name",
+                            widthGrow: 1
+                        },
+                        { title: "Score", field: "score", widthGrow: 1,
+                            formatter: function (cell) {
+                                return '<span style="color:green;cursor:pointer;text-decoration:underline">' + cell.getValue() + '</span>';
+                            },
+                            cellClick: function (e, cell) {
+                                const row = cell.getRow().getData();
+                                console.log("Coh-Metrix geklickt:", row.name, row.score);
+                            }
+                        },
+                        { title: "Description", field: "description", widthGrow: 3  },
+                    ]
+                });
+
+                window.cohmetrixTables[key] = table;
+            } else {
+                console.warn("Keine Daten oder Container für Coh-Metrix Tabelle #" + key);
+            }
+        });
+    } else {
+        console.warn("cohmetrixTableDataByModel ist nicht definiert.");
+    }
+}
+
 
 
 

@@ -425,6 +425,53 @@
                         </div>
                     </div>
                 </#if>
+                <#if DUUI.isCohMetrix>
+                    <div class="border p-2 mb-2 bg-light">
+                    <h6 class="mb-0 mr-1 ttlab-scorer-color-primary">Coh-Metrix</h6>
+                    <div class="ttlab-scorer-container">
+
+                    <#if DUUI.textInformation?has_content && DUUI.textInformation.cohMetrixAVG?has_content>
+                        <script>
+                            window.cohmetrixTableDataByModel = {};
+                        </script>
+
+                    <#list DUUI.textInformation.cohMetrixAVG as model>
+                        <div class="ttlab-scorer-box">
+                            <h6 class="ttlab-scorer-color-primary">${model.getGroupName()?html}</h6>
+                            <div class="ttlab-scorer-table-wrapper">
+                                <div class="ttlab-scorer-buttons" data-tablekey="${model_index}">
+<#--                                    <button class="ttlab-download-btn" data-format="json" data-tablekey="${model_index}">JSON</button>-->
+<#--                                    <button class="ttlab-download-btn" data-format="tsv" data-tablekey="${model_index}">TSV</button>-->
+<#--                                    <button class="ttlab-download-btn" data-format="xlsx" data-tablekey="${model_index}">XLSX</button>-->
+                                </div>
+
+                                <div id="cohmetrix-table-${model_index}" class="ttlab-scorer-table"></div>
+                            </div>
+
+                            <script>
+                                window.cohmetrixTableDataByModel["${model_index}"] = [
+                                    <#list model.getCohMetrixInputs() as cohmetrixInput>
+                                    {
+                                        model: "${model.getGroupName()?js_string}",
+                                        name: "${cohmetrixInput.getName()?js_string}",
+                                        score: ${cohmetrixInput.getScore()?c},
+                                        description: "${cohmetrixInput.getDescription()?js_string}"
+                                    }<#if !cohmetrixInput?is_last>,</#if>
+                                    </#list>
+                                ];
+                            </script>
+                        </div>
+                    </#list>
+                        </div>
+                        </div>
+                    </#if>
+
+
+
+
+                <#else>
+                    <p><strong>No Model</strong></p>
+                </#if>
 
 
 

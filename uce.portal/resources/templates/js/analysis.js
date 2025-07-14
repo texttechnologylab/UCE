@@ -19,8 +19,10 @@ nlpMasterCheckbox.addEventListener('change', function () {
     const allCheckboxes = document.querySelectorAll(
         '.nlp-group-checkbox, .nlp-model-checkbox, .ttlab-group-checkbox, .ttlab-subgroup-checkbox, .ttlab-model-checkbox'
     );
-    allCheckboxes.forEach(cb => cb.checked = this.checked);
-
+    // allCheckboxes.forEach(cb => cb.checked = this.checked);
+    allCheckboxes.forEach(cb => {
+        if (!cb.disabled) cb.checked = this.checked;
+    });
     // Set indeterminate state to false for all checkboxes
     document.querySelectorAll('input[type="checkbox"]').forEach(cb => cb.indeterminate = false);
     updateAllFieldVisibilities();
@@ -31,7 +33,10 @@ document.querySelectorAll('.nlp-group-checkbox').forEach(groupCheckbox => {
     groupCheckbox.addEventListener('change', function (e) {
         const groupItem = this.closest('li');
         const modelCheckboxes = groupItem.querySelectorAll('.nlp-model-checkbox');
-        modelCheckboxes.forEach(cb => cb.checked = this.checked);
+        // modelCheckboxes.forEach(cb => cb.checked = this.checked);
+        modelCheckboxes.forEach(cb => {
+            if (!cb.disabled) cb.checked = this.checked;
+        });
         updateNlpGroupState(this);
         updateAllFieldVisibilities();
         e.stopPropagation();
@@ -93,7 +98,10 @@ document.querySelectorAll('.ttlab-group-checkbox, .ttlab-subgroup-checkbox').for
     groupCheckbox.addEventListener('change', function (e) {
         const groupItem = this.closest('li');
         const childCheckboxes = groupItem.querySelectorAll('input[type="checkbox"]');
-        childCheckboxes.forEach(cb => cb.checked = this.checked);
+        // childCheckboxes.forEach(cb => cb.checked = this.checked);
+        childCheckboxes.forEach(cb => {
+            if (!cb.disabled) cb.checked = this.checked;
+        });
         updateTtlabParentCheckboxStates(this);
         updateNlpMasterCheckbox();
         e.stopPropagation();

@@ -13,6 +13,11 @@
     list-style-type: none;
 }
 
+/* Add a margin to separate nested lists */
+.json-display .json-ul:has(.json-ul) {
+    margin-bottom: 16px;
+}
+
 .json-display .item-container{
     padding-top: 6px;
     margin-top:4px;
