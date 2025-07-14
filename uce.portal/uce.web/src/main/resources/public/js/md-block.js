@@ -199,7 +199,10 @@ export class MarkdownBlock extends MarkdownElement {
     static renderer = Object.assign({
         heading (text, level, _raw, slugger) {
             level = Math.min(6, level + (this.hmin - 1));
-            const id = slugger.slug(text);
+            console.log("slugger", slugger, text);
+            // const id = slugger.slug(text);
+            const id = Math.random().toString(36).substring(2, 10);
+
             const hlinks = this.hlinks;
 
             let content;

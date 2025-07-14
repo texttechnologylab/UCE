@@ -12,6 +12,35 @@ public class RAGChatMessage {
     private DateTime created;
     private ArrayList<Document> contextDocuments;
 
+    public static String thinkEndTag = "</think>";
+
+    public static String cleanThinkTag(String answer) {
+        if (answer == null) return answer;
+
+        if (answer.contains(thinkEndTag)) {
+            int thinkEndIndex = answer.lastIndexOf(thinkEndTag) + thinkEndTag.length();
+            answer = answer.substring(thinkEndIndex).trim();
+        }
+
+        return answer;
+    }
+
+    public static boolean hasThinkTag(String answer) {
+        return answer != null && answer.contains(thinkEndTag);
+    }
+
+    public static String getThinkTag(String answer) {
+        if (answer == null) return answer;
+
+        if (answer.contains(thinkEndTag)) {
+            int thinkEndIndex = answer.lastIndexOf(thinkEndTag);
+            answer = answer.substring(0, thinkEndIndex).trim();
+            return answer;
+        }
+
+        return "";
+    }
+
     /**
      * This is the prompt we send to our rag webserver. It differs from
      * the actual message we show in the UI, which is the message.
@@ -62,6 +91,18 @@ public class RAGChatMessage {
 
     public void setMessage(String message) {
         this.message = message;
+    }
+
+    public String getMessageWithoutThinking() {
+        return cleanThinkTag(message);
+    }
+
+    public String getMessageOnlyThinking() {
+        return getThinkTag(message);
+    }
+
+    public boolean hasThinking() {
+        return hasThinkTag(message);
     }
 
     public List<Long> getContextDocument_Ids() {

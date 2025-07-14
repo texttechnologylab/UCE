@@ -20,6 +20,8 @@ import spark.ModelAndView;
 import spark.Route;
 
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class RAGApi implements UceApi {
     private static final Logger logger = LogManager.getLogger(RAGApi.class);
@@ -55,6 +57,8 @@ public class RAGApi implements UceApi {
             return "";
         }
     });
+
+    static final Pattern patternIDGiven = Pattern.compile("ID=(\\d+)");
 
     @Authentication(required = Authentication.Requirement.LOGGED_IN,
             route = Authentication.RouteTypes.POST,
@@ -98,14 +102,124 @@ public class RAGApi implements UceApi {
                     (ex) -> logger.error("Error getting the ContextNeeded info from the rag service.", ex));
             if (contextNeeded == null) contextNeeded = 1;
 
+            // Check if the user wants to work with just one document or with multiple documents
+            Long documentId = null;
+            try {
+                if (userMessage.contains("ID")) {
+                    Matcher matcher = patternIDGiven.matcher(userMessage);
+                    if (matcher.find()) {
+                        documentId = Long.parseLong(matcher.group(1));
+                        System.out.println("Found ID: " + documentId);
+                    } else {
+                        System.out.println("No ID found.");
+                    }
+                }
+            }
+            catch (Exception ex) {
+                logger.error("Error parsing the user message for a document ID.", ex);
+            }
+
+            // Check for the amount of documents the user wants to work with
+            String documentTitle = null;
+            // Only if there is no document id given
+            if (documentId == null) {
+                List<String> parts = List.of("URL", "title", "ID");
+                for (String part : parts) {
+                    if (documentId != null) {
+                        break;
+                    }
+                    documentTitle = ExceptionUtils.tryCatchLog(
+                            () -> ragService.postRAGDocTitle(userMessage, part, chatState.getModel()),
+                            (ex) -> logger.error("Error getting the postRAGDocTitle info from the rag service.", ex));
+                    if (documentTitle != null && documentTitle.equalsIgnoreCase("null")) {
+                        documentTitle = null;
+                    }
+                    if (documentTitle != null && documentTitle.contains(" ")) {
+                        documentTitle = null;
+                    }
+                    if (documentTitle != null && !documentTitle.isEmpty()) {
+                        try {
+                            Integer documentIdInt = Integer.parseInt(documentTitle);
+                            Document doc = db.getDocumentById(documentIdInt);
+                            if (doc != null) {
+                                documentId = doc.getId();
+                                System.out.println("Found document ID from ID: " + documentTitle);
+                            } else {
+                                System.out.println("No document found with title: " + documentTitle);
+                            }
+                        }
+                        catch (Exception ex) {
+                            ex.printStackTrace();
+                        }
+                        if (documentId == null) {
+                            try {
+                                Document doc = db.getFirstDocumentByTitle(documentTitle, true);
+                                if (doc != null) {
+                                    documentId = doc.getId();
+                                    System.out.println("Found document ID from title: " + documentTitle);
+                                } else {
+                                    System.out.println("No document found with title: " + documentTitle);
+                                }
+                            } catch (Exception ex) {
+                                ex.printStackTrace();
+                            }
+                        }
+                    }
+                }
+            }
+
+            // Check for the amount of documents the user wants to work with
+            Integer amountOfDocs = null;
+            // Only if there is no document id given
+            if (documentId == null) {
+                amountOfDocs = ExceptionUtils.tryCatchLog(
+                        () -> ragService.postRAGAmountDocs(userMessage, chatState.getModel()),
+                        (ex) -> logger.error("Error getting the AmountDocs info from the rag service.", ex));
+                if (amountOfDocs == null) amountOfDocs = 3;
+                // only max 10 docs...
+                int docsLimit = 10;
+                if (amountOfDocs > docsLimit) {
+                    amountOfDocs = docsLimit;
+                    logger.warn("The user requested more than " + docsLimit + " documents, limiting.");
+                }
+                logger.info("Using " + amountOfDocs + " documents.");
+            }
+
             List<DocumentChunkEmbedding> nearestDocumentChunkEmbeddings = new ArrayList<>();
             List<Document> foundDocuments = new ArrayList<Document>();
             if (contextNeeded == 1) {
-                nearestDocumentChunkEmbeddings = ragService.getClosestDocumentChunkEmbeddings(userMessage, 3, -1);
-                // foreach fetched document embedding, we also fetch the actual documents so the chat can show them
-                foundDocuments = db.getManyDocumentsByIds(nearestDocumentChunkEmbeddings.stream().map(d -> Math.toIntExact(d.getDocument_id())).toList());
-                prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]",
-                        String.join("\n", nearestDocumentChunkEmbeddings.stream().map(UIMAAnnotation::getCoveredText).toList()));
+                if (documentId != null) {
+                    // use a specific document only
+                    Document doc = db.getDocumentById(documentId);
+                    StringBuilder contextText = new StringBuilder();
+                    contextText.append("Provide your answer based on the contents of the following document.\n\n");
+                    contextText.append("ID: ").append(doc.getId()).append("\n");
+                    contextText.append("Title: ").append(doc.getDocumentTitle()).append("\n");
+                    contextText.append("Language: ").append(doc.getLanguage()).append("\n");
+                    contextText.append("Content:\n").append(doc.getFullText());
+                    contextText.append("\n\n");
+                    prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", contextText);
+                }
+                else {
+                    nearestDocumentChunkEmbeddings = ragService.getClosestDocumentChunkEmbeddings(userMessage, amountOfDocs, -1);
+                    // foreach fetched document embedding, we also fetch the actual documents so the chat can show them
+                    foundDocuments = db.getManyDocumentsByIds(nearestDocumentChunkEmbeddings.stream().map(d -> Math.toIntExact(d.getDocument_id())).toList());
+                    StringBuilder contextText = new StringBuilder();
+                    contextText.append("The following documents contain information, ordered by relevance.\n\n");
+                    int docInd = 0;
+                    for (var nearestDocumentChunkEmbedding : nearestDocumentChunkEmbeddings) {
+                        if (docInd >= foundDocuments.size()) break; // TODO this should not happen?!
+                        Document doc = foundDocuments.get(docInd);
+                        docInd++;
+                        contextText.append("Document #").append(docInd).append("\n");
+                        contextText.append("ID: ").append(doc.getId()).append("\n");
+                        contextText.append("Title: ").append(doc.getDocumentTitle()).append("\n");
+                        contextText.append("Language: ").append(doc.getLanguage()).append("\n");
+                        contextText.append("Search result:\n").append(nearestDocumentChunkEmbedding.getCoveredText());
+                        contextText.append("\n\n");
+                    }
+                    prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", contextText);
+                }
             }
             userRagMessage.setPrompt(prompt);
 

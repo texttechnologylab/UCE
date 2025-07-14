@@ -1,6 +1,7 @@
 package org.texttechnologylab;
 
 import com.google.gson.Gson;
+import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Paragraph;
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
 import org.apache.commons.compress.compressors.CompressorException;
 import org.apache.jena.mem.SparseArraySubSpliterator;
@@ -16,6 +17,7 @@ import org.hucompute.textimager.uima.type.category.CategoryCoveredTagged;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.driver.DUUIRemoteDriver;
 import org.texttechnologylab.DockerUnifiedUIMAInterface.lua.DUUILuaContext;
+import org.texttechnologylab.modules.CohMetrixInfo;
 import org.texttechnologylab.modules.TTLabScorerInfo;
 import org.texttechnologylab.type.LLMPrompt;
 import org.texttechnologylab.type.LLMSystemPrompt;
@@ -24,6 +26,7 @@ import org.texttechnologylab.annotation.*;
 import org.texttechnologylab.modules.ModelInfo;
 import org.texttechnologylab.modules.Sentences;
 import org.xml.sax.SAXException;
+import org.texttechnologylab.uima.type.cohmetrix.Index;
 
 
 import java.io.IOException;
@@ -66,6 +69,8 @@ public class DUUIPipeline {
                 String Variant = url.getValue().getVariant();
                 alreadyAddedUrl.add(url.getValue().getUrl());
                 switch (Variant) {
+                    case "cohmetrix":
+                        composer.add(new DUUIRemoteDriver.Component(url.getValue().getUrl()));
                     case "Coherence":
                         composer.add(
                                 new DUUIRemoteDriver.Component(url.getValue().getUrl())
@@ -128,16 +133,24 @@ public class DUUIPipeline {
 
     public JCas getSentences(JCas cas) throws Exception {
         HashMap<String, String> spacyUrls = new HashMap<>();
-        spacyUrls.put("Spacy", "http://spacy.service.component.duui.texttechnologylab.org");
+        spacyUrls.put("Spacy", "http://spacy-cohmetrix.service.component.duui.texttechnologylab.org");
+//        spacyUrls.put("Spacy", "http://spacy.service.component.duui.texttechnologylab.org");
+        spacyUrls.put("Syntok", "http://paragraph-syntok.service.component.duui.texttechnologylab.org/");
         DUUIComposer composer = setListComposer(spacyUrls);
         cas = runPipeline(cas, composer);
         // Iterate over the sentences
-        Collection<Sentence> sentences = JCasUtil.select(cas, Sentence.class);
-        for (Sentence sentence : sentences) {
-            System.out.println("Sentence: " + sentence.getCoveredText());
-            System.out.println("Begin: " + sentence.getBegin());
-            System.out.println("End: " + sentence.getEnd());
-        }
+//        Collection<Sentence> sentences = JCasUtil.select(cas, Sentence.class);
+//        for (Sentence sentence : sentences) {
+//            System.out.println("Sentence: " + sentence.getCoveredText());
+//            System.out.println("Begin: " + sentence.getBegin());
+//            System.out.println("End: " + sentence.getEnd());
+//        }
+//        Collection< Paragraph > paragraphs = JCasUtil.select(cas, Paragraph.class);
+//        for (Paragraph paragraph : paragraphs) {
+//            System.out.println("Paragraph: "+ paragraph.getCoveredText());
+//            System.out.println("Begin Paragraph"+ paragraph.getBegin());
+//            System.out.println("End Paragraph"+ paragraph.getEnd());
+//        }
         return cas;
     }
 
@@ -215,7 +228,7 @@ public class DUUIPipeline {
         return new Object[]{cas, sb};
     }
 
-    public Object[] getJCasResults(JCas cas, List<ModelInfo> modelGroups, List<String> ttlabScorerGroups) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
+    public Object[] getJCasResults(JCas cas, List<ModelInfo> modelGroups, List<String> ttlabScorerGroups, List<String> cohMetrixScorerGroups) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
         Sentences sentences = new Sentences();
         // set sentences
         Collection<Sentence> allSentences = JCasUtil.select(cas, Sentence.class);
@@ -232,7 +245,7 @@ public class DUUIPipeline {
         }
         TextClass textClass = new TextClass();
         for (ModelInfo modelGroup : modelGroups) {
-            Object [] extractedResults = getExtractedResults(cas, modelGroup, sentences, textClass, ttlabScorerGroups);
+            Object [] extractedResults = getExtractedResults(cas, modelGroup, sentences, textClass, ttlabScorerGroups, cohMetrixScorerGroups);
             sentences = (Sentences) extractedResults[0];
             textClass = (TextClass) extractedResults[1];
         }
@@ -248,11 +261,71 @@ public class DUUIPipeline {
         return new Object[]{sentences, textClass};
     }
 
-    public Object[] getExtractedResults(JCas cas, ModelInfo modelInfo, Sentences sentences, TextClass textClass, List<String> ttlabScorerGroups) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
+    public Object[] getExtractedResults(JCas cas, ModelInfo modelInfo, Sentences sentences, TextClass textClass, List<String> ttlabScorerGroups, List<String> cohMetrixScorerGroups) throws UIMAException, ResourceInitializationException, CASException, IOException, SAXException, CompressorException {
         String btName = "Bert Token";
         String ACName = "Auto Correlation";
         TTLabScorerInfo ttLabScorerInfo = new TTLabScorerInfo();
+        CohMetrixInfo cohMetrixInfo = new CohMetrixInfo();
         switch (modelInfo.getVariant()) {
+            case "cohmetrix":
+                List<String> UsedCohMetrix = new ArrayList<>();
+                Collection<Index> cohMetrixScores = JCasUtil.select(cas, Index.class);
+                LinkedHashMap<String, CohMetrixClass> cohMetrixScores_map = new LinkedHashMap<>();
+                LinkedHashMap<String, LinkedHashMap<String, String>> cohMetrixMapNames = cohMetrixInfo.getCohMetrixMapInfo();
+                LinkedHashMap<String, String> cohMetrixModelNames = cohMetrixMapNames.get("Models");
+                LinkedHashMap<String, String> cohMetrixDescription = cohMetrixMapNames.get("Description");
+                for (Index index : cohMetrixScores) {
+                    String groupname = index.getTypeName();
+                    String labelv2 = index.getLabelV2();
+                    String labelv3 = index.getLabelV3();
+                    String ttlabName = index.getLabelTTLab();
+                    String Description = index.getDescription();
+                    double score = index.getValue();
+                    String error = index.getError();
+                    if (cohMetrixScorerGroups.contains(labelv3) || cohMetrixScorerGroups.contains(ttlabName)) {
+                        String labelv3Name = cohMetrixModelNames.get(labelv3);
+                        String ttlabNameMap = cohMetrixModelNames.get(ttlabName);
+                        if (ttlabNameMap != null) {
+                            if (!ttlabNameMap.equals(modelInfo.getName())) {
+                                continue; // skip if model name does not match modelInfo name
+                            }
+                        }
+                        if (labelv3Name != null) {
+                            if (!labelv3Name.equals(modelInfo.getName())) {
+                                continue; // skip if model name does not match modelInfo name
+                            }
+                        }
+                        if (UsedCohMetrix.contains(ttlabName) || UsedCohMetrix.contains(labelv3)) {
+                            continue; // skip if already used
+                        }
+                        if (ttlabName == null && !UsedCohMetrix.contains(labelv3)) {
+                            UsedCohMetrix.add(labelv3);
+                        }
+                        else{
+                            UsedCohMetrix.add(ttlabName);
+                        }
+                        CohMetrixInput cohMetrixInput = new CohMetrixInput();
+                        if (ttlabName != null) {
+                            cohMetrixInput.setName(ttlabName);
+                        }
+                        else {
+                            cohMetrixInput.setName(labelv3);
+                        }
+                        cohMetrixInput.setScore(score);
+                        cohMetrixInput.setDescription(Description);
+                        if (!cohMetrixScores_map.containsKey(groupname)) {
+                            CohMetrixClass cohMetrixClass = new CohMetrixClass();
+                            cohMetrixClass.setModelInfo(modelInfo);
+                            cohMetrixClass.setGroupName(groupname);
+                            cohMetrixScores_map.put(groupname, cohMetrixClass);
+                        }
+                        cohMetrixScores_map.get(groupname).addCohMetrixInput(cohMetrixInput);
+                    }
+                }
+                for (Map.Entry<String, CohMetrixClass> entry : cohMetrixScores_map.entrySet()) {
+                    CohMetrixClass cohMetrixClass = entry.getValue();
+                    textClass.addAVGCohMetrix(cohMetrixClass);
+                }
             case "ttlabscorer":
                 List<String> UsedSubmodels = new ArrayList<>();
                 LinkedHashMap<String, TAClass> ttlabScores_map = new LinkedHashMap<>();

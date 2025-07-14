@@ -25,6 +25,7 @@ import org.texttechnologylab.models.corpus.UCELog;
 import org.texttechnologylab.modules.ModelGroup;
 import org.texttechnologylab.modules.ModelResources;
 import org.texttechnologylab.modules.TTLabScorerInfo;
+import org.texttechnologylab.modules.CohMetrixInfo;
 import org.texttechnologylab.routes.*;
 import org.texttechnologylab.services.LexiconService;
 import org.texttechnologylab.services.MapService;
@@ -105,6 +106,7 @@ public class App {
         if(SystemStatus.UceConfig.getSettings().getAnalysis().isEnableAnalysisEngine()){
             var modelResources = new ModelResources();
             var ttlabScorer = new TTLabScorerInfo();
+            var cohMetrixInfo = new CohMetrixInfo();
             logger.info("Testing the model resources:");
         }
 
@@ -296,7 +298,9 @@ public class App {
 
         ModelResources modelResources = new ModelResources();
         TTLabScorerInfo ttlabScorer = new TTLabScorerInfo();
+        CohMetrixInfo cohMetrixInfo = new CohMetrixInfo();
         LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<String, String>>> taInputMap = ttlabScorer.getTaInputMap();
+        LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<String, String>>> cohMetrixMap = cohMetrixInfo.getCohMetrixMap();
         List<ModelGroup> groups = modelResources.getGroupedModelObjects();
         // Landing page
         get("/", (request, response) -> {
@@ -319,6 +323,7 @@ public class App {
             model.put("uceVersion", commonConfig.getUceVersion());
             model.put("modelGroups", groups);
             model.put("ttlabScorer", taInputMap);
+            model.put("cohMetrix", cohMetrixMap);
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");
