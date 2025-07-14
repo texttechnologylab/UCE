@@ -63,20 +63,6 @@ public class App {
         var numThreads = 1;
         if (numThreadsStr != null) numThreads = Integer.parseInt(numThreadsStr);
 
-        // Also import uceConfig here
-        // TODO rethink configs
-        var gson = new Gson();
-        var configFile = cmd.getOptionValue("configFile");
-        var configJson = cmd.getOptionValue("configJson");
-        if (configFile != null && !configFile.isEmpty()) {
-            var reader = new FileReader(configFile);
-            SystemStatus.UceConfig = gson.fromJson(reader, UceConfig.class);
-            logger.info("Read UCE Config from path: " + configFile);
-        } else if (configJson != null && !configJson.isEmpty()) {
-            SystemStatus.UceConfig = gson.fromJson(configJson, UceConfig.class);
-            logger.info("Parsed UCE Config from JSON.");
-        }
-
         if (importerNumber != 1) {
             throw new InvalidParameterException("For now, the -importerNumber must always be 1, since this will be the only instance. Canceling.");
         }
@@ -120,8 +106,6 @@ public class App {
         options.addOption("num", "importerNumber", true, "When starting multiple importers, assign an id to each instance by counting up from 1 to n.");
         options.addOption("t", "numThreads", true, "We do the import asynchronous. Decide with how many threads, e.g. 4-8. By default, this is single threaded.");
         options.addOption("view", "casView", true, "Name of the CAS view to import from. If not set, the default view (initial view) is used.");
-        options.addOption("cf", "configFile", true, "The filepath to the UceConfig.json file.");
-        options.addOption("cj", "configJson", true, "The json content of a UceConfig.json file.");
         return options;
     }
 }
