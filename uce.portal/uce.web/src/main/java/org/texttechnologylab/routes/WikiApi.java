@@ -295,6 +295,7 @@ public class WikiApi implements UceApi {
             // Here we resolve the incoming and outgoing links into simply: to and from nodes
             linkableDto.fromNodes = new ArrayList<>();
             for (var incoming : linkableVm.getIncomingLinks()) {
+                if(incoming.getFromLinkableViewModel() == null) continue;
                 var newLinkableDto = new LinkableNodeDto(incoming.getFromLinkableViewModel().getBaseModel());
                 newLinkableDto.setNodeHtml(Renderer.renderLinkable(incoming.getFromLinkableViewModel().getBaseModel(), linkable));
                 newLinkableDto.setLink(incoming.getLink());
@@ -303,6 +304,7 @@ public class WikiApi implements UceApi {
 
             linkableDto.toNodes = new ArrayList<>();
             for (var outgoing : linkableVm.getOutgoingLinks()) {
+                if(outgoing.getToLinkableViewModel() == null) continue;
                 var newLinkableDto = new LinkableNodeDto(outgoing.getToLinkableViewModel().getBaseModel());
                 newLinkableDto.setNodeHtml(Renderer.renderLinkable(outgoing.getToLinkableViewModel().getBaseModel(), linkable));
                 newLinkableDto.setLink(outgoing.getLink());

@@ -58,7 +58,8 @@ public class LinkViewModel {
                     toClazz = ReflectionUtils.getClassFromClassName(annoLink.getToAnnotationType(), Linkable.class);
                 final var finalTo = toClazz;
 
-                toLinkableViewModel = db.getLinkable(link.getToId(), finalTo).getLinkableViewModel();
+                var linkable = db.getLinkable(link.getToId(), finalTo);
+                if(linkable != null) toLinkableViewModel = linkable.getLinkableViewModel();
             } catch (Exception ex) {
                 logger.error("Error fetching the toLinkable of a link.", ex);
             }

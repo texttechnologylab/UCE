@@ -205,12 +205,12 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 if (sentiment.getPrimaryValue() < 0.6) color = "var(--dark)";
 
                 var s = String.format(
-                        "<span class='sentiment' " +
+                        "<em class='sentiment' " +
                         "style='background-color: %4$s; color:%5$s' data-type='%3$s' title='%1$s' data-wid='%2$s' data-wcovered='' " +
                         "data-trigger='hover' data-toggle='popover' data-placement='right' data-html='true' data-content='%6$s'>",
                         "Sentiment: " + sentiment.getWikiId(), sentiment.getWikiId(), sentiment.getPrimaryType().toUpperCase(), bgRgba, color, sentiment.getDescription());
                 sentimentCoverWrappersStart.put(start, s);
-                sentimentCoverWrappersEnd.put(end, "</span>");
+                sentimentCoverWrappersEnd.put(end, "</em>");
                 sentimentMarkers.put(end, sentiment.generateSentimentMarker());
                 continue;
             }

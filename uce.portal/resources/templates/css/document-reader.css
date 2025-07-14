@@ -148,6 +148,10 @@ body {
     padding: 2rem 4.5rem;
 }
 
+.document-content em{
+    font-style: normal;
+}
+
 .document-content *{
     font-family: Courier  !important;
     word-break: break-word;
