@@ -51,9 +51,6 @@
     <script src="js/visualization/cdns/drawflow-last.js"></script>
     <script type="module" src="js/md-block.js"></script>
 
-    <!-- text editor scripts -->
-    <script src="/js/dist/tiptap-bundle.js"></script>
-
     <title>${document.getDocumentTitle()}</title>
 </head>
 
@@ -314,6 +311,8 @@
 
     </div>
 </div>
+
+    <script type="module" src="/js/dist/tiptap-bundle.js"></script>
         </body>
 
 <#--<script type="module">
