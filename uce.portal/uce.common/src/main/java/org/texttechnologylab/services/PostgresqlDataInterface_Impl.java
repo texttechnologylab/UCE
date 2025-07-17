@@ -1384,7 +1384,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public EmotionType getOrCreateEmotionTypeByName(String name) throws DatabaseOperationException {
+    public synchronized EmotionType getOrCreateEmotionTypeByName(String name) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var criteriaBuilder = session.getCriteriaBuilder();
             var criteriaQuery = criteriaBuilder.createQuery(EmotionType.class);
