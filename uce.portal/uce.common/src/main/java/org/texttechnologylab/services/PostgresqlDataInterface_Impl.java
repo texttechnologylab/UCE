@@ -20,7 +20,6 @@ import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
-import org.texttechnologylab.models.corpus.Time;
 import org.texttechnologylab.models.corpus.links.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.dto.map.MapClusterDto;
@@ -29,6 +28,8 @@ import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
+import org.texttechnologylab.models.modelInfo.Model;
+import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
@@ -43,7 +44,10 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
-import java.sql.*;
+import java.sql.Array;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
 
@@ -434,12 +438,13 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         () -> getAllLinksOfLinkable(taxon.getId(), taxon.getClass(), List.of(AnnotationLink.class))
                                 .stream()
                                 .filter(l -> l.getLinkId().equals("context") && l.getToAnnotationType().equals(GeoName.class.getName())).toList(),
-                        (ex) -> { });
+                        (ex) -> {
+                        });
                 // Foreach taxa, fetch a possible geoname link.
                 if (links != null)
                     for (var link : links) {
                         var geoname = doc.getGeoNames().stream().filter(g -> g.getId() == link.getToId()).findFirst();
-                        if(geoname.isEmpty()) continue;
+                        if (geoname.isEmpty()) continue;
                         var globeTaxon = new GlobeTaxon();
                         globeTaxon.setLongitude(geoname.get().getLongitude());
                         globeTaxon.setLatitude(geoname.get().getLatitude());
@@ -981,7 +986,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
             DocumentSearchResult search = null;
             try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() +
-                                                              "(?::bigint, ?::text[], ?::text, ?::integer, ?::integer, ?::boolean, ?::text, ?::text, ?::jsonb, ?::boolean, ?::text, ?::text)}")) {
+                    "(?::bigint, ?::text[], ?::text, ?::integer, ?::integer, ?::boolean, ?::text, ?::text, ?::jsonb, ?::boolean, ?::text, ?::text)}")) {
                 storedProcedure.setInt(1, (int) corpusId);
                 storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.stream().map(this::escapeSql).toArray()));
                 storedProcedure.setString(3, ogSearchQuery);
@@ -1200,9 +1205,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             // Construct HQL dynamically (THIS IS UNSAFE BECAUSE OF THE CONDITION INSERTION)
             String hql = "SELECT DISTINCT t.coveredText " +
-                         "FROM Time t " +
-                         "JOIN Document d ON t.documentId = d.id " +
-                         "WHERE " + condition + " AND d.corpusId = :corpusId";
+                    "FROM Time t " +
+                    "JOIN Document d ON t.documentId = d.id " +
+                    "WHERE " + condition + " AND d.corpusId = :corpusId";
 
             var query = session.createQuery(hql, String.class);
             query.setParameter("corpusId", corpusId);
@@ -1393,11 +1398,57 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var topic = session.get(UnifiedTopic.class, id);
             Hibernate.initialize(topic.getTopics());
-            for(var t:topic.getTopics()){
+            for (var t : topic.getTopics()) {
                 Hibernate.initialize(t.getWords());
             }
             return topic;
         });
+    }
+
+    public synchronized Model getOrCreateModel(String modelName) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(Model.class);
+            var root = criteriaQuery.from(Model.class);
+            criteriaQuery.select(root).where(criteriaBuilder.equal(root.get("name"), modelName));
+
+            List<Model> models = session.createQuery(criteriaQuery).getResultList();
+            if (models.isEmpty()) {
+                Model newModel = new Model(modelName);
+                session.save(newModel);
+                return newModel;
+            } else {
+                return models.getFirst();
+            }
+        });
+    }
+
+    public synchronized ModelVersion getOrCreateModelVersion(Model model, String version) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(ModelVersion.class);
+            var root = criteriaQuery.from(ModelVersion.class);
+            criteriaQuery.select(root).where(
+                    criteriaBuilder.and(
+                            criteriaBuilder.equal(root.get("model"), model),
+                            criteriaBuilder.equal(root.get("version"), version)
+                    )
+            );
+
+            List<ModelVersion> versions = session.createQuery(criteriaQuery).getResultList();
+            if (versions.isEmpty()) {
+                ModelVersion newVersion = new ModelVersion(model, version);
+                session.save(newVersion);
+                return newVersion;
+            } else {
+                return versions.getFirst();
+            }
+        });
+    }
+
+    public ModelVersion getOrCreateModelVersion(String modelName, String version) throws DatabaseOperationException {
+        Model model = getOrCreateModel(modelName);
+        return getOrCreateModelVersion(model, version);
     }
 
     public <T extends KeywordDistribution> List<T> getKeywordDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
@@ -1641,9 +1692,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             // Use native SQL to query the document_topics_raw table
             String sql = "SELECT topiclabel, thetadt FROM documenttopicsraw " +
-                         "WHERE document_id = :documentId " +
-                         "ORDER BY thetadt DESC " +
-                         "LIMIT :limit";
+                    "WHERE document_id = :documentId " +
+                    "ORDER BY thetadt DESC " +
+                    "LIMIT :limit";
 
             var query = session.createNativeQuery(sql)
                     .setParameter("documentId", documentId)
@@ -1657,9 +1708,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             // Direct query using sentence_id
             String sql = "SELECT topiclabel, thetast FROM sentencetopics " +
-                         "WHERE sentence_id = :sentenceId " +
-                         "ORDER BY thetast DESC " +
-                         "LIMIT :limit";
+                    "WHERE sentence_id = :sentenceId " +
+                    "ORDER BY thetast DESC " +
+                    "LIMIT :limit";
 
             var query = session.createNativeQuery(sql)
                     .setParameter("sentenceId", sentenceId)
@@ -1672,12 +1723,12 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     public List<Object[]> getTopDocumentsByTopicLabel(String topicValue, long corpusId, int limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = "SELECT d.id, d.documentid, dtr.thetadt " +
-                         "FROM document d " +
-                         "JOIN documenttopicsraw dtr ON d.id = dtr.document_id " +
-                         "WHERE dtr.topiclabel = :topicValue " +
-                         "AND d.corpusid = :corpusId " +
-                         "ORDER BY dtr.thetadt DESC " +
-                         "LIMIT :limit";
+                    "FROM document d " +
+                    "JOIN documenttopicsraw dtr ON d.id = dtr.document_id " +
+                    "WHERE dtr.topiclabel = :topicValue " +
+                    "AND d.corpusid = :corpusId " +
+                    "ORDER BY dtr.thetadt DESC " +
+                    "LIMIT :limit";
 
             var query = session.createNativeQuery(sql)
                     .setParameter("topicValue", topicValue)
@@ -1691,10 +1742,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     public List<TopicWord> getTopicWordsByTopicLabel(String topicValue, long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = "SELECT word, probability " +
-                         "FROM corpustopicwords " +
-                         "WHERE topiclabel = :topicValue AND corpus_id = :corpusId " +
-                         "ORDER BY probability DESC " +
-                         "LIMIT 20";
+                    "FROM corpustopicwords " +
+                    "WHERE topiclabel = :topicValue AND corpus_id = :corpusId " +
+                    "ORDER BY probability DESC " +
+                    "LIMIT 20";
 
             var query = session.createNativeQuery(sql);
             query.setParameter("topicValue", topicValue);
@@ -1731,12 +1782,12 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     public List<TopicWord> getNormalizedTopicWordsForCorpus(long corpusId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = "SELECT word, " +
-                         "AVG(probability) AS avg_probability, " +
-                         "AVG(probability) / SUM(AVG(probability)) OVER () AS normalized_probability " +
-                         "FROM corpustopicwords " +
-                         "WHERE corpus_id = :corpusId " +
-                         "GROUP BY word " +
-                         "ORDER BY normalized_probability DESC";
+                    "AVG(probability) AS avg_probability, " +
+                    "AVG(probability) / SUM(AVG(probability)) OVER () AS normalized_probability " +
+                    "FROM corpustopicwords " +
+                    "WHERE corpus_id = :corpusId " +
+                    "GROUP BY word " +
+                    "ORDER BY normalized_probability DESC";
 
             var query = session.createNativeQuery(sql);
             query.setParameter("corpusId", corpusId);
@@ -1783,11 +1834,11 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     public List<TopicWord> getDocumentWordDistribution(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = "SELECT word, AVG(probability) AS avg_probability " +
-                         "FROM documenttopicwords " +
-                         "WHERE document_id = :documentId " +
-                         "GROUP BY word " +
-                         "ORDER BY avg_probability DESC " +
-                         "LIMIT 20";
+                    "FROM documenttopicwords " +
+                    "WHERE document_id = :documentId " +
+                    "GROUP BY word " +
+                    "ORDER BY avg_probability DESC " +
+                    "LIMIT 20";
 
             var query = session.createNativeQuery(sql);
             query.setParameter("documentId", documentId);
@@ -1818,25 +1869,25 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     public List<Object[]> getSimilarDocumentbyDocumentId(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = "WITH sourcewords AS (" +
-                         "    SELECT word " +
-                         "    FROM documenttopicwords " +
-                         "    WHERE document_id = :documentId " +
-                         "    GROUP BY word" +
-                         "), " +
-                         "similardocs AS (" +
-                         "    SELECT " +
-                         "        dtw.document_id, " +
-                         "        COUNT(DISTINCT dtw.word) AS sharedwords " +
-                         "    FROM documenttopicwords dtw " +
-                         "    JOIN sourcewords sw ON sw.word = dtw.word " +
-                         "    WHERE dtw.document_id != :documentId " +
-                         "    GROUP BY dtw.document_id " +
-                         "    ORDER BY sharedwords DESC" +
-                         ") " +
-                         "SELECT d.documentid, s.sharedwords " +
-                         "FROM similardocs s " +
-                         "JOIN document d ON s.document_id = d.id " +
-                         "LIMIT 20";
+                    "    SELECT word " +
+                    "    FROM documenttopicwords " +
+                    "    WHERE document_id = :documentId " +
+                    "    GROUP BY word" +
+                    "), " +
+                    "similardocs AS (" +
+                    "    SELECT " +
+                    "        dtw.document_id, " +
+                    "        COUNT(DISTINCT dtw.word) AS sharedwords " +
+                    "    FROM documenttopicwords dtw " +
+                    "    JOIN sourcewords sw ON sw.word = dtw.word " +
+                    "    WHERE dtw.document_id != :documentId " +
+                    "    GROUP BY dtw.document_id " +
+                    "    ORDER BY sharedwords DESC" +
+                    ") " +
+                    "SELECT d.documentid, s.sharedwords " +
+                    "FROM similardocs s " +
+                    "JOIN document d ON s.document_id = d.id " +
+                    "LIMIT 20";
 
             var query = session.createNativeQuery(sql)
                     .setParameter("documentId", documentId);
@@ -1862,7 +1913,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             // Outer query: group by page_id, aggregate values and count
             String finalSql = "SELECT page_id, valuee AS taxon_value " +
-                              "FROM (" + sqlBuilder.toString() + ") AS combined_taxon ";
+                    "FROM (" + sqlBuilder.toString() + ") AS combined_taxon ";
 
             var query = session.createNativeQuery(finalSql)
                     .setParameter("documentId", documentId)
@@ -1878,8 +1929,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             // Construct the SQL query to select page_id and coveredtext from the namedentity table
             String sql = "SELECT ne.page_id, ne.coveredtext AS named_entity_value, ne.typee AS named_entity_type " +
-                         "FROM namedentity ne " +
-                         "WHERE ne.document_id = :documentId";
+                    "FROM namedentity ne " +
+                    "WHERE ne.document_id = :documentId";
 
             var query = session.createNativeQuery(sql)
                     .setParameter("documentId", documentId);
@@ -2000,10 +2051,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     public List<Object[]> getTopicWordsByDocumentId(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = "SELECT topiclabel, word, AVG(probability) AS avg_probability " +
-                         "FROM documenttopicwords " +
-                         "WHERE document_id = :documentId " +
-                         "GROUP BY topiclabel, word " +
-                         "ORDER BY avg_probability DESC";
+                    "FROM documenttopicwords " +
+                    "WHERE document_id = :documentId " +
+                    "GROUP BY topiclabel, word " +
+                    "ORDER BY avg_probability DESC";
 
             var query = session.createNativeQuery(sql);
             query.setParameter("documentId", documentId);
