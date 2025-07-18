@@ -182,7 +182,8 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         // Build the final HTML string in a single pass
         var finalText = new StringBuilder();
 
-        for (int i = 0; i < coveredText.length(); i++) {
+        // iterate +1 because we want to process the character after the last one to add the end tags
+        for (int i = 0; i < coveredText.length()+1; i++) {
             // Insert end spans first
             if (topicCoverWrappersEnd.containsKey(i)) {
                 finalText.append(topicCoverWrappersEnd.get(i));
@@ -208,7 +209,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
 
             // Append the current character
-            finalText.append(coveredText.charAt(i));
+            if (i < coveredText.length()) {
+                finalText.append(coveredText.charAt(i));
+            }
         }
 
         // We apply some heuristic post-processing to make the text more readable.
