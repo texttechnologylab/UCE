@@ -7,7 +7,7 @@ import org.texttechnologylab.models.ModelBase;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "model_version")
+@Table(name = "model_version", uniqueConstraints = @UniqueConstraint(columnNames = {"model_id", "version"}))
 public class ModelVersion extends ModelBase {
 
     @Getter
