@@ -4,9 +4,8 @@
                 <h3 class="mb-0 mr-1 color-prime text-center">${languageResource.get("analysis")}</h3>
     </header>
 </div>
-<div class="mt-4">
-    <div class="row m-0 p-0">
-        <div class="col-3">
+    <div class="analysis-flex-layout" id="analysis-layout">
+        <div id="treeview-panel" class="bg-light">
             <div class="resizable-container">
                 <div class="analysis-sidebar-toggle">
                     <button class="analysis-toggle-btn" onclick="toggleSidebar('nlp-tools')" title="NLP-Tools">
@@ -162,22 +161,24 @@
                 </div>
             </div>
         </div>
-        <div class="col-4">
-            <div class="group-box card-shadow bg-light">
-                <h5 class="mb-0 mr-1 color-prime">${languageResource.get("inputField")}</h5>
-                <div class="analysis-text-view">
-                    <div class="grow-text">
-                        <label for="analysis-input"></label><textarea name="analysis-input" id="analysis-input" rows="10" placeholder="${languageResource.get("input")}" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
-                        <br />
-                        <button type="button" class="btn-primary" id="analysis-upload-btn">${languageResource.get("upload")}</button>
-                        <input type="file" id="file-input" accept=".txt" style="display: none;" />
-                        <button class="btn btn-success run-pipeline-btn">
-                            <i class="fas fa-play"></i> ${languageResource.get("RunPipeline")}
-                        </button>
+        <div id="resizer" class="resizer"></div>
+        <div class="d-flex flex-grow-1 flex-row">
+            <div class="input-panel bg-light">
+                <div class="group-box card-shadow bg-light">
+                    <h5 class="mb-0 mr-1 color-prime">${languageResource.get("inputField")}</h5>
+                    <div class="analysis-text-view">
+                        <div class="grow-text">
+                            <label for="analysis-input"></label><textarea name="analysis-input" id="analysis-input" rows="10" placeholder="${languageResource.get("input")}" onInput="this.parentNode.dataset.replicatedValue = this.value"></textarea>
+                            <br />
+                            <button type="button" class="btn-primary" id="analysis-upload-btn">${languageResource.get("upload")}</button>
+                            <input type="file" id="file-input" accept=".txt" style="display: none;" />
+                            <button class="btn btn-success run-pipeline-btn">
+                                <i class="fas fa-play"></i> ${languageResource.get("RunPipeline")}
+                            </button>
+                        </div>
                     </div>
                 </div>
-            </div>
-            <div id="claim-field-wrapper" style="display: none;">
+                <div id="claim-field-wrapper" style="display: none;">
                 <div class="group-box card-shadow bg-light">
                     <h5 class="mb-0 mr-1 color-prime">Claim</h5>
                     <div class="analysis-text-view">
@@ -187,7 +188,7 @@
                     </div>
                 </div>
             </div>
-            <div id="text-field-wrapper" style="display: none;">
+                <div id="text-field-wrapper" style="display: none;">
                 <div class="group-box card-shadow bg-light">
                     <h5 class="mb-0 mr-1 color-prime">Cohesion Text</h5>
                     <div class="analysis-text-view">
@@ -197,7 +198,7 @@
                     </div>
                 </div>
             </div>
-            <div id="stance-field-wrapper" style="display: none;">
+                <div id="stance-field-wrapper" style="display: none;">
                 <div class="group-box card-shadow bg-light">
                     <h5 class="mb-0 mr-1 color-prime">Hypothesis</h5>
                     <div class="analysis-text-view">
@@ -207,7 +208,7 @@
                     </div>
                 </div>
             </div>
-            <div id="llm-field-wrapper" style="display: none;">
+                <div id="llm-field-wrapper" style="display: none;">
                 <div class="group-box card-shadow bg-light">
                     <h5 class="mb-0 mr-1 color-prime">System Prompt</h5>
                     <div class="analysis-text-view">
@@ -217,15 +218,11 @@
                     </div>
                 </div>
             </div>
-            <div id="analysis-InputText-container"></div>
-        </div>
-        <div class="col-5">
-            <div>
-<#--                <h5 class="mb-0 mr-1 color-prime">${languageResource.get("output")}</h5>-->
-                <div id="analysis-result-container">
-                </div>
+                <div id="analysis-InputText-container"></div>
             </div>
         </div>
+        <div class="result-panel bg-white">
+            <div id="analysis-result-container"></div>
+        </div>
     </div>
-</div>
 

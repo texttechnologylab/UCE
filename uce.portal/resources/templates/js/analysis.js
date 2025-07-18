@@ -256,3 +256,42 @@ document.querySelectorAll('.ta-collapse-toggle-btn').forEach(button => {
         toggleCard(this);
     });
 });
+
+(function initTreeviewResizer() {
+    const resizer = document.getElementById('resizer');
+    const treeviewPanel = document.getElementById('treeview-panel');
+
+    if (!resizer || !treeviewPanel) return;
+
+    let startX = 0;
+    let startWidth = 0;
+
+    const parsePx = (value) => parseInt(value.replace('px', ''), 10);
+
+    const onMouseMove = (e) => {
+        const dx = e.clientX - startX;
+
+        const computedStyle = window.getComputedStyle(treeviewPanel);
+        const minWidth = parsePx(computedStyle.minWidth) || 200;
+
+        const maxWidth = window.innerWidth - 100;
+        const newWidth = Math.min(maxWidth, Math.max(minWidth, startWidth + dx));
+
+        treeviewPanel.style.width = newWidth + "px";
+    };
+
+    const onMouseUp = () => {
+        document.removeEventListener('mousemove', onMouseMove);
+        document.removeEventListener('mouseup', onMouseUp);
+    };
+
+    resizer.addEventListener('mousedown', (e) => {
+        e.preventDefault();
+        startX = e.clientX;
+        startWidth = treeviewPanel.getBoundingClientRect().width;
+        document.addEventListener('mousemove', onMouseMove);
+        document.addEventListener('mouseup', onMouseUp);
+    });
+})();
+
+
