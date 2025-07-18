@@ -1134,6 +1134,38 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<Long> findDocumentIdsByMetadata(String key, String value, UCEMetadataValueType valueType) throws DatabaseOperationException {
+        // Search for a document based on a metadata key/value pair
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var cq = cb.createQuery(Long.class);
+            var root = cq.from(UCEMetadata.class);
+
+            var predicate = cb.and(
+                    cb.equal(root.get("key"), key),
+                    cb.equal(root.get("value"), value),
+                    cb.equal(root.get("valueType"), valueType.ordinal())
+            );
+
+            cq.select(root.get("documentId")).where(predicate);
+
+            var query = session.createQuery(cq);
+            return query.getResultList();
+        });
+    }
+
+    public void deleteDocumentById(long id) throws DatabaseOperationException {
+        // NOTE this only cleans up everything directly connected to the document
+        // TODO also remove embeddings and other data
+        executeOperationSafely((session) -> {
+            var doc = session.get(Document.class, id);
+            if (doc != null) {
+                session.delete(doc);
+            }
+            return null;
+        });
+    }
+
     public Document getFirstDocumentByTitle(String title, boolean like) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var cb = session.getCriteriaBuilder();
