@@ -14,14 +14,15 @@ public class Model extends ModelBase {
 
     @Getter
     @Setter
-    @Column(name = "model_name", nullable = false, unique = true)
-    private String modelName;
+    @Column(name = "name", nullable = false, unique = true)
+    private String name;
 
     public Model() {
         // Default constructor for JPA
     }
-    public Model(String modelName) {
-        this.modelName = modelName;
+
+    public Model(String name) {
+        this.name = name;
     }
 
 }
