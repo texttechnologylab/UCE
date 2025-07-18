@@ -168,7 +168,8 @@ body {
     font-weight: bold;
 }
 
-.document-content p {
+/* TODO check this for side effects */
+.document-content div {
     /*text-align: justify;*/
     line-height: 25px;
     z-index: 1;
@@ -748,4 +749,18 @@ body {
     height: 800px;
     overflow: hidden;
     position: relative;
+}
+
+.paragraph .paragraph-header {
+    border-radius: 16px;
+    font-size: 75%;
+}
+
+/* Additional styles for document content */
+/* TODO improve styling */
+.document-content-paragraph-style-core-answer {
+    padding: 8px 16px;
+    background-color: white;
+    color: var(--prime);
+    border: 1px solid var(--prime);
 }
