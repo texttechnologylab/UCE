@@ -12,6 +12,7 @@ import java.util.*;
 public class Page extends UIMAAnnotation {
     private int pageNumber;
     private String pageIdentifier;
+    private String divId;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "document_id", nullable = false)
@@ -19,6 +20,7 @@ public class Page extends UIMAAnnotation {
 
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "page_Id")
+    @OrderBy("begin, end")
     private List<Paragraph> paragraphs;
 
     @OneToMany(cascade = CascadeType.ALL)
@@ -41,6 +43,14 @@ public class Page extends UIMAAnnotation {
 
     public Page() {
         super(-1, -1);
+    }
+
+    public String getDivId() {
+        return divId;
+    }
+
+    public void setDivId(String divId) {
+        this.divId = divId;
     }
 
     public Document getDocument() {

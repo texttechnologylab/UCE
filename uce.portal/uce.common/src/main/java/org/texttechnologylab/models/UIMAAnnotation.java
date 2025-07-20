@@ -253,7 +253,8 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             emotionCoverWrappersStart.remove(firstEmotion);
         });
 
-        for (int i = 0; i < coveredText.length(); i++) {
+        // iterate +1 because we want to process the character after the last one to add the end tags
+        for (int i = 0; i < coveredText.length()+1; i++) {
             // Insert the normal end spans
             if (topicCoverWrappersEnd.containsKey(i)) {
                 finalText.append(topicCoverWrappersEnd.get(i));
@@ -299,7 +300,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
 
             // Append the current character
-            finalText.append(coveredText.charAt(i));
+            if (i < coveredText.length()) {
+                finalText.append(coveredText.charAt(i));
+            }
         }
 
         // If the sentiment goes over the page, we need to close all non-closed tags that are left

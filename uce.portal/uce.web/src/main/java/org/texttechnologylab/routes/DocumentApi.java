@@ -194,6 +194,49 @@ public class DocumentApi implements UceApi {
         return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "reader/documentReaderView.ftl"));
     });
 
+    public Route findDocumentIdByMetadata = ((request, response) -> {
+        // NOTE this only returns the first document id that matches the metadata.
+        var key = ExceptionUtils.tryCatchLog(() -> request.queryParams("key"),
+                (ex) -> logger.error("Error: document deletion requires a 'key' query parameter. ", ex));
+        var value = ExceptionUtils.tryCatchLog(() -> request.queryParams("value"),
+                (ex) -> logger.error("Error: document deletion requires a 'value' query parameter. ", ex));
+        var valueTypeStr = ExceptionUtils.tryCatchLog(() -> request.queryParams("value_type"),
+                (ex) -> logger.error("Error: document deletion requires a 'valueType' query parameter (e.g. STRING, NUMBER, ...). ", ex));
+        if (key == null || value == null || valueTypeStr == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+
+        try {
+            UCEMetadataValueType valueType = UCEMetadataValueType.valueOf(valueTypeStr);
+
+            List<Long> documentIds = db.findDocumentIdsByMetadata(key, value, valueType);
+            Long documentId = documentIds.getFirst();
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("document_id", documentId);
+
+            var resultJson = new Gson().toJson(result);
+            response.type("application/json");
+            return resultJson;
+        }
+        catch (Exception ex) {
+            logger.error(ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
+
+    public Route deleteDocument = ((request, response) -> {
+        var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
+                (ex) -> logger.error("Error: document deletion requires an 'id' query parameter. ", ex));
+        if (id == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+
+        db.deleteDocumentById(Long.parseLong(id));
+
+        // TODO
+        return "{'status': 'success', 'message': 'Document deletion is not implemented yet.'}";
+    });
+
     public Route getPagesListView = ((request, response) -> {
 
         var model = new HashMap<String, Object>();

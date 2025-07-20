@@ -22,12 +22,33 @@ public class Paragraph extends UIMAAnnotation {
     private String align;
     private int lineSpacing;
 
+    // Additional properties for paragraph styling
+    // This is loaded from AnnotationComments during the import process
+    private String cssClass;
+    private String header;
+
     public Paragraph() {
         super(-1, -1);
     }
 
     public Paragraph(int begin, int end) {
         super(begin, end);
+    }
+
+    public String getCssClass() {
+        return cssClass;
+    }
+
+    public void setCssClass(String cssClass) {
+        this.cssClass = cssClass;
+    }
+
+    public String getHeader() {
+        return header;
+    }
+
+    public void setHeader(String header) {
+        this.header = header;
     }
 
     public int getLeftIndent() {

@@ -19,6 +19,7 @@ import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.annotation.AnnotationComment;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.Emotion;
 import org.texttechnologylab.annotation.SentimentModel;
@@ -915,6 +916,9 @@ public class Importer {
                         pageCount.getAndIncrement();
                     });
 
+            // Get all annotations, these are used to store additional information to the paragraphs
+            Collection<AnnotationComment> annotationComments = JCasUtil.select(jCas, AnnotationComment.class);
+
             // We go through each page
             for (var p : pageAdapters) {
                 // New page
@@ -925,7 +929,10 @@ public class Importer {
                 // TODO: For now, only the new ABBYY typesystems get their paragraphs. We dont really use the others anymore.
                 // In the future, we can add back blocks and lines and whatnot for a more truer OCR page visualization
                 if (corpusConfig.getAnnotations().isOCRParagraph() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
-                    page.setParagraphs(getCoveredParagraphs((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
+                    page.setParagraphs(getCoveredParagraphs((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal(), page, annotationComments));
+
+                if (corpusConfig.getAnnotations().isOCRParagraph() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
+                    page.setDivId(((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()).getId());
 
                 //if (corpusConfig.getAnnotations().isOCRBlock() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
                 //    page.setBlocks(getCoveredBlocks((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
@@ -1941,7 +1948,7 @@ public class Importer {
     /**
      * Gets all covered paragraphs from a OCR page in a cas
      */
-    private List<Paragraph> getCoveredParagraphs(org.texttechnologylab.annotation.ocr.abbyy.Page page) {
+    private List<Paragraph> getCoveredParagraphs(org.texttechnologylab.annotation.ocr.abbyy.Page page, Page ucePage, Collection<AnnotationComment> annotationComments) {
         // Paragraphs
         var paragraphs = new ArrayList<Paragraph>();
         // Get all covered by this. This can probably be done in one go, but oh well
@@ -1953,6 +1960,19 @@ public class Importer {
             paragraph.setRightIndent(pg.getRightIndent());
             paragraph.setStartIndent(pg.getStartIndent());
             paragraph.setCoveredText(pg.getCoveredText());
+            paragraph.setPage(ucePage);
+
+            // Get additional styling info from the AnnotationComments
+            for (AnnotationComment comment : annotationComments) {
+                if (comment.getReference() == pg) {
+                    if (comment.getKey().startsWith("_uce_paragraph_config_header")) {
+                        paragraph.setHeader(comment.getValue());
+                    }
+                    else if (comment.getKey().startsWith("_uce_paragraph_config_cssclass")) {
+                        paragraph.setCssClass(comment.getValue());
+                    }
+                }
+            }
 
             paragraphs.add(paragraph);
         });
