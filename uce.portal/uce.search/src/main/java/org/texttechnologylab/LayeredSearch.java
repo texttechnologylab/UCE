@@ -146,9 +146,9 @@ public class LayeredSearch extends CacheItem {
                 // Check if its a taxon command
                 if (slot.getValue().length() > 2) {
                     var possibleCommand = slot.getValue().substring(0, 3);
-                    if (Arrays.asList(StringUtils.TAX_RANKS).contains(possibleCommand)) {
+                    if (Arrays.asList(EnrichedSearchQuery.TAX_RANKS).contains(possibleCommand)) {
                         // The full name of the taxonomic rank
-                        var fullRankName = StringUtils.getFullTaxonRankByCode(possibleCommand.replace("::", "")).toLowerCase();
+                        var fullRankName = EnrichedSearchQuery.getFullTaxonRankByCode(possibleCommand.replace("::", "")).toLowerCase();
                         var value = slot.getValue().substring(3);
                         //var ordinalValue = TaxonRank.valueOf(fullRankName).ordinal();
                         var idsOfRank = ExceptionUtils.tryCatchLog(

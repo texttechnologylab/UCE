@@ -21,6 +21,8 @@ import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotation.AnnotationComment;
 import org.texttechnologylab.annotation.DocumentAnnotation;
+import org.texttechnologylab.annotation.Emotion;
+import org.texttechnologylab.annotation.SentimentModel;
 import org.texttechnologylab.annotation.geonames.GeoNamesEntity;
 import org.texttechnologylab.annotation.link.*;
 import org.texttechnologylab.annotation.ocr.*;
@@ -33,6 +35,7 @@ import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.emotion.Feeling;
 import org.texttechnologylab.models.corpus.links.AnnotationLink;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
@@ -392,7 +395,7 @@ public class Importer {
 
             return XMIToDocument(jCas, corpus, filename);
         } catch (Exception ex) {
-            logger.error("Error while reading an annotated xmi file to a cas and transforming it into a document:", ex);
+            logger.error("Error while reading the annotated xmi file " + filename + " to a cas and transforming it into a document:", ex);
             return null;
         }
     }
@@ -475,7 +478,8 @@ public class Importer {
                 if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
                     postProccessDocument(existingDoc, corpus, filePath);
-                }
+                } else
+                    logger.info("Document was already post-processed.");
                 logger.info("Done.");
                 return null;
             }
@@ -532,6 +536,16 @@ public class Importer {
                         () -> setGeoNames(document, jCas),
                         (ex) -> logImportWarn("This file should have contained GeoNames annotations, but selecting them caused an error.", ex, filePath));
 
+            if (corpusConfig.getAnnotations().isSentiment())
+                ExceptionUtils.tryCatchLog(
+                        () -> setSentiments(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained Sentiment annotations, but selecting them caused an error.", ex, filePath));
+
+            if (corpusConfig.getAnnotations().isEmotion())
+                ExceptionUtils.tryCatchLog(
+                        () -> setEmotions(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained Emotion annotations, but selecting them caused an error.", ex, filePath));
+
             if (corpusConfig.getAnnotations().isLemma())
                 ExceptionUtils.tryCatchLog(
                         () -> setLemmata(document, jCas),
@@ -587,6 +601,55 @@ public class Importer {
         } finally {
             logger.info("Finished with importing that CAS.\n\n\n");
         }
+    }
+
+    /**
+     * Selects and sets the emotions of a document
+     */
+    private void setEmotions(Document document, JCas jCas){
+        var emotions = new ArrayList<org.texttechnologylab.models.corpus.emotion.Emotion>();
+        JCasUtil.select(jCas, Emotion.class).forEach(e -> {
+            var emotion = new org.texttechnologylab.models.corpus.emotion.Emotion(e.getBegin(), e.getEnd());
+            emotion.setCoveredText(e.getCoveredText());
+            var meta = e.getModel();
+            if(meta != null) emotion.setModel(meta.getModelName() + "__v::" + meta.getModelVersion());
+
+            var feelings = new ArrayList<Feeling>();
+            for(var annotationComment:e.getEmotions()){
+                var feeling = new Feeling();
+                feeling.setEmotion(emotion);
+                ExceptionUtils.tryCatchLog(() -> feeling.setValue(Double.parseDouble(annotationComment.getValue())), (ex) -> {});
+                feeling.setFeeling(annotationComment.getKey());
+                feelings.add(feeling);
+            }
+            emotion.setFeelings(feelings);
+
+            emotions.add(emotion);
+        });
+
+        document.setEmotions(emotions);
+        logger.info("Setting Emotions done.");
+    }
+
+    /**
+     * Selects and sets the sentiment of a document
+     */
+    private void setSentiments(Document document, JCas jCas){
+        var sentiments = new ArrayList<Sentiment>();
+        JCasUtil.select(jCas, SentimentModel.class).forEach(s -> {
+            var sentiment = new Sentiment(s.getBegin(), s.getEnd());
+            sentiment.setCoveredText(s.getCoveredText());
+            sentiment.setPositive(s.getProbabilityPositive());
+            sentiment.setNeutral(s.getProbabilityNeutral());
+            sentiment.setNegative(s.getProbabilityNegative());
+            var meta = s.getModel();
+            if(meta != null) sentiment.setModel(meta.getModelName() + "__v::" + meta.getModelVersion());
+
+            sentiments.add(sentiment);
+        });
+
+        document.setSentiments(sentiments);
+        logger.info("Setting Sentiments done.");
     }
 
     /**
@@ -844,6 +907,7 @@ public class Importer {
             var pageAdapters = new ArrayList<PageAdapter>();
             JCasUtil.select(jCas, OCRPage.class)
                     .forEach(p -> pageAdapters.add(new OCRPageAdapterImpl(p)));
+
             // The ABBYY Pages have no pageNumber anymore, so we count up by hand...
             var pageCount = new AtomicInteger(1);
             JCasUtil.select(jCas, org.texttechnologylab.annotation.ocr.abbyy.Page.class)
@@ -912,9 +976,22 @@ public class Importer {
     }
 
     private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage) {
-        // Set the pages for the different annotations - this is pretty horrible, but I cant be bothered right now.
+        // Set the pages for the different annotations - this is freaking horrible, but I cant be bothered right now.
+        // Update: Someone please release me from this horror that is this code.
         if (document.getSentences() != null) {
             for (var anno : document.getSentences().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getEmotions() != null) {
+            for (var anno : document.getEmotions().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getSentiments() != null) {
+            for (var anno : document.getSentiments().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
                 anno.setPage(page);
             }

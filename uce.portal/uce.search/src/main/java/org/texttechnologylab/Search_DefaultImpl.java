@@ -308,7 +308,7 @@ public class Search_DefaultImpl implements Search {
                     var possibleCommand = cleanedToken.substring(0, 3);
 
                     // Do we have a taxon rank command?
-                    if (Arrays.asList(StringUtils.TAX_RANKS).contains(possibleCommand)) {
+                    if (Arrays.asList(EnrichedSearchQuery.TAX_RANKS).contains(possibleCommand)) {
                         isTaxonCommandToken = true;
                         enrichedSearchToken.setType(EnrichedSearchTokenType.TAXON_COMMAND);
                         cleanedToken = cleanedToken.substring(3);
@@ -316,7 +316,7 @@ public class Search_DefaultImpl implements Search {
                         enrichedSearchToken.setValue(cleanedToken);
                         var finalCleanedToken = cleanedToken;
                         var speciesIds = ExceptionUtils.tryCatchLog(
-                                () -> jenaSparqlService.getSpeciesIdsOfUpperRank(StringUtils.getFullTaxonRankByCode(possibleCommand.replace("::", "")), finalCleanedToken),
+                                () -> jenaSparqlService.getSpeciesIdsOfUpperRank(EnrichedSearchQuery.getFullTaxonRankByCode(possibleCommand.replace("::", "")), finalCleanedToken),
                                 (ex) -> logger.error("Error querying species by an upper rank.", ex));
                         if (speciesIds != null) taxonIds.addAll(speciesIds);
                     }

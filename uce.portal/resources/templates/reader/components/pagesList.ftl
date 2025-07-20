@@ -37,9 +37,9 @@
             <div class="page-content">
                 <#if (page.getParagraphs())?? && page.getParagraphs()?size == 0>
                     <!--<markdown-viewer> -->
-                        <p class="paragraph">
+                        <div class="paragraph">
                             ${page.buildHTMLString(documentAnnotations, documentText)}
-                        </p>
+                        </div>
                     <!--</markdown-viewer>-->
                 <#else>
                     <#list page.getParagraphs() as paragraph>

@@ -111,10 +111,12 @@ public class DocumentApi implements UceApi {
             var corpus = db.getCorpusById(corpusId);
             var corpusConfig = CorpusConfig.fromJson(corpus.getCorpusJsonConfig());
             var documentsCount = db.countDocumentsInCorpus(corpusId);
+            var pagesCount = db.countPagesInCorpus(corpusId);
 
             model.put("corpus", corpus);
             model.put("corpusConfig", corpusConfig);
             model.put("documentsCount", documentsCount);
+            model.put("pagesCount", pagesCount);
 
         } catch (Exception ex) {
             logger.error("Error getting the corpus inspector view.", ex);

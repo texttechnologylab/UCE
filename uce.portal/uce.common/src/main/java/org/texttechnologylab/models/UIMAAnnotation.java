@@ -5,6 +5,7 @@ import lombok.Getter;
 import lombok.Setter;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.emotion.Emotion;
 import org.texttechnologylab.models.corpus.links.AnnotationLink;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
@@ -58,7 +59,7 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         return coveredText.replaceAll("<", "");
     }
 
-    public String getCoveredHtmlText(){
+    public String getCoveredHtmlText() {
         return coveredText.replaceAll(" ", "&nbsp;").replaceAll("\n", "<br/>");
     }
 
@@ -125,34 +126,43 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         // We build start and end of the annotations and store them in the TreeMap
         Map<Integer, List<UIMAAnnotation>> startTags = new TreeMap<>();
         Map<Integer, List<String>> endTags = new TreeMap<>();
+        // These topic, sentiment and emote annotations are special cases.
+        // -> But we can easily cleanup this code guys, it's redundant. - Kevin
         Map<Integer, String> topicMarkers = new TreeMap<>();
         Map<Integer, String> topicCoverWrappersStart = new TreeMap<>();
         Map<Integer, String> topicCoverWrappersEnd = new TreeMap<>();
-
+        Map<Integer, String> sentimentCoverWrappersStart = new TreeMap<>();
+        Map<Integer, String> sentimentCoverWrappersEnd = new TreeMap<>();
+        Map<Integer, String> sentimentMarkers = new TreeMap<>();
+        Map<Integer, String> emotionCoverWrappersStart = new TreeMap<>();
+        Map<Integer, String> emotionCoverWrappersEnd = new TreeMap<>();
+        Map<Integer, String> emotionMarkers = new TreeMap<>();
 
         for (var annotation : annotations) {
-            if(annotation.getCoveredText() == null){
+            if (annotation.getCoveredText() == null) {
                 //errorOffset += 1;
                 continue;
             }
-            if(annotation.getBegin() < getBegin() && annotation.getEnd() < getBegin()){
-                if(annotation.getCoveredText().isEmpty()){
+            if (annotation.getBegin() < getBegin() && annotation.getEnd() < getBegin()) {
+                if (annotation.getCoveredText().isEmpty()) {
                     errorOffset += 1;
                     continue;
                 }
             }
 
-            if (annotation.getBegin() < getBegin()
+            // We need to handle Sentiment a bit differently, as they are sentence or paragraph based annotations.
+            if (annotation.getClass() != Sentiment.class && annotation.getClass() != Emotion.class) {
+                if (annotation.getBegin() < getBegin()
                     || annotation.getEnd() > getEnd()
                     || annotation.getBegin() == annotation.getEnd()) {
-                continue;
+                    continue;
+                }
             }
 
             // So sometimes, we have broken annotations have a supposed length of "1" but really,
             // they don't as they are empty. This screws up our begin and ends though! Hence, when we
             // meet an empty annotation, track it and substract a single value of the begins and ends!
-
-            if(annotation.getCoveredText().isEmpty()){
+            if (annotation.getCoveredText().isEmpty()) {
                 errorOffset += 1;
                 continue;
             }
@@ -165,6 +175,43 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 topicCoverWrappersEnd.put(end, "</span>");
 
                 topicMarkers.put(end, topic.generateTopicMarker());
+                continue;
+            }
+
+            if (annotation instanceof Emotion emotion) {
+                var start = emotion.getBegin() - offset - errorOffset;
+                var end = emotion.getEnd() - offset - errorOffset; // marker after last char
+
+                emotionCoverWrappersStart.put(start, "<span class='emotion'>");
+                emotionCoverWrappersEnd.put(end, "</span>");
+
+                emotionMarkers.put(end, emotion.generateEmotionMarker());
+                continue;
+            }
+
+            if (annotation instanceof Sentiment sentiment) {
+                var start = sentiment.getBegin() - offset - errorOffset;
+                var end = sentiment.getEnd() - offset - errorOffset;
+                var sentimentColor = sentiment.getPrimaryColor();
+                var bgRgba = String.format(
+                        Locale.US,
+                        "rgba(%d, %d, %d, %.2f)",
+                        sentimentColor.getRed(),
+                        sentimentColor.getGreen(),
+                        sentimentColor.getBlue(),
+                        sentiment.getPrimaryValue() - 0.175 // make the highest colors less popping
+                );
+                var color = "white";
+                if (sentiment.getPrimaryValue() < 0.6) color = "var(--dark)";
+
+                var s = String.format(
+                        "<span class='sentiment' " +
+                        "style='background-color: %4$s; color:%5$s' data-type='%3$s' title='%1$s' data-wid='%2$s' data-wcovered='' " +
+                        "data-trigger='hover' data-toggle='popover' data-placement='right' data-html='true' data-content='%6$s'>",
+                        "Sentiment: " + sentiment.getWikiId(), sentiment.getWikiId(), sentiment.getPrimaryType().toUpperCase(), bgRgba, color, sentiment.getDescription());
+                sentimentCoverWrappersStart.put(start, s);
+                sentimentCoverWrappersEnd.put(end, "</span>");
+                sentimentMarkers.put(end, sentiment.generateSentimentMarker());
                 continue;
             }
 
@@ -182,11 +229,47 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         // Build the final HTML string in a single pass
         var finalText = new StringBuilder();
 
+        // If a sentiment started on the previous page, it has a key less than 0
+        var firstSentimentOpt = sentimentCoverWrappersStart
+                .keySet()
+                .stream()
+                .filter(k -> k < 0)
+                .max(Integer::compareTo);
+
+        firstSentimentOpt.ifPresent(firstSentiment -> {
+            finalText.append(sentimentCoverWrappersStart.get(firstSentiment));
+            sentimentCoverWrappersStart.remove(firstSentiment);
+        });
+
+        // Same with Emote
+        var firstEmotionOpt = emotionCoverWrappersStart
+                .keySet()
+                .stream()
+                .filter(k -> k < 0)
+                .max(Integer::compareTo);
+
+        firstEmotionOpt.ifPresent(firstEmotion -> {
+            finalText.append(emotionCoverWrappersStart.get(firstEmotion));
+            emotionCoverWrappersStart.remove(firstEmotion);
+        });
+
         // iterate +1 because we want to process the character after the last one to add the end tags
         for (int i = 0; i < coveredText.length()+1; i++) {
-            // Insert end spans first
+            // Insert the normal end spans
             if (topicCoverWrappersEnd.containsKey(i)) {
                 finalText.append(topicCoverWrappersEnd.get(i));
+            }
+
+            if (emotionMarkers.containsKey(i)) {
+                finalText.append(emotionMarkers.get(i));
+            }
+            if (emotionCoverWrappersEnd.containsKey(i)) {
+                finalText.append(emotionCoverWrappersEnd.get(i));
+                emotionCoverWrappersEnd.remove(i);
+            }
+            if (sentimentCoverWrappersEnd.containsKey(i)) {
+                finalText.append(sentimentCoverWrappersEnd.get(i));
+                sentimentCoverWrappersEnd.remove(i);
             }
             if (endTags.containsKey(i)) {
                 //finalText.append(endTags.get(i).getFirst());
@@ -198,6 +281,14 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             // Insert start spans
             if (topicCoverWrappersStart.containsKey(i)) {
                 finalText.append(topicCoverWrappersStart.get(i));
+            }
+            if (emotionCoverWrappersStart.containsKey(i)) {
+                finalText.append(emotionCoverWrappersStart.get(i));
+                emotionCoverWrappersStart.remove(i);
+            }
+            if (sentimentCoverWrappersStart.containsKey(i)) {
+                finalText.append(sentimentCoverWrappersStart.get(i));
+                sentimentCoverWrappersStart.remove(i);
             }
 
             // Insert marker after character
@@ -212,6 +303,11 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             if (i < coveredText.length()) {
                 finalText.append(coveredText.charAt(i));
             }
+        }
+
+        // If the sentiment goes over the page, we need to close all non-closed tags that are left
+        for (var entry : sentimentCoverWrappersEnd.entrySet()) {
+            finalText.append(entry.getValue());
         }
 
         // We apply some heuristic post-processing to make the text more readable.
@@ -233,9 +329,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
 
             return String.format("<span class='multi-annotation' title='%1$s'>" +
-                    "<div class='multi-annotation-popup'>" +
-                    btnsHtml.toString().replace("%", "%%") +
-                    "</div><span class='ruby-text'>", UUID.randomUUID());
+                                 "<div class='multi-annotation-popup'>" +
+                                 btnsHtml.toString().replace("%", "%%") +
+                                 "</div><span class='ruby-text'>", UUID.randomUUID());
         }
     }
 
@@ -245,11 +341,11 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu ne-%1$s' title='%2$s' data-wid='%3$s' data-wcovered='%4$s'>",
                     ne.getType(), includeTitle ? ne.getCoveredText() : "", ne.getWikiId(), ne.getCoveredText());
-        } else if(annotation instanceof GeoName geoName){
+        } else if (annotation instanceof GeoName geoName) {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu geoname' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
                     includeTitle ? geoName.getName() : "", geoName.getWikiId(), geoName.getCoveredText());
-        }else if (annotation instanceof Time time) {
+        } else if (annotation instanceof Time time) {
             return String.format(
                     "<span class='open-wiki-page annotation custom-context-menu time' title='%1$s' data-wid='%2$s' data-wcovered='%3$s'>",
                     includeTitle ? time.getCoveredText() : "", time.getWikiId(), time.getCoveredText());
