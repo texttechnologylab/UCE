@@ -108,6 +108,17 @@ public class Importer {
         this.casView = casView;
     }
 
+    public Importer(
+            ApplicationContext serviceContext,
+            int importerNumber,
+            String casView
+    ) {
+        this.importerNumber = importerNumber;
+        this.casView = casView;
+
+        initServices(serviceContext);
+    }
+
     public Importer(ApplicationContext serviceContext) {
         initServices(serviceContext);
     }
@@ -164,7 +175,7 @@ public class Importer {
     /**
      * Stores an uploaded xmi to a given corpus
      */
-    public void storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus) throws DatabaseOperationException {
+    public void storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus, String fileName, String documentId) throws DatabaseOperationException {
         logger.info("Trying to store an uploaded UIMA file...");
 
         // Before we try to parse the document, we need to check if we have UCEMetadata filters for this corpus.
@@ -174,11 +185,11 @@ public class Importer {
                     (ex) -> logger.error("Couldn't fetch UCEMetadataFilters to a corpus - this shouldn't happen. The process continues without filters.", ex));
 
         // We don't catch exceptions here, we let them be raised.
-        var doc = XMIToDocument(inputStream, corpus, "TODO: CHANGE THIS FILEPATH");
+        var doc = XMIToDocument(inputStream, corpus, fileName, documentId);
         if (doc == null)
             throw new DatabaseOperationException("The document was already imported into the corpus according to its documentId.");
         db.saveDocument(doc);
-        postProccessDocument(doc, corpus, "TODO: CHANGE THIS FILEPATH");
+        postProccessDocument(doc, corpus, fileName);
 
         logger.info("Finished storing and uploaded UIMA file.");
     }
@@ -359,13 +370,19 @@ public class Importer {
 
     /**
      * Converts an XMI inputstream to a Document.
+     * @param documentId Optional document id to use for database, useful if multiple views are imported
      */
-    public Document XMIToDocument(InputStream inputStream, Corpus corpus, String filePath) {
+    public Document XMIToDocument(InputStream inputStream, Corpus corpus, String filePath, String documentId) {
         try {
             var jCas = JCasFactory.createJCas();
             CasIOUtils.load(inputStream, null, jCas.getCas(), CasLoadMode.LENIENT);
 
-            return XMIToDocument(jCas, corpus, filePath);
+            // NOTE we need to specify the view here, the serialized data is the full CAS even when starting with a selected view
+            if (casView != null) {
+                jCas = jCas.getView(casView);
+            }
+
+            return XMIToDocument(jCas, corpus, filePath, documentId);
         } catch (Exception ex) {
             logger.error("Error while reading an annotated xmi file from stream to a cas and transforming it into a document:", ex);
             return null;
@@ -434,10 +451,15 @@ public class Importer {
         return null; // Unsupported
     }
 
+    public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath) {
+        return XMIToDocument(jCas, corpus, filePath, null);
+    }
+
     /**
      * Convert a UIMA jCas to an OCRDocument
+     * @param documentId Optional document id to use for database, useful if multiple views are imported
      */
-    public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath) {
+    public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath, String documentId) {
 
         logger.info("=============================== Importing a new CAS as a Document. ===============================");
 
@@ -457,6 +479,11 @@ public class Importer {
             if (metadata == null) {
                 // If the metadata block is missing, something is off. In that case, return null
                 return null;
+            }
+            // NOTE this could also be done by the import-caller, but having the document id as a parameter makes it much easier
+            if (documentId != null) {
+                logger.info("Setting document id from \"" + metadata.getDocumentId() + "\" to \"" + documentId + "\"");
+                metadata.setDocumentId(documentId);
             }
             var document = new Document(metadata.getLanguage(),
                     metadata.getDocumentTitle(),
