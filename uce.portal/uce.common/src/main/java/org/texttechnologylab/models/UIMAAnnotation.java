@@ -1,21 +1,18 @@
 package org.texttechnologylab.models;
 
-import io.micrometer.common.lang.Nullable;
 import lombok.Getter;
 import lombok.Setter;
-import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.corpus.links.AnnotationLink;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
-import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
+import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.*;
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 @MappedSuperclass
 public class UIMAAnnotation extends ModelBase implements Linkable {
@@ -50,6 +47,12 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
     @Setter
     @Column(name = "page_id", insertable = false, updatable = false)
     private Long pageId;
+
+    @Getter
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "model_version_id", nullable = true)
+    private ModelVersion modelVersion;
 
     public String getCoveredText() {
         if (coveredText == null) {

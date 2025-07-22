@@ -3,7 +3,7 @@
     <!-- uce corporate data -->
     <div class="mt-5 uce-description">
         <div class="flexed align-items-center justify-content-between">
-            <h5 class="color-prime mb-0">${uceConfig.getMeta().getName()?trim!"-"}</h5>
+            <h5 class="color-prime mb-0 clickable" onclick="$(this).parent().next('.content').toggle(50)">${uceConfig.getMeta().getName()?trim!"-"}</h5>
             <button class="btn" onclick="$(this).parent().next('.content').toggle(50)">
                 <i class="fas fa-info-circle color-prime large-font"></i>
             </button>

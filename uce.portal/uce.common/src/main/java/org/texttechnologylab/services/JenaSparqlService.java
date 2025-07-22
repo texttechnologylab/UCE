@@ -326,7 +326,7 @@ public class JenaSparqlService {
         var rankCommand = "SELECT distinct ?subject WHERE {\n" +
                 "  ?subject <http://rs.tdwg.org/dwc/terms/taxonRank> \"{RANK}\"^^<xsd:string> . " +
                 "  ?subject <http://rs.tdwg.org/dwc/terms/cleanedScientificName> \"{NAME}\" . " +
-                "} LIMIT 10";
+                "} LIMIT 1";
         rankCommand = rankCommand.replace("{RANK}", rank).replace("{NAME}", name);
         var result = executeCommand(rankCommand, RDFSelectQueryDto.class);
 

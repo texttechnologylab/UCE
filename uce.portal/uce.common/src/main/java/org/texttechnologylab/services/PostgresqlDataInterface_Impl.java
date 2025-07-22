@@ -8,6 +8,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.type.LongType;
 import org.hibernate.type.StandardBasicTypes;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
@@ -20,7 +21,6 @@ import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
-import org.texttechnologylab.models.corpus.Time;
 import org.texttechnologylab.models.corpus.links.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.dto.map.MapClusterDto;
@@ -31,6 +31,10 @@ import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
+import org.texttechnologylab.models.modelInfo.Model;
+import org.texttechnologylab.models.modelInfo.ModelCategory;
+import org.texttechnologylab.models.modelInfo.ModelVersion;
+import org.texttechnologylab.models.modelInfo.NamedModel;
 import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
@@ -45,7 +49,10 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
-import java.sql.*;
+import java.sql.Array;
+import java.sql.PreparedStatement;
+import java.sql.ResultSet;
+import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
 
@@ -212,6 +219,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var criteria = session.createCriteria(Document.class);
             criteria.add(Restrictions.eq("corpusId", id));
+            criteria.setProjection(Projections.rowCount());
+            return Math.toIntExact((Long) criteria.uniqueResult());
+        });
+    }
+
+    @SuppressWarnings("deprecation")
+    public int countPagesInCorpus(long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(Page.class, "page");
+            criteria.createAlias("page.document", "document");
+            criteria.add(Restrictions.eq("document.corpusId", corpusId));
             criteria.setProjection(Projections.rowCount());
             return Math.toIntExact((Long) criteria.uniqueResult());
         });
@@ -1165,7 +1183,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-
     public Document getDocumentByCorpusAndDocumentId(long corpusId, String documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var cb = session.getCriteriaBuilder();
@@ -1183,7 +1200,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             Document doc = session.createQuery(criteriaQuery).uniqueResult();
 
             if (doc != null) {
-                initializeCompleteDocument(doc, 0, 999999);
+                //initializeCompleteDocument(doc, 0, 999999);
             }
             return doc;
         });
@@ -1268,18 +1285,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public GeoName getGeoNameAnnotationById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(GeoName.class, id));
-    }
-
-    public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(Time.class, id));
-    }
-
-    public Sentence getSentenceAnnotationById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(Sentence.class, id));
-    }
-
     public long countLexiconEntries() throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
@@ -1295,29 +1300,74 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(NamedEntity.class, id));
+        return executeOperationSafely((session) -> {
+            var entity = session.get(NamedEntity.class, id);
+            Hibernate.initialize(entity.getPage());
+            return entity;
+        });
     }
 
     public GazetteerTaxon getGazetteerTaxonById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(GazetteerTaxon.class, id));
+        return executeOperationSafely((session) -> {
+            var taxon = session.get(GazetteerTaxon.class, id);
+            Hibernate.initialize(taxon.getPage());
+            return taxon;
+        });
     }
 
     public GnFinderTaxon getGnFinderTaxonById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(GnFinderTaxon.class, id));
+        return executeOperationSafely((session) -> {
+            var taxon = session.get(GnFinderTaxon.class, id);
+            Hibernate.initialize(taxon.getPage());
+            return taxon;
+        });
     }
 
     public BiofidTaxon getBiofidTaxonById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(BiofidTaxon.class, id));
+        return executeOperationSafely((session) -> {
+            var taxon = session.get(BiofidTaxon.class, id);
+            Hibernate.initialize(taxon.getPage());
+            return taxon;
+        });
+    }
+
+    public GeoName getGeoNameAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var geo = session.get(GeoName.class, id);
+            Hibernate.initialize(geo.getPage());
+            return geo;
+        });
+    }
+
+    public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var time = session.get(Time.class, id);
+            Hibernate.initialize(time.getPage());
+            return time;
+        });
+    }
+
+    public Sentence getSentenceAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var sentence = session.get(Sentence.class, id);
+            Hibernate.initialize(sentence.getPage());
+            return sentence;
+        });
     }
 
     public Lemma getLemmaById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(Lemma.class, id));
+        return executeOperationSafely((session) -> {
+            var lemma = session.get(Lemma.class, id);
+            Hibernate.initialize(lemma.getPage());
+            return lemma;
+        });
     }
 
     public CompleteNegation getCompleteNegationById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var neg = session.get(CompleteNegation.class, id);
             Hibernate.initialize(neg);
+            Hibernate.initialize(neg.getPage());
             return neg;
         });
     }
@@ -1333,6 +1383,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             try {
                 CompleteNegation neg = query.getSingleResult();
                 Hibernate.initialize(neg); // Ensure lazy-loaded properties are initialized
+                Hibernate.initialize(neg.getPage());
                 return neg;
             } catch (NoResultException e) {
                 return null; // Or throw an exception if no result is an error case
@@ -1391,6 +1442,97 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return emotionType;
         });
     }
+
+    public synchronized Model getOrCreateModel(String modelName) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(Model.class);
+            var root = criteriaQuery.from(Model.class);
+            criteriaQuery.select(root).where(criteriaBuilder.equal(root.get("name"), modelName));
+
+            List<Model> models = session.createQuery(criteriaQuery).getResultList();
+            if (models.isEmpty()) {
+                Model newModel = new Model(modelName);
+                session.save(newModel);
+                return newModel;
+            } else {
+                return models.getFirst();
+            }
+        });
+    }
+
+    public synchronized ModelVersion getOrCreateModelVersion(Model model, String version) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(ModelVersion.class);
+            var root = criteriaQuery.from(ModelVersion.class);
+            criteriaQuery.select(root).where(
+                    criteriaBuilder.and(
+                            criteriaBuilder.equal(root.get("model"), model),
+                            criteriaBuilder.equal(root.get("version"), version)
+                    )
+            );
+
+            List<ModelVersion> versions = session.createQuery(criteriaQuery).getResultList();
+            if (versions.isEmpty()) {
+                ModelVersion newVersion = new ModelVersion(model, version);
+                session.save(newVersion);
+                return newVersion;
+            } else {
+                return versions.getFirst();
+            }
+        });
+    }
+
+    public ModelVersion getOrCreateModelVersion(String modelName, String version) throws DatabaseOperationException {
+        Model model = getOrCreateModel(modelName);
+        return getOrCreateModelVersion(model, version);
+    }
+
+    public synchronized ModelCategory getOrCreateModelCategory(String categoryName) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(ModelCategory.class);
+            var root = criteriaQuery.from(ModelCategory.class);
+            criteriaQuery.select(root).where(criteriaBuilder.equal(root.get("categoryName"), categoryName));
+
+            List<ModelCategory> categories = session.createQuery(criteriaQuery).getResultList();
+            if (categories.isEmpty()) {
+                ModelCategory newCategory = new ModelCategory(categoryName);
+                session.save(newCategory);
+                return newCategory;
+            } else {
+                return categories.getFirst();
+            }
+        });
+    }
+
+    public ModelCategory getOrCreateModelCategory(@NotNull Class<?> modelClass) throws DatabaseOperationException {
+        NamedModel namedModel = modelClass.getAnnotation(NamedModel.class);
+        if (namedModel == null) {
+            throw new IllegalArgumentException("The class " + modelClass.getName() + " is not annotated with @NamedModel.");
+        }
+        return getOrCreateModelCategory(namedModel.name());
+    }
+
+    public synchronized void registerModelToCategoryAssociation(Model model, ModelCategory category) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            // First, ensure the model and category are managed entities
+            Model managedModel = session.get(Model.class, model.getId());
+            ModelCategory managedCategory = session.get(ModelCategory.class, category.getId());
+            if (managedModel == null || managedCategory == null) {
+                throw new IllegalArgumentException("Model or Category not found in the database.");
+            }
+            // Add the category to the model's categories
+            managedModel.getCategories().add(managedCategory);
+            // Add the model to the category's models
+            managedCategory.getModels().add(managedModel);
+            // Save the changes
+            session.saveOrUpdate(managedModel);
+            return null;
+        });
+    }
+
 
     public <T extends KeywordDistribution> List<T> getKeywordDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {

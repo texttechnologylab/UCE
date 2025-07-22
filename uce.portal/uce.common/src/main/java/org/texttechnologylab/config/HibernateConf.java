@@ -19,6 +19,9 @@ import org.texttechnologylab.models.emotion.EmotionValue;
 import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
+import org.texttechnologylab.models.modelInfo.Model;
+import org.texttechnologylab.models.modelInfo.ModelCategory;
+import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
@@ -87,6 +90,10 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(Emotion.class);
         metadataSources.addAnnotatedClass(EmotionValue.class);
         metadataSources.addAnnotatedClass(EmotionType.class);
+        // model info
+        metadataSources.addAnnotatedClass(Model.class);
+        metadataSources.addAnnotatedClass(ModelVersion.class);
+        metadataSources.addAnnotatedClass(ModelCategory.class);
 
         metadataSources.addAnnotatedClass(DocumentTopThreeTopics.class);
         var metadata = metadataSources.buildMetadata();
