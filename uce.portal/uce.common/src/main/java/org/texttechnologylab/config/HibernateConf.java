@@ -17,6 +17,7 @@ import org.texttechnologylab.models.gbif.GbifOccurrence;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.modelInfo.Model;
+import org.texttechnologylab.models.modelInfo.ModelCategory;
 import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
@@ -85,6 +86,7 @@ public class HibernateConf {
         // model info
         metadataSources.addAnnotatedClass(Model.class);
         metadataSources.addAnnotatedClass(ModelVersion.class);
+        metadataSources.addAnnotatedClass(ModelCategory.class);
 
         metadataSources.addAnnotatedClass(DocumentTopThreeTopics.class);
         var metadata = metadataSources.buildMetadata();
