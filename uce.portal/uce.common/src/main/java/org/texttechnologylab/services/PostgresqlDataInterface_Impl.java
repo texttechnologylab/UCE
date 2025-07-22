@@ -29,6 +29,7 @@ import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.modelInfo.Model;
+import org.texttechnologylab.models.modelInfo.ModelCategory;
 import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
@@ -1450,6 +1451,38 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Model model = getOrCreateModel(modelName);
         return getOrCreateModelVersion(model, version);
     }
+
+    public synchronized ModelCategory getOrCreateModelCategory(String categoryName) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(ModelCategory.class);
+            var root = criteriaQuery.from(ModelCategory.class);
+            criteriaQuery.select(root).where(criteriaBuilder.equal(root.get("categoryName"), categoryName));
+
+            List<ModelCategory> categories = session.createQuery(criteriaQuery).getResultList();
+            if (categories.isEmpty()) {
+                ModelCategory newCategory = new ModelCategory(categoryName);
+                session.save(newCategory);
+                return newCategory;
+            } else {
+                return categories.getFirst();
+            }
+        });
+    }
+
+    public synchronized void registerModelToCategoryAssociation(Model model, ModelCategory category) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            // Add the association
+            model.getCategories().add(category);
+            category.getModels().add(model);
+
+            // Save the changes
+            session.saveOrUpdate(model);
+            session.saveOrUpdate(category);
+            return null;
+        });
+    }
+
 
     public <T extends KeywordDistribution> List<T> getKeywordDistributionsByString(Class<T> clazz, String topic, int limit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
