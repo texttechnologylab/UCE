@@ -1472,13 +1472,18 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public synchronized void registerModelToCategoryAssociation(Model model, ModelCategory category) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
-            // Add the association
-            model.getCategories().add(category);
-            category.getModels().add(model);
-
+            // First, ensure the model and category are managed entities
+            Model managedModel = session.get(Model.class, model.getId());
+            ModelCategory managedCategory = session.get(ModelCategory.class, category.getId());
+            if (managedModel == null || managedCategory == null) {
+                throw new IllegalArgumentException("Model or Category not found in the database.");
+            }
+            // Add the category to the model's categories
+            managedModel.getCategories().add(managedCategory);
+            // Add the model to the category's models
+            managedCategory.getModels().add(managedModel);
             // Save the changes
-            session.saveOrUpdate(model);
-            session.saveOrUpdate(category);
+            session.saveOrUpdate(managedModel);
             return null;
         });
     }
