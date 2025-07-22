@@ -23,7 +23,7 @@ public class Model extends ModelBase {
 
     @Getter
     @Setter
-    @ManyToMany(mappedBy = "models")
+    @ManyToMany
     @Fetch(FetchMode.JOIN)
     private Set<ModelCategory> categories;
 
