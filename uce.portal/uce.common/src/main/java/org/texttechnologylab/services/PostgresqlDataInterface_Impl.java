@@ -8,6 +8,7 @@ import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.type.LongType;
 import org.hibernate.type.StandardBasicTypes;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.stereotype.Service;
 import org.texttechnologylab.annotations.Searchable;
 import org.texttechnologylab.config.HibernateConf;
@@ -31,6 +32,7 @@ import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.modelInfo.Model;
 import org.texttechnologylab.models.modelInfo.ModelCategory;
 import org.texttechnologylab.models.modelInfo.ModelVersion;
+import org.texttechnologylab.models.modelInfo.NamedModel;
 import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
@@ -1468,6 +1470,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 return categories.getFirst();
             }
         });
+    }
+
+    public ModelCategory getOrCreateModelCategory(@NotNull Class<?> modelClass) throws DatabaseOperationException {
+        NamedModel namedModel = modelClass.getAnnotation(NamedModel.class);
+        if (namedModel == null) {
+            throw new IllegalArgumentException("The class " + modelClass.getName() + " is not annotated with @NamedModel.");
+        }
+        return getOrCreateModelCategory(namedModel.name());
     }
 
     public synchronized void registerModelToCategoryAssociation(Model model, ModelCategory category) throws DatabaseOperationException {
