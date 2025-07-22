@@ -8,6 +8,7 @@ import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.modelInfo.NamedModel;
 import org.texttechnologylab.utils.Pair;
 
 import javax.persistence.*;
@@ -18,6 +19,7 @@ import java.util.UUID;
 @Entity
 @Table(name = "emotion")
 @Typesystem(types = {org.texttechnologylab.annotation.Emotion.class})
+@NamedModel(name = "emotion")
 public class Emotion extends UIMAAnnotation implements WikiModel {
 
     @Getter

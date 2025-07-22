@@ -293,7 +293,7 @@
                         <div class="custom-control custom-switch search-pro-mode-switch"
                              data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
                              data-content="${languageResource.get("searchProModeDescription")}">
-                            <input type="checkbox" class="custom-control-input" id="proModeSwitch">
+                            <input type="checkbox" class="custom-control-input" checked id="proModeSwitch">
                             <label class="font-weight-bold font-italic custom-control-label flexed align-items-center"
                                    for="proModeSwitch">
                                 Pro
@@ -382,7 +382,7 @@
                                         <#assign enrichDisabled = 'disabled'>
                                     </#if>-->
                                     <label class="mb-0 w-100 small-font mr-3">Enrich</label>
-                                    <input type="checkbox" data-id="ENRICH"/>
+                                    <input type="checkbox" data-id="ENRICH" checked/>
                                 </div>
                             </div>
                         </div>
@@ -479,7 +479,7 @@
                                             </div>
                                             <!-- img -->
                                             <div class="flexed align-items-center justify-content-center text-center h-100">
-                                                <img src="${member.getImage()!""}"/>
+                                                <img src="${member.getImage()!"/img/user.png"}"/>
                                             </div>
                                         </div>
                                     </div>
@@ -510,7 +510,7 @@
         <div class="row m-0 p-0 w-100 h-100">
 
             <!-- contacts -->
-            <div class="col-sm-3 color-secondary m-0 justify-content-center flexed">
+            <div class="col-sm-3 text-dark m-0 justify-content-center flexed">
                 <div class="group-box bg-light mb-0">
                     <h6 class="text-left color-prime">${languageResource.get("contact")}</h6>
                     <div class="small-font text-left">
@@ -531,7 +531,7 @@
             </div>
 
             <!-- add more footer here later -->
-            <div class="col-sm-6 color-secondary w-100 m-0 flexed justify-content-center">
+            <div class="col-sm-6 text-dark w-100 m-0 flexed justify-content-center">
                 <div class="group-box bg-light mb-0">
                     <h6 class="text-dark">Powered by the <a href="https://texttechnologylab.github.io/UCE/"
                                                             target="_blank">Unified Corpus Explorer</a></h6>
@@ -543,7 +543,7 @@
             </div>
 
             <!-- TTLab -->
-            <div class="col-md-3 color-secondary text-right justify-content-center">
+            <div class="col-md-3 text-dark text-right justify-content-center">
                 <div class="group-box bg-light mb-0">
                     <a href="https://www.texttechnologylab.org/" target="_blank">
                         <h6 class="color-prime">Text Technology Lab</h6>
@@ -561,7 +561,7 @@
 </footer>
 
 <script type="module">
-    <#include "js/corpusUniverse.js">
+    <#--<#include "js/corpusUniverse.js">-->
 </script>
 <script type="module">
     <#include "js/graphViz.js">

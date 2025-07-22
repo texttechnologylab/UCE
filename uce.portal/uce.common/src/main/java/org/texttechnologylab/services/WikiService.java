@@ -33,6 +33,7 @@ public class WikiService {
         viewModel.setAnnotationType("Corpus");
         viewModel.setCorpus(corpus.getViewModel());
         viewModel.setDocumentsCount(db.countDocumentsInCorpus(corpusId));
+        viewModel.setPagesCount(db.countPagesInCorpus(corpusId));
         viewModel.setNormalizedTopicWords(db.getNormalizedTopicWordsForCorpus(corpusId));
         viewModel.setTopicDistributions(db.getTopNormalizedTopicsByCorpusId(corpusId));
 
@@ -58,6 +59,7 @@ public class WikiService {
         viewModel.setDocument(db.getDocumentById(lemma.getDocumentId()));
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
         viewModel.setCoveredText(coveredText);
+        viewModel.setPage(lemma.getPage());
         viewModel.setAnnotationType("Lemma");
 
         var kwicState = new KeywordInContextState();
@@ -76,6 +78,7 @@ public class WikiService {
         var negation = db.getCompleteNegationByCueId(id);
         var cue = negation.getCue();
         viewModel.setWikiModel(cue);
+        viewModel.setPage(cue.getPage());
         viewModel.setDocument(db.getDocumentById(negation.getDocument().getId()));
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
         viewModel.setCoveredText(coveredText);
@@ -100,6 +103,7 @@ public class WikiService {
         var viewModel = new UnifiedTopicWikiPageViewModel();
         var unifiedTopic = db.getInitializedUnifiedTopicById(id);
         viewModel.setWikiModel(unifiedTopic);
+        viewModel.setPage(unifiedTopic.getPage());
         viewModel.setDocument(db.getDocumentById(unifiedTopic.getDocument().getId()));
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
         viewModel.setCoveredText(coveredText);
@@ -182,7 +186,8 @@ public class WikiService {
         viewModel.setAnnotatedBy(clazz.getSimpleName());
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(taxon.getBegin(), taxon.getEnd(), taxon.getDocumentId()));
         viewModel.setWikiModel(taxon);
-        viewModel.setOdds(-1);
+        viewModel.setPage(taxon.getPage());
+        viewModel.setOdds(1);
         if(clazz == GnFinderTaxon.class)
             viewModel.setOdds(MathUtils.log10OddsToProbability(((GnFinderTaxon)taxon).getOddsLog10()));
         // We are not interested in the standard w3 XML triplets
@@ -219,6 +224,7 @@ public class WikiService {
         viewModel.setCoveredText(sentence.getCoveredText());
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(sentence.getBegin(), sentence.getEnd(), sentence.getDocumentId()));
         viewModel.setWikiModel(sentence);
+        viewModel.setPage(sentence.getPage());
         viewModel.setDocument(db.getDocumentById(sentence.getDocumentId()));
         viewModel.setAnnotationType("Sentence");
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
@@ -241,6 +247,7 @@ public class WikiService {
         var geoName = db.getGeoNameAnnotationById(id);
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(geoName.getBegin(), geoName.getEnd(), geoName.getDocumentId()));
         viewModel.setWikiModel(geoName);
+        viewModel.setPage(geoName.getPage());
         viewModel.setDocument(db.getDocumentById(geoName.getDocumentId()));
         viewModel.setAnnotationType("GeoName");
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
@@ -265,6 +272,7 @@ public class WikiService {
         viewModel.setCoveredText(coveredText);
         // Currently, Time is handled like a NamedEntity.
         var time = db.getTimeAnnotationById(id);
+        viewModel.setPage(time.getPage());
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(time.getBegin(), time.getEnd(), time.getDocumentId()));
         viewModel.setWikiModel(time);
         viewModel.setDocument(db.getDocumentById(time.getDocumentId()));
@@ -292,6 +300,7 @@ public class WikiService {
         var ner = db.getNamedEntityById(id);
         viewModel.setLemmas(db.getLemmasWithinBeginAndEndOfDocument(ner.getBegin(), ner.getEnd(), ner.getDocumentId()));
         viewModel.setWikiModel(ner);
+        viewModel.setPage(ner.getPage());
         viewModel.setDocument(db.getDocumentById(ner.getDocumentId()));
         viewModel.setAnnotationType("Named-Entity");
         viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());

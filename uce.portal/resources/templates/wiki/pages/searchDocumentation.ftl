@@ -317,6 +317,7 @@
                                 <li class="text"><b class="color-secondary">O::</b>'Order Name'</li>
                                 <li class="text"><b class="color-secondary">F::</b>'Family Name'</li>
                                 <li class="text"><b class="color-secondary">G::</b>'Genus Name'</li>
+                                <li class="text"><b class="color-secondary">S::</b>'Species Name'</li>
                             </ul>
                         </div>
                     </div>
@@ -438,7 +439,7 @@
                                 This logic applies to all other available commands, which include
                             </p>
                             <ul>
-                                <li class="text"><b class="color-secondary">S::</b> 'Season', so Winter, Summer, Spring and Fall.</li>
+                                <li class="text"><b class="color-secondary">E::</b> 'S<b>e</b>ason', so Winter, Summer, Spring and Fall.</li>
                                 <li class="text"><b class="color-secondary">M::</b> 'Month', so February, March, etc.</li>
                                 <li class="text"><b class="color-secondary">D::</b> 'Day', but in terms of a number from 1 to 31.</li>
                             </ul>

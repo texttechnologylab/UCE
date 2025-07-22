@@ -25,16 +25,29 @@ import java.util.stream.Stream;
 public class EnrichedSearchQuery {
     public static final String[] QUERY_OPERATORS = {"&", "|", "!", "<->", "(", ")"};
     // https://en.wikipedia.org/wiki/Taxonomic_rank#:~:text=Main%20ranks,-In%20his%20landmark&text=Today%2C%20the%20nomenclature%20is%20regulated,family%2C%20genus%2C%20and%20species.
-    public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::"};
+    public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::", "S::"};
     public static final String[] LOCATION_COMMANDS = {"LOC::", "R::"};
-    public static final String[] TIME_COMMANDS = {"Y::", "M::", "D::", "S::", "T::"};
+    public static final String[] TIME_COMMANDS = {"Y::", "M::", "D::", "E::", "T::"};
+
+    public static String getFullTaxonRankByCode(String code) {
+        return switch (code) {
+            case "C" -> "class";
+            case "F" -> "family";
+            case "K" -> "kingdom";
+            case "P" -> "phylum";
+            case "O" -> "order";
+            case "G" -> "genus";
+            case "S" -> "species";
+            default -> null;
+        };
+    }
 
     public static String getFullTimeUnitByCode(String code) {
         return switch (code) {
             case "Y" -> "year";
             case "M" -> "month";
             case "D" -> "day";
-            case "S" -> "season";
+            case "E" -> "season";
             case "T" -> "range";
             default -> null;
         };
@@ -249,7 +262,7 @@ public class EnrichedSearchQuery {
         enrichedToken.setValue(value);
 
         var speciesIds = jenaSparqlService.getSpeciesIdsOfUpperRank(
-                StringUtils.getFullTaxonRankByCode(command.replace("::", "")), value);
+                getFullTaxonRankByCode(command.replace("::", "")), value);
         var names = jenaSparqlService.getAlternativeNamesOfTaxons(speciesIds);
 
         if (names == null || names.isEmpty()) {
@@ -277,7 +290,7 @@ public class EnrichedSearchQuery {
         var names = jenaSparqlService.getAlternativeNamesOfTaxons(taxonIds);
         if (names == null || names.isEmpty()) {
             query.append(originalToken).append(" ");
-            return false;
+            return true;
         }
 
         appendEnrichedNames(query, names, originalToken.replaceAll("__", " "), delimiter, or);

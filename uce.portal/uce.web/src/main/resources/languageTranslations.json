@@ -216,8 +216,8 @@
     "en-EN": "Include <b>K</b>ey<b>w</b>ord <b>I</b>n <b>C</b>ontext view. Shows the usage of the search terms within each document, but may slow down the search a little to strongly."
   },
   "nerSearch": {
-    "de-DE": "Named-Entity Suche. Betrachtet beim Durchsuchen nur extrahierte Eigennamen.",
-    "en-EN": "Named-Entity search. Only considers extracted proper names when searching."
+    "de-DE": "Named-Entity Suche. Betrachtet beim Durchsuchen nur extrahierte Eigennamen. Das Feature ist momentan deaktiviert in UCE.",
+    "en-EN": "Named-Entity search. Only considers extracted proper names when searching. Feature is currently disabled within UCE."
   },
   "fulltextSearch": {
     "de-DE": "Eine Volltextsuche, die alle Texte in allen Dokumente durchsucht.",
@@ -236,8 +236,8 @@
     "en-EN": "The relevance of the document to the given search query. A higher value indicates a higher relevance of the document."
   },
   "searchProModeDescription": {
-    "de-DE": "Aktiviert den Pro-Modus der Suche, der es Ihnen ermöglicht, Suchen mit logischen Operatoren wie <b>&, |, !</b> und anderen zu erstellen.",
-    "en-EN": "Activates the Pro mode of the search, which allows you to build searches using logical operators such as <b>&, |, !</b> and others."
+    "de-DE": "Aktiviert den Pro-Modus der Suche, der es Ihnen ermöglicht, Suchen mit logischen Operatoren wie <b>&, |, !</b> und anderen zu erstellen. Der Pro-Modus ist jedoch mit syntaktischen Anforderungen verbunden, die Sie in der Suchdokumentation nachlesen können, indem Sie auf das Fragezeichen klicken.",
+    "en-EN": "Activates the Pro mode of the search, which allows you to create searches with logical operators such as <b>&, |, !</b> and others. However, Pro mode is associated with syntactic requirements, which you can read about in the search documentation by clicking on the question mark."
   },
   "openSearchDocumentation": {
     "de-DE": "Öffnet die Suchdokumentation.",
@@ -406,6 +406,10 @@
   "documents": {
     "de-DE": "Dokumente",
     "en-EN": "Documents"
+  },
+  "pages": {
+    "de-DE": "Seiten",
+    "en-EN": "Pages"
   },
   "corpusTsnePlotMissing": {
     "de-DE": "Die Korpus-Überblick konnte nicht geladen werden, da keine oder nicht genügend annotierte embeddings vorhanden sind.",

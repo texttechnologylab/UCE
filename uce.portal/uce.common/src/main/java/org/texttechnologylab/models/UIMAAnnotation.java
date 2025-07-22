@@ -7,6 +7,7 @@ import org.texttechnologylab.models.corpus.links.AnnotationLink;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.emotion.Emotion;
+import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.utils.StringUtils;
@@ -47,6 +48,12 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
     @Setter
     @Column(name = "page_id", insertable = false, updatable = false)
     private Long pageId;
+
+    @Getter
+    @Setter
+    @ManyToOne(fetch = FetchType.LAZY, optional = true)
+    @JoinColumn(name = "model_version_id", nullable = true)
+    private ModelVersion modelVersion;
 
     public String getCoveredText() {
         if (coveredText == null) {
