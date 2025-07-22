@@ -22,8 +22,14 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotation.AnnotationComment;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.geonames.GeoNamesEntity;
-import org.texttechnologylab.annotation.link.*;
-import org.texttechnologylab.annotation.ocr.*;
+import org.texttechnologylab.annotation.link.ADLink;
+import org.texttechnologylab.annotation.link.DALink;
+import org.texttechnologylab.annotation.link.DLink;
+import org.texttechnologylab.annotation.model.MetaData;
+import org.texttechnologylab.annotation.ocr.OCRBlock;
+import org.texttechnologylab.annotation.ocr.OCRLine;
+import org.texttechnologylab.annotation.ocr.OCRPage;
+import org.texttechnologylab.annotation.ocr.OCRToken;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
@@ -46,6 +52,9 @@ import org.texttechnologylab.models.emotion.EmotionValue;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.LogStatus;
+import org.texttechnologylab.models.modelInfo.Model;
+import org.texttechnologylab.models.modelInfo.ModelCategory;
+import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
@@ -55,7 +64,6 @@ import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.*;
-import org.texttechnologylab.models.negation.CompleteNegation;
 
 import java.io.*;
 import java.nio.file.Files;
@@ -144,13 +152,13 @@ public class Importer {
     public void start(int numThreads) throws DatabaseOperationException {
         logger.info(
                 "\n _   _ _____  _____   _____                           _   \n" +
-                "| | | /  __ \\|  ___| |_   _|                         | |  \n" +
-                "| | | | /  \\/| |__     | | _ __ ___  _ __   ___  _ __| |_ \n" +
-                "| | | | |    |  __|    | || '_ ` _ \\| '_ \\ / _ \\| '__| __|\n" +
-                "| |_| | \\__/\\| |___   _| || | | | | | |_) | (_) | |  | |_ \n" +
-                " \\___/ \\____/\\____/   \\___/_| |_| |_| .__/ \\___/|_|   \\__|\n" +
-                "                                    | |                   \n" +
-                "                                    |_|"
+                        "| | | /  __ \\|  ___| |_   _|                         | |  \n" +
+                        "| | | | /  \\/| |__     | | _ __ ___  _ __   ___  _ __| |_ \n" +
+                        "| | | | |    |  __|    | || '_ ` _ \\| '_ \\ / _ \\| '__| __|\n" +
+                        "| |_| | \\__/\\| |___   _| || | | | | | |_) | (_) | |  | |_ \n" +
+                        " \\___/ \\____/\\____/   \\___/_| |_| |_| .__/ \\___/|_|   \\__|\n" +
+                        "                                    | |                   \n" +
+                        "                                    |_|"
         );
         logger.info("===========> Global Import Id: " + importId);
         logger.info("===========> Importer Number: " + importerNumber);
@@ -212,7 +220,7 @@ public class Importer {
                 final var corpusConfig1 = corpusConfig; // This sucks so hard - why doesn't java just do this itself if needed?
                 var existingCorpus = ExceptionUtils.tryCatchLog(() -> db.getCorpusByName(corpusConfig1.getName()),
                         (ex) -> logger.error("Error getting an existing corpus by name. The corpus config should probably be changed " +
-                                             "to not add to existing corpus then.", ex));
+                                "to not add to existing corpus then.", ex));
 
                 if (existingCorpus != null) { // If we have the corpus, use that. Else store the new corpus.
                     corpus = existingCorpus;
@@ -472,7 +480,7 @@ public class Importer {
             var exists = db.documentExists(corpus.getId(), document.getDocumentId());
             if (exists) {
                 logger.info("Document with id " + document.getDocumentId()
-                            + " already exists in the corpus " + corpus.getId() + ".");
+                        + " already exists in the corpus " + corpus.getId() + ".");
                 logger.info("Checking if that document was also post-processed yet...");
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
                 if (!existingDoc.isPostProcessed()) {
@@ -829,8 +837,8 @@ public class Importer {
             if (documentAnnotation != null) {
                 try {
                     metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
-                                                   + documentAnnotation.getDateMonth() + "."
-                                                   + documentAnnotation.getDateYear());
+                            + documentAnnotation.getDateMonth() + "."
+                            + documentAnnotation.getDateYear());
                     metadataTitleInfo.setAuthor(documentAnnotation.getAuthor());
                 } catch (Exception ex) {
                     logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
@@ -1430,11 +1438,29 @@ public class Importer {
      * Selects and sets the emotions to a document
      */
     private void setEmotion(Document document, JCas jCas) {
+        ModelCategory modelCategory;
+        try {
+            modelCategory = db.getOrCreateModelCategory(Emotion.class);
+        } catch (DatabaseOperationException e) {
+            logger.error("Error while getting or creating model category for Emotion", e);
+            return;
+        }
+
         List<Emotion> emotions = new ArrayList<>();
 
         JCasUtil.select(jCas, org.texttechnologylab.annotation.Emotion.class).forEach(e -> {
             Emotion emotion = new Emotion(e.getBegin(), e.getEnd());
             emotion.setDocument(document);
+            try {
+                MetaData modelMetaData = e.getModel();
+                Model model = db.getOrCreateModel(modelMetaData.getModelName());
+                ModelVersion modelVersion = db.getOrCreateModelVersion(model, modelMetaData.getModelVersion());
+                emotion.setModelVersion(modelVersion);
+                db.registerModelToCategoryAssociation(model, modelCategory);
+            } catch (DatabaseOperationException ex) {
+                logger.error("Error while getting or creating model for Emotion", ex);
+                return;
+            }
 
             FSArray<AnnotationComment> emotionAnnotations = e.getEmotions();
             List<EmotionValue> emotionValues = new ArrayList<>();
