@@ -295,8 +295,7 @@ var GraphVizHandler = (function () {
         target,
         title,
         config,
-        tooltipFormatter,
-        onClick = null
+        tooltipFormatter
     ) {
         const chartId = generateUUID();
 
@@ -448,10 +447,6 @@ var GraphVizHandler = (function () {
         this.activeCharts[chartId] = echart;
         echart.setChartId(chartId);
 
-        if (onClick && typeof onClick === 'function') {
-            echart.getInstance().on('click', onClick);
-        }
-
         return echart;
     };
 
@@ -459,7 +454,8 @@ var GraphVizHandler = (function () {
         chartId,
         title,
         config,
-        tooltipFormatter) {
+        tooltipFormatter
+    ) {
         const echart = this.getChartById(chartId);
         if (!echart) {
             console.warn('No chart found with ID:', chartId);

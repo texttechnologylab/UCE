@@ -1497,6 +1497,43 @@ function renderEmotionDevelopment(containerId) {
                 chartConfig,
                 tooltipFormatter
             );
+            const chart = window.graphVizHandler.getChartById(chartId);
+            if (!chart) {
+                console.error('Chart not found for ID:', chartId);
+                return;
+            }
+            // remove old event listeners
+            chart.getInstance().off('mouseover');
+            chart.getInstance().off('mouseout');
+            chart.getInstance().off('click');
+
+            // add new event listeners
+            chart.getInstance().on('mouseover', function (params) {
+                // remove previous highlights to be safe
+                $('.emotion-covered.highlight').removeClass('highlight');
+                const index = params.dataIndex;
+                const elementId = 'emot-E-' + emotionData.emotionData[index][0].emotionId;
+                const element = $('#' + elementId);
+                element.addClass('highlight');
+            });
+            chart.getInstance().on('mouseout', function (params) {
+                const index = params.dataIndex;
+                const elementId = 'emot-E-' + emotionData.emotionData[index][0].emotionId;
+                const element = $('#' + elementId);
+                element.removeClass('highlight');
+            });
+            chart.getInstance().on('click', function (params) {
+                const index = params.dataIndex;
+                const emotionId = emotionData.emotionData[index][0].emotionId;
+                const elementId = 'emot-E-' + emotionId;
+                const element = document.getElementById(elementId);
+                if (element) {
+                    element.scrollIntoView({behavior: 'smooth', block: 'center'});
+                    clearTopicColoring();
+                    hideTopicNavButtons();
+                    $('.scrollbar-minimap').hide();
+                }
+            });
             container.classList.remove('dirty');
         }
         else {
@@ -1504,19 +1541,7 @@ function renderEmotionDevelopment(containerId) {
                 containerId,
                 '',
                 chartConfig,
-                tooltipFormatter,
-                function (params) {
-                    const index = params.dataIndex;
-                    const emotionId = emotionData.emotionData[index][0].emotionId;
-                    const elementId = 'emot-E-' + emotionId;
-                    const element = document.getElementById(elementId);
-                    if (element) {
-                        element.scrollIntoView({behavior: 'smooth', block: 'center'});
-                        clearTopicColoring();
-                        hideTopicNavButtons();
-                        $('.scrollbar-minimap').hide();
-                    }
-                }
+                tooltipFormatter
             ).then(chart => {
                 chart.getInstance().on('mouseover', function (params) {
                     // remove previous highlights to be safe
@@ -1531,6 +1556,18 @@ function renderEmotionDevelopment(containerId) {
                     const elementId = 'emot-E-' + emotionData.emotionData[index][0].emotionId;
                     const element = $('#' + elementId);
                     element.removeClass('highlight');
+                });
+                chart.getInstance().on('click', function (params) {
+                    const index = params.dataIndex;
+                    const emotionId = emotionData.emotionData[index][0].emotionId;
+                    const elementId = 'emot-E-' + emotionId;
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.scrollIntoView({behavior: 'smooth', block: 'center'});
+                        clearTopicColoring();
+                        hideTopicNavButtons();
+                        $('.scrollbar-minimap').hide();
+                    }
                 });
                 $(container).on('mouseout', function () {
                     $('.emotion-covered.highlight').removeClass('highlight');
