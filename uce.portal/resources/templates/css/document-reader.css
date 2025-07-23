@@ -521,6 +521,47 @@ body {
     opacity: 1.2;
 }
 
+/* Sidebar Model Selection */
+.side-bar-content .model-category {
+    display: flex;
+    flex-direction: row;
+    align-items: center;
+    justify-content: space-between;
+}
+.side-bar-content .model-category label {
+    font-weight: bold;
+    font-size: 1.1rem;
+    color: #333;
+}
+.side-bar-content .model-category select {
+    padding: 6px 10px;
+    font-size: 14px;
+    border-radius: 5px;
+    border: 1px solid #ccc;
+    background-color: #f9f9f9;
+    transition: border-color 0.2s ease-in-out;
+}
+.side-bar-content .model-category select:focus {
+    border-color: #007bff;
+    outline: none;
+}
+.side-bar-content .model-category select option {
+    padding: 6px 10px;
+    font-size: 14px;
+    background-color: #fff;
+    color: #333;
+}
+.side-bar-content .model-category select option:hover {
+    background-color: #f0f0f0;
+}
+.side-bar-content .model-category select option:checked {
+    background-color: #007bff;
+    color: white;
+}
+.side-bar-content .model-category select option:checked:hover {
+    background-color: #0056b3;
+}
+
 /* Scrollbar Minimap Styles */
 .scrollbar-minimap {
     position: fixed;

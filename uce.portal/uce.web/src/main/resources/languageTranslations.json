@@ -451,6 +451,10 @@
     "de-DE": "Wichtige Themen",
     "en-EN": "Key Topics"
   },
+  "modelSelection": {
+    "de-DE": "Modellauswahl",
+    "en-EN": "Model Selection"
+  },
   "corpusWords": {
     "de-DE": "Top Wörter aus dem Korpus",
     "en-EN": "Top words from Corpus"

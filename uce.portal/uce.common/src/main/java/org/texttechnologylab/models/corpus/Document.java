@@ -20,6 +20,7 @@ import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.emotion.Emotion;
+import org.texttechnologylab.models.modelInfo.ModelNameHelper;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
@@ -347,7 +348,7 @@ public class Document extends ModelBase implements WikiModel, Linkable {
      *
      * @return
      */
-    public List<UIMAAnnotation> getAllAnnotations(int pagesSkip, int pagesTake) {
+    public List<UIMAAnnotation> getAllAnnotations(int pagesSkip, int pagesTake, Map<String, Integer> modelSelection) {
         var pagesBegin = getPages().stream().skip(pagesSkip).limit(1).findFirst().get().getBegin();
         var pagesEnd = getPages().stream().skip(Math.min(pagesSkip + pagesTake, getPages().size() - 1)).limit(1).findFirst().get().getEnd();
 
@@ -369,7 +370,8 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         // unifiedTopics
         annotations.addAll(unifiedTopics.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         // emotions
-        annotations.addAll(emotions.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        int emotionModelId = modelSelection.getOrDefault(ModelNameHelper.getModelName(Emotion.class), -1);
+        annotations.addAll(emotions.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).filter(e -> emotionModelId == -1 || e.getModelVersion().getModel().getId() == emotionModelId).toList());
 
         annotations.sort(Comparator.comparingInt(UIMAAnnotation::getBegin));
         return annotations;
@@ -432,6 +434,14 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         return unscoredTopics.stream()
                 .limit(topN)
                 .collect(Collectors.toList());
+    }
+
+    public List<String> getModelCategories() {
+        List<String> categories = new ArrayList<>();
+        if (!emotions.isEmpty()) {
+            categories.add(ModelNameHelper.getModelName(Emotion.class));
+        }
+        return categories;
     }
 
 }

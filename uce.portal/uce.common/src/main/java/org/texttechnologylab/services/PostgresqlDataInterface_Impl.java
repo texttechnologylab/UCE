@@ -2047,7 +2047,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Object[]> getDocumentEmotionsOrdered(long documentId) throws DatabaseOperationException {
+    public List<Object[]> getDocumentEmotionsOrdered(long documentId, int modelId) throws DatabaseOperationException {
         class EmotionEntry {
             long emotionId;
             long emotionType;
@@ -2060,11 +2060,14 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                            ev.value AS emotionValue
                     FROM emotion e
                     JOIN emotion_value ev ON e.id = ev.emotion_id
+                    JOIN model_version mv ON e.model_version_id = mv.id
                     WHERE e.document_id = :documentId
+                    AND mv.model_id = :modelId
                     ORDER BY e.beginn, e.endd
                     """;
             var query = session.createNativeQuery(sql)
-                    .setParameter("documentId", documentId);
+                    .setParameter("documentId", documentId)
+                    .setParameter("modelId", modelId);
 
             var result = query.getResultList();
             List<Long> emotionIds = new ArrayList<>();
@@ -2101,6 +2104,33 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             String sql = "SELECT id, name FROM emotion_type ORDER BY name";
             var query = session.createNativeQuery(sql);
+            //noinspection unchecked
+            return query.getResultList().stream()
+                    .map(result -> {
+                        Object[] row = (Object[]) result;
+                        return Map.of(
+                                "id", ((Number) row[0]).longValue(),
+                                "name", (String) row[1]
+                        );
+                    })
+                    .toList();
+        });
+    }
+
+    public List<Object> getEmotionTypesForDocument(long documentId, long modelId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = """
+                    SELECT DISTINCT et.id AS emotionTypeId, et.name AS emotionTypeName
+                    FROM emotion e
+                    JOIN emotion_value ev ON e.id = ev.emotion_id
+                    JOIN emotion_type et ON ev.emotion_type_id = et.id
+                    JOIN model_version mv ON e.model_version_id = mv.id
+                    WHERE e.document_id = :documentId
+                    AND mv.model_id = :modelId
+                    """;
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId)
+                    .setParameter("modelId", modelId);
             //noinspection unchecked
             return query.getResultList().stream()
                     .map(result -> {
@@ -2330,6 +2360,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
         for (var emotion : doc.getEmotions()) {
             Hibernate.initialize(emotion.getEmotionValues());
+            Hibernate.initialize(emotion.getModelVersion());
+            Hibernate.initialize(emotion.getModelVersion().getModel());
             for (var ev : emotion.getEmotionValues()) {
                 Hibernate.initialize(ev.getEmotionType());
             }

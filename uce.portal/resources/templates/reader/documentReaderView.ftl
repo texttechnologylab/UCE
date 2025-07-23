@@ -259,6 +259,32 @@
                                 </p>
                                 <div class="document-topics-list" data-document-id="${document.id}"></div>
                             </div>
+
+                            <!-- Model Selection -->
+                            <#if modelCategories?has_content && modelCategories?size gt 0>
+                                <div class="group-box model-selection-box">
+                                    <p class="title">${languageResource.get("modelSelection")}</p>
+                                    <div class="flexed align-items-center">
+                                        <#list modelCategories as category>
+                                            <div class="model-category">
+                                                <label class="mb-0 mr-2" for="model-select-${category.getId()}">${category.getCategoryName()}</label>
+                                                <select class="form-control model-select"
+                                                        id="model-select-${category.getId()}"
+                                                        model-category-id="${category.getId()}"
+                                                        model-category-name="${category.getCategoryName()}"
+                                                        onchange="modelCategoriesChanged(this)">
+                                                >
+                                                    <#list category.getModels() as model>
+                                                        <option value="${model.getId()}" title="${model.getName()}">
+                                                            ${model.getName()}
+                                                        </option>
+                                                    </#list>
+                                                </select>
+                                            </div>
+                                        </#list>
+                                    </div>
+                                </div>
+                            </#if>
                         </div>
                     </div>
 

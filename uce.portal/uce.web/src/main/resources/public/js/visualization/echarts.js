@@ -23,6 +23,14 @@ class ECharts {
         this.option = newOption;
         this.render();
     }
+
+    setChartId(id) {
+        this.chartId = id;
+    }
+
+    getChartId() {
+        return this.chartId;
+    }
 }
 
-export { ECharts };
+export {ECharts};

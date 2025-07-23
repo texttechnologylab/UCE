@@ -273,12 +273,47 @@ function attachTopicClickHandlers() {
 });*/
 
 /**
+ * Retrieve the model selection from the sidebar.
+ * @return Record<string, number>
+ */
+function retrieveModelSelection() {
+    const modelSelects = $('.side-bar select.model-select');
+    const modelSelection = {};
+    for (let i = 0; i < modelSelects.length; i++) {
+        const modelSelect = $(modelSelects[i]);
+        const category = modelSelect.attr('model-category-name');
+        const model = parseInt(modelSelect.val());
+        if (category !== undefined && model !== undefined) {
+            modelSelection[category] = model;
+        }
+    }
+    return modelSelection;
+}
+
+function modelCategoriesChanged(element) {
+    lazyLoadPages()
+
+    const $element = $(element);
+    if ($element.attr('model-category-name') === 'emotion') {
+        const containerId = 'vp-6';
+        const $container = $('#' + containerId);
+        $container.addClass('dirty');
+    }
+}
+
+/**
  * Handle the lazy loading of more pages
  */
 async function lazyLoadPages() {
     const $readerContainer = $('.reader-container');
     const id = $readerContainer.data('id');
     const pagesCount = $readerContainer.data('pagescount');
+
+    // clear out the existing pages
+    $('.reader-container .document-content').empty();
+
+    const modelSelection = retrieveModelSelection();
+    const modelSelectionString = JSON.stringify(modelSelection);
 
     for (let i = 0; i <= pagesCount; i += 10) {
         const $loadedPagesCount = $('.site-container .loaded-pages-count');
@@ -288,7 +323,7 @@ async function lazyLoadPages() {
             $loadedPagesCount.html(i);
         } else {
             await $.ajax({
-                url: "/api/document/reader/pagesList?id=" + id + "&skip=" + i,
+                url: "/api/document/reader/pagesList?id=" + id + "&skip=" + i + "&modelSelection=" + encodeURIComponent(modelSelectionString),
                 type: "GET",
                 success: function (response) {
                     // Render the new pages
@@ -1379,15 +1414,18 @@ function renderSentenceTopicSankey(containerId) {
 
 function renderEmotionDevelopment(containerId) {
     const container = document.getElementById(containerId);
-    if (!container || container.classList.contains('rendered')) return;
+    if (!container || (container.classList.contains('rendered') && !container.classList.contains('dirty'))) return;
 
     $('.visualization-spinner').show();
     const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
-
-    const emotionReq = $.get('/api/document/page/emotionDev', {documentId: docId});
+    const modelSelection = retrieveModelSelection();
+    const emotionReq = $.get('/api/document/page/emotionDev', {documentId: docId, modelId: modelSelection['emotion']});
     emotionReq.then(emotionData => {
         $('.visualization-spinner').hide();
         if (!emotionData || typeof emotionData !== 'object' || !("emotionTypes" in emotionData) || !Array.isArray(emotionData.emotionTypes) || emotionData.emotionTypes.length === 0 || !("emotionData" in emotionData) || !Array.isArray(emotionData.emotionData) || emotionData.emotionData.length === 0) {
+            if (container.classList.contains('rendered') && container.classList.contains('dirty')) {
+                return;
+            }
             const container = document.getElementById(containerId);
             if (container) {
                 container.innerHTML = '<div style="color:#888;">' + document.getElementById('viz-content').getAttribute('data-message') + '</div>';
@@ -1447,44 +1485,61 @@ function renderEmotionDevelopment(containerId) {
             return tooltipContent;
         };
 
-        window.graphVizHandler.createLineChart(
-            containerId,
-            '',
-            chartConfig,
-            tooltipFormatter,
-            function (params) {
-                const index = params.dataIndex;
-                const emotionId = emotionData.emotionData[index][0].emotionId;
-                const elementId = 'emot-E-' + emotionId;
-                const element = document.getElementById(elementId);
-                if (element) {
-                    element.scrollIntoView({behavior: 'smooth', block: 'center'});
-                    clearTopicColoring();
-                    hideTopicNavButtons();
-                    $('.scrollbar-minimap').hide();
-                }
+        if (container.classList.contains('dirty')) {
+            const chartId = container.getAttribute('chart-id');
+            if (!chartId) {
+                console.error('No chart ID found for container:', containerId);
+                return;
             }
-        ).then(chart=> {
-            chart.getInstance().on('mouseover', function (params) {
-                // remove previous highlights to be safe
-                $('.emotion-covered.highlight').removeClass('highlight');
-                const index = params.dataIndex;
-                const elementId = 'emot-E-' + emotionData.emotionData[index][0].emotionId;
-                const element = $('#' + elementId);
-                element.addClass('highlight');
+            window.graphVizHandler.updateLineChart(
+                chartId,
+                '',
+                chartConfig,
+                tooltipFormatter
+            );
+            container.classList.remove('dirty');
+        }
+        else {
+            window.graphVizHandler.createLineChart(
+                containerId,
+                '',
+                chartConfig,
+                tooltipFormatter,
+                function (params) {
+                    const index = params.dataIndex;
+                    const emotionId = emotionData.emotionData[index][0].emotionId;
+                    const elementId = 'emot-E-' + emotionId;
+                    const element = document.getElementById(elementId);
+                    if (element) {
+                        element.scrollIntoView({behavior: 'smooth', block: 'center'});
+                        clearTopicColoring();
+                        hideTopicNavButtons();
+                        $('.scrollbar-minimap').hide();
+                    }
+                }
+            ).then(chart => {
+                chart.getInstance().on('mouseover', function (params) {
+                    // remove previous highlights to be safe
+                    $('.emotion-covered.highlight').removeClass('highlight');
+                    const index = params.dataIndex;
+                    const elementId = 'emot-E-' + emotionData.emotionData[index][0].emotionId;
+                    const element = $('#' + elementId);
+                    element.addClass('highlight');
+                });
+                chart.getInstance().on('mouseout', function (params) {
+                    const index = params.dataIndex;
+                    const elementId = 'emot-E-' + emotionData.emotionData[index][0].emotionId;
+                    const element = $('#' + elementId);
+                    element.removeClass('highlight');
+                });
+                $(container).on('mouseout', function () {
+                    $('.emotion-covered.highlight').removeClass('highlight');
+                });
+                $(container).attr('chart-id', chart.getChartId());
             });
-            chart.getInstance().on('mouseout', function (params) {
-                const index = params.dataIndex;
-                const elementId = 'emot-E-' + emotionData.emotionData[index][0].emotionId;
-                const element = $('#' + elementId);
-                element.removeClass('highlight');
-            });
-            $(container).on('mouseout', function () {
-                $('.emotion-covered.highlight').removeClass('highlight');
-            });
-        });
 
-        container.classList.add('rendered');
+            container.classList.add('rendered');
+        }
     }).catch(() => {
         $('.visualization-spinner').hide();
         const container = document.getElementById(containerId);

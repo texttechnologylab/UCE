@@ -132,7 +132,7 @@ var GraphVizHandler = (function () {
         return getColorForWeight(weight);
     }
 
-    GraphVizHandler.prototype.createSankeyChart = async function (target, title, linksData, nodesData,onClick = null) {
+    GraphVizHandler.prototype.createSankeyChart = async function (target, title, linksData, nodesData, onClick = null) {
         const chartId = generateUUID();
 
         const option = {
@@ -223,11 +223,10 @@ var GraphVizHandler = (function () {
                     }]
                 });
 
-            }
-            else {
+            } else {
                 const resetNodes = nodesData.map(node => ({
                     ...node,
-                    label: { show: false },
+                    label: {show: false},
                     // itemStyle: {
                     //     ...(node.itemStyle || {}),
                     //     opacity: 0.5
@@ -364,8 +363,8 @@ var GraphVizHandler = (function () {
                 data: s.data,
                 symbol: 'circle',
                 symbolSize: 10,
-                lineStyle: { width: 3, color: s.color },
-                itemStyle: { color: s.color },
+                lineStyle: {width: 3, color: s.color},
+                itemStyle: {color: s.color},
                 z: 2
             });
         });
@@ -439,14 +438,15 @@ var GraphVizHandler = (function () {
                 data: s.data,
                 symbol: 'circle',
                 symbolSize: 10,
-                lineStyle: { width: 3, color: s.color },
-                itemStyle: { color: s.color },
+                lineStyle: {width: 3, color: s.color},
+                itemStyle: {color: s.color},
                 z: 2
             });
         });
 
         const echart = new ECharts(target, option);
         this.activeCharts[chartId] = echart;
+        echart.setChartId(chartId);
 
         if (onClick && typeof onClick === 'function') {
             echart.getInstance().on('click', onClick);
@@ -455,6 +455,67 @@ var GraphVizHandler = (function () {
         return echart;
     };
 
+    GraphVizHandler.prototype.updateLineChart = function (
+        chartId,
+        title,
+        config,
+        tooltipFormatter) {
+        const echart = this.getChartById(chartId);
+        if (!echart) {
+            console.warn('No chart found with ID:', chartId);
+            return;
+        }
+        const {
+            xData,
+            seriesData,
+            yLabel = 'Count'
+        } = config;
+        const option = {
+            title: {
+                text: title,
+                left: 'center'
+            },
+            tooltip: {
+                trigger: 'axis',
+                enterable: true,
+                backgroundColor: '#fff',
+                borderColor: '#ccc',
+                borderWidth: 1,
+                textStyle: {
+                    color: '#000',
+                    fontSize: 12
+                },
+                formatter: tooltipFormatter
+            },
+            legend: {
+                data: seriesData.map(s => s.name),
+                top: 'auto'
+            },
+            xAxis: {
+                type: 'category',
+                name: 'X',
+                data: xData
+            },
+            yAxis: {
+                type: 'value',
+                name: yLabel
+            },
+            series: []
+        };
+        seriesData.forEach(s => {
+            option.series.push({
+                name: s.name,
+                type: 'line',
+                data: s.data,
+                symbol: 'circle',
+                symbolSize: 10,
+                lineStyle: {width: 3, color: s.color},
+                itemStyle: {color: s.color},
+                z: 2
+            });
+        });
+        echart.updateOption(option);
+    }
 
     GraphVizHandler.prototype.createChordChart = async function (
         target,
@@ -467,7 +528,7 @@ var GraphVizHandler = (function () {
         const hasGraphData = data.nodes && data.links && data.categories;
 
         const option = {
-            title: { text: title, left: 'center' },
+            title: {text: title, left: 'center'},
             tooltip: {
                 trigger: 'item',
                 enterable: hasGraphData,
@@ -489,15 +550,15 @@ var GraphVizHandler = (function () {
             series: hasGraphData ? [{
                 type: 'graph',
                 layout: 'circular',
-                circular: { rotateLabel: true },
+                circular: {rotateLabel: true},
                 data: data.nodes,
                 links: data.links,
                 categories: data.categories,
                 roam: true,
-                label: { rotate: 90, show: true },
-                itemStyle: { borderWidth: 1, borderColor: '#aaa' },
-                lineStyle: { opacity: 0.5, width: 2, curveness: 0.3 },
-                emphasis: { focus: 'adjacency', label: { show: true } }
+                label: {rotate: 90, show: true},
+                itemStyle: {borderWidth: 1, borderColor: '#aaa'},
+                lineStyle: {opacity: 0.5, width: 2, curveness: 0.3},
+                emphasis: {focus: 'adjacency', label: {show: true}}
             }] : {
                 type: 'chord',
                 data: data.nodes,
@@ -533,7 +594,7 @@ var GraphVizHandler = (function () {
         title,
         matrix,
         labels,
-        series_name= null,
+        series_name = null,
         tooltipFormatter = null,
         onClick = null
     ) {
@@ -616,10 +677,10 @@ var GraphVizHandler = (function () {
     ) {
         const chartId = generateUUID();
         const option = {
-            title: { text: '', left: 'center' },
+            title: {text: '', left: 'center'},
             tooltip: {},
-            xAxis: { show: false, min: 'dataMin', max: 'dataMax' },
-            yAxis: { show: false, min: 'dataMin', max: 'dataMax' },
+            xAxis: {show: false, min: 'dataMin', max: 'dataMax'},
+            yAxis: {show: false, min: 'dataMin', max: 'dataMax'},
             animationDuration: 1500,
             animationEasingUpdate: 'quinticInOut',
             series: [{
@@ -635,7 +696,7 @@ var GraphVizHandler = (function () {
                 edges: links,
                 roam: true,
                 symbolSize: 10,
-                label: { show: false },
+                label: {show: false},
                 emphasis: {
                     focus: 'adjacency',
                     lineStyle: {
@@ -643,7 +704,7 @@ var GraphVizHandler = (function () {
                     }
                 },
 
-                itemStyle: { borderColor: '#fff', borderWidth: 1 }
+                itemStyle: {borderColor: '#fff', borderWidth: 1}
             }]
         };
 
@@ -659,6 +720,19 @@ var GraphVizHandler = (function () {
 
         return echart;
     };
+
+    GraphVizHandler.prototype.getActiveCharts = function () {
+        return this.activeCharts;
+    }
+
+    GraphVizHandler.prototype.getChartById = function (chartId) {
+        if (chartId in this.activeCharts) {
+            return this.activeCharts[chartId];
+        } else {
+            console.warn('No chart found with ID:', chartId);
+            return null;
+        }
+    }
 
 
     return GraphVizHandler;

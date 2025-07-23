@@ -2,6 +2,8 @@ package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
+import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
@@ -13,6 +15,7 @@ import org.texttechnologylab.SessionManager;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.UCEMetadataValueType;
+import org.texttechnologylab.models.modelInfo.ModelCategory;
 import org.texttechnologylab.models.search.SearchType;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.S3StorageService;
@@ -186,6 +189,14 @@ public class DocumentApi implements UceApi {
                         model.put("searchTokens", String.join("[TOKEN]", activeSearchState.getSearchTokens()));
                 }
             }
+
+            List<ModelCategory> modelCategories = new ArrayList<>();
+            List<String> modelCategoryNames = doc.getModelCategories();
+            for (String categoryName : modelCategoryNames) {
+                ModelCategory modelCategory = db.getOrCreateModelCategory(categoryName);
+                modelCategories.add(modelCategory);
+            }
+            model.put("modelCategories", modelCategories);
         } catch (Exception ex) {
             logger.error("Error creating the document reader view for document with id: " + id, ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
@@ -203,10 +214,24 @@ public class DocumentApi implements UceApi {
         if (id == null)
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
 
+        String modelSelectionString = request.queryParams("modelSelection");
+        Map<String, Integer> modelSelection = new HashMap<>();
+        if (modelSelectionString != null && !modelSelectionString.isEmpty()) {
+            try {
+                JsonObject jsonObject = JsonParser.parseString(modelSelectionString).getAsJsonObject();
+                for (var entry : jsonObject.entrySet()) {
+                    modelSelection.put(entry.getKey(), entry.getValue().getAsInt());
+                }
+            } catch (Exception ex) {
+                logger.error("Error parsing model selection JSON: " + modelSelectionString, ex);
+            }
+        }
+
+
         try {
             var skip = Integer.parseInt(request.queryParams("skip"));
             var doc = db.getCompleteDocumentById(Long.parseLong(id), skip, 10);
-            var annotations = doc.getAllAnnotations(skip, 10);
+            var annotations = doc.getAllAnnotations(skip, 10, modelSelection);
             model.put("documentAnnotations", annotations);
             model.put("documentText", doc.getFullText());
             model.put("documentPages", doc.getPages(10, skip));
@@ -518,6 +543,8 @@ public class DocumentApi implements UceApi {
     public Route getDocumentEmotionDevelopment = (request, response) -> {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for emotion development.", ex));
+        String modelIdString = request.queryParams("modelId");
+        int modelId = modelIdString == null ? -1 : Integer.parseInt(modelIdString);
 
         if (documentId == null) {
             response.status(400);
@@ -526,8 +553,8 @@ public class DocumentApi implements UceApi {
         }
 
         try {
-            var emotionData = db.getDocumentEmotionsOrdered(documentId);
-            var emotionTypes = db.getEmotionTypes();
+            var emotionData = db.getDocumentEmotionsOrdered(documentId, modelId);
+            var emotionTypes = db.getEmotionTypesForDocument(documentId, modelId);
             Map<String, Object> emotionDevelopment = new HashMap<>();
             emotionDevelopment.put("emotionTypes", emotionTypes);
             emotionDevelopment.put("emotionData", emotionData);
