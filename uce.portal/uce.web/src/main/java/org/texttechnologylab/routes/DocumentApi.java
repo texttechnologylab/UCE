@@ -264,8 +264,13 @@ public class DocumentApi implements UceApi {
 
         db.deleteDocumentById(Long.parseLong(id));
 
-        // TODO
-        return "{'status': 'success', 'message': 'Document deletion is not implemented yet.'}";
+        Map<String, Object> result = new HashMap<>();
+        result.put("status", "success");
+        result.put("message", "NOTE Document deletion is not fully implemented yet.");
+
+        var resultJson = new Gson().toJson(result);
+        response.type("application/json");
+        return resultJson;
     });
 
     public Route getPagesListView = ((request, response) -> {

@@ -175,7 +175,7 @@ public class Importer {
     /**
      * Stores an uploaded xmi to a given corpus
      */
-    public void storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus, String fileName, String documentId) throws DatabaseOperationException {
+    public Long storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus, String fileName, String documentId) throws DatabaseOperationException {
         logger.info("Trying to store an uploaded UIMA file...");
 
         // Before we try to parse the document, we need to check if we have UCEMetadata filters for this corpus.
@@ -192,6 +192,7 @@ public class Importer {
         postProccessDocument(doc, corpus, fileName);
 
         logger.info("Finished storing and uploaded UIMA file.");
+        return doc.getId();
     }
 
     /**

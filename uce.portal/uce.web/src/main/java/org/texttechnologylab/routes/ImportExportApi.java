@@ -1,5 +1,6 @@
 package org.texttechnologylab.routes;
 
+import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
@@ -12,6 +13,8 @@ import org.texttechnologylab.utils.StringUtils;
 import spark.Route;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class ImportExportApi implements UceApi {
@@ -90,15 +93,26 @@ public class ImportExportApi implements UceApi {
             try (var input = request.raw().getPart("file").getInputStream()) {
                 var fileName = request.raw().getPart("file").getSubmittedFileName();
                 // Import the doc in the background
-                var importFuture = CompletableFuture.runAsync(() -> {
+                var importFuture = CompletableFuture.supplyAsync(() -> {
                     try {
-                        importer.storeUploadedXMIToCorpusAsync(input, corpus, fileName, documentId);
+                        return importer.storeUploadedXMIToCorpusAsync(input, corpus, fileName, documentId);
                     } catch (DatabaseOperationException e) {
                         throw new RuntimeException(e);
                     }
                 });
-                importFuture.get();
+                Long newDocumentId = importFuture.get();
+                // TODO check that this new document id is not null, could this happen?
+
                 response.status(200);
+
+                var acceptedContentType = request.headers("Accept");
+                if (acceptedContentType != null && acceptedContentType.equals("application/json")) {
+                    Map<String, Object> apiResult = new HashMap<>();
+                    apiResult.put("document_id", newDocumentId);
+                    response.type("application/json");
+                    return new Gson().toJson(apiResult);
+                }
+
                 return "File uploaded successfully!";
             }
         } catch (Exception e) {

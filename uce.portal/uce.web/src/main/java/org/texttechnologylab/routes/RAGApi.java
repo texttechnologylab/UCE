@@ -76,6 +76,10 @@ public class RAGApi implements UceApi {
             var userMessage = requestBody.get("userMessage").toString();
             var stateId = UUID.fromString(requestBody.get("stateId").toString());
 
+            // A specific document id can be provided to only work with this document as LLM context
+            // TODO check datatype again here
+            var documentId = requestBody.getOrDefault("documentId", null) != null ? ((Double)requestBody.get("documentId")).longValue() : null;
+
             // TODO: This also needs some form of periodic cleanup. I could have used websockets, but at the time,
             // noone really knew if this feature is even needed or applicable. Websocket introduced more complexity to client
             // and server so we scraped it. For the future, it may be a good idea though.
@@ -97,26 +101,34 @@ public class RAGApi implements UceApi {
             // Update: 16.04.2024: I've trained a BERT model that classifies user inputs into context_needed or
             // context_not_needed. So: we ask our webserver: should we fetch context? if yes, do so, if not - then don't.
             // See also: https://www.kaggle.com/models/kevinbnisch/ccc-bert
-            var contextNeeded = ExceptionUtils.tryCatchLog(
-                    () -> ragService.postRAGContextNeeded(userMessage),
-                    (ex) -> logger.error("Error getting the ContextNeeded info from the rag service.", ex));
-            if (contextNeeded == null) contextNeeded = 1;
-
-            // Check if the user wants to work with just one document or with multiple documents
-            Long documentId = null;
-            try {
-                if (userMessage.contains("ID")) {
-                    Matcher matcher = patternIDGiven.matcher(userMessage);
-                    if (matcher.find()) {
-                        documentId = Long.parseLong(matcher.group(1));
-                        System.out.println("Found ID: " + documentId);
-                    } else {
-                        System.out.println("No ID found.");
-                    }
-                }
+            // NOTE if a specific document id is given we always add its content
+            Integer contextNeeded;
+            if (documentId != null) {
+                contextNeeded = 1;
             }
-            catch (Exception ex) {
-                logger.error("Error parsing the user message for a document ID.", ex);
+            else {
+                contextNeeded = ExceptionUtils.tryCatchLog(
+                        () -> ragService.postRAGContextNeeded(userMessage),
+                        (ex) -> logger.error("Error getting the ContextNeeded info from the rag service.", ex));
+                if (contextNeeded == null) contextNeeded = 1;
+            }
+
+            // Check if the user wants to work with just one document or with multiple documents,
+            // unless a specific id is already given in the request
+            if (documentId == null) {
+                try {
+                    if (userMessage.contains("ID")) {
+                        Matcher matcher = patternIDGiven.matcher(userMessage);
+                        if (matcher.find()) {
+                            documentId = Long.parseLong(matcher.group(1));
+                            System.out.println("Found ID: " + documentId);
+                        } else {
+                            System.out.println("No ID found.");
+                        }
+                    }
+                } catch (Exception ex) {
+                    logger.error("Error parsing the user message for a document ID.", ex);
+                }
             }
 
             // Check for the amount of documents the user wants to work with
@@ -246,6 +258,15 @@ public class RAGApi implements UceApi {
             chatState.addMessage(systemResponseMessage);
 
             model.put("chatState", chatState);
+
+            // Dont return the template if this is an API request
+            var contentType = request.headers("Accept");
+            if (contentType != null && contentType.equals("application/json")) {
+                RAGChatStateDTO returnState = RAGChatStateDTO.fromRAGChatState(chatState);
+                response.type("application/json");
+                return new Gson().toJson(returnState);
+            }
+
         } catch (Exception ex) {
             logger.error("Unknown Error getting the response of the ragbot; request body:\n " + request.body(), ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
@@ -270,6 +291,10 @@ public class RAGApi implements UceApi {
         var ragModel = SystemStatus.UceConfig.getSettings().getRag().getModels().stream().filter(m -> m.getModel().equals(ragModelId)).findFirst();
         if (ragModel.isEmpty()) return "The requested model isn't available in this UCE instance: " + ragModelId;
 
+        // TODO should we offer this as a parameter? is in use for the TA bot at the moment, but we should discuss it for the future versions
+        var systemPrompt = request.queryParamOrDefault("systemPrompt", null);
+        var systemMessage = request.queryParamOrDefault("systemMessage", null);
+
         try {
             // We need to know the language here
             var languageResources = LanguageResources.fromRequest(request);
@@ -281,14 +306,32 @@ public class RAGApi implements UceApi {
 
             var startMessage = new RAGChatMessage();
             startMessage.setRole(Roles.SYSTEM);
-            startMessage.setMessage(languageResources.get("ragBotGreetingMessage"));
-            startMessage.setPrompt(languageResources.get("ragBotGreetingPrompt"));
+            // NOTE to prevent inconsistencies, both must be set
+            if (systemPrompt != null && systemMessage != null) {
+                startMessage.setPrompt(systemPrompt);
+                startMessage.setMessage(systemMessage);
+            } else {
+                startMessage.setPrompt(languageResources.get("ragBotGreetingPrompt"));
+                startMessage.setMessage(languageResources.get("ragBotGreetingMessage"));
+            }
 
             ragState.addMessage(startMessage);
 
             // TODO: Someday it's probably best to cache this in a mongodb or something. -> Yes, it is.
             activeRagChatStates.put(ragState.getChatId(), ragState);
             model.put("chatState", ragState);
+
+            // Dont return the template if this is an API request
+            var contentType = request.headers("Accept");
+            if (contentType != null && contentType.equals("application/json")) {
+                // Only return ChatID and dont leak extra info like chat history or api key
+                Map<String, Object> apiResult = new HashMap<>();
+                apiResult.put("chat_id", ragState.getChatId());
+                //apiResult.put("messages", ragState.getMessages());
+                response.type("application/json");
+                return new Gson().toJson(apiResult);
+            }
+
         } catch (Exception ex) {
             logger.error("Error creating a new RAGbot chat", ex);
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
