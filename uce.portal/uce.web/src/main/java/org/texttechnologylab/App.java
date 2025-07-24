@@ -426,8 +426,9 @@ public class App {
                 get("/page/lemma", (registry.get(DocumentApi.class)).getDocumentLemmaByPage);
                 get("/page/geoname", (registry.get(DocumentApi.class)).getDocumentGeonameByPage);
                 // TODO better use "delete" instead of "get" here?
-                get("/delete", (registry.get(DocumentApi.class)).deleteDocument);
+                delete("/delete", (registry.get(DocumentApi.class)).deleteDocument);
                 get("/findIdByMetadata", (registry.get(DocumentApi.class)).findDocumentIdByMetadata);
+                get("/findIdsByMetadata", (registry.get(DocumentApi.class)).findDocumentIdsByMetadata);
             });
 
             path("/rag", () -> {
