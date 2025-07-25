@@ -999,6 +999,12 @@ public class Importer {
                 anno.setPage(page);
             }
         }
+        if (document.getToxics() != null) {
+            for (var anno : document.getToxics().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
     }
 
     /**
