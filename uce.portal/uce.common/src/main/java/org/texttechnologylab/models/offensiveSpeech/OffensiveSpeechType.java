@@ -9,7 +9,7 @@ import javax.persistence.Entity;
 import javax.persistence.Table;
 
 @Entity
-@Table(name = "offensive_speech_type")
+@Table(name = "offensivespeech_type")
 public class OffensiveSpeechType extends ModelBase {
 
     @Getter

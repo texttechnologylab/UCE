@@ -13,7 +13,7 @@ import javax.persistence.*;
 import java.util.List;
 
 @Entity
-@Table(name = "offensive_speech")
+@Table(name = "offensivespeech")
 @Typesystem(types = {org.texttechnologylab.annotation.OffensiveSpeech.class})
 public class OffensiveSpeech extends UIMAAnnotation implements WikiModel {
 

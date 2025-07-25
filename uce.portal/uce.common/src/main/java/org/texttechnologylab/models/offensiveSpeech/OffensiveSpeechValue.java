@@ -7,19 +7,19 @@ import org.texttechnologylab.models.ModelBase;
 import javax.persistence.*;
 
 @Entity
-@Table(name = "offensive_speech_value")
+@Table(name = "offensivespeech_value")
 public class OffensiveSpeechValue extends ModelBase {
 
     @Getter
     @Setter
     @ManyToOne
-    @JoinColumn(name = "offensive_speech_type_id", nullable = false)
+    @JoinColumn(name = "offensivespeech_type_id", nullable = false)
     private OffensiveSpeechType offensiveSpeechType;
 
     @Getter
     @Setter
     @ManyToOne
-    @JoinColumn(name = "offensive_speech_id", nullable = false)
+    @JoinColumn(name = "offensivespeech_id", nullable = false)
     private OffensiveSpeech offensiveSpeech;
 
     @Getter
