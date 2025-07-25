@@ -50,6 +50,8 @@ import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.toxic.Toxic;
+import org.texttechnologylab.models.toxic.ToxicType;
+import org.texttechnologylab.models.toxic.ToxicValue;
 import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.*;
 import org.texttechnologylab.models.negation.CompleteNegation;
@@ -1426,8 +1428,29 @@ public class Importer {
             Toxic toxic = new Toxic(t.getBegin(), t.getEnd());
             toxic.setDocument(document);
             toxic.setCoveredText(t.getCoveredText());
-            toxic.setToxic(t.getToxic());
-            toxic.setNonToxic(t.getNonToxic());
+
+            List<ToxicValue> toxicValues = new ArrayList<>();
+            ToxicType toxicType, nonToxicType;
+            try {
+                toxicType = db.getOrCreateToxicType("toxic");
+                nonToxicType = db.getOrCreateToxicType("non-toxic");
+            } catch (DatabaseOperationException e) {
+                logger.error("Error while fetching ToxicType or NonToxicType from database.", e);
+                return;
+            }
+
+            ToxicValue toxicValue = new ToxicValue();
+            toxicValue.setToxicType(toxicType);
+            toxicValue.setValue(t.getToxic());
+            toxicValue.setToxic(toxic);
+            toxicValues.add(toxicValue);
+            ToxicValue nonToxicValue = new ToxicValue();
+            nonToxicValue.setToxicType(nonToxicType);
+            nonToxicValue.setValue(t.getNonToxic());
+            nonToxicValue.setToxic(toxic);
+            toxicValues.add(nonToxicValue);
+
+            toxic.setToxicValues(toxicValues);
             toxics.add(toxic);
         });
 

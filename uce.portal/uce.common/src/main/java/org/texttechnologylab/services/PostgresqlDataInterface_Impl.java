@@ -34,6 +34,7 @@ import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.topic.UnifiedTopic;
+import org.texttechnologylab.models.toxic.ToxicType;
 import org.texttechnologylab.models.util.HealthStatus;
 import org.texttechnologylab.utils.ReflectionUtils;
 import org.texttechnologylab.utils.StringUtils;
@@ -1353,6 +1354,24 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 Hibernate.initialize(t.getWords());
             }
             return topic;
+        });
+    }
+
+    public synchronized ToxicType getOrCreateToxicType(String type) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(ToxicType.class);
+            var root = criteriaQuery.from(ToxicType.class);
+            criteriaQuery.select(root).where(criteriaBuilder.equal(root.get("name"), type));
+
+            ToxicType toxicType;
+            try {
+                toxicType = session.createQuery(criteriaQuery).getSingleResult();
+            } catch (NoResultException e) {
+                toxicType = new ToxicType(type);
+                session.save(toxicType);
+            }
+            return toxicType;
         });
     }
 
