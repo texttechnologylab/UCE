@@ -108,6 +108,10 @@
     border-left-color: darkred;
 }
 
+.lexicon-view .lexicon-entry[data-type="offensivespeech"]{
+    border-left-color: silver;
+}
+
 .lexicon-view .filter-container{
     width: 100%;
     position: sticky;
