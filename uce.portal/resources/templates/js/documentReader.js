@@ -1485,7 +1485,7 @@ function renderEmotionDevelopment(containerId) {
             return tooltipContent;
         };
 
-        if (container.classList.contains('dirty')) {
+        if (container.classList.contains('rendered')) {
             const chartId = container.getAttribute('chart-id');
             if (!chartId) {
                 console.error('No chart ID found for container:', containerId);
