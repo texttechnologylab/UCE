@@ -110,6 +110,21 @@ public class WikiService {
     }
 
     /**
+     * Builds a view model to render a offensive speech annotation wiki page
+     */
+    public OffensiveSpeechAnnotationWikiPageViewModel buildOffensiveSpeechAnnotationWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new OffensiveSpeechAnnotationWikiPageViewModel();
+        var offensiveSpeech = db.getInitializedOffensiveSpeechById(id);
+        viewModel.setWikiModel(offensiveSpeech);
+        viewModel.setDocument(db.getDocumentById(offensiveSpeech.getDocumentId()));
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("OffensiveSpeech");
+
+        return viewModel;
+    }
+
+    /**
      * Gets a DocumentTopicDistributionWikiPageViewModel to render a Wikipage for that topic distribution
      */
     public TopicWikiPageViewModel buildTopicWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {

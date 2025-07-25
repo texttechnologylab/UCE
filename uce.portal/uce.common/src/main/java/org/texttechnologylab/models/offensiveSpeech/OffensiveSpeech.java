@@ -8,6 +8,7 @@ import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.utils.Pair;
 
 import javax.persistence.*;
 import java.util.List;
@@ -51,6 +52,12 @@ public class OffensiveSpeech extends UIMAAnnotation implements WikiModel {
     @Override
     public String getWikiId() {
         return "OS" + "-" + this.getId();
+    }
+
+    public List<Pair<String, Double>> collectOffensiveSpeechValues() {
+        return this.offensiveSpeechValues.stream()
+            .map(value -> new Pair<>(value.getOffensiveSpeechType().getName(), value.getValue()))
+            .toList();
     }
 
 }

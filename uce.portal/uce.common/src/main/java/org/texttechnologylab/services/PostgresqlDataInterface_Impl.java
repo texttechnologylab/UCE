@@ -30,7 +30,9 @@ import org.texttechnologylab.models.globe.GlobeTaxon;
 import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.CompleteNegation;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
 import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechType;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechValue;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -1374,6 +1376,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 session.save(offensiveSpeechType);
             }
             return offensiveSpeechType;
+        });
+    }
+
+    public OffensiveSpeech getInitializedOffensiveSpeechById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var offensiveSpeech = session.get(OffensiveSpeech.class, id);
+            Hibernate.initialize(offensiveSpeech.getOffensiveSpeechValues());
+            for (OffensiveSpeechValue value : offensiveSpeech.getOffensiveSpeechValues()) {
+                Hibernate.initialize(value.getOffensiveSpeechType());
+            }
+            return offensiveSpeech;
         });
     }
 
