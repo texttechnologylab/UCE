@@ -45,6 +45,8 @@ import org.texttechnologylab.models.imp.ImportStatus;
 import org.texttechnologylab.models.imp.LogStatus;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechType;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechValue;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
 import org.texttechnologylab.models.topic.TopicValueBase;
@@ -1430,27 +1432,32 @@ public class Importer {
                 logger.warn("OffensiveSpeech annotation without offensives found. Skipping this annotation.");
                 return;
             }
-            if (offensives.size() != 2) {
-                logger.warn("OffensiveSpeech annotation with " + offensives.size() + " offensives found. Expected 2. Skipping this annotation.");
-                return;
+
+            List<OffensiveSpeechValue> offensivesList = new ArrayList<>();
+            for (AnnotationComment offensive : offensives) {
+                String offensiveSpeechName = offensive.getKey();
+                OffensiveSpeechType offensiveSpeechType;
+                try {
+                    offensiveSpeechType = db.getOrCreateOffensiveSpeechType(offensiveSpeechName);
+                } catch (DatabaseOperationException e) {
+                    logger.warn("Unknown OffensiveSpeechType: " + offensiveSpeechName + ". Skipping this annotation.");
+                    continue;
+                }
+                double value;
+                try {
+                    value = Double.parseDouble(offensive.getValue());
+                }
+                catch (NumberFormatException e) {
+                    logger.warn("Invalid value for OffensiveSpeechType: " + offensiveSpeechName + ". Skipping this annotation.");
+                    continue;
+                }
+                OffensiveSpeechValue offensiveSpeechValue = new OffensiveSpeechValue();
+                offensiveSpeechValue.setOffensiveSpeechType(offensiveSpeechType);
+                offensiveSpeechValue.setValue(value);
+                offensiveSpeechValue.setOffensiveSpeech(offensiveSpeech);
+                offensivesList.add(offensiveSpeechValue);
             }
-            final String offensiveKey = "Offensive";
-            final String nonOffensiveKey = "Not Offensive";
-            OptionalDouble offensiveScore = offensives.stream()
-                    .filter(oc -> oc.getKey().equals(offensiveKey))
-                    .map(AnnotationComment::getValue)
-                    .mapToDouble(Double::parseDouble)
-                    .findFirst();
-            OptionalDouble nonOffensiveScore = offensives.stream()
-                    .filter(oc -> oc.getKey().equals(nonOffensiveKey))
-                    .map(AnnotationComment::getValue)
-                    .mapToDouble(Double::parseDouble).findFirst();
-            if (offensiveScore.isEmpty() || nonOffensiveScore.isEmpty()) {
-                logger.warn("OffensiveSpeech annotation without offensive or non-offensive score found. Skipping this annotation.");
-                return;
-            }
-            offensiveSpeech.setOffensive(offensiveScore.getAsDouble());
-            offensiveSpeech.setNonOffensive(nonOffensiveScore.getAsDouble());
+            offensiveSpeech.setOffensiveSpeechValues(offensivesList);
             offensiveSpeeches.add(offensiveSpeech);
         });
 
