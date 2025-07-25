@@ -19,13 +19,9 @@ public class OffensiveSpeech extends UIMAAnnotation implements WikiModel {
 
     @Getter
     @Setter
-    @Column(name = "offensive", nullable = false)
-    private double offensive;
-
-    @Getter
-    @Setter
-    @Column(name = "non_offensive", nullable = false)
-    private double nonOffensive;
+    @OneToMany(mappedBy = "offensiveSpeech", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
+    @Fetch(FetchMode.SUBSELECT)
+    private List<OffensiveSpeechValue> offensiveSpeechValues;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "document_id", nullable = false)
