@@ -53,36 +53,24 @@ class OllamaModel:
         if isinstance(messages, str):
             messages = [{"role": "user", "content": messages}]
 
-        # Convert to Ollama-style prompt string
-        prompt = self._convert_to_prompt(messages)
-
         response = requests.post(
-            f"{self.base_url}/api/generate",
+            f"{self.base_url}/api/chat",
             json={
                 "model": self.model_name,
-                "prompt": prompt,
+                "messages": messages,
                 "stream": False,
                 "options": {
-                  "num_ctx": 8096,
+                  "num_ctx": 16192,
                   "keep_alive": "60m"
                 }
             }
         )
 
         if response.status_code == 200:
-            return response.json()["response"]
+            # TODO we might want to return more info here later
+            return response.json()["message"]["content"]
         else:
             raise Exception(f"Ollama error: {response.status_code} - {response.text}")
-
-    def _convert_to_prompt(self, messages):
-        formatted = ""
-        for m in messages:
-            if m["role"] == "user":
-                formatted += f"User: {m['content']}\n"
-            elif m["role"] == "assistant":
-                formatted += f"Assistant: {m['content']}\n"
-        formatted += "Assistant: "
-        return formatted
 
 if __name__ == "__main__":
     llm = InstructLLM("ollama/gemma2:27b")
