@@ -103,15 +103,16 @@ public class RAGApi implements UceApi {
             // See also: https://www.kaggle.com/models/kevinbnisch/ccc-bert
             // NOTE if a specific document id is given we always add its content
             Integer contextNeeded;
-            if (documentId != null) {
-                contextNeeded = 1;
-            }
-            else {
+            // TODO allow this to be set via parameter: should the "needed" model run if there is a documentId given?
+//            if (documentId != null) {
+//                contextNeeded = 1;
+//            }
+//            else {
                 contextNeeded = ExceptionUtils.tryCatchLog(
                         () -> ragService.postRAGContextNeeded(userMessage),
                         (ex) -> logger.error("Error getting the ContextNeeded info from the rag service.", ex));
                 if (contextNeeded == null) contextNeeded = 1;
-            }
+//            }
 
             // Check if the user wants to work with just one document or with multiple documents,
             // unless a specific id is already given in the request
@@ -205,11 +206,12 @@ public class RAGApi implements UceApi {
                     Document doc = db.getDocumentById(documentId);
                     StringBuilder contextText = new StringBuilder();
                     contextText.append("Provide your answer based on the contents of the following document.\n\n");
+                    contextText.append("<document>").append("\n");
                     contextText.append("ID: ").append(doc.getId()).append("\n");
                     contextText.append("Title: ").append(doc.getDocumentTitle()).append("\n");
                     contextText.append("Language: ").append(doc.getLanguage()).append("\n");
-                    contextText.append("Content:\n").append(doc.getFullText());
-                    contextText.append("\n\n");
+                    contextText.append("Content:\n").append(doc.getFullText()).append("\n");
+                    contextText.append("</document>").append("\n\n");
                     prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", contextText);
                 }
                 else {
@@ -223,12 +225,13 @@ public class RAGApi implements UceApi {
                         if (docInd >= foundDocuments.size()) break; // TODO this should not happen?!
                         Document doc = foundDocuments.get(docInd);
                         docInd++;
+                        contextText.append("<document>").append("\n");
                         contextText.append("Document #").append(docInd).append("\n");
                         contextText.append("ID: ").append(doc.getId()).append("\n");
                         contextText.append("Title: ").append(doc.getDocumentTitle()).append("\n");
                         contextText.append("Language: ").append(doc.getLanguage()).append("\n");
-                        contextText.append("Search result:\n").append(nearestDocumentChunkEmbedding.getCoveredText());
-                        contextText.append("\n\n");
+                        contextText.append("Search result:\n").append(nearestDocumentChunkEmbedding.getCoveredText()).append("\n");
+                        contextText.append("</document>").append("\n\n");
                     }
                     prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", contextText);
                 }
@@ -324,12 +327,9 @@ public class RAGApi implements UceApi {
             // Dont return the template if this is an API request
             var contentType = request.headers("Accept");
             if (contentType != null && contentType.equals("application/json")) {
-                // Only return ChatID and dont leak extra info like chat history or api key
-                Map<String, Object> apiResult = new HashMap<>();
-                apiResult.put("chat_id", ragState.getChatId());
-                //apiResult.put("messages", ragState.getMessages());
+                RAGChatStateDTO returnState = RAGChatStateDTO.fromRAGChatState(ragState);
                 response.type("application/json");
-                return new Gson().toJson(apiResult);
+                return new Gson().toJson(returnState);
             }
 
         } catch (Exception ex) {
