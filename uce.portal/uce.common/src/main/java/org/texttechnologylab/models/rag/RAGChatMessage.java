@@ -2,6 +2,7 @@ package org.texttechnologylab.models.rag;
 
 import org.joda.time.DateTime;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.corpus.Image;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -11,6 +12,10 @@ public class RAGChatMessage {
     private String message;
     private DateTime created;
     private ArrayList<Document> contextDocuments;
+
+    // Images that are sent with the message
+    // NOTE that they will use the base64 encoded image in the message payload
+    private List<Image> images;
 
     public static String thinkEndTag = "</think>";
 
@@ -51,6 +56,19 @@ public class RAGChatMessage {
     public RAGChatMessage(){
         this.created = DateTime.now();
         this.contextDocuments = new ArrayList<>();
+        this.images = new ArrayList<>();
+    }
+
+    public List<Image> getImages() {
+        return images;
+    }
+
+    public void setImages(List<Image> images) {
+        this.images = images;
+    }
+
+    public void addImage(Image image) {
+        this.images.add(image);
     }
 
     public ArrayList<Document> getContextDocuments() {

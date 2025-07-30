@@ -10,8 +10,8 @@ import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.annotations.auth.Authentication;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
-import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.corpus.Image;
 import org.texttechnologylab.models.rag.*;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
@@ -200,16 +200,22 @@ public class RAGApi implements UceApi {
 
             List<DocumentChunkEmbedding> nearestDocumentChunkEmbeddings = new ArrayList<>();
             List<Document> foundDocuments = new ArrayList<Document>();
-            if (contextNeeded == 1) {
+            List<Image> foundImages = new ArrayList<>();
+            // if we need context or there is a document id given we include it in the context
+            if (contextNeeded == 1 || documentId != null) {
+                Set<String> hibernateInit = Set.of("image");
                 if (documentId != null) {
                     // use a specific document only
-                    Document doc = db.getDocumentById(documentId);
+                    Document doc = db.getDocumentById(documentId, hibernateInit);
+                    List<Image> docImages = doc.getImages();
+                    foundImages.addAll(docImages);
                     StringBuilder contextText = new StringBuilder();
                     contextText.append("Provide your answer based on the contents of the following document.\n\n");
                     contextText.append("<document>").append("\n");
                     contextText.append("ID: ").append(doc.getId()).append("\n");
                     contextText.append("Title: ").append(doc.getDocumentTitle()).append("\n");
                     contextText.append("Language: ").append(doc.getLanguage()).append("\n");
+                    contextText.append("Images: ").append(docImages.size()).append(" images provided.").append("\n");
                     contextText.append("Content:\n").append(doc.getFullText()).append("\n");
                     contextText.append("</document>").append("\n\n");
                     prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", contextText);
@@ -217,7 +223,7 @@ public class RAGApi implements UceApi {
                 else {
                     nearestDocumentChunkEmbeddings = ragService.getClosestDocumentChunkEmbeddings(userMessage, amountOfDocs, -1);
                     // foreach fetched document embedding, we also fetch the actual documents so the chat can show them
-                    foundDocuments = db.getManyDocumentsByIds(nearestDocumentChunkEmbeddings.stream().map(d -> Math.toIntExact(d.getDocument_id())).toList());
+                    foundDocuments = db.getManyDocumentsByIds(nearestDocumentChunkEmbeddings.stream().map(d -> Math.toIntExact(d.getDocument_id())).toList(), hibernateInit);
                     StringBuilder contextText = new StringBuilder();
                     contextText.append("The following documents contain information, ordered by relevance.\n\n");
                     int docInd = 0;
@@ -225,11 +231,14 @@ public class RAGApi implements UceApi {
                         if (docInd >= foundDocuments.size()) break; // TODO this should not happen?!
                         Document doc = foundDocuments.get(docInd);
                         docInd++;
+                        List<Image> docImages = doc.getImages();
+                        foundImages.addAll(docImages);
                         contextText.append("<document>").append("\n");
                         contextText.append("Document #").append(docInd).append("\n");
                         contextText.append("ID: ").append(doc.getId()).append("\n");
                         contextText.append("Title: ").append(doc.getDocumentTitle()).append("\n");
                         contextText.append("Language: ").append(doc.getLanguage()).append("\n");
+                        contextText.append("Images: ").append(docImages.size()).append(" images provided.").append("\n");
                         contextText.append("Search result:\n").append(nearestDocumentChunkEmbedding.getCoveredText()).append("\n");
                         contextText.append("</document>").append("\n\n");
                     }
@@ -237,6 +246,7 @@ public class RAGApi implements UceApi {
                 }
             }
             userRagMessage.setPrompt(prompt);
+            userRagMessage.setImages(foundImages);
 
             // Add the message to the current chat
             chatState.addMessage(userRagMessage);

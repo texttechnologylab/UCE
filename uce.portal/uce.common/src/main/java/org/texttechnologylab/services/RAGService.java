@@ -356,11 +356,20 @@ public class RAGService {
         params.put("url", modelConfig.getUrl());
 
         // Add the chat history
-        var promptMessages = new ArrayList<HashMap<String, String>>();
+        var promptMessages = new ArrayList<HashMap<String, Object>>();
         for (var chat : chatHistory.stream().sorted(Comparator.comparing(RAGChatMessage::getCreated)).toList()) {
-            var promptMessage = new HashMap<String, String>();
+            // TODO make type instead of Map Object
+            var promptMessage = new HashMap<String, Object>();
             promptMessage.put("role", chat.getRole().name().toLowerCase());
             promptMessage.put("content", chat.getPrompt());
+            if (chat.getImages() != null && !chat.getImages().isEmpty()) {
+                var images = new ArrayList<String>();
+                for (var image : chat.getImages()) {
+                    // Use the base64 encoded image
+                    images.add(image.getSrc());
+                }
+                promptMessage.put("images", images);
+            }
             promptMessages.add(promptMessage);
         }
         params.put("promptMessages", promptMessages);
