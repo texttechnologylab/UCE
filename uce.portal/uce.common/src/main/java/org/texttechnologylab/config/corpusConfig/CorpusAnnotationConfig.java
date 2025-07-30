@@ -23,6 +23,7 @@ public class CorpusAnnotationConfig {
     private boolean sentence;
     private boolean time;
     private boolean wikipediaLink;
+    private boolean image;
     // negation annos
     private boolean completeNegation;
     private boolean cue;

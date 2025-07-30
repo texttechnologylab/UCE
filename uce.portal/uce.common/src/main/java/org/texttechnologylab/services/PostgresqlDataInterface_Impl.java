@@ -2157,6 +2157,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getWikipediaLinks());
         Hibernate.initialize(doc.getLemmas());
         Hibernate.initialize(doc.getUceMetadata());
+        Hibernate.initialize(doc.getImages());
         // init negations
         Hibernate.initialize(doc.getCompleteNegations());
         Hibernate.initialize(doc.getCues());

@@ -284,6 +284,44 @@ public class StringUtils {
 
     public static String BIOFID_URL_BASE = "https://www.biofid.de/bio-ontologies/gbif/";
 
+    private static String protectTagContent(String html, Pattern pattern, List<String> protectedParts, Map<String, String> placeholderMap) {
+        Matcher matcher = pattern.matcher(html);
+        StringBuffer sb = new StringBuffer();
+        int index = 0;
+
+        while (matcher.find()) {
+            String match = matcher.group();
+            String placeholder = "%%UCE_PLACEHOLDER_" + index++ + "%%";
+            protectedParts.add(match);
+            placeholderMap.put(placeholder, match);
+            matcher.appendReplacement(sb, placeholder);
+        }
+        matcher.appendTail(sb);
+
+        return sb.toString();
+    }
+
+    public static String replaceCharacterOutsideTags(String input, String target, String replacement) {
+        // this is a replacement for "replaceCharacterOutsideSpan" that allows to specify multiple tags
+        // TODO check that this is actually working and produces equivalent results
+
+        List<String> protectedParts = new ArrayList<>();
+        Map<String, String> placeholderMap = new HashMap<>();
+
+        Pattern spanPattern = Pattern.compile("<span.*?>.*?</span>", Pattern.DOTALL);
+        input = protectTagContent(input, spanPattern, protectedParts, placeholderMap);
+
+        Pattern imgPattern = Pattern.compile("<img\\b[^>]*?>", Pattern.CASE_INSENSITIVE);
+        input = protectTagContent(input, imgPattern, protectedParts, placeholderMap);
+
+        input = input.replaceAll(Pattern.quote(target), Matcher.quoteReplacement(replacement));
+        for (Map.Entry<String, String> entry : placeholderMap.entrySet()) {
+            input = input.replace(entry.getKey(), entry.getValue());
+        }
+
+        return input;
+    }
+
     public static String replaceCharacterOutsideSpan(String input, char targetChar, String replacement) {
         StringBuilder result = new StringBuilder();
         boolean inSpan = false;

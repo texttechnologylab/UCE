@@ -73,6 +73,7 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(UCELog.class);
         metadataSources.addAnnotatedClass(UCEImport.class);
         metadataSources.addAnnotatedClass(ImportLog.class);
+        metadataSources.addAnnotatedClass(Image.class);
         //negations
         metadataSources.addAnnotatedClass(CompleteNegation.class);
         metadataSources.addAnnotatedClass(Cue.class);

@@ -150,6 +150,13 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 }
             }
 
+            if (annotation instanceof Image) {
+                // We render the image at the starting position, no end tag needed
+                var start = annotation.getBegin() - offset - errorOffset;
+                startTags.computeIfAbsent(start, k -> new ArrayList<>()).add(annotation);
+                continue;
+            }
+
             // We need to handle Sentiment a bit differently, as they are sentence or paragraph based annotations.
             if (annotation.getClass() != Sentiment.class && annotation.getClass() != Emotion.class) {
                 if (annotation.getBegin() < getBegin()
@@ -314,7 +321,12 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         //return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
         //return StringUtils.CleanText(finalText.toString());
         //return coveredText;
-        return StringUtils.replaceCharacterOutsideSpan(StringUtils.replaceCharacterOutsideSpan(StringUtils.CleanText(finalText.toString()), '\n', "<br/>"), ' ', "&nbsp;");
+//        return StringUtils.replaceCharacterOutsideSpan(StringUtils.replaceCharacterOutsideSpan(StringUtils.CleanText(finalText.toString()), '\n', "<br/>"), ' ', "&nbsp;");
+
+        var finalTextString = finalText.toString();
+        finalTextString = StringUtils.replaceCharacterOutsideTags(finalTextString, "\n", "<br/>");
+        finalTextString = StringUtils.replaceCharacterOutsideTags(finalTextString, " ", "&nbsp;");
+        return finalTextString;
     }
 
     private String generateMultiHTMLTag(List<UIMAAnnotation> annotations) {
@@ -381,6 +393,8 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             return String.format(
                     "<span class='annotation custom-context-menu focus' title='%1$s'>",
                     includeTitle ? focus.getCoveredText() : "");
+        } else if (annotation instanceof Image image) {
+            return "<img width='" + image.getWidth() + "' height='" + image.getHeight() + "' src='" + image.getHTMLImgSrc() + "' /><br/>";
         } else if (annotation instanceof UnifiedTopic topic) {
             // Get the representative topic if available
             String repTopicValue = "";
