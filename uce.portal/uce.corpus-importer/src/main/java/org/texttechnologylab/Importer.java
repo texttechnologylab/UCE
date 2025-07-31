@@ -57,6 +57,8 @@ import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.*;
 import org.texttechnologylab.models.negation.CompleteNegation;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -1481,8 +1483,21 @@ public class Importer {
         List<Image> images = new ArrayList<>();
         for (org.texttechnologylab.annotation.type.Image imageAnno : JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Image.class)) {
             Image image = new Image(imageAnno.getBegin(), imageAnno.getEnd());
-            image.setWidth(imageAnno.getWidth());
-            image.setHeight(imageAnno.getHeight());
+            if (imageAnno.getWidth() == 0 && imageAnno.getHeight() == 0) {
+                // try to automatically detect image dimensions
+                try {
+                    byte[] imageBytes = Base64.getDecoder().decode(imageAnno.getSrc());
+                    BufferedImage imageData = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                    image.setWidth(imageData.getWidth());
+                    image.setHeight(imageData.getHeight());
+                } catch (Exception e) {
+                    System.err.println("Failed detecting image dimensions for image: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                image.setWidth(imageAnno.getWidth());
+                image.setHeight(imageAnno.getHeight());
+            }
             image.setMimeType(imageAnno.getMimetype());
             image.setSrc(imageAnno.getSrc());
             images.add(image);

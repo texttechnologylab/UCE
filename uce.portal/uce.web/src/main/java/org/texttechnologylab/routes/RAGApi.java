@@ -202,14 +202,22 @@ public class RAGApi implements UceApi {
             List<DocumentChunkEmbedding> nearestDocumentChunkEmbeddings = new ArrayList<>();
             List<Document> foundDocuments = new ArrayList<Document>();
             List<Image> foundImages = new ArrayList<>();
+            // TODO max images should be a parameter
+            int maxImages = 5;
             // if we need context or there is a document id given we include it in the context
             if (contextNeeded == 1 || documentId != null) {
                 Set<String> hibernateInit = Set.of("image");
                 if (documentId != null) {
                     // use a specific document only
                     Document doc = db.getDocumentById(documentId, hibernateInit);
+
                     List<Image> docImages = doc.getImages();
                     foundImages.addAll(docImages);
+                    // remove images if more than maxImages
+                    if (foundImages.size() > maxImages) {
+                        foundImages = foundImages.subList(0, maxImages);
+                    }
+
                     StringBuilder contextText = new StringBuilder();
                     if (!docImages.isEmpty()) {
                         // TODO this should be further finetuned...
@@ -238,8 +246,14 @@ public class RAGApi implements UceApi {
                         if (docInd >= foundDocuments.size()) break; // TODO this should not happen?!
                         Document doc = foundDocuments.get(docInd);
                         docInd++;
+
                         List<Image> docImages = doc.getImages();
                         foundImages.addAll(docImages);
+                        // remove images if more than maxImages
+                        if (foundImages.size() > maxImages) {
+                            foundImages = foundImages.subList(0, maxImages);
+                        }
+
                         contextText.append("<document>").append("\n");
                         contextText.append("Document #").append(docInd).append("\n");
                         contextText.append("ID: ").append(doc.getId()).append("\n");
