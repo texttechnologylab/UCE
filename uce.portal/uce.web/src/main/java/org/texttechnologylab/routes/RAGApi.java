@@ -4,6 +4,7 @@ import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.LanguageResources;
@@ -210,14 +211,20 @@ public class RAGApi implements UceApi {
                     List<Image> docImages = doc.getImages();
                     foundImages.addAll(docImages);
                     StringBuilder contextText = new StringBuilder();
-                    contextText.append("Provide your answer based on the contents of the following document.\n\n");
-                    contextText.append("<document>").append("\n");
-                    contextText.append("ID: ").append(doc.getId()).append("\n");
-                    contextText.append("Title: ").append(doc.getDocumentTitle()).append("\n");
-                    contextText.append("Language: ").append(doc.getLanguage()).append("\n");
-                    contextText.append("Images: ").append(docImages.size()).append(" images provided.").append("\n");
-                    contextText.append("Content:\n").append(doc.getFullText()).append("\n");
-                    contextText.append("</document>").append("\n\n");
+                    if (!docImages.isEmpty()) {
+                        // TODO this should be further finetuned...
+                        contextText.append("Provide your answer based on the given image").append(docImages.size()>1?"s":"").append(".\n\n");
+                    }
+                    else {
+                        contextText.append("Provide your answer based on the contents of the following document :\n\n");
+                        contextText.append("<document>").append("\n");
+                        contextText.append("ID: ").append(doc.getId()).append("\n");
+                        contextText.append("Title: ").append(doc.getDocumentTitle()).append("\n");
+                        contextText.append("Language: ").append(doc.getLanguage()).append("\n");
+                        contextText.append("Images: ").append(docImages.size()).append(" images provided.").append("\n");
+                        contextText.append("Content:\n").append(doc.getFullText()).append("\n");
+                        contextText.append("</document>").append("\n\n");
+                    }
                     prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", contextText);
                 }
                 else {
@@ -297,16 +304,39 @@ public class RAGApi implements UceApi {
      */
     public Route getNewRAGChat = ((request, response) -> {
         var model = new HashMap<String, Object>();
-        var ragModelId = ExceptionUtils.tryCatchLog(() -> request.queryParams("model"),
-                (ex) -> logger.error("Error: the chatting requires a 'model' query parameter. ", ex));
+        String ragModelId;
+        String systemPrompt = null;
+        String systemMessage = null;
+
+        // this endpoint is provided as a GET and POST request to handle larger prompts
+        // TODO switch to POST only?
+        if (request.requestMethod().equals("POST")) {
+            JSONObject requestBody = new JSONObject(request.body());
+
+            ragModelId = ExceptionUtils.tryCatchLog(() -> requestBody.getString("model"),
+                    (ex) -> logger.error("Error: the chatting requires a 'model' query parameter. ", ex));
+
+            // TODO should we offer this as a parameter? is in use for the TA bot at the moment, but we should discuss it for the future versions
+            if (requestBody.has("systemPrompt")) {
+                systemPrompt = requestBody.getString("systemPrompt");
+            }
+            if (requestBody.has("systemMessage")) {
+                systemMessage = requestBody.getString("systemMessage");
+            }
+        }
+        else {
+            ragModelId = ExceptionUtils.tryCatchLog(() -> request.queryParams("model"),
+                    (ex) -> logger.error("Error: the chatting requires a 'model' query parameter. ", ex));
+
+            // TODO should we offer this as a parameter? is in use for the TA bot at the moment, but we should discuss it for the future versions
+            systemPrompt = request.queryParamOrDefault("systemPrompt", null);
+            systemMessage = request.queryParamOrDefault("systemMessage", null);
+        }
+
         if (ragModelId == null)
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         var ragModel = SystemStatus.UceConfig.getSettings().getRag().getModels().stream().filter(m -> m.getModel().equals(ragModelId)).findFirst();
         if (ragModel.isEmpty()) return "The requested model isn't available in this UCE instance: " + ragModelId;
-
-        // TODO should we offer this as a parameter? is in use for the TA bot at the moment, but we should discuss it for the future versions
-        var systemPrompt = request.queryParamOrDefault("systemPrompt", null);
-        var systemMessage = request.queryParamOrDefault("systemMessage", null);
 
         try {
             // We need to know the language here
