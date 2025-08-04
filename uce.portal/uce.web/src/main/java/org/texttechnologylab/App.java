@@ -433,6 +433,8 @@ public class App {
 
             path("/rag", () -> {
                 get("/new", (registry.get(RAGApi.class)).getNewRAGChat);
+                // NOTE we allow also "post" here, as the system prompt can get quite long...
+                post("/new", (registry.get(RAGApi.class)).getNewRAGChat);
                 post("/postUserMessage", (registry.get(RAGApi.class)).postUserMessage);
                 get("/plotTsne", (registry.get(RAGApi.class)).getTsnePlot);
                 get("/sentenceEmbeddings", (registry.get(RAGApi.class)).getSentenceEmbeddings);

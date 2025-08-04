@@ -506,7 +506,25 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    private void initializeDocument(Document doc, Set<String> hibernateInit) {
+        // initialize additional Hibernate based properties
+        if (hibernateInit != null) {
+            for (String init : hibernateInit) {
+                switch (init) {
+                    // TODO can this be done more elegantly?
+                    case "image" -> Hibernate.initialize(doc.getImages());
+                    default -> System.err.println("getDocumentById: Unknown initialization option: " + init);
+                    // Add more cases as needed for other initializations
+                }
+            }
+        }
+    }
+
     public List<Document> getManyDocumentsByIds(List<Integer> documentIds) throws DatabaseOperationException {
+        return getManyDocumentsByIds(documentIds, null);
+    }
+
+    public List<Document> getManyDocumentsByIds(List<Integer> documentIds, Set<String> hibernateInit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
             var query = builder.createQuery(Document.class);
@@ -529,6 +547,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 // Hibernate.initialize(doc.getPages());
                 // Hibernate.initialize(doc.getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON));
                 sortedDocs[documentIds.indexOf(id)] = doc;
+
+                initializeDocument(doc, hibernateInit);
             }
 
             return Arrays.stream(sortedDocs).filter(Objects::nonNull).toList();
@@ -1137,10 +1157,15 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public Document getDocumentById(long id) throws DatabaseOperationException {
+        return getDocumentById(id, null);
+    }
+
+    public Document getDocumentById(long id, Set<String> hibernateInit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
             Hibernate.initialize(doc.getPages());
             Hibernate.initialize(doc.getUceMetadata());
+            initializeDocument(doc, hibernateInit);
             return doc;
         });
     }
@@ -2157,6 +2182,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getWikipediaLinks());
         Hibernate.initialize(doc.getLemmas());
         Hibernate.initialize(doc.getUceMetadata());
+        Hibernate.initialize(doc.getImages());
         // init negations
         Hibernate.initialize(doc.getCompleteNegations());
         Hibernate.initialize(doc.getCues());

@@ -4,14 +4,15 @@ import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.json.JSONObject;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.annotations.auth.Authentication;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
-import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.corpus.Image;
 import org.texttechnologylab.models.rag.*;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
@@ -200,24 +201,44 @@ public class RAGApi implements UceApi {
 
             List<DocumentChunkEmbedding> nearestDocumentChunkEmbeddings = new ArrayList<>();
             List<Document> foundDocuments = new ArrayList<Document>();
-            if (contextNeeded == 1) {
+            List<Image> foundImages = new ArrayList<>();
+            // TODO max images should be a parameter
+            int maxImages = 5;
+            // if we need context or there is a document id given we include it in the context
+            if (contextNeeded == 1 || documentId != null) {
+                Set<String> hibernateInit = Set.of("image");
                 if (documentId != null) {
                     // use a specific document only
-                    Document doc = db.getDocumentById(documentId);
+                    Document doc = db.getDocumentById(documentId, hibernateInit);
+
+                    List<Image> docImages = doc.getImages();
+                    foundImages.addAll(docImages);
+                    // remove images if more than maxImages
+                    if (foundImages.size() > maxImages) {
+                        foundImages = foundImages.subList(0, maxImages);
+                    }
+
                     StringBuilder contextText = new StringBuilder();
-                    contextText.append("Provide your answer based on the contents of the following document.\n\n");
-                    contextText.append("<document>").append("\n");
-                    contextText.append("ID: ").append(doc.getId()).append("\n");
-                    contextText.append("Title: ").append(doc.getDocumentTitle()).append("\n");
-                    contextText.append("Language: ").append(doc.getLanguage()).append("\n");
-                    contextText.append("Content:\n").append(doc.getFullText()).append("\n");
-                    contextText.append("</document>").append("\n\n");
+                    if (!docImages.isEmpty()) {
+                        // TODO this should be further finetuned...
+                        contextText.append("Provide your answer based on the given image").append(docImages.size()>1?"s":"").append(".\n\n");
+                    }
+                    else {
+                        contextText.append("Provide your answer based on the contents of the following document :\n\n");
+                        contextText.append("<document>").append("\n");
+                        contextText.append("ID: ").append(doc.getId()).append("\n");
+                        contextText.append("Title: ").append(doc.getDocumentTitle()).append("\n");
+                        contextText.append("Language: ").append(doc.getLanguage()).append("\n");
+                        contextText.append("Images: ").append(docImages.size()).append(" images provided.").append("\n");
+                        contextText.append("Content:\n").append(doc.getFullText()).append("\n");
+                        contextText.append("</document>").append("\n\n");
+                    }
                     prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", contextText);
                 }
                 else {
                     nearestDocumentChunkEmbeddings = ragService.getClosestDocumentChunkEmbeddings(userMessage, amountOfDocs, -1);
                     // foreach fetched document embedding, we also fetch the actual documents so the chat can show them
-                    foundDocuments = db.getManyDocumentsByIds(nearestDocumentChunkEmbeddings.stream().map(d -> Math.toIntExact(d.getDocument_id())).toList());
+                    foundDocuments = db.getManyDocumentsByIds(nearestDocumentChunkEmbeddings.stream().map(d -> Math.toIntExact(d.getDocument_id())).toList(), hibernateInit);
                     StringBuilder contextText = new StringBuilder();
                     contextText.append("The following documents contain information, ordered by relevance.\n\n");
                     int docInd = 0;
@@ -225,11 +246,20 @@ public class RAGApi implements UceApi {
                         if (docInd >= foundDocuments.size()) break; // TODO this should not happen?!
                         Document doc = foundDocuments.get(docInd);
                         docInd++;
+
+                        List<Image> docImages = doc.getImages();
+                        foundImages.addAll(docImages);
+                        // remove images if more than maxImages
+                        if (foundImages.size() > maxImages) {
+                            foundImages = foundImages.subList(0, maxImages);
+                        }
+
                         contextText.append("<document>").append("\n");
                         contextText.append("Document #").append(docInd).append("\n");
                         contextText.append("ID: ").append(doc.getId()).append("\n");
                         contextText.append("Title: ").append(doc.getDocumentTitle()).append("\n");
                         contextText.append("Language: ").append(doc.getLanguage()).append("\n");
+                        contextText.append("Images: ").append(docImages.size()).append(" images provided.").append("\n");
                         contextText.append("Search result:\n").append(nearestDocumentChunkEmbedding.getCoveredText()).append("\n");
                         contextText.append("</document>").append("\n\n");
                     }
@@ -237,6 +267,7 @@ public class RAGApi implements UceApi {
                 }
             }
             userRagMessage.setPrompt(prompt);
+            userRagMessage.setImages(foundImages);
 
             // Add the message to the current chat
             chatState.addMessage(userRagMessage);
@@ -287,16 +318,39 @@ public class RAGApi implements UceApi {
      */
     public Route getNewRAGChat = ((request, response) -> {
         var model = new HashMap<String, Object>();
-        var ragModelId = ExceptionUtils.tryCatchLog(() -> request.queryParams("model"),
-                (ex) -> logger.error("Error: the chatting requires a 'model' query parameter. ", ex));
+        String ragModelId;
+        String systemPrompt = null;
+        String systemMessage = null;
+
+        // this endpoint is provided as a GET and POST request to handle larger prompts
+        // TODO switch to POST only?
+        if (request.requestMethod().equals("POST")) {
+            JSONObject requestBody = new JSONObject(request.body());
+
+            ragModelId = ExceptionUtils.tryCatchLog(() -> requestBody.getString("model"),
+                    (ex) -> logger.error("Error: the chatting requires a 'model' query parameter. ", ex));
+
+            // TODO should we offer this as a parameter? is in use for the TA bot at the moment, but we should discuss it for the future versions
+            if (requestBody.has("systemPrompt")) {
+                systemPrompt = requestBody.getString("systemPrompt");
+            }
+            if (requestBody.has("systemMessage")) {
+                systemMessage = requestBody.getString("systemMessage");
+            }
+        }
+        else {
+            ragModelId = ExceptionUtils.tryCatchLog(() -> request.queryParams("model"),
+                    (ex) -> logger.error("Error: the chatting requires a 'model' query parameter. ", ex));
+
+            // TODO should we offer this as a parameter? is in use for the TA bot at the moment, but we should discuss it for the future versions
+            systemPrompt = request.queryParamOrDefault("systemPrompt", null);
+            systemMessage = request.queryParamOrDefault("systemMessage", null);
+        }
+
         if (ragModelId == null)
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
         var ragModel = SystemStatus.UceConfig.getSettings().getRag().getModels().stream().filter(m -> m.getModel().equals(ragModelId)).findFirst();
         if (ragModel.isEmpty()) return "The requested model isn't available in this UCE instance: " + ragModelId;
-
-        // TODO should we offer this as a parameter? is in use for the TA bot at the moment, but we should discuss it for the future versions
-        var systemPrompt = request.queryParamOrDefault("systemPrompt", null);
-        var systemMessage = request.queryParamOrDefault("systemMessage", null);
 
         try {
             // We need to know the language here
