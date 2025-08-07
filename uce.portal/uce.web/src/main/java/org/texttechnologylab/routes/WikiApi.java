@@ -162,6 +162,9 @@ public class WikiApi implements UceApi {
             } else if (type.startsWith("UT")) {
                 model.put("vm", wikiService.buildUnifiedTopicWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/unifiedTopicAnnotationPage.ftl";
+            } else if (type.startsWith("T")) {
+                model.put("vm", wikiService.buildToxicAnnotationWikiPageViewModel(id, coveredText));
+                renderView = "/wiki/pages/toxicAnnotationPage.ftl";
             } else if (type.startsWith("DTR")) {
                 model.put("vm", wikiService.buildTopicWikiPageViewModel(id, coveredText));
                 renderView = "/wiki/pages/topicPage.ftl";
