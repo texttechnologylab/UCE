@@ -14,6 +14,7 @@ import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.UnifiedTopic;
+import org.texttechnologylab.models.toxic.Toxic;
 import org.texttechnologylab.models.viewModels.lexicon.LexiconOccurrenceViewModel;
 import org.texttechnologylab.utils.SystemStatus;
 
@@ -47,7 +48,9 @@ public class LexiconService {
                     Cue.class,
                     Scope.class,
                     XScope.class,
-                    UnifiedTopic.class));
+                    UnifiedTopic.class,
+                    Toxic.class
+            ));
 
     public LexiconService(PostgresqlDataInterface_Impl db) {
         this.db = db;

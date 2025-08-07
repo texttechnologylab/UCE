@@ -108,6 +108,10 @@
     border-left-color: darkred;
 }
 
+.lexicon-view .lexicon-entry[data-type="toxic"]{
+    border-left-color: darkorange;
+}
+
 .lexicon-view .filter-container{
     width: 100%;
     position: sticky;
