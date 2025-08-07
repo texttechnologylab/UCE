@@ -1,6 +1,8 @@
 package org.texttechnologylab.services;
 
+import java.io.BufferedReader;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.net.http.HttpClient;
@@ -356,7 +358,32 @@ public class RAGService {
         params.put("url", modelConfig.getUrl());
 
         // Add the chat history
-        var promptMessages = new ArrayList<HashMap<String, Object>>();
+        var promptMessages = buildPromptMessages(chatHistory);
+        params.put("promptMessages", promptMessages);
+        var jsonData = gson.toJson(params);
+
+        // Create request
+        var request = HttpRequest.newBuilder()
+                .uri(new URI(url))
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonData))
+                .build();
+        // Send request and get response
+        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        var statusCode = response.statusCode();
+        if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
+
+        var responseBody = response.body();
+        var ragCompleteDto = gson.fromJson(responseBody, RAGCompleteDto.class);
+        if (ragCompleteDto.getStatus() != 200) throw new HttpStatusException(
+                "Webservice replied with an internally wrong status code, something went wrong there: " + ragCompleteDto.getStatus(), statusCode, url);
+
+        return ragCompleteDto.getMessage();
+    }
+
+    private List<Map<String, Object>> buildPromptMessages(List<RAGChatMessage> chatHistory) {
+        var promptMessages = new ArrayList<Map<String, Object>>();
+
         var history = chatHistory.stream().sorted(Comparator.comparing(RAGChatMessage::getCreated)).toList();
         // Make sure the last message has images
         var lastMessageHasImage = history.getLast().getImages() != null && !history.getLast().getImages().isEmpty();
@@ -383,7 +410,52 @@ public class RAGService {
 
             promptMessages.add(promptMessage);
         }
+
+        return promptMessages;
+    }
+
+    /**
+     * Get the streaming response from the LLM. We cache the results internally, so that the external tools
+     * can poll for new messages easily.
+     * @param chatState
+     * @return
+     * @throws URISyntaxException
+     * @throws IOException
+     * @throws InterruptedException
+     */
+    public void postNewRAGPromptStreaming(
+            RAGChatState chatState,
+            List<DocumentChunkEmbedding> nearestDocumentChunkEmbeddings,
+            List<Document> foundDocuments
+    ) throws URISyntaxException, IOException, InterruptedException {
+        var httpClient = HttpClient.newBuilder()
+                .version(HttpClient.Version.HTTP_2)
+                .build();
+
+        var url = config.getRAGWebserverBaseUrl() + "rag/complete/stream";
+
+        var gson = new Gson();
+        var params = new HashMap<String, Object>();
+
+        RAGModelConfig modelConfig = chatState.getModel();
+        params.put("model", modelConfig.getModel());
+        params.put("apiKey", modelConfig.getApiKey());
+        params.put("url", modelConfig.getUrl());
+
+        // Add the chat history
+        var promptMessages = buildPromptMessages(chatState.getMessages());
         params.put("promptMessages", promptMessages);
+
+        // Add an empty chat message answer that will be filled after creating the history for the request
+        var systemResponseMessage = new RAGChatMessage();
+        systemResponseMessage.setDone(false);
+        systemResponseMessage.setRole(Roles.ASSISTANT);
+        systemResponseMessage.setPrompt("");
+        systemResponseMessage.setMessage("");
+        systemResponseMessage.setContextDocument_Ids(nearestDocumentChunkEmbeddings.stream().map(DocumentChunkEmbedding::getDocument_id).toList());
+        systemResponseMessage.setContextDocuments(new ArrayList<>(foundDocuments));
+        chatState.addMessage(systemResponseMessage);
+
         var jsonData = gson.toJson(params);
 
         // Create request
@@ -393,16 +465,29 @@ public class RAGService {
                 .POST(HttpRequest.BodyPublishers.ofString(jsonData))
                 .build();
         // Send request and get response
-        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofInputStream());
         var statusCode = response.statusCode();
         if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
 
-        var responseBody = response.body();
-        var ragCompleteDto = gson.fromJson(responseBody, RAGCompleteDto.class);
-        if (ragCompleteDto.getStatus() != 200) throw new HttpStatusException(
-                "Webservice replied with an internally wrong status code, something went wrong there: " + ragCompleteDto.getStatus(), statusCode, url);
+        StringBuilder streamingMessage = new StringBuilder();
+        try (var reader = new BufferedReader(new InputStreamReader(response.body()))) {
+            String line;
+            while ((line = reader.readLine()) != null) {
+                if (!line.isBlank()) {
+                    var ragCompleteDto = gson.fromJson(line, RAGCompleteStreamingDto.class);
 
-        return ragCompleteDto.getMessage();
+                    // save the updated message in the chat state, this will allow the user to poll for updates
+                    streamingMessage.append(ragCompleteDto.getMessage().getContent());
+                    var updatedMessage = streamingMessage.toString();
+                    systemResponseMessage.setPrompt(updatedMessage);
+                    systemResponseMessage.setMessage(updatedMessage);
+                    systemResponseMessage.setDone(ragCompleteDto.isDone());
+                    // TODO also update the "created" timestamp or keep the start?
+                }
+            }
+        }
+
+        // TODO check if the message contains any content, else set error message?
     }
 
     /**

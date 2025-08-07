@@ -12,6 +12,7 @@ public class RAGChatMessage {
     private String message;
     private DateTime created;
     private ArrayList<Document> contextDocuments;
+    private boolean done;
 
     // Images that are sent with the message
     // NOTE that they will use the base64 encoded image in the message payload
@@ -57,6 +58,16 @@ public class RAGChatMessage {
         this.created = DateTime.now();
         this.contextDocuments = new ArrayList<>();
         this.images = new ArrayList<>();
+        // by default, we expect the message to already be finished. this is set to "false" for streaming requests only
+        this.done = false;
+    }
+
+    public boolean isDone() {
+        return done;
+    }
+
+    public void setDone(boolean done) {
+        this.done = done;
     }
 
     public List<Image> getImages() {

@@ -9,7 +9,7 @@ import warnings
 import traceback
 
 from cBERT.cBERT import CCCBERT
-from flask import Flask, g, render_template, request, jsonify, current_app
+from flask import Flask, g, render_template, request, jsonify, current_app, Response, stream_with_context
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import euclidean
 from scipy.sparse.csgraph import minimum_spanning_tree
@@ -269,6 +269,31 @@ def context():
         print("Exception while trying to get CCC-BERT contect decision: ")
         print(ex)
     return jsonify(result)
+
+@app.route('/rag/complete/stream', methods=['POST'])
+def rag_complete_stream():
+    try:
+        data = request.get_json()
+        print(data)
+        messages = data['promptMessages']
+        api_key = data['apiKey']
+        model = data['model']
+        url = data['url']
+    except Exception as ex:
+        result = {
+            "status": 400,
+            "message": "There was an exception caught while trying to complete the chat: " + str(ex)
+        }
+        print("Exception while trying to complete chat: ")
+        print(ex)
+        return jsonify(result)
+
+    return Response(
+        stream_with_context(
+            get_instruct_model(model, url).complete_stream(messages, api_key)
+        ),
+        mimetype='application/json'
+    )
 
 @app.route('/rag/complete', methods=['POST'])
 def rag_complete():
