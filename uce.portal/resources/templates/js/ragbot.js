@@ -42,9 +42,14 @@ function startPolling(chatId) {
                 $('.chat-window-container .ccontent').html(response["html"])
                 activatePopovers()
 
+                $('.chat-window-container .ccontent').animate({
+                    scrollTop: $('.chat-window-container .ccontent')[0].scrollHeight
+                }, 500);
+
                 if (response["done"]) {
                     console.log("RAG polling done for chatId:", chatId)
                     clearInterval(ragPollingInterval)
+                    $('.chat-window-container .cfooter .cloader').first().fadeOut(150);
                 }
             },
             error: function (xhr, status, error) {
@@ -55,7 +60,7 @@ function startPolling(chatId) {
                 clearInterval(ragPollingInterval)
             }
         });
-    }, 1000); // every second
+    }, 500); // every 1/2 second
 }
 
 /**
@@ -90,9 +95,9 @@ $('body').on('click', '.chat-window-container .send-message-btn', function(){
             error: function (xhr, status, error) {
                 console.error(xhr.responseText);
                 $('.chat-window-container .ccontent').html(xhr.responseText);
+                $('.chat-window-container .cfooter .cloader').first().fadeOut(150);
             }
         }).always(function () {
-            $('.chat-window-container .cfooter .cloader').first().fadeOut(150);
             $userInput.val('') // Clear the chat input
         });
     }
