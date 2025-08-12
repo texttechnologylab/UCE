@@ -461,6 +461,12 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         if (!emotions.isEmpty()) {
             categories.add(ModelNameHelper.getModelName(Emotion.class));
         }
+        if (!offensiveSpeeches.isEmpty()) {
+            categories.add(ModelNameHelper.getModelName(OffensiveSpeech.class));
+        }
+        if (!toxics.isEmpty()) {
+            categories.add(ModelNameHelper.getModelName(Toxic.class));
+        }
         return categories;
     }
 
