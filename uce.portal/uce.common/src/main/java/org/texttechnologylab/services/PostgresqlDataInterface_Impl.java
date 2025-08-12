@@ -2444,6 +2444,18 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             }
         }
 
+        // toxic
+        Hibernate.initialize(doc.getToxics());
+
+        for (var toxic : doc.getToxics()) {
+            Hibernate.initialize(toxic.getToxicValues());
+            Hibernate.initialize(toxic.getModelVersion());
+            Hibernate.initialize(toxic.getModelVersion().getModel());
+            for (var tv : toxic.getToxicValues()) {
+                Hibernate.initialize(tv.getToxicType());
+            }
+        }
+
         for (var link : doc.getWikipediaLinks()) {
             Hibernate.initialize(link.getWikiDataHyponyms());
         }

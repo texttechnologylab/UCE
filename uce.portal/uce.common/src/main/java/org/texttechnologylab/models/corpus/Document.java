@@ -389,6 +389,9 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         // offensiveSpeech
         int offensiveSpeechModelId = modelSelection.getOrDefault(ModelNameHelper.getModelName(OffensiveSpeech.class), -1);
         annotations.addAll(offensiveSpeeches.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).filter(e -> offensiveSpeechModelId == -1 || e.getModelVersion().getModel().getId() == offensiveSpeechModelId).toList());
+        // toxic
+        int toxicModelId = modelSelection.getOrDefault(ModelNameHelper.getModelName(Toxic.class), -1);
+        annotations.addAll(toxics.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).filter(e -> toxicModelId == -1 || e.getModelVersion().getModel().getId() == toxicModelId).toList());
 
         annotations.sort(Comparator.comparingInt(UIMAAnnotation::getBegin));
         return annotations;

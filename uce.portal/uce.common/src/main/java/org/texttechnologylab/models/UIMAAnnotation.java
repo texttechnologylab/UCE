@@ -11,6 +11,7 @@ import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
 import org.texttechnologylab.models.topic.UnifiedTopic;
+import org.texttechnologylab.models.toxic.Toxic;
 import org.texttechnologylab.utils.StringUtils;
 
 import javax.persistence.*;
@@ -139,6 +140,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         Map<Integer, String> offensiveSpeechMarkers = new TreeMap<>();
         Map<Integer, String> offensiveSpeechCoverWrappersStart = new TreeMap<>();
         Map<Integer, String> offensiveSpeechCoverWrappersEnd = new TreeMap<>();
+        Map<Integer, String> toxicMarkers = new TreeMap<>();
+        Map<Integer, String> toxicCoverWrappersStart = new TreeMap<>();
+        Map<Integer, String> toxicCoverWrappersEnd = new TreeMap<>();
 
 
         for (var annotation : annotations) {
@@ -201,6 +205,17 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 continue;
             }
 
+            if (annotation instanceof Toxic toxic) {
+                var start = toxic.getBegin() - offset - errorOffset;
+                var end = toxic.getEnd() - offset - errorOffset;
+
+                toxicCoverWrappersStart.put(start, toxic.generateToxicCoveredStartSpan());
+                toxicCoverWrappersEnd.put(end, "</span>");
+
+                toxicMarkers.put(end, toxic.generateToxicMarker());
+                continue;
+            }
+
             var start = annotation.getBegin() - offset - errorOffset;
             var end = annotation.getEnd() - offset - errorOffset;
 
@@ -226,6 +241,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             if (offensiveSpeechCoverWrappersEnd.containsKey(i)) {
                 finalText.append(offensiveSpeechCoverWrappersEnd.get(i));
             }
+            if (toxicCoverWrappersEnd.containsKey(i)) {
+                finalText.append(toxicCoverWrappersEnd.get(i));
+            }
             if (endTags.containsKey(i)) {
                 //finalText.append(endTags.get(i).getFirst());
                 for (var tag : endTags.get(i)) {
@@ -234,6 +252,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
 
             // Insert start spans
+            if (toxicCoverWrappersStart.containsKey(i)) {
+                finalText.append(toxicCoverWrappersStart.get(i));
+            }
             if (offensiveSpeechCoverWrappersStart.containsKey(i)) {
                 finalText.append(offensiveSpeechCoverWrappersStart.get(i));
             }
@@ -253,6 +274,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
             if (offensiveSpeechMarkers.containsKey(i)) {
                 finalText.append(offensiveSpeechMarkers.get(i));
+            }
+            if (toxicMarkers.containsKey(i)) {
+                finalText.append(toxicMarkers.get(i));
             }
             if (startTags.containsKey(i)) {
                 finalText.append(generateMultiHTMLTag(startTags.get(i)));
