@@ -9,6 +9,7 @@ import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.emotion.Emotion;
 import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.utils.StringUtils;
 
@@ -135,6 +136,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         Map<Integer, String> emotionMarkers = new TreeMap<>();
         Map<Integer, String> emotionCoverWrappersStart = new TreeMap<>();
         Map<Integer, String> emotionCoverWrappersEnd = new TreeMap<>();
+        Map<Integer, String> offensiveSpeechMarkers = new TreeMap<>();
+        Map<Integer, String> offensiveSpeechCoverWrappersStart = new TreeMap<>();
+        Map<Integer, String> offensiveSpeechCoverWrappersEnd = new TreeMap<>();
 
 
         for (var annotation : annotations) {
@@ -186,6 +190,17 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 continue;
             }
 
+            if (annotation instanceof OffensiveSpeech offensiveSpeech) {
+                var start = offensiveSpeech.getBegin() - offset - errorOffset;
+                var end = offensiveSpeech.getEnd() - offset - errorOffset;
+
+                offensiveSpeechCoverWrappersStart.put(start, offensiveSpeech.generateOffensiveSpeechCoveredStartSpan());
+                offensiveSpeechCoverWrappersEnd.put(end, "</span>");
+
+                offensiveSpeechMarkers.put(end, offensiveSpeech.generateOffensiveSpeechMarker());
+                continue;
+            }
+
             var start = annotation.getBegin() - offset - errorOffset;
             var end = annotation.getEnd() - offset - errorOffset;
 
@@ -208,6 +223,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             if (emotionCoverWrappersEnd.containsKey(i)) {
                 finalText.append(emotionCoverWrappersEnd.get(i));
             }
+            if (offensiveSpeechCoverWrappersEnd.containsKey(i)) {
+                finalText.append(offensiveSpeechCoverWrappersEnd.get(i));
+            }
             if (endTags.containsKey(i)) {
                 //finalText.append(endTags.get(i).getFirst());
                 for (var tag : endTags.get(i)) {
@@ -216,6 +234,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
 
             // Insert start spans
+            if (offensiveSpeechCoverWrappersStart.containsKey(i)) {
+                finalText.append(offensiveSpeechCoverWrappersStart.get(i));
+            }
             if (emotionCoverWrappersStart.containsKey(i)) {
                 finalText.append(emotionCoverWrappersStart.get(i));
             }
@@ -229,6 +250,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
             if (emotionMarkers.containsKey(i)) {
                 finalText.append(emotionMarkers.get(i));
+            }
+            if (offensiveSpeechMarkers.containsKey(i)) {
+                finalText.append(offensiveSpeechMarkers.get(i));
             }
             if (startTags.containsKey(i)) {
                 finalText.append(generateMultiHTMLTag(startTags.get(i)));

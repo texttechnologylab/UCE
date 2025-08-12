@@ -23,8 +23,6 @@ import org.texttechnologylab.models.emotion.Emotion;
 import org.texttechnologylab.models.modelInfo.ModelNameHelper;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
-import org.texttechnologylab.models.search.AnnotationSearchResult;
-import org.texttechnologylab.models.search.PageSnippet;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.UnifiedTopic;
@@ -388,6 +386,9 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         // emotions
         int emotionModelId = modelSelection.getOrDefault(ModelNameHelper.getModelName(Emotion.class), -1);
         annotations.addAll(emotions.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).filter(e -> emotionModelId == -1 || e.getModelVersion().getModel().getId() == emotionModelId).toList());
+        // offensiveSpeech
+        int offensiveSpeechModelId = modelSelection.getOrDefault(ModelNameHelper.getModelName(OffensiveSpeech.class), -1);
+        annotations.addAll(offensiveSpeeches.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).filter(e -> offensiveSpeechModelId == -1 || e.getModelVersion().getModel().getId() == offensiveSpeechModelId).toList());
 
         annotations.sort(Comparator.comparingInt(UIMAAnnotation::getBegin));
         return annotations;

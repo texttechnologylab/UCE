@@ -12,7 +12,9 @@ import org.texttechnologylab.models.modelInfo.NamedModel;
 import org.texttechnologylab.utils.Pair;
 
 import javax.persistence.*;
+import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "offensivespeech")
@@ -51,15 +53,32 @@ public class OffensiveSpeech extends UIMAAnnotation implements WikiModel {
         this.document = document;
     }
 
+    private OffensiveSpeechValue getRepresentativeOffensiveSpeechValue() {
+        if (this.offensiveSpeechValues != null && !this.offensiveSpeechValues.isEmpty()) {
+            return this.offensiveSpeechValues.stream().max(Comparator.comparingDouble(OffensiveSpeechValue::getValue)).orElse(null);
+        }
+        return null;
+    }
+
+    public String generateOffensiveSpeechMarker() {
+        OffensiveSpeechValue rep = getRepresentativeOffensiveSpeechValue();
+        String repValue = rep != null ? rep.getOffensiveSpeechType().getName() : "";
+        return String.format("<span class='open-wiki-page annotation custom-context-menu offensive-marker' title='%1$s' data-wid='%2$s' data-wcovered='%3$s' data-offensive-value='%4$s'>os</span>", this.getWikiId(), this.getWikiId(), this.getCoveredText(), repValue);
+    }
+
+    public String generateOffensiveSpeechCoveredStartSpan() {
+        OffensiveSpeechValue rep = getRepresentativeOffensiveSpeechValue();
+        String repValue = rep != null ? rep.getOffensiveSpeechType().getName() : "";
+        return String.format("<span class='offensive-covered offensive colorable-offensive' id='os-%2$s' data-wcovered='%3$s' data-offensive-value='%4$s'>", UUID.randomUUID(), this.getWikiId(), this.getCoveredText(), repValue);
+    }
+
     @Override
     public String getWikiId() {
         return "OS" + "-" + this.getId();
     }
 
     public List<Pair<String, Double>> collectOffensiveSpeechValues() {
-        return this.offensiveSpeechValues.stream()
-            .map(value -> new Pair<>(value.getOffensiveSpeechType().getName(), value.getValue()))
-            .toList();
+        return this.offensiveSpeechValues.stream().map(value -> new Pair<>(value.getOffensiveSpeechType().getName(), value.getValue())).toList();
     }
 
 }

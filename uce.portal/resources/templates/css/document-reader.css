@@ -343,6 +343,11 @@ body {
     position: relative;
 }
 
+.document-content .colorable-offensive {
+    transition: background-color 0.3s ease;
+    position: relative;
+}
+
 .document-content .animated-topic-scroll {
     transition: box-shadow 0.3s ease-in-out;
     box-shadow: 0 0 10px 5px rgba(255, 255, 0, 0.5);
@@ -383,6 +388,29 @@ body {
 }
 
 .document-content .emotion-covered.highlight {
+    background-color: rgba(255, 0, 0, 0.2);
+    border-radius: 3px;
+    padding: 2px 4px;
+}
+
+.document-content .offensive-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px; /* minimum size */
+    height: 20px;
+    padding: 0 4px; /* horizontal padding */
+    border-radius: 20%;
+    border: 1px solid #333;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: white;
+    color: #333;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
+.document-content .offensive-covered.highlight {
     background-color: rgba(255, 0, 0, 0.2);
     border-radius: 3px;
     padding: 2px 4px;

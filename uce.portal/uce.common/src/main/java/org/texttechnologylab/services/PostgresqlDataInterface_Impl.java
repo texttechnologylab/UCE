@@ -2432,6 +2432,18 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             }
         }
 
+        // offensive speech
+        Hibernate.initialize(doc.getOffensiveSpeeches());
+
+        for (var offensiveSpeech : doc.getOffensiveSpeeches()) {
+            Hibernate.initialize(offensiveSpeech.getOffensiveSpeechValues());
+            Hibernate.initialize(offensiveSpeech.getModelVersion());
+            Hibernate.initialize(offensiveSpeech.getModelVersion().getModel());
+            for (var osv : offensiveSpeech.getOffensiveSpeechValues()) {
+                Hibernate.initialize(osv.getOffensiveSpeechType());
+            }
+        }
+
         for (var link : doc.getWikipediaLinks()) {
             Hibernate.initialize(link.getWikiDataHyponyms());
         }
