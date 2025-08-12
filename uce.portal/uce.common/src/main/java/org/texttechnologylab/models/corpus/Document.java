@@ -22,6 +22,9 @@ import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.models.emotion.Emotion;
 import org.texttechnologylab.models.modelInfo.ModelNameHelper;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
+import org.texttechnologylab.models.search.AnnotationSearchResult;
+import org.texttechnologylab.models.search.PageSnippet;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.UnifiedTopic;
@@ -217,6 +220,12 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
     @Fetch(value = FetchMode.SUBSELECT)
     private List<UnifiedTopic> unifiedTopics;
+
+    @Setter
+    @Getter
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, fetch = FetchType.EAGER)
+    @Fetch(value = FetchMode.SUBSELECT)
+    private List<OffensiveSpeech> offensiveSpeeches;
 
     @Setter
     @Getter

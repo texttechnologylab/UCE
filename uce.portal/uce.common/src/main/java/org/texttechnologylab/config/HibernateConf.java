@@ -23,6 +23,9 @@ import org.texttechnologylab.models.modelInfo.Model;
 import org.texttechnologylab.models.modelInfo.ModelCategory;
 import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechType;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechValue;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -89,6 +92,10 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(TopicWord.class);
         metadataSources.addAnnotatedClass(TopicValueBase.class);
         metadataSources.addAnnotatedClass(TopicValueBaseWithScore.class);
+        // offensive speech
+        metadataSources.addAnnotatedClass(OffensiveSpeech.class);
+        metadataSources.addAnnotatedClass(OffensiveSpeechValue.class);
+        metadataSources.addAnnotatedClass(OffensiveSpeechType.class);
         // toxic
         metadataSources.addAnnotatedClass(Toxic.class);
         metadataSources.addAnnotatedClass(ToxicValue.class);

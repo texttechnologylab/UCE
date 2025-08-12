@@ -36,6 +36,9 @@ import org.texttechnologylab.models.modelInfo.ModelCategory;
 import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.modelInfo.NamedModel;
 import org.texttechnologylab.models.negation.CompleteNegation;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechType;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechValue;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -1409,6 +1412,37 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 Hibernate.initialize(t.getWords());
             }
             return topic;
+        });
+    }
+
+    public synchronized OffensiveSpeechType getOrCreateOffensiveSpeechType(String name) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(OffensiveSpeechType.class);
+            var root = criteriaQuery.from(OffensiveSpeechType.class);
+            criteriaQuery.select(root)
+                    .where(criteriaBuilder.equal(root.get("name"), name));
+
+            OffensiveSpeechType offensiveSpeechType;
+            try {
+                offensiveSpeechType = session.createQuery(criteriaQuery).getSingleResult();
+            } catch (NoResultException e) {
+                // If not found, create a new one
+                offensiveSpeechType = new OffensiveSpeechType(name);
+                session.save(offensiveSpeechType);
+            }
+            return offensiveSpeechType;
+        });
+    }
+
+    public OffensiveSpeech getInitializedOffensiveSpeechById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var offensiveSpeech = session.get(OffensiveSpeech.class, id);
+            Hibernate.initialize(offensiveSpeech.getOffensiveSpeechValues());
+            for (OffensiveSpeechValue value : offensiveSpeech.getOffensiveSpeechValues()) {
+                Hibernate.initialize(value.getOffensiveSpeechType());
+            }
+            return offensiveSpeech;
         });
     }
 

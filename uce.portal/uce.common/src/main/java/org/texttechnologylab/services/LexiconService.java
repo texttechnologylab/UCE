@@ -12,6 +12,7 @@ import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.emotion.Emotion;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.toxic.Toxic;
 import org.texttechnologylab.models.viewModels.lexicon.LexiconOccurrenceViewModel;
@@ -45,6 +46,7 @@ public class LexiconService {
                     Scope.class,
                     XScope.class,
                     UnifiedTopic.class,
+                    OffensiveSpeech.class,
                     Toxic.class,
                     Emotion.class));
 

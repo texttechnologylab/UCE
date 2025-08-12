@@ -56,6 +56,9 @@ import org.texttechnologylab.models.modelInfo.Model;
 import org.texttechnologylab.models.modelInfo.ModelCategory;
 import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechType;
+import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechValue;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
 import org.texttechnologylab.models.topic.TopicValueBase;
@@ -581,6 +584,11 @@ public class Importer {
                 ExceptionUtils.tryCatchLog(
                         () -> setUnifiedTopic(document, jCas),
                         (ex) -> logImportWarn("This file should have contained UnifiedTopic annotations, but selecting them caused an error.", ex, filePath));
+
+            if (corpusConfig.getAnnotations().isOffensiveSpeech())
+                ExceptionUtils.tryCatchLog(
+                        () -> setOffensiveSpeech(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained OffensiveSpeech annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().isToxic())
                 ExceptionUtils.tryCatchLog(
@@ -1446,6 +1454,51 @@ public class Importer {
         });
 
         document.setUnifiedTopics(unifiedTopics);
+    }
+
+    private void setOffensiveSpeech(Document document, JCas jCas) {
+        List<OffensiveSpeech> offensiveSpeeches = new ArrayList<>();
+
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.OffensiveSpeech.class).forEach(os -> {
+            OffensiveSpeech offensiveSpeech = new OffensiveSpeech(os.getBegin(), os.getEnd());
+            offensiveSpeech.setDocument(document);
+            offensiveSpeech.setCoveredText(os.getCoveredText());
+
+            FSArray<AnnotationComment> offensives = os.getOffensives();
+            if (offensives == null) {
+                logger.warn("OffensiveSpeech annotation without offensives found. Skipping this annotation.");
+                return;
+            }
+
+            List<OffensiveSpeechValue> offensivesList = new ArrayList<>();
+            for (AnnotationComment offensive : offensives) {
+                String offensiveSpeechName = offensive.getKey();
+                OffensiveSpeechType offensiveSpeechType;
+                try {
+                    offensiveSpeechType = db.getOrCreateOffensiveSpeechType(offensiveSpeechName);
+                } catch (DatabaseOperationException e) {
+                    logger.warn("Unknown OffensiveSpeechType: " + offensiveSpeechName + ". Skipping this annotation.");
+                    continue;
+                }
+                double value;
+                try {
+                    value = Double.parseDouble(offensive.getValue());
+                }
+                catch (NumberFormatException e) {
+                    logger.warn("Invalid value for OffensiveSpeechType: " + offensiveSpeechName + ". Skipping this annotation.");
+                    continue;
+                }
+                OffensiveSpeechValue offensiveSpeechValue = new OffensiveSpeechValue();
+                offensiveSpeechValue.setOffensiveSpeechType(offensiveSpeechType);
+                offensiveSpeechValue.setValue(value);
+                offensiveSpeechValue.setOffensiveSpeech(offensiveSpeech);
+                offensivesList.add(offensiveSpeechValue);
+            }
+            offensiveSpeech.setOffensiveSpeechValues(offensivesList);
+            offensiveSpeeches.add(offensiveSpeech);
+        });
+
+        document.setOffensiveSpeeches(offensiveSpeeches);
     }
 
     /**

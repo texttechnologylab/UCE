@@ -112,6 +112,10 @@
     border-left-color: darkred;
 }
 
+.lexicon-view .lexicon-entry[data-type="offensivespeech"]{
+    border-left-color: silver;
+}
+
 .lexicon-view .lexicon-entry[data-type="toxic"]{
     border-left-color: darkorange;
 }
