@@ -1523,12 +1523,31 @@ public class Importer {
      * Selects and sets the toxicities to a document.
      */
     private void setToxic(Document document, JCas jCas) {
+        ModelCategory modelCategory;
+        try {
+            modelCategory = db.getOrCreateModelCategory(Toxic.class);
+        } catch (DatabaseOperationException e) {
+            logger.error("Error while getting or creating model category for Toxic", e);
+            return;
+        }
+
         List<Toxic> toxics = new ArrayList<>();
 
         JCasUtil.select(jCas, org.texttechnologylab.annotation.Toxic.class).forEach(t -> {
             Toxic toxic = new Toxic(t.getBegin(), t.getEnd());
             toxic.setDocument(document);
             toxic.setCoveredText(t.getCoveredText());
+
+            try {
+                MetaData modelMetaData = t.getModel();
+                Model model = db.getOrCreateModel(modelMetaData.getModelName());
+                ModelVersion modelVersion = db.getOrCreateModelVersion(model, modelMetaData.getModelVersion());
+                toxic.setModelVersion(modelVersion);
+                db.registerModelToCategoryAssociation(model, modelCategory);
+            } catch (DatabaseOperationException e) {
+                logger.error("Error while getting or creating model for Toxic", e);
+                return;
+            }
 
             List<ToxicValue> toxicValues = new ArrayList<>();
             ToxicType toxicType, nonToxicType;
