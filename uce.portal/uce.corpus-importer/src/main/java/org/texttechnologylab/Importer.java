@@ -62,6 +62,9 @@ import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.topic.UnifiedTopic;
+import org.texttechnologylab.models.toxic.Toxic;
+import org.texttechnologylab.models.toxic.ToxicType;
+import org.texttechnologylab.models.toxic.ToxicValue;
 import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.*;
 
@@ -579,6 +582,11 @@ public class Importer {
                         () -> setUnifiedTopic(document, jCas),
                         (ex) -> logImportWarn("This file should have contained UnifiedTopic annotations, but selecting them caused an error.", ex, filePath));
 
+            if (corpusConfig.getAnnotations().isToxic())
+                ExceptionUtils.tryCatchLog(
+                        () -> setToxic(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained Toxic annotations, but selecting them caused an error.", ex, filePath));
+
             if (corpusConfig.getAnnotations().isEmotion())
                 ExceptionUtils.tryCatchLog(
                         () -> setEmotion(document, jCas),
@@ -1009,6 +1017,12 @@ public class Importer {
                 anno.setPage(page);
             }
         }
+        if (document.getToxics() != null) {
+            for (var anno : document.getToxics().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
         if (document.getEmotions() != null) {
             for (var anno : document.getEmotions().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
@@ -1432,6 +1446,45 @@ public class Importer {
         });
 
         document.setUnifiedTopics(unifiedTopics);
+    }
+
+    /**
+     * Selects and sets the toxicities to a document.
+     */
+    private void setToxic(Document document, JCas jCas) {
+        List<Toxic> toxics = new ArrayList<>();
+
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.Toxic.class).forEach(t -> {
+            Toxic toxic = new Toxic(t.getBegin(), t.getEnd());
+            toxic.setDocument(document);
+            toxic.setCoveredText(t.getCoveredText());
+
+            List<ToxicValue> toxicValues = new ArrayList<>();
+            ToxicType toxicType, nonToxicType;
+            try {
+                toxicType = db.getOrCreateToxicType("toxic");
+                nonToxicType = db.getOrCreateToxicType("non-toxic");
+            } catch (DatabaseOperationException e) {
+                logger.error("Error while fetching ToxicType or NonToxicType from database.", e);
+                return;
+            }
+
+            ToxicValue toxicValue = new ToxicValue();
+            toxicValue.setToxicType(toxicType);
+            toxicValue.setValue(t.getToxic());
+            toxicValue.setToxic(toxic);
+            toxicValues.add(toxicValue);
+            ToxicValue nonToxicValue = new ToxicValue();
+            nonToxicValue.setToxicType(nonToxicType);
+            nonToxicValue.setValue(t.getNonToxic());
+            nonToxicValue.setToxic(toxic);
+            toxicValues.add(nonToxicValue);
+
+            toxic.setToxicValues(toxicValues);
+            toxics.add(toxic);
+        });
+
+        document.setToxics(toxics);
     }
 
     /**

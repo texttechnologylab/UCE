@@ -27,6 +27,9 @@ import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.topic.UnifiedTopic;
+import org.texttechnologylab.models.toxic.Toxic;
+import org.texttechnologylab.models.toxic.ToxicType;
+import org.texttechnologylab.models.toxic.ToxicValue;
 
 import java.util.HashMap;
 
@@ -86,6 +89,10 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(TopicWord.class);
         metadataSources.addAnnotatedClass(TopicValueBase.class);
         metadataSources.addAnnotatedClass(TopicValueBaseWithScore.class);
+        // toxic
+        metadataSources.addAnnotatedClass(Toxic.class);
+        metadataSources.addAnnotatedClass(ToxicValue.class);
+        metadataSources.addAnnotatedClass(ToxicType.class);
         // emotion
         metadataSources.addAnnotatedClass(Emotion.class);
         metadataSources.addAnnotatedClass(EmotionValue.class);

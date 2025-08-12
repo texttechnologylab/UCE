@@ -13,6 +13,7 @@ import org.texttechnologylab.models.corpus.*;
 import org.texttechnologylab.models.emotion.Emotion;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.topic.UnifiedTopic;
+import org.texttechnologylab.models.toxic.Toxic;
 import org.texttechnologylab.models.viewModels.lexicon.LexiconOccurrenceViewModel;
 
 import javax.persistence.Table;
@@ -44,6 +45,7 @@ public class LexiconService {
                     Scope.class,
                     XScope.class,
                     UnifiedTopic.class,
+                    Toxic.class,
                     Emotion.class));
 
     public LexiconService(PostgresqlDataInterface_Impl db) {

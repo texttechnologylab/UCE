@@ -126,6 +126,21 @@ public class WikiService {
     }
 
     /**
+     * Builds a view model to render a toxic annotation wiki page
+     */
+    public ToxicAnnotationWikiPageViewModel buildToxicAnnotationWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {
+        var viewModel = new ToxicAnnotationWikiPageViewModel();
+        var toxic = db.getInitializedToxicById(id);
+        viewModel.setWikiModel(toxic);
+        viewModel.setDocument(db.getDocumentById(toxic.getDocumentId()));
+        viewModel.setCorpus(db.getCorpusById(viewModel.getDocument().getCorpusId()).getViewModel());
+        viewModel.setCoveredText(coveredText);
+        viewModel.setAnnotationType("Toxic");
+
+        return viewModel;
+    }
+
+    /**
      * Gets a DocumentTopicDistributionWikiPageViewModel to render a Wikipage for that topic distribution
      */
     public TopicWikiPageViewModel buildTopicWikiPageViewModel(long id, String coveredText) throws DatabaseOperationException {

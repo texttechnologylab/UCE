@@ -25,6 +25,7 @@ public class CorpusAnnotationConfig {
     private boolean xscope;
     private boolean unifiedTopic;
     private boolean emotion;
+    private boolean toxic;
 
     public boolean isGeoNames() {
         return geoNames;
@@ -208,4 +209,7 @@ public class CorpusAnnotationConfig {
         return emotion;
     }
 
+    public boolean isToxic(){
+        return toxic;
+    }
 }
