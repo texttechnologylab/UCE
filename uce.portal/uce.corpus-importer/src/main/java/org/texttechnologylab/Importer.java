@@ -1457,12 +1457,30 @@ public class Importer {
     }
 
     private void setOffensiveSpeech(Document document, JCas jCas) {
+        ModelCategory modelCategory;
+        try {
+            modelCategory = db.getOrCreateModelCategory(OffensiveSpeech.class);
+        } catch (DatabaseOperationException e) {
+            logger.error("Error while getting or creating model category for OffensiveSpeech", e);
+            return;
+        }
+
         List<OffensiveSpeech> offensiveSpeeches = new ArrayList<>();
 
         JCasUtil.select(jCas, org.texttechnologylab.annotation.OffensiveSpeech.class).forEach(os -> {
             OffensiveSpeech offensiveSpeech = new OffensiveSpeech(os.getBegin(), os.getEnd());
             offensiveSpeech.setDocument(document);
             offensiveSpeech.setCoveredText(os.getCoveredText());
+            try {
+                MetaData modelMetaData = os.getModel();
+                Model model = db.getOrCreateModel(modelMetaData.getModelName());
+                ModelVersion modelVersion = db.getOrCreateModelVersion(model, modelMetaData.getModelVersion());
+                offensiveSpeech.setModelVersion(modelVersion);
+                db.registerModelToCategoryAssociation(model, modelCategory);
+            } catch (DatabaseOperationException e) {
+                logger.error("Error while getting or creating model for OffensiveSpeech", e);
+                return;
+            }
 
             FSArray<AnnotationComment> offensives = os.getOffensives();
             if (offensives == null) {
