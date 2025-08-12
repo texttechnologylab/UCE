@@ -264,7 +264,7 @@
                             <#if modelCategories?has_content && modelCategories?size gt 0>
                                 <div class="group-box model-selection-box">
                                     <p class="title">${languageResource.get("modelSelection")}</p>
-                                    <div class="flexed align-items-center">
+                                    <div class="flexed-column align-items-center">
                                         <#list modelCategories as category>
                                             <div class="model-category">
                                                 <label class="mb-0 mr-2" for="model-select-${category.getId()}">${category.getCategoryName()}</label>

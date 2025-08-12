@@ -232,6 +232,11 @@ nav .selected-nav-btn.text::before {
     display: flex;
 }
 
+.flexed-column {
+    display: flex;
+    flex-direction: column;
+}
+
 .display-none {
     display: none;
 }
