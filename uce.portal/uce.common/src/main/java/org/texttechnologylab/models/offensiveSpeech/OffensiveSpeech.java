@@ -8,6 +8,7 @@ import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.modelInfo.NamedModel;
 import org.texttechnologylab.utils.Pair;
 
 import javax.persistence.*;
@@ -16,6 +17,7 @@ import java.util.List;
 @Entity
 @Table(name = "offensivespeech")
 @Typesystem(types = {org.texttechnologylab.annotation.OffensiveSpeech.class})
+@NamedModel(name = "offensivespeech")
 public class OffensiveSpeech extends UIMAAnnotation implements WikiModel {
 
     @Getter
