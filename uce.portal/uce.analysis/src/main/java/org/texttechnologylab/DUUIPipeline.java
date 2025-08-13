@@ -28,7 +28,6 @@ import org.texttechnologylab.modules.Sentences;
 import org.xml.sax.SAXException;
 import org.texttechnologylab.uima.type.cohmetrix.Index;
 
-
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.*;
