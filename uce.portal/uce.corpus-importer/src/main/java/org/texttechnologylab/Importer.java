@@ -19,6 +19,7 @@ import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.annotation.AnnotationComment;
 import org.texttechnologylab.annotation.DocumentAnnotation;
 import org.texttechnologylab.annotation.Emotion;
 import org.texttechnologylab.annotation.SentimentModel;
@@ -56,6 +57,8 @@ import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.*;
 import org.texttechnologylab.models.negation.CompleteNegation;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -82,6 +85,9 @@ public class Importer {
     );
     private static final String[] COMATIBLE_CAS_FILE_ENDINGS = Arrays.asList("xmi", "bz2", "zip", "gz").toArray(new String[0]);
     private static final Set<String> MIME_TYPES_PDF = Set.of("application/pdf", "pdf");
+    private static final String MIME_TYPE_IMAGE_PREFIX = "image/";
+    // TODO this list must also be used in the frontend to decide if we should show the image viewer
+    private static final Set<String> MIME_TYPES_IMAGES = Set.of("image/jpeg", "image/png");
     private GoetheUniversityService goetheUniversityService;
     private PostgresqlDataInterface_Impl db;
     private RAGService ragService;
@@ -105,6 +111,17 @@ public class Importer {
         this.importId = importId;
         this.path = foldername;
         this.casView = casView;
+    }
+
+    public Importer(
+            ApplicationContext serviceContext,
+            int importerNumber,
+            String casView
+    ) {
+        this.importerNumber = importerNumber;
+        this.casView = casView;
+
+        initServices(serviceContext);
     }
 
     public Importer(ApplicationContext serviceContext) {
@@ -163,7 +180,7 @@ public class Importer {
     /**
      * Stores an uploaded xmi to a given corpus
      */
-    public void storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus) throws DatabaseOperationException {
+    public Long storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus, String fileName, String documentId) throws DatabaseOperationException {
         logger.info("Trying to store an uploaded UIMA file...");
 
         // Before we try to parse the document, we need to check if we have UCEMetadata filters for this corpus.
@@ -173,13 +190,14 @@ public class Importer {
                     (ex) -> logger.error("Couldn't fetch UCEMetadataFilters to a corpus - this shouldn't happen. The process continues without filters.", ex));
 
         // We don't catch exceptions here, we let them be raised.
-        var doc = XMIToDocument(inputStream, corpus, "TODO: CHANGE THIS FILEPATH");
+        var doc = XMIToDocument(inputStream, corpus, fileName, documentId);
         if (doc == null)
             throw new DatabaseOperationException("The document was already imported into the corpus according to its documentId.");
         db.saveDocument(doc);
-        postProccessDocument(doc, corpus, "TODO: CHANGE THIS FILEPATH");
+        postProccessDocument(doc, corpus, fileName);
 
         logger.info("Finished storing and uploaded UIMA file.");
+        return doc.getId();
     }
 
     /**
@@ -197,6 +215,8 @@ public class Importer {
 
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
         //fixed paths
+        // NOTE the config is not updated if the corpus already exists!
+        // TODO compare configs and show a warning if they differ (except name, ...)
         try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString())) {
 
             corpusConfig = gson.fromJson(reader, CorpusConfig.class);
@@ -358,13 +378,19 @@ public class Importer {
 
     /**
      * Converts an XMI inputstream to a Document.
+     * @param documentId Optional document id to use for database, useful if multiple views are imported
      */
-    public Document XMIToDocument(InputStream inputStream, Corpus corpus, String filePath) {
+    public Document XMIToDocument(InputStream inputStream, Corpus corpus, String filePath, String documentId) {
         try {
             var jCas = JCasFactory.createJCas();
             CasIOUtils.load(inputStream, null, jCas.getCas(), CasLoadMode.LENIENT);
 
-            return XMIToDocument(jCas, corpus, filePath);
+            // NOTE we need to specify the view here, the serialized data is the full CAS even when starting with a selected view
+            if (casView != null) {
+                jCas = jCas.getView(casView);
+            }
+
+            return XMIToDocument(jCas, corpus, filePath, documentId);
         } catch (Exception ex) {
             logger.error("Error while reading an annotated xmi file from stream to a cas and transforming it into a document:", ex);
             return null;
@@ -433,10 +459,15 @@ public class Importer {
         return null; // Unsupported
     }
 
+    public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath) {
+        return XMIToDocument(jCas, corpus, filePath, null);
+    }
+
     /**
      * Convert a UIMA jCas to an OCRDocument
+     * @param documentId Optional document id to use for database, useful if multiple views are imported
      */
-    public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath) {
+    public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath, String documentId) {
 
         logger.info("=============================== Importing a new CAS as a Document. ===============================");
 
@@ -456,6 +487,11 @@ public class Importer {
             if (metadata == null) {
                 // If the metadata block is missing, something is off. In that case, return null
                 return null;
+            }
+            // NOTE this could also be done by the import-caller, but having the document id as a parameter makes it much easier
+            if (documentId != null) {
+                logger.info("Setting document id from \"" + metadata.getDocumentId() + "\" to \"" + documentId + "\"");
+                metadata.setDocumentId(documentId);
             }
             var document = new Document(metadata.getLanguage(),
                     metadata.getDocumentTitle(),
@@ -495,6 +531,14 @@ public class Importer {
                 byte[] pdfBytes = jCas.getSofaDataStream().readAllBytes();
                 document.setDocumentData(pdfBytes);
                 logger.info("Document is a PDF: " + document.getMimeType() + " of length " + pdfBytes.length);
+            } else if (document.getMimeType().startsWith(MIME_TYPE_IMAGE_PREFIX) || MIME_TYPES_IMAGES.contains(document.getMimeType())) {
+                document.setFullText("");
+
+                // This is a document that only contains image bytes in the sofa string
+                byte[] imageBytes = jCas.getSofaDataStream().readAllBytes();
+                document.setDocumentData(imageBytes);
+                logger.info("Document is an image: " + document.getMimeType() + " of length " + imageBytes.length);
+
             } else {
                 // by default, we assume text as before
                 document.setFullText(jCas.getDocumentText());
@@ -589,6 +633,11 @@ public class Importer {
             ExceptionUtils.tryCatchLog(
                     () -> setPages(document, jCas, corpusConfig),
                     (ex) -> logImportWarn("This file should have contained OCRPage annotations, but selecting them caused an error.", ex, filePath));
+
+            if (corpusConfig.getAnnotations().isImage())
+                ExceptionUtils.tryCatchLog(
+                        () -> setImages(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained image annotations, but selecting them caused an error.", ex, filePath));
 
             var duration = System.currentTimeMillis() - start;
             logImportInfo("Successfully extracted all annotations from " + filePath, LogStatus.FINISHED, filePath, duration);
@@ -915,6 +964,9 @@ public class Importer {
                         pageCount.getAndIncrement();
                     });
 
+            // Get all annotations, these are used to store additional information to the paragraphs
+            Collection<AnnotationComment> annotationComments = JCasUtil.select(jCas, AnnotationComment.class);
+
             // We go through each page
             for (var p : pageAdapters) {
                 // New page
@@ -925,7 +977,10 @@ public class Importer {
                 // TODO: For now, only the new ABBYY typesystems get their paragraphs. We dont really use the others anymore.
                 // In the future, we can add back blocks and lines and whatnot for a more truer OCR page visualization
                 if (corpusConfig.getAnnotations().isOCRParagraph() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
-                    page.setParagraphs(getCoveredParagraphs((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
+                    page.setParagraphs(getCoveredParagraphs((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal(), page, annotationComments));
+
+                if (corpusConfig.getAnnotations().isOCRParagraph() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
+                    page.setDivId(((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()).getId());
 
                 //if (corpusConfig.getAnnotations().isOCRBlock() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
                 //    page.setBlocks(getCoveredBlocks((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
@@ -1420,6 +1475,34 @@ public class Importer {
         document.setXscopes(xScopesTotal);
         document.setFocuses(focusesTotal);
         document.setEvents(eventsTotal);
+    }
+
+
+    private void setImages(Document document, JCas jCas) {
+        // create image annotations
+        List<Image> images = new ArrayList<>();
+        for (org.texttechnologylab.annotation.type.Image imageAnno : JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Image.class)) {
+            Image image = new Image(imageAnno.getBegin(), imageAnno.getEnd());
+            if (imageAnno.getWidth() == 0 && imageAnno.getHeight() == 0) {
+                // try to automatically detect image dimensions
+                try {
+                    byte[] imageBytes = Base64.getDecoder().decode(imageAnno.getSrc());
+                    BufferedImage imageData = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                    image.setWidth(imageData.getWidth());
+                    image.setHeight(imageData.getHeight());
+                } catch (Exception e) {
+                    System.err.println("Failed detecting image dimensions for image: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                image.setWidth(imageAnno.getWidth());
+                image.setHeight(imageAnno.getHeight());
+            }
+            image.setMimeType(imageAnno.getMimetype());
+            image.setSrc(imageAnno.getSrc());
+            images.add(image);
+        }
+        document.setImages(images);
     }
 
 
@@ -1941,7 +2024,7 @@ public class Importer {
     /**
      * Gets all covered paragraphs from a OCR page in a cas
      */
-    private List<Paragraph> getCoveredParagraphs(org.texttechnologylab.annotation.ocr.abbyy.Page page) {
+    private List<Paragraph> getCoveredParagraphs(org.texttechnologylab.annotation.ocr.abbyy.Page page, Page ucePage, Collection<AnnotationComment> annotationComments) {
         // Paragraphs
         var paragraphs = new ArrayList<Paragraph>();
         // Get all covered by this. This can probably be done in one go, but oh well
@@ -1953,6 +2036,19 @@ public class Importer {
             paragraph.setRightIndent(pg.getRightIndent());
             paragraph.setStartIndent(pg.getStartIndent());
             paragraph.setCoveredText(pg.getCoveredText());
+            paragraph.setPage(ucePage);
+
+            // Get additional styling info from the AnnotationComments
+            for (AnnotationComment comment : annotationComments) {
+                if (comment.getReference() == pg) {
+                    if (comment.getKey().startsWith("_uce_paragraph_config_header")) {
+                        paragraph.setHeader(comment.getValue());
+                    }
+                    else if (comment.getKey().startsWith("_uce_paragraph_config_cssclass")) {
+                        paragraph.setCssClass(comment.getValue());
+                    }
+                }
+            }
 
             paragraphs.add(paragraph);
         });

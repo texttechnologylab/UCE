@@ -43,13 +43,17 @@
                     <!--</markdown-viewer>-->
                 <#else>
                     <#list page.getParagraphs() as paragraph>
-                        <p class="paragraph" style="
+                        <div class="paragraph ${paragraph.getCssClass()!}" style="
                                 margin-bottom: 24px;
                                 text-align: ${paragraph.getAlign()!"left"};
                                 font-weight: ${paragraph.getFontWeight()};
-                                text-decoration: ${paragraph.getUnderlined()};">
+                                text-decoration: ${paragraph.getUnderlined()};"
+                        >
+                            <#if paragraph.getHeader()??>
+                                <label class="mx-0 my-0 px-2 py-1 small-font color-dark ellipsis-text bg-lightgray paragraph-header">${paragraph.getHeader()}</label>
+                            </#if>
                             ${paragraph.buildHTMLString(documentAnnotations, documentText)}
-                        </p>
+                        </div>
                     </#list>
                 </#if>
             </div>

@@ -425,10 +425,16 @@ public class App {
                 get("/page/namedEntities", (registry.get(DocumentApi.class)).getDocumentNamedEntitiesByPage);
                 get("/page/lemma", (registry.get(DocumentApi.class)).getDocumentLemmaByPage);
                 get("/page/geoname", (registry.get(DocumentApi.class)).getDocumentGeonameByPage);
+                // TODO better use "delete" instead of "get" here?
+                delete("/delete", (registry.get(DocumentApi.class)).deleteDocument);
+                get("/findIdByMetadata", (registry.get(DocumentApi.class)).findDocumentIdByMetadata);
+                get("/findIdsByMetadata", (registry.get(DocumentApi.class)).findDocumentIdsByMetadata);
             });
 
             path("/rag", () -> {
                 get("/new", (registry.get(RAGApi.class)).getNewRAGChat);
+                // NOTE we allow also "post" here, as the system prompt can get quite long...
+                post("/new", (registry.get(RAGApi.class)).getNewRAGChat);
                 post("/postUserMessage", (registry.get(RAGApi.class)).postUserMessage);
                 get("/plotTsne", (registry.get(RAGApi.class)).getTsnePlot);
                 get("/sentenceEmbeddings", (registry.get(RAGApi.class)).getSentenceEmbeddings);

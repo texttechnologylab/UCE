@@ -6,10 +6,7 @@ import freemarker.template.Configuration;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
-import org.texttechnologylab.CustomFreeMarkerEngine;
-import org.texttechnologylab.LanguageResources;
-import org.texttechnologylab.SearchState;
-import org.texttechnologylab.SessionManager;
+import org.texttechnologylab.*;
 import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.UCEMetadataValueType;
@@ -192,6 +189,88 @@ public class DocumentApi implements UceApi {
         }
 
         return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "reader/documentReaderView.ftl"));
+    });
+
+    /**
+     * Finds all document ids matching a metadata key, value and value type.
+     */
+    public Route findDocumentIdsByMetadata = ((request, response) -> {
+        var key = ExceptionUtils.tryCatchLog(() -> request.queryParams("key"),
+                (ex) -> logger.error("Error: document deletion requires a 'key' query parameter. ", ex));
+        var value = ExceptionUtils.tryCatchLog(() -> request.queryParams("value"),
+                (ex) -> logger.error("Error: document deletion requires a 'value' query parameter. ", ex));
+        var valueTypeStr = ExceptionUtils.tryCatchLog(() -> request.queryParams("value_type"),
+                (ex) -> logger.error("Error: document deletion requires a 'value_type' query parameter (e.g. STRING, NUMBER, ...). ", ex));
+        if (key == null || value == null || valueTypeStr == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+
+        try {
+            UCEMetadataValueType valueType = UCEMetadataValueType.valueOf(valueTypeStr);
+
+            List<Long> documentIds = db.findDocumentIdsByMetadata(key, value, valueType);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("document_ids", documentIds);
+
+            var resultJson = new Gson().toJson(result);
+            response.type("application/json");
+            return resultJson;
+        }
+        catch (Exception ex) {
+            logger.error(ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
+
+    /**
+     * Finds the first document id matching a metadata key, value and value type.
+     */
+    public Route findDocumentIdByMetadata = ((request, response) -> {
+        var key = ExceptionUtils.tryCatchLog(() -> request.queryParams("key"),
+                (ex) -> logger.error("Error: document deletion requires a 'key' query parameter. ", ex));
+        var value = ExceptionUtils.tryCatchLog(() -> request.queryParams("value"),
+                (ex) -> logger.error("Error: document deletion requires a 'value' query parameter. ", ex));
+        var valueTypeStr = ExceptionUtils.tryCatchLog(() -> request.queryParams("value_type"),
+                (ex) -> logger.error("Error: document deletion requires a 'value_type' query parameter (e.g. STRING, NUMBER, ...). ", ex));
+        if (key == null || value == null || valueTypeStr == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+
+        try {
+            UCEMetadataValueType valueType = UCEMetadataValueType.valueOf(valueTypeStr);
+
+            List<Long> documentIds = db.findDocumentIdsByMetadata(key, value, valueType);
+            Long documentId = documentIds.getFirst();
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("document_id", documentId);
+
+            var resultJson = new Gson().toJson(result);
+            response.type("application/json");
+            return resultJson;
+        }
+        catch (Exception ex) {
+            logger.error(ex);
+            response.status(500);
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        }
+    });
+
+    public Route deleteDocument = ((request, response) -> {
+        var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
+                (ex) -> logger.error("Error: document deletion requires an 'id' query parameter. ", ex));
+        if (id == null)
+            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+
+        db.deleteDocumentById(Long.parseLong(id));
+
+        Map<String, Object> result = new HashMap<>();
+        result.put("status", "success");
+        result.put("message", "NOTE Document deletion is not fully implemented yet.");
+
+        var resultJson = new Gson().toJson(result);
+        response.type("application/json");
+        return resultJson;
     });
 
     public Route getPagesListView = ((request, response) -> {

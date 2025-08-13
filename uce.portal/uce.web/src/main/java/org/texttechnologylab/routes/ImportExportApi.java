@@ -1,5 +1,6 @@
 package org.texttechnologylab.routes;
 
+import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
@@ -12,6 +13,8 @@ import org.texttechnologylab.utils.StringUtils;
 import spark.Route;
 
 import java.nio.charset.StandardCharsets;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
 public class ImportExportApi implements UceApi {
@@ -69,24 +72,47 @@ public class ImportExportApi implements UceApi {
             if (corpusId == null)
                 return "Parameter corpusId didn't exist. Without it, the document cannot be uploaded.";
 
+            var casView = ExceptionUtils.tryCatchLog(
+                    () -> new String(request.raw().getPart("casView").getInputStream().readAllBytes(), StandardCharsets.UTF_8),
+                    (ex) -> logger.error("Error getting the casView that should be imported from this document. Using default view.", ex));
+
+            // If we import a document with multiple views, we can optionally override the documentId that is used to check for existing documents
+            var documentId = ExceptionUtils.tryCatchLog(
+                    () -> new String(request.raw().getPart("documentId").getInputStream().readAllBytes(), StandardCharsets.UTF_8),
+                    (ex) -> logger.error("Error getting the documentId that should be used as a name/id for this document. Aborting.", ex));
+
             var corpus = ExceptionUtils.tryCatchLog(
                     () -> db.getCorpusById(corpusId),
                     (ex) -> logger.error("Couldn't fetch corpus when uploading new document to corpusId " + corpusId, ex));
             if (corpus == null)
                 return "Corpus with id " + corpusId + " wasn't found in the database; can't upload document.";
 
-            var importer = new Importer(this.serviceContext);
+            // TODO just use 1 as default? will throw an error if this is null otherwise...
+            var importerNumber = 1;
+            var importer = new Importer(this.serviceContext, importerNumber, casView);
             try (var input = request.raw().getPart("file").getInputStream()) {
+                var fileName = request.raw().getPart("file").getSubmittedFileName();
                 // Import the doc in the background
-                var importFuture = CompletableFuture.runAsync(() -> {
+                var importFuture = CompletableFuture.supplyAsync(() -> {
                     try {
-                        importer.storeUploadedXMIToCorpusAsync(input, corpus);
+                        return importer.storeUploadedXMIToCorpusAsync(input, corpus, fileName, documentId);
                     } catch (DatabaseOperationException e) {
                         throw new RuntimeException(e);
                     }
                 });
-                importFuture.get();
+                Long newDocumentId = importFuture.get();
+                // TODO check that this new document id is not null, could this happen?
+
                 response.status(200);
+
+                var acceptedContentType = request.headers("Accept");
+                if (acceptedContentType != null && acceptedContentType.equals("application/json")) {
+                    Map<String, Object> apiResult = new HashMap<>();
+                    apiResult.put("document_id", newDocumentId);
+                    response.type("application/json");
+                    return new Gson().toJson(apiResult);
+                }
+
                 return "File uploaded successfully!";
             }
         } catch (Exception e) {

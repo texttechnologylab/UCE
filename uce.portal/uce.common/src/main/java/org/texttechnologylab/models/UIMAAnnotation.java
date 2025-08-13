@@ -150,6 +150,13 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 }
             }
 
+            if (annotation instanceof Image) {
+                // We render the image at the starting position, no end tag needed
+                var start = annotation.getBegin() - offset - errorOffset;
+                startTags.computeIfAbsent(start, k -> new ArrayList<>()).add(annotation);
+                continue;
+            }
+
             // We need to handle Sentiment a bit differently, as they are sentence or paragraph based annotations.
             if (annotation.getClass() != Sentiment.class && annotation.getClass() != Emotion.class) {
                 if (annotation.getBegin() < getBegin()
@@ -253,7 +260,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             emotionCoverWrappersStart.remove(firstEmotion);
         });
 
-        for (int i = 0; i < coveredText.length(); i++) {
+
+        // iterate +1 because we want to process the character after the last one to add the end tags
+        for (int i = 0; i < coveredText.length()+1; i++) {
 
             if (emotionMarkers.containsKey(i)) {
                 finalText.append(emotionMarkers.get(i));
@@ -300,7 +309,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
 
             // Append the current character
-            finalText.append(coveredText.charAt(i));
+            if (i < coveredText.length()) {
+                finalText.append(coveredText.charAt(i));
+            }
         }
 
         // If the sentiment goes over the page, we need to close all non-closed tags that are left
@@ -313,10 +324,10 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         }
 
         // We apply some heuristic post-processing to make the text more readable.
-        //return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
-        //return StringUtils.CleanText(finalText.toString());
-        //return coveredText;
-        return StringUtils.replaceCharacterOutsideSpan(StringUtils.replaceCharacterOutsideSpan(StringUtils.CleanText(finalText.toString()), '\n', "<br/>"), ' ', "&nbsp;");
+        var finalTextString = finalText.toString();
+        finalTextString = StringUtils.replaceCharacterOutsideTags(finalTextString, "\n", "<br/>");
+        finalTextString = StringUtils.replaceCharacterOutsideTags(finalTextString, " ", "&nbsp;");
+        return finalTextString;
     }
 
     private String generateMultiHTMLTag(List<UIMAAnnotation> annotations) {
@@ -383,6 +394,8 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             return String.format(
                     "<span class='annotation custom-context-menu focus' title='%1$s'>",
                     includeTitle ? focus.getCoveredText() : "");
+        } else if (annotation instanceof Image image) {
+            return "<img width='" + image.getWidth() + "' height='" + image.getHeight() + "' src='" + image.getHTMLImgSrc() + "' /><br/>";
         } else if (annotation instanceof UnifiedTopic topic) {
             // Get the representative topic if available
             String repTopicValue = "";

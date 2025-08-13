@@ -356,11 +356,31 @@ public class RAGService {
         params.put("url", modelConfig.getUrl());
 
         // Add the chat history
-        var promptMessages = new ArrayList<HashMap<String, String>>();
-        for (var chat : chatHistory.stream().sorted(Comparator.comparing(RAGChatMessage::getCreated)).toList()) {
-            var promptMessage = new HashMap<String, String>();
+        var promptMessages = new ArrayList<HashMap<String, Object>>();
+        var history = chatHistory.stream().sorted(Comparator.comparing(RAGChatMessage::getCreated)).toList();
+        // Make sure the last message has images
+        var lastMessageHasImage = history.getLast().getImages() != null && !history.getLast().getImages().isEmpty();
+        for (var chatInd = 0; chatInd < history.size(); chatInd++ ) {
+            var chat = history.get(chatInd);
+
+            // TODO make type instead of Map Object
+            var promptMessage = new HashMap<String, Object>();
             promptMessage.put("role", chat.getRole().name().toLowerCase());
             promptMessage.put("content", chat.getPrompt());
+
+            // TODO we only send the images in the last message if available, else we use all images
+            boolean isLast = (chatInd == chatHistory.size() - 1);
+            if (lastMessageHasImage && isLast) {
+                if (chat.getImages() != null && !chat.getImages().isEmpty()) {
+                    var images = new ArrayList<String>();
+                    for (var image : chat.getImages()) {
+                        // Use the base64 encoded image
+                        images.add(image.getSrcResized());
+                    }
+                    promptMessage.put("images", images);
+                }
+            }
+
             promptMessages.add(promptMessage);
         }
         params.put("promptMessages", promptMessages);

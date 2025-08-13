@@ -14,6 +14,7 @@ public class UCELog extends ModelBase {
     private String ip;
     private String method;
     private String uri;
+    @Column(columnDefinition = "TEXT")
     private String query;
     @Column(columnDefinition = "TEXT")
     private String body;
