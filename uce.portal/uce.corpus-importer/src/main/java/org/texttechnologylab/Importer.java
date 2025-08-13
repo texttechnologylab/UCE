@@ -61,6 +61,9 @@ import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechType;
 import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechValue;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
+import org.texttechnologylab.models.sentiment.Sentiment;
+import org.texttechnologylab.models.sentiment.SentimentType;
+import org.texttechnologylab.models.sentiment.SentimentValue;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -585,6 +588,12 @@ public class Importer {
                         () -> setUnifiedTopic(document, jCas),
                         (ex) -> logImportWarn("This file should have contained UnifiedTopic annotations, but selecting them caused an error.", ex, filePath));
 
+            if (corpusConfig.getAnnotations().isSentiment())
+                ExceptionUtils.tryCatchLog(
+                        () -> setSentiment(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained sentiment annotations, but selecting them caused an error.", ex, filePath));
+
+
             if (corpusConfig.getAnnotations().isOffensiveSpeech())
                 ExceptionUtils.tryCatchLog(
                         () -> setOffensiveSpeech(document, jCas),
@@ -1025,6 +1034,12 @@ public class Importer {
                 anno.setPage(page);
             }
         }
+        if (document.getSentiments() != null) {
+            for (var anno: document.getSentiments().stream().filter(s ->
+                    (s.getBegin() >= page.getBegin() && s.getEnd() <= page.getEnd()) || (s.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
         if (document.getToxics() != null) {
             for (var anno : document.getToxics().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
@@ -1454,6 +1469,52 @@ public class Importer {
         });
 
         document.setUnifiedTopics(unifiedTopics);
+    }
+
+    private void setSentiment(Document document, JCas jCas){
+        List<Sentiment> sentiments = new ArrayList<>();
+
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.SentimentModel.class).forEach(s -> {
+            Sentiment sentiment = new Sentiment(s.getBegin(), s.getEnd());
+            sentiment.setDocument(document);
+
+            sentiment.setSentiment(s.getSentiment());
+
+            List<SentimentValue> sentimentValues = new ArrayList<>();
+            SentimentType positiveType, negativeType, neutralType;
+            try {
+                positiveType = db.getOrCreateSentimentType("positive");
+                negativeType = db.getOrCreateSentimentType("negative");
+                neutralType = db.getOrCreateSentimentType("neutral");
+            } catch (DatabaseOperationException e) {
+                logger.error("Error while fetching Sentiment Types", e);
+                return;
+            }
+
+            SentimentValue positiveValue = new SentimentValue();
+            positiveValue.setSentimentType(positiveType);
+            positiveValue.setValue(s.getProbabilityPositive());
+            positiveValue.setSentiment(sentiment);
+            sentimentValues.add(positiveValue);
+
+            SentimentValue negativeValue = new SentimentValue();
+            negativeValue.setSentimentType(negativeType);
+            negativeValue.setValue(s.getProbabilityNegative());
+            negativeValue.setSentiment(sentiment);
+            sentimentValues.add(negativeValue);
+
+            SentimentValue neutralValue = new SentimentValue();
+            neutralValue.setSentimentType(neutralType);
+            neutralValue.setValue(s.getProbabilityNeutral());
+            neutralValue.setSentiment(sentiment);
+            sentimentValues.add(neutralValue);
+
+            sentiment.setSentimentValues(sentimentValues);
+
+            sentiment.setCoveredText(s.getCoveredText());
+            sentiments.add(sentiment);
+        });
+        document.setSentiments(sentiments);
     }
 
     private void setOffensiveSpeech(Document document, JCas jCas) {

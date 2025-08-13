@@ -23,6 +23,9 @@ import org.texttechnologylab.models.modelInfo.Model;
 import org.texttechnologylab.models.modelInfo.ModelCategory;
 import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.*;
+import org.texttechnologylab.models.sentiment.Sentiment;
+import org.texttechnologylab.models.sentiment.SentimentType;
+import org.texttechnologylab.models.sentiment.SentimentValue;
 import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
 import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechType;
 import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeechValue;
@@ -92,6 +95,10 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(TopicWord.class);
         metadataSources.addAnnotatedClass(TopicValueBase.class);
         metadataSources.addAnnotatedClass(TopicValueBaseWithScore.class);
+        // sentiment
+        metadataSources.addAnnotatedClass(Sentiment.class);
+        metadataSources.addAnnotatedClass(SentimentType.class);
+        metadataSources.addAnnotatedClass(SentimentValue.class);
         // offensive speech
         metadataSources.addAnnotatedClass(OffensiveSpeech.class);
         metadataSources.addAnnotatedClass(OffensiveSpeechValue.class);

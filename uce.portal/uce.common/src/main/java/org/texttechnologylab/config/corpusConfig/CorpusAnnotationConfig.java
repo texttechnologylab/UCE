@@ -24,6 +24,7 @@ public class CorpusAnnotationConfig {
     private boolean scope;
     private boolean xscope;
     private boolean unifiedTopic;
+    private boolean sentiment;
     private boolean offensiveSpeech;
     private boolean emotion;
     private boolean toxic;
@@ -204,6 +205,9 @@ public class CorpusAnnotationConfig {
     // UnifiedTopic
     public boolean isUnifiedTopic() {
         return unifiedTopic;
+    }
+    public boolean isSentiment() {
+        return sentiment;
     }
 
     public boolean isOffensiveSpeech() {
