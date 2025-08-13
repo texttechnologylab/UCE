@@ -61,10 +61,8 @@ public class Sentiment extends UIMAAnnotation implements WikiModel {
     }
 
     public List<Pair<String, String>> loopThroughProperties() {
-        return List.of(
-                new Pair<>("probability positive", Double.toString(probabilityPositive)),
-                new Pair<>("probability negative", Double.toString(probabilityNegative)),
-                new Pair<>("probability neutral", Double.toString(probabilityNeutral))
-        );
+        return sentimentValues.stream()
+                .map(v -> new Pair<>(v.getSentimentType().getName(), String.format("%.6f", v.getValue())))
+                .toList();
     }
 }
