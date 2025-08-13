@@ -10,6 +10,12 @@
         <#include "*/wiki/components/metadata.ftl">
     </div>
 
+    <!-- Model information -->
+    <div>
+        <#assign model = vm.getWikiModel()>
+        <#include "*/wiki/components/modelInfo.ftl">
+    </div>
+
     <hr class="mt-2 mb-4"/>
 
     <!-- Emotion information -->

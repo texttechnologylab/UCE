@@ -1424,6 +1424,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
            for (var s : sentiment.getSentimentValues()) {
                Hibernate.initialize(s.getSentimentType());
            }
+          Hibernate.initialize(sentiment.getModelVersion());
+          if (sentiment.getModelVersion() != null) {
+              Hibernate.initialize(sentiment.getModelVersion().getModel());
+          }
            return sentiment;
         });
     }
@@ -1473,6 +1477,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             for (OffensiveSpeechValue value : offensiveSpeech.getOffensiveSpeechValues()) {
                 Hibernate.initialize(value.getOffensiveSpeechType());
             }
+            Hibernate.initialize(offensiveSpeech.getModelVersion());
+            if (offensiveSpeech.getModelVersion() != null) {
+                Hibernate.initialize(offensiveSpeech.getModelVersion().getModel());
+            }
             return offensiveSpeech;
         });
     }
@@ -1483,6 +1491,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             Hibernate.initialize(toxic.getToxicValues());
             for(var t:toxic.getToxicValues()){
                 Hibernate.initialize(t.getToxicType());
+            }
+            Hibernate.initialize(toxic.getModelVersion());
+            if (toxic.getModelVersion() != null) {
+                Hibernate.initialize(toxic.getModelVersion().getModel());
             }
             return toxic;
         });
@@ -1512,6 +1524,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             Hibernate.initialize(emotion.getEmotionValues());
             for (var ev : emotion.getEmotionValues()) {
                 Hibernate.initialize(ev.getEmotionType());
+            }
+            Hibernate.initialize(emotion.getModelVersion());
+            if (emotion.getModelVersion() != null) {
+                Hibernate.initialize(emotion.getModelVersion().getModel());
             }
             return emotion;
         });
