@@ -2,6 +2,8 @@ package org.texttechnologylab.models.sentiment;
 
 import lombok.Getter;
 import lombok.Setter;
+import org.hibernate.annotations.Fetch;
+import org.hibernate.annotations.FetchMode;
 import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
@@ -9,8 +11,8 @@ import org.texttechnologylab.models.corpus.Document;
 import org.texttechnologylab.utils.Pair;
 
 import javax.persistence.*;
-import java.util.ArrayList;
 import java.util.List;
+import java.util.ArrayList;
 
 @Entity
 @Table(name = "sentiment")
@@ -24,19 +26,9 @@ public class Sentiment extends UIMAAnnotation implements WikiModel {
 
     @Getter
     @Setter
-    @Column(name = "probability_positive", nullable = false)
-    private double probabilityPositive;
-
-    @Getter
-    @Setter
-    @Column(name = "probability_neutral", nullable = false)
-    private double probabilityNeutral;
-
-    @Getter
-    @Setter
-    @Column(name = "probability_negative", nullable = false)
-    private double probabilityNegative;
-
+    @OneToMany(mappedBy = "sentiment", fetch = FetchType.LAZY, cascade = CascadeType.ALL)
+    @Fetch(value = FetchMode.SUBSELECT)
+    private List<SentimentValue> sentimentValues;
 
     @ManyToOne(fetch = FetchType.LAZY, optional = false, cascade = {CascadeType.PERSIST, CascadeType.MERGE})
     @JoinColumn(name = "document_id", nullable = false)

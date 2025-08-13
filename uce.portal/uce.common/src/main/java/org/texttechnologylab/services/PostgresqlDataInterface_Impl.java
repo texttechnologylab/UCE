@@ -32,6 +32,7 @@ import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.CompleteNegation;
 import org.texttechnologylab.models.search.*;
 import org.texttechnologylab.models.sentiment.Sentiment;
+import org.texttechnologylab.models.sentiment.SentimentType;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicWord;
 import org.texttechnologylab.models.topic.UnifiedTopic;
@@ -1357,10 +1358,32 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public Sentiment getInitializedSentimentById(long id) throws DatabaseOperationException{
+    public Sentiment getInitializedSentimentById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            var sent = session.get(Sentiment.class, id);
-            return sent;
+           var sentiment = session.get(Sentiment.class, id);
+           Hibernate.initialize(sentiment.getSentimentValues());
+           for (var s : sentiment.getSentimentValues()) {
+               Hibernate.initialize(s.getSentimentType());
+           }
+           return sentiment;
+        });
+    }
+
+    public synchronized SentimentType getOrCreateSentimentType(String name) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteriaBuilder = session.getCriteriaBuilder();
+            var criteriaQuery = criteriaBuilder.createQuery(SentimentType.class);
+            var root = criteriaQuery.from(SentimentType.class);
+            criteriaQuery.select(root).where(criteriaBuilder.equal(root.get("name"), name));
+
+            SentimentType sentimentType;
+            try {
+                sentimentType = session.createQuery(criteriaQuery).getSingleResult();
+            } catch (NoResultException e) {
+                sentimentType = new SentimentType(name);
+                session.save(sentimentType);
+            }
+            return sentimentType;
         });
     }
 
