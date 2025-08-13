@@ -399,6 +399,9 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         // toxic
         int toxicModelId = modelSelection.getOrDefault(ModelNameHelper.getModelName(Toxic.class), -1);
         annotations.addAll(toxics.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).filter(e -> toxicModelId == -1 || e.getModelVersion().getModel().getId() == toxicModelId).toList());
+        // sentiment
+        int sentimentModelId = modelSelection.getOrDefault(ModelNameHelper.getModelName(Sentiment.class), -1);
+        annotations.addAll(sentiments.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).filter(e -> sentimentModelId == -1 || e.getModelVersion().getModel().getId() == sentimentModelId).toList());
 
         annotations.sort(Comparator.comparingInt(UIMAAnnotation::getBegin));
         return annotations;
@@ -473,6 +476,9 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         }
         if (!toxics.isEmpty()) {
             categories.add(ModelNameHelper.getModelName(Toxic.class));
+        }
+        if (!sentiments.isEmpty()) {
+            categories.add(ModelNameHelper.getModelName(Sentiment.class));
         }
         return categories;
     }

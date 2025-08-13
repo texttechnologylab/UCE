@@ -12,7 +12,9 @@ import org.texttechnologylab.models.modelInfo.NamedModel;
 import org.texttechnologylab.utils.Pair;
 
 import javax.persistence.*;
+import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
 
 @Entity
 @Table(name = "sentiment")
@@ -54,6 +56,27 @@ public class Sentiment extends UIMAAnnotation implements WikiModel {
 
     public void setDocument(Document document) {
         this.document = document;
+    }
+
+    private SentimentValue getRepresentativeSentimentValue() {
+        if (this.sentimentValues != null && !this.sentimentValues.isEmpty()) {
+            return this.sentimentValues.stream()
+                    .max(Comparator.comparingDouble(SentimentValue::getValue))
+                    .orElse(null);
+        }
+        return null;
+    }
+
+    public String generateSentimentMarker() {
+        SentimentValue rep = getRepresentativeSentimentValue();
+        String repValue = rep != null ? rep.getSentimentType().getName() : "";
+        return String.format("<span class='open-wiki-page annotation custom-context-menu sentiment-marker' title='%1$s' data-wid='%2$s' data-wcovered='%3$s' data-sentiment-value='%4$s'>s</span>", this.getWikiId(), this.getWikiId(), this.getCoveredText(), repValue);
+    }
+
+    public String generateSentimentCoveredStartSpan() {
+        SentimentValue rep = getRepresentativeSentimentValue();
+        String repValue = rep != null ? rep.getSentimentType().getName() : "";
+        return String.format("<span class='sentiment-covered sentiment colorable-sentiment' id='s-%2$s' data-wcovered='%3$s' data-sentiment-value='%4$s'>", UUID.randomUUID(), this.getWikiId(), this.getCoveredText(), repValue);
     }
 
     @Override

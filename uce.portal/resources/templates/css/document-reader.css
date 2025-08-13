@@ -348,7 +348,12 @@ body {
     position: relative;
 }
 
-.document-content .colorable-toxic:hover {
+.document-content .colorable-toxic {
+    transition: background-color 0.3s ease;
+    position: relative;
+}
+
+.document-content .colorable-sentiment {
     transition: background-color 0.3s ease;
     position: relative;
 }
@@ -439,6 +444,29 @@ body {
 }
 
 .document-content .toxic-covered.highlight {
+    background-color: rgba(255, 0, 0, 0.2);
+    border-radius: 3px;
+    padding: 2px 4px;
+}
+
+.document-content .sentiment-marker {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 20px; /* minimum size */
+    height: 20px;
+    padding: 0 4px; /* horizontal padding */
+    border-radius: 20%;
+    border: 1px solid #333;
+    font-size: 14px;
+    font-weight: bold;
+    background-color: white;
+    color: #333;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
+.document-content .sentiment-covered.highlight {
     background-color: rgba(255, 0, 0, 0.2);
     border-radius: 3px;
     padding: 2px 4px;

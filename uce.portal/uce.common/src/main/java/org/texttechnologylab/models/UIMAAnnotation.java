@@ -10,6 +10,7 @@ import org.texttechnologylab.models.emotion.Emotion;
 import org.texttechnologylab.models.modelInfo.ModelVersion;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.offensiveSpeech.OffensiveSpeech;
+import org.texttechnologylab.models.sentiment.Sentiment;
 import org.texttechnologylab.models.topic.UnifiedTopic;
 import org.texttechnologylab.models.toxic.Toxic;
 import org.texttechnologylab.utils.StringUtils;
@@ -143,6 +144,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         Map<Integer, String> toxicMarkers = new TreeMap<>();
         Map<Integer, String> toxicCoverWrappersStart = new TreeMap<>();
         Map<Integer, String> toxicCoverWrappersEnd = new TreeMap<>();
+        Map<Integer, String> sentimentMarkers = new TreeMap<>();
+        Map<Integer, String> sentimentCoverWrappersStart = new TreeMap<>();
+        Map<Integer, String> sentimentCoverWrappersEnd = new TreeMap<>();
 
 
         for (var annotation : annotations) {
@@ -216,6 +220,17 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 continue;
             }
 
+            if (annotation instanceof Sentiment sentiment) {
+                var start = sentiment.getBegin() - offset - errorOffset;
+                var end = sentiment.getEnd() - offset - errorOffset;
+
+                sentimentCoverWrappersStart.put(start, sentiment.generateSentimentCoveredStartSpan());
+                sentimentCoverWrappersEnd.put(end, "</span>");
+
+                sentimentMarkers.put(end, sentiment.generateSentimentMarker());
+                continue;
+            }
+
             var start = annotation.getBegin() - offset - errorOffset;
             var end = annotation.getEnd() - offset - errorOffset;
 
@@ -244,6 +259,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             if (toxicCoverWrappersEnd.containsKey(i)) {
                 finalText.append(toxicCoverWrappersEnd.get(i));
             }
+            if (sentimentCoverWrappersEnd.containsKey(i)) {
+                finalText.append(sentimentCoverWrappersEnd.get(i));
+            }
             if (endTags.containsKey(i)) {
                 //finalText.append(endTags.get(i).getFirst());
                 for (var tag : endTags.get(i)) {
@@ -252,6 +270,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
 
             // Insert start spans
+            if (sentimentCoverWrappersStart.containsKey(i)) {
+                finalText.append(sentimentCoverWrappersStart.get(i));
+            }
             if (toxicCoverWrappersStart.containsKey(i)) {
                 finalText.append(toxicCoverWrappersStart.get(i));
             }
@@ -277,6 +298,9 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             }
             if (toxicMarkers.containsKey(i)) {
                 finalText.append(toxicMarkers.get(i));
+            }
+            if (sentimentMarkers.containsKey(i)) {
+                finalText.append(sentimentMarkers.get(i));
             }
             if (startTags.containsKey(i)) {
                 finalText.append(generateMultiHTMLTag(startTags.get(i)));
