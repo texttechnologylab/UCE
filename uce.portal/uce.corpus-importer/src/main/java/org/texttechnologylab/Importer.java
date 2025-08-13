@@ -46,6 +46,8 @@ import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.models.rag.DocumentSentenceEmbedding;
 import org.texttechnologylab.models.sentiment.Sentiment;
+import org.texttechnologylab.models.sentiment.SentimentType;
+import org.texttechnologylab.models.sentiment.SentimentValue;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -1431,9 +1433,37 @@ public class Importer {
             sentiment.setDocument(document);
 
             sentiment.setSentiment(s.getSentiment());
-            sentiment.setProbabilityPositive(s.getProbabilityPositive());
-            sentiment.setProbabilityNegative(s.getProbabilityNegative());
-            sentiment.setProbabilityNeutral(s.getProbabilityNeutral());
+
+            List<SentimentValue> sentimentValues = new ArrayList<>();
+            SentimentType positiveType, negativeType, neutralType;
+            try {
+                positiveType = db.getOrCreateSentimentType("positive");
+                negativeType = db.getOrCreateSentimentType("negative");
+                neutralType = db.getOrCreateSentimentType("neutral");
+            } catch (DatabaseOperationException e) {
+                logger.error("Error while fetching Sentiment Types", e);
+                return;
+            }
+
+            SentimentValue positiveValue = new SentimentValue();
+            positiveValue.setSentimentType(positiveType);
+            positiveValue.setValue(s.getProbabilityPositive());
+            positiveValue.setSentiment(sentiment);
+            sentimentValues.add(positiveValue);
+
+            SentimentValue negativeValue = new SentimentValue();
+            negativeValue.setSentimentType(negativeType);
+            negativeValue.setValue(s.getProbabilityNegative());
+            negativeValue.setSentiment(sentiment);
+            sentimentValues.add(negativeValue);
+
+            SentimentValue neutralValue = new SentimentValue();
+            neutralValue.setSentimentType(neutralType);
+            neutralValue.setValue(s.getProbabilityNeutral());
+            neutralValue.setSentiment(sentiment);
+            sentimentValues.add(neutralValue);
+
+            sentiment.setSentimentValues(sentimentValues);
 
             sentiment.setCoveredText(s.getCoveredText());
             sentiments.add(sentiment);
