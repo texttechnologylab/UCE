@@ -18,6 +18,8 @@ import org.texttechnologylab.models.imp.ImportLog;
 import org.texttechnologylab.models.imp.UCEImport;
 import org.texttechnologylab.models.negation.*;
 import org.texttechnologylab.models.sentiment.Sentiment;
+import org.texttechnologylab.models.sentiment.SentimentType;
+import org.texttechnologylab.models.sentiment.SentimentValue;
 import org.texttechnologylab.models.topic.TopicValueBase;
 import org.texttechnologylab.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.models.topic.TopicWord;
@@ -83,6 +85,8 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(TopicValueBaseWithScore.class);
         // sentiment
         metadataSources.addAnnotatedClass(Sentiment.class);
+        metadataSources.addAnnotatedClass(SentimentType.class);
+        metadataSources.addAnnotatedClass(SentimentValue.class);
 
         metadataSources.addAnnotatedClass(DocumentTopThreeTopics.class);
         var metadata = metadataSources.buildMetadata();
