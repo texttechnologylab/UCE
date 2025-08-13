@@ -1472,11 +1472,29 @@ public class Importer {
     }
 
     private void setSentiment(Document document, JCas jCas){
+        ModelCategory modelCategory;
+        try {
+            modelCategory = db.getOrCreateModelCategory(Sentiment.class);
+        } catch (DatabaseOperationException e) {
+            logger.error("Error while getting or creating model category for Sentiment", e);
+            return;
+        }
         List<Sentiment> sentiments = new ArrayList<>();
 
         JCasUtil.select(jCas, org.texttechnologylab.annotation.SentimentModel.class).forEach(s -> {
             Sentiment sentiment = new Sentiment(s.getBegin(), s.getEnd());
             sentiment.setDocument(document);
+
+            try {
+                MetaData modelMetaData = s.getModel();
+                Model model = db.getOrCreateModel(modelMetaData.getModelName());
+                ModelVersion modelVersion = db.getOrCreateModelVersion(model, modelMetaData.getModelVersion());
+                sentiment.setModelVersion(modelVersion);
+                db.registerModelToCategoryAssociation(model, modelCategory);
+            } catch (DatabaseOperationException e) {
+                logger.error("Error while getting or creating model for Toxic", e);
+                return;
+            }
 
             sentiment.setSentiment(s.getSentiment());
 

@@ -8,15 +8,16 @@ import org.texttechnologylab.annotations.Typesystem;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.corpus.Document;
+import org.texttechnologylab.models.modelInfo.NamedModel;
 import org.texttechnologylab.utils.Pair;
 
 import javax.persistence.*;
 import java.util.List;
-import java.util.ArrayList;
 
 @Entity
 @Table(name = "sentiment")
 @Typesystem(types = {org.texttechnologylab.annotation.SentimentModel.class})
+@NamedModel(name = "sentiment")
 public class Sentiment extends UIMAAnnotation implements WikiModel {
 
     @Getter
