@@ -1,7 +1,8 @@
-from transformers import AutoModelForCausalLM, AutoTokenizer
-import torch
 import requests
+import torch
 from openai import OpenAI
+from transformers import AutoModelForCausalLM, AutoTokenizer
+
 
 class InstructLLM:
 
@@ -16,6 +17,9 @@ class InstructLLM:
     def complete(self, messages, api_key=''):
         return self.model.complete(messages=messages, api_key=api_key)
 
+    def complete_stream(self, messages, api_key=''):
+        return self.model.complete_stream(messages=messages, api_key=api_key)
+
 class ChatGPT:
 
     def __init__(self, model):
@@ -28,6 +32,11 @@ class ChatGPT:
             messages=messages
         )
         return response.choices[0].message.content
+
+    def complete_stream(self, messages, api_key):
+        # TODO implement streaming
+        print("WARNING, streaming support for this model type has not been implemented yet in UCE, falling back to non-streaming completion.")
+        return self.complete(messages, api_key)
 
 class CausalLM:
 
@@ -42,6 +51,11 @@ class CausalLM:
         inputs = self.tokenizer.apply_chat_template(messages, return_tensors="pt").to(self.device)
         outputs = self.model.generate(inputs, max_new_tokens=128)
         return self.tokenizer.decode(outputs[0], skip_special_tokens=True)
+
+    def complete_stream(self, messages, api_key):
+        # TODO implement streaming
+        print("WARNING, streaming support for this model type has not been implemented yet in UCE, falling back to non-streaming completion.")
+        return self.complete(messages, api_key)
 
 class OllamaModel:
 
@@ -72,7 +86,41 @@ class OllamaModel:
         else:
             raise Exception(f"Ollama error: {response.status_code} - {response.text}")
 
+    # TODO maybe combine with "complete" method later?
+    def complete_stream(self, messages, api_key=''):
+        if isinstance(messages, str):
+            messages = [{"role": "user", "content": messages}]
+
+        response = requests.post(
+            f"{self.base_url}/api/chat",
+            json={
+                "model": self.model_name,
+                "messages": messages,
+                "stream": True,
+                "options": {
+                  "num_ctx": 16192,
+                  "keep_alive": "60m"
+                }
+            },
+            stream=True
+        )
+
+        if response.status_code != 200:
+            raise Exception(f"Ollama error: {response.status_code} - {response.text}")
+
+        # TODO handle errors in streaming response?
+        for line in response.iter_lines():
+            if line:
+                yield line + b'\n'  # forward as-is
+
 if __name__ == "__main__":
-    llm = InstructLLM("ollama/gemma2:27b")
-    print("Loaded.")
-    print(llm.complete("Hi, wie geht es dir?"))
+    messages = [
+        {
+            "role": "user",
+            "content": "who are you?",
+        }
+    ]
+
+    llm = OllamaModel("gemma3:4b", "http://geltlin.hucompute.org:12441")
+    for r in llm.complete_stream(messages):
+        print(r)

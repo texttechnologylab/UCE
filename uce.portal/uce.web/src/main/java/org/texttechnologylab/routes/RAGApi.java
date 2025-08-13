@@ -9,6 +9,7 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.annotations.auth.Authentication;
+import org.texttechnologylab.backgroundtasks.RAGStreamBackgroundTask;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.Document;
@@ -59,6 +60,58 @@ public class RAGApi implements UceApi {
         }
     });
 
+    /**
+     * Get the list of messages for a given chat.
+     * This can be used fo get messages updates for streaming results.
+     */
+    public Route getMessagesForChat = ((request, response) -> {
+        Gson gson = new Gson();
+        response.type("application/json");
+
+        var chatId = ExceptionUtils.tryCatchLog(() -> request.queryParams("chatId"),
+                (ex) -> logger.error("Error: the 'chatId' query parameter is required to get the message list. ", ex));
+        if (chatId == null || chatId.isEmpty()) {
+            response.status(400);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("message", "The 'chatId' query parameter is required to get the messages.");
+            return gson.toJson(result);
+        }
+
+        var stateId = UUID.fromString(chatId);
+        logger.info("Fetching chat messages for chat with id: " + stateId);
+
+        if (!activeRagChatStates.containsKey(stateId)) {
+            logger.error("Error fetching the active rag chat states - state not found for stateId: " + stateId);
+
+            response.status(400);
+
+            Map<String, Object> result = new HashMap<>();
+            result.put("message", "Not active chat with id 'chatId' found.");
+            return gson.toJson(result);
+        }
+        var chatState = activeRagChatStates.get(stateId);
+
+        // we always return JSON result, but depending on the Accept header we return the rendered HTML or just the data
+        response.type("application/json");
+
+        // send full chat state as JSON only
+        var contentType = request.headers("Accept");
+        if (contentType != null && contentType.equals("application/json")) {
+            RAGChatStateDTO returnState = RAGChatStateDTO.fromRAGChatState(chatState);
+            return new Gson().toJson(returnState);
+        }
+
+        // sende render for HTML output
+        var model = new HashMap<String, Object>();
+        model.put("chatState", chatState);
+        var renderedHtml = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
+        Map<String, Object> result = new HashMap<>();
+        result.put("html", renderedHtml);
+        result.put("done", chatState.getNewestMessage().isDone());
+        return new Gson().toJson(result);
+    });
+
     static final Pattern patternIDGiven = Pattern.compile("ID=(\\d+)");
 
     @Authentication(required = Authentication.Requirement.LOGGED_IN,
@@ -76,6 +129,10 @@ public class RAGApi implements UceApi {
         try {
             var userMessage = requestBody.get("userMessage").toString();
             var stateId = UUID.fromString(requestBody.get("stateId").toString());
+
+            // Stream the result?
+            // NOTE this will start a new thread in the background and return the chat id immediately
+            var stream = requestBody.getOrDefault("stream", null) != null ? ((Boolean)requestBody.get("stream")).booleanValue() : false;
 
             // A specific document id can be provided to only work with this document as LLM context
             // TODO check datatype again here
@@ -209,6 +266,7 @@ public class RAGApi implements UceApi {
                 Set<String> hibernateInit = Set.of("image");
                 if (documentId != null) {
                     // use a specific document only
+                    // TODO cache documents in state
                     Document doc = db.getDocumentById(documentId, hibernateInit);
 
                     List<Image> docImages = doc.getImages();
@@ -271,6 +329,27 @@ public class RAGApi implements UceApi {
 
             // Add the message to the current chat
             chatState.addMessage(userRagMessage);
+
+            // At this point, we distinguish between "streaming" and "non-streaming" responses of the LLM.
+            // In the latter case, we query the LLM and wait for the response, this is the same as before.
+            // If we want to stream the results, we will spawn a new thread that will handle the returns,
+            // save them in the chat state as "partial" messages and, when all data is received, will
+            // update the state to contain the complete message.
+            // The user can poll for new parts of the message anytime using a different endpoint.
+            // TODO we need to make sure, that we cannot accept another message from the user while the streaming is in progress.
+            if (stream) {
+                // Start a background thread that will handle the streaming response
+                Runnable backgroundTask = new RAGStreamBackgroundTask(ragService, chatState, nearestDocumentChunkEmbeddings, foundDocuments);
+                // TODO store active background threads to be able to cancel them if needed
+                var backgroundThread = new Thread(backgroundTask);
+                backgroundThread.start();
+
+                // Streaming immediately returns the chat id that the caller can use to poll for new messages.
+                Map<String, String> returnMap = new HashMap<>();
+                returnMap.put("chat_id", chatState.getChatId().toString());
+                response.type("application/json");
+                return new Gson().toJson(returnMap);
+            }
 
             // Now let's ask our rag llm
             String finalPrompt = prompt;
