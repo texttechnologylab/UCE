@@ -3,6 +3,7 @@ package org.texttechnologylab.services;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UncheckedIOException;
 import java.lang.reflect.InvocationTargetException;
 import java.net.*;
 import java.net.http.HttpClient;
@@ -11,11 +12,14 @@ import java.net.http.HttpResponse;
 import java.sql.*;
 import java.time.Duration;
 import java.util.*;
+import java.util.concurrent.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.google.gson.Gson;
 import com.pgvector.PGvector;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.jsoup.HttpStatusException;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.uceConfig.RAGModelConfig;
@@ -35,6 +39,8 @@ import static org.texttechnologylab.models.rag.RAGChatMessage.cleanThinkTag;
  * Service class for RAG: Retrieval Augmented Generation
  */
 public class RAGService {
+    private static final Logger logger = LogManager.getLogger(RAGService.class);
+
     private PostgresqlDataInterface_Impl postgresqlDataInterfaceImpl = null;
     private Connection vectorDbConnection = null;
     private CommonConfig config;
@@ -458,10 +464,14 @@ public class RAGService {
 
         var jsonData = gson.toJson(params);
 
+        // For both individually, connection/first data and then the streaming response
+        var ragStreamTimeout = 10;
+
         // Create request
         var request = HttpRequest.newBuilder()
                 .uri(new URI(url))
                 .header("Content-Type", "application/json")
+                .timeout(Duration.ofMinutes(ragStreamTimeout))  // timeout for connection and first data
                 .POST(HttpRequest.BodyPublishers.ofString(jsonData))
                 .build();
         // Send request and get response
@@ -469,22 +479,52 @@ public class RAGService {
         var statusCode = response.statusCode();
         if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
 
-        StringBuilder streamingMessage = new StringBuilder();
-        try (var reader = new BufferedReader(new InputStreamReader(response.body()))) {
-            String line;
-            while ((line = reader.readLine()) != null) {
-                if (!line.isBlank()) {
-                    var ragCompleteDto = gson.fromJson(line, RAGCompleteStreamingDto.class);
+        // Run in executor as we want to make sure that this will stop after N minutes
+        ExecutorService executor = Executors.newSingleThreadExecutor();
+        try {
+            Future<Void> future = executor.submit(() -> {
+                StringBuilder streamingMessage = new StringBuilder();
+                try (var reader = new BufferedReader(new InputStreamReader(response.body()))) {
+                    String line;
+                    while ((line = reader.readLine()) != null) {
+                        if (!line.isBlank()) {
+                            var ragCompleteDto = gson.fromJson(line, RAGCompleteStreamingDto.class);
 
-                    // save the updated message in the chat state, this will allow the user to poll for updates
-                    streamingMessage.append(ragCompleteDto.getMessage().getContent());
-                    var updatedMessage = streamingMessage.toString();
-                    systemResponseMessage.setPrompt(updatedMessage);
-                    systemResponseMessage.setMessage(updatedMessage);
-                    systemResponseMessage.setDone(ragCompleteDto.isDone());
-                    // TODO also update the "created" timestamp or keep the start?
+                            // save the updated message in the chat state, this will allow the user to poll for updates
+                            streamingMessage.append(ragCompleteDto.getMessage().getContent());
+                            var updatedMessage = streamingMessage.toString();
+                            systemResponseMessage.setPrompt(updatedMessage);
+                            systemResponseMessage.setMessage(updatedMessage);
+                            systemResponseMessage.setDone(ragCompleteDto.isDone());
+                            // TODO also update the "created" timestamp or keep the start?
+                        }
+                    }
+                } catch (IOException e) {
+                    throw new UncheckedIOException(e);
                 }
-            }
+                return null;
+            });
+
+            // wait max N minutes for completion
+            future.get(ragStreamTimeout, TimeUnit.SECONDS);
+
+        } catch (TimeoutException e) {
+            logger.error("RAG streaming response timed out after " + ragStreamTimeout + " minutes for chat " + chatState.getChatId() + ": ", e);
+            // TODO unify error handling of rag...
+            var currentMessage = systemResponseMessage.getMessage();
+            currentMessage += "\n\n[UCE: Timed out after " + ragStreamTimeout + " minutes. Please try again later.]";
+            systemResponseMessage.setPrompt(currentMessage);
+            systemResponseMessage.setMessage(currentMessage);
+            systemResponseMessage.setDone(true);
+            try {
+                response.body().close(); // Close InputStream to unblock the reader
+            } catch (IOException ignored) {}
+        } catch (ExecutionException e) {
+            throw new RuntimeException("RAG streaming reading error for chat " + chatState.getChatId(), e.getCause());
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        } finally {
+            executor.shutdownNow();
         }
 
         // TODO check if the message contains any content, else set error message?

@@ -1,9 +1,15 @@
+// NOTE there is only one chat window...
+let ragPollingInterval;
+let ragStream;
+
 /**
  * Start a new rag chat TODO: Outsource this into new prototype maybe
  */
 $('body').on('click', '.chat-window-container .start-new-chat-btn', function () {
     const $select = $(this).prev('.ragbot-model-select');
     const model = $select.get(0).options[$select.get(0).selectedIndex].getAttribute('data-id');
+    // NOTE Model streaming is set by the model for now, but we will provide it via JavaScript so in the future we can easily add a per-chat option for the user here
+    ragStream = $select.get(0).options[$select.get(0).selectedIndex].getAttribute('data-streaming');
 
     $.ajax({
         url: "/api/rag/new?model=" + encodeURIComponent(model),
@@ -21,9 +27,6 @@ $('body').on('click', '.chat-window-container .start-new-chat-btn', function () 
         $('.chat-window-container .loader-container').first().fadeOut(150);
     });
 })
-
-// NOTE there is only one chat window...
-let ragPollingInterval;
 
 function startPolling(chatId) {
     console.log("Starting RAG polling for chatId:", chatId)
@@ -74,9 +77,7 @@ $('body').on('click', '.chat-window-container .send-message-btn', function(){
 
     const stateId = $('.chat-window-container .chat-state').data('id');
 
-    // TODO should this be a setting of the model, user, or a global setting? or just enabled by default?
-    const stream_rag = true
-    if (stream_rag) {
+    if (ragStream) {
         // stream the LLM results, this will send the message and then polls for new answers
         $.ajax({
             url: "/api/rag/postUserMessage",

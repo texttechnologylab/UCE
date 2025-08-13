@@ -59,7 +59,7 @@ public class RAGChatMessage {
         this.contextDocuments = new ArrayList<>();
         this.images = new ArrayList<>();
         // by default, we expect the message to already be finished. this is set to "false" for streaming requests only
-        this.done = false;
+        this.done = true;
     }
 
     public boolean isDone() {

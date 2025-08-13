@@ -24,6 +24,7 @@ public class RAGChatStateDTO {
             this.model = new RAGModelConfig();
             this.model.setModel(model.getModel());
             this.model.setDisplayName(model.getDisplayName());
+            this.model.setStreaming(model.isStreaming());
         }
         else {
             this.model = null;
