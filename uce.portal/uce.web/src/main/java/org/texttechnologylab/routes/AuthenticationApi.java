@@ -3,18 +3,15 @@ package org.texttechnologylab.routes;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
 import freemarker.template.Configuration;
+import io.javalin.http.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
-import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.config.CommonConfig;
-import org.texttechnologylab.freeMarker.RequestContextHolder;
 import org.texttechnologylab.models.authentication.UceUser;
 import org.texttechnologylab.services.AuthenticationService;
 import org.texttechnologylab.utils.AuthenticationUtils;
 import org.texttechnologylab.utils.SystemStatus;
-import spark.ModelAndView;
-import spark.Route;
 
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
@@ -40,23 +37,23 @@ public class AuthenticationApi implements UceApi {
     /**
      * Gets called when the user logs out of the authentication. We clear and invalidate the session then.
      */
-    public Route logoutCallback = ((request, response) -> {
-        request.session().attribute("uceUser", null);
-        request.session().invalidate();
-        response.redirect("/");
-        return null;
-    });
+    public void logoutCallback(Context ctx) {
+        ctx.sessionAttribute("uceUser", null);
+        ctx.req().getSession().invalidate();
+        ctx.redirect("/");
+    };
 
     /**
      * A route that gets called by the keycloak server AFTER having a user logged in. In this request, we get a
      * code from keycloak which isn't yet a token. We need to again ask keycloak to send us, based on that code, the final
      * jtw token which then has all the claims of that user and which we can then work with.
      */
-    public Route loginCallback = ((request, response) -> {
+    public void loginCallback(Context ctx) {
         try{
-            var code = request.queryParams("code");
+            var code = ctx.queryParam("code");
             if (code == null) {
-                return "Missing authorization parameter 'code' - cannot verify login!";
+                ctx.result("Missing authorization parameter 'code' - cannot verify login!");
+                return;
             }
 
             var redirectUri = SystemStatus.UceConfig.getSettings().getAuthentication().getRedirectUrl();
@@ -83,7 +80,8 @@ public class AuthenticationApi implements UceApi {
             var result = new BufferedReader(new InputStreamReader(is))
                     .lines().collect(Collectors.joining("\n"));
             if (status != 200) {
-                return "Error retrieving token: " + result;
+                ctx.result("Error retrieving token: " + result);
+                return;
             }
 
             // So the Authenticator sent us a couple of very useful information
@@ -110,16 +108,15 @@ public class AuthenticationApi implements UceApi {
             var expiresIn = tokenResponse.get("expires_in").getAsLong();
             user.setExpiresIn(expiresIn);
 
-            request.session().attribute("uceUser", user);
+            ctx.sessionAttribute("uceUser", user);
 
             // We redirect back to the main page after logging in.
-            response.redirect("/");
-            return null;
+            ctx.redirect("/");
         } catch (Exception ex){
             logger.error("Error in the authentication: a callback produced an error. Request " +
-                         "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+                         "with id=" + ctx.attribute("id") + " to this endpoint for URI parameters.", ex);
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
 }

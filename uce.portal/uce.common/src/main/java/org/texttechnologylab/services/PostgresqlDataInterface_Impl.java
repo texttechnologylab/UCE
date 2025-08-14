@@ -1202,6 +1202,27 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    public List<Long> findDocumentIDsByTitle(String title, boolean like) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var cq = cb.createQuery(Long.class);
+            var root = cq.from(Document.class);
+
+            Predicate predicate;
+            if (like) {
+                predicate = cb.like(root.get("documentTitle"), "%" + title + "%");
+            }
+            else{
+                predicate = cb.equal(root.get("documentTitle"), title);
+            }
+
+            cq.select(root.get("id")).where(predicate);
+
+            var query = session.createQuery(cq);
+            return query.getResultList();
+        });
+    }
+
     public Document getFirstDocumentByTitle(String title, boolean like) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var cb = session.getCriteriaBuilder();

@@ -3,19 +3,20 @@ package org.texttechnologylab.routes;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import freemarker.template.Configuration;
+import io.javalin.http.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.*;
 import org.texttechnologylab.config.CorpusConfig;
+import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.corpus.UCEMetadataValueType;
 import org.texttechnologylab.models.search.SearchType;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.S3StorageService;
-import spark.ModelAndView;
-import spark.Route;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -33,15 +34,16 @@ public class DocumentApi implements UceApi {
         this.freemarkerConfig = freemarkerConfig;
     }
 
-    public Route getUceMetadataOfDocument = ((request, response) -> {
+    public void getUceMetadataOfDocument(Context ctx) throws IOException {
         var model = new HashMap<String, Object>();
-        var languageResources = LanguageResources.fromRequest(request);
+        var languageResources = LanguageResources.fromRequest(ctx);
 
-        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId and hence can't return the metadata. ", ex));
         if (documentId == null) {
             model.put("information", languageResources.get("missingParameterError"));
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
+            return;
         }
 
         try {
@@ -56,23 +58,25 @@ public class DocumentApi implements UceApi {
             model.put("uceMetadata", uceMetadata);
         } catch (Exception ex) {
             logger.error("Error getting the uce metadata of a document.", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
+            return;
         }
 
-        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "document/documentUceMetadata.ftl"));
-    });
+        ctx.render("document/documentUceMetadata.ftl", model);
+    }
 
-    public Route getDocumentListOfCorpus = ((request, response) -> {
+    public void getDocumentListOfCorpus(Context ctx) throws IOException {
         var model = new HashMap<String, Object>();
-        var languageResources = LanguageResources.fromRequest(request);
+        var languageResources = LanguageResources.fromRequest(ctx);
 
-        var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("corpusId")),
+        var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("corpusId")),
                 (ex) -> logger.error("Error: couldn't determine the corpusId and hence can't return the document list. ", ex));
         if (corpusId == null) {
             model.put("information", languageResources.get("missingParameterError"));
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl", model);
+            return;
         }
-        var page = ExceptionUtils.tryCatchLog(() -> Integer.parseInt(request.queryParams("page")),
+        var page = ExceptionUtils.tryCatchLog(() -> Integer.parseInt(ctx.queryParam("page")),
                 (ex) -> logger.error("Error: couldn't determine the page, defaulting to page 1 then. ", ex));
         if (page == null) page = 1;
 
@@ -80,29 +84,32 @@ public class DocumentApi implements UceApi {
             var take = 10;
             var documents = db.getDocumentsByCorpusId(corpusId, (page - 1) * take, take);
 
-            model.put("requestId", request.attribute("id"));
+            model.put("requestId", ctx.attribute("id"));
             model.put("documents", documents);
             model.put("corpusId", corpusId);
         } catch (Exception ex) {
             logger.error("Error getting the documents list of a corpus.", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
+            return;
         }
 
         // Depending on the page, we returns JUST a rendered list of documents or
         // a view that contains the documents but also styles navigation and such
         if (page == 1)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/corpusDocumentsList.ftl"));
+            ctx.render("corpus/components/corpusDocumentsList.ftl", model);
         else
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/components/documents.ftl"));
-    });
+            ctx.render("corpus/components/documents.ftl", model);
+    }
 
-    public Route getCorpusInspectorView = ((request, response) -> {
+    public void getCorpusInspectorView(Context ctx) {
         var model = new HashMap<String, Object>();
 
-        var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
+        var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("id")),
                 (ex) -> logger.error("Error: the url for the corpus inspector requires an 'id' query parameter that is the corpusId. ", ex));
-        if (corpusId == null)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (corpusId == null) {
+            ctx.render("defaultError.ftl");
+            return;
+        }
 
         try {
             var corpus = db.getCorpusById(corpusId);
@@ -117,19 +124,22 @@ public class DocumentApi implements UceApi {
 
         } catch (Exception ex) {
             logger.error("Error getting the corpus inspector view.", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
+            return;
         }
 
-        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/corpusInspector.ftl"));
-    });
+        ctx.render("corpus/corpusInspector.ftl", model);
+    }
 
-    public Route get3dGlobe = ((request, response) -> {
+    public void get3dGlobe(Context ctx) {
         var model = new HashMap<String, Object>();
 
-        var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("id")),
+        var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("id")),
                 (ex) -> logger.error("Error: the url for the document 3d globe requires an 'id' query parameter that is the document id.", ex));
-        if (id == null)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (id == null) {
+            ctx.render("defaultError.ftl");
+            return;
+        }
 
         try {
             // I've forgotten why I introduced this variable here?...
@@ -144,24 +154,27 @@ public class DocumentApi implements UceApi {
             model.put("jsonData", dataJson);
         } catch (Exception ex) {
             logger.error("Error getting the 3D globe of a document, returning default error view.", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
+            return;
         }
 
-        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/globe.ftl"));
-    });
+        ctx.render("corpus/globe.ftl", model);
+    }
 
-    public Route getSingleDocumentReadView = ((request, response) -> {
+    public void getSingleDocumentReadView(Context ctx) {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
 
-        var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
+        var id = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("id"),
                 (ex) -> logger.error("Error: the url for the document reader requires an 'id' query parameter. " +
                                      "Document reader can't be built.", ex));
-        if (id == null)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (id == null) {
+            ctx.render("defaultError.ftl");
+            return;
+        }
 
         // Check if we have an searchId parameter. This is optional
-        var searchId = ExceptionUtils.tryCatchLog(() -> request.queryParams("searchId"),
+        var searchId = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("searchId"),
                 (ex) -> logger.warn("Opening a document view but no searchId parameter was provided. Currently, this shouldn't happen, but it didn't stop the procedure."));
 
         try {
@@ -185,24 +198,27 @@ public class DocumentApi implements UceApi {
             }
         } catch (Exception ex) {
             logger.error("Error creating the document reader view for document with id: " + id, ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
+            return;
         }
 
-        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "reader/documentReaderView.ftl"));
-    });
+        ctx.render("reader/documentReaderView.ftl", model);
+    };
 
     /**
      * Finds all document ids matching a metadata key, value and value type.
      */
-    public Route findDocumentIdsByMetadata = ((request, response) -> {
-        var key = ExceptionUtils.tryCatchLog(() -> request.queryParams("key"),
+    public void findDocumentIdsByMetadata(Context ctx) {
+        var key = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("key"),
                 (ex) -> logger.error("Error: document deletion requires a 'key' query parameter. ", ex));
-        var value = ExceptionUtils.tryCatchLog(() -> request.queryParams("value"),
+        var value = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("value"),
                 (ex) -> logger.error("Error: document deletion requires a 'value' query parameter. ", ex));
-        var valueTypeStr = ExceptionUtils.tryCatchLog(() -> request.queryParams("value_type"),
+        var valueTypeStr = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("value_type"),
                 (ex) -> logger.error("Error: document deletion requires a 'value_type' query parameter (e.g. STRING, NUMBER, ...). ", ex));
-        if (key == null || value == null || valueTypeStr == null)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (key == null || value == null || valueTypeStr == null) {
+            ctx.render("defaultError.ftl");
+            return;
+        }
 
         try {
             UCEMetadataValueType valueType = UCEMetadataValueType.valueOf(valueTypeStr);
@@ -213,28 +229,30 @@ public class DocumentApi implements UceApi {
             result.put("document_ids", documentIds);
 
             var resultJson = new Gson().toJson(result);
-            response.type("application/json");
-            return resultJson;
+            ctx.contentType("application/json");
+            ctx.json(resultJson);
         }
         catch (Exception ex) {
             logger.error(ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
     /**
      * Finds the first document id matching a metadata key, value and value type.
      */
-    public Route findDocumentIdByMetadata = ((request, response) -> {
-        var key = ExceptionUtils.tryCatchLog(() -> request.queryParams("key"),
+    public void findDocumentIdByMetadata(Context ctx) {
+        var key = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("key"),
                 (ex) -> logger.error("Error: document deletion requires a 'key' query parameter. ", ex));
-        var value = ExceptionUtils.tryCatchLog(() -> request.queryParams("value"),
+        var value = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("value"),
                 (ex) -> logger.error("Error: document deletion requires a 'value' query parameter. ", ex));
-        var valueTypeStr = ExceptionUtils.tryCatchLog(() -> request.queryParams("value_type"),
+        var valueTypeStr = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("value_type"),
                 (ex) -> logger.error("Error: document deletion requires a 'value_type' query parameter (e.g. STRING, NUMBER, ...). ", ex));
-        if (key == null || value == null || valueTypeStr == null)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (key == null || value == null || valueTypeStr == null) {
+            ctx.render("defaultError.ftl");
+            return;
+        }
 
         try {
             UCEMetadataValueType valueType = UCEMetadataValueType.valueOf(valueTypeStr);
@@ -246,21 +264,23 @@ public class DocumentApi implements UceApi {
             result.put("document_id", documentId);
 
             var resultJson = new Gson().toJson(result);
-            response.type("application/json");
-            return resultJson;
+            ctx.contentType("application/json");
+            ctx.json(resultJson);
         }
         catch (Exception ex) {
             logger.error(ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
-    public Route deleteDocument = ((request, response) -> {
-        var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
+    public void deleteDocument(Context ctx) throws DatabaseOperationException {
+        var id = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("id"),
                 (ex) -> logger.error("Error: document deletion requires an 'id' query parameter. ", ex));
-        if (id == null)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (id == null) {
+            ctx.render("defaultError.ftl");
+            return;
+        }
 
         db.deleteDocumentById(Long.parseLong(id));
 
@@ -269,21 +289,23 @@ public class DocumentApi implements UceApi {
         result.put("message", "NOTE Document deletion is not fully implemented yet.");
 
         var resultJson = new Gson().toJson(result);
-        response.type("application/json");
-        return resultJson;
-    });
+        ctx.contentType("application/json");
+        ctx.json(resultJson);
+    }
 
-    public Route getPagesListView = ((request, response) -> {
+    public void getPagesListView(Context ctx) {
 
         var model = new HashMap<String, Object>();
 
-        var id = ExceptionUtils.tryCatchLog(() -> request.queryParams("id"),
+        var id = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("id"),
                 (ex) -> logger.error("Error: the url for the document pages list view requires an 'id' query parameter. ", ex));
-        if (id == null)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (id == null) {
+            ctx.render("defaultError.ftl");
+            return;
+        }
 
         try {
-            var skip = Integer.parseInt(request.queryParams("skip"));
+            var skip = Integer.parseInt(ctx.queryParam("skip"));
             var doc = db.getCompleteDocumentById(Long.parseLong(id), skip, 10);
             var annotations = doc.getAllAnnotations(skip, 10);
             model.put("documentAnnotations", annotations);
@@ -291,23 +313,25 @@ public class DocumentApi implements UceApi {
             model.put("documentPages", doc.getPages(10, skip));
         } catch (Exception ex) {
             logger.error("Error getting the pages list view - either the document couldn't be fetched (id=" + id + ") or its annotations.", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
+            return;
         }
 
-        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "reader/components/pagesList.ftl"));
-    });
+        ctx.render("reader/components/pagesList.ftl", model);
+    }
 
-    public Route getDocumentTopics = ((request, response) -> {
-        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+    public void getDocumentTopics(Context ctx) {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for topics. ", ex));
 
         if (documentId == null) {
-            response.status(400);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+            ctx.status(400);
+            ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter"));
+            return;
         }
 
         try {
-            var limit = Integer.parseInt(request.queryParams("limit"));
+            var limit = Integer.parseInt(ctx.queryParam("limit"));
 
             var topTopics = db.getTopTopicsByDocument(documentId, limit);
             var result = new ArrayList<Map<String, Object>>();
@@ -319,22 +343,22 @@ public class DocumentApi implements UceApi {
                 result.add(topicMap);
             }
 
-            response.type("application/json");
-            return new Gson().toJson(result);
+            ctx.contentType("application/json");
+            ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting document topics.", ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(Map.of("information", "Error retrieving document topics."), "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl", Map.of("information", "Error retrieving document topics."));
         }
-    });
+    }
 
-    public Route getTaxonCountByPage = ((request, response) -> {
-        var documentId = request.queryParams("documentId");
+    public void getTaxonCountByPage(Context ctx) {
+        var documentId = ctx.queryParam("documentId");
 
         if (documentId == null || documentId.isEmpty()) {
-            response.status(400);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+            ctx.status(400);
+            ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter"));
+            return;
         }
 
         try {
@@ -351,24 +375,22 @@ public class DocumentApi implements UceApi {
                 result.add(pageMap);
             }
 
-            response.type("application/json");
-            return new Gson().toJson(result);
+            ctx.contentType("application/json");
+            ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting taxon counts.", ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Error retrieving taxon counts."), "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl", Map.of("information", "Error retrieving taxon counts."));
         }
-    });
+    }
 
-    public Route getDocumentTopicDistributionByPage = ((request, response) -> {
-        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+    public void getDocumentTopicDistributionByPage(Context ctx) {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for topics. ", ex));
 
         if (documentId == null) {
-            response.status(400);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+            ctx.status(400);
+            ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter"));
         }
 
         try {
@@ -382,24 +404,23 @@ public class DocumentApi implements UceApi {
                 result.add(pageMap);
             }
 
-            response.type("application/json");
-            return new Gson().toJson(result);
+            ctx.contentType("application/json");
+            ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting document topics.", ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Error retrieving document topics."), "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl", Map.of("information", "Error retrieving document topics."));
         }
-    });
+    }
 
-    public Route getDocumentNamedEntitiesByPage = ((request, response) -> {
-        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+    public void getDocumentNamedEntitiesByPage(Context ctx) {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for entities. ", ex));
 
         if (documentId == null) {
-            response.status(400);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+            ctx.status(400);
+            ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter"));
+            return;
         }
 
         try {
@@ -414,24 +435,23 @@ public class DocumentApi implements UceApi {
                 result.add(pageMap);
             }
 
-            response.type("application/json");
-            return new Gson().toJson(result);
+            ctx.contentType("application/json");
+            ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting document entities.", ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Error retrieving document entities."), "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl", Map.of("information", "Error retrieving document entities."));
         }
-    });
+    }
 
-    public Route getDocumentLemmaByPage = ((request, response) -> {
-        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+    public void getDocumentLemmaByPage(Context ctx) {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for lemma. ", ex));
 
         if (documentId == null) {
-            response.status(400);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+            ctx.status(400);
+            ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter"));
+            return;
         }
 
         try {
@@ -446,24 +466,23 @@ public class DocumentApi implements UceApi {
                 result.add(pageMap);
             }
 
-            response.type("application/json");
-            return new Gson().toJson(result);
+            ctx.contentType("application/json");
+            ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting document lemma.", ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Error retrieving document lemma."), "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl", Map.of("information", "Error retrieving document lemma."));
         }
-    });
+    }
 
-    public Route getDocumentGeonameByPage = ((request, response) -> {
-        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+    public void getDocumentGeonameByPage(Context ctx) {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for geoname. ", ex));
 
         if (documentId == null) {
-            response.status(400);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter"), "defaultError.ftl"));
+            ctx.status(400);
+            ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter"));
+            return;
         }
 
         try {
@@ -477,25 +496,24 @@ public class DocumentApi implements UceApi {
                 result.add(pageMap);
             }
 
-            response.type("application/json");
-            return new Gson().toJson(result);
+            ctx.contentType("application/json");
+            ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting document geoname.", ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Error retrieving document geoname."), "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl", Map.of("information", "Error retrieving document geoname."));
         }
-    });
+    }
 
 
-    public Route getSentenceTopicsWithEntities = ((request, response) -> {
-        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+    public void getSentenceTopicsWithEntities(Context ctx) {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for sentence topics with entities. ", ex));
 
         if (documentId == null) {
-            response.status(400);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for sentence topics with entities"), "defaultError.ftl"));
+            ctx.status(400);
+            ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter for sentence topics with entities"));
+            return;
         }
 
         try {
@@ -509,26 +527,25 @@ public class DocumentApi implements UceApi {
                 result.add(topicEntityMap);
             }
 
-            response.type("application/json");
-            return new Gson().toJson(result);
+            ctx.contentType("application/json");
+            ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting sentence topics with entities.", ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Error retrieving sentence topics with entities."), "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl", Map.of("information", "Error retrieving sentence topics with entities."));
         }
-    });
+    }
 
-    public Route getTopicWordsByDocument = (request, response) -> {
+    public void getTopicWordsByDocument(Context ctx) {
         Long documentId = ExceptionUtils.tryCatchLog(
-                () -> Long.parseLong(request.queryParams("documentId")),
+                () -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for topic words.", ex)
         );
 
         if (documentId == null) {
-            response.status(400);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for topic words"), "defaultError.ftl"));
+            ctx.status(400);
+            ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter for topic words"));
+            return;
         }
 
         try {
@@ -552,25 +569,24 @@ public class DocumentApi implements UceApi {
                 result.add(topicMap);
             }
 
-            response.type("application/json");
-            return new Gson().toJson(result);
+            ctx.contentType("application/json");
+            ctx.json(result);
 
         } catch (Exception ex) {
             logger.error("Error getting topic words by document ID.", ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Error retrieving topic words."), "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl", Map.of("information", "Error retrieving topic words."));
         }
-    };
+    }
 
-    public Route getUnifiedTopicToSentenceMap = (request, response) -> {
-        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+    public void getUnifiedTopicToSentenceMap(Context ctx) {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for unified topic to sentence mapping.", ex));
 
         if (documentId == null) {
-            response.status(400);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for unified topic to sentence mapping"), "defaultError.ftl"));
+            ctx.status(400);
+            ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter for unified topic to sentence mapping"));
+            return;
         }
 
         try {
@@ -584,16 +600,14 @@ public class DocumentApi implements UceApi {
                 result.add(mapEntry);
             }
 
-            response.type("application/json");
-            return new Gson().toJson(result);
+            ctx.contentType("application/json");
+            ctx.json(result);
 
         } catch (Exception ex) {
             logger.error("Error retrieving unified topic to sentence mapping.", ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Error retrieving unified topic to sentence mapping."), "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl", Map.of("information", "Error retrieving unified topic to sentence mapping."));
         }
-    };
-
+    }
 
 }

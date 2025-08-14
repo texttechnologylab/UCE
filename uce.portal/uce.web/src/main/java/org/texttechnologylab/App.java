@@ -1,15 +1,23 @@
 package org.texttechnologylab;
 
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
+import io.javalin.Javalin;
+import io.javalin.config.JavalinConfig;
+import io.javalin.http.staticfiles.Location;
+import io.modelcontextprotocol.server.McpServer;
+import io.modelcontextprotocol.server.McpSyncServer;
+import io.modelcontextprotocol.server.transport.HttpServletStreamableServerTransportProvider;
+import io.modelcontextprotocol.spec.McpSchema;
+import jakarta.servlet.MultipartConfigElement;
 import org.apache.commons.cli.DefaultParser;
 import org.apache.commons.cli.MissingOptionException;
 import org.apache.commons.cli.Options;
 import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.keycloak.authorization.client.AuthzClient;
-import org.keycloak.representations.idm.authorization.AuthorizationRequest;
+import org.eclipse.jetty.servlet.ServletHolder;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.auth.AuthenticationRouteRegister;
@@ -19,7 +27,6 @@ import org.texttechnologylab.config.UceConfig;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.freeMarker.Renderer;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
-import org.texttechnologylab.models.authentication.UceUser;
 import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.UCELog;
 import org.texttechnologylab.modules.ModelGroup;
@@ -33,17 +40,14 @@ import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.ImageUtils;
 import org.texttechnologylab.utils.StringUtils;
 import org.texttechnologylab.utils.SystemStatus;
-import spark.ExceptionHandler;
-import spark.ModelAndView;
 
-import javax.servlet.MultipartConfigElement;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
-import static spark.Spark.*;
+import static io.javalin.apibuilder.ApiBuilder.*;
 
 public class App {
     private static final Configuration configuration = Configuration.getDefaultConfiguration();
@@ -151,23 +155,64 @@ public class App {
             }
         });
 
-        // Set the folder for our template files of freemarker
-        try {
-            configuration.setDirectoryForTemplateLoading(new File(commonConfig.getTemplatesLocation()));
+        var registry = new ApiRegistry(context, configuration, DUUIInputCounter);
 
-            // We use the externalLocation method so that the files in the public folder are hot reloaded
-            staticFiles.externalLocation(commonConfig.getPublicLocation());
+        logger.info("Setting up the Javalin application...");
+        var javalinApp = Javalin.create(config -> {
+            // Set the folder for our template files of freemarker
+            try {
+                configuration.setDirectoryForTemplateLoading(new File(commonConfig.getTemplatesLocation()));
+
+                // We use the externalLocation method so that the files in the public folder are hot reloaded
+                config.staticFiles.add(commonConfig.getPublicLocation(), Location.EXTERNAL);
+                logger.info("Setup FreeMarker templates and public folders.");
+            } catch (Exception e) {
+                logger.error("Error setting up FreeMarker, the application will hence shutdown.", e);
+                // TODO
+//                return;
+            }
+            config.fileRenderer(new CustomFreeMarkerEngine(configuration));
             logger.info("Setup FreeMarker templates and public folders.");
-        } catch (Exception e) {
-            logger.error("Error setting up FreeMarker, the application will hence shutdown.", e);
-            return;
+
+            // Start the routes.
+            logger.info("Initializing all the spark routes...");
+            ExceptionUtils.tryCatchLog(() -> initSparkRoutes(context, registry, config),
+                    (ex) -> logger.error("There was a problem initializing the spark routes, web service will be shut down.", ex));
+            logger.info("Routes initialized");
+
+            // Start MCP server
+            if (SystemStatus.UceConfig.getSettings().getMcp().isEnabled()) {
+                logger.info("Initializing MCP server...");
+                ExceptionUtils.tryCatchLog(() -> initMCP(registry, config),
+                        (ex) -> logger.error("There was a problem initializing the MCP server, web service will be shut down.", ex));
+                logger.info("MCP server initialized.");
+            }
+            else {
+                logger.info("MCP server is disabled and will not be initialized.");
+            }
+        });
+
+        // Define default exception handler. This shows an error view then in the body.
+        // TODO why cant this be done in "config"?
+        javalinApp.exception(
+                Exception.class,
+                (exception, ctx) -> {
+                    logger.error("Unknown error handled in API - returning default error view.", exception);
+                    ctx.status(500);
+                    ctx.render("defaultError.ftl");
+                }
+        );
+
+        if (SystemStatus.UceConfig.getSettings().getAuthentication().isActivated()) {
+            AuthenticationRouteRegister.registerApis(registry.getAll(), javalinApp);
         }
 
-        // Start the routes.
-        logger.info("Initializing all the spark routes...");
-        ExceptionUtils.tryCatchLog(() -> initSparkRoutes(context),
-                (ex) -> logger.error("There was a problem initializing the spark routes, web service will be shut down.", ex));
-        logger.info("Routes initialized - UCE web service has started!");
+        logger.info("Javalin application setup done.");
+
+        // TODO parameterize
+        javalinApp.start(4567);
+
+        logger.info("UCE web service has started!");
     }
 
     /**
@@ -252,49 +297,32 @@ public class App {
         }
     }
 
-    private static void initSparkRoutes(ApplicationContext context) throws IOException {
-        var registry = new ApiRegistry(context, configuration, DUUIInputCounter);
-        if (SystemStatus.UceConfig.getSettings().getAuthentication().isActivated()) {
-            AuthenticationRouteRegister.registerApis(registry.getAll());
-        }
-        Renderer.freemarkerConfig = configuration;
+    private static void initMCP(ApiRegistry registry, JavalinConfig config) throws Exception {
+        config.jetty.modifyServletContextHandler(context -> {
+            HttpServletStreamableServerTransportProvider transportProvider = HttpServletStreamableServerTransportProvider
+                    .builder()
+                    .objectMapper(new ObjectMapper())
+                    .mcpEndpoint("/mcp")
+                    .build();
+            context.addServlet(new ServletHolder(transportProvider), "/mcp/*");
 
-        before((request, response) -> {
-            // Setup and log all API calls with some information. We don't want to log file uploads, since it would
-            // destroy the file body stream.
-            if (!(request.contentType() != null && request.contentType().contains("multipart/form-data"))) {
-                request.attribute("id", UUID.randomUUID().toString());
-                logger.info("Received API call: ID={}, IP={}, Method={}, URI={}, QUERY={}, BODY={}",
-                        request.attribute("id"), request.ip(), request.requestMethod(), request.uri(), request.queryString(), request.body());
+            McpSyncServer mcpServer = McpServer.sync(transportProvider)
+                    .serverInfo("ttlab-uce", "0.0.1")
+                    .capabilities(McpSchema.ServerCapabilities.builder()
+                            .resources(false, false)
+                            .tools(true)
+                            .prompts(true)
+                            .logging()
+                            .completions()
+                            .build())
+                    .build();
 
-                // Should we log to db as well?
-                if (commonConfig.getLogToDb() && SystemStatus.PostgresqlDbStatus.isAlive()) {
-                    var uceLog = new UCELog(request.ip(), request.requestMethod(), request.uri(), request.body(), request.queryString());
-                    ExceptionUtils.tryCatchLog(
-                            () -> context.getBean(PostgresqlDataInterface_Impl.class).saveUceLog(uceLog),
-                            (ex) -> logger.error("Error storing a log to the database: ", ex));
-                    logger.info("Last log was also logged to the db with id " + uceLog.getId());
-                }
-            } else{
-                // Else we have a form-data upload. We handle those explicitly.
-                // Set the multipart data configs for uploads
-                request.raw().setAttribute("org.eclipse.jetty.multipartConfig", new MultipartConfigElement("/tmp"));
-            }
-
-            // Always inject the current system config into all UI templates
-            RequestContextHolder.setUceConfigHolder(SystemStatus.UceConfig);
-
-            // Check if the request contains a language parameter
-            var languageResources = LanguageResources.fromRequest(request);
-            response.header("Content-Language", languageResources.getDefaultLanguage());
-            RequestContextHolder.setLanguageResources(languageResources);
-
-            // Check if we have an authenticated user in the session and inject it into the template
-            if(SystemStatus.UceConfig.getSettings().getAuthentication().isActivated()){
-                var user = SessionManager.getUserFromRequest(request);
-                RequestContextHolder.setAuthenticatedUceUser(user);
-            }
+            (registry.get(McpApi.class)).registerTools(mcpServer);
         });
+    }
+
+    private static void initSparkRoutes(ApplicationContext context, ApiRegistry registry, JavalinConfig config) throws IOException {
+        Renderer.freemarkerConfig = configuration;
 
         ModelResources modelResources = new ModelResources();
         TTLabScorerInfo ttlabScorer = new TTLabScorerInfo();
@@ -302,144 +330,175 @@ public class App {
         LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<String, String>>> taInputMap = ttlabScorer.getTaInputMap();
         LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<String, String>>> cohMetrixMap = cohMetrixInfo.getCohMetrixMap();
         List<ModelGroup> groups = modelResources.getGroupedModelObjects();
-        // Landing page
-        get("/", (request, response) -> {
-            var model = new HashMap<String, Object>();
-            model.put("title", SystemStatus.UceConfig.getMeta().getName());
-            model.put("corpora", context.getBean(PostgresqlDataInterface_Impl.class)
-                    .getAllCorpora()
-                    .stream().map(Corpus::getViewModel)
-                    .toList());
-            model.put("commonConf", commonConfig);
-            model.put("isSparqlAlive", SystemStatus.JenaSparqlStatus.isAlive());
-            model.put("isAuthAlive", SystemStatus.AuthenticationService.isAlive());
-            model.put("isDbAlive", SystemStatus.PostgresqlDbStatus.isAlive());
-            model.put("isRagAlive", SystemStatus.RagServiceStatus.isAlive());
-            model.put("isS3StorageAlive", SystemStatus.S3StorageStatus.isAlive());
-            model.put("isLexiconCalculating", SystemStatus.LexiconIsCalculating);
-            model.put("alphabetList", StringUtils.getAlphabetAsList());
-            model.put("lexiconEntriesCount", context.getBean(LexiconService.class).countLexiconEntries());
-            model.put("lexiconizableAnnotations", LexiconService.lexiconizableAnnotations);
-            model.put("uceVersion", commonConfig.getUceVersion());
-            model.put("modelGroups", groups);
-            model.put("ttlabScorer", taInputMap);
-            model.put("cohMetrix", cohMetrixMap);
 
-            // The vm files are located under the resources directory
-            return new ModelAndView(model, "index.ftl");
-        }, new CustomFreeMarkerEngine(configuration));
+        config.router.apiBuilder(() -> {
 
-        // Potential imprint
-        get("/imprint", (request, response) -> {
-            var model = new HashMap<String, Object>();
-            model.put("imprint", SystemStatus.UceConfig.getCorporate().getImprint());
-            return new ModelAndView(model, "imprint.ftl");
-        }, new CustomFreeMarkerEngine(configuration));
+                    before(ctx -> {
+                        // Setup and log all API calls with some information. We don't want to log file uploads, since it would
+                        // destroy the file body stream.
+                        if (!(ctx.contentType() != null && ctx.contentType().contains("multipart/form-data"))) {
+                            ctx.attribute("id", UUID.randomUUID().toString());
+                            logger.info("Received API call: ID={}, IP={}, Method={}, URI={}, QUERY={}, BODY={}",
+                                    ctx.attribute("id"), ctx.ip(), ctx.method().name(), ctx.url(), ctx.queryString(), ctx.body());
 
-        // A document reader view
-        get("/documentReader", (registry.get(DocumentApi.class)).getSingleDocumentReadView);
+                            // Should we log to db as well?
+                            if (commonConfig.getLogToDb() && SystemStatus.PostgresqlDbStatus.isAlive()) {
+                                var uceLog = new UCELog(ctx.ip(), ctx.method().name(), ctx.url(), ctx.body(), ctx.queryString());
+                                ExceptionUtils.tryCatchLog(
+                                        () -> context.getBean(PostgresqlDataInterface_Impl.class).saveUceLog(uceLog),
+                                        (ex) -> logger.error("Error storing a log to the database: ", ex));
+                                logger.info("Last log was also logged to the db with id " + uceLog.getId());
+                            }
+                        } else {
+                            // Else we have a form-data upload. We handle those explicitly.
+                            // Set the multipart data configs for uploads
+                            ctx.req().setAttribute("org.eclipse.jetty.multipartConfig", new MultipartConfigElement("/tmp"));
+                        }
 
-        // A corpus World View
-        get("/globe", (registry.get(DocumentApi.class)).get3dGlobe);
+                        // Always inject the current system config into all UI templates
+                        RequestContextHolder.setUceConfigHolder(SystemStatus.UceConfig);
 
-        // Define default exception handler. This shows an error view then in the body.
-        ExceptionHandler<Exception> defaultExceptionHandler = (exception, request, response) -> {
-            logger.error("Unknown error handled in API - returning default error view.", exception);
-            response.status(500);
-            response.body(new CustomFreeMarkerEngine(configuration).render(new ModelAndView(null, "defaultError.ftl")));
-        };
+                        // Check if the request contains a language parameter
+                        var languageResources = LanguageResources.fromRequest(ctx);
+                        ctx.header("Content-Language", languageResources.getDefaultLanguage());
+                        RequestContextHolder.setLanguageResources(languageResources);
 
-        path("/auth", () -> {
-            get("/login", (registry.get(AuthenticationApi.class)).loginCallback);
-            get("/logout", (registry.get(AuthenticationApi.class)).logoutCallback);
-        });
+                        // Check if we have an authenticated user in the session and inject it into the template
+                        if (SystemStatus.UceConfig.getSettings().getAuthentication().isActivated()) {
+                            var user = SessionManager.getUserFromRequest(ctx);
+                            RequestContextHolder.setAuthenticatedUceUser(user);
+                        }
+                    });
 
-        // API routes
-        path("/api", () -> {
+                    // Landing page
+                    get("/", ctx -> {
+                        var model = new HashMap<String, Object>();
+                        model.put("title", SystemStatus.UceConfig.getMeta().getName());
+                        model.put("corpora", context.getBean(PostgresqlDataInterface_Impl.class)
+                                .getAllCorpora()
+                                .stream().map(Corpus::getViewModel)
+                                .toList());
+                        model.put("commonConf", commonConfig);
+                        model.put("isSparqlAlive", SystemStatus.JenaSparqlStatus.isAlive());
+                        model.put("isAuthAlive", SystemStatus.AuthenticationService.isAlive());
+                        model.put("isDbAlive", SystemStatus.PostgresqlDbStatus.isAlive());
+                        model.put("isRagAlive", SystemStatus.RagServiceStatus.isAlive());
+                        model.put("isS3StorageAlive", SystemStatus.S3StorageStatus.isAlive());
+                        model.put("isLexiconCalculating", SystemStatus.LexiconIsCalculating);
+                        model.put("alphabetList", StringUtils.getAlphabetAsList());
+                        model.put("lexiconEntriesCount", context.getBean(LexiconService.class).countLexiconEntries());
+                        model.put("lexiconizableAnnotations", LexiconService.lexiconizableAnnotations);
+                        model.put("uceVersion", commonConfig.getUceVersion());
+                        model.put("modelGroups", groups);
+                        model.put("ttlabScorer", taInputMap);
+                        model.put("cohMetrix", cohMetrixMap);
 
-            exception(Exception.class, defaultExceptionHandler);
+                        // The vm files are located under the resources directory
+                        ctx.render("index.ftl", model);
+                    });
 
-            before("/*", (req, res) -> {
-            });
+                    // Potential imprint
+                    get("/imprint", ctx -> {
+                        var model = new HashMap<String, Object>();
+                        model.put("imprint", SystemStatus.UceConfig.getCorporate().getImprint());
+                        ctx.render("imprint.ftl", model);
+                    });
 
-            path("/ie", () -> {
-                post("/upload/uima", (registry.get(ImportExportApi.class)).uploadUIMA);
-                get("/download/uima", (registry.get(ImportExportApi.class)).downloadUIMA);
-            });
+                    // A document reader view
+                    get("/documentReader", (ctx) -> (registry.get(DocumentApi.class)).getSingleDocumentReadView(ctx));
 
-            path("/wiki", () -> {
-                get("/page", (registry.get(WikiApi.class)).getPage);
-                get("/annotation", (registry.get(WikiApi.class)).getAnnotation);
-                path("/linkable", () -> {
-                    post("/node", (registry.get(WikiApi.class)).getLinkableNode);
+                    // A corpus World View
+                    get("/globe", (ctx) -> (registry.get(DocumentApi.class)).get3dGlobe(ctx));
+
+
+                    path("/auth", () -> {
+                        get("/login", (ctx) -> (registry.get(AuthenticationApi.class)).loginCallback(ctx));
+                        get("/logout", (ctx) -> (registry.get(AuthenticationApi.class)).logoutCallback(ctx));
+                    });
+
+                    // API routes
+                    path("/api", () -> {
+                        before("/*", (ctx) -> {
+                        });
+
+                        path("/ie", () -> {
+                            post("/upload/uima", (ctx) -> (registry.get(ImportExportApi.class)).uploadUIMA(ctx));
+                            get("/download/uima", (ctx) -> (registry.get(ImportExportApi.class)).downloadUIMA(ctx));
+                        });
+
+                        path("/wiki", () -> {
+                            get("/page", (ctx) -> (registry.get(WikiApi.class)).getPage(ctx));
+                            get("/annotation", (ctx) -> (registry.get(WikiApi.class)).getAnnotation(ctx));
+                            path("/linkable", () -> {
+                                post("/node", (ctx) -> (registry.get(WikiApi.class)).getLinkableNode(ctx));
+                            });
+                            path("/lexicon", () -> {
+                                post("/entries", (ctx) -> (registry.get(WikiApi.class)).getLexicon(ctx));
+                                post("/occurrences", (ctx) -> (registry.get(WikiApi.class)).getOccurrencesOfLexiconEntry(ctx));
+                            });
+                            post("/queryOntology", (ctx) -> (registry.get(WikiApi.class)).queryOntology(ctx));
+                        });
+
+                        path("/corpus", () -> {
+                            get("/inspector", (ctx) -> (registry.get(DocumentApi.class)).getCorpusInspectorView(ctx));
+                            get("/documentsList", (ctx) -> (registry.get(DocumentApi.class)).getDocumentListOfCorpus(ctx));
+                            path("/map", () -> {
+                                post("/linkedOccurrences", (ctx) -> (registry.get(MapApi.class)).getLinkedOccurrences(ctx));
+                                post("/linkedOccurrenceClusters", (ctx) -> (registry.get(MapApi.class)).getLinkedOccurrenceClusters(ctx));
+                            });
+                        });
+
+                        path("/search", () -> {
+                            post("/default", (ctx) -> (registry.get(SearchApi.class)).search(ctx));
+                            post("/semanticRole", (ctx) -> (registry.get(SearchApi.class)).semanticRoleSearch(ctx));
+                            post("/layered", (ctx) -> (registry.get(SearchApi.class)).layeredSearch(ctx));
+                            get("/active/page", (ctx) -> (registry.get(SearchApi.class)).activeSearchPage(ctx));
+                            get("/active/sort", (ctx) -> (registry.get(SearchApi.class)).activeSearchSort(ctx));
+                            get("/semanticRole/builder", (ctx) -> (registry.get(SearchApi.class)).getSemanticRoleBuilderView(ctx));
+                        });
+
+                        path("/analysis", () -> {
+                            post("/runPipeline", (ctx) -> (registry.get(AnalysisApi.class)).runPipeline(ctx));
+                            get("/setHistory", (ctx) -> (registry.get(AnalysisApi.class)).setHistory(ctx));
+                            post("/callHistory", (ctx) -> (registry.get(AnalysisApi.class)).callHistory(ctx));
+                            post("/callHistoryText", (ctx) -> (registry.get(AnalysisApi.class)).callHistoryText(ctx));
+                        });
+
+                        path("/corpusUniverse", () -> {
+                            // Gets a corpus universe view
+                            get("/new", (ctx) -> (registry.get(CorpusUniverseApi.class)).getCorpusUniverseView(ctx));
+                            post("/fromSearch", (ctx) -> (registry.get(CorpusUniverseApi.class)).fromSearch(ctx));
+                            post("/fromCorpus", (ctx) -> (registry.get(CorpusUniverseApi.class)).fromCorpus(ctx));
+                            get("/nodeInspectorContent", (ctx) -> (registry.get(CorpusUniverseApi.class)).getNodeInspectorContentView(ctx));
+                        });
+
+                        path("/document", () -> {
+                            get("/reader/pagesList", (ctx) -> (registry.get(DocumentApi.class)).getPagesListView(ctx));
+                            get("/uceMetadata", (ctx) -> (registry.get(DocumentApi.class)).getUceMetadataOfDocument(ctx));
+                            get("/topics", (ctx) -> (registry.get(DocumentApi.class)).getDocumentTopics(ctx));
+                            get("/page/taxon", (ctx) -> (registry.get(DocumentApi.class)).getTaxonCountByPage(ctx));
+                            get("/page/topics", (ctx) -> (registry.get(DocumentApi.class)).getDocumentTopicDistributionByPage(ctx));
+                            get("/page/topicEntityRelation", (ctx) -> (registry.get(DocumentApi.class)).getSentenceTopicsWithEntities(ctx));
+                            get("/page/topicWords", (ctx) -> (registry.get(DocumentApi.class)).getTopicWordsByDocument(ctx));
+                            get("/unifiedTopicSentenceMap", (ctx) -> (registry.get(DocumentApi.class)).getUnifiedTopicToSentenceMap(ctx));
+                            get("/page/namedEntities", (ctx) -> (registry.get(DocumentApi.class)).getDocumentNamedEntitiesByPage(ctx));
+                            get("/page/lemma", (ctx) -> (registry.get(DocumentApi.class)).getDocumentLemmaByPage(ctx));
+                            get("/page/geoname", (ctx) -> (registry.get(DocumentApi.class)).getDocumentGeonameByPage(ctx));
+                            delete("/delete", (ctx) -> (registry.get(DocumentApi.class)).deleteDocument(ctx));
+                            get("/findIdByMetadata", (ctx) -> (registry.get(DocumentApi.class)).findDocumentIdByMetadata(ctx));
+                            get("/findIdsByMetadata", (ctx) -> (registry.get(DocumentApi.class)).findDocumentIdsByMetadata(ctx));
+                        });
+
+                        path("/rag", () -> {
+                            get("/new", (ctx) -> (registry.get(RAGApi.class)).getNewRAGChat(ctx));
+                            // NOTE we allow also "post" here, as the system prompt can get quite long...
+                            post("/new", (ctx) -> (registry.get(RAGApi.class)).getNewRAGChat(ctx));
+                            post("/postUserMessage", (ctx) -> (registry.get(RAGApi.class)).postUserMessage(ctx));
+                            get("/messages", (ctx) -> (registry.get(RAGApi.class)).getMessagesForChat(ctx));
+                            get("/plotTsne", (ctx) -> (registry.get(RAGApi.class)).getTsnePlot(ctx));
+                            get("/sentenceEmbeddings", (ctx) -> (registry.get(RAGApi.class)).getSentenceEmbeddings(ctx));
+                        });
+                    });
                 });
-                path("/lexicon", () -> {
-                    post("/entries", (registry.get(WikiApi.class)).getLexicon);
-                    post("/occurrences", (registry.get(WikiApi.class)).getOccurrencesOfLexiconEntry);
-                });
-                post("/queryOntology", (registry.get(WikiApi.class)).queryOntology);
-            });
-
-            path("/corpus", () -> {
-                get("/inspector", (registry.get(DocumentApi.class)).getCorpusInspectorView);
-                get("/documentsList", (registry.get(DocumentApi.class)).getDocumentListOfCorpus);
-                path("/map", () -> {
-                    post("/linkedOccurrences", (registry.get(MapApi.class)).getLinkedOccurrences);
-                    post("/linkedOccurrenceClusters", (registry.get(MapApi.class)).getLinkedOccurrenceClusters);
-                });
-            });
-
-            path("/search", () -> {
-                post("/default", (registry.get(SearchApi.class)).search);
-                post("/semanticRole", (registry.get(SearchApi.class)).semanticRoleSearch);
-                post("/layered", (registry.get(SearchApi.class)).layeredSearch);
-                get("/active/page", (registry.get(SearchApi.class)).activeSearchPage);
-                get("/active/sort", (registry.get(SearchApi.class)).activeSearchSort);
-                get("/semanticRole/builder", (registry.get(SearchApi.class)).getSemanticRoleBuilderView);
-            });
-
-            path("/analysis", () -> {
-                post("/runPipeline", (registry.get(AnalysisApi.class)).runPipeline);
-                get("/setHistory", (registry.get(AnalysisApi.class)).setHistory);
-                post("/callHistory", (registry.get(AnalysisApi.class)).callHistory);
-                post("/callHistoryText", (registry.get(AnalysisApi.class)).callHistoryText);
-            });
-
-            path("/corpusUniverse", () -> {
-                // Gets a corpus universe view
-                get("/new", (registry.get(CorpusUniverseApi.class)).getCorpusUniverseView);
-                post("/fromSearch", (registry.get(CorpusUniverseApi.class)).fromSearch);
-                post("/fromCorpus", (registry.get(CorpusUniverseApi.class)).fromCorpus);
-                get("/nodeInspectorContent", (registry.get(CorpusUniverseApi.class)).getNodeInspectorContentView);
-            });
-
-            path("/document", () -> {
-                get("/reader/pagesList", (registry.get(DocumentApi.class)).getPagesListView);
-                get("/uceMetadata", (registry.get(DocumentApi.class)).getUceMetadataOfDocument);
-                get("/topics", (registry.get(DocumentApi.class)).getDocumentTopics);
-                get("/page/taxon", (registry.get(DocumentApi.class)).getTaxonCountByPage);
-                get("/page/topics", (registry.get(DocumentApi.class)).getDocumentTopicDistributionByPage);
-                get("/page/topicEntityRelation", (registry.get(DocumentApi.class)).getSentenceTopicsWithEntities);
-                get("/page/topicWords", (registry.get(DocumentApi.class)).getTopicWordsByDocument);
-                get("/unifiedTopicSentenceMap", (registry.get(DocumentApi.class)).getUnifiedTopicToSentenceMap);
-                get("/page/namedEntities", (registry.get(DocumentApi.class)).getDocumentNamedEntitiesByPage);
-                get("/page/lemma", (registry.get(DocumentApi.class)).getDocumentLemmaByPage);
-                get("/page/geoname", (registry.get(DocumentApi.class)).getDocumentGeonameByPage);
-                // TODO better use "delete" instead of "get" here?
-                delete("/delete", (registry.get(DocumentApi.class)).deleteDocument);
-                get("/findIdByMetadata", (registry.get(DocumentApi.class)).findDocumentIdByMetadata);
-                get("/findIdsByMetadata", (registry.get(DocumentApi.class)).findDocumentIdsByMetadata);
-            });
-
-            path("/rag", () -> {
-                get("/new", (registry.get(RAGApi.class)).getNewRAGChat);
-                // NOTE we allow also "post" here, as the system prompt can get quite long...
-                post("/new", (registry.get(RAGApi.class)).getNewRAGChat);
-                post("/postUserMessage", (registry.get(RAGApi.class)).postUserMessage);
-                get("/messages", (registry.get(RAGApi.class)).getMessagesForChat);
-                get("/plotTsne", (registry.get(RAGApi.class)).getTsnePlot);
-                get("/sentenceEmbeddings", (registry.get(RAGApi.class)).getSentenceEmbeddings);
-            });
-        });
     }
 }

@@ -3,6 +3,7 @@ package org.texttechnologylab.routes;
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
 import freemarker.template.Configuration;
+import io.javalin.http.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.hibernate.exception.SQLGrammarException;
@@ -16,9 +17,8 @@ import org.texttechnologylab.models.search.SearchLayer;
 import org.texttechnologylab.models.search.SearchOrder;
 import org.texttechnologylab.models.search.SearchType;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
-import spark.ModelAndView;
-import spark.Route;
 
+import java.io.IOException;
 import java.util.*;
 
 public class SearchApi implements UceApi {
@@ -33,18 +33,19 @@ public class SearchApi implements UceApi {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
     }
 
-    public Route activeSearchSort = ((request, response) -> {
+    public void activeSearchSort(Context ctx) {
         var model = new HashMap<String, Object>();
 
         try {
-            var languageResources = LanguageResources.fromRequest(request);
-            var searchId = request.queryParams("searchId");
-            var order = request.queryParams("order").toUpperCase();
-            var orderBy = request.queryParams("orderBy").toUpperCase();
+            var languageResources = LanguageResources.fromRequest(ctx);
+            var searchId = ctx.queryParam("searchId");
+            var order = ctx.queryParam("order").toUpperCase();
+            var orderBy = ctx.queryParam("orderBy").toUpperCase();
             if (!SessionManager.ActiveSearches.containsKey(searchId)) {
                 logger.error("Issue fetching an active search state from the cache, id couldn't be found: " + searchId);
                 model.put("information", languageResources.get("searchStateNotFound"));
-                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+                ctx.render("defaultError.ftl", model);
+                return;
             }
 
             // Sort the current search state.
@@ -63,26 +64,28 @@ public class SearchApi implements UceApi {
             model.put("searchState", activeSearchState);
         } catch (Exception ex) {
             logger.error("Error changing the sorting of an active search - best refer to the last logged API call " +
-                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+                    "with id=" + ctx.attribute("id") + " to this endpoint for URI parameters.", ex);
+            ctx.render("defaultError.ftl");
+            return;
         }
-        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "search/components/documentList.ftl"));
-    });
+        ctx.render("search/components/documentList.ftl", model);
+    }
 
-    public Route activeSearchPage = ((request, response) -> {
+    public void activeSearchPage(Context ctx) {
         var result = new HashMap<>();
         result.put("status", 200);
         var gson = new Gson();
 
         try {
-            var languageResources = LanguageResources.fromRequest(request);
-            var searchId = request.queryParams("searchId");
-            var page = Integer.parseInt(request.queryParams("page"));
+            var languageResources = LanguageResources.fromRequest(ctx);
+            var searchId = ctx.queryParam("searchId");
+            var page = Integer.parseInt(ctx.queryParam("page"));
             if (!SessionManager.ActiveSearches.containsKey(searchId)) {
                 logger.error("Issue fetching an active search state from the cache, id couldn't be found: " + searchId);
                 var model = new HashMap<String, Object>();
                 model.put("information", languageResources.get("searchStateNotFound"));
-                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+                ctx.render("defaultError.ftl", model);
+                return;
             }
 
             // Get the next pages.
@@ -101,33 +104,33 @@ public class SearchApi implements UceApi {
 
             // We return mutliple views:
             // the document view itself
-            var documentsListView = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "search/components/documentList.ftl"));
+            var documentsListView = new CustomFreeMarkerEngine(this.freemarkerConfig).render("search/components/documentList.ftl", model, ctx);
             result.put("documentsList", documentsListView);
             // The navigation changed
-            var navigationView = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "search/components/navigation.ftl"));
+            var navigationView = new CustomFreeMarkerEngine(this.freemarkerConfig).render("search/components/navigation.ftl", model, ctx);
             result.put("navigationView", navigationView);
             // And the keyword in context changed
             var keywordContext = new HashMap<String, Object>();
             keywordContext.put("contextState", activeSearchState.getKeywordInContextState());
-            var keywordView = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(keywordContext, "search/components/keywordInContext.ftl"));
+            var keywordView = new CustomFreeMarkerEngine(this.freemarkerConfig).render("search/components/keywordInContext.ftl", keywordContext, ctx);
             result.put("keywordInContextView", keywordView);
             // And finally, the visualization data JSON
             result.put("searchVisualization", activeSearchState.getVisualizationData());
         } catch (Exception ex) {
             result.replace("status", 500);
             logger.error("Error changing the page of an active search - best refer to the last logged API call " +
-                    "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
+                    "with id=" + ctx.attribute("id") + " to this endpoint for URI parameters.", ex);
         }
 
-        response.type("application/json");
-        return gson.toJson(result);
-    });
+        ctx.contentType("application/json");
+        ctx.json(result);
+    }
 
-    public Route search = ((request, response) -> {
+    public void search(Context ctx) throws IOException {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
-        var requestBody = gson.fromJson(request.body(), Map.class);
-        var languageResources = LanguageResources.fromRequest(request);
+        var requestBody = gson.fromJson(ctx.body(), Map.class);
+        var languageResources = LanguageResources.fromRequest(ctx);
 
         try {
             var searchInput = requestBody.get("searchInput").toString();
@@ -202,21 +205,21 @@ public class SearchApi implements UceApi {
             SessionManager.ActiveSearches.put(searchState.getSearchId().toString(), searchState);
             model.put("searchState", searchState);
 
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
+            ctx.render("search/searchResult.ftl", model);
         } catch (SQLGrammarException grammarException) {
-            response.status(406);
-            return languageResources.get("searchGrammarError");
+            ctx.status(406);
+            ctx.result(languageResources.get("searchGrammarError"));
         } catch (Exception ex) {
             logger.error("Error starting a new search with the request body:\n " + gson.toJson(requestBody), ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
-    public Route layeredSearch = ((request, response) -> {
+    public void layeredSearch(Context ctx) throws IOException {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
-        var requestBody = gson.fromJson(request.body(), Map.class);
-        var languageResources = LanguageResources.fromRequest(request);
+        var requestBody = gson.fromJson(ctx.body(), Map.class);
+        var languageResources = LanguageResources.fromRequest(ctx);
 
         try {
             ArrayList<LayeredSearchLayerDto> layers = gson.fromJson(
@@ -237,21 +240,21 @@ public class SearchApi implements UceApi {
 
             // Either way, update the layers
             layeredSearch.updateLayers(layers);
-            return gson.toJson(layeredSearch.getLayers());
+            ctx.json(layeredSearch.getLayers());
         } catch (Exception ex) {
             logger.error("Error starting a new layered search with the request body:\n " + gson.toJson(requestBody), ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
     /**
      * Old route that is currently not being used. The default search route checks what kind of search it is now.
      */
-    public Route semanticRoleSearch = ((request, response) -> {
+    public void semanticRoleSearch(Context ctx) {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
-        Map<String, Object> requestBody = gson.fromJson(request.body(), Map.class);
+        Map<String, Object> requestBody = gson.fromJson(ctx.body(), Map.class);
 
         try {
             var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
@@ -267,19 +270,21 @@ public class SearchApi implements UceApi {
             model.put("searchState", searchState);
             SessionManager.ActiveSearches.put(searchState.getSearchId().toString(), searchState);
 
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "search/searchResult.ftl"));
+            ctx.render("search/searchResult.ftl", model);
         } catch (Exception ex) {
             logger.error("Error starting a new semantic role search with the request body:\n " + gson.toJson(requestBody), ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
-    public Route getSemanticRoleBuilderView = ((request, response) -> {
+    public void getSemanticRoleBuilderView(Context ctx) {
         var model = new HashMap<String, Object>();
-        var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("corpusId")),
+        var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("corpusId")),
                 (ex) -> logger.error("Error: the url for the semantic role query builder requires a 'corpusId' query parameter. ", ex));
-        if (corpusId == null)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (corpusId == null) {
+            ctx.render("defaultError.ftl");
+            return;
+        }
 
         try {
             var annotations = db.getAnnotationsOfCorpus(corpusId, 0, 250);
@@ -290,11 +295,11 @@ public class SearchApi implements UceApi {
             model.put("person", annotations.stream().filter(a -> a.getInfo().equals("PERSON")).toList());
             model.put("misc", annotations.stream().filter(a -> a.getInfo().equals("MISC")).toList());
 
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "search/components/foundAnnotationsModal/foundAnnotationsModal.ftl"));
+            ctx.render("search/components/foundAnnotationsModal/foundAnnotationsModal.ftl", model);
         } catch (Exception ex) {
             logger.error("Error getting the semantic role query builder view.", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
 }

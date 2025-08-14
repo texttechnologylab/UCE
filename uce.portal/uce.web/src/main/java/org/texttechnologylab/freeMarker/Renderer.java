@@ -5,8 +5,6 @@ import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.models.Linkable;
 import org.texttechnologylab.models.UIMAAnnotation;
 import org.texttechnologylab.models.corpus.Document;
-import org.texttechnologylab.models.viewModels.link.LinkableViewModel;
-import spark.ModelAndView;
 
 import java.util.HashMap;
 
@@ -41,7 +39,7 @@ public final class Renderer {
     }
 
     public static String renderToHTML(String path, HashMap<String, Object> model){
-        return new CustomFreeMarkerEngine(freemarkerConfig).render(new ModelAndView(model, path));
+        return new CustomFreeMarkerEngine(freemarkerConfig).render(path, model);
     }
 
 }

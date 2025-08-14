@@ -2,16 +2,15 @@ package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
+import io.javalin.http.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
-import org.texttechnologylab.CustomFreeMarkerEngine;
 import org.texttechnologylab.LanguageResources;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.services.*;
-import spark.ModelAndView;
-import spark.Route;
 
+import java.io.IOException;
 import java.sql.Date;
 import java.util.HashMap;
 import java.util.Map;
@@ -30,10 +29,10 @@ public class MapApi implements UceApi {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
     }
 
-    public Route getLinkedOccurrences = ((request, response) -> {
+    public void getLinkedOccurrences(Context ctx) throws IOException {
         var model = new HashMap<String, Object>();
-        var languageResources = LanguageResources.fromRequest(request);
-        var requestBody = gson.fromJson(request.body(), Map.class);
+        var languageResources = LanguageResources.fromRequest(ctx);
+        var requestBody = gson.fromJson(ctx.body(), Map.class);
 
         var minLng = ExceptionUtils.tryCatchLog(() -> Double.parseDouble(requestBody.get("minLng").toString()),
                 (ex) -> logger.error("Couldn't fetch occurrences of map - minLng missing.", ex));
@@ -52,7 +51,8 @@ public class MapApi implements UceApi {
         var category = ExceptionUtils.tryCatchLog(() -> requestBody.get("category").toString(), (ex) -> {});
         if(minLng == null || minLat == null || maxLng == null || maxLat == null || corpusId == null){
             model.put("information", languageResources.get("missingParameterError"));
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+            ctx.render("defaultError.ftl", model);
+            return;
         }
 
         if(skip == null) skip = 0;
@@ -60,18 +60,18 @@ public class MapApi implements UceApi {
         if(category==null || category.isBlank()) category = null;
 
         try {
-            return gson.toJson(mapService.getGeoNameTimelineLinks(minLng, minLat, maxLng, maxLat, fromDate, toDate, corpusId, skip, take, category));
+            ctx.result(gson.toJson(mapService.getGeoNameTimelineLinks(minLng, minLat, maxLng, maxLat, fromDate, toDate, corpusId, skip, take, category)));
         } catch (Exception ex) {
             logger.error("Error getting linked occurrences from map - best refer to the last logged API call " +
-                         "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+                         "with id=" + ctx.attribute("id") + " to this endpoint for URI parameters.", ex);
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
-    public Route getLinkedOccurrenceClusters = ((request, response) -> {
+    public void getLinkedOccurrenceClusters(Context ctx) throws IOException {
         var model = new HashMap<String, Object>();
-        var languageResources = LanguageResources.fromRequest(request);
-        var requestBody = gson.fromJson(request.body(), Map.class);
+        var languageResources = LanguageResources.fromRequest(ctx);
+        var requestBody = gson.fromJson(ctx.body(), Map.class);
 
         var minLng = ExceptionUtils.tryCatchLog(() -> Double.parseDouble(requestBody.get("minLng").toString()),
                 (ex) -> logger.error("Couldn't fetch occurrences of map - minLng missing.", ex));
@@ -90,16 +90,17 @@ public class MapApi implements UceApi {
 
         if(minLng == null || minLat == null || maxLng == null || maxLat == null || zoom == null || corpusId == null){
             model.put("information", languageResources.get("missingParameterError"));
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
+            ctx.render("defaultError.ftl", model);
+            return;
         }
 
         try {
-            return gson.toJson(mapService.getTimelineMapClusters(minLng, minLat, maxLng, maxLat, 0.0001, fromDate, toDate, corpusId));
+            ctx.result(gson.toJson(mapService.getTimelineMapClusters(minLng, minLat, maxLng, maxLat, 0.0001, fromDate, toDate, corpusId)));
         } catch (Exception ex) {
             logger.error("Error getting linked occurrence clusters from map - best refer to the last logged API call " +
-                         "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+                         "with id=" + ctx.attribute("id") + " to this endpoint for URI parameters.", ex);
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
 }

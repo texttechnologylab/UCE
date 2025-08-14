@@ -1,6 +1,6 @@
 package org.texttechnologylab.routes;
 
-import com.google.gson.Gson;
+import io.javalin.http.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
@@ -10,7 +10,6 @@ import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.S3StorageService;
 import org.texttechnologylab.utils.StringUtils;
-import spark.Route;
 
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
@@ -31,22 +30,23 @@ public class ImportExportApi implements UceApi {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
     }
 
-    public Route downloadUIMA = ((request, response) -> {
+    public void downloadUIMA(Context ctx) {
         var objectName = ExceptionUtils.tryCatchLog(
-                () -> request.queryParams("objectName"),
+                () -> ctx.queryParam("objectName"),
                 (ex) -> logger.error("Error getting a cas object from the storage to download, the objectName parameter wasn't set.", ex));
         if (objectName == null || objectName.isBlank()) {
-            response.status(400);
-            return "Missing required query parameter: objectName";
+            ctx.status(400);
+            ctx.result("Missing required query parameter: objectName");
+            return;
         }
 
         try (
                 var s3Stream = s3StorageService.downloadObject(objectName);
-                var out = response.raw().getOutputStream()
+                var out = ctx.res().getOutputStream()
         ) {
             var contentType = s3StorageService.getContentTypeOfObject(objectName);
-            response.raw().setContentType(contentType);
-            response.raw().setHeader("Content-Disposition", "attachment; filename=\"" + objectName + "." + StringUtils.getExtensionByContentType(contentType) + "\"");
+            ctx.res().setContentType(contentType);
+            ctx.res().setHeader("Content-Disposition", "attachment; filename=\"" + objectName + "." + StringUtils.getExtensionByContentType(contentType) + "\"");
 
             var buffer  = new byte[8192];
             int bytesRead;
@@ -55,43 +55,47 @@ public class ImportExportApi implements UceApi {
             }
 
             out.flush();
-            return response.raw(); // required to return the raw response stream
+            //return ctx.res(); // required to return the raw response stream
         } catch (Exception e) {
             logger.error("Failed to download object: " + objectName, e);
-            response.status(500);
-            return "Error downloading object: " + e.getMessage();
+            ctx.status(500);
+            ctx.result("Error downloading object: " + e.getMessage());
         }
-    });
+    }
 
-    public Route uploadUIMA = ((request, response) -> {
+    public void uploadUIMA(Context ctx) {
         try {
             // First, we need to know which corpus this document should be added to.
             var corpusId = ExceptionUtils.tryCatchLog(
-                    () -> Long.parseLong(new String(request.raw().getPart("corpusId").getInputStream().readAllBytes(), StandardCharsets.UTF_8)),
+                    () -> Long.parseLong(new String(ctx.req().getPart("corpusId").getInputStream().readAllBytes(), StandardCharsets.UTF_8)),
                     (ex) -> logger.error("Error getting the corpusId this document should be added to. Aborting.", ex));
-            if (corpusId == null)
-                return "Parameter corpusId didn't exist. Without it, the document cannot be uploaded.";
+            if (corpusId == null) {
+                ctx.result("Parameter corpusId didn't exist. Without it, the document cannot be uploaded.");
+                return;
+            }
 
             var casView = ExceptionUtils.tryCatchLog(
-                    () -> new String(request.raw().getPart("casView").getInputStream().readAllBytes(), StandardCharsets.UTF_8),
+                    () -> new String(ctx.req().getPart("casView").getInputStream().readAllBytes(), StandardCharsets.UTF_8),
                     (ex) -> logger.error("Error getting the casView that should be imported from this document. Using default view.", ex));
 
             // If we import a document with multiple views, we can optionally override the documentId that is used to check for existing documents
             var documentId = ExceptionUtils.tryCatchLog(
-                    () -> new String(request.raw().getPart("documentId").getInputStream().readAllBytes(), StandardCharsets.UTF_8),
+                    () -> new String(ctx.req().getPart("documentId").getInputStream().readAllBytes(), StandardCharsets.UTF_8),
                     (ex) -> logger.error("Error getting the documentId that should be used as a name/id for this document. Aborting.", ex));
 
             var corpus = ExceptionUtils.tryCatchLog(
                     () -> db.getCorpusById(corpusId),
                     (ex) -> logger.error("Couldn't fetch corpus when uploading new document to corpusId " + corpusId, ex));
-            if (corpus == null)
-                return "Corpus with id " + corpusId + " wasn't found in the database; can't upload document.";
+            if (corpus == null) {
+                ctx.result("Corpus with id " + corpusId + " wasn't found in the database; can't upload document.");
+                return;
+            }
 
             // TODO just use 1 as default? will throw an error if this is null otherwise...
             var importerNumber = 1;
             var importer = new Importer(this.serviceContext, importerNumber, casView);
-            try (var input = request.raw().getPart("file").getInputStream()) {
-                var fileName = request.raw().getPart("file").getSubmittedFileName();
+            try (var input = ctx.req().getPart("file").getInputStream()) {
+                var fileName = ctx.req().getPart("file").getSubmittedFileName();
                 // Import the doc in the background
                 var importFuture = CompletableFuture.supplyAsync(() -> {
                     try {
@@ -103,22 +107,23 @@ public class ImportExportApi implements UceApi {
                 Long newDocumentId = importFuture.get();
                 // TODO check that this new document id is not null, could this happen?
 
-                response.status(200);
+                ctx.status(200);
 
-                var acceptedContentType = request.headers("Accept");
+                var acceptedContentType = ctx.header("Accept");
                 if (acceptedContentType != null && acceptedContentType.equals("application/json")) {
                     Map<String, Object> apiResult = new HashMap<>();
                     apiResult.put("document_id", newDocumentId);
-                    response.type("application/json");
-                    return new Gson().toJson(apiResult);
+                    ctx.contentType("application/json");
+                    ctx.json(apiResult);
+                    return;
                 }
 
-                return "File uploaded successfully!";
+                ctx.result("File uploaded successfully!");
             }
         } catch (Exception e) {
-            response.status(500);
-            return "Error uploading a file: " + e.getMessage();
+            ctx.status(500);
+            ctx.result("Error uploading a file: " + e.getMessage());
         }
-    });
+    };
 
 }

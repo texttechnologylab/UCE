@@ -43,6 +43,12 @@
             <groupId>com.github.mevbagci</groupId>
             <artifactId>DockerUnifiedUIMAInterface</artifactId>
             <version>1.5.2</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>com.sparkjava</groupId>
+                    <artifactId>spark-core</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

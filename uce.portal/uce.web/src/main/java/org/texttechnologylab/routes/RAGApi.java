@@ -2,6 +2,8 @@ package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
+import io.javalin.http.Context;
+import io.javalin.http.HandlerType;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.json.JSONObject;
@@ -18,8 +20,6 @@ import org.texttechnologylab.models.rag.*;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
 import org.texttechnologylab.utils.SystemStatus;
-import spark.ModelAndView;
-import spark.Route;
 
 import java.util.*;
 import java.util.regex.Matcher;
@@ -44,38 +44,41 @@ public class RAGApi implements UceApi {
      * Returns a fully rendered Tsne plot for the given corpus.
      * Update: This was a short-handed implementation because we needed something fast. It is obsolete as off now.
      */
-    public Route getTsnePlot = ((request, response) -> {
+    public void getTsnePlot(Context ctx) {
 
-        var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("corpusId")),
+        var corpusId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("corpusId")),
                 (ex) -> logger.error("Error: the url for the tsne plot requires a 'corpusId' query parameter. ", ex));
-        if (corpusId == null)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (corpusId == null) {
+            ctx.render("defaultError.ftl");
+            return;
+        }
 
         try {
             var plotAsHtml = db.getCorpusTsnePlotByCorpusId(corpusId).getPlotHtml();
-            return plotAsHtml == null ? "" : plotAsHtml;
+            ctx.result(plotAsHtml == null ? "" : plotAsHtml);
         } catch (Exception ex) {
             logger.error("Error fetching the tsne plot of corpus: " + corpusId, ex);
-            return "";
+            ctx.result("");
         }
-    });
+    }
 
     /**
      * Get the list of messages for a given chat.
      * This can be used fo get messages updates for streaming results.
      */
-    public Route getMessagesForChat = ((request, response) -> {
+    public void getMessagesForChat(Context ctx) {
         Gson gson = new Gson();
-        response.type("application/json");
+        ctx.contentType("application/json");
 
-        var chatId = ExceptionUtils.tryCatchLog(() -> request.queryParams("chatId"),
+        var chatId = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("chatId"),
                 (ex) -> logger.error("Error: the 'chatId' query parameter is required to get the message list. ", ex));
         if (chatId == null || chatId.isEmpty()) {
-            response.status(400);
+            ctx.status(400);
 
             Map<String, Object> result = new HashMap<>();
             result.put("message", "The 'chatId' query parameter is required to get the messages.");
-            return gson.toJson(result);
+            ctx.json(result);
+            return;
         }
 
         var stateId = UUID.fromString(chatId);
@@ -84,33 +87,35 @@ public class RAGApi implements UceApi {
         if (!activeRagChatStates.containsKey(stateId)) {
             logger.error("Error fetching the active rag chat states - state not found for stateId: " + stateId);
 
-            response.status(400);
+            ctx.status(400);
 
             Map<String, Object> result = new HashMap<>();
             result.put("message", "Not active chat with id 'chatId' found.");
-            return gson.toJson(result);
+            ctx.json(result);
+            return;
         }
         var chatState = activeRagChatStates.get(stateId);
 
         // we always return JSON result, but depending on the Accept header we return the rendered HTML or just the data
-        response.type("application/json");
+        ctx.contentType("application/json");
 
         // send full chat state as JSON only
-        var contentType = request.headers("Accept");
+        var contentType = ctx.header("Accept");
         if (contentType != null && contentType.equals("application/json")) {
             RAGChatStateDTO returnState = RAGChatStateDTO.fromRAGChatState(chatState);
-            return new Gson().toJson(returnState);
+            ctx.json(returnState);
+            return;
         }
 
         // sende render for HTML output
         var model = new HashMap<String, Object>();
         model.put("chatState", chatState);
-        var renderedHtml = new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
+        var renderedHtml = new CustomFreeMarkerEngine(this.freemarkerConfig).render("ragbot/chatHistory.ftl", model, ctx);
         Map<String, Object> result = new HashMap<>();
         result.put("html", renderedHtml);
         result.put("done", chatState.getNewestMessage().isDone());
-        return new Gson().toJson(result);
-    });
+        ctx.json(result);
+    }
 
     static final Pattern patternIDGiven = Pattern.compile("ID=(\\d+)");
 
@@ -121,10 +126,10 @@ public class RAGApi implements UceApi {
     /**
      * Receives a user message and handles and returns a new RAGChatState
      */
-    public Route postUserMessage = ((request, response) -> {
+    public void postUserMessage(Context ctx) {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
-        Map requestBody = gson.fromJson(request.body(), Map.class);
+        Map requestBody = gson.fromJson(ctx.body(), Map.class);
 
         try {
             var userMessage = requestBody.get("userMessage").toString();
@@ -143,7 +148,8 @@ public class RAGApi implements UceApi {
             // and server so we scraped it. For the future, it may be a good idea though.
             if (!activeRagChatStates.containsKey(stateId)) {
                 logger.error("Error fetching the active rag chat states - state not found for stateId: " + stateId);
-                return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+                ctx.render("defaultError.ftl");
+                return;
             }
             // Get the cached state.
             var chatState = activeRagChatStates.get(stateId);
@@ -347,8 +353,9 @@ public class RAGApi implements UceApi {
                 // Streaming immediately returns the chat id that the caller can use to poll for new messages.
                 Map<String, String> returnMap = new HashMap<>();
                 returnMap.put("chat_id", chatState.getChatId().toString());
-                response.type("application/json");
-                return new Gson().toJson(returnMap);
+                ctx.contentType("application/json");
+                ctx.json(returnMap);
+                return;
             }
 
             // Now let's ask our rag llm
@@ -357,7 +364,7 @@ public class RAGApi implements UceApi {
                     () -> ragService.postNewRAGPrompt(chatState.getMessages(), chatState.getModel()),
                     (ex) -> logger.error("Error getting the next response from our LLM RAG service. The prompt: " + finalPrompt, ex));
             if (answer == null) {
-                var languageResources = LanguageResources.fromRequest(request);
+                var languageResources = LanguageResources.fromRequest(ctx);
                 answer = languageResources.get("ragBotErrorMessage");
             }
             var systemResponseMessage = new RAGChatMessage();
@@ -373,20 +380,22 @@ public class RAGApi implements UceApi {
             model.put("chatState", chatState);
 
             // Dont return the template if this is an API request
-            var contentType = request.headers("Accept");
+            var contentType = ctx.header("Accept");
             if (contentType != null && contentType.equals("application/json")) {
                 RAGChatStateDTO returnState = RAGChatStateDTO.fromRAGChatState(chatState);
-                response.type("application/json");
-                return new Gson().toJson(returnState);
+                ctx.contentType("application/json");
+                ctx.json(returnState);
+                return;
             }
 
         } catch (Exception ex) {
-            logger.error("Unknown Error getting the response of the ragbot; request body:\n " + request.body(), ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            logger.error("Unknown Error getting the response of the ragbot; request body:\n " + ctx.body(), ex);
+            ctx.render("defaultError.ftl");
+            return;
         }
 
-        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
-    });
+        ctx.render("ragbot/chatHistory.ftl", model);
+    }
 
     @Authentication(required = Authentication.Requirement.LOGGED_IN,
             route = Authentication.RouteTypes.GET,
@@ -395,7 +404,7 @@ public class RAGApi implements UceApi {
     /**
      * Returns an empty chat alongside its chatHistory view
      */
-    public Route getNewRAGChat = ((request, response) -> {
+    public void getNewRAGChat(Context ctx) {
         var model = new HashMap<String, Object>();
         String ragModelId;
         String systemPrompt = null;
@@ -403,8 +412,8 @@ public class RAGApi implements UceApi {
 
         // this endpoint is provided as a GET and POST request to handle larger prompts
         // TODO switch to POST only?
-        if (request.requestMethod().equals("POST")) {
-            JSONObject requestBody = new JSONObject(request.body());
+        if (ctx.method() == HandlerType.POST) {
+            JSONObject requestBody = new JSONObject(ctx.body());
 
             ragModelId = ExceptionUtils.tryCatchLog(() -> requestBody.getString("model"),
                     (ex) -> logger.error("Error: the chatting requires a 'model' query parameter. ", ex));
@@ -418,22 +427,27 @@ public class RAGApi implements UceApi {
             }
         }
         else {
-            ragModelId = ExceptionUtils.tryCatchLog(() -> request.queryParams("model"),
+            ragModelId = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("model"),
                     (ex) -> logger.error("Error: the chatting requires a 'model' query parameter. ", ex));
 
             // TODO should we offer this as a parameter? is in use for the TA bot at the moment, but we should discuss it for the future versions
-            systemPrompt = request.queryParamOrDefault("systemPrompt", null);
-            systemMessage = request.queryParamOrDefault("systemMessage", null);
+            systemPrompt = ctx.queryParam("systemPrompt");
+            systemMessage = ctx.queryParam("systemMessage");
         }
 
-        if (ragModelId == null)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (ragModelId == null) {
+            ctx.render("defaultError.ftl");
+            return;
+        }
         var ragModel = SystemStatus.UceConfig.getSettings().getRag().getModels().stream().filter(m -> m.getModel().equals(ragModelId)).findFirst();
-        if (ragModel.isEmpty()) return "The requested model isn't available in this UCE instance: " + ragModelId;
+        if (ragModel.isEmpty()) {
+            ctx.result("The requested model isn't available in this UCE instance: " + ragModelId);
+            return;
+        }
 
         try {
             // We need to know the language here
-            var languageResources = LanguageResources.fromRequest(request);
+            var languageResources = LanguageResources.fromRequest(ctx);
 
             var ragState = new RAGChatState();
             ragState.setModel(ragModel.get());
@@ -458,29 +472,30 @@ public class RAGApi implements UceApi {
             model.put("chatState", ragState);
 
             // Dont return the template if this is an API request
-            var contentType = request.headers("Accept");
+            var contentType = ctx.header("Accept");
             if (contentType != null && contentType.equals("application/json")) {
                 RAGChatStateDTO returnState = RAGChatStateDTO.fromRAGChatState(ragState);
-                response.type("application/json");
-                return new Gson().toJson(returnState);
+                ctx.contentType("application/json");
+                ctx.json(returnState);
             }
 
         } catch (Exception ex) {
             logger.error("Error creating a new RAGbot chat", ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
+            return;
         }
 
-        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "ragbot/chatHistory.ftl"));
-    });
+        ctx.render("ragbot/chatHistory.ftl", model);
+    }
 
-    public Route getSentenceEmbeddings = ((request, response) -> {
-        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+    public void getSentenceEmbeddings(Context ctx) {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for sentence topics with entities. ", ex));
 
         if (documentId == null) {
-            response.status(400);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Missing documentId parameter for fetching sentence embeddings"), "defaultError.ftl"));
+            ctx.status(400);
+            ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter for fetching sentence embeddings"));
+            return;
         }
 
         try {
@@ -497,14 +512,13 @@ public class RAGApi implements UceApi {
                     })
                     .toList();
 
-            response.type("application/json");
-            return new Gson().toJson(simplified);
+            ctx.contentType("application/json");
+            ctx.json(simplified);
         } catch (Exception ex) {
             logger.error("Error getting sentence embeddings.", ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(Map.of("information", "Error retrieving sentence embeddings."), "defaultError.ftl"));
+            ctx.status(500);
+            ctx.render("defaultError.ftl", Map.of("information", "Error retrieving sentence embeddings."));
         }
-    });
+    }
 
 }

@@ -1,33 +1,26 @@
 package org.texttechnologylab;
 
+import freemarker.template.Configuration;
+import io.javalin.http.Context;
+import io.javalin.rendering.FileRenderer;
+import org.jetbrains.annotations.NotNull;
 import org.texttechnologylab.freeMarker.RequestContextHolder;
-import spark.ModelAndView;
-import spark.Request;
-import spark.TemplateEngine;
 
-import java.util.HashMap;
 import java.util.Map;
 
 /**
  * A custom freemarker engine that allows us to inject additional logic - we use it e.g. to
  * inject the language resource object to every template.
  */
-public class CustomFreeMarkerEngine extends TemplateEngine {
+public class CustomFreeMarkerEngine implements FileRenderer {
 
-    private final freemarker.template.Configuration configuration;
+    private final Configuration configuration;
 
     public CustomFreeMarkerEngine(freemarker.template.Configuration configuration) {
         this.configuration = configuration;
     }
 
-    @Override
-    public String render(ModelAndView modelAndView) {
-        Map<String, Object> model = (Map)(modelAndView.getModel());
-
-        if(model == null){
-            model = new HashMap<>();
-        }
-
+    public String render(String templatePath, Map<String, Object> model) {
         // Always inject the uceConfig
         model.put("uceConfig", RequestContextHolder.getUceConfig());
 
@@ -44,7 +37,7 @@ public class CustomFreeMarkerEngine extends TemplateEngine {
         }
 
         try {
-            return process(configuration, modelAndView.getViewName(), model);
+            return process(configuration, templatePath, model);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
@@ -67,5 +60,11 @@ public class CustomFreeMarkerEngine extends TemplateEngine {
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
+    }
+
+    @NotNull
+    @Override
+    public String render(@NotNull String s, @NotNull Map<String, ?> map, @NotNull Context context) {
+        return render(s, (Map<String, Object>) map) ;
     }
 }
