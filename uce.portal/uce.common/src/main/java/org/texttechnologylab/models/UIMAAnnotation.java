@@ -189,8 +189,8 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                 var start = emotion.getBegin() - offset - errorOffset;
                 var end = emotion.getEnd() - offset - errorOffset; // marker after last char
 
-                emotionCoverWrappersStart.put(start, "<span class='emotion'>");
-                emotionCoverWrappersEnd.put(end, "</span>");
+                //emotionCoverWrappersStart.put(start, "<span class='emotion'>");
+                //emotionCoverWrappersEnd.put(end, "</span>");
 
                 emotionMarkers.put(end, emotion.generateEmotionMarker());
                 continue;
@@ -260,15 +260,17 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
             emotionCoverWrappersStart.remove(firstEmotion);
         });
 
+
         // iterate +1 because we want to process the character after the last one to add the end tags
         for (int i = 0; i < coveredText.length()+1; i++) {
-            // Insert the normal end spans
-            if (topicCoverWrappersEnd.containsKey(i)) {
-                finalText.append(topicCoverWrappersEnd.get(i));
-            }
 
             if (emotionMarkers.containsKey(i)) {
                 finalText.append(emotionMarkers.get(i));
+            }
+
+            // Insert the end spans
+            if (topicCoverWrappersEnd.containsKey(i)) {
+                finalText.append(topicCoverWrappersEnd.get(i));
             }
             if (emotionCoverWrappersEnd.containsKey(i)) {
                 finalText.append(emotionCoverWrappersEnd.get(i));
@@ -316,13 +318,12 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
         for (var entry : sentimentCoverWrappersEnd.entrySet()) {
             finalText.append(entry.getValue());
         }
+        // If the sentiment goes over the page, we need to close all non-closed tags that are left
+        for (var entry : emotionCoverWrappersEnd.entrySet()) {
+            finalText.append(entry.getValue());
+        }
 
         // We apply some heuristic post-processing to make the text more readable.
-        //return StringUtils.AddLineBreaks(StringUtils.CleanText(finalText.toString()), finalText.length());
-        //return StringUtils.CleanText(finalText.toString());
-        //return coveredText;
-//        return StringUtils.replaceCharacterOutsideSpan(StringUtils.replaceCharacterOutsideSpan(StringUtils.CleanText(finalText.toString()), '\n', "<br/>"), ' ', "&nbsp;");
-
         var finalTextString = finalText.toString();
         finalTextString = StringUtils.replaceCharacterOutsideTags(finalTextString, "\n", "<br/>");
         finalTextString = StringUtils.replaceCharacterOutsideTags(finalTextString, " ", "&nbsp;");

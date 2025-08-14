@@ -1776,9 +1776,9 @@ public class Importer {
 
                 // Link them to other annotations, such as Taxa, NamedEntity (e.g. PERSON)
                 var linkedAnnotations = new ArrayList<UIMAAnnotation>();
-                if (corpusConfig.getAnnotations().isNamedEntity())
+                if (corpusConfig.getAnnotations().isNamedEntity() && document.getNamedEntities() != null)
                     linkedAnnotations.addAll(document.getNamedEntities().stream().filter(g -> !g.getType().equals("LOCATION") && g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
-                if (corpusConfig.getAnnotations().getTaxon().isAnnotated()) {
+                if (corpusConfig.getAnnotations().getTaxon().isAnnotated() && document.getAllTaxa() != null) {
                     linkedAnnotations.addAll(document.getGazetteerTaxons().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
                     linkedAnnotations.addAll(document.getGnFinderTaxons().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
                 }

@@ -148,6 +148,10 @@ body {
     padding: 2rem 4.5rem;
 }
 
+.document-content em{
+    font-style: normal;
+}
+
 .document-content *{
     font-family: Courier  !important;
     word-break: break-word;
@@ -298,8 +302,8 @@ body {
 
 .document-content .sentiment {
     border-radius: 6px;
-    box-shadow: rgba(17, 17, 26, 0.1) 0px 2px 8px, rgba(17, 17, 26, 0.05) 0px 4px 16px;
-    display: block !important;
+    box-shadow: rgba(17, 17, 26, 0.1) 0px 1px 4px, rgba(17, 17, 26, 0.05) 0px 2px 8px;
+    display: inline !important;
     margin-bottom: 4px;
     padding: 2px;
 }

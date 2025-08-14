@@ -243,8 +243,9 @@ public class Document extends ModelBase implements WikiModel, Linkable {
 
     public Document(String language, String documentTitle, String documentId, long corpusId) {
         this.language = language;
-        this.documentTitle = documentTitle;
-        this.documentId = documentId;
+        // DUUI often produces %20 instead of a space... can't change that, but it's ugly.
+        this.documentTitle = documentTitle.replaceAll("%20", " ");
+        this.documentId = documentId.replaceAll("%20", " ");
         this.corpusId = corpusId;
     }
 
@@ -398,7 +399,7 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         annotations.addAll(namedEntities.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(geoNames.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(times.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
-        var pageOverlap = 400;
+        var pageOverlap = 40000;
         annotations.addAll(sentiments.stream().filter(a -> a.getBegin() + pageOverlap >= pagesBegin && a.getEnd() - pageOverlap <= pagesEnd).toList());
         annotations.addAll(emotions.stream().filter(a -> a.getBegin() + pageOverlap >= pagesBegin && a.getEnd() - pageOverlap <= pagesEnd).toList());
         annotations.addAll(wikipediaLinks.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());

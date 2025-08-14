@@ -60,7 +60,7 @@ INNER JOIN (
     JOIN time t ON al1.toid = t.id and al1.toannotationtypetable = 'time'
     WHERE al1.linkid = 'context' AND t.date IS NOT NULL
 ) t ON al.fromid = t.fromid
-WHERE al.linkid = 'context' and al.fromannotationtypetable != 'namedEntity' 
+WHERE al.linkid = 'context' -- and al.fromannotationtypetable != 'namedEntity' 
 GROUP BY
     g.id, g.name, g.location_geom, al.corpusid, t.date, al.fromannotationtypetable;
 	
@@ -116,7 +116,7 @@ BEGIN
         WHERE al1.linkid = 'context' AND t.date IS NOT NULL AND al1.corpusid = corpus
     ) t ON al.fromid = t.fromid
     WHERE al.linkid = 'context' 
-      AND al.fromannotationtypetable != 'namedEntity'
+      --AND al.fromannotationtypetable != 'namedEntity'
       AND (
         from_annotation_type_table IS NULL 
         OR
@@ -171,7 +171,7 @@ BEGIN
         )
 
         -- For now, no named entities
-        AND fromannotationtypetable != 'namedEntity' 
+        --AND fromannotationtypetable != 'namedEntity' 
 
         -- Filter by date range
         AND (

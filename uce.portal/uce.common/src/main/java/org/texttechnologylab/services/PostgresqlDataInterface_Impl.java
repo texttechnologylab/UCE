@@ -367,6 +367,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public Linkable getLinkable(long id, Class<? extends Linkable> clazz) throws DatabaseOperationException {
         var linkable = getLinkableById(id, clazz);
+        if(linkable == null) return null;
         linkable.initLinkableViewModel(this);
         return linkable;
     }
