@@ -344,7 +344,7 @@ def get_instruct_model(model_name, url):
             current_app.config[model_name] = InstructLLM(model_name, url)
         return current_app.config[model_name]
     # just recreate every time
-    InstructLLM(model_name, url)
+    return InstructLLM(model_name, url)
 
 def get_CCCBERT_model():
     '''Gets the CCC-BERT model to check whether we need context or not'''
