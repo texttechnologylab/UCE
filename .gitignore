@@ -6,6 +6,7 @@ target/
 ### Env files ###
 .env
 documentation/venv
+rag/linux-env
 
 ### Logging ###
 uce.portal/logs/

@@ -19,7 +19,10 @@ import org.apache.uima.jcas.cas.FSArray;
 import org.apache.uima.util.CasIOUtils;
 import org.apache.uima.util.CasLoadMode;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.annotation.AnnotationComment;
 import org.texttechnologylab.annotation.DocumentAnnotation;
+import org.texttechnologylab.annotation.Emotion;
+import org.texttechnologylab.annotation.SentimentModel;
 import org.texttechnologylab.annotation.geonames.GeoNamesEntity;
 import org.texttechnologylab.annotation.link.*;
 import org.texttechnologylab.annotation.ocr.*;
@@ -32,6 +35,7 @@ import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.emotion.Feeling;
 import org.texttechnologylab.models.corpus.links.AnnotationLink;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
@@ -53,6 +57,8 @@ import org.texttechnologylab.services.*;
 import org.texttechnologylab.utils.*;
 import org.texttechnologylab.models.negation.CompleteNegation;
 
+import javax.imageio.ImageIO;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,6 +85,9 @@ public class Importer {
     );
     private static final String[] COMATIBLE_CAS_FILE_ENDINGS = Arrays.asList("xmi", "bz2", "zip", "gz").toArray(new String[0]);
     private static final Set<String> MIME_TYPES_PDF = Set.of("application/pdf", "pdf");
+    private static final String MIME_TYPE_IMAGE_PREFIX = "image/";
+    // TODO this list must also be used in the frontend to decide if we should show the image viewer
+    private static final Set<String> MIME_TYPES_IMAGES = Set.of("image/jpeg", "image/png");
     private GoetheUniversityService goetheUniversityService;
     private PostgresqlDataInterface_Impl db;
     private RAGService ragService;
@@ -102,6 +111,17 @@ public class Importer {
         this.importId = importId;
         this.path = foldername;
         this.casView = casView;
+    }
+
+    public Importer(
+            ApplicationContext serviceContext,
+            int importerNumber,
+            String casView
+    ) {
+        this.importerNumber = importerNumber;
+        this.casView = casView;
+
+        initServices(serviceContext);
     }
 
     public Importer(ApplicationContext serviceContext) {
@@ -160,7 +180,7 @@ public class Importer {
     /**
      * Stores an uploaded xmi to a given corpus
      */
-    public void storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus) throws DatabaseOperationException {
+    public Long storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus, String fileName, String documentId) throws DatabaseOperationException {
         logger.info("Trying to store an uploaded UIMA file...");
 
         // Before we try to parse the document, we need to check if we have UCEMetadata filters for this corpus.
@@ -170,13 +190,14 @@ public class Importer {
                     (ex) -> logger.error("Couldn't fetch UCEMetadataFilters to a corpus - this shouldn't happen. The process continues without filters.", ex));
 
         // We don't catch exceptions here, we let them be raised.
-        var doc = XMIToDocument(inputStream, corpus, "TODO: CHANGE THIS FILEPATH");
+        var doc = XMIToDocument(inputStream, corpus, fileName, documentId);
         if (doc == null)
             throw new DatabaseOperationException("The document was already imported into the corpus according to its documentId.");
         db.saveDocument(doc);
-        postProccessDocument(doc, corpus, "TODO: CHANGE THIS FILEPATH");
+        postProccessDocument(doc, corpus, fileName);
 
         logger.info("Finished storing and uploaded UIMA file.");
+        return doc.getId();
     }
 
     /**
@@ -194,6 +215,8 @@ public class Importer {
 
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
         //fixed paths
+        // NOTE the config is not updated if the corpus already exists!
+        // TODO compare configs and show a warning if they differ (except name, ...)
         try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString())) {
 
             corpusConfig = gson.fromJson(reader, CorpusConfig.class);
@@ -355,13 +378,19 @@ public class Importer {
 
     /**
      * Converts an XMI inputstream to a Document.
+     * @param documentId Optional document id to use for database, useful if multiple views are imported
      */
-    public Document XMIToDocument(InputStream inputStream, Corpus corpus, String filePath) {
+    public Document XMIToDocument(InputStream inputStream, Corpus corpus, String filePath, String documentId) {
         try {
             var jCas = JCasFactory.createJCas();
             CasIOUtils.load(inputStream, null, jCas.getCas(), CasLoadMode.LENIENT);
 
-            return XMIToDocument(jCas, corpus, filePath);
+            // NOTE we need to specify the view here, the serialized data is the full CAS even when starting with a selected view
+            if (casView != null) {
+                jCas = jCas.getView(casView);
+            }
+
+            return XMIToDocument(jCas, corpus, filePath, documentId);
         } catch (Exception ex) {
             logger.error("Error while reading an annotated xmi file from stream to a cas and transforming it into a document:", ex);
             return null;
@@ -391,7 +420,7 @@ public class Importer {
 
             return XMIToDocument(jCas, corpus, filename);
         } catch (Exception ex) {
-            logger.error("Error while reading an annotated xmi file to a cas and transforming it into a document:", ex);
+            logger.error("Error while reading the annotated xmi file " + filename + " to a cas and transforming it into a document:", ex);
             return null;
         }
     }
@@ -430,10 +459,15 @@ public class Importer {
         return null; // Unsupported
     }
 
+    public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath) {
+        return XMIToDocument(jCas, corpus, filePath, null);
+    }
+
     /**
      * Convert a UIMA jCas to an OCRDocument
+     * @param documentId Optional document id to use for database, useful if multiple views are imported
      */
-    public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath) {
+    public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath, String documentId) {
 
         logger.info("=============================== Importing a new CAS as a Document. ===============================");
 
@@ -453,6 +487,11 @@ public class Importer {
             if (metadata == null) {
                 // If the metadata block is missing, something is off. In that case, return null
                 return null;
+            }
+            // NOTE this could also be done by the import-caller, but having the document id as a parameter makes it much easier
+            if (documentId != null) {
+                logger.info("Setting document id from \"" + metadata.getDocumentId() + "\" to \"" + documentId + "\"");
+                metadata.setDocumentId(documentId);
             }
             var document = new Document(metadata.getLanguage(),
                     metadata.getDocumentTitle(),
@@ -474,7 +513,8 @@ public class Importer {
                 if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
                     postProccessDocument(existingDoc, corpus, filePath);
-                }
+                } else
+                    logger.info("Document was already post-processed.");
                 logger.info("Done.");
                 return null;
             }
@@ -491,6 +531,14 @@ public class Importer {
                 byte[] pdfBytes = jCas.getSofaDataStream().readAllBytes();
                 document.setDocumentData(pdfBytes);
                 logger.info("Document is a PDF: " + document.getMimeType() + " of length " + pdfBytes.length);
+            } else if (document.getMimeType().startsWith(MIME_TYPE_IMAGE_PREFIX) || MIME_TYPES_IMAGES.contains(document.getMimeType())) {
+                document.setFullText("");
+
+                // This is a document that only contains image bytes in the sofa string
+                byte[] imageBytes = jCas.getSofaDataStream().readAllBytes();
+                document.setDocumentData(imageBytes);
+                logger.info("Document is an image: " + document.getMimeType() + " of length " + imageBytes.length);
+
             } else {
                 // by default, we assume text as before
                 document.setFullText(jCas.getDocumentText());
@@ -530,6 +578,16 @@ public class Importer {
                 ExceptionUtils.tryCatchLog(
                         () -> setGeoNames(document, jCas),
                         (ex) -> logImportWarn("This file should have contained GeoNames annotations, but selecting them caused an error.", ex, filePath));
+
+            if (corpusConfig.getAnnotations().isSentiment())
+                ExceptionUtils.tryCatchLog(
+                        () -> setSentiments(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained Sentiment annotations, but selecting them caused an error.", ex, filePath));
+
+            if (corpusConfig.getAnnotations().isEmotion())
+                ExceptionUtils.tryCatchLog(
+                        () -> setEmotions(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained Emotion annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().isLemma())
                 ExceptionUtils.tryCatchLog(
@@ -576,6 +634,11 @@ public class Importer {
                     () -> setPages(document, jCas, corpusConfig),
                     (ex) -> logImportWarn("This file should have contained OCRPage annotations, but selecting them caused an error.", ex, filePath));
 
+            if (corpusConfig.getAnnotations().isImage())
+                ExceptionUtils.tryCatchLog(
+                        () -> setImages(document, jCas),
+                        (ex) -> logImportWarn("This file should have contained image annotations, but selecting them caused an error.", ex, filePath));
+
             var duration = System.currentTimeMillis() - start;
             logImportInfo("Successfully extracted all annotations from " + filePath, LogStatus.FINISHED, filePath, duration);
 
@@ -586,6 +649,55 @@ public class Importer {
         } finally {
             logger.info("Finished with importing that CAS.\n\n\n");
         }
+    }
+
+    /**
+     * Selects and sets the emotions of a document
+     */
+    private void setEmotions(Document document, JCas jCas){
+        var emotions = new ArrayList<org.texttechnologylab.models.corpus.emotion.Emotion>();
+        JCasUtil.select(jCas, Emotion.class).forEach(e -> {
+            var emotion = new org.texttechnologylab.models.corpus.emotion.Emotion(e.getBegin(), e.getEnd());
+            emotion.setCoveredText(e.getCoveredText());
+            var meta = e.getModel();
+            if(meta != null) emotion.setModel(meta.getModelName() + "__v::" + meta.getModelVersion());
+
+            var feelings = new ArrayList<Feeling>();
+            for(var annotationComment:e.getEmotions()){
+                var feeling = new Feeling();
+                feeling.setEmotion(emotion);
+                ExceptionUtils.tryCatchLog(() -> feeling.setValue(Double.parseDouble(annotationComment.getValue())), (ex) -> {});
+                feeling.setFeeling(annotationComment.getKey());
+                feelings.add(feeling);
+            }
+            emotion.setFeelings(feelings);
+
+            emotions.add(emotion);
+        });
+
+        document.setEmotions(emotions);
+        logger.info("Setting Emotions done.");
+    }
+
+    /**
+     * Selects and sets the sentiment of a document
+     */
+    private void setSentiments(Document document, JCas jCas){
+        var sentiments = new ArrayList<Sentiment>();
+        JCasUtil.select(jCas, SentimentModel.class).forEach(s -> {
+            var sentiment = new Sentiment(s.getBegin(), s.getEnd());
+            sentiment.setCoveredText(s.getCoveredText());
+            sentiment.setPositive(s.getProbabilityPositive());
+            sentiment.setNeutral(s.getProbabilityNeutral());
+            sentiment.setNegative(s.getProbabilityNegative());
+            var meta = s.getModel();
+            if(meta != null) sentiment.setModel(meta.getModelName() + "__v::" + meta.getModelVersion());
+
+            sentiments.add(sentiment);
+        });
+
+        document.setSentiments(sentiments);
+        logger.info("Setting Sentiments done.");
     }
 
     /**
@@ -843,6 +955,7 @@ public class Importer {
             var pageAdapters = new ArrayList<PageAdapter>();
             JCasUtil.select(jCas, OCRPage.class)
                     .forEach(p -> pageAdapters.add(new OCRPageAdapterImpl(p)));
+
             // The ABBYY Pages have no pageNumber anymore, so we count up by hand...
             var pageCount = new AtomicInteger(1);
             JCasUtil.select(jCas, org.texttechnologylab.annotation.ocr.abbyy.Page.class)
@@ -850,6 +963,9 @@ public class Importer {
                         pageAdapters.add(new PageAdapterImpl(p, pageCount.get()));
                         pageCount.getAndIncrement();
                     });
+
+            // Get all annotations, these are used to store additional information to the paragraphs
+            Collection<AnnotationComment> annotationComments = JCasUtil.select(jCas, AnnotationComment.class);
 
             // We go through each page
             for (var p : pageAdapters) {
@@ -861,7 +977,10 @@ public class Importer {
                 // TODO: For now, only the new ABBYY typesystems get their paragraphs. We dont really use the others anymore.
                 // In the future, we can add back blocks and lines and whatnot for a more truer OCR page visualization
                 if (corpusConfig.getAnnotations().isOCRParagraph() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
-                    page.setParagraphs(getCoveredParagraphs((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
+                    page.setParagraphs(getCoveredParagraphs((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal(), page, annotationComments));
+
+                if (corpusConfig.getAnnotations().isOCRParagraph() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
+                    page.setDivId(((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()).getId());
 
                 //if (corpusConfig.getAnnotations().isOCRBlock() && p.getOriginal() instanceof org.texttechnologylab.annotation.ocr.abbyy.Page)
                 //    page.setBlocks(getCoveredBlocks((org.texttechnologylab.annotation.ocr.abbyy.Page) p.getOriginal()));
@@ -905,9 +1024,22 @@ public class Importer {
     }
 
     private void updateAnnotationsWithPageId(Document document, Page page, boolean isLastPage) {
-        // Set the pages for the different annotations - this is pretty horrible, but I cant be bothered right now.
+        // Set the pages for the different annotations - this is freaking horrible, but I cant be bothered right now.
+        // Update: Someone please release me from this horror that is this code.
         if (document.getSentences() != null) {
             for (var anno : document.getSentences().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getEmotions() != null) {
+            for (var anno : document.getEmotions().stream().filter(t ->
+                    (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
+                anno.setPage(page);
+            }
+        }
+        if (document.getSentiments() != null) {
+            for (var anno : document.getSentiments().stream().filter(t ->
                     (t.getBegin() >= page.getBegin() && t.getEnd() <= page.getEnd()) || (t.getPage() == null && isLastPage)).toList()) {
                 anno.setPage(page);
             }
@@ -1346,6 +1478,34 @@ public class Importer {
     }
 
 
+    private void setImages(Document document, JCas jCas) {
+        // create image annotations
+        List<Image> images = new ArrayList<>();
+        for (org.texttechnologylab.annotation.type.Image imageAnno : JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Image.class)) {
+            Image image = new Image(imageAnno.getBegin(), imageAnno.getEnd());
+            if (imageAnno.getWidth() == 0 && imageAnno.getHeight() == 0) {
+                // try to automatically detect image dimensions
+                try {
+                    byte[] imageBytes = Base64.getDecoder().decode(imageAnno.getSrc());
+                    BufferedImage imageData = ImageIO.read(new ByteArrayInputStream(imageBytes));
+                    image.setWidth(imageData.getWidth());
+                    image.setHeight(imageData.getHeight());
+                } catch (Exception e) {
+                    System.err.println("Failed detecting image dimensions for image: " + e.getMessage());
+                    e.printStackTrace();
+                }
+            } else {
+                image.setWidth(imageAnno.getWidth());
+                image.setHeight(imageAnno.getHeight());
+            }
+            image.setMimeType(imageAnno.getMimetype());
+            image.setSrc(imageAnno.getSrc());
+            images.add(image);
+        }
+        document.setImages(images);
+    }
+
+
     /**
      * Selects and sets the topics to a document
      */
@@ -1616,9 +1776,9 @@ public class Importer {
 
                 // Link them to other annotations, such as Taxa, NamedEntity (e.g. PERSON)
                 var linkedAnnotations = new ArrayList<UIMAAnnotation>();
-                if (corpusConfig.getAnnotations().isNamedEntity())
+                if (corpusConfig.getAnnotations().isNamedEntity() && document.getNamedEntities() != null)
                     linkedAnnotations.addAll(document.getNamedEntities().stream().filter(g -> !g.getType().equals("LOCATION") && g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
-                if (corpusConfig.getAnnotations().getTaxon().isAnnotated()) {
+                if (corpusConfig.getAnnotations().getTaxon().isAnnotated() && document.getAllTaxa() != null) {
                     linkedAnnotations.addAll(document.getGazetteerTaxons().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
                     linkedAnnotations.addAll(document.getGnFinderTaxons().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
                 }
@@ -1864,7 +2024,7 @@ public class Importer {
     /**
      * Gets all covered paragraphs from a OCR page in a cas
      */
-    private List<Paragraph> getCoveredParagraphs(org.texttechnologylab.annotation.ocr.abbyy.Page page) {
+    private List<Paragraph> getCoveredParagraphs(org.texttechnologylab.annotation.ocr.abbyy.Page page, Page ucePage, Collection<AnnotationComment> annotationComments) {
         // Paragraphs
         var paragraphs = new ArrayList<Paragraph>();
         // Get all covered by this. This can probably be done in one go, but oh well
@@ -1876,6 +2036,19 @@ public class Importer {
             paragraph.setRightIndent(pg.getRightIndent());
             paragraph.setStartIndent(pg.getStartIndent());
             paragraph.setCoveredText(pg.getCoveredText());
+            paragraph.setPage(ucePage);
+
+            // Get additional styling info from the AnnotationComments
+            for (AnnotationComment comment : annotationComments) {
+                if (comment.getReference() == pg) {
+                    if (comment.getKey().startsWith("_uce_paragraph_config_header")) {
+                        paragraph.setHeader(comment.getValue());
+                    }
+                    else if (comment.getKey().startsWith("_uce_paragraph_config_cssclass")) {
+                        paragraph.setCssClass(comment.getValue());
+                    }
+                }
+            }
 
             paragraphs.add(paragraph);
         });

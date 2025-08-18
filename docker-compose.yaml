@@ -15,7 +15,7 @@ services:
     volumes:
       - ${TDB2_DATA}:/fuseki/databases/${TDB2_ENDPOINT}
     environment:
-      - JVM_ARGS=${JVM_ARGS}
+      - JAVA_OPTIONS=${JAVA_OPTIONS}
     command: --update --tdb2 --port 5430 --loc /fuseki/databases/${TDB2_ENDPOINT} /${TDB2_ENDPOINT}
     networks:
       - app_net
@@ -73,7 +73,7 @@ services:
     ports:
       - "8002:5432"
     volumes:
-      #- ./../backups/2025-06-12-TTLab-Instance-Data/db-data:/var/lib/postgresql/data
+      #- ./../backups/2025-06-25_BIOfid-Nova-Data/db-data:/var/lib/postgresql/data
       - ${POSTGRESQL_CONFIG}:/etc/postgresql.conf
     command: -c config_file=/etc/postgresql.conf
     networks:

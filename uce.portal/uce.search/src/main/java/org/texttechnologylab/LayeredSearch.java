@@ -146,9 +146,9 @@ public class LayeredSearch extends CacheItem {
                 // Check if its a taxon command
                 if (slot.getValue().length() > 2) {
                     var possibleCommand = slot.getValue().substring(0, 3);
-                    if (Arrays.asList(StringUtils.TAX_RANKS).contains(possibleCommand)) {
+                    if (Arrays.asList(EnrichedSearchQuery.TAX_RANKS).contains(possibleCommand)) {
                         // The full name of the taxonomic rank
-                        var fullRankName = StringUtils.getFullTaxonRankByCode(possibleCommand.replace("::", "")).toLowerCase();
+                        var fullRankName = EnrichedSearchQuery.getFullTaxonRankByCode(possibleCommand.replace("::", "")).toLowerCase();
                         var value = slot.getValue().substring(3);
                         //var ordinalValue = TaxonRank.valueOf(fullRankName).ordinal();
                         var idsOfRank = ExceptionUtils.tryCatchLog(
@@ -192,9 +192,9 @@ public class LayeredSearch extends CacheItem {
                 // Let's see if we too have some commands in here.
                 if (slot.getValue().length() > 2) {
                     var possibleCommand = slot.getValue().substring(0, 3);
-                    if (Arrays.asList(StringUtils.TIME_COMMANDS).contains(possibleCommand)) {
+                    if (Arrays.asList(EnrichedSearchQuery.TIME_COMMANDS).contains(possibleCommand)) {
                         // The full name of the taxonomic rank
-                        var unitName = StringUtils.GetFullTimeUnitByCode(possibleCommand.replace("::", "")).toLowerCase();
+                        var unitName = EnrichedSearchQuery.getFullTimeUnitByCode(possibleCommand.replace("::", "")).toLowerCase();
                         var value = slot.getValue().substring(3);
 
                         var condition = "a.{UNIT_NAME} = {VALUE} AND a.page_id is not null " + conditionEnding;

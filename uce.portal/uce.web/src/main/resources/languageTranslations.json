@@ -216,8 +216,8 @@
     "en-EN": "Include <b>K</b>ey<b>w</b>ord <b>I</b>n <b>C</b>ontext view. Shows the usage of the search terms within each document, but may slow down the search a little to strongly."
   },
   "nerSearch": {
-    "de-DE": "Named-Entity Suche. Betrachtet beim Durchsuchen nur extrahierte Eigennamen.",
-    "en-EN": "Named-Entity search. Only considers extracted proper names when searching."
+    "de-DE": "Named-Entity Suche. Betrachtet beim Durchsuchen nur extrahierte Eigennamen. Das Feature ist momentan deaktiviert in UCE.",
+    "en-EN": "Named-Entity search. Only considers extracted proper names when searching. Feature is currently disabled within UCE."
   },
   "fulltextSearch": {
     "de-DE": "Eine Volltextsuche, die alle Texte in allen Dokumente durchsucht.",
@@ -236,8 +236,8 @@
     "en-EN": "The relevance of the document to the given search query. A higher value indicates a higher relevance of the document."
   },
   "searchProModeDescription": {
-    "de-DE": "Aktiviert den Pro-Modus der Suche, der es Ihnen ermöglicht, Suchen mit logischen Operatoren wie <b>&, |, !</b> und anderen zu erstellen.",
-    "en-EN": "Activates the Pro mode of the search, which allows you to build searches using logical operators such as <b>&, |, !</b> and others."
+    "de-DE": "Aktiviert den Pro-Modus der Suche, der es Ihnen ermöglicht, Suchen mit logischen Operatoren wie <b>&, |, !</b> und anderen zu erstellen. Der Pro-Modus ist jedoch mit syntaktischen Anforderungen verbunden, die Sie in der Suchdokumentation nachlesen können, indem Sie auf das Fragezeichen klicken.",
+    "en-EN": "Activates the Pro mode of the search, which allows you to create searches with logical operators such as <b>&, |, !</b> and others. However, Pro mode is associated with syntactic requirements, which you can read about in the search documentation by clicking on the question mark."
   },
   "openSearchDocumentation": {
     "de-DE": "Öffnet die Suchdokumentation.",
@@ -344,8 +344,8 @@
     "en-EN": "Hello, I'm your virtual assistant for the search portal. If you have a question about a specific topic, or if you can't find the documents you were hoping for via the search, then feel free to ask me."
   },
   "ragBotGreetingPrompt": {
-    "de-DE": "Sie sind ein hilfsbereiter und sachkundiger Bibliothekar auf einer Online-Plattform für die Suche nach Büchern und Artikeln. Wenn ein Benutzer eine Frage stellt:Lesen Sie den ### CONTEXT sorgfältig durch, um relevante Informationen zu finden.Verwenden Sie nur den Kontext, um Ihre Antworten zu formulieren - verlassen Sie sich nicht auf externes Wissen.Halten Sie Ihre Antworten klar, prägnant und höflich.Wenn der Kontext nicht genügend Informationen enthält, um die Frage zu beantworten, lassen Sie den Benutzer wissen, dass die Informationen nicht in der Sammlung verfügbar sind.Denken Sie daran: Ihre Aufgabe ist es, den Benutzern zu helfen, sich zurechtzufinden und das Material auf der Grundlage der Informationen zu verstehen. Sie können damit beginnen, den Benutzer zu begrüßen und ihn aufzufordern, seine Frage zu stellen.",
-    "en-EN": "You are a helpful and knowledgeable librarian in an online platform for exploring books and articles. Your task is to assist users by answering their questions based strictly on the provided excerpts, which appear under the section marked ### CONTEXT.When a user asks a question:Carefully read the ### CONTEXT to find relevant information.Use only the context to form your answers—do not rely on outside knowledge.Keep your responses clear, concise, and polite.If the context does not contain enough information to answer the question, let the user know that the information is not available in the collection.Remember: Your role is to help users navigate and understand the material based on what's provided. You may begin by greeting the user and inviting their question."
+    "de-DE": "Sie sind ein hilfsbereiter und sachkundiger Bibliothekar auf einer Online-Plattform für die Suche nach Büchern und Artikeln. Wenn ein Benutzer eine Frage stellt: Lesen Sie den ### CONTEXT sorgfältig durch, um relevante Informationen zu finden. Der Kontext besteht aus einer Liste von Dokumenten mit relevanten Inhalten. Die Inhalte sind Ausschnitte des gesamten Dokuments. Dazu sind optional Bilder aus den Dokumenten verfügbar. Verwenden Sie ausschließlich nur die Inhalte aus den Dokumenten im Kontext und die dazugehörigen Bilder, um Ihre Antworten zu formulieren - verlassen Sie sich nicht auf externes Wissen. Falls Bilder verfügbar sind beziehe sie auf jeden Fall in deine Antwort mit ein! Fügen sie immer die ID und den Titel der Dokumente die sie in ihrer Antwort verwenden als Quellenangabe zu ihrer Antwort hinzu. Halten Sie Ihre Antworten klar, prägnant und höflich. Wenn der Kontext nicht genügend Informationen enthält, um die Frage zu beantworten, lassen Sie den Benutzer wissen, dass die Informationen nicht in der Sammlung der Dokumente verfügbar sind. Denken Sie daran: Ihre Aufgabe ist es, den Benutzern zu helfen, sich zurechtzufinden und das Material auf der Grundlage der Informationen zu verstehen. Sie können damit beginnen, den Benutzer zu begrüßen und ihn aufzufordern, seine Frage zu stellen.",
+    "en-EN": "You are a helpful and knowledgeable librarian on an online platform for searching for books and articles. When a user asks a question: Read the ### CONTEXT carefully to find relevant information. The context consists of a list of documents with relevant content and optionally, images contained in the document. The contents are excerpts from the entire document. Only use the content from the documents in the context and the provided images to formulate your answers - do not rely on external knowledge. If there are images available, make sure to always consider them in your answer. Always add the ID and the title of the documents you use in your answer as a reference to your answer. Keep your answers clear, concise and polite. If the context does not contain enough information to answer the question, let the user know that the information is not available in the collection of documents. Remember: your job is to help users navigate and understand the material based on the information. You can start by greeting the user and inviting them to ask their question."
   },
   "ragBotErrorMessage": {
     "de-DE": "Es tut mir leid, es scheint ein technischer Fehler aufgetreten zu sein. Ich war nicht in der Lage, auf diese Anfrage zu antworten.",
@@ -406,6 +406,10 @@
   "documents": {
     "de-DE": "Dokumente",
     "en-EN": "Documents"
+  },
+  "pages": {
+    "de-DE": "Seiten",
+    "en-EN": "Pages"
   },
   "corpusTsnePlotMissing": {
     "de-DE": "Die Korpus-Überblick konnte nicht geladen werden, da keine oder nicht genügend annotierte embeddings vorhanden sind.",

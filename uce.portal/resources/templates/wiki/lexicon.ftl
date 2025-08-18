@@ -91,12 +91,12 @@
                                     <!-- Sorting order -->
                                     <div class="sortings mr-1 pr-2 flexed align-items-center border-right border-left pl-1 ml-1">
                                         <label class="mb-0 ml-1 mr-1">${languageResource.get("occurrence")}</label>
-                                        <a class="rounded-a border-0" data-id="occurrence" data-dir="ASC"
+                                        <a class="rounded-a border-0 selected-sort" data-id="occurrence" data-dir="ASC"
                                            onclick="window.wikiHandler.handleLexiconSortingChanged($(this))">
                                             <i class="fas fa-sort-amount-up-alt"></i>
                                         </a>
                                         <label class="mb-0 ml-2 mr-1">${languageResource.get("alphabet")}</label>
-                                        <a class="rounded-a border-0 selected-sort" data-id="alphabet" data-dir="ASC"
+                                        <a class="rounded-a border-0" data-id="alphabet" data-dir="ASC"
                                            onclick="window.wikiHandler.handleLexiconSortingChanged($(this))">
                                             <i class="fas fa-sort-amount-up-alt"></i>
                                         </a>

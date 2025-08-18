@@ -49,7 +49,7 @@ public class MapApi implements UceApi {
         var toDate = ExceptionUtils.tryCatchLog(() -> Date.valueOf(requestBody.get("toDate").toString()), (ex) -> {});
         var corpusId = ExceptionUtils.tryCatchLog(() -> (long)Double.parseDouble(requestBody.get("corpusId").toString()),
                 (ex) -> logger.error("Couldn't fetch occurrences of map - corpusId missing.", ex));
-
+        var category = ExceptionUtils.tryCatchLog(() -> requestBody.get("category").toString(), (ex) -> {});
         if(minLng == null || minLat == null || maxLng == null || maxLat == null || corpusId == null){
             model.put("information", languageResources.get("missingParameterError"));
             return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "defaultError.ftl"));
@@ -57,9 +57,10 @@ public class MapApi implements UceApi {
 
         if(skip == null) skip = 0;
         if(take == null) take = 25;
+        if(category==null || category.isBlank()) category = null;
 
         try {
-            return gson.toJson(mapService.getGeoNameTimelineLinks(minLng, minLat, maxLng, maxLat, fromDate, toDate, corpusId, skip, take));
+            return gson.toJson(mapService.getGeoNameTimelineLinks(minLng, minLat, maxLng, maxLat, fromDate, toDate, corpusId, skip, take, category));
         } catch (Exception ex) {
             logger.error("Error getting linked occurrences from map - best refer to the last logged API call " +
                          "with id=" + request.attribute("id") + " to this endpoint for URI parameters.", ex);

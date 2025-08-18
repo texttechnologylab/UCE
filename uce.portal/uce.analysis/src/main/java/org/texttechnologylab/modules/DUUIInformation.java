@@ -38,6 +38,14 @@ public class DUUIInformation {
 
     private Boolean isOffensive = false;
 
+    private Boolean isTtlabScorer = false;
+
+    private Boolean isCohMetrix = false;
+
+    private List<String> ttlabScorerGroups;
+
+    private List<String> cohMetrixGroups;
+
     public DUUIInformation(Sentences sentence, TextClass textInformation, List<ModelGroup> modelGroups, HashMap<String, ModelInfo> modelInfos) {
         this.sentence = sentence;
         this.textInformation = textInformation;
@@ -175,4 +183,34 @@ public class DUUIInformation {
         return isLLM;
     }
 
+    public void setIsTtlabScorer(boolean isTtlabScorer) {
+        this.isTtlabScorer = isTtlabScorer;
+    }
+    public Boolean getIsTtlabScorer() {
+        return isTtlabScorer;
+    }
+
+    public List<String> getTtlabScorerGroups() {
+        return ttlabScorerGroups;
+    }
+
+    public void setTtlabScorerGroups(List<String> ttlabScorerGroups) {
+        this.ttlabScorerGroups = ttlabScorerGroups;
+    }
+
+    public Boolean getIsCohMetrix() {
+        return isCohMetrix;
+    }
+
+    public void setIsCohMetrix(Boolean isCohMetrix) {
+        this.isCohMetrix = isCohMetrix;
+    }
+
+    public List<String> getCohMetrixGroups() {
+        return cohMetrixGroups;
+    }
+
+    public void setCohMetrixGroups(List<String> cohMetrixGroups) {
+        this.cohMetrixGroups = cohMetrixGroups;
+    }
 }

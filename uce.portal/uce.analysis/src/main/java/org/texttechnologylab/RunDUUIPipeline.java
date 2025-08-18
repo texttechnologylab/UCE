@@ -8,10 +8,7 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.typeClasses.TextClass;
 import org.texttechnologylab.modules.*;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.HashMap;
-import java.util.List;
+import java.util.*;
 
 
 public class RunDUUIPipeline {
@@ -24,6 +21,8 @@ public class RunDUUIPipeline {
         HashMap<String, ModelInfo> modelInfosMap = new HashMap<>();
         HashMap<String, String> urls = new HashMap<>();
         List<ModelInfo> modelInfosList = new ArrayList<>();
+        List<String> ttlabScorerGroups = new ArrayList<>();
+        List<String> cohmetrixScorerGroups = new ArrayList<>();
         boolean isHateSpeech = false;
         boolean isSentiment = false;
         boolean isTopic = false;
@@ -37,6 +36,20 @@ public class RunDUUIPipeline {
         boolean isLLM = false;
         boolean isTA = false;
         boolean isOffensive = false;
+        boolean isTtlabScorer = false;
+        boolean isCohmetrix = false;
+        TTLabScorerInfo ttlabModelInfo = new TTLabScorerInfo();
+        List<String> ttlabModelGroupNames = new ArrayList<>();
+        List<String> cohmetrixGroups = new ArrayList<>();
+        LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<String, String>>> taInputMap = ttlabModelInfo.getTaInputMap();
+        LinkedHashMap<String, LinkedHashMap<String, String>> taNameMap = ttlabModelInfo.getTAMapNames();
+        LinkedHashMap<String, String> ttlabSubModels = taNameMap.get("submodels");
+        LinkedHashMap<String, String> ttlabProperties = taNameMap.get("properties");
+        CohMetrixInfo cohmetrixModelInfo = new CohMetrixInfo();
+        LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<String, String>>> cohmetrixInputMap = cohmetrixModelInfo.getCohMetrixMap();
+        LinkedHashMap<String, LinkedHashMap<String, String>> cohmetrixNameMap = cohmetrixModelInfo.getCohMetrixMapInfo();
+        LinkedHashMap<String, String> cohmetrixModels = cohmetrixNameMap.get("Models");
+        LinkedHashMap<String, String> cohmetrixDescription = cohmetrixNameMap.get("Description");
         for (String modelKey : modelGroups) {
             if (modelInfos.containsKey(modelKey)) {
                 ModelInfo modelInfo = modelInfos.get(modelKey);
@@ -88,6 +101,40 @@ public class RunDUUIPipeline {
                         isOffensive = true;
                         break;
                 }
+            }
+            if (modelKey.startsWith("ttlabscorer##")) {
+                String property = modelKey.replace("ttlabscorer##", "");
+                ttlabScorerGroups.add(property);
+                String ttlabModelGroupName = ttlabProperties.get(property);
+                String ttlabSubModelName = ttlabSubModels.get(ttlabModelGroupName);
+                if (!ttlabModelGroupNames.contains(ttlabSubModelName)){
+                    ttlabModelGroupNames.add(ttlabSubModelName);
+                    ModelInfo ttlabmodelInfo = ttlabModelInfo.getModelInfo();
+                    ttlabmodelInfo.setName(ttlabSubModelName);
+                    ttlabmodelInfo.setMainTool("TTLAB Scorer");
+                    ttlabmodelInfo.setKey(ttlabSubModelName);
+                    modelInfosList.add(ttlabmodelInfo);
+                    String modelKeyName = ttlabmodelInfo.getMainTool().replace(" ", "_")+"_"+ttlabmodelInfo.getKey().replace(" ", "_");
+                    modelInfosMap.put(modelKeyName, ttlabmodelInfo);
+                }
+                isTtlabScorer = true;
+            }
+            if(modelKey.startsWith("cohmetrix##")){
+                String labelName = modelKey.replace("cohmetrix##", "");
+                cohmetrixScorerGroups.add(labelName);
+                String cohmetrixModelGroupName = cohmetrixModels.get(labelName);
+                String cohmetrixModelDescription = cohmetrixDescription.get(labelName);
+                if (!cohmetrixGroups.contains(cohmetrixModelGroupName)) {
+                    cohmetrixGroups.add(cohmetrixModelGroupName);
+                    ModelInfo cohmetrixmodel= cohmetrixModelInfo.getModelInfo();
+                    cohmetrixmodel.setName(cohmetrixModelGroupName);
+                    cohmetrixmodel.setMainTool("CohMetrix");
+                    cohmetrixmodel.setKey(cohmetrixModelGroupName);
+                    modelInfosList.add(cohmetrixmodel);
+                    String modelKeyName = cohmetrixmodel.getMainTool().replace(" ", "_")+"_"+cohmetrixmodel.getKey().replace(" ", "_");
+                    modelInfosMap.put(modelKeyName, cohmetrixmodel);
+                }
+                isCohmetrix = true;
             }
         }
         DUUIPipeline pipeline = new DUUIPipeline();
@@ -147,7 +194,7 @@ public class RunDUUIPipeline {
         DUUIComposer composer = pipeline.setComposer(modelInfosMap);
         JCas result = pipeline.runPipeline(cas, composer);
         // get results
-        Object[] results = pipeline.getJCasResults(result, modelInfosList);
+        Object[] results = pipeline.getJCasResults(result, modelInfosList, ttlabScorerGroups, cohmetrixScorerGroups);
         // print results
         Sentences sentences = (Sentences) results[0];
         TextClass textClass = (TextClass) results[1];
@@ -176,6 +223,15 @@ public class RunDUUIPipeline {
         duuiInformation.setIsTA(isTA);
         // set offensive
         duuiInformation.setIsOffensive(isOffensive);
+        // set ttlab scorer
+        duuiInformation.setIsTtlabScorer(isTtlabScorer);
+        if (isTtlabScorer) {
+            duuiInformation.setTtlabScorerGroups(ttlabScorerGroups);
+        }
+        duuiInformation.setIsCohMetrix(isCohmetrix);
+        if (isCohmetrix) {
+            duuiInformation.setCohMetrixGroups(cohmetrixScorerGroups);
+        }
         return duuiInformation;
     }
 

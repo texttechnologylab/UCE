@@ -148,6 +148,10 @@ body {
     padding: 2rem 4.5rem;
 }
 
+.document-content em{
+    font-style: normal;
+}
+
 .document-content *{
     font-family: Courier  !important;
     word-break: break-word;
@@ -168,7 +172,8 @@ body {
     font-weight: bold;
 }
 
-.document-content p {
+/* TODO check this for side effects */
+.document-content div {
     /*text-align: justify;*/
     line-height: 25px;
     z-index: 1;
@@ -216,8 +221,9 @@ body {
     position: relative;
     z-index: 3;
     text-decoration-thickness: 1px;
-    background-color: rgba(125, 125, 125, 0.07);
-    text-decoration-color: var(--secondary);
+    text-decoration-style: solid;
+    /*background-color: rgba(125, 125, 125, 0.07);*/
+    text-decoration-color: var(--dark);
 }
 
 .document-content .multi-annotation:hover {
@@ -241,6 +247,7 @@ body {
     display: none;
     background-color: white;
     border-radius: 3px;
+    color:gray;
     border: gray 1px solid;
 }
 
@@ -293,6 +300,23 @@ body {
     text-decoration-color: transparent;
 }
 
+.document-content .sentiment {
+    border-radius: 6px;
+    box-shadow: rgba(17, 17, 26, 0.1) 0px 1px 4px, rgba(17, 17, 26, 0.05) 0px 2px 8px;
+    display: inline !important;
+    margin-bottom: 4px;
+    padding: 2px;
+}
+
+.document-content .sentiment[data-type="NEU"] {
+}
+
+.document-content .sentiment[data-type="NEG"] {
+}
+
+.document-content .sentiment[data-type="POS"]{
+}
+
 .document-content .lemma {
     z-index: 0 !important;
 }
@@ -343,7 +367,7 @@ body {
     box-shadow: 0 0 10px 5px rgba(255, 255, 0, 0.5);
 }
 
-.document-content .topic-marker {
+.document-content .annotation-marker {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -351,13 +375,24 @@ body {
     height: 20px;
     padding: 0 4px;          /* horizontal padding */
     border-radius: 50%;
-    border: 1px solid #333;
+    background-color: lightgray;
+    border: 1px solid darkgray;
     font-size: 14px;
     font-weight: bold;
-    background-color: white;
-    color: #333;
+    color: white;
     cursor: pointer;
     margin-left: 4px;
+}
+
+.document-content .emotion-marker{
+    border-radius: 3px !important;
+    color:var(--dark) !important;
+    border: transparent 1px solid !important;
+    background-color: var(--default);
+}
+
+.document-content .emotion-marker:hover{
+    color:white !important;
 }
 
 .side-bar {
@@ -750,6 +785,7 @@ body {
     position: relative;
 }
 
+
 .key-topic-settings-panel {
     position: absolute;
     top: 160px;
@@ -915,4 +951,18 @@ body {
     border-radius: 4px;
     cursor: pointer;
     padding: 0;
+
+.paragraph .paragraph-header {
+    border-radius: 16px;
+    font-size: 75%;
+}
+
+/* Additional styles for document content */
+/* TODO improve styling */
+.document-content-paragraph-style-core-answer {
+    padding: 8px 16px;
+    background-color: white;
+    color: var(--prime);
+    border: 1px solid var(--prime);
+
 }

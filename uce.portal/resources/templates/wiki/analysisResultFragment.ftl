@@ -10,7 +10,6 @@
                                     <div class="analysis-topic-card-title">${model.getModelInfo().getName()}</div>
                                     <div class="analysis-topics-grid">
                                         <#list model.topics as topic>
-                                        <#-- Berechne die Transparenz basierend auf dem Score (zwischen 0 und 1) -->
                                             <#assign opacity = topic.getScore()?string?replace(",", ".")>
                                             <div class="analysis-topic-entry" style="background-color: rgba(0, 200, 200, ${opacity});">
                                                 <div class="analysis-topic-score">${topic.getKey()}: ${topic.getScore()}</div>
@@ -29,12 +28,9 @@
                             <#list DUUI.textInformation.sentimentAVG as model>
                             <div class="analysis-sentiment-card">
                                 <div class="analysis-sentiment-card-title">${model.getModelInfo().getName()}</div>
-    <#--                            <p><strong>${model.getModelInfo().getName()}</strong></p>-->
                                 <#assign positiveOpacity = model.getPositive()?string?replace(",", ".")>
                                 <#assign neutralOpacity = model.getNeutral()?string?replace(",", ".")>
                                 <#assign negativeOpacity = model.getNegative()?string?replace(",", ".")>
-
-                                <!-- Anzeige der verschiedenen Sentiment-Werte -->
                                 <div class="analysis-sentiment-entry" style="background-color: rgba(0, 255, 0, ${positiveOpacity});">
                                     <div class="analysis-sentiment-score">AVG Positive: ${model.getPositive()}</div>
                                 </div>
@@ -104,7 +100,6 @@
                                     <div class="analysis-offensive-card-title">${model.getModelInfo().getName()}</div>
                                     <div class="analysis-offensives-grid">
                                         <#list model.offensives as offensive>
-                                        <#-- Berechne die Transparenz basierend auf dem Score (zwischen 0 und 1) -->
                                             <#assign opacity = offensive.getScore()?string?replace(",", ".")>
                                             <div class="analysis-offensive-entry" style="background-color: rgba(0, 200, 200, ${opacity});">
                                                 <div class="analysis-offensive-score">${offensive.getKey()}: ${offensive.getScore()}</div>
@@ -215,7 +210,6 @@
                                     <#assign oppoaseOpacity = model.getOppose()?string?replace(",", ".")>
                                     <#assign neutralOpacity = model.getNeutral()?string?replace(",", ".")>
 
-                                    <!-- Anzeige der verschiedenen Sentiment-Werte -->
                                     <div class="analysis-stance-entry" style="background-color: rgba(0, 255, 0, ${supportOpacity});">
                                         <div class="analysis-stance-score">AVG Support: ${model.getSupport()}</div>
                                     </div>
@@ -237,36 +231,48 @@
                         <div class="analysis-readabilitys-container">
                             <#list DUUI.textInformation.readabilityAVG as model>
                                 <div class="analysis-readability-card">
-                                    <div class="analysis-readability-card-title">${model.getModelInfo().getName()}</div>
-                                    <div class="analysis-readabilitys-grid">
-                                        <div class="analysis-readability-entry analysis-readability-fleschkincaid">
-                                            <div class="analysis-readability-score">Flesch Kincaid: ${model.getFleschKincaid()}</div>
+                                    <#if model.getModelInfo().getName()="Readability (EN)">
+                                        <div class="analysis-readability-card-title">${model.getModelInfo().getName()}</div>
+                                        <div class="analysis-readabilitys-grid">
+                                            <div class="analysis-readability-entry analysis-readability-fleschkincaid">
+                                                <div class="analysis-readability-score">Flesch Kincaid: ${model.getFleschKincaid()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-flesch">
+                                                <div class="analysis-readability-score">Flesch: ${model.getFlesch()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-gunningfog">
+                                                <div class="analysis-readability-score">Gunning Fog: ${model.getGunningFog()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-colemanliau">
+                                                <div class="analysis-readability-score">Coleman Liau: ${model.getColemanLiau()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-dalechall">
+                                                <div class="analysis-readability-score">Dale Chall: ${model.getDaleChall()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-ari">
+                                                <div class="analysis-readability-score">ARI: ${model.getARI()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-linsearwrite">
+                                                <div class="analysis-readability-score">Linsear Write: ${model.getLinsearWrite()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-smog">
+                                                <div class="analysis-readability-score">SMOG: ${model.getSMOG()}</div>
+                                            </div>
+                                            <div class="analysis-readability-entry analysis-readability-spache">
+                                                <div class="analysis-readability-score">Spache: ${model.getSpache()}</div>
+                                            </div>
                                         </div>
-                                        <div class="analysis-readability-entry analysis-readability-flesch">
-                                            <div class="analysis-readability-score">Flesch: ${model.getFlesch()}</div>
+                                    <#else>
+                                        <div class="analysis-readability-card-title">${model.getGroupName()}</div>
+                                        <div class="analysis-readabilitys-grid">
+                                            <#list model.readabilityInputs as readabilityInput>
+                                                <#assign opacity = readabilityInput.getScore()?string?replace(",", ".")>
+                                                <div class="analysis-readability-entry" style="background-color: rgba(0, 200, 200, ${opacity});">
+                                                    <div class="analysis-readability-score">${readabilityInput.getName()}: ${readabilityInput.getScore()}</div>
+                                                </div>
+                                            </#list>
                                         </div>
-                                        <div class="analysis-readability-entry analysis-readability-gunningfog">
-                                            <div class="analysis-readability-score">Gunning Fog: ${model.getGunningFog()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-colemanliau">
-                                            <div class="analysis-readability-score">Coleman Liau: ${model.getColemanLiau()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-dalechall">
-                                            <div class="analysis-readability-score">Dale Chall: ${model.getDaleChall()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-ari">
-                                            <div class="analysis-readability-score">ARI: ${model.getARI()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-linsearwrite">
-                                            <div class="analysis-readability-score">Linsear Write: ${model.getLinsearWrite()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-smog">
-                                            <div class="analysis-readability-score">SMOG: ${model.getSMOG()}</div>
-                                        </div>
-                                        <div class="analysis-readability-entry analysis-readability-spache">
-                                            <div class="analysis-readability-score">Spache: ${model.getSpache()}</div>
-                                        </div>
-                                    </div>
+                                    </#if>
                                 </div>
                             </#list>
                         </div>
@@ -299,12 +305,19 @@
                         <div class="analysis-ta-container">
                             <#if DUUI.textInformation?has_content>
                             <#-- Check if taAVG is not empty -->
-                                <p>TextInformation</p>
                                 <#if DUUI.textInformation.taScoreAVG?has_content>
-                                    <p>TA Analysis</p>
                                     <#list DUUI.textInformation.taScoreAVG as model>
                                         <div class="analysis-ta-card">
-                                            <div class="analysis-ta-card-title">${model.getGroupName()}</div>
+                                            <div class="analysis-ta-card-title">${model.getGroupName()}
+                                                <button
+                                                        class="ta-collapse-toggle-btn"
+                                                        aria-expanded="true"
+                                                        aria-label="Toggle TA details"
+                                                        onclick="toggleCard(this)"
+                                                >
+                                                    ▼
+                                                </button>
+                                            </div>
                                             <div class="analysis-ta-grid">
                                                 <#list model.taInputs as taInput>
                                                     <#assign opacity = taInput.getScore()?string?replace(",", ".")>
@@ -324,9 +337,148 @@
                         </div>
                     </div>
                 </#if>
+<#--                <#if DUUI.isTtlabScorer>-->
+<#--                    <div class="border p-2 mb-2 bg-light">-->
+<#--                        <h6 class="mb-0 mr-1 color-prime">TTLab Scorer Analysis</h6>-->
+<#--                        <div class="analysis-ta-container">-->
+<#--                            <#if DUUI.textInformation?has_content>-->
+<#--                            &lt;#&ndash; Check if taAVG is not empty &ndash;&gt;-->
+<#--                                <#if DUUI.textInformation.taScoreAVG?has_content>-->
+<#--                                    <#list DUUI.textInformation.taScoreAVG as model>-->
+<#--                                        <div class="analysis-ta-card">-->
+<#--                                            <div class="analysis-ta-card-title">${model.getGroupName()}-->
+<#--                                                <button-->
+<#--                                                        class="ta-collapse-toggle-btn"-->
+<#--                                                        aria-expanded="true"-->
+<#--                                                        aria-label="Toggle TA details"-->
+<#--                                                        onclick="toggleCard(this)"-->
+<#--                                                >-->
+<#--                                                    ▼-->
+<#--                                                </button>-->
+<#--                                            </div>-->
+<#--                                            <div class="analysis-ta-grid">-->
+<#--                                                <#list model.taInputs as taInput>-->
+<#--                                                    <#assign opacity = taInput.getScore()?string?replace(",", ".")>-->
+<#--                                                    <div class="analysis-ta-entry" style="background-color: rgba(0, 200, 200, ${opacity});">-->
+<#--                                                        <div class="analysis-ta-score">${taInput.getName()}: ${taInput.getScore()}</div>-->
+<#--                                                    </div>-->
+<#--                                                </#list>-->
+<#--                                            </div>-->
+<#--                                        </div>-->
+<#--                                    </#list>-->
+<#--                                <#else>-->
+<#--                                    <p><strong>Keine TA Analyse</strong></p>-->
+<#--                                </#if>-->
+<#--                            <#else>-->
+<#--                                <p><strong>Keine TA Analyse</strong></p>-->
+<#--                            </#if>-->
+<#--                        </div>-->
+<#--                    </div>-->
+<#--                </#if>-->
+                <#if DUUI.isTtlabScorer>
+                    <div class="border p-2 mb-2 bg-light">
+                        <h6 class="mb-0 mr-1 ttlab-scorer-color-primary">TTLab Scorer Analysis</h6>
+                        <div class="ttlab-scorer-container">
+
+                            <#if DUUI.textInformation?has_content && DUUI.textInformation.taScoreAVG?has_content>
+                                <script>
+                                    window.ttlabTableDataByModel = {};
+                                </script>
+
+                            <#list DUUI.textInformation.taScoreAVG as model>
+                                <div class="ttlab-scorer-box">
+                                    <h6 class="ttlab-scorer-color-primary">${model.getGroupName()?html}</h6>
+
+                                    <div class="ttlab-scorer-table-wrapper">
+                                        <div class="ttlab-scorer-buttons" data-tablekey="${model_index}">
+<#--                                            <button class="ttlab-download-btn" data-format="json" data-tablekey="${model_index}">JSON</button>-->
+<#--                                            <button class="ttlab-download-btn" data-format="tsv" data-tablekey="${model_index}">TSV</button>-->
+<#--                                            <button class="ttlab-download-btn" data-format="xlsx" data-tablekey="${model_index}">XLSX</button>-->
+                                        </div>
+
+                                        <div id="ttlab-scorer-table-${model_index}" class="ttlab-scorer-table"></div>
+                                    </div>
+
+                                    <script>
+                                        window.ttlabTableDataByModel["${model_index}"] = [
+                                            <#list model.taInputs as taInput>
+                                            {
+                                                model: "${model.getGroupName()?js_string}",
+                                                name: "${taInput.getName()?js_string}",
+                                                score: ${taInput.getScore()?c}
+                                            }<#if !taInput?is_last>,</#if>
+                                            </#list>
+                                        ];
+                                    </script>
+                                </div>
+                            </#list>
+                                <div id="scatter-container" style="position: relative; width: 600px; min-width: 400px; height: 450px; min-height: 300px; border: 1px solid #ccc; padding: 15px; background: #fff; resize: both; overflow: auto; box-shadow: 0 4px 10px rgba(0,0,0,0.1); border-radius: 8px; display: none">
+                                    <button id="close-scatter" style="position: absolute; top: 5px; right: 5px; background: #ff5c5c; border: none; color: white; padding: 5px 10px; cursor: pointer; border-radius: 3px;">✕</button>
+                                    <canvas id="ttlab-scatter-chart" height="400" style="width: 100%; height: 100%; display: block;"></canvas>
+                                </div>
+
+
+                            <#else>
+                                <p><strong>No TTLab Scorer Analysis</strong></p>
+                            </#if>
+
+                        </div>
+                    </div>
+                </#if>
+                <#if DUUI.isCohMetrix>
+                    <div class="border p-2 mb-2 bg-light">
+                    <h6 class="mb-0 mr-1 ttlab-scorer-color-primary">Coh-Metrix</h6>
+                    <div class="ttlab-scorer-container">
+
+                    <#if DUUI.textInformation?has_content && DUUI.textInformation.cohMetrixAVG?has_content>
+                        <script>
+                            window.cohmetrixTableDataByModel = {};
+                        </script>
+
+                    <#list DUUI.textInformation.cohMetrixAVG as model>
+                        <div class="ttlab-scorer-box">
+                            <h6 class="ttlab-scorer-color-primary">${model.getGroupName()?html}</h6>
+                            <div class="ttlab-scorer-table-wrapper">
+                                <div class="ttlab-scorer-buttons" data-tablekey="${model_index}">
+<#--                                    <button class="ttlab-download-btn" data-format="json" data-tablekey="${model_index}">JSON</button>-->
+<#--                                    <button class="ttlab-download-btn" data-format="tsv" data-tablekey="${model_index}">TSV</button>-->
+<#--                                    <button class="ttlab-download-btn" data-format="xlsx" data-tablekey="${model_index}">XLSX</button>-->
+                                </div>
+
+                                <div id="cohmetrix-table-${model_index}" class="ttlab-scorer-table"></div>
+                            </div>
+
+                            <script>
+                                window.cohmetrixTableDataByModel["${model_index}"] = [
+                                    <#list model.getCohMetrixInputs() as cohmetrixInput>
+                                    {
+                                        model: "${model.getGroupName()?js_string}",
+                                        name: "${cohmetrixInput.getName()?js_string}",
+                                        score: ${cohmetrixInput.getScore()?c},
+                                        description: "${cohmetrixInput.getDescription()?js_string}"
+                                    }<#if !cohmetrixInput?is_last>,</#if>
+                                    </#list>
+                                ];
+                            </script>
+                        </div>
+                    </#list>
+                        </div>
+                        </div>
+                    </#if>
+
+
+
+
+                <#else>
+                    <p><strong>No Model</strong></p>
+                </#if>
+
+
+
+
             <#else>
-                <p><strong>Kein Model</strong></p>
+                <p><strong>No Model</strong></p>
             </#if>
         <#else>
-            <p><em>Keine Ausgabe</em></p>
+            <p><em>No Output</em></p>
         </#if>

@@ -17,6 +17,8 @@
 
     "srLink": false,
     "namedEntity": false,
+    "sentiment": false,
+    "emotion": false,
     "geoNames": false,
     "lemma": false,
     "sentence": false,

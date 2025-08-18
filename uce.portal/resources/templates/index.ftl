@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
           integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY="
           crossorigin=""/>
+    <link href="https://unpkg.com/tabulator-tables@6.3.1/dist/css/tabulator.min.css" rel="stylesheet">
     <style>
         <#include "*/css/site.css">
         <#include "*/css/simple-loader.css">
@@ -27,12 +28,14 @@
         <#include "*/css/leaflet/MarkerCluster.css">
         <#include "*/css/leaflet/MarkerCluster.Default.css">
     </style>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://unpkg.com/tabulator-tables@6.3.1/dist/js/tabulator.min.js"></script>
+    <script src="https://unpkg.com/xlsx/dist/xlsx.full.min.js"></script>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
             crossorigin="anonymous"></script>
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
             integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo="
             crossorigin=""></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
     <script
             src="https://cdn.jsdelivr.net/npm/popper.js@1.14.7/dist/umd/popper.min.js"
             integrity="sha384-UO2eT0CpHqdSJQ6hJty5KVphtPhzWj9WO1clHTMGa3JDZwrnQq4sF86dIHNDz0W1"
@@ -290,7 +293,7 @@
                         <div class="custom-control custom-switch search-pro-mode-switch"
                              data-trigger="hover" data-toggle="popover" data-placement="top" data-html="true"
                              data-content="${languageResource.get("searchProModeDescription")}">
-                            <input type="checkbox" class="custom-control-input" id="proModeSwitch">
+                            <input type="checkbox" class="custom-control-input" checked id="proModeSwitch">
                             <label class="font-weight-bold font-italic custom-control-label flexed align-items-center"
                                    for="proModeSwitch">
                                 Pro
@@ -379,7 +382,7 @@
                                         <#assign enrichDisabled = 'disabled'>
                                     </#if>-->
                                     <label class="mb-0 w-100 small-font mr-3">Enrich</label>
-                                    <input type="checkbox" data-id="ENRICH"/>
+                                    <input type="checkbox" data-id="ENRICH" checked/>
                                 </div>
                             </div>
                         </div>
@@ -408,7 +411,10 @@
             <!-- Header -->
             <header class="container-fluid card-shadow bg-lightgray">
                 <div class="container flexed align-items-center justify-content-between">
-                    <h3 class="text-center mb-0 mr-1 color-prime">Linked-Corpus Map</h3>
+                    <div class="flexed align-items-baseline">
+                        <h3 class="text-center mb-0 mr-1 color-prime">Linked-Corpus Map</h3>
+                        <h5 class="font-italic mb-0 text ml-1">(Beta)</h5>
+                    </div>
                     <a class="w-rounded-btn mb-0 mr-0 ml-2 mt-0" href="#uce-timeline-map">
                         <i class="fas fa-angle-double-down"></i>
                     </a>
@@ -473,7 +479,7 @@
                                             </div>
                                             <!-- img -->
                                             <div class="flexed align-items-center justify-content-center text-center h-100">
-                                                <img src="${member.getImage()!""}"/>
+                                                <img src="${member.getImage()!"/img/user.png"}"/>
                                             </div>
                                         </div>
                                     </div>
@@ -504,7 +510,7 @@
         <div class="row m-0 p-0 w-100 h-100">
 
             <!-- contacts -->
-            <div class="col-sm-3 color-secondary m-0 justify-content-center flexed">
+            <div class="col-sm-3 text-dark m-0 justify-content-center flexed">
                 <div class="group-box bg-light mb-0">
                     <h6 class="text-left color-prime">${languageResource.get("contact")}</h6>
                     <div class="small-font text-left">
@@ -525,7 +531,7 @@
             </div>
 
             <!-- add more footer here later -->
-            <div class="col-sm-6 color-secondary w-100 m-0 flexed justify-content-center">
+            <div class="col-sm-6 text-dark w-100 m-0 flexed justify-content-center">
                 <div class="group-box bg-light mb-0">
                     <h6 class="text-dark">Powered by the <a href="https://texttechnologylab.github.io/UCE/"
                                                             target="_blank">Unified Corpus Explorer</a></h6>
@@ -537,7 +543,7 @@
             </div>
 
             <!-- TTLab -->
-            <div class="col-md-3 color-secondary text-right justify-content-center">
+            <div class="col-md-3 text-dark text-right justify-content-center">
                 <div class="group-box bg-light mb-0">
                     <a href="https://www.texttechnologylab.org/" target="_blank">
                         <h6 class="color-prime">Text Technology Lab</h6>
@@ -555,7 +561,7 @@
 </footer>
 
 <script type="module">
-    <#include "js/corpusUniverse.js">
+    <#--<#include "js/corpusUniverse.js">-->
 </script>
 <script type="module">
     <#include "js/graphViz.js">

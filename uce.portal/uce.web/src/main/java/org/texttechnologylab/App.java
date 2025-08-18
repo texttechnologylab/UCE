@@ -24,6 +24,8 @@ import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.models.corpus.UCELog;
 import org.texttechnologylab.modules.ModelGroup;
 import org.texttechnologylab.modules.ModelResources;
+import org.texttechnologylab.modules.TTLabScorerInfo;
+import org.texttechnologylab.modules.CohMetrixInfo;
 import org.texttechnologylab.routes.*;
 import org.texttechnologylab.services.LexiconService;
 import org.texttechnologylab.services.MapService;
@@ -38,10 +40,7 @@ import javax.servlet.MultipartConfigElement;
 import java.io.*;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.CompletableFuture;
 
 import static spark.Spark.*;
@@ -106,6 +105,8 @@ public class App {
         // Load in and test the model resources for the Analysis Engine
         if(SystemStatus.UceConfig.getSettings().getAnalysis().isEnableAnalysisEngine()){
             var modelResources = new ModelResources();
+            var ttlabScorer = new TTLabScorerInfo();
+            var cohMetrixInfo = new CohMetrixInfo();
             logger.info("Testing the model resources:");
         }
 
@@ -296,6 +297,10 @@ public class App {
         });
 
         ModelResources modelResources = new ModelResources();
+        TTLabScorerInfo ttlabScorer = new TTLabScorerInfo();
+        CohMetrixInfo cohMetrixInfo = new CohMetrixInfo();
+        LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<String, String>>> taInputMap = ttlabScorer.getTaInputMap();
+        LinkedHashMap<String, LinkedHashMap<String, LinkedHashMap<String, String>>> cohMetrixMap = cohMetrixInfo.getCohMetrixMap();
         List<ModelGroup> groups = modelResources.getGroupedModelObjects();
         // Landing page
         get("/", (request, response) -> {
@@ -317,6 +322,8 @@ public class App {
             model.put("lexiconizableAnnotations", LexiconService.lexiconizableAnnotations);
             model.put("uceVersion", commonConfig.getUceVersion());
             model.put("modelGroups", groups);
+            model.put("ttlabScorer", taInputMap);
+            model.put("cohMetrix", cohMetrixMap);
 
             // The vm files are located under the resources directory
             return new ModelAndView(model, "index.ftl");
@@ -418,11 +425,18 @@ public class App {
                 get("/page/namedEntities", (registry.get(DocumentApi.class)).getDocumentNamedEntitiesByPage);
                 get("/page/lemma", (registry.get(DocumentApi.class)).getDocumentLemmaByPage);
                 get("/page/geoname", (registry.get(DocumentApi.class)).getDocumentGeonameByPage);
+                // TODO better use "delete" instead of "get" here?
+                delete("/delete", (registry.get(DocumentApi.class)).deleteDocument);
+                get("/findIdByMetadata", (registry.get(DocumentApi.class)).findDocumentIdByMetadata);
+                get("/findIdsByMetadata", (registry.get(DocumentApi.class)).findDocumentIdsByMetadata);
             });
 
             path("/rag", () -> {
                 get("/new", (registry.get(RAGApi.class)).getNewRAGChat);
+                // NOTE we allow also "post" here, as the system prompt can get quite long...
+                post("/new", (registry.get(RAGApi.class)).getNewRAGChat);
                 post("/postUserMessage", (registry.get(RAGApi.class)).postUserMessage);
+                get("/messages", (registry.get(RAGApi.class)).getMessagesForChat);
                 get("/plotTsne", (registry.get(RAGApi.class)).getTsnePlot);
                 get("/sentenceEmbeddings", (registry.get(RAGApi.class)).getSentenceEmbeddings);
             });

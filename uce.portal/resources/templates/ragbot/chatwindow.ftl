@@ -25,7 +25,7 @@
                 <button disabled class="btn btn-secondary rounded-0 mb-0 border-right-0">Model</button>
                 <select class="rounded-0 form-control ragbot-model-select mr-1">
                     <#list uceConfig.getSettings().getRag().getModels() as ragModel>
-                        <option data-id="${ragModel.getModel()}">${ragModel.getDisplayName()}</option>
+                        <option data-id="${ragModel.getModel()}" data-streaming="${ragModel.isStreaming()?c}">${ragModel.getDisplayName()}</option>
                     </#list>
                 </select>
                 <button class="start-new-chat-btn text-center btn btn-primary rounded-0 w-auto no-text-wrap pl-3 pr-3 ml-1">

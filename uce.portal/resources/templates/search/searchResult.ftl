@@ -68,7 +68,7 @@
                                 <i class="fas fa-eye small-font color-prime"></i>
                             </a>
                         </div>
-                        <div class="flexed align-items-center justify-content-around">
+                        <div class="flexed align-items-center justify-content-around overflow-x">
                             <#list searchState.getEnrichedSearchTokens() as token>
                                 <#assign width = "">
                                 <#if token.getChildren()?has_content && token.getChildren()?size gt 0>

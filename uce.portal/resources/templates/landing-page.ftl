@@ -3,7 +3,7 @@
     <!-- uce corporate data -->
     <div class="mt-5 uce-description">
         <div class="flexed align-items-center justify-content-between">
-            <h5 class="color-prime mb-0">${uceConfig.getMeta().getName()?trim!"-"}</h5>
+            <h5 class="color-prime mb-0 clickable" onclick="$(this).parent().next('.content').toggle(50)">${uceConfig.getMeta().getName()?trim!"-"}</h5>
             <button class="btn" onclick="$(this).parent().next('.content').toggle(50)">
                 <i class="fas fa-info-circle color-prime large-font"></i>
             </button>
@@ -29,11 +29,11 @@
                         <!-- header -->
                         <div class="flexed align-items-center justify-content-between">
                             <div>
-                                <h5 class="open-corpus-inspector-btn border-0 w-100 mb-2 color-prime clickable"
+                                <h5 class="justify-content-start open-corpus-inspector-btn border-0 w-100 mb-2 color-prime clickable"
                                     data-id="${corpusVm.getCorpus().getId()}">
-                                    ${corpusVm.getCorpus().getName()?trim}
+                                    <i class="fas fa-globe mr-2"></i> ${corpusVm.getCorpus().getName()?trim}
                                 </h5>
-                                <p class="text mb-0 small">${corpusVm.getCorpus().getAuthor()}</p>
+                                <p class="text mb-0 small"><i class="fas fa-pen-nib mr-1"></i> ${corpusVm.getCorpus().getAuthor()}</p>
                             </div>
                             <div>
                                 <a class="btn open-corpus-inspector-btn mb-1" data-trigger="hover"

@@ -1,11 +1,13 @@
 package org.texttechnologylab;
 
+import com.google.gson.Gson;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.apache.uima.fit.testing.util.DisableLogging;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.config.CommonConfig;
 import org.texttechnologylab.config.SpringConfig;
+import org.texttechnologylab.config.UceConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
 import org.texttechnologylab.models.imp.ImportStatus;
@@ -18,6 +20,8 @@ import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.utils.SystemStatus;
 
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.security.InvalidParameterException;
 import java.util.ArrayList;
 import java.util.Objects;
@@ -30,7 +34,7 @@ import java.util.logging.Level;
 public class App {
     private static final Logger logger = LogManager.getLogger(App.class);
 
-    public static void main(String[] args) throws DatabaseOperationException, ParseException {
+    public static void main(String[] args) throws DatabaseOperationException, ParseException, FileNotFoundException {
         // Disable the warning and other junk logs from the UIMA project.
         DisableLogging.enableLogging(Level.SEVERE);
 
