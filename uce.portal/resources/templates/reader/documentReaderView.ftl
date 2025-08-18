@@ -183,8 +183,8 @@
             <div class="side-bar">
 
                 <div class="tab-header">
-                    <button class="tab-btn active" data-tab="navigator-tab">Control Panel</button>
-                    <button class="tab-btn" data-tab="visualization-tab">Visualization</button>
+                    <button class="tab-btn active" data-tab="navigator-tab">${languageResource.get("controlPanelTab")}</button>
+                    <button class="tab-btn" data-tab="visualization-tab">${languageResource.get("visualizationTab")}</button>
 <#--                    <button class="tab-btn" data-tab="playground-tab">Playground</button>-->
 
                 </div>
@@ -306,11 +306,11 @@
                             </div>
 
                             <div class="viz-bottom-nav">
-                                <button class="viz-nav-btn active" data-target="#viz-panel-1">Semantic Density</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-2">Topic-Entity</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-3">Topic Landscape</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-4">Topic Similarity</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-5">Sentence Topic Flow</button>
+                                <button class="viz-nav-btn active" data-target="#viz-panel-1">${languageResource.get("semanticDensity")}</button>
+                                <button class="viz-nav-btn" data-target="#viz-panel-2">${languageResource.get("topicEntity")}</button>
+                                <button class="viz-nav-btn" data-target="#viz-panel-3">${languageResource.get("topicLandscape")}</button>
+                                <button class="viz-nav-btn" data-target="#viz-panel-4">${languageResource.get("topicSimilarity")}</button>
+                                <button class="viz-nav-btn" data-target="#viz-panel-5">${languageResource.get("sentenceTopicFlow")}</button>
                             </div>
 
                         </div>

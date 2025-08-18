@@ -506,5 +506,33 @@
   "uploadTopicSettings": {
     "de-DE": "Thema Einstellungen hochladen",
     "en-EN": "Upload topic settings"
+  },
+  "controlPanelTab": {
+    "de-DE": "Steuerungsfeld",
+    "en-EN": "Control Panel"
+  },
+  "visualizationTab": {
+    "de-DE": "Visualisierung",
+    "en-EN": "Visualization"
+  },
+  "semanticDensity": {
+    "de-DE": "Semantische Dichte",
+    "en-EN": "Semantic Density"
+  },
+  "topicEntity": {
+    "de-DE": "Thema-Entität",
+    "en-EN": "Topic-Entity"
+  },
+  "topicLandscape": {
+    "de-DE": "Themenlandschaft",
+    "en-EN": "Topic Landscape"
+  },
+  "topicSimilarity": {
+    "de-DE": "Thematische Ähnlichkeit",
+    "en-EN": "Topic Similarity"
+  },
+  "sentenceTopicFlow": {
+    "de-DE": "Satz-Themenfluss",
+    "en-EN": "Sentence Topic Flow"
   }
 }
