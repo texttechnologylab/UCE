@@ -1,9 +1,23 @@
 let currentFocusedPage = 0;
 let searchTokens = "";
-let topicColorMap = {};
 let currentSelectedTopic = null;
 let currentTopicIndex = -1;
 let matchingTopics = [];
+
+let defaultTopicColorMap = getDefaultTopicColorMap();
+let defaultTopicSettings = {
+    topicCount: 10,
+    colorMode: 'per-topic', // 'per-topic' or 'gradient'
+    gradientStartColor: '#ff0000',
+    gradientEndColor: '#00ff00',
+    topicColorMap: defaultTopicColorMap
+};
+
+const documentId = $('.reader-container').data('id');
+const settingsKey = `settings:`+documentId+`:topicSettings`;
+const topicColorMapKey = `settings:`+documentId+`:topicColorMap`;
+const topicSettings = JSON.parse(localStorage.getItem(settingsKey)) || defaultTopicSettings;
+let topicColorMap = topicSettings.topicColorMap;
 
 /**
  * Handles the expanding and de-expanding of the side bar
@@ -144,6 +158,9 @@ $(document).ready(function () {
     // Load document topics
     loadDocumentTopics();
 
+    // Initialize topic settings panel
+    initializeTopicSettingsPanel();
+
     const hasTopics = $('.colorable-topic').length > 0;
     if (hasTopics) {
         $('.scrollbar-minimap').show();
@@ -160,19 +177,15 @@ $(document).ready(function () {
     for (let i = 1; i < 11; i++) searchPotentialSearchTokensInPage(i);
 });
 
-function loadDocumentTopics() {
-    $('.topics-loading').hide();
-
-    // Extract topics from colorable-topic spans in the document
+function sortedTopicArray(){
     const topicFrequency = {};
-    $('.colorable-topic').each(function () {
+    $('.colorable-topic').each(function() {
         const topic = $(this).data('topic-value');
         if (topic) {
             topicFrequency[topic] = (topicFrequency[topic] || 0) + 1;
         }
     });
 
-    // Convert to array and sort by frequency
     const topicArray = Object.keys(topicFrequency).map(topic => ({
         label: topic,
         frequency: topicFrequency[topic]
@@ -180,20 +193,33 @@ function loadDocumentTopics() {
 
     topicArray.sort((a, b) => b.frequency - a.frequency);
 
-    // Find max and min for normalization across ALL topics
-    const maxFreq = topicArray.length > 0 ? topicArray[0].frequency : 1;
-    const minFreq = topicArray.length > 0 ? topicArray[topicArray.length - 1].frequency : 0;
-    const freqRange = maxFreq - minFreq;
+    return topicArray;
+}
 
-    // Create color mapping for ALL topics
-    topicArray.forEach(function (topic) {
-        const normalizedFreq = freqRange > 0 ?
-            (topic.frequency - minFreq) / freqRange : 1;
-        topicColorMap[topic.label] = window.graphVizHandler.getColorForWeight(normalizedFreq);
-    });
+async function loadDocumentTopics() {
+    $('.topics-loading').hide();
 
-    // Take top 10 topics for display
-    const topTopics = topicArray.slice(0, 10);
+    const topicArray = sortedTopicArray();
+    if (topicSettings.colorMode === 'gradient') {
+
+        // Find max and min for normalization across ALL topics
+        const maxFreq = topicArray.length > 0 ? topicArray[0].frequency : 1;
+        const minFreq = topicArray.length > 0 ? topicArray[topicArray.length - 1].frequency : 0;
+        const freqRange = maxFreq - minFreq;
+
+        // Create color mapping for ALL topics
+        topicArray.forEach(function (topic) {
+            const normalizedFreq = freqRange > 0 ?
+                (topic.frequency - minFreq) / freqRange : 1;
+
+            topicColorMap[topic.label] = window.graphVizHandler.getColorForWeight(normalizedFreq, hexToRgb(topicSettings.gradientStartColor), hexToRgb(topicSettings.gradientEndColor));
+
+
+        });
+    }
+
+    // Take top N topics for display based on settings
+    const topTopics = topicArray.slice(0, topicSettings.topicCount);
 
     if (topTopics.length > 0) {
         let html = '';
@@ -218,6 +244,27 @@ function loadDocumentTopics() {
         // Hide the minimap since there are no topics
         $('.scrollbar-minimap').hide();
     }
+}
+
+function getDefaultTopicColorMap() {
+    const topics = new Set();
+    $('.colorable-topic').each(function() {
+        const topicValue = $(this).data('topic-value');
+        if (topicValue) {
+            topics.add(topicValue);
+        }
+    });
+
+    const topicArray = Array.from(topics);
+    const topicCount = topicArray.length;
+
+    const defaultTopicColorMap = {};
+    topicArray.forEach((topic, index) => {
+        const hue = (index * (360 / topicCount)) % 360;
+        defaultTopicColorMap[topic] = hslToRgba(hue, 70, 45, 0.6);
+    });
+
+    return defaultTopicColorMap;
 }
 
 function attachTopicClickHandlers() {
@@ -356,7 +403,7 @@ function searchPotentialSearchTokensInPage(page) {
     });
 }
 
-function colorUnifiedTopics(selectedTopic) {
+function colorUnifiedTopics(selectedTopic, defaultColor=null) {
     clearTopicColoring();
     let color;
 
@@ -368,11 +415,15 @@ function colorUnifiedTopics(selectedTopic) {
         return $(this).data('topic') === selectedTopic;
     });
 
-    if ($selectedTopicTag.length === 0) {
-        color = topicColorMap[selectedTopic];
+    if(defaultColor=== null) {
+        if ($selectedTopicTag.length === 0) {
+            color = topicColorMap[selectedTopic];
+        } else {
+            color = $selectedTopicTag.css('background-color');
+        }
     }
     else{
-        color = $selectedTopicTag.css('background-color');
+        color = defaultColor;
     }
 
     let finalColor = color;
@@ -388,7 +439,8 @@ function colorUnifiedTopics(selectedTopic) {
             $(this).css({
                 'background-color': finalColor,
                 'border-radius': '3px',
-                'padding': '0 2px'
+                'padding': '0 2px',
+                'color': '#ffffff'
             });
         }
     });
@@ -399,7 +451,8 @@ function clearTopicColoring() {
     $('.colorable-topic').css({
         'background-color': '',
         'border-radius': '',
-        'padding': ''
+        'padding': '',
+        'color': 'gray'
     });
 
     $('.minimap-marker.topic-marker').remove();
@@ -866,7 +919,6 @@ $(document).on('click', '.viz-nav-btn', function () {
 });
 
 
-
 function renderSentenceTopicNetwork(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
@@ -932,7 +984,7 @@ function renderSentenceTopicNetwork(containerId) {
                         nodes.push({
                             id: sentenceId,
                             name: `Sentence `+utId,
-                            symbolSize: 20,
+                            symbolSize: 5,
                             x, y,
                             itemStyle: { color },
                             label: { show: false },
@@ -978,7 +1030,7 @@ function renderSentenceTopicNetwork(containerId) {
                             links.push({
                                 source: id1,
                                 target: id2,
-                                lineStyle: { color: '#bbb', opacity: 0.2 }
+                                lineStyle: { color: '#bbb', opacity: 0.5, width: 3 },
                             });
                         });
                     });
@@ -1073,8 +1125,6 @@ function computeTopicSimilarityMatrix(data, type = "cosine") {
     };
 }
 
-
-
 function renderTopicSimilarityMatrix(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')){
@@ -1126,7 +1176,6 @@ function renderTopicSimilarityMatrix(containerId) {
             container.classList.add('rendered');
         });
 }
-
 
 function renderTopicEntityChordDiagram(containerId) {
     const container = document.getElementById(containerId);
@@ -1565,4 +1614,207 @@ function renderTemporalExplorer(containerId) {
     }).catch(err => {
         console.error("Error loading or processing annotation data:", err);
     });
+}
+
+function initializeTopicSettingsPanel() {
+
+    if (topicSettings.colorMode === 'per-topic') {
+        $('#per-topic-colors').prop('checked', true);
+    } else {
+        $('#gradient-range').prop('checked', true);
+        $('.color-pickers').show();
+    }
+
+    $('#gradient-start-color').val(topicSettings.gradientStartColor);
+    $('#gradient-end-color').val(topicSettings.gradientEndColor);
+
+    function populateTopicCountDropdown(topics) {
+        const totalTopics = topics.length;
+        const $dropdown = $('#topic-count');
+        $dropdown.empty();
+
+        for (let i = 1; i <= totalTopics; i++) {
+            const $option = $('<option></option>').val(i).text(i);
+            if (i === topicSettings.topicCount) {
+                $option.prop('selected', true);
+            }
+            $dropdown.append($option);
+        }
+    }
+
+    function populateTopicColorGrid(topics) {
+        const $grid = $('.key-topic-color-grid');
+        const topicCount = parseInt($('#topic-count').val(), 10);
+        $grid.empty();
+
+        if (!topics || topics.length === 0) {
+            return;
+        }
+        const requiredTopics = topics.slice(0, topicCount);
+
+        requiredTopics.forEach(function(topic) {
+            const $row = $('<div class="topic-setting-per-topic-color-row"></div>');
+            const $topicName = $('<div class="topic-setting-per-topic-name"></div>').text(topic.label);
+            const $colorPicker = $('<div class="topic-setting-per-topic-color-picker"></div>');
+            const $colorInput = $('<input type="color">').val(rgbaToHex(topicColorMap[topic.label] || '#000000'));
+
+            $colorInput.on('change', function() {
+                topicColorMap[topic.label] = convertToRGBA($(this).val());
+            });
+
+            $colorPicker.append($colorInput);
+            $row.append($topicName).append($colorPicker);
+            $grid.append($row);
+        });
+    }
+
+
+    $('#topic-count').on('change', function() {
+        const topicArray = sortedTopicArray();
+        if ($('input[name="color-mode"]:checked').val() === 'per-topic') {
+            populateTopicColorGrid(topicArray);
+            $('.key-topic-color-grid').show();
+        }
+    });
+
+    $('.key-topics-settings').on('click', function(e) {
+        e.stopPropagation();
+        $('.key-topic-settings-panel').toggle();
+        // set to default position
+    $('.key-topic-settings-panel').css('top', '160px');
+    $('.key-topic-settings-panel').css('right', '50px');
+
+        const topicArray = sortedTopicArray();
+        populateTopicCountDropdown(topicArray);
+
+        if (topicSettings.colorMode === 'per-topic') {
+            populateTopicColorGrid(topicArray);
+            $('.key-topic-color-grid').show();
+        }
+    });
+
+    $('input[name="color-mode"]').on('change', function() {
+        if ($(this).val() === 'gradient') {
+            $('.color-pickers').show();
+            $('.key-topic-color-grid').hide();
+        } else {
+            $('.color-pickers').hide();
+
+            const topicArray = sortedTopicArray();
+            populateTopicColorGrid(topicArray);
+            $('.key-topic-color-grid').show();
+        }
+    });
+
+    $('.key-topics-setting-apply-btn').on('click', function() {
+        // Update settings
+        topicSettings.topicCount = parseInt($('#topic-count').val(), 10) || 10;
+        topicSettings.colorMode = $('input[name="color-mode"]:checked').val() || 'per-topic';
+        topicSettings.gradientStartColor = $('#gradient-start-color').val();
+        topicSettings.gradientEndColor = $('#gradient-end-color').val();
+        topicSettings.topicColorMap = topicColorMap;
+
+        $('.key-topic-settings-panel').hide();
+        localStorage.setItem(settingsKey, JSON.stringify(topicSettings));
+
+        loadDocumentTopics();
+    });
+
+    $('.key-topics-setting-reset-btn').on('click', function() {
+        topicSettings.topicCount = defaultTopicSettings.topicCount;
+        topicSettings.colorMode = defaultTopicSettings.colorMode;
+        topicSettings.gradientStartColor = defaultTopicSettings.gradientStartColor;
+        topicSettings.gradientEndColor = defaultTopicSettings.gradientEndColor;
+        topicSettings.topicColorMap = defaultTopicSettings.topicColorMap;
+        topicColorMap = topicSettings.topicColorMap;
+        $('.key-topic-settings-panel').hide();
+
+        localStorage.setItem(settingsKey, JSON.stringify(topicSettings));
+        loadDocumentTopics();
+    });
+
+    $(document).on('click', function(e) {
+        if (!$(e.target).closest('.key-topic-settings-panel').length &&
+            !$(e.target).closest('.key-topics-settings').length) {
+            $('.key-topic-settings-panel').hide();
+        }
+    });
+
+    $('.save-topic-setting').on('click', function(e) {
+        try {
+            const settings = JSON.parse(localStorage.getItem(settingsKey)) || defaultTopicSettings;
+            const colorMap = JSON.parse(localStorage.getItem(topicColorMapKey)) || defaultTopicColorMap;
+            const documentId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
+            if (!settings || !colorMap) {
+                showMessageModal("Input Error", "No topic settings found in local storage.");
+                return;
+            }
+
+            const jsonData = JSON.stringify({
+                settings: settings,
+                colorMap: colorMap,
+                documentId: documentId
+            }, null, 2);
+
+            const blob = new Blob([jsonData], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'topic-settings-' + documentId + '-' + new Date().toISOString().replace(/[:.]/g, '-') + '.json';
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        } catch (err) {
+            console.error('Error saving topic settings:', err);
+            showMessageModal("Save Error", "An error occurred while trying to save the file.");
+        }
+    });
+
+
+    $('.upload-topic-setting').on('click', function(e) {
+        const input = document.createElement('input');
+        input.type = 'file';
+        input.accept = 'application/json';
+
+        input.onchange = function(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    const currentDocumentId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
+                    if (data.documentId !== currentDocumentId) {
+                        showMessageModal("Invalid file", "The settings file does not match the current document.");
+                        return;
+                    }
+
+                    if (data.settings) {
+                        localStorage.setItem(settingsKey, JSON.stringify(data.settings));
+                    }
+
+                    showMessageModal("Setting Applied", "Settings successfully loaded and applied.");
+                    location.reload();
+
+                } catch (err) {
+                    console.error('Error reading settings file:', err);
+                    showMessageModal("Invalid File", "Could not parse the settings file. Please ensure it is a valid JSON file.");
+                }
+            };
+
+            reader.readAsText(file);
+        };
+
+        input.click();
+    });
+
+
+    document.querySelectorAll('.key-topic-settings-panel').forEach(panel =>
+        makeDraggable(panel, 'h4')
+    );
 }

@@ -785,6 +785,173 @@ body {
     position: relative;
 }
 
+
+.key-topic-settings-panel {
+    position: absolute;
+    top: 160px;
+    right: 50px;
+    width: 300px;
+    background-color: white;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    padding: 16px;
+    z-index: 1000;
+    display: none;
+    border: 1px solid rgba(0, 0, 0, 0.1);
+}
+
+.key-topic-settings-panel h4 {
+    font-size: 16px;
+    margin-bottom: 16px;
+    color: #333;
+    font-weight: 600;
+}
+
+.key-topic-settings-panel .setting-group {
+    margin-bottom: 16px;
+}
+
+.key-topic-settings-panel .setting-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-size: 14px;
+    color: #555;
+}
+
+.key-topic-settings-panel .setting-group input[type="number"] {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    font-size: 14px;
+}
+
+.key-topic-settings-panel .color-option {
+    display: flex;
+    align-items: center;
+    margin-bottom: 8px;
+    cursor: pointer;
+}
+
+.key-topic-settings-panel .color-option input[type="radio"] {
+    margin-right: 8px;
+}
+
+.key-topic-settings-panel .color-option label {
+    margin-bottom: 0;
+    cursor: pointer;
+}
+
+.key-topic-settings-panel .color-pickers {
+    display: flex;
+    gap: 8px;
+    margin-top: 8px;
+    margin-left: 24px;
+}
+
+.key-topic-settings-panel .color-pickers input[type="color"] {
+    width: 40px;
+    height: 40px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.key-topic-settings-panel .color-pickers .color-label {
+    font-size: 12px;
+    color: #777;
+    text-align: center;
+    margin-top: 4px;
+}
+
+.key-topic-settings-panel .key-topics-setting-apply-btn {
+    width: 100%;
+    padding: 8px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.key-topic-settings-panel .key-topics-setting-apply-btn:hover {
+    background-color: #0069d9;
+}
+
+.key-topic-settings-panel .key-topics-setting-reset-btn {
+    width: 100%;
+    padding: 8px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.2s;
+}
+
+.key-topic-settings-panel .key-topics-setting-reset-btn:hover {
+    background-color: #0069d9;
+}
+
+
+.key-topics-settings {
+    cursor: pointer;
+    transition: transform 0.2s;
+}
+
+.key-topics-settings:hover {
+    transform: rotate(45deg);
+}
+
+.key-topic-color-grid {
+    margin-top: 15px;
+    max-height: 200px;
+    overflow-y: auto;
+    border: 1px solid #eee;
+    border-radius: 4px;
+    padding: 8px;
+}
+
+.topic-setting-per-topic-color-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 8px;
+    padding-bottom: 8px;
+    border-bottom: 1px solid #f0f0f0;
+}
+
+.topic-setting-per-topic-color-row:last-child {
+    margin-bottom: 0;
+    padding-bottom: 0;
+    border-bottom: none;
+}
+
+.topic-setting-per-topic-name {
+    flex: 1;
+    font-size: 12px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    margin-right: 10px;
+}
+
+.topic-setting-per-topic-color-picker {
+    display: flex;
+    align-items: center;
+}
+
+.topic-setting-per-topic-color-picker input[type="color"] {
+    width: 24px;
+    height: 24px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    padding: 0;
+
 .paragraph .paragraph-header {
     border-radius: 16px;
     font-size: 75%;
@@ -797,4 +964,5 @@ body {
     background-color: white;
     color: var(--prime);
     border: 1px solid var(--prime);
+
 }
