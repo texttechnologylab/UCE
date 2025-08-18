@@ -16,6 +16,7 @@ import org.texttechnologylab.models.WikiModel;
 import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
+import org.texttechnologylab.models.corpus.emotion.Emotion;
 import org.texttechnologylab.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentLink;
 import org.texttechnologylab.models.corpus.links.DocumentToAnnotationLink;
@@ -109,6 +110,18 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<GeoName> geoNames;
+
+    @Setter
+    @Getter
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
+    private List<Sentiment> sentiments;
+
+    @Setter
+    @Getter
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
+    private List<Emotion> emotions;
 
     @Getter
     @Setter
@@ -218,14 +231,21 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @Fetch(value = FetchMode.SUBSELECT)
     private List<UnifiedTopic> unifiedTopics;
 
+    @Getter
+    @Setter
+    @OneToMany(cascade = CascadeType.ALL)
+    @JoinColumn(name = "document_Id")
+    private List<Image> images;
+
     public Document() {
         metadataTitleInfo = new MetadataTitleInfo();
     }
 
     public Document(String language, String documentTitle, String documentId, long corpusId) {
         this.language = language;
-        this.documentTitle = documentTitle;
-        this.documentId = documentId;
+        // DUUI often produces %20 instead of a space... can't change that, but it's ugly.
+        this.documentTitle = documentTitle.replaceAll("%20", " ");
+        this.documentId = documentId.replaceAll("%20", " ");
         this.corpusId = corpusId;
     }
 
@@ -246,7 +266,33 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     }
 
     public List<UCEMetadata> getUceMetadataWithoutJson() {
-        return getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON).toList();
+        return getUceMetadata()
+                .stream()
+                .filter(u -> u.getValueType() != UCEMetadataValueType.JSON)
+                .sorted(Comparator
+                        .comparing(UCEMetadata::getValueType)
+                        .thenComparing(filter -> {
+                            // Try to extract a number in the beginning of the key
+                            String key = filter.getKey();
+
+                            // TODO this is a special case for Coh-Metrix, should be generalized
+                            // TODO duplicated in "Corpus getUceMetadataFilters"
+                            if (key.contains(":")) {
+                                String[] parts = key.split(":");
+                                if (parts.length > 1) {
+                                    try {
+                                        int number = Integer.parseInt(parts[0].trim());
+                                        return String.format("%05d", number);
+                                    } catch (NumberFormatException e) {
+                                        // return the original key on error
+                                    }
+                                }
+                            }
+
+                            return key;
+                        })
+                )
+                .toList();
     }
 
     public List<UCEMetadata> getUceMetadata() {
@@ -265,7 +311,9 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         if (fullText == null || fullText.isEmpty()) {
             return "";
         }
-        var words = Arrays.stream(fullText.trim().split("\\s+")).toList();
+        // Opening HTML Tags may cause the UI HTML to break!
+        var cleaned = fullText.replace("<", "");
+        var words = Arrays.stream(cleaned.trim().split("\\s+")).toList();
         // Take the first 30 words
         StringBuilder result = new StringBuilder();
         int count = 0;
@@ -351,6 +399,9 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         annotations.addAll(namedEntities.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(geoNames.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(times.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        var pageOverlap = 40000;
+        annotations.addAll(sentiments.stream().filter(a -> a.getBegin() + pageOverlap >= pagesBegin && a.getEnd() - pageOverlap <= pagesEnd).toList());
+        annotations.addAll(emotions.stream().filter(a -> a.getBegin() + pageOverlap >= pagesBegin && a.getEnd() - pageOverlap <= pagesEnd).toList());
         annotations.addAll(wikipediaLinks.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         annotations.addAll(lemmas.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         // negations TODO: completeNegations do not have start and end so far -> could cause problems?
@@ -362,6 +413,7 @@ public class Document extends ModelBase implements WikiModel, Linkable {
         annotations.addAll(events.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
         // unifiedTopics
         annotations.addAll(unifiedTopics.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
+        annotations.addAll(images.stream().filter(a -> a.getBegin() >= pagesBegin && a.getEnd() <= pagesEnd).toList());
 
         annotations.sort(Comparator.comparingInt(UIMAAnnotation::getBegin));
         return annotations;

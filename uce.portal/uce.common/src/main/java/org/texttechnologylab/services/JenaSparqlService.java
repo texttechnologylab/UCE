@@ -21,6 +21,7 @@ import java.net.*;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 
 /**
@@ -105,7 +106,59 @@ public class JenaSparqlService {
     }
 
     /**
-     * Given a taxonid, it searches the sparql database for alternative names
+     * Given a list of accepted taxon URIs, return a list of URIs of synonyms that refer to them.
+     */
+    public List<String> getPossibleSynonymIdsOfTaxon(List<String> biofidUrls) throws IOException {
+        var synonymIds = new HashSet<String>();
+
+        for (var url : biofidUrls) {
+            var query = """
+            PREFIX dwc: <http://rs.tdwg.org/dwc/terms/>
+            SELECT ?subject
+            WHERE {
+              ?subject dwc:acceptedNameUsageID <%s> .
+              ?subject dwc:taxonomicStatus ?status .
+              FILTER(lcase(str(?status)) = "synonym")
+            }
+            """.formatted(url);
+
+            var result = executeCommand(query, RDFSelectQueryDto.class);
+            if (result != null && result.getResults() != null && result.getResults().getBindings() != null) {
+                for (var binding : result.getResults().getBindings()) {
+                    synonymIds.add(binding.getSubject().getValue());
+                }
+            }
+        }
+        return new ArrayList<>(synonymIds);
+    }
+
+    public List<String> getSubordinateTaxonIds(List<String> biofidUrls) throws IOException {
+        var subordinateIds = new HashSet<String>();
+
+        for (var url : biofidUrls) {
+            var query = """
+            PREFIX dwc: <http://rs.tdwg.org/dwc/terms/>
+            SELECT ?subject ?object
+            WHERE {
+              ?subject dwc:parentNameUsageID <%s> .
+              ?subject dwc:taxonRank ?object .
+              FILTER(lcase(str(?object)) IN ("subspecies", "varietas", "variety", "forma", "form"))
+            }
+            """.formatted(url);
+
+            var result = executeCommand(query, RDFSelectQueryDto.class);
+            if (result != null && result.getResults() != null && result.getResults().getBindings() != null) {
+                for (var binding : result.getResults().getBindings()) {
+                    subordinateIds.add(binding.getSubject().getValue());
+                }
+            }
+        }
+
+        return new ArrayList<>(subordinateIds);
+    }
+
+    /**
+     * Given a taxonid, it searches the sparql database for alternative names, synonyms, subspecies and more and returns a list of names.
      * E.g. BioFID id: https://www.biofid.de/bio-ontologies/gbif/4299368
      * Example call:
      * <p>
@@ -132,15 +185,23 @@ public class JenaSparqlService {
         }
 
         biofidIds = biofidIds.stream().distinct().toList();
-        // We want all objects where the subjects fit any of the given ids and the predicate is either vascularName or scientificName
-        // By doing so, we get more possible alternative names
+        var allIds = new HashSet<>(biofidIds);
+
+        // Step 1: Add synonyms
+        allIds.addAll(getPossibleSynonymIdsOfTaxon(biofidIds));
+
+        // Step 2: Add subordinate taxa (subspecies, varieties, etc.)
+        allIds.addAll(getSubordinateTaxonIds(biofidIds));
+
+        // Step 3: Query for names of all taxon URIs
         var command = "SELECT ?subject ?predicate ?object " +
-                "WHERE {" +
-                "  VALUES ?subject { {BIOFID_IDS} }" +
-                "  ?subject ?predicate ?object . " +
-                "  FILTER(?predicate IN (<http://rs.tdwg.org/dwc/terms/vernacularName>, <http://rs.tdwg.org/dwc/terms/cleanedScientificName>)) " +
-                "}";
-        command = command.replace("{BIOFID_IDS}", String.join("\n", biofidIds.stream().map(id -> "<" + id + ">").toList()));
+                      "WHERE {" +
+                      "  VALUES ?subject { {BIOFID_IDS} }" +
+                      "  ?subject ?predicate ?object . " +
+                      "  FILTER(?predicate IN (<http://rs.tdwg.org/dwc/terms/vernacularName>, <http://rs.tdwg.org/dwc/terms/cleanedScientificName>)) " +
+                      "}";
+        command = command.replace("{BIOFID_IDS}", String.join("\n", allIds.stream().map(id -> "<" + id + ">").toList()));
+
         var result = executeCommand(command, RDFSelectQueryDto.class);
         var alternativeNames = new ArrayList<String>();
         if (result == null || result.getResults() == null || result.getResults().getBindings() == null)
@@ -149,6 +210,7 @@ public class JenaSparqlService {
         for (var t : result.getResults().getBindings()) {
             alternativeNames.add(t.getObject().getValue());
         }
+
         return alternativeNames;
     }
 
@@ -264,7 +326,7 @@ public class JenaSparqlService {
         var rankCommand = "SELECT distinct ?subject WHERE {\n" +
                 "  ?subject <http://rs.tdwg.org/dwc/terms/taxonRank> \"{RANK}\"^^<xsd:string> . " +
                 "  ?subject <http://rs.tdwg.org/dwc/terms/cleanedScientificName> \"{NAME}\" . " +
-                "} LIMIT 10";
+                "} LIMIT 1";
         rankCommand = rankCommand.replace("{RANK}", rank).replace("{NAME}", name);
         var result = executeCommand(rankCommand, RDFSelectQueryDto.class);
 

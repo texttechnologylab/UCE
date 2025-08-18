@@ -1,0 +1,24 @@
+@prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix uce:      <https://www.texttechnologylab.org/uce-schema#> .
+
+uce:parent a rdfs:Class;
+  rdfs:comment "Ontology unspecific hierarchical ordering for entities.";
+  rdfs:range rdfs:Class;
+  rdfs:domain rdfs:Class .
+
+uce:rank a rdf:Property;
+  rdfs:comment "Ontology unspecific rank name.";
+  rdfs:range rdfs:Class;
+  rdfs:domain rdfs:Literal .
+
+uce:synonym a rdfs:Class;
+  rdfs:isDefinedBy <http://www.w3.org/1999/02/22-rdf-syntax-ns#>;
+  rdfs:comment "An alternative name of an entity.";
+  rdfs:range rdfs:Class;
+  rdfs:domain rdfs:Class .
+
+uce:enriches a rdfs:Class;
+  rdfs:comment "The subject of the enrichment relation stores the label, label language and type of the object.";
+  rdfs:range rdfs:Class;
+  rdfs:domain rdfs:Class .

@@ -20,6 +20,7 @@ import org.texttechnologylab.models.biofid.BiofidTaxon;
 import org.texttechnologylab.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.models.corpus.*;
+import org.texttechnologylab.models.corpus.Time;
 import org.texttechnologylab.models.corpus.links.*;
 import org.texttechnologylab.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.models.dto.map.MapClusterDto;
@@ -42,10 +43,7 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
-import java.sql.Array;
-import java.sql.PreparedStatement;
-import java.sql.ResultSet;
-import java.sql.SQLException;
+import java.sql.*;
 import java.util.*;
 import java.util.function.Function;
 
@@ -123,9 +121,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                        java.sql.Date toDate,
                                                        long corpusId,
                                                        int skip,
-                                                       int take) throws DatabaseOperationException {
+                                                       int take,
+                                                       String fromAnnotationTypeTable) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
-            try (var storedProcedure = connection.prepareCall("{call uce_query_geoname_timeline_links" + "(?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
+            try (var storedProcedure = connection.prepareCall("{call uce_query_geoname_timeline_links" + "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)}")) {
                 storedProcedure.setDouble(1, minLng);
                 storedProcedure.setDouble(2, minLat);
                 storedProcedure.setDouble(3, maxLng);
@@ -135,6 +134,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 storedProcedure.setInt(7, (int) corpusId);
                 storedProcedure.setInt(8, skip);
                 storedProcedure.setInt(9, take);
+                storedProcedure.setString(10, fromAnnotationTypeTable);
 
                 var result = storedProcedure.executeQuery();
                 var points = new ArrayList<PointDto>();
@@ -210,6 +210,17 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var criteria = session.createCriteria(Document.class);
             criteria.add(Restrictions.eq("corpusId", id));
+            criteria.setProjection(Projections.rowCount());
+            return Math.toIntExact((Long) criteria.uniqueResult());
+        });
+    }
+
+    @SuppressWarnings("deprecation")
+    public int countPagesInCorpus(long corpusId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var criteria = session.createCriteria(Page.class, "page");
+            criteria.createAlias("page.document", "document");
+            criteria.add(Restrictions.eq("document.corpusId", corpusId));
             criteria.setProjection(Projections.rowCount());
             return Math.toIntExact((Long) criteria.uniqueResult());
         });
@@ -356,6 +367,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public Linkable getLinkable(long id, Class<? extends Linkable> clazz) throws DatabaseOperationException {
         var linkable = getLinkableById(id, clazz);
+        if(linkable == null) return null;
         linkable.initLinkableViewModel(this);
         return linkable;
     }
@@ -495,7 +507,25 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    private void initializeDocument(Document doc, Set<String> hibernateInit) {
+        // initialize additional Hibernate based properties
+        if (hibernateInit != null) {
+            for (String init : hibernateInit) {
+                switch (init) {
+                    // TODO can this be done more elegantly?
+                    case "image" -> Hibernate.initialize(doc.getImages());
+                    default -> System.err.println("getDocumentById: Unknown initialization option: " + init);
+                    // Add more cases as needed for other initializations
+                }
+            }
+        }
+    }
+
     public List<Document> getManyDocumentsByIds(List<Integer> documentIds) throws DatabaseOperationException {
+        return getManyDocumentsByIds(documentIds, null);
+    }
+
+    public List<Document> getManyDocumentsByIds(List<Integer> documentIds, Set<String> hibernateInit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
             var query = builder.createQuery(Document.class);
@@ -518,6 +548,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 // Hibernate.initialize(doc.getPages());
                 // Hibernate.initialize(doc.getUceMetadata().stream().filter(u -> u.getValueType() != UCEMetadataValueType.JSON));
                 sortedDocs[documentIds.indexOf(id)] = doc;
+
+                initializeDocument(doc, hibernateInit);
             }
 
             return Arrays.stream(sortedDocs).filter(Objects::nonNull).toList();
@@ -1126,10 +1158,71 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public Document getDocumentById(long id) throws DatabaseOperationException {
+        return getDocumentById(id, null);
+    }
+
+    public Document getDocumentById(long id, Set<String> hibernateInit) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
             Hibernate.initialize(doc.getPages());
             Hibernate.initialize(doc.getUceMetadata());
+            initializeDocument(doc, hibernateInit);
+            return doc;
+        });
+    }
+
+    public List<Long> findDocumentIdsByMetadata(String key, String value, UCEMetadataValueType valueType) throws DatabaseOperationException {
+        // Search for a document based on a metadata key/value pair
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var cq = cb.createQuery(Long.class);
+            var root = cq.from(UCEMetadata.class);
+
+            var predicate = cb.and(
+                    cb.equal(root.get("key"), key),
+                    cb.equal(root.get("value"), value),
+                    cb.equal(root.get("valueType"), valueType.ordinal())
+            );
+
+            cq.select(root.get("documentId")).where(predicate);
+
+            var query = session.createQuery(cq);
+            return query.getResultList();
+        });
+    }
+
+    public void deleteDocumentById(long id) throws DatabaseOperationException {
+        // NOTE this only cleans up everything directly connected to the document
+        // TODO also remove embeddings and other data
+        executeOperationSafely((session) -> {
+            var doc = session.get(Document.class, id);
+            if (doc != null) {
+                session.delete(doc);
+            }
+            return null;
+        });
+    }
+
+    public Document getFirstDocumentByTitle(String title, boolean like) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var cq = cb.createQuery(Document.class);
+            var root = cq.from(Document.class);
+
+            if (like) {
+                cq.select(root).where(cb.like(root.get("documentTitle"), "%" + title + "%"));
+            }
+            else{
+                cq.select(root).where(cb.equal(root.get("documentTitle"), title));
+            }
+
+            var query = session.createQuery(cq);
+            query.setMaxResults(1);
+            var doc = query.uniqueResult();
+            if (doc != null) {
+                Hibernate.initialize(doc.getPages());
+                Hibernate.initialize(doc.getUceMetadata());
+            }
             return doc;
         });
     }
@@ -1162,7 +1255,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-
     public Document getDocumentByCorpusAndDocumentId(long corpusId, String documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var cb = session.getCriteriaBuilder();
@@ -1180,9 +1272,25 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             Document doc = session.createQuery(criteriaQuery).uniqueResult();
 
             if (doc != null) {
-                initializeCompleteDocument(doc, 0, 999999);
+                //initializeCompleteDocument(doc, 0, 999999);
             }
             return doc;
+        });
+    }
+
+    public List<String> getDistinctTimesByCondition(String condition, long corpusId, int limit) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            // Construct HQL dynamically (THIS IS UNSAFE BECAUSE OF THE CONDITION INSERTION)
+            String hql = "SELECT DISTINCT t.coveredText " +
+                         "FROM Time t " +
+                         "JOIN Document d ON t.documentId = d.id " +
+                         "WHERE " + condition + " AND d.corpusId = :corpusId";
+
+            var query = session.createQuery(hql, String.class);
+            query.setParameter("corpusId", corpusId);
+            query.setMaxResults(limit);
+
+            return query.getResultList();
         });
     }
 
@@ -1249,18 +1357,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public GeoName getGeoNameAnnotationById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(GeoName.class, id));
-    }
-
-    public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(Time.class, id));
-    }
-
-    public Sentence getSentenceAnnotationById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(Sentence.class, id));
-    }
-
     public long countLexiconEntries() throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var builder = session.getCriteriaBuilder();
@@ -1276,29 +1372,74 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     public NamedEntity getNamedEntityById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(NamedEntity.class, id));
+        return executeOperationSafely((session) -> {
+            var entity = session.get(NamedEntity.class, id);
+            Hibernate.initialize(entity.getPage());
+            return entity;
+        });
     }
 
     public GazetteerTaxon getGazetteerTaxonById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(GazetteerTaxon.class, id));
+        return executeOperationSafely((session) -> {
+            var taxon = session.get(GazetteerTaxon.class, id);
+            Hibernate.initialize(taxon.getPage());
+            return taxon;
+        });
     }
 
     public GnFinderTaxon getGnFinderTaxonById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(GnFinderTaxon.class, id));
+        return executeOperationSafely((session) -> {
+            var taxon = session.get(GnFinderTaxon.class, id);
+            Hibernate.initialize(taxon.getPage());
+            return taxon;
+        });
     }
 
     public BiofidTaxon getBiofidTaxonById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(BiofidTaxon.class, id));
+        return executeOperationSafely((session) -> {
+            var taxon = session.get(BiofidTaxon.class, id);
+            Hibernate.initialize(taxon.getPage());
+            return taxon;
+        });
+    }
+
+    public GeoName getGeoNameAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var geo = session.get(GeoName.class, id);
+            Hibernate.initialize(geo.getPage());
+            return geo;
+        });
+    }
+
+    public Time getTimeAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var time = session.get(Time.class, id);
+            Hibernate.initialize(time.getPage());
+            return time;
+        });
+    }
+
+    public Sentence getSentenceAnnotationById(long id) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var sentence = session.get(Sentence.class, id);
+            Hibernate.initialize(sentence.getPage());
+            return sentence;
+        });
     }
 
     public Lemma getLemmaById(long id) throws DatabaseOperationException {
-        return executeOperationSafely((session) -> session.get(Lemma.class, id));
+        return executeOperationSafely((session) -> {
+            var lemma = session.get(Lemma.class, id);
+            Hibernate.initialize(lemma.getPage());
+            return lemma;
+        });
     }
 
     public CompleteNegation getCompleteNegationById(long id) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var neg = session.get(CompleteNegation.class, id);
             Hibernate.initialize(neg);
+            Hibernate.initialize(neg.getPage());
             return neg;
         });
     }
@@ -1314,6 +1455,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             try {
                 CompleteNegation neg = query.getSingleResult();
                 Hibernate.initialize(neg); // Ensure lazy-loaded properties are initialized
+                Hibernate.initialize(neg.getPage());
                 return neg;
             } catch (NoResultException e) {
                 return null; // Or throw an exception if no result is an error case
@@ -2031,6 +2173,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getSentences());
         Hibernate.initialize(doc.getNamedEntities());
         Hibernate.initialize(doc.getGeoNames());
+        Hibernate.initialize(doc.getSentiments());
+        Hibernate.initialize(doc.getEmotions());
+        for(var emote:doc.getEmotions()) Hibernate.initialize(emote.getFeelings());
         Hibernate.initialize(doc.getBiofidTaxons());
         Hibernate.initialize(doc.getGazetteerTaxons());
         Hibernate.initialize(doc.getGnFinderTaxons());
@@ -2038,6 +2183,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         Hibernate.initialize(doc.getWikipediaLinks());
         Hibernate.initialize(doc.getLemmas());
         Hibernate.initialize(doc.getUceMetadata());
+        Hibernate.initialize(doc.getImages());
         // init negations
         Hibernate.initialize(doc.getCompleteNegations());
         Hibernate.initialize(doc.getCues());

@@ -79,7 +79,11 @@
       "enableAnalysisEngine": true
     },
     "authentication": {
-      "isActivated": false
+      "isActivated": true,
+      "publicUrl": "http://localhost:8080",
+      "redirectUrl": "http://localhost:4567/auth"
+    },
+    "embeddings": {
     }
   }
 }

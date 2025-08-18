@@ -351,6 +351,10 @@
     color: orange !important;
 }
 
+.enriched-search-tokens-list .enriched-token[data-type="TIME_COMMAND"] .value{
+    color: black !important;
+}
+
 .enriched-search-tokens-list .enriched-token[data-type="LOCATION_COMMAND"] .value{
     color: dodgerblue !important;
 }

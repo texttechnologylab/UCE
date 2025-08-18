@@ -20,7 +20,7 @@
                         <p>Invalid or missing JSON data.</p>
                     </#if>
                 <#else>
-                    <div class="flex-grow-1 col-md-auto m-0 pl-1 pr-1" style="max-width: 300px" data-trigger="hover"
+                    <div class="flex-grow-1 col-md-auto m-0 pl-1 pr-1" data-trigger="hover"
                          data-toggle="popover" data-html="true"
                          data-content="<b>${metadata.getValue()!''}</b><br/><br/>${metadata.getComment()!''}<br/><i>(${metadata.getValueType()?lower_case!''})">
                         <div class="flexed align-items-center justify-content-between uce-metadata-item">

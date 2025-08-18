@@ -88,7 +88,7 @@ public class UnifiedTopic extends UIMAAnnotation implements WikiModel {
             }
         }
         return String.format(
-                "<span class='open-wiki-page annotation custom-context-menu topic-marker' title='%1$s' data-wid='%2$s' data-wcovered='%3$s' data-topic-value='%4$s'>t</span>",
+                "<span class='open-wiki-page annotation custom-context-menu annotation-marker topic-marker' title='%1$s' data-wid='%2$s' data-wcovered='%3$s' data-topic-value='%4$s'>t</span>",
                 this.getWikiId(), this.getWikiId(), this.getCoveredText(), repTopicValue);
     }
 

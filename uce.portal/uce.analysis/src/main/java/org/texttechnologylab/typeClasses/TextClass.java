@@ -3,21 +3,22 @@ import org.texttechnologylab.modules.ModelInfo;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.LinkedHashMap;
 
 public class TextClass {
 
-    private HashMap<ModelInfo, ArrayList<TopicClass>> topics = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<OffensiveClass>> offensives = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<HateClass>> hate = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<SentimentClass>> sentiment = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<ToxicClass>> toxic = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<EmotionClass>> emotions = new HashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<TopicClass>> topics = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<OffensiveClass>> offensives = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<HateClass>> hate = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<SentimentClass>> sentiment = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<ToxicClass>> toxic = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<EmotionClass>> emotions = new LinkedHashMap<>();
 
-    private HashMap<ModelInfo, ArrayList<FactClass>> facts = new HashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<FactClass>> facts = new LinkedHashMap<>();
 
-    private HashMap<ModelInfo, ArrayList<CoherenceClass>> coherence = new HashMap<>();
-    private HashMap<ModelInfo, ArrayList<StanceClass>> stance = new HashMap<>();
-    private HashMap<ModelInfo, LLMClass> llm = new HashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<CoherenceClass>> coherence = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, ArrayList<StanceClass>> stance = new LinkedHashMap<>();
+    private LinkedHashMap<ModelInfo, LLMClass> llm = new LinkedHashMap<>();
 
     private ArrayList<HateClass> hateAVG = new ArrayList<>();
     private ArrayList<SentimentClass> sentimentAVG = new ArrayList<>();
@@ -32,6 +33,7 @@ public class TextClass {
     private ArrayList<ReadabilityClass> readabilityAVG = new ArrayList<>();
     private ArrayList<LLMClass> llmAVG = new ArrayList<>();
     private ArrayList<TAClass> taScoreAVG = new ArrayList<>();
+    private ArrayList<CohMetrixClass> cohMetrixAVG = new ArrayList<>();
 
     private ArrayList<ModelInfo> topicsModels = new ArrayList<>();
     private ArrayList<ModelInfo> offensivesModels = new ArrayList<>();
@@ -46,6 +48,7 @@ public class TextClass {
     private ArrayList<ModelInfo> coherenceModels = new ArrayList<>();
     private ArrayList<ModelInfo> readabilityModels = new ArrayList<>();
     private ArrayList<ModelInfo> taModels = new ArrayList<>();
+    private ArrayList<ModelInfo> cohMetrixModels = new ArrayList<>();
     private ArrayList<ModelInfo> llmModels = new ArrayList<>();
 
     private ClaimClass claim = new ClaimClass();
@@ -261,6 +264,10 @@ public class TextClass {
 
     public void addAVGTA(TAClass ta) {
         this.taScoreAVG.add(ta);
+    }
+
+    public void addAVGCohMetrix(CohMetrixClass cohMetrix) {
+        this.cohMetrixAVG.add(cohMetrix);
     }
 
 
@@ -488,6 +495,10 @@ public class TextClass {
         return taScoreAVG;
     }
 
+    public ArrayList<CohMetrixClass> getCohMetrixAVG() {
+        return cohMetrixAVG;
+    }
+
     public ArrayList<ToxicClass> getToxicAVG() {
         return toxicAVG;
     }
@@ -554,4 +565,14 @@ public class TextClass {
     public void setTaModels(ArrayList<ModelInfo> taModels) {
         this.taModels = taModels;
     }
+
+    public ArrayList<ModelInfo> getCohMetrixModels() {
+        return cohMetrixModels;
+    }
+
+    public void setCohMetrixModels(ArrayList<ModelInfo> cohMetrixModels) {
+        this.cohMetrixModels = cohMetrixModels;
+    }
+
+
 }

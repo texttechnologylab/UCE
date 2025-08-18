@@ -11,8 +11,13 @@
     </div>
 
     <!-- by which DUUI Tool -->
-    <div class="flexed align-items-center pl-1 w-100">
-        <i class="fas fa-toolbox color-prime"></i> <span class="text ml-2 mr-1">Annotated by</span><label class="mb-0 font-italic">${vm.getAnnotatedBy()}</label>
+    <div class="flexed align-items-center justify-content-between pl-1 w-100">
+        <div class="flexed align-items-center mr-1">
+            <i class="fas fa-toolbox color-prime"></i> <span class="text ml-2 mr-1">Annotated by</span><label class="mb-0 font-italic">${vm.getAnnotatedBy()}</label>
+        </div>
+        <div class="flexed align-items-center ml-1">
+            <i class="fas fa-percentage color-prime"></i> <span class="text ml-1 mr-1">Odds: </span><label class="mb-0 font-italic">${vm.getOdds()}</label>
+        </div>
     </div>
 
     <!-- BIOfid specific urls here -->

@@ -1,3 +1,5 @@
+from typing import Union, Dict
+
 import plotly.express as px
 import plotly.io as pio
 import gc
@@ -7,7 +9,7 @@ import warnings
 import traceback
 
 from cBERT.cBERT import CCCBERT
-from flask import Flask, g, render_template, request, jsonify, current_app
+from flask import Flask, g, render_template, request, jsonify, current_app, Response, stream_with_context
 from sklearn.cluster import KMeans
 from scipy.spatial.distance import euclidean
 from scipy.sparse.csgraph import minimum_spanning_tree
@@ -242,8 +244,10 @@ def embed():
     try:
         data = request.get_json()
         text = data['text']
+        config = data['config'] if "config" in data else None
+        backend = data['backend'] if "backend" in data else None
         result['status'] = 200
-        result['message'] = get_embedding_model().embed(text)
+        result['message'] = get_embedding_model(backend, config).embed(text)
     except Exception as ex:
         result['message'] = "There was an exception caught while trying to embed: " + str(ex)
         print("Exception while trying to get embedding: ")
@@ -265,6 +269,31 @@ def context():
         print("Exception while trying to get CCC-BERT contect decision: ")
         print(ex)
     return jsonify(result)
+
+@app.route('/rag/complete/stream', methods=['POST'])
+def rag_complete_stream():
+    try:
+        data = request.get_json()
+        print(data)
+        messages = data['promptMessages']
+        api_key = data['apiKey']
+        model = data['model']
+        url = data['url']
+    except Exception as ex:
+        result = {
+            "status": 400,
+            "message": "There was an exception caught while trying to complete the chat: " + str(ex)
+        }
+        print("Exception while trying to complete chat: ")
+        print(ex)
+        return jsonify(result)
+
+    return Response(
+        stream_with_context(
+            get_instruct_model(model, url).complete_stream(messages, api_key)
+        ),
+        mimetype='application/json'
+    )
 
 @app.route('/rag/complete', methods=['POST'])
 def rag_complete():
@@ -290,11 +319,18 @@ def rag_complete():
 def hello():
     return 'RAGServer running.'
 
-def get_embedding_model():
+def get_embedding_model(backend: Union[str, None] = None, config: Union[Dict, None] = None):
     '''Gets the embedding model from the app's cache'''
-    if 'embedding_model' not in current_app.config:
-        current_app.config['embedding_model'] = Embedder()
-    return current_app.config['embedding_model']
+    # NOTE this is a hack: the importer performs a test call at a point where the UCE config is not yet loaded.
+    # This results in a cached default model, we therefore explicitly check for the backend.
+    # This also will not reload the model if e.g. the model name changes!
+    # TODO caching based on actual config and backend
+    keyname = f"embedding_model"
+    if backend is not None:
+        keyname = f"embedding_model_{backend}"
+    if keyname not in current_app.config:
+        current_app.config[keyname] = Embedder(backend, config)
+    return current_app.config[keyname]
 
 def get_instruct_model(model_name, url):
     '''Gets the llm that has the actual conversation'''

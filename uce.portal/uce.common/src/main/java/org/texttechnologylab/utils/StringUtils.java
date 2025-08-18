@@ -282,21 +282,44 @@ public class StringUtils {
         return result.toString();
     }
 
-    // https://en.wikipedia.org/wiki/Taxonomic_rank#:~:text=Main%20ranks,-In%20his%20landmark&text=Today%2C%20the%20nomenclature%20is%20regulated,family%2C%20genus%2C%20and%20species.
-    public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::"};
-
     public static String BIOFID_URL_BASE = "https://www.biofid.de/bio-ontologies/gbif/";
 
-    public static String getFullTaxonRankByCode(String code) {
-        return switch (code) {
-            case "C" -> "class";
-            case "F" -> "family";
-            case "K" -> "kingdom";
-            case "P" -> "phylum";
-            case "O" -> "order";
-            case "G" -> "genus";
-            default -> null;
-        };
+    private static String protectTagContent(String html, Pattern pattern, List<String> protectedParts, Map<String, String> placeholderMap) {
+        Matcher matcher = pattern.matcher(html);
+        StringBuffer sb = new StringBuffer();
+        int index = 0;
+
+        while (matcher.find()) {
+            String match = matcher.group();
+            String placeholder = "%%UCE_PLACEHOLDER_" + index++ + "%%";
+            protectedParts.add(match);
+            placeholderMap.put(placeholder, match);
+            matcher.appendReplacement(sb, placeholder);
+        }
+        matcher.appendTail(sb);
+
+        return sb.toString();
+    }
+
+    public static String replaceCharacterOutsideTags(String input, String target, String replacement) {
+        // this is a replacement for "replaceCharacterOutsideSpan" that allows to specify multiple tags
+        // TODO check that this is actually working and produces equivalent results
+
+        List<String> protectedParts = new ArrayList<>();
+        Map<String, String> placeholderMap = new HashMap<>();
+
+        Pattern spanPattern = Pattern.compile("<span.*?>.*?</span>", Pattern.DOTALL);
+        input = protectTagContent(input, spanPattern, protectedParts, placeholderMap);
+
+        Pattern imgPattern = Pattern.compile("<img\\b[^>]*?>", Pattern.CASE_INSENSITIVE);
+        input = protectTagContent(input, imgPattern, protectedParts, placeholderMap);
+
+        input = input.replaceAll(Pattern.quote(target), Matcher.quoteReplacement(replacement));
+        for (Map.Entry<String, String> entry : placeholderMap.entrySet()) {
+            input = input.replace(entry.getKey(), entry.getValue());
+        }
+
+        return input;
     }
 
     public static String replaceCharacterOutsideSpan(String input, char targetChar, String replacement) {
@@ -345,18 +368,6 @@ public class StringUtils {
         // Replace with bio:123123
         Matcher matcher = pattern.matcher(query);
         return matcher.replaceAll("bio:$1");
-    }
-
-    public static final String[] TIME_COMMANDS = {"Y::", "M::", "D::", "S::"};
-
-    public static String GetFullTimeUnitByCode(String code) {
-        return switch (code) {
-            case "Y" -> "year";
-            case "M" -> "month";
-            case "D" -> "day";
-            case "S" -> "season";
-            default -> null;
-        };
     }
 
     public static String mergeBoldTags(String input) {

@@ -31,4 +31,8 @@ public class RAGChatState {
         }
         this.messages.add(message);
     }
+
+    public RAGChatMessage getNewestMessage() {
+        return this.messages != null && !this.messages.isEmpty() ? this.messages.getLast() : null;
+    }
 }
