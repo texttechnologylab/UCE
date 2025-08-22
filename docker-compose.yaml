@@ -40,13 +40,23 @@ services:
     ports:
       - "8008:4567"
     depends_on:
-      - uce-postgresql-db
+      uce-postgresql-db:
+        condition: service_healthy
     networks:
       - app_net
     volumes:
       - "${UCE_CONFIG_PATH}:/app/config/uceConfig.json"
       - "./database:/app/database"
-    command: ["/bin/sh", "-c", "sleep 7 && java --add-opens=java.base/java.util=ALL-UNNAMED --add-opens=java.util/java.base=ALL-UNNAMED -jar ./target/webportal-jar-with-dependencies.jar -cf /app/config/uceConfig.json"]
+    command: [
+      "java",
+      "--add-opens=java.base/java.util=ALL-UNNAMED",
+      "--add-opens=java.util/java.base=ALL-UNNAMED",
+      "-jar",
+      "./target/webportal-jar-with-dependencies.jar",
+      "-cf",
+      "/app/config/uceConfig.json"
+    ]
+
 
   uce-importer:
     container_name: uce-importer
@@ -54,14 +64,22 @@ services:
       context: .
       dockerfile: ./uce.portal/uce.corpus-importer/Dockerfile
     depends_on:
-      - uce-postgresql-db
+      uce-postgresql-db:
+        condition: service_healthy
     networks:
       - app_net
     volumes:
       - "./database:/app/database"
       # MOUNT HERE ALL UIMA CORPORA INTO THE '/app/input/corpora/zobodat' PATH 
       - "./../test_data/corpora/zobodat:/app/input/corpora/zobodat"
-    command: [ "/bin/sh", "-c", "sleep 7 && java -jar ./target/importer.jar -srcDir /app/input/corpora/ -num 1 -t ${IMPORTER_THREADS}" ]
+    command: [
+      "java",
+      "-jar",
+      "./target/importer.jar",
+      "-srcDir", "/app/input/corpora/",
+      "-num", "1",
+      "-t", "${IMPORTER_THREADS}"
+    ]
 
   uce-postgresql-db:
     container_name: uce-postgresql-db
@@ -78,7 +96,13 @@ services:
     command: -c config_file=/etc/postgresql.conf
     networks:
       - app_net
-      
+    healthcheck:
+        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        interval: 5s
+        timeout: 5s
+        start_interval: 1s
+        retries: 20
+
   uce-minio-storage:
     image: minio/minio
     container_name: minio
