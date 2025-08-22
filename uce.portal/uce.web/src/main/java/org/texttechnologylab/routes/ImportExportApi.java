@@ -1,12 +1,16 @@
 package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
+import com.google.gson.JsonIOException;
+import com.google.gson.JsonSyntaxException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.Importer;
+import org.texttechnologylab.config.CorpusConfig;
 import org.texttechnologylab.exceptions.DatabaseOperationException;
 import org.texttechnologylab.exceptions.ExceptionUtils;
+import org.texttechnologylab.models.corpus.Corpus;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.S3StorageService;
 import org.texttechnologylab.utils.StringUtils;
@@ -24,6 +28,8 @@ public class ImportExportApi implements UceApi {
     private ApplicationContext serviceContext;
 
     private static final Logger logger = LogManager.getLogger(PostgresqlDataInterface_Impl.class);
+
+    private static final Gson gson = new Gson();
 
     public ImportExportApi(ApplicationContext serviceContext) {
         this.serviceContext = serviceContext;
@@ -48,7 +54,7 @@ public class ImportExportApi implements UceApi {
             response.raw().setContentType(contentType);
             response.raw().setHeader("Content-Disposition", "attachment; filename=\"" + objectName + "." + StringUtils.getExtensionByContentType(contentType) + "\"");
 
-            var buffer  = new byte[8192];
+            var buffer = new byte[8192];
             int bytesRead;
             while ((bytesRead = s3Stream.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
@@ -84,18 +90,48 @@ public class ImportExportApi implements UceApi {
             var corpus = ExceptionUtils.tryCatchLog(
                     () -> db.getCorpusById(corpusId),
                     (ex) -> logger.error("Couldn't fetch corpus when uploading new document to corpusId " + corpusId, ex));
-            if (corpus == null)
-                return "Corpus with id " + corpusId + " wasn't found in the database; can't upload document.";
+            if (corpus == null) {
+                logger.info("No corpus found with id: " + corpusId + ". Trying to initialize with a provided corpusConfig.");
+                var corpusConfigRaw = ExceptionUtils.tryCatchLog(
+                        () -> new String(request.raw().getPart("corpusConfig").getInputStream().readAllBytes(), StandardCharsets.UTF_8),
+                        (ex) -> logger.error("Error getting the corpusConfig that should be used for this document. Aborting.", ex));
+                if (corpusConfigRaw == null)
+                    return "Corpus with id " + corpusId + " wasn't found in the database; no config was provided; can't upload document.";
+                try {
+                    // Based on the code of uce.corpus-importer#Importer.java
+                    corpus = new Corpus();
+                    var corpusConfig = gson.fromJson(corpusConfigRaw, CorpusConfig.class);
+                    corpus.setName(corpusConfig.getName());
+                    corpus.setLanguage(corpusConfig.getLanguage());
+                    corpus.setAuthor(corpusConfig.getAuthor());
+                    corpus.setCorpusJsonConfig(gson.toJson(corpusConfig));
+                    if (corpusConfig.isAddToExistingCorpus()) {
+                        var existingCorpus = ExceptionUtils.tryCatchLog(() -> db.getCorpusByName(corpusConfig.getName()),
+                                (ex) -> logger.error("Error getting an existing corpus by name. The corpus config should probably be changed " +
+                                        "to not add to existing corpus then.", ex));
 
+                        if (existingCorpus != null) { // If we have the corpus, use that. Else store the new corpus.
+                            corpus = existingCorpus;
+                        } else {
+                            final var corpus1 = corpus;
+                            ExceptionUtils.tryCatchLog(() -> db.saveCorpus(corpus1),
+                                    (ex) -> logger.error("Error saving the corpus.", ex));
+                        }
+                    }
+                } catch (JsonIOException | JsonSyntaxException e) {
+                    return "The corpusConfig provided is not properly formatted.";
+                }
+            }
             // TODO just use 1 as default? will throw an error if this is null otherwise...
             var importerNumber = 1;
             var importer = new Importer(this.serviceContext, importerNumber, casView);
             try (var input = request.raw().getPart("file").getInputStream()) {
                 var fileName = request.raw().getPart("file").getSubmittedFileName();
                 // Import the doc in the background
+                final var corpus1 = corpus;
                 var importFuture = CompletableFuture.supplyAsync(() -> {
                     try {
-                        return importer.storeUploadedXMIToCorpusAsync(input, corpus, fileName, documentId);
+                        return importer.storeUploadedXMIToCorpusAsync(input, corpus1, fileName, documentId);
                     } catch (DatabaseOperationException e) {
                         throw new RuntimeException(e);
                     }
