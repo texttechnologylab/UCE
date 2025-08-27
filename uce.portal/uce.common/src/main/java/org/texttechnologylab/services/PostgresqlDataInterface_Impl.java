@@ -1475,6 +1475,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         return executeOperationSafely((session) -> {
             var topic = session.get(UnifiedTopic.class, id);
             Hibernate.initialize(topic.getTopics());
+            Hibernate.initialize(topic.getPage());
             for(var t:topic.getTopics()){
                 Hibernate.initialize(t.getWords());
             }
