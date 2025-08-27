@@ -13,10 +13,20 @@
           crossorigin=""/>
     <style>
         <#include "*/css/site.css">
-        <#include "*/css/document-reader.css">
-        <#include "*/css/custom-context-menu.css">
+    </style>
+    <style>
         <#include "*/css/wiki.css">
+    </style>
+    <style>
+        <#include "*/css/custom-context-menu.css">
+    </style>
+    <style>
+        <#include "*/css/document-reader.css">
+    </style>
+    <style>
         <#include "*/css/drawflow.css">
+    </style>
+    <style>
         <#include "*/css/bg-anim.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
