@@ -473,10 +473,70 @@
   },
   "cosine": {
     "de-DE": "Misst die Winkelsimilarität von Themen-Wort-Vektoren",
-    "en-EN": " Zählt einfach die überlappenden Wörter zwischen Themen"
+    "en-EN": "Measures the angular similarity of topic-word vectors"
   },
   "overlap": {
     "de-DE": "Zählt einfach die überlappenden Wörter zwischen Themen",
     "en-EN": "Counts simply the overlapping words between topics"
+  },
+  "topicSettings": {
+    "de-DE": "Thema Einstellungen",
+    "en-EN": "Topic Settings"
+  },
+  "numTopics": {
+    "de-DE": "Anzahl der zu zeigenden Themen",
+    "en-EN": "Number of topics to show"
+  },
+  "topicColorMode": {
+    "de-DE": "Thema-Farben Modus",
+    "en-EN": "Topic Colors Mode"
+  },
+  "perTopic": {
+    "de-DE": "Pro Thema",
+    "en-EN": "Per Topic"
+  },
+  "apply": {
+    "de-DE": "Anwenden",
+    "en-EN": "Apply"
+  },
+  "reset": {
+    "de-DE": "Zurücksetzen",
+    "en-EN": "Reset"
+  },
+  "saveTopicSettings": {
+    "de-DE": "Thema Einstellungen speichern in Downloads",
+    "en-EN": "Save topic settings to Downloads"
+  },
+  "uploadTopicSettings": {
+    "de-DE": "Thema Einstellungen hochladen",
+    "en-EN": "Upload topic settings"
+  },
+  "controlPanelTab": {
+    "de-DE": "Steuerungsfeld",
+    "en-EN": "Control Panel"
+  },
+  "visualizationTab": {
+    "de-DE": "Visualisierung",
+    "en-EN": "Visualization"
+  },
+  "semanticDensity": {
+    "de-DE": "Semantische Dichte",
+    "en-EN": "Semantic Density"
+  },
+  "topicEntity": {
+    "de-DE": "Thema-Entität",
+    "en-EN": "Topic-Entity"
+  },
+  "topicLandscape": {
+    "de-DE": "Themenlandschaft",
+    "en-EN": "Topic Landscape"
+  },
+  "topicSimilarity": {
+    "de-DE": "Thematische Ähnlichkeit",
+    "en-EN": "Topic Similarity"
+  },
+  "sentenceTopicFlow": {
+    "de-DE": "Satz-Themenfluss",
+    "en-EN": "Sentence Topic Flow"
   }
 }

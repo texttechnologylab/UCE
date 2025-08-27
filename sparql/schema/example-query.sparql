@@ -1,0 +1,17 @@
+PREFIX rdf: <http://www.w3.org/1999/02/22-rdf-syntax-ns#>
+PREFIX rdfs: <http://www.w3.org/2000/01/rdf-schema#>
+PREFIX uce: <https://www.texttechnologylab.org/uce#>
+PREFIX gbif: <https://www.gbif.org/species/>
+
+
+SELECT ?enriched ?taxon ?label WHERE {
+  {
+    ?enriched uce:enriches gbif:2436436 .
+  }
+  UNION
+  {
+	?enriched uce:enriches ?taxon .
+	?taxon uce:synonym gbif:2436436 .
+  }
+  OPTIONAL { ?enriched rdf:label ?label .}
+}
