@@ -6,6 +6,7 @@ import lombok.Setter;
 @Getter
 @Setter
 public class SettingsConfig {
+    private Integer port = null;
     private RAGConfig rag;
     private AnalysisConfig analysis;
     private EmbeddingsConfig embeddings;

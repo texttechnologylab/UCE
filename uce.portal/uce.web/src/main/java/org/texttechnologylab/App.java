@@ -209,8 +209,11 @@ public class App {
 
         logger.info("Javalin application setup done.");
 
-        // TODO parameterize
-        javalinApp.start(4567);
+        int port = 4567;
+        if (SystemStatus.UceConfig.getSettings().getPort() != null) {
+            port = SystemStatus.UceConfig.getSettings().getPort();
+        }
+        javalinApp.start(port);
 
         logger.info("UCE web service has started!");
     }
