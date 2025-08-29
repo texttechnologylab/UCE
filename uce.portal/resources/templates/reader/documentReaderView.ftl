@@ -13,10 +13,20 @@
           crossorigin=""/>
     <style>
         <#include "*/css/site.css">
-        <#include "*/css/document-reader.css">
-        <#include "*/css/custom-context-menu.css">
+    </style>
+    <style>
         <#include "*/css/wiki.css">
+    </style>
+    <style>
+        <#include "*/css/custom-context-menu.css">
+    </style>
+    <style>
+        <#include "*/css/document-reader.css">
+    </style>
+    <style>
         <#include "*/css/drawflow.css">
+    </style>
+    <style>
         <#include "*/css/bg-anim.css">
     </style>
     <script src="https://kit.fontawesome.com/b0888ca2eb.js"
@@ -185,8 +195,8 @@
             <div class="side-bar">
 
                 <div class="tab-header">
-                    <button class="tab-btn active" data-tab="navigator-tab">Navigator</button>
-                    <button class="tab-btn" data-tab="visualization-tab">Visualization</button>
+                    <button class="tab-btn active" data-tab="navigator-tab">${languageResource.get("controlPanelTab")}</button>
+                    <button class="tab-btn" data-tab="visualization-tab">${languageResource.get("visualizationTab")}</button>
 <#--                    <button class="tab-btn" data-tab="playground-tab">Playground</button>-->
 
                 </div>
@@ -255,10 +265,13 @@
                             </#if>
 
                             <div class="group-box topics-box">
-                                <p class="title">
-                                    <span>${languageResource.get("topics")}</span>
-                                    <i class="ml-2 topics-loading rotate fas fa-spinner"></i>
-                                </p>
+                                <div class="key-topics-title d-flex align-items-center justify-content-between mb-3">
+                                    <span class="title mx-auto" style="flex:1; text-align:center;">${languageResource.get("topics")}</span>
+                                    <i class="ml-2 fas fa-cog key-topics-settings" title="Settings"></i>
+                                </div>
+
+
+
                                 <div class="document-topics-list" data-document-id="${document.id}"></div>
                             </div>
                         </div>
@@ -305,17 +318,65 @@
                             </div>
 
                             <div class="viz-bottom-nav">
-                                <button class="viz-nav-btn active" data-target="#viz-panel-1">Semantic Density</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-2">Topic-Entity</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-3">Topic Landscape</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-4">Topic Similarity</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-5">Sentence Topic Flow</button>
+                                <button class="viz-nav-btn active" data-target="#viz-panel-1">${languageResource.get("semanticDensity")}</button>
+                                <button class="viz-nav-btn" data-target="#viz-panel-2">${languageResource.get("topicEntity")}</button>
+                                <button class="viz-nav-btn" data-target="#viz-panel-3">${languageResource.get("topicLandscape")}</button>
+                                <button class="viz-nav-btn" data-target="#viz-panel-4">${languageResource.get("topicSimilarity")}</button>
+                                <button class="viz-nav-btn" data-target="#viz-panel-5">${languageResource.get("sentenceTopicFlow")}</button>
                             </div>
 
                         </div>
                     </div>
                 </div>
 
+            </div>
+            <div class="key-topic-settings-panel" data-id="${document.getCorpusId()}">
+                <div class="d-flex align-items-center justify-content-between mb-3">
+                    <h4 class="mb-0">${languageResource.get("topicSettings")}</h4>
+                    <div>
+                        <button class="save-topic-setting btn btn-light btn-sm mr-2" title="Save" data-toggle="tooltip" data-placement="top" data-original-title="${languageResource.get("saveTopicSettings")}"><i class="fas fa-save"></i></button>
+                        <button class="upload-topic-setting btn btn-light btn-sm" title="Upload" data-toggle="tooltip" data-placement="top" data-original-title="${languageResource.get("uploadTopicSettings")}"><i class="fas fa-upload"></i></button>
+                    </div>
+                </div>
+
+                <div class="setting-group">
+                    <label for="topic-count">${languageResource.get("numTopics")}</label>
+                    <select id="topic-count" class="form-control">
+                    </select>
+                </div>
+
+                <div class="setting-group">
+                    <label>${languageResource.get("topicColorMode")}</label>
+
+                    <div class="color-option">
+                        <input type="radio" id="per-topic-colors" name="color-mode" value="per-topic">
+                        <label for="per-topic-colors">${languageResource.get("perTopic")}</label>
+                    </div>
+
+                    <div class="color-option">
+                        <input type="radio" id="gradient-range" name="color-mode" value="gradient">
+                        <label for="gradient-range">Gradient range</label>
+                    </div>
+
+                    <div class="color-pickers" style="display:none;">
+                        <div>
+                            <input type="color" id="gradient-start-color">
+                            <div class="color-label">Min</div>
+                        </div>
+                        <div>
+                            <input type="color" id="gradient-end-color">
+                            <div class="color-label">Max</div>
+                        </div>
+                    </div>
+
+                    <div class="key-topic-color-grid" style="display:none;">
+                    </div>
+                </div>
+
+                <div style="display: flex; gap: 10px;">
+                    <button class="key-topics-setting-apply-btn">${languageResource.get("apply")}</button>
+                    <button class="key-topics-setting-reset-btn">${languageResource.get("reset")}</button>
+                </div>
             </div>
         </div>
 

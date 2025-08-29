@@ -1,0 +1,57 @@
+@prefix rdf:      <http://www.w3.org/1999/02/22-rdf-syntax-ns#> .
+@prefix rdfs:     <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix dwc:      <http://rs.tdwg.org/dwc/terms/> .
+@prefix gbif:     <https://www.gbif.org/species/> .
+@prefix uce:      <https://www.texttechnologylab.org/uce-schema#> .
+
+## Relevant taxonomic ranks
+gbif:1 a dwc:Taxon;
+  uce:rank "kingdom";
+  rdf:label "Animalia" .
+
+gbif:44 a dwc:Taxon;
+  uce:rank "phylum";
+  rdf:label "Chordata" .
+
+gbif:359 a dwc:Taxon;
+  uce:rank "class";
+  rdf:label "Mammalia" .
+
+gbif:798 a dwc:Taxon;
+  uce:rank "order";
+  rdf:label "Primates" .
+
+gbif:5483 a dwc:Taxon;
+  uce:rank "family";
+  rdf:label "Hominidae" .
+
+## Two example species
+# accepted species entry
+gbif:2436436 a dwc:Taxon;
+  dwc:label "Homo sapiens Linnaeus, 1758";
+  uce:rank "species";
+  uce:parent gbif:1, gbif:44, gbif:798, gbif:359, gbif:5483 .
+
+# synonym of above
+gbif:4827592 a dwc:Taxon;
+  rdf:label "Homo americanus Bory de St.Vincent, 1825";
+  uce:rank "species";
+  uce:parent gbif:1, gbif:44, gbif:359, gbif:798, gbif:5483;
+  uce:synonym gbif:2436436 .
+
+## Enrichment for UCE search
+# synonym symmetry
+gbif:2436436 uce:synonym gbif:4827592 .
+
+# "enriched" entities
+<uce:gbif/2436436/1> uce:enriches gbif:2436436;
+  rdf:type dwc:scientificName;
+  rdf:label "Homo sapiens" .
+
+<uce:gbif/2436436/2> uce:enriches gbif:2436436;
+  rdf:type dwc:vernacularName;
+  rdf:label "Human"@en, "Humans"@en, "Man"@en, "Mensch"@de .
+
+<uce:gbif/4827592/1> uce:enriches gbif:4827592;
+  rdf:type dwc:scientificName;
+  rdf:label "Homo americanus" .

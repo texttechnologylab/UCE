@@ -14,6 +14,7 @@ public class DocumentAnnotationWikiPageViewModel extends AnnotationWikiPageViewM
     private List<Object[]> similarDocuments;
 
     public List<UCEMetadata> getUceMetadata() {
+        if(uceMetadata == null) return new ArrayList<>();
         return uceMetadata
                 .stream()
                 .sorted(Comparator
