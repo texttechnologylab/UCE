@@ -1,10 +1,9 @@
 package org.texttechnologylab;
 
+import io.javalin.http.Context;
 import org.texttechnologylab.cronjobs.SessionJob;
 import org.texttechnologylab.models.authentication.UceUser;
 import org.texttechnologylab.models.search.CacheItem;
-import org.texttechnologylab.models.viewModels.wiki.CachedWikiPage;
-import spark.Request;
 
 import java.util.HashMap;
 
@@ -16,8 +15,8 @@ public final class SessionManager {
     public static HashMap<String, CacheItem> ActiveLayeredSearches = new HashMap<>();
     public static HashMap<String, CacheItem> CachedWikiPages = new HashMap<>();
 
-    public static UceUser getUserFromRequest(Request request){
-        return request.session().attribute("uceUser");
+    public static UceUser getUserFromRequest(Context ctx){
+        return ctx.sessionAttribute("uceUser");
     }
 
     public static void InitSessionManager(long cleanupInterval){

@@ -2,6 +2,7 @@ package org.texttechnologylab.routes;
 
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
+import io.javalin.http.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
@@ -15,9 +16,9 @@ import org.texttechnologylab.models.universe.UniverseLayer;
 import org.texttechnologylab.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.services.RAGService;
 import org.texttechnologylab.utils.ListUtils;
-import spark.ModelAndView;
-import spark.Route;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.*;
 
 public class CorpusUniverseApi implements UceApi {
@@ -34,29 +35,32 @@ public class CorpusUniverseApi implements UceApi {
         this.freemarkerConfig = freemarkerConfig;
     }
 
-    public Route getNodeInspectorContentView = ((request, response) -> {
+    public void getNodeInspectorContentView(Context ctx) {
         var model = new HashMap<String, Object>();
         //var corpusId = Long.parseLong(request.queryParams("corpusId"));
-        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(request.queryParams("documentId")),
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: the url for the node inspector requires a 'documentId' query parameter. ", ex));
-        if (documentId == null)
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+        if (documentId == null) {
+            ctx.render("defaultError.ftl");
+            return;
+        }
 
         try {
             var document = db.getDocumentById(documentId);
             model.put("document", document);
         } catch (Exception ex) {
             logger.error("Error fetching the document for the node inspector with id: " + documentId, ex);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
+            return;
         }
 
-        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "universe/nodeInspectorContent.ftl"));
-    });
+        ctx.render("universe/nodeInspectorContent.ftl", model);
+    }
 
-    public Route getCorpusUniverseView = ((request, response) -> {
+    public void getCorpusUniverseView(Context ctx) {
         var model = new HashMap<String, Object>();
-        var corpusId = Long.parseLong(request.queryParams("corpusId"));
-        var currentUniverseCenter = request.queryParams("currentCenter");
+        var corpusId = Long.parseLong(ctx.queryParam("corpusId"));
+        var currentUniverseCenter = ctx.queryParam("currentCenter");
 
         model.put("corpusId", corpusId);
         model.put("currentCenter", currentUniverseCenter);
@@ -64,17 +68,18 @@ public class CorpusUniverseApi implements UceApi {
             // Later
         } catch (Exception ex) {
             logger.error("Error fetching a new corpus universe view");
-            return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(null, "defaultError.ftl"));
+            ctx.render("defaultError.ftl");
+            return;
         }
 
-        return new CustomFreeMarkerEngine(this.freemarkerConfig).render(new ModelAndView(model, "corpus/corpusUniverse.ftl"));
-    });
+        ctx.render("corpus/corpusUniverse.ftl", model);
+    }
 
-    public Route fromCorpus = ((request, response) -> {
+    public void fromCorpus(Context ctx) {
         var result = new HashMap<>();
         result.put("status", 200);
         var gson = new Gson();
-        var requestBody = gson.fromJson(request.body(), Map.class);
+        var requestBody = gson.fromJson(ctx.body(), Map.class);
         var corpusId = (long)Float.parseFloat(requestBody.get("corpusId").toString());
 
         var possibleCenter = requestBody.get("currentCenter").toString()
@@ -89,7 +94,8 @@ public class CorpusUniverseApi implements UceApi {
                 (ex) -> logger.error("Couldn't determine the desired level of the corpus universe.", ex));
         if (level == null || currentCenter == null) {
             result.replace("status", 500);
-            return gson.toJson(result);
+            ctx.json(result);
+            return;
         }
 
         var nodes = new ArrayList<CorpusUniverseNode>();
@@ -127,16 +133,16 @@ public class CorpusUniverseApi implements UceApi {
         result.put("nodes", nodes);
         result.put("level", level);
 
-        return gson.toJson(result);
-    });
+        ctx.json(result);
+    }
 
-    public Route fromSearch = ((request, response) -> {
+    public void fromSearch(Context ctx) throws IOException, URISyntaxException {
         var result = new HashMap<>();
         result.put("status", 200);
         var gson = new Gson();
-        var languageResources = LanguageResources.fromRequest(request);
+        var languageResources = LanguageResources.fromRequest(ctx);
 
-        var requestBody = gson.fromJson(request.body(), Map.class);
+        var requestBody = gson.fromJson(ctx.body(), Map.class);
         var searchId = requestBody.get("searchId").toString();
         var level = ExceptionUtils.tryCatchLog(
                 () -> UniverseLayer.valueOf(requestBody.get("level").toString()),
@@ -144,7 +150,8 @@ public class CorpusUniverseApi implements UceApi {
         if (!SessionManager.ActiveSearches.containsKey(searchId)) {
             logger.error("Error creating corpus universe from search.");
             result.replace("status", 500);
-            return gson.toJson(result);
+            ctx.json(result);
+            return;
         }
 
         var activeSearchState = (SearchState) SessionManager.ActiveSearches.get(searchId);
@@ -174,8 +181,8 @@ public class CorpusUniverseApi implements UceApi {
         result.put("nodes", nodes);
         result.put("level", level);
 
-        return gson.toJson(result);
-    });
+        ctx.json(result);
+    }
 
     private static CorpusUniverseNode getCorpusUniverseNode(Document doc, DocumentEmbedding docEmbedding) {
         var node = new CorpusUniverseNode();

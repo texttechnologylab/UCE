@@ -2,9 +2,9 @@ package org.texttechnologylab;
 
 import com.google.gson.Gson;
 import com.google.gson.internal.LinkedTreeMap;
+import io.javalin.http.Context;
 import org.bson.Document;
 import org.texttechnologylab.utils.SupportedLanguages;
-import spark.Request;
 
 import java.io.BufferedReader;
 import java.io.IOException;
@@ -43,10 +43,10 @@ public final class LanguageResources {
     /**
      * Builds a language resource object with the correct language from a request
      *
-     * @param request
+     * @param ctx
      */
-    public static LanguageResources fromRequest(Request request) throws IOException {
-        var language = request.cookie("language");
+    public static LanguageResources fromRequest(Context ctx) throws IOException {
+        var language = ctx.cookie("language");
         var languageResources = new LanguageResources("en-EN"); // English is standard
         if (language != null && !language.equals("undefined")) {
             var langCode = language;

@@ -19,7 +19,8 @@ public class ApiRegistry {
                 ImportExportApi.class, new ImportExportApi(context),
                 AnalysisApi.class, new AnalysisApi(context, configuration, DUUIInputCounter),
                 MapApi.class, new MapApi(context, configuration),
-                AuthenticationApi.class, new AuthenticationApi(context, configuration)
+                AuthenticationApi.class, new AuthenticationApi(context, configuration),
+                McpApi.class, new McpApi(context, configuration)
         );
     }
 

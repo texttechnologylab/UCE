@@ -1,13 +1,13 @@
 package org.texttechnologylab.routes;
 
 import freemarker.template.Configuration;
+import io.javalin.http.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.annotations.auth.Authentication;
 import org.texttechnologylab.models.dto.AnalysisRequestDto;
 import org.texttechnologylab.models.dto.HistoryRequestDto;
-import spark.Route;
 import com.google.gson.Gson;
 import org.texttechnologylab.*;
 
@@ -15,9 +15,6 @@ import java.util.HashMap;
 import java.util.List;
 
 import org.texttechnologylab.modules.DUUIInformation;
-
-
-import spark.ModelAndView;
 
 
 public class AnalysisApi implements UceApi {
@@ -38,11 +35,11 @@ public class AnalysisApi implements UceApi {
             route = Authentication.RouteTypes.POST,
             path = "/api/analysis/runPipeline"
     )
-    public Route runPipeline = ((request, response) -> {
+    public void runPipeline(Context ctx) {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
         try {
-            var requestDto = gson.fromJson(request.body(), AnalysisRequestDto.class);
+            var requestDto = gson.fromJson(ctx.body(), AnalysisRequestDto.class);
 
             var selectedModels = requestDto.getSelectedModels();
             var inputText = requestDto.getInputText();
@@ -75,47 +72,43 @@ public class AnalysisApi implements UceApi {
             history.addInputLLM(String.valueOf(counter), inputLLM);
             counter++;
 
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(model, "wiki/analysisResultFragment.ftl"));
+            ctx.render("wiki/analysisResultFragment.ftl", model);
 
         } catch (Exception ex) {
-            logger.error("Error running analysis pipeline with request body: " + request.body(), ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(null, "defaultError.ftl"));
+            logger.error("Error running analysis pipeline with request body: " + ctx.body(), ex);
+            ctx.status(500);
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
     @Authentication(required = Authentication.Requirement.LOGGED_IN,
             route = Authentication.RouteTypes.GET,
             path = "/api/analysis/setHistory"
     )
-    public Route setHistory = ((request, response) -> {
+    public void setHistory(Context ctx) {
         var model = new HashMap<String, Object>();
         try {
             List<String> historyList = history.getAllKeys();
             model.put("historyList", historyList);
 
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(model, "wiki/analysisHistoryFragment.ftl"));
+            ctx.render("wiki/analysisHistoryFragment.ftl", model);
 
         } catch (Exception ex) {
-            logger.error("Error running analysis pipeline with request body: " + request.body(), ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(null, "defaultError.ftl"));
+            logger.error("Error running analysis pipeline with request body: " + ctx.body(), ex);
+            ctx.status(500);
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
     @Authentication(required = Authentication.Requirement.LOGGED_IN,
             route = Authentication.RouteTypes.POST,
             path = "/api/analysis/callHistory"
     )
-    public Route callHistory = ((request, response) -> {
+    public void callHistory(Context ctx) {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
         try {
-            var requestDto = gson.fromJson(request.body(), HistoryRequestDto.class);
+            var requestDto = gson.fromJson(ctx.body(), HistoryRequestDto.class);
 
             var historyID = requestDto.getHistoryId();
 
@@ -141,26 +134,24 @@ public class AnalysisApi implements UceApi {
             model.put("inputLLM", inputLLM);
             // set history
 
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(model, "wiki/analysisResultFragment.ftl"));
+            ctx.render("wiki/analysisResultFragment.ftl", model);
 
         } catch (Exception ex) {
-            logger.error("Error running analysis pipeline with request body: " + request.body(), ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(null, "defaultError.ftl"));
+            logger.error("Error running analysis pipeline with request body: " + ctx.body(), ex);
+            ctx.status(500);
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
     @Authentication(required = Authentication.Requirement.LOGGED_IN,
             route = Authentication.RouteTypes.POST,
             path = "/api/analysis/callHistoryText"
     )
-    public Route callHistoryText = ((request, response) -> {
+    public void callHistoryText(Context ctx) {
         var model = new HashMap<String, Object>();
         var gson = new Gson();
         try {
-            var requestDto = gson.fromJson(request.body(), HistoryRequestDto.class);
+            var requestDto = gson.fromJson(ctx.body(), HistoryRequestDto.class);
             var historyID = requestDto.getHistoryId();
 
             model.put("historyID", historyID);
@@ -181,15 +172,13 @@ public class AnalysisApi implements UceApi {
             model.put("inputLLM", history.getInputLLM(historyID));
             // set history
 
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(model, "wiki/analysisHistoryTextFragment.ftl"));
+            ctx.render("wiki/analysisHistoryTextFragment.ftl", model);
 
         } catch (Exception ex) {
-            logger.error("Error running analysis pipeline with request body: " + request.body(), ex);
-            response.status(500);
-            return new CustomFreeMarkerEngine(this.freemarkerConfig)
-                    .render(new ModelAndView(null, "defaultError.ftl"));
+            logger.error("Error running analysis pipeline with request body: " + ctx.body(), ex);
+            ctx.status(500);
+            ctx.render("defaultError.ftl");
         }
-    });
+    }
 
 }

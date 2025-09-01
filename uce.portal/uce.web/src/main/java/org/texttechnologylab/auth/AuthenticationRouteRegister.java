@@ -1,25 +1,16 @@
 package org.texttechnologylab.auth;
 
+import io.javalin.Javalin;
+import io.javalin.http.Handler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
-import org.reflections.Reflections;
-import org.reflections.scanners.Scanners;
-import org.reflections.util.ConfigurationBuilder;
 import org.texttechnologylab.annotations.auth.Authentication;
 import org.texttechnologylab.freeMarker.Renderer;
 import org.texttechnologylab.routes.UceApi;
-import spark.Route;
 
-import java.lang.reflect.Modifier;
 import java.util.HashMap;
 import java.util.Map;
 
-import static spark.Spark.halt;
-import static spark.Spark.post;
-import static spark.Spark.put;
-import static spark.Spark.get;
-import static spark.Spark.delete;
-import static spark.Spark.patch;
 
 public class AuthenticationRouteRegister {
 
@@ -30,11 +21,11 @@ public class AuthenticationRouteRegister {
      *
      * @param apiInstances a map of UceApi classes to their manually constructed instances
      */
-    public static void registerApis(Map<Class<? extends UceApi>, UceApi> apiInstances) {
+    public static void registerApis(Map<Class<? extends UceApi>, UceApi> apiInstances, Javalin javalinApp) {
         for (Map.Entry<Class<? extends UceApi>, UceApi> entry : apiInstances.entrySet()) {
             UceApi instance = entry.getValue();
             try {
-                register(instance);
+                register(instance, javalinApp);
             } catch (Exception ex) {
                 logger.error("[CRITICAL RISK] Failed to register a route for authentication: ", ex);
             }
@@ -44,12 +35,12 @@ public class AuthenticationRouteRegister {
     /**
      * Registers a single UceApi object with authentication rules through the AuthenticationAnnotation.
      */
-    public static void register(UceApi api) {
+    public static void register(UceApi api, Javalin javalinApp) {
         for (var field : api.getClass().getDeclaredFields()) {
-            if (Route.class.isAssignableFrom(field.getType())) {
+            if (Handler.class.isAssignableFrom(field.getType())) {
                 try {
                     field.setAccessible(true);
-                    Route originalRoute = (Route) field.get(api);
+                    Handler originalRoute = (Handler) field.get(api);
 
                     var auth = field.getAnnotation(Authentication.class);
                     if (auth == null) {
@@ -57,26 +48,28 @@ public class AuthenticationRouteRegister {
                     }
 
                     String path = auth.path();
-                    Route wrappedRoute = originalRoute;
+                    Handler wrappedRoute = originalRoute;
 
                     if (auth.required() == Authentication.Requirement.LOGGED_IN) {
-                        wrappedRoute = (req, res) -> {
-                            if (req.session().attribute("uceUser") == null) {
+                        wrappedRoute = ctx -> {
+                            if (ctx.sessionAttribute("uceUser") == null) {
                                 var model = new HashMap<String, Object>();
                                 model.put("information", "You need to be logged in.");
 
-                                halt(401, Renderer.renderToHTML("*/accessDenied.ftl", model));
+                                ctx.status(401);
+                                ctx.render(Renderer.renderToHTML("*/accessDenied.ftl", model));
+                                return;
                             }
-                            return originalRoute.handle(req, res);
+                            originalRoute.handle(ctx);
                         };
                     }
 
                     switch (auth.route()) {
-                        case GET -> get(path, wrappedRoute);
-                        case POST -> post(path, wrappedRoute);
-                        case PUT -> put(path, wrappedRoute);
-                        case DELETE -> delete(path, wrappedRoute);
-                        case PATCH -> patch(path, wrappedRoute);
+                        case GET -> javalinApp.get(path, wrappedRoute);
+                        case POST -> javalinApp.post(path, wrappedRoute);
+                        case PUT -> javalinApp.put(path, wrappedRoute);
+                        case DELETE -> javalinApp.delete(path, wrappedRoute);
+                        case PATCH -> javalinApp.patch(path, wrappedRoute);
                         default -> throw new IllegalArgumentException("Unsupported HTTP method");
                     }
 
