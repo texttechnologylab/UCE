@@ -1216,10 +1216,12 @@ public class Importer {
                 // The potential biofid urls are like: https://www.biofid.de/bio-ontologies/gbif/10428508
                 for (var potentialBiofidId : splited) {
                     if (potentialBiofidId.isEmpty()) continue;
+                    if(potentialBiofidId.contains("gbif.org")) potentialBiofidId = StringUtils.gbifToBIOfidUrl(potentialBiofidId);
 
+                    final var biofidId = potentialBiofidId;
                     // Before we do GbifOccurence stuff, we build specific BiofidTaxon objects if we can.
                     var newBiofidTaxons = ExceptionUtils.tryCatchLog(
-                            () -> jenaSparqlService.queryBiofidTaxon(potentialBiofidId),
+                            () -> jenaSparqlService.queryBiofidTaxon(biofidId),
                             (ex) -> logger.error("Error building a BiofidTaxon object from a potential id.", ex));
                     if (newBiofidTaxons != null) {
                         for (var biofidTaxon : newBiofidTaxons) {
@@ -1227,7 +1229,7 @@ public class Importer {
                             biofidTaxon.setBegin(t.getBegin());
                             biofidTaxon.setEnd(t.getEnd());
                             biofidTaxon.setDocument(document);
-                            biofidTaxon.setBiofidUrl(potentialBiofidId);
+                            biofidTaxon.setBiofidUrl(biofidId);
                             biofidTaxon.setOriginalAnnotatedTaxonTable(ReflectionUtils.getTableAnnotationName(GazetteerTaxon.class));
                             biofidTaxa.add(biofidTaxon);
                         }

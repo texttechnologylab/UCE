@@ -116,6 +116,32 @@ public class StringUtils {
     }
 
     /**
+     * Converts a GBIF species URL into a BioFID ontology URL.
+     * Example:
+     *   https://www.gbif.org/species/2487879
+     * → https://www.biofid.de/bio-ontologies/gbif/2487879
+     *
+     * @param gbifUrl the GBIF species URL
+     * @return the corresponding BioFID ontology URL, or null if no valid ID is found
+     */
+    public static String gbifToBIOfidUrl(String gbifUrl) {
+        if (gbifUrl == null || gbifUrl.isBlank()) {
+            return null;
+        }
+
+        // Extract the numeric ID at the end of the GBIF URL
+        String[] parts = gbifUrl.trim().split("/");
+        String lastPart = parts[parts.length - 1];
+
+        // Check if it's actually a number
+        if (!lastPart.matches("\\d+")) {
+            return null; // not a valid GBIF species URL
+        }
+
+        return "https://www.biofid.de/bio-ontologies/gbif/" + lastPart;
+    }
+
+    /**
      * Removes special characters only at beginning and end.
      *
      * @param str
