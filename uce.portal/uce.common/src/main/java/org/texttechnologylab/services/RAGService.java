@@ -506,7 +506,7 @@ public class RAGService {
             });
 
             // wait max N minutes for completion
-            future.get(ragStreamTimeout, TimeUnit.SECONDS);
+            future.get(ragStreamTimeout, TimeUnit.MINUTES);
 
         } catch (TimeoutException e) {
             logger.error("RAG streaming response timed out after " + ragStreamTimeout + " minutes for chat " + chatState.getChatId() + ": ", e);
