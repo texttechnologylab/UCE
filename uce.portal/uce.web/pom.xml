@@ -152,7 +152,7 @@
                     <finalName>webportal</finalName>
                     <archive>
                         <manifest>
-                            <mainClass>org.texttechnologylab.App</mainClass>
+                            <mainClass>org.texttechnologylab.uce.web.App</mainClass>
                             <addDefaultImplementationEntries>true</addDefaultImplementationEntries>
                         </manifest>
                         <!-- We need this entry for the log4j releases -->
@@ -176,7 +176,7 @@
                             <finalName>webportal</finalName>
                             <archive>
                                 <manifest>
-                                    <mainClass>org.texttechnologylab.App</mainClass>
+                                    <mainClass>org.texttechnologylab.uce.web.App</mainClass>
                                 </manifest>
                                 <!-- We need this entry for the log4j releases -->
                                 <manifestEntries>
