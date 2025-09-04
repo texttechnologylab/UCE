@@ -307,7 +307,11 @@ def rag_complete():
         api_key = data['apiKey']
         model = data['model']
         url = data['url']
-        result['message'] = get_instruct_model(model, url).complete(messages, api_key)
+        if "tools" in data:
+            tools = data["tools"]
+        else:
+            tools = None
+        result['message'] = get_instruct_model(model, url).complete(messages, api_key, tools)
         result['status'] = 200
     except Exception as ex:
         result['message'] = "There was an exception caught while trying to complete the chat: " + str(ex)
@@ -334,9 +338,13 @@ def get_embedding_model(backend: Union[str, None] = None, config: Union[Dict, No
 
 def get_instruct_model(model_name, url):
     '''Gets the llm that has the actual conversation'''
-    if model_name not in current_app.config:
-        current_app.config[model_name] = InstructLLM(model_name, url)
-    return current_app.config[model_name]
+    # dont cache ollama models, these are not loading large models locally
+    if InstructLLM.should_cache(model_name):
+        if model_name not in current_app.config:
+            current_app.config[model_name] = InstructLLM(model_name, url)
+        return current_app.config[model_name]
+    # just recreate every time
+    return InstructLLM(model_name, url)
 
 def get_CCCBERT_model():
     '''Gets the CCC-BERT model to check whether we need context or not'''
