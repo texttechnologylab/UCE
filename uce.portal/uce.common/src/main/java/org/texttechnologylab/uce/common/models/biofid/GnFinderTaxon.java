@@ -32,6 +32,10 @@ public class GnFinderTaxon extends Taxon implements WikiModel {
     @Setter
     private String matchedCanonical;
 
+    @Getter
+    @Setter
+    private boolean isVerified;
+
     @Override
     public String getWikiId() { return "TA_GN-" + this.getId(); }
 

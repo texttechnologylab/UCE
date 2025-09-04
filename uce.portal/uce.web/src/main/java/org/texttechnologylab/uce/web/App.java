@@ -159,21 +159,21 @@ public class App {
             }
         });
 
+        // Set the folder for our template files of freemarker
+        configuration.setDirectoryForTemplateLoading(new File(commonConfig.getTemplatesLocation()));
+        configuration.setDefaultEncoding("UTF-8");
+
         var registry = new ApiRegistry(context, configuration, DUUIInputCounter);
 
         logger.info("Setting up the Javalin application...");
         var javalinApp = Javalin.create(config -> {
-            // Set the folder for our template files of freemarker
             try {
-                configuration.setDirectoryForTemplateLoading(new File(commonConfig.getTemplatesLocation()));
-
                 // We use the externalLocation method so that the files in the public folder are hot reloaded
                 config.staticFiles.add(commonConfig.getPublicLocation(), Location.EXTERNAL);
                 logger.info("Setup FreeMarker templates and public folders.");
             } catch (Exception e) {
                 logger.error("Error setting up FreeMarker, the application will hence shutdown.", e);
-                // TODO
-//                return;
+                return;
             }
             config.fileRenderer(new CustomFreeMarkerEngine(configuration));
             logger.info("Setup FreeMarker templates and public folders.");
@@ -339,8 +339,8 @@ public class App {
         List<ModelGroup> groups = modelResources.getGroupedModelObjects();
 
         config.router.apiBuilder(() -> {
-
                     before(ctx -> {
+                        ctx.res().setCharacterEncoding("UTF-8");
                         // Setup and log all API calls with some information. We don't want to log file uploads, since it would
                         // destroy the file body stream.
                         if (!(ctx.contentType() != null && ctx.contentType().contains("multipart/form-data"))) {

@@ -64,6 +64,7 @@ import org.texttechnologylab.uce.common.utils.*;
 import javax.imageio.ImageIO;
 import java.awt.image.BufferedImage;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -218,10 +219,9 @@ public class Importer {
             throw new DatabaseOperationException("Postgresql DB is not alive - cancelling import.");
 
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
-        //fixed paths
         // NOTE the config is not updated if the corpus already exists!
         // TODO compare configs and show a warning if they differ (except name, ...)
-        try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString())) {
+        try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString(), StandardCharsets.UTF_8)) {
 
             corpusConfig = gson.fromJson(reader, CorpusConfig.class);
             corpus.setName(corpusConfig.getName());
@@ -382,6 +382,7 @@ public class Importer {
 
     /**
      * Converts an XMI inputstream to a Document.
+     *
      * @param documentId Optional document id to use for database, useful if multiple views are imported
      */
     public Document XMIToDocument(InputStream inputStream, Corpus corpus, String filePath, String documentId) {
@@ -469,6 +470,7 @@ public class Importer {
 
     /**
      * Convert a UIMA jCas to an OCRDocument
+     *
      * @param documentId Optional document id to use for database, useful if multiple views are imported
      */
     public Document XMIToDocument(JCas jCas, Corpus corpus, String filePath, String documentId) {
@@ -658,19 +660,20 @@ public class Importer {
     /**
      * Selects and sets the emotions of a document
      */
-    private void setEmotions(Document document, JCas jCas){
+    private void setEmotions(Document document, JCas jCas) {
         var emotions = new ArrayList<org.texttechnologylab.uce.common.models.corpus.emotion.Emotion>();
         JCasUtil.select(jCas, Emotion.class).forEach(e -> {
             var emotion = new org.texttechnologylab.uce.common.models.corpus.emotion.Emotion(e.getBegin(), e.getEnd());
             emotion.setCoveredText(e.getCoveredText());
             var meta = e.getModel();
-            if(meta != null) emotion.setModel(meta.getModelName() + "__v::" + meta.getModelVersion());
+            if (meta != null) emotion.setModel(meta.getModelName() + "__v::" + meta.getModelVersion());
 
             var feelings = new ArrayList<Feeling>();
-            for(var annotationComment:e.getEmotions()){
+            for (var annotationComment : e.getEmotions()) {
                 var feeling = new Feeling();
                 feeling.setEmotion(emotion);
-                ExceptionUtils.tryCatchLog(() -> feeling.setValue(Double.parseDouble(annotationComment.getValue())), (ex) -> {});
+                ExceptionUtils.tryCatchLog(() -> feeling.setValue(Double.parseDouble(annotationComment.getValue())), (ex) -> {
+                });
                 feeling.setFeeling(annotationComment.getKey());
                 feelings.add(feeling);
             }
@@ -686,7 +689,7 @@ public class Importer {
     /**
      * Selects and sets the sentiment of a document
      */
-    private void setSentiments(Document document, JCas jCas){
+    private void setSentiments(Document document, JCas jCas) {
         var sentiments = new ArrayList<Sentiment>();
         JCasUtil.select(jCas, SentimentModel.class).forEach(s -> {
             var sentiment = new Sentiment(s.getBegin(), s.getEnd());
@@ -695,7 +698,7 @@ public class Importer {
             sentiment.setNeutral(s.getProbabilityNeutral());
             sentiment.setNegative(s.getProbabilityNegative());
             var meta = s.getModel();
-            if(meta != null) sentiment.setModel(meta.getModelName() + "__v::" + meta.getModelVersion());
+            if (meta != null) sentiment.setModel(meta.getModelName() + "__v::" + meta.getModelVersion());
 
             sentiments.add(sentiment);
         });
@@ -1156,19 +1159,35 @@ public class Importer {
     private void setTaxonomy(Document document, JCas jCas, CorpusConfig corpusConfig) {
         var biofidTaxa = new ArrayList<BiofidTaxon>();
 
-        // Handle Verified GNFinder taxa
+        // Handle Verified GNFinder taxa (verified and not)
         var gnFinderTaxa = new ArrayList<GnFinderTaxon>();
+
+        // Not Verified
+        JCasUtil.select(jCas, org.texttechnologylab.annotation.biofid.gnfinder.Taxon.class).forEach(t -> {
+            var taxon = new GnFinderTaxon(t.getBegin(), t.getEnd());
+            taxon.setValue(t.getValue());
+            taxon.setDocument(document);
+            taxon.setCoveredText(t.getCoveredText());
+            taxon.setOddsLog10(t.getOddsLog10());
+            taxon.setIdentifier(t.getIdentifier()); // the identifier is empty
+            // Can't enrich it since we have no identifier.
+            gnFinderTaxa.add(taxon);
+        });
+
+        // Verified
         JCasUtil.select(jCas, org.texttechnologylab.annotation.biofid.gnfinder.VerifiedTaxon.class).forEach(t -> {
             var taxon = new GnFinderTaxon(t.getBegin(), t.getEnd());
             taxon.setValue(t.getValue());
             taxon.setDocument(document);
             taxon.setCoveredText(t.getCoveredText());
-            taxon.setIdentifier(t.getIdentifier());
+            taxon.setOddsLog10(t.getOddsLog10());
+            taxon.setVerified(true);
+
             ExceptionUtils.tryCatchLog(
                     () -> taxon.setRecordId(Long.parseLong(Arrays.stream(taxon.getIdentifier().split("/")).toList().getLast())),
                     (ex) -> logger.warn("Setting the recordId of a Taxon failed, but continuing the import: ", ex));
-            taxon.setOddsLog10(t.getOddsLog10());
             taxon.setMatchedName(t.getMatchedName());
+            taxon.setIdentifier(t.getIdentifier());
             taxon.setMatchedCanonical(t.getMatchedCanonicalFull());
 
             var biofidUrl = StringUtils.BIOFID_URL_BASE + taxon.getRecordId();
@@ -1188,6 +1207,7 @@ public class Importer {
             }
             gnFinderTaxa.add(taxon);
         });
+
         document.setGnFinderTaxons(gnFinderTaxa);
 
         // Handle Gazetteer Taxa
@@ -1220,7 +1240,8 @@ public class Importer {
                 // The potential biofid urls are like: https://www.biofid.de/bio-ontologies/gbif/10428508
                 for (var potentialBiofidId : splited) {
                     if (potentialBiofidId.isEmpty()) continue;
-                    if(potentialBiofidId.contains("gbif.org")) potentialBiofidId = StringUtils.gbifToBIOfidUrl(potentialBiofidId);
+                    if (potentialBiofidId.contains("gbif.org"))
+                        potentialBiofidId = StringUtils.gbifToBIOfidUrl(potentialBiofidId);
 
                     final var biofidId = potentialBiofidId;
                     // Before we do GbifOccurence stuff, we build specific BiofidTaxon objects if we can.
@@ -2049,8 +2070,7 @@ public class Importer {
                 if (comment.getReference() == pg) {
                     if (comment.getKey().startsWith("_uce_paragraph_config_header")) {
                         paragraph.setHeader(comment.getValue());
-                    }
-                    else if (comment.getKey().startsWith("_uce_paragraph_config_cssclass")) {
+                    } else if (comment.getKey().startsWith("_uce_paragraph_config_cssclass")) {
                         paragraph.setCssClass(comment.getValue());
                     }
                 }
