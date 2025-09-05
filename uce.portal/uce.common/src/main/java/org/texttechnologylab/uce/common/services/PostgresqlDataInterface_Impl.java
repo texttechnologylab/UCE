@@ -9,6 +9,7 @@ import org.hibernate.criterion.Restrictions;
 import org.hibernate.type.LongType;
 import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Service;
+import org.texttechnologylab.models.authentication.DocumentPermission;
 import org.texttechnologylab.uce.common.annotations.Searchable;
 import org.texttechnologylab.uce.common.config.HibernateConf;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
@@ -48,6 +49,7 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class PostgresqlDataInterface_Impl implements DataInterface {
@@ -75,6 +77,51 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         } catch (Exception ex) {
             SystemStatus.PostgresqlDbStatus = new HealthStatus(false, "Couldn't build the session factory.", ex);
         }
+    }
+
+    public void calculateEffectivePermissions(String username, Set<String> groups) throws DatabaseOperationException {
+        executeOperationSafely(session -> {
+            // Build a Postgres array literal from the groups set
+            // Escape single quotes to prevent SQL injection
+            String groupArrayLiteral = groups.stream()
+                    .map(s -> "'" + s.replace("'", "''") + "'")
+                    .collect(Collectors.joining(", "));
+
+            // If the set is empty, just use ARRAY[]::text[]
+            if (groupArrayLiteral.isEmpty()) {
+                groupArrayLiteral = ""; // Postgres accepts ARRAY[]::text[] as empty
+            }
+
+            String sql = String.format("""
+            WITH all_permissions AS (
+                SELECT dp.document_id, dp.level
+                FROM documentpermissions dp
+                WHERE dp.type = 1
+                  AND dp.name = :username
+                UNION ALL
+                SELECT dp.document_id, dp.level
+                FROM documentpermissions dp
+                WHERE dp.type = 0
+                  AND dp.name = ANY(ARRAY[%s])
+            ),
+            ranked AS (
+                SELECT document_id, MAX(level) AS max_level
+                FROM all_permissions
+                GROUP BY document_id
+            )
+            INSERT INTO documentpermissions (document_id, name, type, level)
+            SELECT r.document_id, :username, 2, r.max_level
+            FROM ranked r
+            ON CONFLICT (document_id, name, type)
+            DO UPDATE SET level = EXCLUDED.level;
+            """, groupArrayLiteral);
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("username", username);
+
+            query.executeUpdate();
+            return null;
+        });
     }
 
     public void executeSqlWithoutReturn(String sql) throws DatabaseOperationException {

@@ -86,10 +86,15 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.texttechnologylab</groupId>
+            <groupId>com.github.Myyyvothrr</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>uima-3-ba474b74bd-1</version>
+            <version>fcee936b3ed172b6da25f609b2bc138fa99a57a2</version>
         </dependency>
+<!--        <dependency>-->
+<!--            <groupId>com.github.mevbagci</groupId>-->
+<!--            <artifactId>UIMATypeSystem</artifactId>-->
+<!--            <version>3.0.17</version>-->
+<!--        </dependency>-->
         <!--<dependency>
             <groupId>org.texttechnologylab.annotation</groupId>
             <artifactId>typesystem</artifactId>

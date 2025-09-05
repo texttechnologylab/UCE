@@ -5,6 +5,7 @@ import org.hibernate.boot.MetadataSources;
 import org.hibernate.boot.registry.StandardServiceRegistryBuilder;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
+import org.texttechnologylab.models.authentication.DocumentPermission;
 import org.texttechnologylab.uce.common.models.biofid.BiofidTaxon;
 import org.texttechnologylab.uce.common.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.uce.common.models.biofid.GnFinderTaxon;
@@ -68,6 +69,7 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(LexiconEntry.class);
         metadataSources.addAnnotatedClass(Page.class);
         metadataSources.addAnnotatedClass(Document.class);
+        metadataSources.addAnnotatedClass(DocumentPermission.class);
         metadataSources.addAnnotatedClass(Corpus.class);
         metadataSources.addAnnotatedClass(CorpusTsnePlot.class);
         metadataSources.addAnnotatedClass(UCELog.class);

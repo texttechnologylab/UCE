@@ -9,6 +9,7 @@ import org.hibernate.annotations.BatchSize;
 import org.hibernate.annotations.Fetch;
 import org.hibernate.annotations.FetchMode;
 import org.hibernate.annotations.Filter;
+import org.texttechnologylab.models.authentication.DocumentPermission;
 import org.texttechnologylab.uce.common.models.Linkable;
 import org.texttechnologylab.uce.common.models.ModelBase;
 import org.texttechnologylab.uce.common.models.UIMAAnnotation;
@@ -233,6 +234,26 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<Image> images;
+
+    @Getter
+    @OneToMany(
+            mappedBy = "document",
+            cascade = CascadeType.ALL,      // propagate persist/remove
+            orphanRemoval = true,           // remove children when not referenced
+            fetch = FetchType.EAGER         // TODO permissions should be always loaded with the document
+    )
+    private Set<DocumentPermission> permissions = new HashSet<>();
+
+    // NOTE permissions should always be set using these methods to ensure both sides of the relation are in sync
+    public void addPermission(DocumentPermission permission) {
+        permissions.add(permission);
+        permission.setDocument(this);
+    }
+
+    public void removePermission(DocumentPermission permission) {
+        permissions.remove(permission);
+        permission.setDocument(null);
+    }
 
     public Document() {
         metadataTitleInfo = new MetadataTitleInfo();
