@@ -125,6 +125,7 @@ class DrawflowJS {
         if (Array.isArray(nodeDto.toNodes)) {
             nodeDto.toNodes.forEach((toNodeDto) => {
                 const toId = this.placeNodeDto(toNodeDto, depth + 2);
+                console.log(toNodeDto);
                 const label = toNodeDto.link.type;
                 const connectionKey = `${node.id}->${toId}:${label}`;
                 const reverseKey = `${toId}->${node.id}:${label}`;

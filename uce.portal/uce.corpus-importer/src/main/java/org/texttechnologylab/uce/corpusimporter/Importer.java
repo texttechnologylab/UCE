@@ -1169,7 +1169,7 @@ public class Importer {
             taxon.setDocument(document);
             taxon.setCoveredText(t.getCoveredText());
             taxon.setOddsLog10(t.getOddsLog10());
-            taxon.setIdentifier(t.getIdentifier()); // the identifier is empty
+            taxon.setIdentifier(t.getIdentifier()); // the identifier is probably empty
             // Can't enrich it since we have no identifier.
             gnFinderTaxa.add(taxon);
         });
@@ -1181,8 +1181,15 @@ public class Importer {
             taxon.setDocument(document);
             taxon.setCoveredText(t.getCoveredText());
             taxon.setOddsLog10(t.getOddsLog10());
-            taxon.setVerified(true);
+            taxon.setIdentifier(t.getIdentifier());
+            // Sometimes even verified gn finder taxa have no identifier?... This shouldn't happen while annotating.
+            // Maybe the verification server broke down.
+            if(taxon.getIdentifier() == null){
+                gnFinderTaxa.add(taxon);
+                return;
+            }
 
+            taxon.setVerified(true);
             ExceptionUtils.tryCatchLog(
                     () -> taxon.setRecordId(Long.parseLong(Arrays.stream(taxon.getIdentifier().split("/")).toList().getLast())),
                     (ex) -> logger.warn("Setting the recordId of a Taxon failed, but continuing the import: ", ex));
@@ -1273,6 +1280,27 @@ public class Importer {
      */
     private void setTimes(Document document, JCas jCas) {
         var times = new ArrayList<Time>();
+
+        // For some reason, this one corpus uses the heideltime time annotations instead of the ttlab time annotation...
+        // So we now have two - yeah!
+        // Heideltime
+        JCasUtil.select(jCas, de.unihd.dbs.uima.types.heideltime.Timex3.class).forEach(t -> {
+            var time = new Time(t.getBegin(), t.getEnd());
+            time.setValue(t.getTimexType());
+            time.setCoveredText(t.getCoveredText());
+
+            // Let's see if we can dissect the raw time string into more usable formats for our db.
+            var units = RegexUtils.dissectTimeAnnotationString(time.getCoveredText());
+            time.setYear(units.year);
+            time.setMonth(units.month);
+            time.setDay(units.day);
+            time.setDate(units.fullDate);
+            time.setSeason(units.season);
+
+            times.add(time);
+        });
+
+        // TTLab Time
         JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Time.class).forEach(t -> {
             var time = new Time(t.getBegin(), t.getEnd());
             time.setValue(t.getValue());

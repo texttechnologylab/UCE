@@ -177,7 +177,7 @@ public class WikiService {
         viewModel.setPage(taxon.getPage());
         viewModel.setOdds(1);
         if(clazz == GnFinderTaxon.class)
-            viewModel.setOdds(MathUtils.log10OddsToProbability(((GnFinderTaxon)taxon).getOddsLog10()));
+            viewModel.setOdds(((GnFinderTaxon)taxon).getOddsLog10());
         // We are not interested in the standard w3 XML triplets
         var biofidUrl = StringUtils.BIOFID_URL_BASE + taxon.getRecordId();
         viewModel.setNextRDFNodes(
