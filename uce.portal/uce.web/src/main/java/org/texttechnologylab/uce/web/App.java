@@ -169,6 +169,7 @@ public class App {
 
         var registry = new ApiRegistry(context, configuration, DUUIInputCounter);
 
+        var mapper = getJsonMapper();
         logger.info("Setting up the Javalin application...");
         var javalinApp = Javalin.create(config -> {
             try {
@@ -198,7 +199,7 @@ public class App {
             else {
                 logger.info("MCP server is disabled and will not be initialized.");
             }
-            config.jsonMapper(getJsonMapper());
+            config.jsonMapper(mapper);
         });
 
         // Define default exception handler. This shows an error view then in the body.
