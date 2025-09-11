@@ -113,7 +113,6 @@ public class ImportExportApi implements UceApi {
                 if (acceptedContentType != null && acceptedContentType.equals("application/json")) {
                     Map<String, Object> apiResult = new HashMap<>();
                     apiResult.put("document_id", newDocumentId);
-                    ctx.contentType("application/json");
                     ctx.json(apiResult);
                     return;
                 }
