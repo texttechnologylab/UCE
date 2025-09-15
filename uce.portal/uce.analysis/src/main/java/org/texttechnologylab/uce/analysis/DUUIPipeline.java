@@ -120,7 +120,7 @@ public class DUUIPipeline {
         HashMap<String, String> urls = new HashMap<>();
         urls.put("LanguageDetection", "http://language.service.component.duui.texttechnologylab.org");
         DUUIComposer composer = setListComposer(urls);
-        cas = runPipeline(cas, composer);
+        //cas = runPipeline(cas, composer);
         // Assuming the language detection component sets the language in the JCas
         String language = "en";
         language = cas.getDocumentLanguage();

@@ -79,7 +79,7 @@
       "enableAnalysisEngine": true
     },
     "authentication": {
-      "isActivated": true,
+      "isActivated": false,
       "publicUrl": "http://localhost:8080",
       "redirectUrl": "http://localhost:4567/auth"
     },
