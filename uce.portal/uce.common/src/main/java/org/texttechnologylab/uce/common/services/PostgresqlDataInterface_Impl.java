@@ -330,6 +330,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             if (user != null) {
                 // only show documents where the effective permissions (2) for this user are at least READ (1)
+                // or allow access if there are no permissions set at all
                 sql = """
                     SELECT * FROM document doc
                     LEFT JOIN documentpermissions dp ON dp.document_id = doc.id
