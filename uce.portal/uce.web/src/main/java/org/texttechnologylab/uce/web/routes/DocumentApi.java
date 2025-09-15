@@ -168,7 +168,6 @@ public class DocumentApi implements UceApi {
 
     public void getSingleDocumentReadView(Context ctx) {
         var model = new HashMap<String, Object>();
-        var gson = new Gson();
 
         var id = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("id"),
                 (ex) -> logger.error("Error: the url for the document reader requires an 'id' query parameter. " +
@@ -183,7 +182,9 @@ public class DocumentApi implements UceApi {
                 (ex) -> logger.warn("Opening a document view but no searchId parameter was provided. Currently, this shouldn't happen, but it didn't stop the procedure."));
 
         try {
-            var doc = db.getCompleteDocumentById(Long.parseLong(id), 0, 10);
+            UceUser user = ctx.sessionAttribute("uceUser");
+
+            var doc = db.getCompleteDocumentById(Long.parseLong(id), 0, 10, user);
             model.put("document", doc);
 
             var corpus = db.getCorpusById(doc.getCorpusId());
@@ -310,8 +311,9 @@ public class DocumentApi implements UceApi {
         }
 
         try {
+            UceUser user = ctx.sessionAttribute("uceUser");
             var skip = Integer.parseInt(ctx.queryParam("skip"));
-            var doc = db.getCompleteDocumentById(Long.parseLong(id), skip, 10);
+            var doc = db.getCompleteDocumentById(Long.parseLong(id), skip, 10, user);
             var annotations = doc.getAllAnnotations(skip, 10);
             model.put("documentAnnotations", annotations);
             model.put("documentText", doc.getFullText());

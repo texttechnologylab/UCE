@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.uce.common.config.CorpusConfig;
 import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
+import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.models.search.DocumentSearchResult;
 import org.texttechnologylab.uce.common.models.search.SearchType;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
@@ -62,7 +63,7 @@ public class Search_SemanticRoleImpl implements Search {
     }
 
     @Override
-    public SearchState initSearch() {
+    public SearchState initSearch(UceUser user) {
         var documentSearchResult = executeSearchOnDatabases(true);
         if (documentSearchResult == null)
             throw new NullPointerException("Semantic Role Init Search returned null - not empty.");
@@ -81,7 +82,7 @@ public class Search_SemanticRoleImpl implements Search {
     }
 
     @Override
-    public SearchState getSearchHitsForPage(int page) {
+    public SearchState getSearchHitsForPage(int page, UceUser user) {
         // Adjust the current page and execute the search again
         this.searchState.setCurrentPage(page);
         var documentSearchResult = executeSearchOnDatabases(false);

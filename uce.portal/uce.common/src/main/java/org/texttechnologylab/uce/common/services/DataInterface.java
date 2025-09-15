@@ -147,7 +147,8 @@ public interface DataInterface {
                                                                    SearchOrder order,
                                                                    OrderByColumn orderedByColumn,
                                                                    long corpusId,
-                                                                   List<UCEMetadataFilterDto> filters)
+                                                                   List<UCEMetadataFilterDto> filters,
+                                                                   UceUser user)
         throws DatabaseOperationException;
     /**
      * Searches for documents with a variety of criterias. It's the main db search of the biofid portal
@@ -291,7 +292,7 @@ public interface DataInterface {
     /**
      * Gets a complete document, alongside its lists, from the database.
      */
-    public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) throws DatabaseOperationException;
+    public Document getCompleteDocumentById(long id, int skipPages, int pageLimit, UceUser user) throws DatabaseOperationException;
 
     /**
      * Saves or updates an ImportLog belonging to a UCEImport.

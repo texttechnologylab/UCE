@@ -3,12 +3,15 @@ package org.texttechnologylab.uce.common.services;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.*;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.type.LongType;
 import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Service;
+import org.texttechnologylab.models.authentication.DocumentPermission;
 import org.texttechnologylab.uce.common.annotations.Searchable;
 import org.texttechnologylab.uce.common.config.HibernateConf;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
@@ -53,6 +56,7 @@ import java.util.stream.Collectors;
 
 @Service
 public class PostgresqlDataInterface_Impl implements DataInterface {
+    private static final Logger logger = LogManager.getLogger(PostgresqlDataInterface_Impl.class);
 
     private final SessionFactory sessionFactory;
 
@@ -786,7 +790,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                                    SearchOrder order,
                                                                    OrderByColumn orderedByColumn,
                                                                    long corpusId,
-                                                                   List<UCEMetadataFilterDto> filters) throws DatabaseOperationException {
+                                                                   List<UCEMetadataFilterDto> filters,
+                                                                   UceUser user) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
             HashMap<String, List<String>> tableSubstrings = new HashMap<>();
             tableSubstrings.put("cue", cue);
@@ -1030,7 +1035,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         }
                         CompleteNegation negComp = getCompleteNegationById(negId);
                         //Document doc = getCompleteDocumentById((long) negSorted.get(negId).getFirst().getDocumentId(), 0, 9999999);
-                        Document doc = getCompleteDocumentById(negComp.getDocumentId(), 0, 9999999);
+                        Document doc = getCompleteDocumentById(negComp.getDocumentId(), 0, 9999999, user);
                         PageSnippet pageSnippet = new PageSnippet();
 
                         String snippet = doc.getFullTextSnippetCharOffset(Math.max(minBegin - 100, 0), Math.min(maxEnd + 100, minBegin + 500));
@@ -1649,9 +1654,48 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) throws DatabaseOperationException {
+    public boolean userHasPermission(Document document, UceUser user, DocumentPermission.DOCUMENT_PERMISSION_LEVEL level) {
+        Set<DocumentPermission> documentPermissions = document.getPermissions();
+
+        // check for permissions if the document has any
+        // if not, assume this is a "public" document and allow read access
+        // this will keep backwards compatibility with older versions
+        if (documentPermissions == null || documentPermissions.isEmpty()) {
+            logger.info("Document {} has no permissions, assuming public read access", document.getId());
+            return true;
+        }
+
+        // if not public, a user is required
+        if (user == null) {
+            logger.warn("No user provided for permission check on document {}, denying access", document.getId());
+            return false;
+        }
+
+        // else check if this specific user has the required permission level
+        for (DocumentPermission permission : documentPermissions) {
+            // only need to check effective permissions
+            if (permission.getType() == DocumentPermission.DOCUMENT_PERMISSION_TYPE.EFFECTIVE) {
+                // permission level is sufficient
+                if (permission.getLevel().ordinal() >= level.ordinal()) {
+                    // check if the permission applies to the user
+                    if (permission.getName().equals(user.getUsername())) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        logger.warn("User {} does not have sufficient permissions on document {}, denying access", user.getUsername(), document.getId());
+        return false;
+    }
+
+    public Document getCompleteDocumentById(long id, int skipPages, int pageLimit, UceUser user) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
+
+            if (!userHasPermission(doc, user, DocumentPermission.DOCUMENT_PERMISSION_LEVEL.READ)) {
+                return null;
+            }
 
             return initializeCompleteDocument(doc, skipPages, pageLimit);
         });
