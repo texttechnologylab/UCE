@@ -1,6 +1,8 @@
 package org.texttechnologylab.uce.analysis;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
@@ -14,11 +16,6 @@ import org.texttechnologylab.uce.analysis.typeClasses.TextClass;
 import java.time.Instant;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
-// Added imports (save .jcas, HTTP import, logging)
-//import java.nio.file.Path;
-//import java.nio.file.Paths;
-//import java.nio.file.Files;
-//import java.io.OutputStream;
 import java.io.InputStream;
 import java.io.DataOutputStream;
 import java.net.HttpURLConnection;
@@ -31,6 +28,8 @@ import java.util.*;
 public class RunDUUIPipeline {
     private static final AnalysisCache analysisCache = new AnalysisCache();
     private static final ThreadLocal<String> lastAnalysisIdTL = new ThreadLocal<>();
+    private static final Logger logger = LogManager.getLogger(RunDUUIPipeline.class);
+
 
     public static AnalysisSession getCachedSession(String analysisId) { return analysisCache.get(analysisId); }
 
@@ -214,13 +213,13 @@ public class RunDUUIPipeline {
             newCas.setDocumentText(text);
             cas = newCas;
 
-            System.out.println("[CAS] Created secondary JCas for special models (fact/coherence/stance/LLM)");
+            logger.info("[CAS] Created secondary JCas for special models (fact/coherence/stance/LLM)");
 
         }
         // run pipeline
         DUUIComposer composer = pipeline.setComposer(modelInfosMap);
         JCas result = pipeline.runPipeline(cas, composer);
-        System.out.println("[CAS] Final result JCas created via pipeline.runPipeline(cas, composer)");
+        logger.info("[CAS] Final result JCas created via pipeline.runPipeline(cas, composer)");
         // get results
         Object[] results = pipeline.getJCasResults(result, modelInfosList, ttlabScorerGroups, cohmetrixScorerGroups);
         // print results
@@ -271,7 +270,7 @@ public class RunDUUIPipeline {
         );
         analysisCache.put(session);
         lastAnalysisIdTL.set(analysisId);
-        System.out.println("[CACHE] Added analysisId=" + analysisId + " (stored in memory; TTL=45min)");
+        logger.info("[CACHE] Added analysisId=" + analysisId + " (stored in memory; TTL=45min)");
         return duuiInformation;
     }
 
@@ -364,7 +363,7 @@ public class RunDUUIPipeline {
                 AnalysisSession s = entry.getValue();
                 if (now - s.createdAtMillis > ttlMillis) {
                     map.remove(entry.getKey());
-                    System.out.println("[CRON] Removed expired session: " + s.analysisId);
+                    logger.info("[CRON] Removed expired session: " + s.analysisId);
                 }
             }
         }
@@ -377,12 +376,12 @@ public class RunDUUIPipeline {
             try {
                 analysisCache.cleanupExpired();
             } catch (Exception e) {
-                System.err.println("[CACHE] Cache cleanup failed: " + e.getMessage());
+                logger.error("[CACHE] Cache cleanup failed: " + e.getMessage());
             }
         }, 5, 5, java.util.concurrent.TimeUnit.MINUTES);
 
         scheduler.scheduleAtFixedRate(() -> {
-            System.out.println("[CACHE] Running cache cleanup task...");
+            logger.info("[CACHE] Running cache cleanup task...");
             analysisCache.cleanupExpired();  // your cleanup method
         }, 1, 5, TimeUnit.MINUTES);
 
@@ -494,7 +493,7 @@ public class RunDUUIPipeline {
 
         // Send multipart as XMI
         String filename = "cas_" + analysisId + ".xmi";
-        System.out.println("[IMPORT][HTTP] POST " + importUrl
+        logger.info("[IMPORT][HTTP] POST " + importUrl
                 + " corpusId=" + corpusId + " analysisId=" + analysisId
                 + " documentId=" + documentId + " casView=" + casView
                 + " file=" + filename + " (" + casBytes.length + " bytes)");
@@ -507,7 +506,7 @@ public class RunDUUIPipeline {
                 "application/xml",
                 casBytes
         );
-        System.out.println("[IMPORT][HTTP] status=" + res.status
+        logger.info("[IMPORT][HTTP] status=" + res.status
                 + (res.locationHeader != null ? " Location=" + res.locationHeader : "")
                 + (res.body != null && !res.body.isBlank() ? " body=" + res.body : ""));
         return res;
