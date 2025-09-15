@@ -10,6 +10,7 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.uce.common.config.CorpusConfig;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
 import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
+import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.models.corpus.UCEMetadataValueType;
 import org.texttechnologylab.uce.common.models.search.SearchType;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
@@ -82,9 +83,11 @@ public class DocumentApi implements UceApi {
                 (ex) -> logger.error("Error: couldn't determine the page, defaulting to page 1 then. ", ex));
         if (page == null) page = 1;
 
+        UceUser uceUser = ctx.sessionAttribute("uceUser");
+
         try {
             var take = 10;
-            var documents = db.getDocumentsByCorpusId(corpusId, (page - 1) * take, take);
+            var documents = db.getDocumentsByCorpusId(corpusId, (page - 1) * take, take, uceUser);
 
             model.put("requestId", ctx.attribute("id"));
             model.put("documents", documents);

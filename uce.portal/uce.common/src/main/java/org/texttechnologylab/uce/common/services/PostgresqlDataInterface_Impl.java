@@ -9,7 +9,6 @@ import org.hibernate.criterion.Restrictions;
 import org.hibernate.type.LongType;
 import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Service;
-import org.texttechnologylab.models.authentication.DocumentPermission;
 import org.texttechnologylab.uce.common.annotations.Searchable;
 import org.texttechnologylab.uce.common.config.HibernateConf;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
@@ -17,6 +16,7 @@ import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
 import org.texttechnologylab.uce.common.models.Linkable;
 import org.texttechnologylab.uce.common.models.ModelBase;
 import org.texttechnologylab.uce.common.models.UIMAAnnotation;
+import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.models.biofid.BiofidTaxon;
 import org.texttechnologylab.uce.common.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.uce.common.models.biofid.GnFinderTaxon;
@@ -322,15 +322,35 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException {
+    public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take, UceUser user) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             // TODO: Hardcoded sql, but another instance where hibernate is fucking unusable. This SQL in HQL or whatever
             // crooked syntax is a million times slower. I'll just leave the raw sql here then.
             var sql = "SELECT * FROM document WHERE corpusid = :corpusId ORDER BY id LIMIT :take OFFSET :skip";
+
+            if (user != null) {
+                // only show documents where the effective permissions (2) for this user are at least READ (1)
+                sql = """
+                    SELECT * FROM document doc
+                    LEFT JOIN documentpermissions dp ON dp.document_id = doc.id
+                    WHERE doc.corpusid = :corpusId
+                        AND (
+                            dp.document_id IS NULL
+                            OR (dp.type = 2 AND dp.name = :user AND dp.level >= 1)
+                        )
+                    ORDER BY doc.id
+                    LIMIT :take
+                    OFFSET :skip
+                    """;
+            }
+
             var query = session.createNativeQuery(sql, Document.class)
                     .setParameter("corpusId", corpusId)
                     .setParameter("take", take)
                     .setParameter("skip", skip);
+            if (user != null) {
+                query.setParameter("user", user.getUsername());
+            }
 
             var documents = query.getResultList();
 

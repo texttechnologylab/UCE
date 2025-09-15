@@ -1,6 +1,7 @@
 package org.texttechnologylab.uce.common.services;
 
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
+import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.models.biofid.BiofidTaxon;
 import org.texttechnologylab.uce.common.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.uce.common.models.biofid.GnFinderTaxon;
@@ -71,7 +72,7 @@ public interface DataInterface {
      * Gets all documents that belong to the given corpus
      *
      */
-    public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException;
+    public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take, UceUser user) throws DatabaseOperationException;
 
     /**
      * Gets all DocumentLinks that belong to a document.
