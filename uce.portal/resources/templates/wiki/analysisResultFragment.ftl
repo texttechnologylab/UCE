@@ -1,22 +1,26 @@
 <#if analysisId??>
-          <div class="mb-3">
-            <button id="saveCasBtn" data-analysis-id="${analysisId}" class="btn btn-primary">
-               Save CAS
-            </button>
-          </div>
+  <div class="mb-3" style="display:flex; align-items:center; gap:8px;">
+    <button id="saveCasBtn" data-analysis-id="${analysisId}" class="btn btn-primary">Save CAS</button>
+    <label for="corpusIdInput" class="mb-0">Corpus ID</label>
+    <input type="number" id="corpusIdInput" class="form-control form-control-sm" style="max-width:140px;">
+  </div>
 
-          <script>
-            document.getElementById("saveCasBtn").addEventListener("click", function() {
-              const analysisId = this.dataset.analysisId;
-              fetch("/api/analysis/importCas?analysisId=" + analysisId, {
-                method: "POST"
-              })
-              .then(resp => resp.text())
-              .then(msg => alert("Server response: " + msg))
-              .catch(err => alert("Error: " + err));
-            });
-          </script>
-        </#if>
+  <script>
+    document.getElementById("saveCasBtn").addEventListener("click", function () {
+      const analysisId = this.dataset.analysisId;
+      const corpusId = document.getElementById("corpusIdInput").value; // no checks
+
+      fetch(
+        "/api/analysis/importCas?analysisId=" + encodeURIComponent(analysisId) +
+        "&corpusId=" + encodeURIComponent(corpusId),
+        { method: "POST" }
+      )
+      .then(r => r.text())
+      .then(msg => alert("Server response: " + msg))
+      .catch(err => alert("Error: " + err));
+    });
+  </script>
+</#if>
         <#if DUUI??>
             <#if DUUI.modelGroups?has_content>
                 <#if DUUI.isTopic>

@@ -185,7 +185,7 @@ public class AnalysisApi implements UceApi {
             ctx.render("defaultError.ftl");
         }
     }
-    //  NEW IMPORT ROUTE (Javalin)
+    //   IMPORT ROUTE
     @Authentication(required = Authentication.Requirement.LOGGED_IN,
             route = Authentication.RouteTypes.POST,
             path = "/api/analysis/importCas"
@@ -206,26 +206,17 @@ public class AnalysisApi implements UceApi {
             }
 
             // send to importer
-            long corpusId = Long.parseLong(System.getenv().getOrDefault("UCE_IMPORT_CORPUS_ID", "1"));
-            String documentId = null; // String documentId = "doc-" + analysisId;
-            String casView = null;
-
-            try {
-                RunDUUIPipeline.sendToImporterViaHttp(
-                        "http://localhost:4567/api/ie/upload/uima",
-                        analysisId, corpusId, documentId, casView
-                );
-            } catch (Exception e) {
-                e.printStackTrace();
-                ctx.status(500).result("Importer HTTP failed: " + e.getMessage());
-                return;
-            }
-
+            long corpusId = Long.parseLong(ctx.queryParam("corpusId")); // from ?corpusId=...
+            RunDUUIPipeline.sendToImporterViaHttp(
+                    "http://localhost:4567/api/ie/upload/uima",
+                    analysisId, corpusId, analysisId, null
+            );
             ctx.status(200).result("CAS imported successfully for analysisId=" + analysisId);
-
-        } catch (Exception ex) {
-            logger.error("Error importing CAS", ex);
-            ctx.status(500).result("Error importing CAS: " + ex.getMessage());
+        } catch (NumberFormatException nfe) {
+            ctx.status(400).result("corpusId is required and must be a number");
+        } catch (Exception e) {
+            logger.error("Error importing CAS", e);
+            ctx.status(500).result("Error importing CAS: " + e.getMessage());
         }
     };
 }
