@@ -86,9 +86,9 @@
         </dependency>
 
         <dependency>
-            <groupId>com.github.TheItCrOw</groupId>
+            <groupId>com.github.texttechnologylab</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>3.0.11</version>
+            <version>09ae3a8372</version>
         </dependency>
 
         <!-- https://mvnrepository.com/artifact/org.apache.maven.plugins/maven-shade-plugin -->
