@@ -2,10 +2,12 @@ package org.texttechnologylab.uce.web;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import freemarker.template.Configuration;
 import io.javalin.Javalin;
 import io.javalin.config.JavalinConfig;
 import io.javalin.http.staticfiles.Location;
+import io.javalin.json.JsonMapper;
 import io.modelcontextprotocol.server.McpServer;
 import io.modelcontextprotocol.server.McpSyncServer;
 import io.modelcontextprotocol.server.transport.HttpServletStreamableServerTransportProvider;
@@ -18,6 +20,7 @@ import org.apache.commons.cli.ParseException;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.eclipse.jetty.servlet.ServletHolder;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.AnnotationConfigApplicationContext;
 import org.texttechnologylab.uce.analysis.modules.CohMetrixInfo;
@@ -43,6 +46,7 @@ import org.texttechnologylab.uce.web.freeMarker.RequestContextHolder;
 import org.texttechnologylab.uce.web.routes.*;
 
 import java.io.*;
+import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
@@ -165,6 +169,7 @@ public class App {
 
         var registry = new ApiRegistry(context, configuration, DUUIInputCounter);
 
+        var mapper = getJsonMapper();
         logger.info("Setting up the Javalin application...");
         var javalinApp = Javalin.create(config -> {
             try {
@@ -194,6 +199,7 @@ public class App {
             else {
                 logger.info("MCP server is disabled and will not be initialized.");
             }
+            config.jsonMapper(mapper);
         });
 
         // Define default exception handler. This shows an error view then in the body.
@@ -507,5 +513,25 @@ public class App {
                         });
                     });
                 });
+    }
+
+    private static JsonMapper getJsonMapper() {
+        Gson gson = new GsonBuilder().create();
+        return new JsonMapper() {
+            @NotNull
+            @Override
+            public String toJsonString(@NotNull Object obj, @NotNull Type type) {
+                if (type == String.class) {
+                    return (String) obj;
+                }
+                return gson.toJson(obj, type);
+            }
+
+            @NotNull
+            @Override
+            public <T> T fromJsonString(@NotNull String json, @NotNull Type targetType) {
+                return gson.fromJson(json, targetType);
+            }
+        };
     }
 }

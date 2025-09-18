@@ -167,13 +167,13 @@ public class Importer {
     public void start(int numThreads) throws DatabaseOperationException {
         logger.info(
                 "\n _   _ _____  _____   _____                           _   \n" +
-                "| | | /  __ \\|  ___| |_   _|                         | |  \n" +
-                "| | | | /  \\/| |__     | | _ __ ___  _ __   ___  _ __| |_ \n" +
-                "| | | | |    |  __|    | || '_ ` _ \\| '_ \\ / _ \\| '__| __|\n" +
-                "| |_| | \\__/\\| |___   _| || | | | | | |_) | (_) | |  | |_ \n" +
-                " \\___/ \\____/\\____/   \\___/_| |_| |_| .__/ \\___/|_|   \\__|\n" +
-                "                                    | |                   \n" +
-                "                                    |_|"
+                        "| | | /  __ \\|  ___| |_   _|                         | |  \n" +
+                        "| | | | /  \\/| |__     | | _ __ ___  _ __   ___  _ __| |_ \n" +
+                        "| | | | |    |  __|    | || '_ ` _ \\| '_ \\ / _ \\| '__| __|\n" +
+                        "| |_| | \\__/\\| |___   _| || | | | | | |_) | (_) | |  | |_ \n" +
+                        " \\___/ \\____/\\____/   \\___/_| |_| |_| .__/ \\___/|_|   \\__|\n" +
+                        "                                    | |                   \n" +
+                        "                                    |_|"
         );
         logger.info("===========> Global Import Id: " + importId);
         logger.info("===========> Importer Number: " + importerNumber);
@@ -224,31 +224,17 @@ public class Importer {
         // NOTE the config is not updated if the corpus already exists!
         // TODO compare configs and show a warning if they differ (except name, ...)
         try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString(), StandardCharsets.UTF_8)) {
-
             corpusConfig = gson.fromJson(reader, CorpusConfig.class);
-            corpus.setName(corpusConfig.getName());
-            corpus.setLanguage(corpusConfig.getLanguage());
-            corpus.setAuthor(corpusConfig.getAuthor());
-            corpus.setCorpusJsonConfig(gson.toJson(corpusConfig));
-
-            // Let's check if we already have a corpus with that name and
-            // if we want to add to that in the config.
-            if (corpusConfig.isAddToExistingCorpus()) {
-                final var corpusConfig1 = corpusConfig; // This sucks so hard - why doesn't java just do this itself if needed?
-                var existingCorpus = ExceptionUtils.tryCatchLog(() -> db.getCorpusByName(corpusConfig1.getName()),
-                        (ex) -> logger.error("Error getting an existing corpus by name. The corpus config should probably be changed " +
-                                             "to not add to existing corpus then.", ex));
-
-                if (existingCorpus != null) { // If we have the corpus, use that. Else store the new corpus.
+            try {
+                Corpus existingCorpus = CreateDBCorpus(corpus, corpusConfig, db);
+                if (existingCorpus != null) {
                     corpus = existingCorpus;
-                    // In case that we have a corpus already, we load the existing filters if they exist.
-                    if (corpusConfig.getAnnotations().isUceMetadata())
-                        this.uceMetadataFilters = new CopyOnWriteArrayList<>(db.getUCEMetadataFiltersByCorpusId(corpus.getId()));
-                } else {
-                    final var corpus1 = corpus;
-                    ExceptionUtils.tryCatchLog(() -> db.saveCorpus(corpus1),
-                            (ex) -> logger.error("Error saving the corpus.", ex));
+                    if (corpusConfig.getAnnotations().isUceMetadata()) {
+                        this.uceMetadataFilters = new CopyOnWriteArrayList<>(db.getUCEMetadataFiltersByCorpusId(existingCorpus.getId()));
+                    }
                 }
+            } catch (DatabaseOperationException e) {
+                throw new DatabaseOperationException("Error creating or fetching the corpus from the database - cancelling import.", e);
             }
         } catch (JsonIOException | JsonSyntaxException | IOException e) {
             throw new MissingResourceException(
@@ -380,6 +366,33 @@ public class Importer {
 
         logger.info("\n\n=================================\n Done with the corpus import.");
         executor.shutdown();
+    }
+
+    /**
+     *
+     * @param corpus
+     * @param corpusConfig
+     * @param db
+     * @return A {@link Corpus} object if an existing corpus was found otherwise null
+     */
+    public static Corpus CreateDBCorpus(Corpus corpus, CorpusConfig corpusConfig, PostgresqlDataInterface_Impl db) throws DatabaseOperationException {
+        corpus.setName(corpusConfig.getName());
+        corpus.setLanguage(corpusConfig.getLanguage());
+        corpus.setAuthor(corpusConfig.getAuthor());
+        corpus.setCorpusJsonConfig(gson.toJson(corpusConfig));
+
+        // Let's check if we already have a corpus with that name and
+        // if we want to add to that in the config.
+        if (corpusConfig.isAddToExistingCorpus()) {
+            var existingCorpus = db.getCorpusByName(corpusConfig.getName());
+            if (existingCorpus != null) { // If we have the corpus, use that.
+                return existingCorpus;
+            }
+            throw new DatabaseOperationException("The corpus config specified to add to an existing corpus, " +
+                    "but no corpus with the name " + corpusConfig.getName() + " exists.");
+        }
+        db.saveCorpus(corpus);
+        return null;
     }
 
     /**
@@ -515,7 +528,7 @@ public class Importer {
             var exists = db.documentExists(corpus.getId(), document.getDocumentId());
             if (exists) {
                 logger.info("Document with id " + document.getDocumentId()
-                            + " already exists in the corpus " + corpus.getId() + ".");
+                        + " already exists in the corpus " + corpus.getId() + ".");
                 logger.info("Checking if that document was also post-processed yet...");
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
                 if (!existingDoc.isPostProcessed()) {
@@ -960,8 +973,8 @@ public class Importer {
             if (documentAnnotation != null) {
                 try {
                     metadataTitleInfo.setPublished(documentAnnotation.getDateDay() + "."
-                                                   + documentAnnotation.getDateMonth() + "."
-                                                   + documentAnnotation.getDateYear());
+                            + documentAnnotation.getDateMonth() + "."
+                            + documentAnnotation.getDateYear());
                     metadataTitleInfo.setAuthor(documentAnnotation.getAuthor());
                 } catch (Exception ex) {
                     logger.warn("Tried extracting DocumentAnnotation type, it caused an error. Import will be continued as usual.");
@@ -1191,7 +1204,7 @@ public class Importer {
             taxon.setDocument(document);
             taxon.setCoveredText(t.getCoveredText());
             taxon.setOddsLog10(t.getOddsLog10());
-            taxon.setIdentifier(t.getIdentifier()); // the identifier is empty
+            taxon.setIdentifier(t.getIdentifier()); // the identifier is probably empty
             // Can't enrich it since we have no identifier.
             gnFinderTaxa.add(taxon);
         });
@@ -1203,8 +1216,15 @@ public class Importer {
             taxon.setDocument(document);
             taxon.setCoveredText(t.getCoveredText());
             taxon.setOddsLog10(t.getOddsLog10());
-            taxon.setVerified(true);
+            taxon.setIdentifier(t.getIdentifier());
+            // Sometimes even verified gn finder taxa have no identifier?... This shouldn't happen while annotating.
+            // Maybe the verification server broke down.
+            if(taxon.getIdentifier() == null){
+                gnFinderTaxa.add(taxon);
+                return;
+            }
 
+            taxon.setVerified(true);
             ExceptionUtils.tryCatchLog(
                     () -> taxon.setRecordId(Long.parseLong(Arrays.stream(taxon.getIdentifier().split("/")).toList().getLast())),
                     (ex) -> logger.warn("Setting the recordId of a Taxon failed, but continuing the import: ", ex));
@@ -1295,6 +1315,27 @@ public class Importer {
      */
     private void setTimes(Document document, JCas jCas) {
         var times = new ArrayList<Time>();
+
+        // For some reason, this one corpus uses the heideltime time annotations instead of the ttlab time annotation...
+        // So we now have two - yeah!
+        // Heideltime
+        JCasUtil.select(jCas, de.unihd.dbs.uima.types.heideltime.Timex3.class).forEach(t -> {
+            var time = new Time(t.getBegin(), t.getEnd());
+            time.setValue(t.getTimexType());
+            time.setCoveredText(t.getCoveredText());
+
+            // Let's see if we can dissect the raw time string into more usable formats for our db.
+            var units = RegexUtils.dissectTimeAnnotationString(time.getCoveredText());
+            time.setYear(units.year);
+            time.setMonth(units.month);
+            time.setDay(units.day);
+            time.setDate(units.fullDate);
+            time.setSeason(units.season);
+
+            times.add(time);
+        });
+
+        // TTLab Time
         JCasUtil.select(jCas, org.texttechnologylab.annotation.type.Time.class).forEach(t -> {
             var time = new Time(t.getBegin(), t.getEnd());
             time.setValue(t.getValue());

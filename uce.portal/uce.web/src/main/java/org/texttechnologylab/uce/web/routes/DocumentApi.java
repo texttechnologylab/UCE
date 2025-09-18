@@ -233,10 +233,7 @@ public class DocumentApi implements UceApi {
 
             Map<String, Object> result = new HashMap<>();
             result.put("document_ids", documentIds);
-
-            var resultJson = new Gson().toJson(result);
-            ctx.contentType("application/json");
-            ctx.json(resultJson);
+            ctx.json(result);
         }
         catch (Exception ex) {
             logger.error(ex);
@@ -268,10 +265,7 @@ public class DocumentApi implements UceApi {
 
             Map<String, Object> result = new HashMap<>();
             result.put("document_id", documentId);
-
-            var resultJson = new Gson().toJson(result);
-            ctx.contentType("application/json");
-            ctx.json(resultJson);
+            ctx.json(result);
         }
         catch (Exception ex) {
             logger.error(ex);
@@ -294,9 +288,7 @@ public class DocumentApi implements UceApi {
         result.put("status", "success");
         result.put("message", "NOTE Document deletion is not fully implemented yet.");
 
-        var resultJson = new Gson().toJson(result);
-        ctx.contentType("application/json");
-        ctx.json(resultJson);
+        ctx.json(result);
     }
 
     public void getPagesListView(Context ctx) {
@@ -350,7 +342,6 @@ public class DocumentApi implements UceApi {
                 result.add(topicMap);
             }
 
-            ctx.contentType("application/json");
             ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting document topics.", ex);
@@ -382,7 +373,6 @@ public class DocumentApi implements UceApi {
                 result.add(pageMap);
             }
 
-            ctx.contentType("application/json");
             ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting taxon counts.", ex);
@@ -411,7 +401,6 @@ public class DocumentApi implements UceApi {
                 result.add(pageMap);
             }
 
-            ctx.contentType("application/json");
             ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting document topics.", ex);
@@ -442,7 +431,6 @@ public class DocumentApi implements UceApi {
                 result.add(pageMap);
             }
 
-            ctx.contentType("application/json");
             ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting document entities.", ex);
@@ -473,7 +461,6 @@ public class DocumentApi implements UceApi {
                 result.add(pageMap);
             }
 
-            ctx.contentType("application/json");
             ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting document lemma.", ex);
@@ -503,7 +490,6 @@ public class DocumentApi implements UceApi {
                 result.add(pageMap);
             }
 
-            ctx.contentType("application/json");
             ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting document geoname.", ex);
@@ -534,7 +520,6 @@ public class DocumentApi implements UceApi {
                 result.add(topicEntityMap);
             }
 
-            ctx.contentType("application/json");
             ctx.json(result);
         } catch (Exception ex) {
             logger.error("Error getting sentence topics with entities.", ex);
@@ -576,7 +561,6 @@ public class DocumentApi implements UceApi {
                 result.add(topicMap);
             }
 
-            ctx.contentType("application/json");
             ctx.json(result);
 
         } catch (Exception ex) {
@@ -607,7 +591,6 @@ public class DocumentApi implements UceApi {
                 result.add(mapEntry);
             }
 
-            ctx.contentType("application/json");
             ctx.json(result);
 
         } catch (Exception ex) {

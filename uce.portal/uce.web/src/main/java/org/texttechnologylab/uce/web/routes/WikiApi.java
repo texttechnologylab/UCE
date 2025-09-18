@@ -328,7 +328,8 @@ public class WikiApi implements UceApi {
                 linkableDto.toNodes.add(newLinkableDto);
             }
 
-            ctx.json(linkableDto);
+            ctx.result(gson.toJson(linkableDto));
+            //ctx.json(linkableDto);
         } catch (Exception ex) {
             logger.error("Error getting linkable - best refer to the last logged API call " +
                          "with id=" + ctx.attribute("id") + " to this endpoint for URI parameters.", ex);
