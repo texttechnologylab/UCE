@@ -19,6 +19,39 @@ const topicColorMapKey = `settings:`+documentId+`:topicColorMap`;
 const topicSettings = JSON.parse(localStorage.getItem(settingsKey)) || defaultTopicSettings;
 let topicColorMap = topicSettings.topicColorMap;
 
+function setupImageZoomOverlay() {
+    // Zoom overlay for images
+    window.uceDocumentViewerOverlay = document.createElement('div');
+    window.uceDocumentViewerOverlay.style.position = 'fixed';
+    window.uceDocumentViewerOverlay.style.top = 0;
+    window.uceDocumentViewerOverlay.style.left = 0;
+    window.uceDocumentViewerOverlay.style.width = '100vw';
+    window.uceDocumentViewerOverlay.style.height = '100vh';
+    window.uceDocumentViewerOverlay.style.backgroundColor = 'rgba(0,0,0,0.8)';
+    window.uceDocumentViewerOverlay.style.display = 'none';
+    window.uceDocumentViewerOverlay.style.justifyContent = 'center';
+    window.uceDocumentViewerOverlay.style.alignItems = 'center';
+    window.uceDocumentViewerOverlay.style.zIndex = 9999;
+    window.uceDocumentViewerOverlay.style.cursor = 'zoom-out';
+    document.body.appendChild(window.uceDocumentViewerOverlay);
+
+    window.uceDocumentViewerOverlayImg = document.createElement('img');
+    window.uceDocumentViewerOverlayImg.style.maxWidth = '95%';
+    window.uceDocumentViewerOverlayImg.style.maxHeight = '95%';
+    window.uceDocumentViewerOverlay.appendChild(window.uceDocumentViewerOverlayImg);
+
+    window.uceDocumentViewerOverlay.addEventListener('click', () => {
+        window.uceDocumentViewerOverlay.style.display = 'none';
+    });
+}
+
+function imageZoom(img_src) {
+    window.uceDocumentViewerOverlayImg.src = img_src;
+    window.uceDocumentViewerOverlay.style.display = 'flex';
+}
+
+setupImageZoomOverlay();
+
 /**
  * Handles the expanding and de-expanding of the side bar
  */
@@ -348,6 +381,40 @@ async function lazyLoadPages() {
                         colorUnifiedTopics($activeTopic.data('topic'));
                     }
                     updateMinimapMarkers();
+
+                    // make embedded images usable
+                    // NOTE we are doing this in JavaScript as our text cleaning will destroy more "complex" HTML structures
+                    // TODO this should be configurable by the image annotation
+                    const images = document.querySelectorAll('img.document-reader-embedded-image');
+                    images.forEach(img => {
+                        // full width, horizontal scrollable container with max height of 500px
+                        const wrapper = document.createElement('div');
+                        wrapper.style.width = '100%';
+                        wrapper.style.maxHeight = '500px';
+                        wrapper.style.overflowX = 'auto';
+                        wrapper.style.overflowY = 'hidden';
+                        wrapper.style.boxSizing = 'border-box';
+                        wrapper.style.padding = '8px';
+                        wrapper.style.border = '1px solid #ccc';
+                        wrapper.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.2)';
+                        wrapper.style.backgroundColor = '#fff';
+                        wrapper.style.display = 'flex';
+                        wrapper.style.alignItems = 'flex-start';
+
+                        // also scale the embedded image "responsive" with a maximum of 500px height
+                        img.style.maxHeight = '500px';
+                        img.style.height = 'auto';
+                        img.style.display = 'block';
+
+                        img.parentNode.insertBefore(wrapper, img);
+                        wrapper.appendChild(img);
+
+                        // zoomable
+                        img.style.cursor = 'zoom-in';
+                        img.addEventListener('click', () => {
+                            imageZoom(img.src);
+                        });
+                    });
                 },
                 error: function (xhr, status, error) {
                     console.error(xhr.responseText);
