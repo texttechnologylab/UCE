@@ -174,7 +174,12 @@ public class App {
         var javalinApp = Javalin.create(config -> {
             try {
                 // We use the externalLocation method so that the files in the public folder are hot reloaded
-                config.staticFiles.add(commonConfig.getPublicLocation(), Location.EXTERNAL);
+                if (commonConfig.useExternalPublicLocation()) {
+                    config.staticFiles.add(commonConfig.getPublicLocation(), Location.EXTERNAL);
+                }
+                else {
+                    config.staticFiles.add("/public", Location.CLASSPATH);
+                }
                 logger.info("Setup FreeMarker templates and public folders.");
             } catch (Exception e) {
                 logger.error("Error setting up FreeMarker, the application will hence shutdown.", e);
