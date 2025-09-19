@@ -144,6 +144,10 @@ public class CommonConfig {
         return getProperty("external.public.location");
     }
 
+    public boolean useExternalPublicLocation() {
+        return Boolean.parseBoolean(getProperty("external.public.use"));
+    }
+
     public String getDatabaseScriptsLocation() {
         return getProperty("database.scripts.location");
     }
