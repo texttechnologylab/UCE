@@ -64,7 +64,9 @@
     }
 
     // hydration from search results
+    console.log('${searchState.getVisualizationData()}');
     window.searchVizualization.vizData = JSON.parse('${searchState.getVisualizationData()}')
+    console.log(window.searchVizualization.vizData);
 
     updateSearchVizualization()
 </script>

@@ -5,6 +5,7 @@ import org.joda.time.DateTime;
 import org.texttechnologylab.uce.common.config.CorpusConfig;
 import org.texttechnologylab.uce.common.models.corpus.Document;
 import org.texttechnologylab.uce.common.models.corpus.UCEMetadata;
+import org.texttechnologylab.uce.common.models.corpus.UCEMetadataValueType;
 import org.texttechnologylab.uce.common.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.uce.common.models.search.*;
 import org.texttechnologylab.uce.common.states.KeywordInContextState;
@@ -498,6 +499,7 @@ public class SearchState extends CacheItem {
                 .stream()
                 .map(Document::getUceMetadataWithoutJson)
                 .flatMap(Collection::stream)
+                .filter(m -> m.getValueType() == UCEMetadataValueType.NUMBER || m.getValueType() == UCEMetadataValueType.DATE)
                 .collect(groupingBy(UCEMetadata::getKey));
 
         Map<String, Object> data = new HashMap<>();

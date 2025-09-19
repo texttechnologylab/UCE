@@ -170,7 +170,7 @@ let LayeredSearchHandler = (function () {
             }),
             contentType: "application/json",
             success: (response) => {
-                this.updateLayerResults(JSON.parse(response));
+                this.updateLayerResults(response);
             },
             error: function (xhr, status, error) {
                 showMessageModal("Searched Layer Error", xhr.responseText);

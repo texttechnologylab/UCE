@@ -41,7 +41,7 @@ var FlowVizHandler = (function () {
             }),
             contentType: "application/json",
             success: function (response) {
-                const node = JSON.parse(response);
+                const node = response;
                 window.flowVizHandler.createFlowChart(container, node);
                 $(container).find('.full-loader').fadeOut(125);
             },
