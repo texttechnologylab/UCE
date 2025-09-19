@@ -5,6 +5,7 @@ import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.uce.common.config.CorpusConfig;
 import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
+import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.uce.common.models.search.DocumentSearchResult;
 import org.texttechnologylab.uce.common.models.search.SearchType;
@@ -115,7 +116,7 @@ public class SearchCompleteNegation implements Search {
      * @param countAll determines whether we also count all search hits or just using pagination
      * @return
      */
-    private DocumentSearchResult executeSearchOnDatabases(boolean countAll) {
+    private DocumentSearchResult executeSearchOnDatabases(boolean countAll, UceUser user) {
         return ExceptionUtils.tryCatchLog(
                 () -> db.completeNegationSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
                         searchState.getTake(),
@@ -128,13 +129,14 @@ public class SearchCompleteNegation implements Search {
                         searchState.getOrder(),
                         searchState.getOrderBy(),
                         searchState.getCorpusId(),
-                        searchState.getUceMetadataFilters()),
+                        searchState.getUceMetadataFilters(),
+                        user),
                 (ex) -> logger.error("Error executing semantic search on database.", ex));
     }
 
     @Override
-    public SearchState initSearch() {
-        var documentSearchResult = executeSearchOnDatabases(true);
+    public SearchState initSearch(UceUser user) {
+        var documentSearchResult = executeSearchOnDatabases(true, user);
         if (documentSearchResult == null)
             throw new NullPointerException("CompleteNegation Init Search returned null - not empty.");
 
@@ -177,10 +179,10 @@ public class SearchCompleteNegation implements Search {
     }
 
     @Override
-    public SearchState getSearchHitsForPage(int page) {
+    public SearchState getSearchHitsForPage(int page, UceUser user) {
         // Adjust the current page and execute the search again
         this.searchState.setCurrentPage(page);
-        var documentSearchResult = executeSearchOnDatabases(false);
+        var documentSearchResult = executeSearchOnDatabases(false, user);
         if (documentSearchResult == null)
             throw new NullPointerException("Neg Search returned NULL - not empty.");
         var documents = ExceptionUtils.tryCatchLog(
