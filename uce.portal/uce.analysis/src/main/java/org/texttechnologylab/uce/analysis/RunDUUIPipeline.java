@@ -462,14 +462,7 @@ public class RunDUUIPipeline {
         AnalysisSession s = getCachedSession(analysisId);
         if (s == null) throw new IllegalArgumentException("No cached session for id: " + analysisId);
 
-        java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream(); //  Convert JCas -> XMI bytes
-        org.apache.uima.cas.impl.XmiCasSerializer ser =
-                new org.apache.uima.cas.impl.XmiCasSerializer(s.jcas.getTypeSystem());
-        org.apache.uima.util.XMLSerializer xmlSer =
-                new org.apache.uima.util.XMLSerializer(bos, /*prettyPrint*/ true);
-        xmlSer.setOutputProperty(javax.xml.transform.OutputKeys.VERSION, "1.1");
-        ser.serialize(s.jcas.getCas(), xmlSer.getContentHandler());
-        byte[] casBytes = bos.toByteArray();
+        byte[] casBytes = toXmiBytes(s.jcas);
 
         Map<String, String> fields = new LinkedHashMap<>(); //  Form-data fields
         fields.put("analysisId", analysisId);
@@ -477,19 +470,6 @@ public class RunDUUIPipeline {
         if (documentId != null && !documentId.isBlank()) fields.put("documentId", documentId);
         if (casView != null && !casView.isBlank()) fields.put("casView", casView);
 
-        String corpusConfigJson = System.getenv("UCE_CORPUS_CONFIG_JSON"); // Include corpusConfig
-        if (corpusConfigJson == null || corpusConfigJson.isBlank()) {
-            String cfgPath = System.getenv("UCE_CORPUS_CONFIG_PATH");
-            if (cfgPath != null && !cfgPath.isBlank()) {
-                corpusConfigJson = java.nio.file.Files.readString(
-                        java.nio.file.Path.of(cfgPath),
-                        java.nio.charset.StandardCharsets.UTF_8
-                );
-            }
-        }
-        if (corpusConfigJson != null && !corpusConfigJson.isBlank()) {
-            fields.put("corpusConfig", corpusConfigJson);
-        }
 
         // Send multipart as XMI
         String filename = "cas_" + analysisId + ".xmi";

@@ -60,7 +60,7 @@ public class AnalysisApi implements UceApi {
             RunDUUIPipeline.AnalysisResponse resp =
                     pipeline.getModelResourcesWithHandle(selectedModels, inputText, inputClaim,
                             inputCoherence, inputStance, inputLLM);
-            DUUIInformation DataRequest = pipeline.getModelResources(selectedModels, inputText, inputClaim, inputCoherence, inputStance, inputLLM);
+            DUUIInformation DataRequest = resp.duuiInformation;
             model.put("DUUI", DataRequest);
             model.put("SuccessRequest", true);
             model.put("modelGroups", DataRequest.getModelGroups());
@@ -207,10 +207,10 @@ public class AnalysisApi implements UceApi {
 
             // send to importer
             long corpusId = Long.parseLong(ctx.queryParam("corpusId")); // from ?corpusId=...
-            RunDUUIPipeline.sendToImporterViaHttp(
-                    "http://localhost:4567/api/ie/upload/uima",
-                    analysisId, corpusId, analysisId, null
-            );
+            String importPath = "/api/ie/upload/uima";
+            String importUrl  = ctx.scheme() + "://" + ctx.host() + importPath;
+
+            RunDUUIPipeline.sendToImporterViaHttp(importUrl, analysisId, corpusId, analysisId, null);
             ctx.status(200).result("CAS imported successfully for analysisId=" + analysisId);
         } catch (NumberFormatException nfe) {
             ctx.status(400).result("corpusId is required and must be a number");
