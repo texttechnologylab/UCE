@@ -1,9 +1,9 @@
 {
-  "name": "[corpus_name]",
+  "name": "[corpus_2]",
   "author": "[author/owner of the corpus]",
   "language": "[de-DE, en-EN, ...]",
   "description": "",
-  "addToExistingCorpus": true,
+  "addToExistingCorpus": false,
 
   "annotations": {
     "annotatorMetadata": false,

@@ -68,9 +68,11 @@ public class ImportExportApi implements UceApi {
             // First, we need to know which corpus this document should be added to.
             var corpusId = ExceptionUtils.tryCatchLog(
                     () -> Long.parseLong(new String(ctx.req().getPart("corpusId").getInputStream().readAllBytes(), StandardCharsets.UTF_8)),
-                    (ex) -> logger.error("Error getting the corpusId this document should be added to. Aborting.", ex));
+                    (ex) -> logger.error("Error getting corpusId from request.", ex));
+
             if (corpusId == null) {
-                ctx.result("Parameter corpusId didn't exist. Without it, the document cannot be uploaded.");
+                ctx.status(400);
+                ctx.result("Parameter corpusId didn't exist; cannot upload document.");
                 return;
             }
 
@@ -85,9 +87,11 @@ public class ImportExportApi implements UceApi {
 
             var corpus = ExceptionUtils.tryCatchLog(
                     () -> db.getCorpusById(corpusId),
-                    (ex) -> logger.error("Couldn't fetch corpus when uploading new document to corpusId " + corpusId, ex));
+                    (ex) -> logger.error("Couldn't fetch corpus with id " + corpusId, ex));
+
             if (corpus == null) {
-                ctx.result("Corpus with id " + corpusId + " wasn't found in the database; can't upload document.");
+                ctx.status(404);
+                ctx.result("Corpus with id " + corpusId + " wasn't found in the database.");
                 return;
             }
 
