@@ -1,14 +1,19 @@
 <#if analysisId??>
   <div class="mb-3" style="display:flex; align-items:center; gap:8px;">
     <button id="saveCasBtn" data-analysis-id="${analysisId}" class="btn btn-primary">Save CAS</button>
-    <label for="corpusIdInput" class="mb-0">Corpus ID</label>
-    <input type="number" id="corpusIdInput" class="form-control form-control-sm" style="max-width:140px;">
+    <label for="corpus-select" class="mb-0">Corpus</label>
+    <select id="corpus-select" class="form-control form-control-sm" style="max-width:200px;">
+      <option value="1">Corpus 1</option>
+      <option value="2">Corpus 2</option>
+      <option value="3">Corpus 3</option>
+    </select>
+
   </div>
 
   <script>
     document.getElementById("saveCasBtn").addEventListener("click", function () {
       const analysisId = this.dataset.analysisId;
-      const corpusId = document.getElementById("corpusIdInput").value; // no checks
+      const corpusId = document.getElementById("corpus-select").selectedOptions[0].value;
 
       fetch(
         "/api/analysis/importCas?analysisId=" + encodeURIComponent(analysisId) +
