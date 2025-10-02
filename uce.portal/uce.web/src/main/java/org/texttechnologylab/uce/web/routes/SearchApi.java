@@ -127,7 +127,6 @@ public class SearchApi implements UceApi {
                     "with id=" + ctx.attribute("id") + " to this endpoint for URI parameters.", ex);
         }
 
-        ctx.contentType("application/json");
         ctx.json(result);
     }
 

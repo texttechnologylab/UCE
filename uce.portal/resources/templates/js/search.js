@@ -358,7 +358,7 @@ async function handleSwitchingOfPage(page) {
             $('.view .search-result-container .keyword-in-context-include').html(response.keywordInContextView);
 
             if(response.searchVisualization && window.searchVizualization){
-                const vizData = JSON.parse(response.searchVisualization);
+                const vizData = response.searchVisualization;
                 window.searchVizualization.vizData = vizData;
                 updateSearchVizualization();
             }

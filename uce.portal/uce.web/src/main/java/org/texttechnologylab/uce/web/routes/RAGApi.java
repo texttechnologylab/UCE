@@ -353,7 +353,6 @@ public class RAGApi implements UceApi {
                 // Streaming immediately returns the chat id that the caller can use to poll for new messages.
                 Map<String, String> returnMap = new HashMap<>();
                 returnMap.put("chat_id", chatState.getChatId().toString());
-                ctx.contentType("application/json");
                 ctx.json(returnMap);
                 return;
             }
@@ -383,7 +382,6 @@ public class RAGApi implements UceApi {
             var contentType = ctx.header("Accept");
             if (contentType != null && contentType.equals("application/json")) {
                 RAGChatStateDTO returnState = RAGChatStateDTO.fromRAGChatState(chatState);
-                ctx.contentType("application/json");
                 ctx.json(returnState);
                 return;
             }
@@ -475,8 +473,8 @@ public class RAGApi implements UceApi {
             var contentType = ctx.header("Accept");
             if (contentType != null && contentType.equals("application/json")) {
                 RAGChatStateDTO returnState = RAGChatStateDTO.fromRAGChatState(ragState);
-                ctx.contentType("application/json");
                 ctx.json(returnState);
+                return;
             }
 
         } catch (Exception ex) {
@@ -512,7 +510,6 @@ public class RAGApi implements UceApi {
                     })
                     .toList();
 
-            ctx.contentType("application/json");
             ctx.json(simplified);
         } catch (Exception ex) {
             logger.error("Error getting sentence embeddings.", ex);

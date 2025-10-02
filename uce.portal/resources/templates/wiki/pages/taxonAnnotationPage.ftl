@@ -16,7 +16,9 @@
             <i class="fas fa-toolbox color-prime"></i> <span class="text ml-2 mr-1">Annotated by</span><label class="mb-0 font-italic">${vm.getAnnotatedBy()}</label>
         </div>
         <div class="flexed align-items-center ml-1">
-            <i class="fas fa-percentage color-prime"></i> <span class="text ml-1 mr-1">Odds: </span><label class="mb-0 font-italic">${vm.getOdds()}</label>
+            <#if vm.getAnnotatedBy()?lower_case == "gnfindertaxon">
+                <i class="fas fa-percentage color-prime"></i> <span class="text ml-1 mr-1">OddsLog10: </span><label class="mb-0 font-italic">${vm.getOdds()}</label>
+            </#if>
         </div>
     </div>
 
