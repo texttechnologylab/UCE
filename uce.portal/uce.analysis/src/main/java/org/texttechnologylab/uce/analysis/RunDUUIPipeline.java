@@ -1,6 +1,8 @@
 package org.texttechnologylab.uce.analysis;
 
 import de.tudarmstadt.ukp.dkpro.core.api.segmentation.type.Sentence;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.apache.uima.fit.factory.JCasFactory;
 import org.apache.uima.fit.util.JCasUtil;
 import org.apache.uima.jcas.JCas;
@@ -8,11 +10,33 @@ import org.texttechnologylab.DockerUnifiedUIMAInterface.DUUIComposer;
 import org.texttechnologylab.uce.analysis.modules.*;
 import org.texttechnologylab.uce.analysis.typeClasses.TextClass;
 
+
+
+
+import java.time.Instant;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
+import java.io.InputStream;
+import java.io.DataOutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.nio.charset.StandardCharsets;
+
 import java.util.*;
 
 
 public class RunDUUIPipeline {
+    private static final AnalysisCache analysisCache = new AnalysisCache();
+    private static final ThreadLocal<String> lastAnalysisIdTL = new ThreadLocal<>();
+    private static final Logger logger = LogManager.getLogger(RunDUUIPipeline.class);
 
+
+    public static AnalysisSession getCachedSession(String analysisId) { return analysisCache.get(analysisId); }
+
+    private static String getCurrentUserId() {
+        // TODO: replace with your auth/session identity
+        return "user-unknown";
+    }
 
     public DUUIInformation getModelResources(List<String> modelGroups, String inputText, String claim, String coherenceText, String stanceText, String systemPrompt) throws Exception {
         ModelResources modelResources = new ModelResources();
@@ -189,10 +213,13 @@ public class RunDUUIPipeline {
             newCas.setDocumentText(text);
             cas = newCas;
 
+            logger.info("[CAS] Created secondary JCas for special models (fact/coherence/stance/LLM)");
+
         }
         // run pipeline
         DUUIComposer composer = pipeline.setComposer(modelInfosMap);
         JCas result = pipeline.runPipeline(cas, composer);
+        logger.info("[CAS] Final result JCas created via pipeline.runPipeline(cas, composer)");
         // get results
         Object[] results = pipeline.getJCasResults(result, modelInfosList, ttlabScorerGroups, cohmetrixScorerGroups);
         // print results
@@ -232,7 +259,26 @@ public class RunDUUIPipeline {
         if (isCohmetrix) {
             duuiInformation.setCohMetrixGroups(cohmetrixScorerGroups);
         }
+        String analysisId = UUID.randomUUID().toString();
+        String userId = getCurrentUserId();
+        String title = "Analysis " + Instant.now();
+
+        byte[] xmiBytes = toXmiBytes(result);
+        AnalysisSession session = new AnalysisSession(
+                analysisId, userId, title, /*externalId*/ null,
+                result, /*xmiBytes*/ xmiBytes
+        );
+        analysisCache.put(session);
+        lastAnalysisIdTL.set(analysisId);
+        logger.info("[CACHE] Added analysisId=" + analysisId + " (stored in memory; TTL=45min)");
         return duuiInformation;
+    }
+
+    public AnalysisResponse getModelResourcesWithHandle(List<String> modelGroups, String inputText, String claim,
+                                                        String coherenceText, String stanceText, String systemPrompt) throws Exception {
+        DUUIInformation info = getModelResources(modelGroups, inputText, claim, coherenceText, stanceText, systemPrompt);
+        String id = lastAnalysisIdTL.get();
+        return new AnalysisResponse(id, info);
     }
 
     public static void main(String[] args) throws Exception {
@@ -256,5 +302,195 @@ public class RunDUUIPipeline {
         DUUIInformation duuiInformation = new RunDUUIPipeline().getModelResources(modelGroupNames, inputText, claim, coherenceText, stanceText, systemPrompt);
 
     }
+    public static final class AnalysisResponse {
+        public final String analysisId;
+        public final DUUIInformation duuiInformation;
+
+        public AnalysisResponse(String analysisId, DUUIInformation duuiInformation) {
+            this.analysisId = analysisId;
+            this.duuiInformation = duuiInformation;
+        }
+    }
+
+
+    //AnalysisSession
+    public static final class AnalysisSession {
+        public final String analysisId;
+        public final String userId;
+        public final long createdAtMillis;
+        public final String title;
+        public final String externalId;
+        public final JCas jcas;
+        public final byte[] xmiBytes;
+
+        public AnalysisSession(String analysisId, String userId, String title, String externalId,
+                               JCas jcas, byte[] xmiBytes) {
+            this.analysisId = analysisId;
+            this.userId = userId;
+            this.title = title;
+            this.externalId = externalId;
+            this.createdAtMillis = System.currentTimeMillis();
+            this.jcas = jcas;
+            this.xmiBytes = xmiBytes;
+        }
+    }
+
+
+    //  AnalysisCache
+    public static final class AnalysisCache {
+        private final Map<String, AnalysisSession> map = new ConcurrentHashMap<>();
+        private final long ttlMillis = 45 * 60 * 1000L; // 45 minutes
+
+        public void put(AnalysisSession s) { map.put(s.analysisId, s); }
+
+        public AnalysisSession get(String id) { // Retrieve a session from the cache
+            AnalysisSession s = map.get(id);
+            if (s == null) return null;
+
+            if (System.currentTimeMillis() - s.createdAtMillis > ttlMillis) { // If this session is older than 45 minutes -> expire it
+                map.remove(id);
+                return null;
+            }
+            return s;
+        }
+
+        public void remove(String id) { map.remove(id); } //Manually remove a session by ID
+
+
+        public void cleanupExpired() { //  cleanup all expired sessions
+            long now = System.currentTimeMillis();
+            for (var entry : map.entrySet()) {
+                AnalysisSession s = entry.getValue();
+                if (now - s.createdAtMillis > ttlMillis) {
+                    map.remove(entry.getKey());
+                    logger.info("[CRON] Removed expired session: " + s.analysisId);
+                }
+            }
+        }
+    }
+    private static final java.util.concurrent.ScheduledExecutorService scheduler = //Cron job for automatic cleanup every 5 minutes
+            java.util.concurrent.Executors.newScheduledThreadPool(1);
+
+    static {
+        scheduler.scheduleAtFixedRate(() -> {
+            try {
+                analysisCache.cleanupExpired();
+            } catch (Exception e) {
+                logger.error("[CACHE] Cache cleanup failed: " + e.getMessage());
+            }
+        }, 5, 5, java.util.concurrent.TimeUnit.MINUTES);
+
+        scheduler.scheduleAtFixedRate(() -> {
+            logger.info("[CACHE] Running cache cleanup task...");
+            analysisCache.cleanupExpired();  // your cleanup method
+        }, 1, 5, TimeUnit.MINUTES);
+
+
+    }
+
+
+    private static byte[] toXmiBytes(org.apache.uima.jcas.JCas jcas) throws Exception {
+        java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
+        org.apache.uima.cas.impl.XmiCasSerializer ser =
+                new org.apache.uima.cas.impl.XmiCasSerializer(jcas.getTypeSystem());
+        org.apache.uima.util.XMLSerializer xmlSer =
+                new org.apache.uima.util.XMLSerializer(bos, true);
+        xmlSer.setOutputProperty(javax.xml.transform.OutputKeys.VERSION, "1.1");
+        ser.serialize(jcas.getCas(), xmlSer.getContentHandler());
+        return bos.toByteArray();
+    }
+
+
+    // When we send CAS to the importer via HTTP, we want to capture the response.
+    // This small class acts like a container for the HTTP response details
+    private static class HttpResult {
+        final int status;
+        final String body;
+        final String locationHeader;
+        HttpResult(int status, String body, String locationHeader) {
+            this.status = status; this.body = body; this.locationHeader = locationHeader;
+        }
+    }
+
+
+    // Send CAS via HTTP
+    private static HttpResult postMultipart(String urlStr,
+                                            Map<String, String> fields,
+                                            String fileField, String filename,
+                                            String fileContentType, byte[] fileBytes) throws Exception {
+        String boundary = "----JAVA-" + UUID.randomUUID(); //Generate a boundary string to separate parts in multipart body
+        URL url = new URL(urlStr); //Open HTTP connection to the importer endpoint
+        HttpURLConnection conn = (HttpURLConnection) url.openConnection();
+        conn.setDoOutput(true);
+        conn.setRequestMethod("POST");
+        conn.setRequestProperty("Content-Type", "multipart/form-data; boundary=" + boundary);
+
+        try (DataOutputStream out = new DataOutputStream(conn.getOutputStream())) { //Write request body
+            // text fields
+            for (var e : fields.entrySet()) {
+                out.writeBytes("--" + boundary + "\r\n");
+                out.writeBytes("Content-Disposition: form-data; name=\"" + e.getKey() + "\"\r\n\r\n");
+                out.write(e.getValue().getBytes(StandardCharsets.UTF_8));
+                out.writeBytes("\r\n");
+            }
+            // file field
+            out.writeBytes("--" + boundary + "\r\n");
+            out.writeBytes("Content-Disposition: form-data; name=\"" + fileField + "\"; filename=\"" + filename + "\"\r\n");
+            out.writeBytes("Content-Type: " + fileContentType + "\r\n\r\n");
+            out.write(fileBytes);
+            out.writeBytes("\r\n");
+            out.writeBytes("--" + boundary + "--\r\n");
+            out.flush();
+        }
+
+        int status = conn.getResponseCode(); //Read the HTTP response from the importer
+        String location = conn.getHeaderField("Location");
+        String body;
+
+        try (InputStream in = (status >= 200 && status < 400) ? conn.getInputStream() : conn.getErrorStream()) {
+            body = (in != null) ? new String(in.readAllBytes(), StandardCharsets.UTF_8) : "";
+        }
+        conn.disconnect();
+        return new HttpResult(status, body, location);
+    }
+
+    public static HttpResult sendToImporterViaHttp(String importUrl, //Send cached CAS to importer
+                                                   String analysisId,
+                                                   long corpusId,
+                                                   String documentId,
+                                                   String casView) throws Exception {
+        AnalysisSession s = getCachedSession(analysisId);
+        if (s == null) throw new IllegalArgumentException("No cached session for id: " + analysisId);
+
+        byte[] casBytes = toXmiBytes(s.jcas);
+
+        Map<String, String> fields = new LinkedHashMap<>(); //  Form-data fields
+        fields.put("analysisId", analysisId);
+        fields.put("corpusId", Long.toString(corpusId));
+        if (documentId != null && !documentId.isBlank()) fields.put("documentId", documentId);
+        if (casView != null && !casView.isBlank()) fields.put("casView", casView);
+
+
+        // Send multipart as XMI
+        String filename = "cas_" + analysisId + ".xmi";
+        logger.info("[IMPORT][HTTP] POST " + importUrl
+                + " corpusId=" + corpusId + " analysisId=" + analysisId
+                + " documentId=" + documentId + " casView=" + casView
+                + " file=" + filename + " (" + casBytes.length + " bytes)");
+
+        HttpResult res = postMultipart(
+                importUrl,
+                fields,
+                "file",
+                filename,
+                "application/xml",
+                casBytes
+        );
+        logger.info("[IMPORT][HTTP] status=" + res.status
+                + (res.locationHeader != null ? " Location=" + res.locationHeader : "")
+                + (res.body != null && !res.body.isBlank() ? " body=" + res.body : ""));
+        return res;
+    }
+
 
 }

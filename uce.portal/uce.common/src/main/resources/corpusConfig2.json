@@ -1,0 +1,45 @@
+{
+  "name": "[corpus_2]",
+  "author": "[author/owner of the corpus]",
+  "language": "[de-DE, en-EN, ...]",
+  "description": "",
+  "addToExistingCorpus": false,
+
+  "annotations": {
+    "annotatorMetadata": false,
+    "uceMetadata": false,
+    "logicalLinks": false,
+
+    "OCRPage": false,
+    "OCRParagraph": false,
+    "OCRBlock": false,
+    "OCRLine": false,
+
+    "srLink": false,
+    "namedEntity": false,
+    "sentiment": false,
+    "emotion": false,
+    "geoNames": false,
+    "lemma": false,
+    "sentence": false,
+    "taxon": {
+      "annotated": false,
+      "//comment": "[Are the taxons annotated with biofid onthologies through the 'identifier' property?]",
+      "biofidOnthologyAnnotated": false
+    },
+    "time": false,
+    "wikipediaLink": false,
+    "completeNegation": false,
+    "unifiedTopic": false
+
+  },
+  "other": {
+    "//comment": "[Is this corpus also available on https://sammlungen.ub.uni-frankfurt.de/? Either true or false]",
+    "availableOnFrankfurtUniversityCollection": false,
+
+    "includeKeywordDistribution": false,
+    "enableEmbeddings": false,
+    "enableRAGBot": false,
+    "enableS3Storage": false
+  }
+}

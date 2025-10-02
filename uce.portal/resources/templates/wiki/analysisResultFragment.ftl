@@ -1,4 +1,31 @@
+<#if analysisId??>
+  <div class="mb-3" style="display:flex; align-items:center; gap:8px;">
+    <button id="saveCasBtn" data-analysis-id="${analysisId}" class="btn btn-primary">Save CAS</button>
+    <label for="corpus-select" class="mb-0">Corpus</label>
+    <select id="corpus-select" class="form-control form-control-sm" style="max-width:200px;">
+      <option value="1">Corpus 1</option>
+      <option value="2">Corpus 2</option>
+      <option value="3">Corpus 3</option>
+    </select>
 
+  </div>
+
+  <script>
+    document.getElementById("saveCasBtn").addEventListener("click", function () {
+      const analysisId = this.dataset.analysisId;
+      const corpusId = document.getElementById("corpus-select").selectedOptions[0].value;
+
+      fetch(
+        "/api/analysis/importCas?analysisId=" + encodeURIComponent(analysisId) +
+        "&corpusId=" + encodeURIComponent(corpusId),
+        { method: "POST" }
+      )
+      .then(r => r.text())
+      .then(msg => alert("Server response: " + msg))
+      .catch(err => alert("Error: " + err));
+    });
+  </script>
+</#if>
         <#if DUUI??>
             <#if DUUI.modelGroups?has_content>
                 <#if DUUI.isTopic>

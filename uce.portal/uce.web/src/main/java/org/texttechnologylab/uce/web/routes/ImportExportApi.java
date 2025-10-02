@@ -28,7 +28,6 @@ public class ImportExportApi implements UceApi {
     private ApplicationContext serviceContext;
 
     private static final Logger logger = LogManager.getLogger(PostgresqlDataInterface_Impl.class);
-    private static Gson gson = new Gson();
 
     public ImportExportApi(ApplicationContext serviceContext) {
         this.serviceContext = serviceContext;
@@ -74,9 +73,11 @@ public class ImportExportApi implements UceApi {
             // First, we need to know which corpus this document should be added to.
             var corpusId = ExceptionUtils.tryCatchLog(
                     () -> Long.parseLong(new String(ctx.req().getPart("corpusId").getInputStream().readAllBytes(), StandardCharsets.UTF_8)),
-                    (ex) -> logger.error("Error getting the corpusId this document should be added to. Aborting.", ex));
+                    (ex) -> logger.error("Error getting corpusId from request.", ex));
+
             if (corpusId == null) {
-                ctx.result("Parameter corpusId didn't exist. Without it, the document cannot be uploaded.");
+                ctx.status(400);
+                ctx.result("Parameter corpusId didn't exist; cannot upload document.");
                 return;
             }
 
@@ -91,29 +92,12 @@ public class ImportExportApi implements UceApi {
 
             var corpus = ExceptionUtils.tryCatchLog(
                     () -> db.getCorpusById(corpusId),
-                    (ex) -> logger.error("Couldn't fetch corpus when uploading new document to corpusId " + corpusId, ex));
+                    (ex) -> logger.error("Couldn't fetch corpus with id " + corpusId, ex));
+
             if (corpus == null) {
-                var corpusConfigRaw = ExceptionUtils.tryCatchLog(
-                        () -> new String(ctx.req().getPart("corpusConfig").getInputStream().readAllBytes(), StandardCharsets.UTF_8),
-                        (ex) -> logger.error("Error getting the corpusConfig that should be used for this document. Aborting.", ex));
-                if (corpusConfigRaw == null) {
-                    ctx.result("Corpus with id " + corpusId + " wasn't found in the database; no config was provided; can't upload document.");
-                    return;
-                }
-                logger.info("Corpus with id " + corpusId + " wasn't found in the database; creating a new corpus with the provided config.");
-                try {
-                    var corpusConfig = gson.fromJson(corpusConfigRaw, CorpusConfig.class);
-                    corpus = new Corpus();
-                    var corpusReturn = Importer.CreateDBCorpus(corpus, corpusConfig, this.db);
-                    if (corpusReturn != null) {
-                        corpus = corpusReturn;
-                    }
-                } catch (JsonIOException | JsonSyntaxException e) {
-                    ctx.result("The corpusConfig provided is not properly formatted.");
-                } catch (DatabaseOperationException e) {
-                    ctx.result("Error creating a new corpus in the database: " + e.getMessage());
-                    return;
-                }
+                ctx.status(404);
+                ctx.result("Corpus with id " + corpusId + " wasn't found in the database.");
+                return;
             }
 
             // TODO just use 1 as default? will throw an error if this is null otherwise...
@@ -122,10 +106,9 @@ public class ImportExportApi implements UceApi {
             try (var input = ctx.req().getPart("file").getInputStream()) {
                 var fileName = ctx.req().getPart("file").getSubmittedFileName();
                 // Import the doc in the background
-                final Corpus corpus1 = corpus;
                 var importFuture = CompletableFuture.supplyAsync(() -> {
                     try {
-                        return importer.storeUploadedXMIToCorpusAsync(input, corpus1, fileName, documentId);
+                        return importer.storeUploadedXMIToCorpusAsync(input, corpus, fileName, documentId);
                     } catch (DatabaseOperationException e) {
                         throw new RuntimeException(e);
                     }
@@ -139,6 +122,7 @@ public class ImportExportApi implements UceApi {
                 if (acceptedContentType != null && acceptedContentType.equals("application/json")) {
                     Map<String, Object> apiResult = new HashMap<>();
                     apiResult.put("document_id", newDocumentId);
+                    ctx.contentType("application/json");
                     ctx.json(apiResult);
                     return;
                 }
