@@ -71,6 +71,7 @@ public class Search_DefaultImpl implements Search {
             if(enrichedSearchQuery != null){
                 this.searchState.setEnrichedSearchQuery(enrichedSearchQuery.getEnrichedQuery());
                 this.searchState.setEnrichedSearchTokens(enrichedSearchQuery.getEnrichedSearchTokens());
+                this.searchState.setEnrichedSearchQueryIsCutoff(enrichedSearchQuery.isEnrichedQueryIsCutOff());
             }
         }
 
@@ -316,7 +317,7 @@ public class Search_DefaultImpl implements Search {
                         enrichedSearchToken.setValue(cleanedToken);
                         var finalCleanedToken = cleanedToken;
                         var speciesIds = ExceptionUtils.tryCatchLog(
-                                () -> jenaSparqlService.getSpeciesIdsOfUpperRank(EnrichedSearchQuery.getFullTaxonRankByCode(possibleCommand.replace("::", "")), finalCleanedToken),
+                                () -> jenaSparqlService.getSpeciesIdsOfUpperRank(EnrichedSearchQuery.getFullTaxonRankByCode(possibleCommand.replace("::", "")), finalCleanedToken, 300),
                                 (ex) -> logger.error("Error querying species by an upper rank.", ex));
                         if (speciesIds != null) taxonIds.addAll(speciesIds);
                     }

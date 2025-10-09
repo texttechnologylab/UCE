@@ -78,7 +78,8 @@
                                     <div class="flexed align-items-center justify-content-between">
                                         <label class="mb-0 text-dark font-italic ml-1 mr-1 text-center w-100 clickable hoverable value"
                                                onclick="$(this).closest('.enriched-token').find('.expanded-content').toggle(75)">
-                                            <span>${token.getValue()}</span><span class="ml-1 xsmall-font text">(${token.getType().name()})</span>
+                                            <span>${token.getValue()}</span><span
+                                                    class="ml-1 xsmall-font text">(${token.getType().name()})</span>
                                         </label>
                                     </div>
                                     <#if width == "w-100">
@@ -97,6 +98,15 @@
                                 </div>
                             </#list>
                         </div>
+                        <#if searchState.isEnrichedSearchQueryIsCutoff()>
+                            <div class="mb-0 mt-2 alert alert-warning ml-1 mr-1 pt-1 pb-1 pl-2 pr-2 text-center light-border flexed align-items-center justify-content-between">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <label class="small-font mb-0">${languageResource.get("enrichmentCutoffTitle")}</label>
+                                <i class="fas fa-question-circle"
+                                   data-trigger="hover" data-toggle="popover" data-placement="top"
+                                   data-content="${languageResource.get("enrichmentCutoffDescription")}"></i>
+                            </div>
+                        </#if>
                     </div>
                     <hr class="mt-3 mb-3 bg-lightgray"/>
                 </#if>

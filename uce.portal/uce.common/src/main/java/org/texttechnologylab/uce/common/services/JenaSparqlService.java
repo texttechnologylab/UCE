@@ -95,7 +95,7 @@ public class JenaSparqlService {
     /**
      * Given an upper taxonomic rank such as class, genus, phylum etc., fetches all species of that and returns their names.
      */
-    public List<String> getSpeciesIdsOfUpperRank(String rank, String name) throws IOException {
+    public List<String> getSpeciesIdsOfUpperRank(String rank, String name, int limit) throws IOException {
         if (!SystemStatus.JenaSparqlStatus.isAlive()) {
             return new ArrayList<>();
         }
@@ -103,7 +103,7 @@ public class JenaSparqlService {
         // First off, we need to fetch the identifier of the objects for the rank with the given name
         // Once we have that, we can query all species that belong to that rank by its id
         var rankIds = getIdsOfTaxonRank(rank, name);
-        return getSpeciesOfRank(rank, rankIds);
+        return getSpeciesOfRank(rank, rankIds, limit);
     }
 
     /**
@@ -289,7 +289,7 @@ public class JenaSparqlService {
      *   ?subject <http://rs.tdwg.org/dwc/terms/cleanedScientificName> "Corella"
      * } LIMIT 10
      */
-    private List<String> getSpeciesOfRank(String rankName, List<String> ids) throws IOException {
+    private List<String> getSpeciesOfRank(String rankName, List<String> ids, int limit) throws IOException {
         var command = "SELECT DISTINCT ?subject " +
                 "WHERE { " +
                 "    ?subject <http://rs.tdwg.org/dwc/terms/taxonRank> \"species\"^^<xsd:string> . " +
@@ -298,9 +298,10 @@ public class JenaSparqlService {
                 "        {IDS}" +
                 "    } " +
                 "} " +
-                "LIMIT 300";
+                "LIMIT {LIMIT}";
         command = command
                 .replace("{RANK}", rankName)
+                .replace("{LIMIT}", String.valueOf(limit))
                 .replace("{IDS}", String.join("\n", ids.stream().map(i -> "<" + i + ">").toList()));
         var result = executeCommand(command, RDFSelectQueryDto.class);
 

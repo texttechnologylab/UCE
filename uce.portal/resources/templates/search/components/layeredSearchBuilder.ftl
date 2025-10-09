@@ -16,7 +16,7 @@
                 <a class="rounded-a bg-light light-border rounded-0 delete-slot-btn"><i class="small-font fas fa-trash-alt"></i></a>
             </div>
             <div class="w-100 flexed align-items-center">
-                <input class="form-control rounded-0 w-100 slot-value" placeholder="Callorhinchus capensis..."/>
+                <input class="form-control rounded-0 w-100 slot-value" placeholder="Lepidoptera..."/>
             </div>
         </div>
 

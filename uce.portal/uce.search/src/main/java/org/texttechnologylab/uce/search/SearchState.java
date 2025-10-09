@@ -2,6 +2,7 @@ package org.texttechnologylab.uce.search;
 
 import com.google.gson.Gson;
 import org.joda.time.DateTime;
+import org.texttechnologylab.uce.common.config.CommonConfig;
 import org.texttechnologylab.uce.common.config.CorpusConfig;
 import org.texttechnologylab.uce.common.models.corpus.Document;
 import org.texttechnologylab.uce.common.models.corpus.UCEMetadata;
@@ -18,6 +19,7 @@ import static java.util.stream.Collectors.groupingBy;
  * A class that holds all states of a biofid search. We can use this class to serialize the search. It shouldn't hold any services.
  */
 public class SearchState extends CacheItem {
+    private CommonConfig config;
     private UUID searchId;
     private final DateTime created;
     private boolean proModeActivated;
@@ -26,6 +28,7 @@ public class SearchState extends CacheItem {
      */
     private String searchQuery;
     private String enrichedSearchQuery;
+    private boolean enrichedSearchQueryIsCutoff;
     private String dbSchema = "public";
     private String sourceTable = "page";
     private List<EnrichedSearchToken> enrichedSearchTokens;
@@ -42,11 +45,9 @@ public class SearchState extends CacheItem {
     private SearchOrder order = SearchOrder.DESC;
     private OrderByColumn orderBy = OrderByColumn.RANK;
     private KeywordInContextState keywordInContextState;
-
     private ArrayList<AnnotationSearchResult> foundNamedEntities = new ArrayList<>();
     private ArrayList<AnnotationSearchResult> foundTimes = new ArrayList<>();
     private ArrayList<AnnotationSearchResult> foundTaxons = new ArrayList<>();
-
     // Negation
     private ArrayList<AnnotationSearchResult> foundScopes = new ArrayList<>();
     private ArrayList<AnnotationSearchResult> foundCues = new ArrayList<>();
@@ -54,20 +55,15 @@ public class SearchState extends CacheItem {
     private ArrayList<AnnotationSearchResult> foundFoci = new ArrayList<>();
     private ArrayList<AnnotationSearchResult> foundEvents = new ArrayList<>();
 
-
-
     /**
      * This is only filled when the search layer contains embeddings
      */
     private ArrayList<DocumentChunkEmbeddingSearchResult> foundDocumentChunkEmbeddings;
-
     private String primarySearchLayer;
-
     /**
      * These are the current, paginated list of documents
      */
     private List<Document> currentDocuments;
-
     /**
      * This is currently not used.
      */
@@ -80,9 +76,19 @@ public class SearchState extends CacheItem {
         this.searchType = searchType;
         this.searchId = UUID.randomUUID();
         this.created = DateTime.now();
+        this.config = new CommonConfig();
     }
 
     public void dispose(){ }
+
+
+    public boolean isEnrichedSearchQueryIsCutoff() {
+        return enrichedSearchQueryIsCutoff;
+    }
+
+    public void setEnrichedSearchQueryIsCutoff(boolean enrichedSearchQueryIsCutoff) {
+        this.enrichedSearchQueryIsCutoff = enrichedSearchQueryIsCutoff;
+    }
 
     public LayeredSearch getLayeredSearch() {
         return layeredSearch;
