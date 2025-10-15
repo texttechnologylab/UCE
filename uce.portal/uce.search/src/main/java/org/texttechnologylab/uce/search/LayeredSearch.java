@@ -32,12 +32,12 @@ public class LayeredSearch extends CacheItem {
      */
     public static void CleanupScheme(PostgresqlDataInterface_Impl db) throws DatabaseOperationException {
         var query = "DO $$ DECLARE\n" +
-                "    r RECORD;\n" +
-                "BEGIN\n" +
-                "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'search') LOOP\n" +
-                "        EXECUTE 'DROP TABLE IF EXISTS search.' || quote_ident(r.tablename) || ' CASCADE';\n" +
-                "    END LOOP;\n" +
-                "END $$;";
+                    "    r RECORD;\n" +
+                    "BEGIN\n" +
+                    "    FOR r IN (SELECT tablename FROM pg_tables WHERE schemaname = 'search') LOOP\n" +
+                    "        EXECUTE 'DROP TABLE IF EXISTS search.' || quote_ident(r.tablename) || ' CASCADE';\n" +
+                    "    END LOOP;\n" +
+                    "END $$;";
         db.executeSqlWithoutReturn(query);
     }
 
@@ -47,11 +47,15 @@ public class LayeredSearch extends CacheItem {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
     }
 
-    public String getId() { return this.id; }
+    public String getId() {
+        return this.id;
+    }
 
-    public List<LayeredSearchLayerDto> getLayers(){return this.layers;}
+    public List<LayeredSearchLayerDto> getLayers() {
+        return this.layers;
+    }
 
-    public String getFinalLayerTableName(){
+    public String getFinalLayerTableName() {
         var maxDepth = this.layers.stream().max(Comparator.comparing(LayeredSearchLayerDto::getDepth)).get().getDepth();
         return buildLayerTableName(maxDepth);
     }
@@ -59,7 +63,8 @@ public class LayeredSearch extends CacheItem {
     /**
      * Initalize this layered search. This setups the materialized view in the background and more.
      */
-    public void init() {}
+    public void init() {
+    }
 
     /**
      * Disposes this @LayeredSearch by also cleaning up temporary tables in the database.
@@ -113,7 +118,7 @@ public class LayeredSearch extends CacheItem {
             var result = ExceptionUtils.tryCatchLog(
                     () -> this.executeSingleLayerOnDb(layer),
                     (ex) -> logger.error("Error executing a layer update on the db.", ex));
-            if(result != null && result) {
+            if (result != null && result) {
                 layer.setDirty(false);
                 calculateLayerCount(layer);
             }
@@ -125,11 +130,11 @@ public class LayeredSearch extends CacheItem {
         createSearchTableIfNotExists(buildLayerTableName(layer.getDepth()));
 
         var insertTemplateQuery = "INSERT INTO search.{NAME} (id, document_id, begin_end) \n" +
-                "SELECT p.id, p.document_id, jsonb_agg(jsonb_build_array({ALIAS}.beginn, {ALIAS}.endd)) AS begin_end \n" +
-                "FROM {SOURCE} p\n" +
-                "JOIN {TABLE} {ALIAS} ON {ALIAS}.page_id = p.id\n" +
-                "WHERE {CONDITION} \n" +
-                "ON CONFLICT (id) DO NOTHING;";
+                                  "SELECT p.id, p.document_id, jsonb_agg(jsonb_build_array({ALIAS}.beginn, {ALIAS}.endd)) AS begin_end \n" +
+                                  "FROM {SOURCE} p\n" +
+                                  "JOIN {TABLE} {ALIAS} ON {ALIAS}.page_id = p.id\n" +
+                                  "WHERE {CONDITION} \n" +
+                                  "ON CONFLICT (id) DO NOTHING;";
         var conditionEnding = "GROUP BY p.id, p.document_id HAVING COUNT(a.page_id) > 0";
         var statements = new ArrayList<String>();
 
@@ -170,12 +175,12 @@ public class LayeredSearch extends CacheItem {
                 condition = condition.replace("{VALUE}", slot.getCleanedValue());
                 var statement = sql.replace("{CONDITION}", condition);
                 statements.add(statement);
-            } else if(slot.getType() == LayeredSearchSlotType.TIME){
+            } else if (slot.getType() == LayeredSearchSlotType.TIME) {
                 // Handle the time slots.
                 sql = sql.replace("{TABLE}", "time");
 
                 // Let's see if we got a range in here!
-                if(slot.getValue().contains("-")){
+                if (slot.getValue().contains("-")) {
                     var split = slot.getValue().split("-");
                     var from = split[0].trim();
                     var to = split[1].trim();
@@ -198,7 +203,7 @@ public class LayeredSearch extends CacheItem {
 
                         var condition = "a.{UNIT_NAME} = {VALUE} AND a.page_id is not null " + conditionEnding;
                         condition = condition.replace("{UNIT_NAME}", unitName);
-                        if(unitName.equals("year")) condition = condition.replace("{VALUE}", value);
+                        if (unitName.equals("year")) condition = condition.replace("{VALUE}", value);
                         else condition = condition.replace("{VALUE}", "'" + value + "'");
 
                         var statement = sql.replace("{CONDITION}", condition);
@@ -212,13 +217,13 @@ public class LayeredSearch extends CacheItem {
                 condition = condition.replace("{VALUE}", slot.getCleanedValue());
                 var statement = sql.replace("{CONDITION}", condition);
                 statements.add(statement);
-            } else if (slot.getType() == LayeredSearchSlotType.LOCATION){
+            } else if (slot.getType() == LayeredSearchSlotType.LOCATION) {
                 sql = sql.replace("{TABLE}", "geoname");
 
                 // Let's see if we got a specific long/lat with a range
-                if(slot.getValue().startsWith("R::")){
+                if (slot.getValue().startsWith("R::")) {
                     var locationDto = EnrichedSearchQuery.parseLocationRadiusCommand(slot.getValue());
-                    if(locationDto == null) continue;
+                    if (locationDto == null) continue;
                     // We use the postgis extension for fast radius-based geographic queries.
                     var condition = "ST_DWithin(location_geog, ST_MakePoint({LNG},{LAT}), {RADIUS}) " + conditionEnding;
                     condition = condition.replace("{LNG}", Double.toString(locationDto.getLongitude()));
@@ -227,15 +232,16 @@ public class LayeredSearch extends CacheItem {
                     var statement = sql.replace("{CONDITION}", condition);
                     statements.add(statement);
                     continue;
-                } else if(slot.getValue().startsWith("LOC::")){
+                } else if (slot.getValue().startsWith("LOC::")) {
                     // Then we have a location command with geonames feature classes and codes. Have a look at EnrichedSearchQuery for better description
                     var split = slot.getValue().replace("LOC::", "").split("\\.");
                     var featureClass = split[0];
                     var featureCode = "";
-                    if(split.length > 1) featureCode = split[1];
+                    if (split.length > 1) featureCode = split[1];
 
                     var condition = "a.featureclass = {FEATURE_CLASS} ".replace("{FEATURE_CLASS}", Integer.toString(GeoNameFeatureClass.valueOf(featureClass).ordinal()));
-                    if(!featureCode.isEmpty()) condition += "AND a.featurecode = '{FEATURE_CODE}' ".replace("{FEATURE_CODE}", featureCode);
+                    if (!featureCode.isEmpty())
+                        condition += "AND a.featurecode = '{FEATURE_CODE}' ".replace("{FEATURE_CODE}", featureCode);
                     condition += "AND a.page_id is not null " + conditionEnding;
                     var statement = sql.replace("{CONDITION}", condition);
                     statements.add(statement);
@@ -244,23 +250,23 @@ public class LayeredSearch extends CacheItem {
         }
 
         // Now execute the statements on our view
-        for(var statement:statements) db.executeSqlWithoutReturn(statement);
+        for (var statement : statements) db.executeSqlWithoutReturn(statement);
 
         return true;
     }
 
     private void createSearchTableIfNotExists(String name) throws DatabaseOperationException {
         var query = "CREATE SCHEMA IF NOT EXISTS search;\n" +
-                "DO $$ \n" +
-                "BEGIN\n" +
-                "    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'search' AND table_name = '{NAME}') THEN\n" +
-                "        CREATE TABLE search.{NAME} (\n" +
-                "            id BIGINT PRIMARY KEY, \n" +
-                "            document_id BIGINT,\n" +
-                "            begin_end jsonb\n" +
-                "        );\n" +
-                "    END IF;\n" +
-                "END $$;\n";
+                    "DO $$ \n" +
+                    "BEGIN\n" +
+                    "    IF NOT EXISTS (SELECT 1 FROM information_schema.tables WHERE table_schema = 'search' AND table_name = '{NAME}') THEN\n" +
+                    "        CREATE TABLE search.{NAME} (\n" +
+                    "            id BIGINT PRIMARY KEY, \n" +
+                    "            document_id BIGINT,\n" +
+                    "            begin_end jsonb\n" +
+                    "        );\n" +
+                    "    END IF;\n" +
+                    "END $$;\n";
         query = query.replace("{NAME}", name);
         db.executeSqlWithoutReturn(query);
     }
@@ -268,11 +274,11 @@ public class LayeredSearch extends CacheItem {
     private void calculateLayerCount(LayeredSearchLayerDto layer) throws DatabaseOperationException {
         var query = "SELECT COUNT(DISTINCT id) AS p_count, COUNT(DISTINCT document_id) as d_count FROM search." + buildLayerTableName(layer.getDepth());
         var resultList = db.executeSqlWithReturn(query);
-        if(resultList.isEmpty()) return;
-        else{
-            var counts = (Object[])resultList.getFirst();
-            layer.setPageHits(((Number)counts[0]).intValue());
-            layer.setDocumentHits(((Number)counts[1]).intValue());
+        if (resultList.isEmpty()) return;
+        else {
+            var counts = (Object[]) resultList.getFirst();
+            layer.setPageHits(((Number) counts[0]).intValue());
+            layer.setDocumentHits(((Number) counts[1]).intValue());
         }
     }
 
@@ -281,15 +287,15 @@ public class LayeredSearch extends CacheItem {
      */
     private void dropAllTables() throws DatabaseOperationException {
         var query = "DO $$ \n" +
-                "DECLARE \n" +
-                "    table_name TEXT;\n" +
-                "BEGIN\n" +
-                "    FOR table_name IN \n" +
-                "        SELECT tablename FROM pg_tables WHERE schemaname = 'search' AND tablename LIKE '{PREFIX}%'\n" +
-                "    LOOP\n" +
-                "        EXECUTE 'DROP TABLE IF EXISTS search.' || table_name || ' CASCADE';\n" +
-                "    END LOOP;\n" +
-                "END $$;";
+                    "DECLARE \n" +
+                    "    table_name TEXT;\n" +
+                    "BEGIN\n" +
+                    "    FOR table_name IN \n" +
+                    "        SELECT tablename FROM pg_tables WHERE schemaname = 'search' AND tablename LIKE '{PREFIX}%'\n" +
+                    "    LOOP\n" +
+                    "        EXECUTE 'DROP TABLE IF EXISTS search.' || table_name || ' CASCADE';\n" +
+                    "    END LOOP;\n" +
+                    "END $$;";
         query = query.replace("{PREFIX}", "layered_search_" + this.id);
         db.executeSqlWithoutReturn(query);
     }
@@ -300,7 +306,7 @@ public class LayeredSearch extends CacheItem {
         db.executeSqlWithoutReturn(query);
     }
 
-    private String buildLayerTableName(int depth){
+    private String buildLayerTableName(int depth) {
         return "layered_search_" + this.id + "_" + depth;
     }
 
