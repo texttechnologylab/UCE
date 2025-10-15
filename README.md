@@ -15,7 +15,7 @@
   <!--<a href="http://eval.uce.texttechnologylab.org/"><img src="https://img.shields.io/static/v1?label=&message=Demo&color=orange&style=for-the-badge&logo=abstract" alt="Demo"></a>-->
   <a href="#"><img src="https://img.shields.io/static/v1?label=Languages%3A&message=German|English&color=green&style=for-the-badge" alt="Languages: - German | English"></a>
   <a href="https://www.texttechnologylab.org/team/kevin-boenisch/"><img src="https://img.shields.io/static/v1?label=&message=Text+Technology+Lab&color=informational&style=for-the-badge&logo=buffer" alt="Text Technology Lab"></a>
-  <!--<a href="https://ebooks.iospress.nl/doi/10.3233/FAIA230996"> <img src="https://img.shields.io/static/v1?label=Paper%3A&message=IOS+Press&color=important&style=for-the-badge&logo=adobefonts" alt="Paper: - IOS Press"></a>-->
+  <a href="https://aclanthology.org/2025.naacl-demo.42/"> <img src="https://img.shields.io/static/v1?label=Paper%3A&message=ACL+Anthology&color=red&style=for-the-badge&logo=libreofficewriter" alt="Paper: - ACL"></a>
   <br/>
   <br/>
 </div>
@@ -132,18 +132,4 @@ Some, but not all of the search and visualization features within UCE:
   </tr>
 </table>
 
-## Annotations
-
-Currently supported annotations within UCE are outlined in the following table:
-
-| **Annotation**                        | **Description**                                                                                                                                                        |
-|---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Sentence**                          | Divides the documents into their respective sentences.                                                                                                                 |
-| **Named-Entity**                      | Extracts named entities from a document, categorizing them into four types: organization (ORG), person (PER), location (LOC), and miscellaneous (MISC). |                                                  |
-| **Lemma and POS**                             | Lemmatization reduces inflected words to their root form. Within UCE, searches are enhanced by considering these root forms.                                           |
-| **Semantic Role Labels (SRL)**        | SRL identifies semantic relations between the lexical constituents of a sentence, assigning labels to words or phrases that indicate their semantic roles, such as agent, goal, or result. | 
-| **Time**                              | Extracts temporal expressions, including time and date formats, from a document, analogous to Named-Entity Recognition tasks.                                          |
-| **Taxon**                             | The recognition of unambiguous names of biological entities is referred to as a taxon.                                                                                 |
-| **WikiLinks**                         | Maps potential words and phrases to their corresponding Wikidata URLs, facilitating the retrieval and access of additional information.                                |
-| **OCR**                               | Since much of the literature has yet to be digitized, UCE provides support for corpora containing documents that have undergone Optical Character Recognition (OCR) extraction. These annotations assist in reconstructing the physical layout of the pages within UCE. | 
 
