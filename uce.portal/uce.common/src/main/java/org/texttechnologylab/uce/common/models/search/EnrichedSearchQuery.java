@@ -313,7 +313,7 @@ public class EnrichedSearchQuery {
         query.append(" ( ");
         if (!original.isEmpty()) query.append(original).append(or);
         query.append(delimiter)
-                .append(String.join(or + delimiter, names.stream().map(n -> n.replace("'", "") + delimiter).toList()))
+                .append(String.join(or + delimiter, names.stream().filter(n -> !n.isBlank()).map(n -> n.replace("'", "") + delimiter).toList()))
                 .append(" ) ");
     }
 
