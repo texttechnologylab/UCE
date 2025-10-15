@@ -23,8 +23,20 @@
         <div class="document-card w-100">
             <#assign document = vm.getDocument()>
             <#assign searchId = "">
+            <#assign reduced = true>
             <#include '*/search/components/documentCardContent.ftl' >
         </div>
+    </div>
+
+    <!-- linkable space -->
+    <div class="mt-2 mb-2">
+        <#assign unique = (vm.getWikiModel().getUnique())!"none">
+        <#assign height = 500>
+        <#if unique != "none">
+            <div class="w-100">
+                <#include "*/wiki/components/linkableSpace.ftl">
+            </div>
+        </#if>
     </div>
 
     <!-- kwic view -->

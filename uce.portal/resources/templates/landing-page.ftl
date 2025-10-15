@@ -3,21 +3,20 @@
     <!-- uce corporate data -->
     <div class="mt-5 uce-description">
         <div class="flexed align-items-center justify-content-between">
-            <h5 class="color-prime mb-0">${system.getMeta().getName()?trim!"-"}</h5>
+            <h5 class="color-prime mb-0 clickable" onclick="$(this).parent().next('.content').toggle(50)">${uceConfig.getMeta().getName()?trim!"-"}</h5>
             <button class="btn" onclick="$(this).parent().next('.content').toggle(50)">
                 <i class="fas fa-info-circle color-prime large-font"></i>
             </button>
         </div>
-        <div class="content display-none">
+        <div class="content display-none text block-text">
             <hr class="mt-3 mb-3"/>
-            <p class="text block-text mb-0 p-2">
-                ${system.getMeta().getDescription()!languageResource.get("noCorpusDescription")}
-            </p>
+            ${uceConfig.getMeta().getDescription()!languageResource.get("noCorpusDescription")}
         </div>
     </div>
 
     <div class="corpora-list">
-        <h3 class="text-center font-weight-bold text-dark"><i class="color-prime fas fa-database mr-2"></i> ${languageResource.get("corpora")}</h3>
+        <h3 class="text-center font-weight-bold text-dark"><i
+                    class="color-prime fas fa-database mr-2"></i> ${languageResource.get("corpora")}</h3>
         <div class="row m-0 p-0 ">
             <#if corpora?size == 0>
                 <div class="group-box mt-2 bg-ghost">
@@ -30,11 +29,11 @@
                         <!-- header -->
                         <div class="flexed align-items-center justify-content-between">
                             <div>
-                                <h5 class="open-corpus-inspector-btn border-0 w-100 mb-2 color-prime clickable"
+                                <h5 class="justify-content-start open-corpus-inspector-btn border-0 w-100 mb-2 color-prime clickable"
                                     data-id="${corpusVm.getCorpus().getId()}">
-                                    ${corpusVm.getCorpus().getName()?trim}
+                                    <i class="fas fa-globe mr-2"></i> ${corpusVm.getCorpus().getName()?trim}
                                 </h5>
-                                <p class="text mb-0 small">${corpusVm.getCorpus().getAuthor()}</p>
+                                <p class="text mb-0 small"><i class="fas fa-pen-nib mr-1"></i> ${corpusVm.getCorpus().getAuthor()}</p>
                             </div>
                             <div>
                                 <a class="btn open-corpus-inspector-btn mb-1" data-trigger="hover"
@@ -42,7 +41,9 @@
                                    data-content="${languageResource.get("openCorpus")}">
                                     <i class="fas fa-globe color-prime"></i>
                                 </a>
-                                <a class="btn light-border flexed clickable align-items-center pl-1 pr-1 mt-1 justify-content-center" data-trigger="hover" onclick="$(this).closest('.corpus-card').find('.expanded-content').toggle(75)">
+                                <a class="btn light-border flexed clickable align-items-center pl-1 pr-1 mt-1 justify-content-center"
+                                   data-trigger="hover"
+                                   onclick="$(this).closest('.corpus-card').find('.expanded-content').toggle(75)">
                                     <i class="fas fa-info-circle color-prime"></i>
                                 </a>
                             </div>

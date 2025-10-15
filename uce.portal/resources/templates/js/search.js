@@ -1,5 +1,101 @@
 let currentCorpusUniverseHandler = undefined;
 
+$('body').on('click', '#search-viz-update-button', function (e) {
+    // TODO more error handling
+    const nBins = parseInt($('#search-viz-n-bins').val())
+    window.searchVizualization.settings.nBins = nBins
+
+    const selectedFeature = $('#search-viz-selected-feature').val()
+    window.searchVizualization.settings.selectedFeature = selectedFeature
+
+    updateSearchVizualization()
+
+    e.preventDefault()
+})
+
+function createHistogramData(data, bins) {
+    // extract only the values, filter nan
+    const values = data.map(d => parseFloat(d.value)).filter(v => !isNaN(v))
+
+    // see https://github.com/texttechnologylab/TextAnnotatorReloaded/blob/main/src/components/BarChart.tsx
+    const min = Math.min(...values)
+    const max = Math.max(...values)
+    const range = max - min
+
+    const bucketSize = range / bins
+    const buckets = new Array(bins).fill(0)
+    for (const value of values) {
+        const bucketIndex = Math.min(
+            Math.floor((value - min) / bucketSize),
+            bins-1
+        )
+        buckets[bucketIndex]++
+    }
+
+    const labels = buckets.map((_, index) => {
+        const start = (min + index * bucketSize).toFixed(3)
+        const end = (min + (index + 1) * bucketSize).toFixed(3)
+        return start.toString() + " - " + end.toString()
+    })
+
+    return [buckets, labels]
+}
+
+function updateSearchVizualization() {
+    // TODO global state?
+    const data = window.searchVizualization.vizData["data"]
+    const currentPage = window.searchVizualization.vizData["currentPage"]
+    const nBins = window.searchVizualization.settings.nBins
+    if(data === undefined) return;
+
+    // set the selected feature to the first one if not set
+    const firstFeature = Object.keys(data).sort().shift()
+    const selectedFeature = window.searchVizualization.settings.selectedFeature || firstFeature
+
+    // update features options based on current data
+    const selectElem = document.getElementById('search-viz-selected-feature')
+    while (selectElem.firstChild) {
+        selectElem.removeChild(selectElem.lastChild)
+    }
+    Object.keys(data).sort().forEach(category => {
+        const option = document.createElement('option')
+        option.value = category
+        option.textContent = category
+        if (category === selectedFeature) {
+            option.selected = true
+        }
+        selectElem.appendChild(option)
+    })
+
+    const chartElem = document.getElementById('search-results-visualization-graph')
+    while (chartElem.firstChild) {
+        chartElem.removeChild(chartElem.lastChild)
+    }
+
+    if (data && Object.keys(data).length > 0 && selectedFeature in data) {
+        let [chartData, chartLabels] = createHistogramData(data[selectedFeature], nBins)
+        console.log("chart_data", chartData)
+        console.log("chart_labels", chartLabels)
+
+        const numDocs = data[selectedFeature].length
+
+        const title = `${languageResource.get("searchVisualizationPlotTitleTemplate")}`
+            .replace("{selectedFeature}", selectedFeature)
+            .replace("{currentPage}", currentPage.toString())
+            .replace("{numDocs}", numDocs.toString())
+
+        window.graphVizHandler.createBasicChart(
+            chartElem,
+            title,
+            {
+                "labels": chartLabels,
+                "data": chartData,
+            },
+            'bar',
+        )
+    }
+}
+
 /**
  * Starts a new search with the given input
  */
@@ -32,11 +128,27 @@ function startNewSearch(searchInput, reloadCorpus = true) {
     // Get possible uce metadata filters of this selectec corpus
     let metadataFilters = [];
     $('.uce-corpus-search-filter[data-id="' + corpusId + '"]').find('.filter-div').each(function () {
-        metadataFilters.push({
-            'key': $(this).find('label').html(),
-            'valueType': $(this).data('type'),
-            'value': $(this).find('input').val(),
-        })
+        const key = $(this).find('label').html()
+        const valueType = $(this).data('type')
+        if (valueType === 'NUMBER') {
+            // NUMBER type is a range
+            const min = parseFloat($(this).find('input[data-range="min"]').val())
+            const max = parseFloat($(this).find('input[data-range="max"]').val())
+            metadataFilters.push({
+                'key': key,
+                'valueType': valueType,
+                'min': min,
+                'max': max,
+                'value': "",  // TODO value must not be null in the backend, change later?
+            })
+        }
+        else {
+            metadataFilters.push({
+                'key': key,
+                'valueType': valueType,
+                'value': $(this).find('input').val(),
+            })
+        }
     })
 
     // Start a new search TODO: Outsource this into new prototype maybe
@@ -240,6 +352,12 @@ async function handleSwitchingOfPage(page) {
             $('.view .search-result-container .document-list-include').html(response.documentsList);
             $('.view .search-result-container .navigation-include').html(response.navigationView);
             $('.view .search-result-container .keyword-in-context-include').html(response.keywordInContextView);
+
+            if(response.searchVisualization && window.searchVizualization){
+                const vizData = response.searchVisualization;
+                window.searchVizualization.vizData = vizData;
+                updateSearchVizualization();
+            }
         },
         error: function (xhr, status, error) {
             console.error(xhr.responseText);
@@ -327,7 +445,15 @@ $('body').on('click', '.document-card .snippets-container .toggle-snippets-btn',
     const $snippets = $(this).closest('.snippets-container').find('.snippet-content');
     $snippets.each(function(){
         if($(this).data('id') !== 0) $(this).toggle();
-    })
+    });
+    if ($(this).parent().find(".snippet-content").length > 1) {
+        var style = $(this).parent().find(".snippet-content[data-id='1']")[0].getAttribute("style");;
+        const regex =  /display: none;/;
+        var found = style.match(regex);
+        $(this).text((found ? "${languageResource.get('more')} " : "${languageResource.get('less')} " ));
+        $(this).append('<i class="ml-1 fas fa-file-alt" aria-hidden="true"></i>');
+    };
+
 })
 
 let currentFocusedDocumentId = -1;

@@ -49,7 +49,8 @@
 }
 
 .keyword-context-card .context-table-container .col-middle {
-    flex: 0;
+    max-width: 125px;
+    /*flex = 0 */
     color:var(--prime);
     display: flex;
     justify-content: center;

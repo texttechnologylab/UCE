@@ -95,8 +95,8 @@ BEGIN
 				-- %s
                 d.documenttitle
             FROM limited_docs d
-            %s
             JOIN page p ON d.id = p.document_id
+            %s
 			-- %s
             AND ($5 IS NULL OR p.document_id IN (SELECT document_id FROM filter_matches))';
 	ELSE
@@ -138,7 +138,9 @@ BEGIN
 			SELECT 
 				(filter->>''key'')::text AS key,
 				(filter->>''value'')::text AS value,
-				(filter->>''valueType'')::text AS value_type
+				(filter->>''min'')::decimal AS min,
+				(filter->>''max'')::decimal AS max,
+				(filter->>''valueType'')::int AS value_type
 			FROM jsonb_array_elements($1) AS filter
 		),
 		filtered_ucemetadata AS (
@@ -150,9 +152,20 @@ BEGIN
 			SELECT um.document_id
 			FROM expanded_filters ef
 			JOIN filtered_ucemetadata um ON 
-				(ef.value_type IS NULL OR um.valueType::text = ef.value_type) 
-				AND (ef.key IS NULL OR um.key = ef.key) 
-				AND (ef.value IS NULL OR um.value = ef.value)
+				(ef.value_type IS NULL OR um.valueType = ef.value_type) 
+				AND (ef.key IS NULL OR um.key = ef.key)
+				AND (
+				    ef.value IS NULL OR um.value = ef.value
+				    OR (
+                        -- range search for NUMBER meta fields
+                        ef.value_type = 1
+                        AND (
+                            (ef.min IS NULL OR um.value::decimal >= ef.min)
+                            AND
+                            (ef.max IS NULL OR um.value::decimal <= ef.max)
+                        )
+				    )
+				)
 			JOIN document d ON um.document_id = d.id AND d.corpusid = $2
 			%s
 			GROUP BY um.document_id
@@ -202,10 +215,10 @@ BEGIN
             GROUP BY t.id, t.coveredtext, t.valuee, t.document_id
         ),
         extracted_taxons AS NOT MATERIALIZED (
-            SELECT ARRAY[ta.id::text, ta.coveredtext, COUNT(ta.id)::text, ta.valuee, ta.document_id::text] 
+            SELECT ARRAY[ta.id::text, ta.coveredtext, COUNT(ta.id)::text, ta.primaryname, ta.document_id::text] 
             FROM ranked_documents rd
-            JOIN taxon ta ON rd.id = ta.document_id
-            GROUP BY ta.id, ta.coveredtext, ta.valuee, ta.document_id
+            JOIN biofidtaxon ta ON rd.id = ta.document_id
+            GROUP BY ta.id, ta.coveredtext, ta.primaryname, ta.document_id
         )
         SELECT 
             CASE WHEN $8 THEN (SELECT total_count FROM counted_documents) ELSE NULL END,

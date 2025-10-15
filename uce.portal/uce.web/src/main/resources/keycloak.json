@@ -1,0 +1,8 @@
+{
+  "realm": "uce",
+  "auth-server-url" : "http://localhost:8080",
+  "resource": "uce-web",
+  "credentials": {
+    "secret": "MZ2EsIzl4fV6ojuaLDDOZlsKOBqEN1mT"
+  }
+}

@@ -1,4 +1,6 @@
 var selectedCorpus = -1;
+var currentView = undefined;
+var reloadTimelineMap = false;
 
 function generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
@@ -38,6 +40,18 @@ function navigateToView(id) {
             $(this).removeClass('selected-nav-btn');
         }
     });
+
+    // Special handles
+    if (id === 'timeline-map') {
+        if (reloadTimelineMap) {
+            setTimeout(function () {
+                const map = window.graphVizHandler.createUceMap(document.getElementById('uce-timeline-map'), true);
+                map.linkedTimelineMap(selectedCorpus);
+            }, 750);
+        }
+    }
+
+    currentView = id;
 }
 
 /**
@@ -85,12 +99,12 @@ function handleCorpusSelectionChanged($select){
     const sparqlAlive = selectedOption.getAttribute("data-sparqlalive");
     const hasEmbeddings = selectedOption.getAttribute("data-hasembeddings");
     const hasRagBot = selectedOption.getAttribute("data-hasragbot");
-    const hasTopicDist = selectedOption.getAttribute("data-hastopicdist");
     const hasTimeAnnotations = selectedOption.getAttribute("data-hastimeannotations");
     const hasTaxonAnnotations = selectedOption.getAttribute("data-hastaxonannotations");
+    const hasGeoNameAnnotations = selectedOption.getAttribute("data-hasgeonameannotations");
     const oldCorpusId = selectedCorpus;
     selectedCorpus = parseInt(selectedOption.getAttribute("data-id"));
-    if(oldCorpusId !== selectedCorpus){
+    if (oldCorpusId !== selectedCorpus) {
         // We have switched corpora then, start a new empty search.
         startNewSearch("", false);
     }
@@ -105,20 +119,36 @@ function handleCorpusSelectionChanged($select){
     else $('.ragbot-chat-include').hide();
 
     // Change the UCE Metadata according to the corpus
-    $('.uce-corpus-search-filter').each(function(){
-        if($(this).data('id') === selectedCorpus) $(this).show();
+    $('.uce-corpus-search-filter').each(function () {
+        if ($(this).data('id') === selectedCorpus) $(this).show();
         else $(this).hide();
     })
 
     // Update the layered search. That requires annotations and without them, is useless.
-    if(hasTaxonAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').show();
+    if (hasTaxonAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').show();
     else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
 
-    if(hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
-    else $('.layered-search-builder-container .choose-layer-popup a[data-type="TAXON"]').hide();
+    if (hasTimeAnnotations === 'true') $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').show();
+    else $('.layered-search-builder-container .choose-layer-popup a[data-type="TIME"]').hide();
 
-    if(hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false') $('.open-layered-search-builder-btn').hide();
-    else $('.open-layered-search-builder-btn').show();
+    if (hasGeoNameAnnotations === 'true') {
+        $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').show();
+        $('.site-container nav .nav-container .switch-view-btn[data-id="timeline-map"]').show();
+        reloadTimelineMap = true;
+    } else {
+        $('.site-container nav .nav-container .switch-view-btn[data-id="timeline-map"]').hide();
+        $('.layered-search-builder-container .choose-layer-popup a[data-type="LOCATION"]').hide();
+        $('#uce-timeline-map').html(''); // Clear old map
+        if (currentView === 'timeline-map') navigateToView('search');
+    }
+
+    if (hasTimeAnnotations === 'false' && hasTaxonAnnotations === 'false' && hasGeoNameAnnotations === 'false') {
+        $('.open-layered-search-builder-btn-badge').hide();
+        $('.open-layered-search-builder-btn').hide();
+    } else {
+        $('.open-layered-search-builder-btn-badge').show();
+        $('.open-layered-search-builder-btn').show();
+    }
 
     updateSearchHistoryUI();
 }
@@ -234,7 +264,6 @@ function openNewDocumentReadView(id, searchId) {
     if (id === undefined || id === '') {
         return;
     }
-    console.log('New Document Reader View for: ' + id);
     window.open("/documentReader?id=" + id + "&searchId=" + searchId, '_blank');
 }
 
@@ -253,4 +282,7 @@ $(document).ready(function () {
     console.log('Webpage loaded!');
     activatePopovers();
     reloadCorpusComponents();
+    // Init the lexicon
+    if (window.wikiHandler) window.wikiHandler.fetchLexiconEntries(0, 24);
 })
+

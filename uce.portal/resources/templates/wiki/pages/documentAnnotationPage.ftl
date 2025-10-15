@@ -13,11 +13,17 @@
 
     <hr class="mt-2 mb-4"/>
 
+    <div id="document-topic-word-cloud-container" class="col-md-8 mx-auto"></div>
+    <div id="document-topic-distribution-container"></div>
+    <div id="document-similar-documents-container"></div>
+
+
     <!-- the document this is from -->
     <div class="mt-4 mb-2 w-100 p-0 m-0 justify-content-center flexed align-items-start">
         <div class="document-card w-100">
             <#assign document = vm.getDocument()>
             <#assign searchId = "">
+            <#assign reduced = true>
             <#include '*/search/components/documentCardContent.ftl' >
         </div>
     </div>
@@ -29,6 +35,17 @@
             <#assign uceMetadata = vm.getUceMetadata()!>
             <#include "*/document/documentUceMetadata.ftl">
         </div>
+    </div>
+
+    <!-- linkable space -->
+    <div class="mt-2 mb-2">
+        <#assign unique = (vm.getWikiModel().getUnique())!"none">
+        <#assign height = 500>
+        <#if unique != "none">
+            <div class="w-100">
+                <#include "*/wiki/components/linkableSpace.ftl">
+            </div>
+        </#if>
     </div>
 
     <!-- Corpus Universe -->
@@ -55,5 +72,75 @@
         const center = $('.wiki-page').data('center');
         const corpusId = $('.wiki-page').data('corpusid');
         window.wikiHandler.addUniverseToDocumentWikiPage(corpusId, center);
+
+        var topicsData = {
+            "labels": [
+                <#list vm.getTopicDistribution() as topic>
+                "${topic[0]?js_string}"<#if topic_has_next>,</#if>
+                </#list>
+            ],
+            "data": [
+                <#list vm.getTopicDistribution() as topic>
+                ${topic[1]?c}<#if topic_has_next>,</#if>
+                </#list>
+            ],
+            "labelName": "Topic Weights"
+        };
+
+        var wordData = [
+            <#list vm.getTopicWords() as wordItem>
+            {
+                "term": "${wordItem.getWord()?js_string}",
+                "weight": ${wordItem.getProbability()?c}
+            }<#if wordItem_has_next>,</#if>
+            </#list>
+        ];
+
+        var similarDocumentsData = {
+            "labels": [
+                <#list vm.getSimilarDocuments() as item>
+                "${item[0]?js_string}"<#if item_has_next>,</#if>
+                </#list>
+            ],
+            "data": [
+                <#list vm.getSimilarDocuments() as item>
+                ${item[1]?c}<#if item_has_next>,</#if>
+                </#list>
+            ],
+            "labelName": "Shared Words"
+        };
+
+        if (topicsData.data.length > 0) {
+            window.graphVizHandler.createBasicChart(
+                document.getElementById('document-topic-distribution-container'),
+                'Topic Distribution',
+                topicsData,
+                'pie'
+            );
+        } else {
+            document.getElementById('document-topic-distribution-container').style.display = 'none';
+        }
+
+        if (wordData.length > 0) {
+            window.graphVizHandler.createWordCloud(
+                document.getElementById('document-topic-word-cloud-container'),
+                "${languageResource.get("documentWords")}",
+                wordData
+            );
+        } else {
+            document.getElementById('document-topic-word-cloud-container').style.display = 'none';
+        }
+
+        if (similarDocumentsData.data.length > 0) {
+            window.graphVizHandler.createBasicChart(
+                document.getElementById('document-similar-documents-container'),
+                'Similar documents based on shared words',
+                similarDocumentsData,
+                'polarArea'
+            );
+        } else {
+            document.getElementById('document-similar-documents-container').style.display = 'none';
+        }
+
     })
 </script>

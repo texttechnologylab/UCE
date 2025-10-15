@@ -14,13 +14,14 @@
         <module>uce.corpus-importer</module>
         <module>uce.web</module>
         <module>uce.search</module>
+        <module>uce.analysis</module>
     </modules>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <javaVersion>21</javaVersion>
-        <maven.compiler.source>${java.version}</maven.compiler.source>
-        <maven.compiler.target>${java.version}</maven.compiler.target>
+        <maven.compiler.source>${java.specification.version}</maven.compiler.source>
+        <maven.compiler.target>${java.specification.version}</maven.compiler.target>
     </properties>
 
     <repositories>

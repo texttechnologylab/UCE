@@ -17,21 +17,6 @@
     max-height: 99999vh !important;
 }
 
-#corpus-select {
-    width: auto;
-    max-width: 200px;
-    border-radius: 0;
-    border-right: 0;
-    height: 41px;
-    padding-left: 15px;
-    padding-right: 15px;
-    background-color: lightgray;
-    font-weight: bold;
-}
-
-.open-corpus-inspector-btn {
-    cursor: pointer;
-}
 
 .open-sr-builder-btn {
     border-radius: 0;
@@ -136,10 +121,15 @@
     z-index: -1;
 }
 
+.search-menu-div .uce-search-filters .list{
+    max-height: 200px;
+    overflow-y: auto;
+}
+
 .search-history-div {
     overflow-y: auto;
     min-height: 125px;
-    max-height: 300px;
+    max-height: 250px;
 }
 
 .search-history-div div {
@@ -203,7 +193,7 @@
     /*pointer-events: none;*/
     margin-top: 18px;
     border-bottom: 1px lightgray solid;
-    margin-bottom: 48px;
+    margin-bottom: 40px;
 }
 
 .search-state .header button {
@@ -359,6 +349,14 @@
 
 .enriched-search-tokens-list .enriched-token[data-type="TAXON_COMMAND"] .value{
     color: orange !important;
+}
+
+.enriched-search-tokens-list .enriched-token[data-type="TIME_COMMAND"] .value{
+    color: black !important;
+}
+
+.enriched-search-tokens-list .enriched-token[data-type="LOCATION_COMMAND"] .value{
+    color: dodgerblue !important;
 }
 
 .enriched-search-tokens-list .enriched-token .children-container{

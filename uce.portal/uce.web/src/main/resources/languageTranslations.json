@@ -7,9 +7,73 @@
     "de-DE": "Team",
     "en-EN": "Team"
   },
+  "analysis": {
+    "de-DE": "Analyse",
+    "en-EN": "Analysis"
+  },
+  "input": {
+    "de-DE": "Eingabe",
+    "en-EN": "Input"
+  },
+  "inputField": {
+    "de-DE": "Eingabe Text",
+    "en-EN": "Input Text"
+  },
+  "upload": {
+    "de-DE": "Datei Hochladen",
+    "en-EN": "Upload File"
+  },
+  "RunPipeline": {
+    "de-DE": "Pipeline Ausführen",
+    "en-EN": "Run Pipeline"
+  },
+  "output": {
+    "de-DE": "Ausgabe",
+    "en-EN": "Output"
+  },
+  "history": {
+    "de-DE": "Historie",
+    "en-EN": "History"
+  },
+  "models": {
+    "de-DE": "Modelle",
+    "en-EN": "Models"
+  },
   "search": {
     "de-DE": "Suche",
     "en-EN": "Search"
+  },
+  "annotations": {
+    "de-DE": "Annotationen",
+    "en-EN": "Annotations"
+  },
+  "incomingLinks": {
+    "de-DE": "Eingehende Links",
+    "en-EN": "Incoming Links"
+  },
+  "outgoingLinks": {
+    "de-DE": "Ausgehende Links",
+    "en-EN": "Outgoing Links"
+  },
+  "alphabet": {
+    "de-DE": "Alphabet",
+    "en-EN": "Alphabet"
+  },
+  "occurrence": {
+    "de-DE": "Vorkommen",
+    "en-EN": "Occurrence"
+  },
+  "noEntriesFound": {
+    "de-DE": "Keine Einträge gefunden.",
+    "en-EN": "No entries found."
+  },
+  "lexicon": {
+    "de-DE": "Lexikon",
+    "en-EN": "Lexicon"
+  },
+  "chooseLexiconEntry": {
+    "de-DE": "Wählen Sie einen lexikalischen Eintrag.",
+    "en-EN": "Select a lexical entry."
   },
   "contact": {
     "de-DE": "Kontakt",
@@ -47,9 +111,17 @@
     "de-DE": "Öffnen der Korpus-Übersicht",
     "en-EN": "Open the corpus viewer"
   },
+  "selectCorpus": {
+    "de-DE": "Wählen Sie den fokussierten Korpus, nach dem die UCE-Funktionen ausgerichtet sind.",
+    "en-EN": "Select the focused corpus according to which the UCE aligns its functions."
+  },
   "openSrBuilder": {
     "de-DE": "Öffnen des Semantic-Role Query Builders",
     "en-EN": "Open the Semantic-Role Query Builder"
+  },
+  "lexiconIsCalculating": {
+    "de-DE": "Das Lexikon wird gerade berechnet. Bitte besuchen Sie diese Seite zu einem späteren Zeitpunkt erneut; sie wird nicht automatisch aktualisiert.",
+    "en-EN": "The lexicon is being calculated. Please visit this page again at a later time; it will not be updated automatically."
   },
   "searchPlaceholder": {
     "de-DE": "Suche...",
@@ -91,6 +163,26 @@
     "de-DE": "Organisationen",
     "en-EN": "Organisations"
   },
+  "cues": {
+    "de-DE": "Stichwörter",
+    "en-EN": "Cues"
+  },
+  "scopes": {
+    "de-DE": "Skopi",
+    "en-EN": "Scopes"
+  },
+  "xscopes": {
+    "de-DE": "Erweiterte Skopi",
+    "en-EN": "Extended Scopes"
+  },
+  "foci": {
+    "de-DE": "Fokusse",
+    "en-EN": "Foci"
+  },
+  "events": {
+    "de-DE": "Ereignisse",
+    "en-EN": "Events"
+  },
   "misc": {
     "de-DE": "Sonstiges",
     "en-EN": "Misc"
@@ -124,8 +216,8 @@
     "en-EN": "Include <b>K</b>ey<b>w</b>ord <b>I</b>n <b>C</b>ontext view. Shows the usage of the search terms within each document, but may slow down the search a little to strongly."
   },
   "nerSearch": {
-    "de-DE": "Named-Entity Suche. Betrachtet beim Durchsuchen nur extrahierte Eigennamen.",
-    "en-EN": "Named-Entity search. Only considers extracted proper names when searching."
+    "de-DE": "Named-Entity Suche. Betrachtet beim Durchsuchen nur extrahierte Eigennamen. Das Feature ist momentan deaktiviert in UCE.",
+    "en-EN": "Named-Entity search. Only considers extracted proper names when searching. Feature is currently disabled within UCE."
   },
   "fulltextSearch": {
     "de-DE": "Eine Volltextsuche, die alle Texte in allen Dokumente durchsucht.",
@@ -139,13 +231,21 @@
     "de-DE": "Nur zugänglich, wenn eine aktive Graph-Datenbank mit hinterlegter Ontologie existiert. Durchsucht den Such-Query nach potentiellen Erweiterungen durch eben jene Ontologie der Datenbank.",
     "en-EN": "Only accessible if an active graph database with a stored ontology exists. Searches the search query for potential extensions using the same ontology of the database."
   },
+  "enrichmentCutoffTitle": {
+    "de-DE": "Diese Enrichment-Suche wurde abgeschnitten.",
+    "en-EN": "This enriched search got cutoff."
+  },
+  "enrichmentCutoffDescription": {
+    "de-DE": "Die Anreicherung wird nach einer bestimmten Anzahl von Tokens abgeschnitten (limitiert), da diese stringbasierte Volltext-Suche sonst zu komplex wird. Dies geschieht nur bei sehr umfangreicher Anreicherung, beispielsweise bei Commands. Um dies zu umgehen, verwenden Sie bitte die Layered Search, die nicht auf einer Volltextsuche basiert, sondern auf den importierten Annotationen, die nicht abgeschnitten werden.",
+    "en-EN": "Enrichment is truncated (limited) after a certain number of tokens, as otherwise this string-based search becomes too complex. This only happens in cases of very large enrichment, such as with commands. To get around this, please use layered search, which is not based on a full-text search but on the imported annotations, which are not truncated."
+  },
   "searchRankDescription": {
     "de-DE": "Die Relevanz des Dokuments für die gegebene Suchanfrage. Ein höherer Wert bedeutet eine höhere Relevanz des Dokuments.",
     "en-EN": "The relevance of the document to the given search query. A higher value indicates a higher relevance of the document."
   },
   "searchProModeDescription": {
-    "de-DE": "Aktiviert den Pro-Modus der Suche, der es Ihnen ermöglicht, Suchen mit logischen Operatoren wie <b>&, |, !</b> und anderen zu erstellen.",
-    "en-EN": "Activates the Pro mode of the search, which allows you to build searches using logical operators such as <b>&, |, !</b> and others."
+    "de-DE": "Aktiviert den Pro-Modus der Suche, der es Ihnen ermöglicht, Suchen mit logischen Operatoren wie <b>&, |, !</b> und anderen zu erstellen. Der Pro-Modus ist jedoch mit syntaktischen Anforderungen verbunden, die Sie in der Suchdokumentation nachlesen können, indem Sie auf das Fragezeichen klicken.",
+    "en-EN": "Activates the Pro mode of the search, which allows you to create searches with logical operators such as <b>&, |, !</b> and others. However, Pro mode is associated with syntactic requirements, which you can read about in the search documentation by clicking on the question mark."
   },
   "openSearchDocumentation": {
     "de-DE": "Öffnet die Suchdokumentation.",
@@ -162,6 +262,10 @@
   "more": {
     "de-DE": "Mehr dazu",
     "en-EN": "More"
+  },
+  "less": {
+    "de-DE": "Weniger dazu",
+    "en-EN": "Less"
   },
   "highlight": {
     "de-DE": "Hervorheben",
@@ -199,6 +303,18 @@
     "de-DE": "Seite",
     "en-EN": "Page"
   },
+  "profile": {
+    "de-DE": "Profil",
+    "en-EN": "Profile"
+  },
+  "noAccess": {
+    "de-DE": "Sie haben momentan keinen Zugriff auf diese Ressource.",
+    "en-EN": "You don't have access to this ressource right now."
+  },
+  "loginRequired": {
+    "de-DE": "Sie müssen eingeloggt sein, um auf diese Ressource zugreifen zu können.",
+    "en-EN": "You need to be logged in to access this ressource."
+  },
   "corpora": {
     "de-DE": "Korpora",
     "en-EN": "Corpora"
@@ -227,13 +343,17 @@
     "de-DE": "Neuen Chat starten",
     "en-EN": "Start a new chat"
   },
+  "ragBotRessourcesWarning": {
+    "de-DE": "Je nach ausgewähltem Modell und je nachdem, wie häufig es verwendet wird, kann die Reaktionszeit variieren. Bei weniger häufig verwendeten Modellen kann es zu einer anfänglichen Verzögerung kommen, da das Modell erst geladen werden muss. Außerdem können größere Modelle mehr Ressourcen erfordern, was zu längeren Antwortzeiten im Vergleich zu kleineren Modellen führen kann.",
+    "en-EN": "Depending on the selected model and how frequently it is used, the response time may vary. For less frequently used models, there may be an initial delay as the model needs to be loaded. Additionally, larger models may require more resources, which can result in longer response times compared to smaller ones."
+  },
   "ragBotGreetingMessage": {
     "de-DE": "Hallo! Ich bin dein virtueller Assistent rund um das Suchportal. Wenn du eine Frage zu einem bestimmten Thema hast, oder du über die Suche nicht die Dokumente findest, die du dir erhofft hattest, dann frag mich gerne.",
     "en-EN": "Hello, I'm your virtual assistant for the search portal. If you have a question about a specific topic, or if you can't find the documents you were hoping for via the search, then feel free to ask me."
   },
   "ragBotGreetingPrompt": {
-    "de-DE": "Du bist ein Bibliothekar in einer Online-Suchplattform für Bücher und Texte aller Art. Menschen instruieren dich und suchen verschiedenste Dinge über diese Bücher und Artikel, und du hilfst ihnen. Es werden dir oft Kontexte gegeben, die Auszüge aus Büchern und Artikel der Plattform darstellen und zur Nutzeranfrage passen. Nutze diese Kontexte um zu antworten indem du dich wie ein Bibliothekar verhälst, der den Kontext wie Bücher und Dokumente sieht und aus diesen vorliest und erklärt. Sollte ein Kontext vorhanden sein, dann werden diese dem User im Chatfenster auch angezeigt. Wenn du die Antwort nicht weisst, dann sag, dass dazu Informationen in deiner Sammlung fehlen. Du kannst außerdem nur Fragen beantworten und nichts selbst unternehmen! Halte die Antwort kurz und sei höflich!",
-    "en-EN": "You are a librarian in an online search platform for books and texts of all kinds. People instruct you and search for various things about these books and articles, and you help them. You are often given contexts that are excerpts from books and articles on the platform that match the user's query. Use these contexts to answer by acting like a librarian who sees the context such as books and documents and reads and explains from them. If a context is available, it will also be displayed to the user in the chat window. If you don't know the answer, say that there is no information in your collection. You can only answer questions and not do anything yourself! Keep your answer short and be polite!"
+    "de-DE": "Sie sind ein hilfsbereiter und sachkundiger Bibliothekar auf einer Online-Plattform für die Suche nach Büchern und Artikeln. Wenn ein Benutzer eine Frage stellt: Lesen Sie den ### CONTEXT sorgfältig durch, um relevante Informationen zu finden. Der Kontext besteht aus einer Liste von Dokumenten mit relevanten Inhalten. Die Inhalte sind Ausschnitte des gesamten Dokuments. Dazu sind optional Bilder aus den Dokumenten verfügbar. Verwenden Sie ausschließlich nur die Inhalte aus den Dokumenten im Kontext und die dazugehörigen Bilder, um Ihre Antworten zu formulieren - verlassen Sie sich nicht auf externes Wissen. Falls Bilder verfügbar sind beziehe sie auf jeden Fall in deine Antwort mit ein! Fügen sie immer die ID und den Titel der Dokumente die sie in ihrer Antwort verwenden als Quellenangabe zu ihrer Antwort hinzu. Halten Sie Ihre Antworten klar, prägnant und höflich. Wenn der Kontext nicht genügend Informationen enthält, um die Frage zu beantworten, lassen Sie den Benutzer wissen, dass die Informationen nicht in der Sammlung der Dokumente verfügbar sind. Denken Sie daran: Ihre Aufgabe ist es, den Benutzern zu helfen, sich zurechtzufinden und das Material auf der Grundlage der Informationen zu verstehen. Sie können damit beginnen, den Benutzer zu begrüßen und ihn aufzufordern, seine Frage zu stellen.",
+    "en-EN": "You are a helpful and knowledgeable librarian on an online platform for searching for books and articles. When a user asks a question: Read the ### CONTEXT carefully to find relevant information. The context consists of a list of documents with relevant content and optionally, images contained in the document. The contents are excerpts from the entire document. Only use the content from the documents in the context and the provided images to formulate your answers - do not rely on external knowledge. If there are images available, make sure to always consider them in your answer. Always add the ID and the title of the documents you use in your answer as a reference to your answer. Keep your answers clear, concise and polite. If the context does not contain enough information to answer the question, let the user know that the information is not available in the collection of documents. Remember: your job is to help users navigate and understand the material based on the information. You can start by greeting the user and inviting them to ask their question."
   },
   "ragBotErrorMessage": {
     "de-DE": "Es tut mir leid, es scheint ein technischer Fehler aufgetreten zu sein. Ich war nicht in der Lage, auf diese Anfrage zu antworten.",
@@ -250,6 +370,14 @@
   "alternativeNames": {
     "de-DE": "Alternative Namen",
     "en-EN": "Alternative Names"
+  },
+  "map": {
+    "de-DE": "Karte",
+    "en-EN": "Map"
+  },
+  "imprint": {
+    "de-DE": "Impressum",
+    "en-EN": "Imprint"
   },
   "noOntologies": {
     "de-DE": "Keine Ontologien gefunden.",
@@ -287,6 +415,10 @@
     "de-DE": "Dokumente",
     "en-EN": "Documents"
   },
+  "pages": {
+    "de-DE": "Seiten",
+    "en-EN": "Pages"
+  },
   "corpusTsnePlotMissing": {
     "de-DE": "Die Korpus-Überblick konnte nicht geladen werden, da keine oder nicht genügend annotierte embeddings vorhanden sind.",
     "en-EN": "The corpus overview could not be loaded because there are no or not enough annotated embeddings available."
@@ -302,5 +434,117 @@
   "noKWIC": {
     "de-DE": "Die Suche wurde ohne das Keyword-on-context feature gestartet.",
     "en-EN": "Search has been started without the Keyword-in-context feature."
+  },
+  "searchVisualizationSummaryTitle": {
+    "de-DE": "Suchergebnisse-basierte Visualisierungen",
+    "en-EN": "Search result visualizations"
+  },
+  "searchVisualizationPlotFeatureLabel": {
+    "de-DE": "Merkmal:",
+    "en-EN": "Feature:"
+  },
+  "searchVisualizationPlotNBinsLabel": {
+    "de-DE": "Anzahl der Klassen:",
+    "en-EN": "Number of bins:"
+  },
+  "searchVisualizationPlotUpdateButton": {
+    "de-DE": "Histogramm aktualisieren",
+    "en-EN": "Update histogram"
+  },
+  "searchVisualizationPlotTitleTemplate": {
+    "de-DE": "Verteilung des Merkmals \"{selectedFeature}\" auf der aktuellen Seite ({currentPage}) der Suchergebnisse ({numDocs} Dokumente)",
+    "en-EN": "Distribution of feature \"{selectedFeature}\" in the current page ({currentPage}) of the search results ({numDocs} documents)"
+  },
+  "topics": {
+    "de-DE": "Wichtige Themen",
+    "en-EN": "Key Topics"
+  },
+  "corpusWords": {
+    "de-DE": "Top Wörter aus dem Korpus",
+    "en-EN": "Top words from Corpus"
+  },
+  "documentWords": {
+    "de-DE": "Top Wörter aus dem Dokument",
+    "en-EN": "Top words from document"
+  },
+  "topicWords": {
+    "de-DE": "Top Wörter aus dem Thema",
+    "en-EN": "Top words from Topic"
+  },
+  "topicDistribution": {
+    "de-DE": "Thema Verteilung",
+    "en-EN": "Topic Distribution"
+  },
+  "noDataAvailable": {
+    "de-DE": "Keine Daten verfügbar.",
+    "en-EN": "No data available."
+  },
+  "cosine": {
+    "de-DE": "Misst die Winkelsimilarität von Themen-Wort-Vektoren",
+    "en-EN": "Measures the angular similarity of topic-word vectors"
+  },
+  "overlap": {
+    "de-DE": "Zählt einfach die überlappenden Wörter zwischen Themen",
+    "en-EN": "Counts simply the overlapping words between topics"
+  },
+  "topicSettings": {
+    "de-DE": "Thema Einstellungen",
+    "en-EN": "Topic Settings"
+  },
+  "numTopics": {
+    "de-DE": "Anzahl der zu zeigenden Themen",
+    "en-EN": "Number of topics to show"
+  },
+  "topicColorMode": {
+    "de-DE": "Thema-Farben Modus",
+    "en-EN": "Topic Colors Mode"
+  },
+  "perTopic": {
+    "de-DE": "Pro Thema",
+    "en-EN": "Per Topic"
+  },
+  "apply": {
+    "de-DE": "Anwenden",
+    "en-EN": "Apply"
+  },
+  "reset": {
+    "de-DE": "Zurücksetzen",
+    "en-EN": "Reset"
+  },
+  "saveTopicSettings": {
+    "de-DE": "Thema Einstellungen speichern in Downloads",
+    "en-EN": "Save topic settings to Downloads"
+  },
+  "uploadTopicSettings": {
+    "de-DE": "Thema Einstellungen hochladen",
+    "en-EN": "Upload topic settings"
+  },
+  "controlPanelTab": {
+    "de-DE": "Steuerungsfeld",
+    "en-EN": "Control Panel"
+  },
+  "visualizationTab": {
+    "de-DE": "Visualisierung",
+    "en-EN": "Visualization"
+  },
+  "semanticDensity": {
+    "de-DE": "Semantische Dichte",
+    "en-EN": "Semantic Density"
+  },
+  "topicEntity": {
+    "de-DE": "Thema-Entität",
+    "en-EN": "Topic-Entity"
+  },
+  "topicLandscape": {
+    "de-DE": "Themenlandschaft",
+    "en-EN": "Topic Landscape"
+  },
+  "topicSimilarity": {
+    "de-DE": "Thematische Ähnlichkeit",
+    "en-EN": "Topic Similarity"
+  },
+  "sentenceTopicFlow": {
+    "de-DE": "Satz-Themenfluss",
+    "en-EN": "Sentence Topic Flow"
   }
 }

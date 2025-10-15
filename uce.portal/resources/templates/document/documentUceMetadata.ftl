@@ -20,18 +20,18 @@
                         <p>Invalid or missing JSON data.</p>
                     </#if>
                 <#else>
-                    <div class="flex-grow-1 col-md-auto m-0 pl-1 pr-1" style="max-width: 300px" data-trigger="hover"
-                         data-toggle="popover" data-html="true" data-placement="top"
-                         data-content="<b>${metadata.getValue()!''}</b><br/><br/>${metadata.getComment()!''}<br/><i>(${metadata.getValueType()?lower_case!''})">
+                    <div class="flex-grow-1 col-md-auto m-0 pl-1 pr-1" data-trigger="hover"
+                         data-toggle="popover" data-html="true"
+                         data-content="<b>${metadata.getCleanValue()!''}</b><br/><br/>${metadata.getComment()!''}<br/><i>(${metadata.getValueType()?lower_case!''})</i>">
                         <div class="flexed align-items-center justify-content-between uce-metadata-item">
                             <div class="flexed align-items-center">
-                                <label class="mb-0 mr-1 color-prime">${metadata.getKey()!''}</label>
+                                <label class="mb-0 mr-1 color-prime small-font">${metadata.getKey()!''}:</label>
                             </div>
                             <#if metadata.getValueType()?has_content && metadata.getValueType() == 'URL'>
                                 <a class="ml-2 small-font ellipsis-text" href="${metadata.getValue()!''}"
                                    target="_blank">${metadata.getValue()!''}</a>
                             <#else>
-                                <label class="mb-0 ml-2 small-font color-dark ellipsis-text">${metadata.getValue()!''}</label>
+                                <label class="mb-0 ml-2 small-font color-dark ellipsis-text">${metadata.getCleanValue()!''}</label>
                             </#if>
                         </div>
                     </div>

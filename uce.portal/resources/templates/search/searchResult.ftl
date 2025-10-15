@@ -3,11 +3,28 @@
     <div class="header">
         <div class="flexed w-100 align-items-center justify-content-center">
             <div class="btn rounded-0 selected-btn" data-trigger="hover" data-toggle="popover" data-placement="top"
-                    data-content="${languageResource.get("searchResultsDescription")}">
-                ${languageResource.get("searchResults")} <span class="hits">&GreaterEqual; ${searchState.getTotalHits()}</span>
+                 data-content="${languageResource.get("searchResultsDescription")}">
+                ${languageResource.get("searchResults")} <span
+                        class="hits">&GreaterEqual; ${searchState.getTotalHits()}</span>
             </div>
         </div>
     </div>
+
+    <#if searchState.hasUceMetadataFilters()>
+        <div id="search-results-visualization-container">
+            <div class="group-box bg-ghost card-shadow w-100">
+                <div class="flexed align-items-center justify-content-between clickable"
+                     onclick="$(this).closest('.group-box').find('.expanded').fadeToggle(75)">
+                    <h6 class="mb-0 w-100">${languageResource.get("searchVisualizationSummaryTitle")}</h6>
+                    <a class="rounded-a"><i class="far fa-chart-bar"></i></a>
+                </div>
+
+                <div class="expanded display-none mt-3">
+                    <#include "*/search/components/searchVisualization.ftl" >
+                </div>
+            </div>
+        </div>
+    </#if>
 
     <div class="row mb-0 mr-0 ml-0 pb-5">
 
@@ -51,7 +68,7 @@
                                 <i class="fas fa-eye small-font color-prime"></i>
                             </a>
                         </div>
-                        <div class="flexed align-items-center justify-content-around">
+                        <div class="flexed align-items-center justify-content-around overflow-x">
                             <#list searchState.getEnrichedSearchTokens() as token>
                                 <#assign width = "">
                                 <#if token.getChildren()?has_content && token.getChildren()?size gt 0>
@@ -61,7 +78,8 @@
                                     <div class="flexed align-items-center justify-content-between">
                                         <label class="mb-0 text-dark font-italic ml-1 mr-1 text-center w-100 clickable hoverable value"
                                                onclick="$(this).closest('.enriched-token').find('.expanded-content').toggle(75)">
-                                            ${token.getValue()}
+                                            <span>${token.getValue()}</span><span
+                                                    class="ml-1 xsmall-font text">(${token.getType().name()})</span>
                                         </label>
                                     </div>
                                     <#if width == "w-100">
@@ -70,7 +88,8 @@
                                             <div class="w-100 children-container">
                                                 <label class="mb-0 text">( </label>
                                                 <#list token.getChildren() as child>
-                                                    <label class="mb-0 text small-font block-text">'${child.getValue()}' | </label>
+                                                    <label class="mb-0 text small-font block-text">'${child.getValue()}'
+                                                        | </label>
                                                 </#list>
                                                 <label class="mb-0 text"> ) </label>
                                             </div>
@@ -79,6 +98,15 @@
                                 </div>
                             </#list>
                         </div>
+                        <#if searchState.isEnrichedSearchQueryIsCutoff()>
+                            <div class="mb-0 mt-2 alert alert-warning ml-1 mr-1 pt-1 pb-1 pl-2 pr-2 text-center light-border flexed align-items-center justify-content-between">
+                                <i class="fas fa-exclamation-circle"></i>
+                                <label class="small-font mb-0">${languageResource.get("enrichmentCutoffTitle")}</label>
+                                <i class="fas fa-question-circle"
+                                   data-trigger="hover" data-toggle="popover" data-placement="top"
+                                   data-content="${languageResource.get("enrichmentCutoffDescription")}"></i>
+                            </div>
+                        </#if>
                     </div>
                     <hr class="mt-3 mb-3 bg-lightgray"/>
                 </#if>
@@ -140,7 +168,7 @@
                                 <div class="content">
                                     <#include '*/search/components/documentCardContent.ftl' >
                                 </div>
-                                <div class="mt-3">
+                                <div class="mt-0 pl-3 pr-3 pb-3 pt-1">
                                     <p class="m-0 text-center w-100">
                                         <i class="color-secondary fas fa-vector-square"></i> Embedding
                                     </p>

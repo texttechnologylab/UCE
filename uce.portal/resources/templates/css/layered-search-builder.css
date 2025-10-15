@@ -17,7 +17,7 @@
     width: 100%;
     margin-left: 24px;
     margin-right: 24px;
-    max-width: 1200px;
+    max-width: 1400px;
     height: calc(100vh - 36px);
     overflow-y: auto;
     background-color: ghostwhite;
@@ -54,6 +54,13 @@
     background-color: rgba(125, 125, 125, 0.15);
     border-radius: 3px;
     border: lightgrey 1px solid;
+}
+
+.layered-search-builder-container .slot .location-map{
+    height: 400px;
+    border-right: lightgrey 1px solid;
+    border-bottom: lightgrey 1px solid;
+    border-left: lightgrey 1px solid;
 }
 
 .layered-search-builder-container .layers-container{
