@@ -3,6 +3,7 @@ package org.texttechnologylab.uce.web.routes;
 import com.google.gson.Gson;
 import freemarker.template.Configuration;
 import io.javalin.http.Context;
+import io.javalin.http.Handler;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
@@ -56,10 +57,14 @@ public class AnalysisApi implements UceApi {
             model.put("inputLLM", inputLLM);
 
             RunDUUIPipeline pipeline = new RunDUUIPipeline();
-            DUUIInformation DataRequest = pipeline.getModelResources(selectedModels, inputText, inputClaim, inputCoherence, inputStance, inputLLM);
+            RunDUUIPipeline.AnalysisResponse resp =
+                    pipeline.getModelResourcesWithHandle(selectedModels, inputText, inputClaim,
+                            inputCoherence, inputStance, inputLLM);
+            DUUIInformation DataRequest = resp.duuiInformation;
             model.put("DUUI", DataRequest);
             model.put("SuccessRequest", true);
             model.put("modelGroups", DataRequest.getModelGroups());
+            model.put("analysisId", resp.analysisId);
             // set history
 
             history.addDuuiInformation(String.valueOf(counter), DataRequest);
@@ -180,5 +185,38 @@ public class AnalysisApi implements UceApi {
             ctx.render("defaultError.ftl");
         }
     }
+    //   IMPORT ROUTE
+    @Authentication(required = Authentication.Requirement.LOGGED_IN,
+            route = Authentication.RouteTypes.POST,
+            path = "/api/analysis/importCas"
+    )
+    public Handler importCas = ctx -> {
+        try {
+            String analysisId = ctx.queryParam("analysisId");
+            if (analysisId == null || analysisId.isBlank()) {
+                ctx.status(400).result("Missing analysisId");
+                return;
+            }
 
+            // Lookup cached session
+            RunDUUIPipeline.AnalysisSession session = RunDUUIPipeline.getCachedSession(analysisId);
+            if (session == null) {
+                ctx.status(404).result("No cached CAS found for analysisId=" + analysisId);
+                return;
+            }
+
+            // send to importer
+            long corpusId = Long.parseLong(ctx.queryParam("corpusId")); // from ?corpusId=...
+            String importPath = "/api/ie/upload/uima";
+            String importUrl  = ctx.scheme() + "://" + ctx.host() + importPath;
+
+            RunDUUIPipeline.sendToImporterViaHttp(importUrl, analysisId, corpusId, analysisId, null);
+            ctx.status(200).result("CAS imported successfully for analysisId=" + analysisId);
+        } catch (NumberFormatException nfe) {
+            ctx.status(400).result("corpusId is required and must be a number");
+        } catch (Exception e) {
+            logger.error("Error importing CAS", e);
+            ctx.status(500).result("Error importing CAS: " + e.getMessage());
+        }
+    };
 }

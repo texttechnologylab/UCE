@@ -480,6 +480,7 @@ public class App {
                             get("/setHistory", (ctx) -> (registry.get(AnalysisApi.class)).setHistory(ctx));
                             post("/callHistory", (ctx) -> (registry.get(AnalysisApi.class)).callHistory(ctx));
                             post("/callHistoryText", (ctx) -> (registry.get(AnalysisApi.class)).callHistoryText(ctx));
+                            post("/importCas", (registry.get(AnalysisApi.class)).importCas); //added the importCas path
                         });
 
                         path("/corpusUniverse", () -> {
