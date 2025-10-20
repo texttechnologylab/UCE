@@ -391,7 +391,7 @@ public class UIMAAnnotation extends ModelBase implements Linkable {
                     "<span class='annotation custom-context-menu focus' title='%1$s'>",
                     includeTitle ? focus.getCoveredText() : "");
         } else if (annotation instanceof Image image) {
-            return "<img width='" + image.getWidth() + "' height='" + image.getHeight() + "' src='" + image.getHTMLImgSrc() + "' /><br/>";
+            return "<img class='document-reader-embedded-image' width='" + image.getWidth() + "' height='" + image.getHeight() + "' src='" + image.getHTMLImgSrc() + "' /><br/>";
         } else if (annotation instanceof UnifiedTopic topic) {
             // Get the representative topic if available
             String repTopicValue = "";

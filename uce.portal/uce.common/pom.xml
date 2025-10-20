@@ -195,7 +195,7 @@
         <dependency>
             <groupId>com.github.texttechnologylab</groupId>
             <artifactId>UIMATypeSystem</artifactId>
-            <version>uima-3-ba474b74bd-1</version>
+            <version>09ae3a8372</version>
         </dependency>
       
         <dependency>

@@ -31,6 +31,8 @@ import org.texttechnologylab.annotation.ocr.OCRBlock;
 import org.texttechnologylab.annotation.ocr.OCRLine;
 import org.texttechnologylab.annotation.ocr.OCRPage;
 import org.texttechnologylab.annotation.ocr.OCRToken;
+import org.texttechnologylab.annotation.uce.Permission;
+import org.texttechnologylab.models.authentication.DocumentPermission;
 import org.texttechnologylab.uce.common.config.CommonConfig;
 import org.texttechnologylab.uce.common.config.CorpusConfig;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
@@ -658,6 +660,11 @@ public class Importer {
                         () -> setImages(document, jCas),
                         (ex) -> logImportWarn("This file should have contained image annotations, but selecting them caused an error.", ex, filePath));
 
+            ExceptionUtils.tryCatchLog(
+                    () -> setPermissions(document, jCas),
+                    (ex) -> logImportWarn("There was an error setting the document permissions.", ex, filePath)
+            );
+
             var duration = System.currentTimeMillis() - start;
             logImportInfo("Successfully extracted all annotations from " + filePath, LogStatus.FINISHED, filePath, duration);
 
@@ -668,6 +675,21 @@ public class Importer {
         } finally {
             logger.info("Finished with importing that CAS.\n\n\n");
         }
+    }
+
+    private void setPermissions(Document document, JCas jCas) {
+        // Extract the permissions of this document, they are stored as normal UIMA annotations
+        List<Permission> permissions = new ArrayList<>(JCasUtil.select(jCas, Permission.class));
+        logger.info("Setting " + permissions.size() + " permissions on the document.");
+        for (Permission permission : permissions) {
+            DocumentPermission docPermission = new DocumentPermission();
+            docPermission.setType(DocumentPermission.DOCUMENT_PERMISSION_TYPE.valueOf(permission.getPermissionType()));
+            docPermission.setLevel(DocumentPermission.DOCUMENT_PERMISSION_LEVEL.valueOf(permission.getPermissionLevel()));
+            docPermission.setName(permission.getUser());
+            // NOTE permissions should always be managed using the methods on the document to ensure both sides of the relation are in sync
+            document.addPermission(docPermission);
+        }
+        logger.info("Finished setting permissions.");
     }
 
     /**

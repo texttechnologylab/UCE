@@ -657,3 +657,23 @@
     width:100%
 }
 
+/* Document permissions */
+.uce-document-permissions-container .uce-document-permissions-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.uce-document-permissions-container .uce-document-permissions-table th,
+.uce-document-permissions-container .uce-document-permissions-table td {
+    padding: 8px;
+    text-align: left;
+}
+
+.uce-document-permissions-container .uce-document-permissions-table th {
+    background-color: #f5f5f5;
+    border-bottom: 2px solid lightgray;
+}
+
+.uce-document-permissions-container .uce-document-permissions-table tr {
+    border-bottom: 1px solid lightgray;
+}
