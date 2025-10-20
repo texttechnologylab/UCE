@@ -23,7 +23,15 @@
       "annotated": false,
       "//comment": "[Are the taxons annotated with biofid onthologies through the 'identifier' property?]",
       "biofidOnthologyAnnotated": false
-    }
+    },
+    "wikipediaLink": false,
+    "completeNegation": false,
+    "cue": false,
+    "event": false,
+    "focus": false,
+    "scope": false,
+    "xscope": false,
+    "unifiedTopic": false
   },
   "other": {
     "//comment": "[Is this corpus also available on https://sammlungen.ub.uni-frankfurt.de/? Either true or false]",

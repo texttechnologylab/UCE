@@ -1,7 +1,7 @@
 
 <hr class="mt-0"/>
 
-In general, UCE currently consists of 5 microservices, each dockerized and orchestrated via Docker Compose to form the application that is UCE. Among these 5 services, some are obligatory *(must-haves)* and some are optional *(specific use cases)*.
+In general, UCE currently consists of several microservices, each dockerized and orchestrated via Docker Compose to form the application that is UCE. Among these services, some are obligatory *(must-haves)* and some are optional *(specific use cases)*.
 
 <table>
   <thead>
@@ -41,6 +41,25 @@ In general, UCE currently consists of 5 microservices, each dockerized and orche
         <td>The (Fuseki) Sparql service allows the integration of ontological hierarchies in RDF or OWL format into UCE's searches.</td>
         <td style="text-align:center; font-size:large">❌</td>
     </tr>
+    <tr>
+      <td>RAG Service</td>
+      <td>The RAG service is a Python web server that primarily enables access to machine learning and AI models. It is required to calculate embeddings and enable the RAG bot.</td>
+      <td style="text-align:center; font-size:large">❌</td>
+    </tr>
+  <tr>
+      <td>S3 MinIO Storage</td>
+      <td>
+          The MinIO storage enables the storage of imported UIMA documents, allowing users to download any document along with its annotations in XMI format.
+      </td>
+      <td style="text-align:center; font-size:large">❌</td>
+  </tr>
+  <tr>
+      <td>Keycloak</td>
+      <td>
+          The Keycloak authentication server manages UCE’s user and role systems. Once integrated, UCE provides user logins and access restrictions. The Keycloak service includes its own admin portal and a comprehensive management interface.
+      </td>
+      <td style="text-align:center; font-size:large">❌</td>
+  </tr>
   </tbody>
 </table>
 

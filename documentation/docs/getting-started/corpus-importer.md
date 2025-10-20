@@ -46,6 +46,8 @@ Afterwards, simply start the importer through the compose:
 docker-compose up --build uce-importer
 ```
 
+The importer will automatically import all corpora that is mounted to its local `/app/input/corpora/` volume.
+
 <hr/>
 
 ## Developer Setup
@@ -76,3 +78,4 @@ Open the `common.conf` file and adjust the database connection parameters to mat
 | `-srcDir` <br/> `--importDir` | Unlike `-src`, `-srcDir` is the path to a directory that holds multiple importable `src` paths. The importer will check for folders within this directory, where each folder should be an importable corpus with a corpusConfig.json and its input UIMA-files. Those are then imported. |
 | `-num` <br/> `--importerNumber` | When starting multiple importers, assign an id to each instance by counting up from 1 to n **(not relevant as off now, just set it to 1)**. |
 | `-t` <br/> `--numThreads` | UCE imports asynchronous. Decide with how many threads, e.g. 4-8-16. By default, this is single threaded. |
+| `-view` <br/> `--casView` | Name of the CAS view to import from. If not set, the default view (initial view) is used. Adjust this only if you're familiar with CAS views and UIMA. Otherwise, you probably don't need this. |

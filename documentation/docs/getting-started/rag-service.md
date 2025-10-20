@@ -51,6 +51,39 @@ python src/webserver.py
 
 ## Settings
 
-As of now, the only language model that works **out of the box** without modifying the source code is ChatGPT. When enabling the RAGBot in the [Corpus Configuration](configuration.md), you must provide your OpenAI key in the `settings` section of the [UCE Configuration](configuration.md).
+The RAGBot can be configured with different LLMs for inference and user interaction. It is recommended to use either an OpenAI model (in which case an OpenAI API key must be set) or a locally hosted [Ollama server](https://ollama.com/).
 
-However, it is easy to adjust the RAG service to query locally hosted or alternative language models instead of using the OpenAI API by diving the `rag` source code. **We plan to add out-of-the-box configuration options for this functionality as soon as possible.**
+In both cases, the configuration must be defined in the [UCE Configuration](configuration.md). The relevant excerpt is shown below:
+
+??? example "Example RAGBot settings within uceConfig.json"
+    ```json title="uceConfig.json"
+    {
+      "settings": {
+        "rag": {
+          "models": [
+            {
+              "model": "ollama/gemma3:latest",
+              "url": "http://ollama.llm.texttechnologylab.org/",
+              "apiKey": "",
+              "displayName": "Gemma3 (4.3B - Google)"
+            },
+            {
+              "model": "ollama/deepseek-r1:latest",
+              "url": "http://ollama.llm.texttechnologylab.org/",
+              "apiKey": "",
+              "displayName": "DeepSeek-R1 (7.6B - DeepSeek)"
+            },
+            {
+              "model": "openai/o4-mini-2025-04-16",
+              "url": "",
+              "apiKey": "YOUR_API_KEY",
+              "displayName": "OpenAI's O4 Mini"
+            }
+          ]
+        }
+      }
+    }
+    ```
+
+For OpenAI models, you can specify any model name listed in the [OpenAI model catalog](https://platform.openai.com/docs/models). UCE provides the option for users to select which model they want to use from the list of models defined in the UCE configuration.
+

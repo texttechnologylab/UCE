@@ -153,6 +153,25 @@ Based on the outlined architecture, UCE provides the following features:
 
     Automatically generates an interlinked hypertext knowledge base derived from the corpus. Each annotation and document is transformed into a dedicated wiki-style entry, promoting interpretability and contextual understanding through semantic linking. This facilitates knowledge integration and conceptual navigation akin to a domain-specific Wikipedia.
 
+-   :material-account-key:{ .lg .middle } __Authentication__
+
+    ---
+
+    UCE is compatible with Keycloak, providing full identity and access management support for authentication. You can define permission systems and user roles, configure login requirements, and create or manage users through the admin cockpit.
+
+-   :material-server:{ .lg .middle } __S3Storage__
+
+    ---
+
+    Integrate S3 storage to allow users to download any document imported into UCE, supporting the FAIR principles required by many research and open-source projects.
+
+-   :material-file-sign:{ .lg .middle } __Analysis Engine__
+
+    ---
+
+    On-demand analysis and annotation of new documents or free text via the API to the Docker Unified UIMA Interface, enabling real-time NLP tasks such as emotion or sentiment analysis.
+
+
 </div>
 
 Depending on the user configuration and the annotations of the corpora, these features are flexibly enabled or disabled. The most minimal configuration for UCE is to import a corpus without any annotations and disable all processing and features, leaving only document reading and basic search functionality.

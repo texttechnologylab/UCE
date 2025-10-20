@@ -60,6 +60,8 @@ nav:
     - Corpus Importer: getting-started/corpus-importer.md
     - RAG Service: getting-started/rag-service.md
     - Sparql Service: getting-started/fuseki-sparql.md
+    - S3 MinIO Storage: getting-started/s3-storage.md
+    - Keycloak: getting-started/keycloak.md
     - Configurations: getting-started/configuration.md
     - UIMA & DUUI: getting-started/uima-duui.md
   - Development:
