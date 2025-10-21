@@ -16,7 +16,7 @@ The Unified Corpus Explorer is being developed by the [Text Technology Lab](http
 
     ---
 
-    Member of the Text Technology Lab and Lead Developer of UCE. He created the project and began its development in 2024.
+    Member of the Text Technology Lab (*01/2024-10/2025*) and Lead Developer of UCE. He created the project and began its development in 2024.
 
 -   [__Giuseppe Abrami__](https://www.texttechnologylab.org/team/giuseppe-abrami/)
 

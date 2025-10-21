@@ -69,14 +69,13 @@ nav:
   - Projects:
     - Projects: projects/index.md
     - BIOfid: projects/biofid.md
-    - PrismAI: projects/prismai.md
   - About Us:
     - About Us: about-us/about-us.md
   - Publications: publications.md
 
 plugins:
   - search
-  - git-revision-date-localized # For last modified date. ACTIVATE FOR RELEASE
+  # - git-revision-date-localized # For last modified date. ACTIVATE FOR RELEASE and comment out for debug, it's slow.
   - glightbox:
       touchNavigation: true
       loop: false
