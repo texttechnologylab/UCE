@@ -76,7 +76,7 @@ tabulate==0.9.0
 tenacity==8.3.0
 threadpoolctl==3.3.0
 tokenizers==0.15.2
-torch==2.2.1
+torch==2.8.0
 tqdm==4.66.2
 transformers==4.38.2
 trimap==1.1.4
