@@ -75,7 +75,7 @@ nav:
 
 plugins:
   - search
-  # - git-revision-date-localized # For last modified date. ACTIVATE FOR RELEASE and comment out for debug, it's slow.
+  - git-revision-date-localized # For last modified date. ACTIVATE FOR RELEASE and comment out for debug, it's slow.
   - glightbox:
       touchNavigation: true
       loop: false
