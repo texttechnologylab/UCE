@@ -1,13 +1,11 @@
 package org.texttechnologylab.uce.common.models.rag;
 
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 import org.joda.time.DateTime;
 import org.texttechnologylab.uce.common.config.uceConfig.RAGModelConfig;
 import org.texttechnologylab.uce.common.utils.SupportedLanguages;
 
-import java.util.ArrayList;
-import java.util.UUID;
+import java.util.*;
 
 @Setter
 @Getter
