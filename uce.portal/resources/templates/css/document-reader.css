@@ -184,7 +184,6 @@ body {
 }
 
 .document-content .page {
-    min-height: 100vh;
     position: relative;
     padding-top: 5rem;
     padding-bottom: 5rem;

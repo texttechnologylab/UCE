@@ -67,7 +67,6 @@ public class RAGApi implements UceApi {
      * This can be used fo get messages updates for streaming results.
      */
     public void getMessagesForChat(Context ctx) {
-        Gson gson = new Gson();
         ctx.contentType("application/json");
 
         var chatId = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("chatId"),
@@ -159,7 +158,18 @@ public class RAGApi implements UceApi {
             userRagMessage.setRole(Roles.USER);
             userRagMessage.setMessage(userMessage);
 
-            var prompt = "### Context: [NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST] \n### Instruktion: " + userMessage;
+            // if we are using MCP we can skip all the extras
+            var usingMcp = SystemStatus.UceConfig.getSettings().getMcp().isEnabled();
+
+            var prompt_replace_text = "";
+            if (usingMcp) {
+                prompt_replace_text = "[NO CONTEXT - CALL TOOLS TO GET CONTEXT OR PERFORM ACTIONS]";
+            }
+            else {
+                prompt_replace_text = "[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]";
+            }
+            var prompt = "### Context: " + prompt_replace_text + " \n### Instruktion: " + userMessage;
+
             // Now fetch some context through embeddings.
             // When do we actually fetch more context? Good paper here: https://arxiv.org/html/2401.06800v1
             // Update: 16.04.2024: I've trained a BERT model that classifies user inputs into context_needed or
@@ -171,16 +181,20 @@ public class RAGApi implements UceApi {
 //            if (documentId != null) {
 //                contextNeeded = 1;
 //            }
-//            else {
+            if (usingMcp) {
+                // no context needed, the model can get it by using tools
+                contextNeeded = 0;
+            }
+            else {
                 contextNeeded = ExceptionUtils.tryCatchLog(
                         () -> ragService.postRAGContextNeeded(userMessage),
                         (ex) -> logger.error("Error getting the ContextNeeded info from the rag service.", ex));
                 if (contextNeeded == null) contextNeeded = 1;
-//            }
+            }
 
             // Check if the user wants to work with just one document or with multiple documents,
             // unless a specific id is already given in the request
-            if (documentId == null) {
+            if (documentId == null && !usingMcp) {
                 try {
                     if (userMessage.contains("ID")) {
                         Matcher matcher = patternIDGiven.matcher(userMessage);
@@ -199,7 +213,7 @@ public class RAGApi implements UceApi {
             // Check for the amount of documents the user wants to work with
             String documentTitle = null;
             // Only if there is no document id given
-            if (documentId == null) {
+            if (documentId == null && !usingMcp) {
                 List<String> parts = List.of("URL", "title", "ID");
                 for (String part : parts) {
                     if (documentId != null) {
@@ -248,7 +262,7 @@ public class RAGApi implements UceApi {
             // Check for the amount of documents the user wants to work with
             Integer amountOfDocs = null;
             // Only if there is no document id given
-            if (documentId == null) {
+            if (documentId == null && !usingMcp) {
                 amountOfDocs = ExceptionUtils.tryCatchLog(
                         () -> ragService.postRAGAmountDocs(userMessage, chatState.getModel()),
                         (ex) -> logger.error("Error getting the AmountDocs info from the rag service.", ex));
@@ -297,7 +311,7 @@ public class RAGApi implements UceApi {
                         contextText.append("Content:\n").append(doc.getFullText()).append("\n");
                         contextText.append("</document>").append("\n\n");
                     }
-                    prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", contextText);
+                    prompt = prompt.replace(prompt_replace_text, contextText);
                 }
                 else {
                     nearestDocumentChunkEmbeddings = ragService.getClosestDocumentChunkEmbeddings(userMessage, amountOfDocs, -1);
@@ -327,7 +341,7 @@ public class RAGApi implements UceApi {
                         contextText.append("Search result:\n").append(nearestDocumentChunkEmbedding.getCoveredText()).append("\n");
                         contextText.append("</document>").append("\n\n");
                     }
-                    prompt = prompt.replace("[NO CONTEXT - USE CONTEXT FROM PREVIOUS QUESTION IF EXIST]", contextText);
+                    prompt = prompt.replace(prompt_replace_text, contextText);
                 }
             }
             userRagMessage.setPrompt(prompt);
@@ -360,7 +374,7 @@ public class RAGApi implements UceApi {
             // Now let's ask our rag llm
             String finalPrompt = prompt;
             var answer = ExceptionUtils.tryCatchLog(
-                    () -> ragService.postNewRAGPrompt(chatState.getMessages(), chatState.getModel()),
+                    () -> ragService.postNewRAGPrompt(chatState),
                     (ex) -> logger.error("Error getting the next response from our LLM RAG service. The prompt: " + finalPrompt, ex));
             if (answer == null) {
                 var languageResources = LanguageResources.fromRequest(ctx);

@@ -10,6 +10,7 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.uce.common.config.CommonConfig;
 import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.services.AuthenticationService;
+import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.uce.common.utils.AuthenticationUtils;
 import org.texttechnologylab.uce.common.utils.SystemStatus;
 
@@ -27,10 +28,12 @@ public class AuthenticationApi implements UceApi {
     private static final Logger logger = LogManager.getLogger(AuthenticationApi.class);
     private Configuration freemarkerConfig;
     private AuthenticationService authenticationService;
+    private PostgresqlDataInterface_Impl db;
     private final Gson gson = new Gson();
 
     public AuthenticationApi(ApplicationContext serviceContext, Configuration freemarkerConfig){
         this.authenticationService = serviceContext.getBean(AuthenticationService.class);
+        this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.freemarkerConfig = freemarkerConfig;
     }
 
@@ -101,6 +104,16 @@ public class AuthenticationApi implements UceApi {
                 user.setName(parsedIdToken.get("name").toString().replace("\"", ""));
                 user.setEmail(parsedIdToken.get("email").toString().replace("\"", ""));
                 user.setUsername(parsedIdToken.get("preferred_username").toString().replace("\"", ""));
+                if (parsedIdToken.has("groups")) {
+                    var userGroups = parsedIdToken
+                            .getAsJsonArray("groups")
+                            .asList()
+                            .stream()
+                            // groups names start with a slash, we remove that here
+                            .map(e -> e.getAsString().replaceFirst("^/", ""))
+                            .collect(Collectors.toSet());
+                    user.setGroups(userGroups);
+                }
             }
 
             var refreshToken = tokenResponse.has("refresh_token") ? tokenResponse.get("refresh_token").getAsString().replace("\"", "") : null;
@@ -109,6 +122,10 @@ public class AuthenticationApi implements UceApi {
             user.setExpiresIn(expiresIn);
 
             ctx.sessionAttribute("uceUser", user);
+
+            // Update the user's document permissions
+            // TODO we should later do this asynchronously when group memberships change using the Keycloak API
+            db.calculateEffectivePermissions(user.getUsername(), user.getGroups());
 
             // We redirect back to the main page after logging in.
             ctx.redirect("/");

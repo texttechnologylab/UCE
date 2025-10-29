@@ -2,9 +2,17 @@ package org.texttechnologylab.uce.common.services;
 
 import com.google.gson.Gson;
 import com.pgvector.PGvector;
+import io.modelcontextprotocol.client.McpClient;
+import io.modelcontextprotocol.client.McpSyncClient;
+import io.modelcontextprotocol.client.transport.HttpClientStreamableHttpTransport;
+import io.modelcontextprotocol.spec.McpSchema;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.jsoup.HttpStatusException;
+import org.texttechnologylab.models.dto.RAGCompleteFullDto;
+import org.texttechnologylab.models.dto.RAGCompleteFullMessageToolCallDto;
+import org.texttechnologylab.models.rag.Tool;
+import org.texttechnologylab.models.rag.ToolFunction;
 import org.texttechnologylab.uce.common.config.CommonConfig;
 import org.texttechnologylab.uce.common.config.uceConfig.RAGModelConfig;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
@@ -51,9 +59,31 @@ public class RAGService {
 
     static final Pattern patternAmount = Pattern.compile("\\d+");
 
+    private McpSyncClient mcpClient;
+
     public RAGService(PostgresqlDataInterface_Impl postgresqlDataInterfaceImpl) {
         this.postgresqlDataInterfaceImpl = postgresqlDataInterfaceImpl;
         TestConnection();
+    }
+
+    private static McpSyncClient initMcpClient() {
+        // own url?
+        HttpClientStreamableHttpTransport transportProvider = HttpClientStreamableHttpTransport
+                .builder("http://localhost:4567/mcp")
+                .build();
+
+        McpSyncClient client = McpClient.sync(transportProvider)
+                .requestTimeout(Duration.ofSeconds(60))  // TODO config
+                .capabilities(McpSchema.ClientCapabilities
+                        .builder()
+                        .roots(true)
+                        .build()
+                )
+                .build();
+
+        client.initialize();
+
+        return client;
     }
 
     public void TestConnection(){
@@ -150,7 +180,7 @@ public class RAGService {
 
         // Get all documents of this corpus, loop through them, get the embeddings and
         // then send a request to our webserver.
-        var corpusDocuments = postgresqlDataInterfaceImpl.getDocumentsByCorpusId(corpusId, 0, 9999999);
+        var corpusDocuments = postgresqlDataInterfaceImpl.getDocumentsByCorpusId(corpusId, 0, 9999999, null);
         var labels = new ArrayList<String>();
         var embeddings = new ArrayList<float[]>();
         for (var document : corpusDocuments) {
@@ -351,44 +381,131 @@ public class RAGService {
      *
      * @return
      */
-    public String postNewRAGPrompt(List<RAGChatMessage> chatHistory, RAGModelConfig modelConfig) throws URISyntaxException, IOException, InterruptedException {
+    public String postNewRAGPrompt(RAGChatState chatState) throws URISyntaxException, IOException, InterruptedException {
+        List<RAGChatMessage> chatHistory = chatState.getMessages();
+        RAGModelConfig modelConfig = chatState.getModel();
+
         var httpClient = HttpClient.newBuilder()
                 .version(HttpClient.Version.HTTP_2)
                 .build();
 
         var url = config.getRAGWebserverBaseUrl() + "rag/complete";
-        var config = new CommonConfig();
 
-        // Prepare workload
         var gson = new Gson();
-        var params = new HashMap<String, Object>();
 
-        params.put("model", modelConfig.getModel());
-        params.put("apiKey", modelConfig.getApiKey());
-        params.put("url", modelConfig.getUrl());
+        // repeated requests if the models is performing tool calls
+        while(true) {
+            // Prepare workload
+            var params = new HashMap<String, Object>();
 
-        // Add the chat history
-        var promptMessages = buildPromptMessages(chatHistory);
-        params.put("promptMessages", promptMessages);
-        var jsonData = gson.toJson(params);
+            params.put("model", modelConfig.getModel());
+            params.put("apiKey", modelConfig.getApiKey());
+            params.put("url", modelConfig.getUrl());
 
-        // Create request
-        var request = HttpRequest.newBuilder()
-                .uri(new URI(url))
-                .header("Content-Type", "application/json")
-                .POST(HttpRequest.BodyPublishers.ofString(jsonData))
-                .build();
-        // Send request and get response
-        var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
-        var statusCode = response.statusCode();
-        if (statusCode != 200) throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
+            // Add the chat history
+            var promptMessages = buildPromptMessages(chatHistory);
+            params.put("promptMessages", promptMessages);
 
-        var responseBody = response.body();
-        var ragCompleteDto = gson.fromJson(responseBody, RAGCompleteDto.class);
-        if (ragCompleteDto.getStatus() != 200) throw new HttpStatusException(
-                "Webservice replied with an internally wrong status code, something went wrong there: " + ragCompleteDto.getStatus(), statusCode, url);
+            // Add MCP tools
+            // TODO initialize MCP client
+            // TODO should we use only one client for all requests or per chat? when to create?
+            mcpClient = initMcpClient();
 
-        return ragCompleteDto.getMessage();
+            // Get available tools from MCP servers
+            var mcpTools = mcpClient.listTools();
+            var usingTools = mcpTools != null && !mcpTools.tools().isEmpty();
+            if (usingTools) {
+                var tools = new ArrayList<Tool>();
+                // TODO check format
+                for (var tool : mcpTools.tools()) {
+                    var toolFunction = new ToolFunction(tool.name(), tool.description(), tool.inputSchema());
+                    tools.add(new Tool(toolFunction));
+                }
+                params.put("tools", tools);
+            }
+
+            var jsonData = gson.toJson(params);
+
+            // Create request
+            var request = HttpRequest.newBuilder()
+                    .uri(new URI(url))
+                    .header("Content-Type", "application/json")
+                    .POST(HttpRequest.BodyPublishers.ofString(jsonData))
+                    .build();
+            // Send request and get response
+            var response = httpClient.send(request, HttpResponse.BodyHandlers.ofString());
+            var statusCode = response.statusCode();
+            if (statusCode != 200)
+                throw new HttpStatusException("Request returned invalid status code: " + statusCode, statusCode, url);
+
+            var responseBody = response.body();
+            if (usingTools) {
+                // if using tools, we have to check if the response is a tool call or a final message and act accordingly
+                var ragCompleteDto = gson.fromJson(responseBody, RAGCompleteFullDto.class);
+                if (ragCompleteDto.getMessage().getMessage().getToolCalls() != null && !ragCompleteDto.getMessage().getMessage().getToolCalls().isEmpty()) {
+                    // TODO only add if not empty?
+                    var responseContent = ragCompleteDto.getMessage().getMessage().getContent();
+                    if (responseContent == null || responseContent.isBlank()) {
+                        responseContent = "[Tool call requested.]";
+                    }
+                    var responseMessage = new RAGChatMessage();
+                    responseMessage.setRole(Roles.ASSISTANT);
+                    responseMessage.setPrompt(responseContent);
+                    responseMessage.setMessage(responseContent);
+                    chatState.addMessage(responseMessage);
+
+                    var answer = new StringBuilder();
+
+                    for (RAGCompleteFullMessageToolCallDto toolCall : ragCompleteDto.getMessage().getMessage().getToolCalls()) {
+                        if (toolCall.getFunction() != null) {
+                            McpSchema.CallToolRequest toolRequest = McpSchema.CallToolRequest
+                                    .builder()
+                                    .name(toolCall.getFunction().getName())
+                                    .arguments(toolCall.getFunction().getArguments())
+                                    .build();
+                            McpSchema.CallToolResult toolResult = mcpClient.callTool(toolRequest);
+                            // TODO handle error
+                            if (!toolResult.isError()) {
+                                for (McpSchema.Content content : toolResult.content()) {
+                                    if (content.type().equals("text")) {
+                                        McpSchema.TextContent textContent = (McpSchema.TextContent) content;
+                                        // TODO format result depending on model?
+                                        if (!answer.isEmpty()) {
+                                            answer.append("\n\n");
+                                        }
+                                        answer.append("Tool result for function \"").append(toolCall.getFunction().getName()).append("\":\n");
+                                        answer.append("<tool>\n").append(textContent.text()).append("\n</tool>");
+                                    } else {
+                                        // TODO support more tool results
+                                        logger.error("RAGService: Tool result content type not supported: " + content.type());
+                                    }
+                                }
+                            }
+                        }
+                    }
+
+                    if (answer.isEmpty()) {
+                        answer.append("[Failed to get tool result.]");
+                    }
+                    var answerString = answer.toString();
+
+                    var toolMessage = new RAGChatMessage();
+                    toolMessage.setRole(Roles.TOOL);
+                    toolMessage.setPrompt(answerString);
+                    toolMessage.setMessage(answerString);
+                    chatState.addMessage(toolMessage);
+                }
+                else {
+                    // no tool call, return message as before
+                    return ragCompleteDto.getMessage().getMessage().getContent();
+                }
+            } else {
+                var ragCompleteDto = gson.fromJson(responseBody, RAGCompleteDto.class);
+                if (ragCompleteDto.getStatus() != 200) throw new HttpStatusException(
+                        "Webservice replied with an internally wrong status code, something went wrong there: " + ragCompleteDto.getStatus(), statusCode, url);
+                return ragCompleteDto.getMessage();
+            }
+        }
     }
 
     private List<Map<String, Object>> buildPromptMessages(List<RAGChatMessage> chatHistory) {
@@ -405,8 +522,9 @@ public class RAGService {
             promptMessage.put("role", chat.getRole().name().toLowerCase());
             promptMessage.put("content", chat.getPrompt());
 
-            // TODO we only send the images in the last message if available, else we use all images
             boolean isLast = (chatInd == chatHistory.size() - 1);
+
+            // TODO we only send the images in the last message if available, else we use all images
             if (lastMessageHasImage && isLast) {
                 if (chat.getImages() != null && !chat.getImages().isEmpty()) {
                     var images = new ArrayList<String>();
@@ -453,6 +571,7 @@ public class RAGService {
         params.put("url", modelConfig.getUrl());
 
         // Add the chat history
+        // TODO tools+streaming not supported, check ollama blog post for this
         var promptMessages = buildPromptMessages(chatState.getMessages());
         params.put("promptMessages", promptMessages);
 

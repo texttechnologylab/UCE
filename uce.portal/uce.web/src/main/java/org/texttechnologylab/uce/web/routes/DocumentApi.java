@@ -10,6 +10,7 @@ import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.uce.common.config.CorpusConfig;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
 import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
+import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.models.corpus.UCEMetadataValueType;
 import org.texttechnologylab.uce.common.models.search.SearchType;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
@@ -82,9 +83,11 @@ public class DocumentApi implements UceApi {
                 (ex) -> logger.error("Error: couldn't determine the page, defaulting to page 1 then. ", ex));
         if (page == null) page = 1;
 
+        UceUser uceUser = ctx.sessionAttribute("uceUser");
+
         try {
             var take = 10;
-            var documents = db.getDocumentsByCorpusId(corpusId, (page - 1) * take, take);
+            var documents = db.getDocumentsByCorpusId(corpusId, (page - 1) * take, take, uceUser);
 
             model.put("requestId", ctx.attribute("id"));
             model.put("documents", documents);
@@ -165,7 +168,6 @@ public class DocumentApi implements UceApi {
 
     public void getSingleDocumentReadView(Context ctx) {
         var model = new HashMap<String, Object>();
-        var gson = new Gson();
 
         var id = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("id"),
                 (ex) -> logger.error("Error: the url for the document reader requires an 'id' query parameter. " +
@@ -180,7 +182,9 @@ public class DocumentApi implements UceApi {
                 (ex) -> logger.warn("Opening a document view but no searchId parameter was provided. Currently, this shouldn't happen, but it didn't stop the procedure."));
 
         try {
-            var doc = db.getCompleteDocumentById(Long.parseLong(id), 0, 10);
+            UceUser user = ctx.sessionAttribute("uceUser");
+
+            var doc = db.getCompleteDocumentById(Long.parseLong(id), 0, 10, user);
             model.put("document", doc);
 
             var corpus = db.getCorpusById(doc.getCorpusId());
@@ -299,8 +303,9 @@ public class DocumentApi implements UceApi {
         }
 
         try {
+            UceUser user = ctx.sessionAttribute("uceUser");
             var skip = Integer.parseInt(ctx.queryParam("skip"));
-            var doc = db.getCompleteDocumentById(Long.parseLong(id), skip, 10);
+            var doc = db.getCompleteDocumentById(Long.parseLong(id), skip, 10, user);
             var annotations = doc.getAllAnnotations(skip, 10);
             model.put("documentAnnotations", annotations);
             model.put("documentText", doc.getFullText());

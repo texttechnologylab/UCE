@@ -3,6 +3,8 @@ package org.texttechnologylab.uce.common.models.authentication;
 import lombok.Getter;
 import lombok.Setter;
 
+import java.util.Set;
+
 @Getter
 @Setter
 public class UceUser {
@@ -13,6 +15,7 @@ public class UceUser {
     private String name;
     private String email;
     private String username;
+    private Set<String> groups;
 
     public String getAbbreviation() {
         if (name == null || name.trim().isEmpty()) {

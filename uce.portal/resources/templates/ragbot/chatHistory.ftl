@@ -1,5 +1,10 @@
 <div class="chat-state h-100 pb-5" data-id="${chatState.getChatId()}"></div>
 <#list chatState.getMessages() as message>
+
+    <#if message.getRole()?lower_case == "tool">
+      <#continue>
+    </#if>
+
     <div class="message" data-type="${message.getRole()?lower_case}">
 
         <#if message.getContextDocuments()?size gt 0>

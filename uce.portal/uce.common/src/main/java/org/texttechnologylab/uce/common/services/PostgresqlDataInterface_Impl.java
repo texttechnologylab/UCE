@@ -3,12 +3,15 @@ package org.texttechnologylab.uce.common.services;
 import com.google.gson.Gson;
 import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.hibernate.*;
 import org.hibernate.criterion.Projections;
 import org.hibernate.criterion.Restrictions;
 import org.hibernate.type.LongType;
 import org.hibernate.type.StandardBasicTypes;
 import org.springframework.stereotype.Service;
+import org.texttechnologylab.models.authentication.DocumentPermission;
 import org.texttechnologylab.uce.common.annotations.Searchable;
 import org.texttechnologylab.uce.common.config.HibernateConf;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
@@ -16,6 +19,7 @@ import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
 import org.texttechnologylab.uce.common.models.Linkable;
 import org.texttechnologylab.uce.common.models.ModelBase;
 import org.texttechnologylab.uce.common.models.UIMAAnnotation;
+import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.models.biofid.BiofidTaxon;
 import org.texttechnologylab.uce.common.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.uce.common.models.biofid.GnFinderTaxon;
@@ -48,9 +52,11 @@ import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.util.*;
 import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 public class PostgresqlDataInterface_Impl implements DataInterface {
+    private static final Logger logger = LogManager.getLogger(PostgresqlDataInterface_Impl.class);
 
     private final SessionFactory sessionFactory;
 
@@ -75,6 +81,51 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         } catch (Exception ex) {
             SystemStatus.PostgresqlDbStatus = new HealthStatus(false, "Couldn't build the session factory.", ex);
         }
+    }
+
+    public void calculateEffectivePermissions(String username, Set<String> groups) throws DatabaseOperationException {
+        executeOperationSafely(session -> {
+            // Build a Postgres array literal from the groups set
+            // Escape single quotes to prevent SQL injection
+            String groupArrayLiteral = groups.stream()
+                    .map(s -> "'" + s.replace("'", "''") + "'")
+                    .collect(Collectors.joining(", "));
+
+            // If the set is empty, just use ARRAY[]::text[]
+            if (groupArrayLiteral.isEmpty()) {
+                groupArrayLiteral = ""; // Postgres accepts ARRAY[]::text[] as empty
+            }
+
+            String sql = String.format("""
+            WITH all_permissions AS (
+                SELECT dp.document_id, dp.level
+                FROM documentpermissions dp
+                WHERE dp.type = 1
+                  AND dp.name = :username
+                UNION ALL
+                SELECT dp.document_id, dp.level
+                FROM documentpermissions dp
+                WHERE dp.type = 0
+                  AND dp.name = ANY(ARRAY[%s])
+            ),
+            ranked AS (
+                SELECT document_id, MAX(level) AS max_level
+                FROM all_permissions
+                GROUP BY document_id
+            )
+            INSERT INTO documentpermissions (document_id, name, type, level)
+            SELECT r.document_id, :username, 2, r.max_level
+            FROM ranked r
+            ON CONFLICT (document_id, name, type)
+            DO UPDATE SET level = EXCLUDED.level;
+            """, groupArrayLiteral);
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("username", username);
+
+            query.executeUpdate();
+            return null;
+        });
     }
 
     public void executeSqlWithoutReturn(String sql) throws DatabaseOperationException {
@@ -275,15 +326,36 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take) throws DatabaseOperationException {
+    public List<Document> getDocumentsByCorpusId(long corpusId, int skip, int take, UceUser user) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             // TODO: Hardcoded sql, but another instance where hibernate is fucking unusable. This SQL in HQL or whatever
             // crooked syntax is a million times slower. I'll just leave the raw sql here then.
             var sql = "SELECT * FROM document WHERE corpusid = :corpusId ORDER BY id LIMIT :take OFFSET :skip";
+
+            if (user != null) {
+                // only show documents where the effective permissions (2) for this user are at least READ (1)
+                // or allow access if there are no permissions set at all
+                sql = """
+                    SELECT * FROM document doc
+                    LEFT JOIN documentpermissions dp ON dp.document_id = doc.id
+                    WHERE doc.corpusid = :corpusId
+                        AND (
+                            dp.document_id IS NULL
+                            OR (dp.type = 2 AND dp.name = :user AND dp.level >= 1)
+                        )
+                    ORDER BY doc.id
+                    LIMIT :take
+                    OFFSET :skip
+                    """;
+            }
+
             var query = session.createNativeQuery(sql, Document.class)
                     .setParameter("corpusId", corpusId)
                     .setParameter("take", take)
                     .setParameter("skip", skip);
+            if (user != null) {
+                query.setParameter("user", user.getUsername());
+            }
 
             var documents = query.getResultList();
 
@@ -718,7 +790,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                                                                    SearchOrder order,
                                                                    OrderByColumn orderedByColumn,
                                                                    long corpusId,
-                                                                   List<UCEMetadataFilterDto> filters) throws DatabaseOperationException {
+                                                                   List<UCEMetadataFilterDto> filters,
+                                                                   UceUser user) throws DatabaseOperationException {
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
             HashMap<String, List<String>> tableSubstrings = new HashMap<>();
             tableSubstrings.put("cue", cue);
@@ -962,7 +1035,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         }
                         CompleteNegation negComp = getCompleteNegationById(negId);
                         //Document doc = getCompleteDocumentById((long) negSorted.get(negId).getFirst().getDocumentId(), 0, 9999999);
-                        Document doc = getCompleteDocumentById(negComp.getDocumentId(), 0, 9999999);
+                        Document doc = getCompleteDocumentById(negComp.getDocumentId(), 0, 9999999, user);
                         PageSnippet pageSnippet = new PageSnippet();
 
                         String snippet = doc.getFullTextSnippetCharOffset(Math.max(minBegin - 100, 0), Math.min(maxEnd + 100, minBegin + 500));
@@ -1587,9 +1660,48 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public Document getCompleteDocumentById(long id, int skipPages, int pageLimit) throws DatabaseOperationException {
+    public boolean userHasPermission(Document document, UceUser user, DocumentPermission.DOCUMENT_PERMISSION_LEVEL level) {
+        Set<DocumentPermission> documentPermissions = document.getPermissions();
+
+        // check for permissions if the document has any
+        // if not, assume this is a "public" document and allow read access
+        // this will keep backwards compatibility with older versions
+        if (documentPermissions == null || documentPermissions.isEmpty()) {
+            logger.info("Document {} has no permissions, assuming public read access", document.getId());
+            return true;
+        }
+
+        // if not public, a user is required
+        if (user == null) {
+            logger.warn("No user provided for permission check on document {}, denying access", document.getId());
+            return false;
+        }
+
+        // else check if this specific user has the required permission level
+        for (DocumentPermission permission : documentPermissions) {
+            // only need to check effective permissions
+            if (permission.getType() == DocumentPermission.DOCUMENT_PERMISSION_TYPE.EFFECTIVE) {
+                // permission level is sufficient
+                if (permission.getLevel().ordinal() >= level.ordinal()) {
+                    // check if the permission applies to the user
+                    if (permission.getName().equals(user.getUsername())) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        logger.warn("User {} does not have sufficient permissions on document {}, denying access", user.getUsername(), document.getId());
+        return false;
+    }
+
+    public Document getCompleteDocumentById(long id, int skipPages, int pageLimit, UceUser user) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             var doc = session.get(Document.class, id);
+
+            if (!userHasPermission(doc, user, DocumentPermission.DOCUMENT_PERMISSION_LEVEL.READ)) {
+                return null;
+            }
 
             return initializeCompleteDocument(doc, skipPages, pageLimit);
         });

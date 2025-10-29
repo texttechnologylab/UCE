@@ -6,6 +6,7 @@ import org.hibernate.exception.SQLGrammarException;
 import org.springframework.context.ApplicationContext;
 import org.texttechnologylab.uce.common.config.CorpusConfig;
 import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
+import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.uce.common.models.search.*;
 import org.texttechnologylab.uce.common.services.JenaSparqlService;
@@ -117,7 +118,7 @@ public class Search_DefaultImpl implements Search {
      *
      * @return
      */
-    public SearchState initSearch() throws SQLGrammarException {
+    public SearchState initSearch(UceUser user) throws SQLGrammarException {
         //var countAll = !this.searchState.getSearchQuery().isEmpty();
         DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
         if (documentSearchResult == null)
@@ -170,7 +171,7 @@ public class Search_DefaultImpl implements Search {
      *
      * @return
      */
-    public SearchState getSearchHitsForPage(int page) {
+    public SearchState getSearchHitsForPage(int page, UceUser user) {
         // Adjust the current page and execute the search again
         this.searchState.setCurrentPage(page);
         var documentSearchResult = executeSearchOnDatabases(false);
