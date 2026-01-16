@@ -1,16 +1,13 @@
 package org.texttechnologylab.uce.web.routes;
 
-import com.google.gson.Gson;
-import com.google.gson.JsonIOException;
-import com.google.gson.JsonSyntaxException;
 import io.javalin.http.Context;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
-import org.texttechnologylab.uce.common.config.CorpusConfig;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
 import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
-import org.texttechnologylab.uce.common.models.corpus.Corpus;
+import org.texttechnologylab.uce.common.models.imp.ImportStatus;
+import org.texttechnologylab.uce.common.models.imp.UCEImport;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.uce.common.services.S3StorageService;
 import org.texttechnologylab.uce.common.utils.StringUtils;
@@ -19,15 +16,16 @@ import org.texttechnologylab.uce.corpusimporter.Importer;
 import java.nio.charset.StandardCharsets;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 import java.util.concurrent.CompletableFuture;
+
 
 public class ImportExportApi implements UceApi {
 
+    private static final Logger logger = LogManager.getLogger(PostgresqlDataInterface_Impl.class);
     private S3StorageService s3StorageService;
     private PostgresqlDataInterface_Impl db;
     private ApplicationContext serviceContext;
-
-    private static final Logger logger = LogManager.getLogger(PostgresqlDataInterface_Impl.class);
 
     public ImportExportApi(ApplicationContext serviceContext) {
         this.serviceContext = serviceContext;
@@ -53,7 +51,7 @@ public class ImportExportApi implements UceApi {
             ctx.res().setContentType(contentType);
             ctx.res().setHeader("Content-Disposition", "attachment; filename=\"" + objectName + "." + StringUtils.getExtensionByContentType(contentType) + "\"");
 
-            var buffer  = new byte[8192];
+            var buffer = new byte[8192];
             int bytesRead;
             while ((bytesRead = s3Stream.read(buffer)) != -1) {
                 out.write(buffer, 0, bytesRead);
@@ -133,6 +131,47 @@ public class ImportExportApi implements UceApi {
             ctx.status(500);
             ctx.result("Error uploading a file: " + e.getMessage());
         }
-    };
+    }
+
+
+    public void importCorpusFromPath(Context ctx) {
+        try {
+            String path = ctx.formParam("path");
+            String numThreadStr = ctx.formParam("numThreads");
+            int numThreads = (numThreadStr != null && !numThreadStr.isBlank()) ? Integer.parseInt(numThreadStr) : 1;
+            String casView = ctx.formParam("casView");
+
+            if (casView != null && casView.isBlank()) {
+                casView = null;
+            }
+
+            if (path == null || path.isBlank()) {
+                ctx.status(400).result("Path is required");
+            }
+
+            String importId = UUID.randomUUID().toString();
+            int importerNumber = 1;
+            Importer importer = new Importer(serviceContext, path, importerNumber, importId, casView);
+            UCEImport uceImport = new UCEImport(importId, path, ImportStatus.STARTING);
+            Integer fileCount = ExceptionUtils.tryCatchLog(importer::getXMICountInPath,
+                    (ex) -> logger.warn("There was an IO error counting the importable UIMA files - the import will probably fail at some point.", ex));
+            uceImport.setTotalDocuments(fileCount == null ? -1 : fileCount);
+            db.saveOrUpdateUceImport(uceImport);
+            CompletableFuture.runAsync(() -> {
+                try {
+                    importer.start(numThreads);
+                } catch (DatabaseOperationException e) {
+                    logger.error("Error during asynchronous corpus import", e);
+                }
+            });
+            ctx.status(200).result("Import started. Import ID: " + importId);
+        } catch (DatabaseOperationException e) {
+            logger.error("Error when creating saving/updating to database" + e);
+        } catch (Exception e) {
+            logger.error("Error initiating corpus import", e);
+            ctx.status(500).result("Error initiating import: " + e.getMessage());
+        }
+
+    }
 
 }
