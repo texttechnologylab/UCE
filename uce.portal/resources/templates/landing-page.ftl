@@ -19,9 +19,12 @@
         <div class="d-flex align-items-center justify-content-center mb-2">
             <h3 class="text-center font-weight-bold text-dark"><i
                         class="color-prime fas fa-database mr-2"></i> ${languageResource.get("corpora")}</h3>
-            <button class="btn btn-sm btn-outline-secondary ml-3" data-toggle="modal" data-target="#importCorpusModal">
-                <i class="fas fa-file-import"></i>
-            </button>
+            <#if uceConfig.settings.enablePathImport?? && uceConfig.settings.enablePathImport>
+                <button class="btn btn-sm btn-outline-secondary ml-3" data-toggle="modal"
+                        data-target="#importCorpusModal">
+                    <i class="fas fa-file-import"></i>
+                </button>
+            </#if>
         </div>
 
 

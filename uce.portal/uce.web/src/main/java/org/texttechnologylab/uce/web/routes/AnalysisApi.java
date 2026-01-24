@@ -11,8 +11,10 @@ import org.texttechnologylab.uce.analysis.History;
 import org.texttechnologylab.uce.analysis.RunDUUIPipeline;
 import org.texttechnologylab.uce.analysis.modules.DUUIInformation;
 import org.texttechnologylab.uce.common.annotations.auth.Authentication;
+import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.models.dto.AnalysisRequestDto;
 import org.texttechnologylab.uce.common.models.dto.HistoryRequestDto;
+import org.texttechnologylab.uce.web.SessionManager;
 
 import java.util.HashMap;
 import java.util.List;
@@ -55,6 +57,10 @@ public class AnalysisApi implements UceApi {
             model.put("inputCoherence", inputCoherence);
             model.put("inputStance", inputStance);
             model.put("inputLLM", inputLLM);
+
+            UceUser user = SessionManager.getUserFromRequest(ctx);
+            String userId = (user != null) ? user.getUsername() : "user-unknown";
+            RunDUUIPipeline.setThreadLocalUserId(userId);
 
             RunDUUIPipeline pipeline = new RunDUUIPipeline();
             RunDUUIPipeline.AnalysisResponse resp =

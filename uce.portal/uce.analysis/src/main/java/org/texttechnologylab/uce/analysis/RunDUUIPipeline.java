@@ -29,13 +29,21 @@ public class RunDUUIPipeline {
     private static final AnalysisCache analysisCache = new AnalysisCache();
     private static final ThreadLocal<String> lastAnalysisIdTL = new ThreadLocal<>();
     private static final Logger logger = LogManager.getLogger(RunDUUIPipeline.class);
+    private static final ThreadLocal<String> currentUserIdTL = new ThreadLocal<>();
 
 
-    public static AnalysisSession getCachedSession(String analysisId) { return analysisCache.get(analysisId); }
+    public static AnalysisSession getCachedSession(String analysisId) {
+        return analysisCache.get(analysisId);
+    }
+
+    public static void setThreadLocalUserId(String userId) {
+        currentUserIdTL.set(userId);
+    }
 
     private static String getCurrentUserId() {
         // TODO: replace with your auth/session identity
-        return "user-unknown";
+
+        return currentUserIdTL.get();
     }
 
     public DUUIInformation getModelResources(List<String> modelGroups, String inputText, String claim, String coherenceText, String stanceText, String systemPrompt) throws Exception {
@@ -261,6 +269,7 @@ public class RunDUUIPipeline {
         }
         String analysisId = UUID.randomUUID().toString();
         String userId = getCurrentUserId();
+        logger.info("[USER] Running pipeline for User: " + userId);
         String title = "Analysis " + Instant.now();
 
         byte[] xmiBytes = toXmiBytes(result);
@@ -354,41 +363,41 @@ public class RunDUUIPipeline {
             return s;
         }
 
-        public void remove(String id) { map.remove(id); } //Manually remove a session by ID
-
-
-        public void cleanupExpired() { //  cleanup all expired sessions
-            long now = System.currentTimeMillis();
-            for (var entry : map.entrySet()) {
-                AnalysisSession s = entry.getValue();
-                if (now - s.createdAtMillis > ttlMillis) {
-                    map.remove(entry.getKey());
-                    logger.info("[CRON] Removed expired session: " + s.analysisId);
-                }
-            }
-        }
+//        public void remove(String id) {
+//            map.remove(id);
+//        } //Manually remove a session by ID
+//
+//
+//        public void cleanupExpired() { //  cleanup all expired sessions
+//            long now = System.currentTimeMillis();
+//            for (var entry : map.entrySet()) {
+//                AnalysisSession s = entry.getValue();
+//                if (now - s.createdAtMillis > ttlMillis) {
+//                    map.remove(entry.getKey());
+//                    logger.info("[CRON] Removed expired session: " + s.analysisId);
+//                }
+//            }
+//        }
+//    }
+//    private static final java.util.concurrent.ScheduledExecutorService scheduler = //Cron job for automatic cleanup every 5 minutes
+//            java.util.concurrent.Executors.newScheduledThreadPool(1);
+//
+//    static {
+//        scheduler.scheduleAtFixedRate(() -> {
+//            try {
+//                analysisCache.cleanupExpired();
+//            } catch (Exception e) {
+//                logger.error("[CACHE] Cache cleanup failed: " + e.getMessage());
+//            }
+//        }, 5, 5, java.util.concurrent.TimeUnit.MINUTES);
+//
+//        scheduler.scheduleAtFixedRate(() -> {
+//            logger.info("[CACHE] Running cache cleanup task...");
+//            analysisCache.cleanupExpired();  // your cleanup method
+//        }, 1, 5, TimeUnit.MINUTES);
+//
+//
     }
-    private static final java.util.concurrent.ScheduledExecutorService scheduler = //Cron job for automatic cleanup every 5 minutes
-            java.util.concurrent.Executors.newScheduledThreadPool(1);
-
-    static {
-        scheduler.scheduleAtFixedRate(() -> {
-            try {
-                analysisCache.cleanupExpired();
-            } catch (Exception e) {
-                logger.error("[CACHE] Cache cleanup failed: " + e.getMessage());
-            }
-        }, 5, 5, java.util.concurrent.TimeUnit.MINUTES);
-
-        scheduler.scheduleAtFixedRate(() -> {
-            logger.info("[CACHE] Running cache cleanup task...");
-            analysisCache.cleanupExpired();  // your cleanup method
-        }, 1, 5, TimeUnit.MINUTES);
-
-
-    }
-
-
     private static byte[] toXmiBytes(org.apache.uima.jcas.JCas jcas) throws Exception {
         java.io.ByteArrayOutputStream bos = new java.io.ByteArrayOutputStream();
         org.apache.uima.cas.impl.XmiCasSerializer ser =

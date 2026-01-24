@@ -12,4 +12,5 @@ public class SettingsConfig {
     private EmbeddingsConfig embeddings;
     private AuthConfig authentication;
     private MCPConfig mcp = new MCPConfig();
+    private boolean enablePathImport = false;
 }

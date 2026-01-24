@@ -120,7 +120,7 @@ public class ImportExportApi implements UceApi {
                 if (acceptedContentType != null && acceptedContentType.equals("application/json")) {
                     Map<String, Object> apiResult = new HashMap<>();
                     apiResult.put("document_id", newDocumentId);
-                    ctx.contentType("application/json");
+//                    ctx.contentType("application/json"); //redundant
                     ctx.json(apiResult);
                     return;
                 }
@@ -147,6 +147,7 @@ public class ImportExportApi implements UceApi {
 
             if (path == null || path.isBlank()) {
                 ctx.status(400).result("Path is required");
+                return;
             }
 
             String importId = UUID.randomUUID().toString();
@@ -167,6 +168,8 @@ public class ImportExportApi implements UceApi {
             ctx.status(200).result("Import started. Import ID: " + importId);
         } catch (DatabaseOperationException e) {
             logger.error("Error when creating saving/updating to database" + e);
+            ctx.status(500).result("Database error initiating corpus import" + e.getMessage());
+
         } catch (Exception e) {
             logger.error("Error initiating corpus import", e);
             ctx.status(500).result("Error initiating import: " + e.getMessage());
