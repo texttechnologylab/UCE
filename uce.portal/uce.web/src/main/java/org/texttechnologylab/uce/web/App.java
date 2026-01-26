@@ -440,7 +440,8 @@ public class App {
                 path("/ie", () -> {
                     post("/upload/uima", (ctx) -> (registry.get(ImportExportApi.class)).uploadUIMA(ctx));
                     get("/download/uima", (ctx) -> (registry.get(ImportExportApi.class)).downloadUIMA(ctx));
-                    post("import/path", (ctx) -> (registry.get(ImportExportApi.class)).importCorpusFromPath(ctx));
+                    post("/import/path", (ctx) -> (registry.get(ImportExportApi.class)).importCorpusFromPath(ctx));
+                    post("/import/upload",(ctx) -> (registry.get(ImportExportApi.class)).importCorpusFromUpload(ctx));
                 });
 
                 path("/wiki", () -> {

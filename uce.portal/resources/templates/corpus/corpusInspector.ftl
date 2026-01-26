@@ -17,6 +17,17 @@
             <a class="w-rounded-btn open-wiki-page" data-wid="${corpus.getWikiId()}" data-wcovered="${corpus.getName()}">
                 <i class="fab fa-wikipedia-w m-0 color-prime large-font"></i>
             </a>
+            <div class="text-center pb-3">
+                <button class="btn btn-sm btn-outline-primary"
+                        onclick="openUploadForExistingCorpora(
+                                '${(corpus.getName()!"-")?js_string}',
+                                '${(corpus.getAuthor()!"-")?js_string}',
+                                '${(corpus.getLanguage()!"-")?js_string}',
+                                '${(corpusConfig.getDescription()!"")?js_string}'
+                                )">
+                    <i class="fas fa-plus mr-1"></i> Upload files to this corpora
+                </button>
+            </div>
         </div>
 
         <div class="ccontent">

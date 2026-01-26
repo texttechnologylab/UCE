@@ -1,9 +1,16 @@
 package org.texttechnologylab.uce.web.routes;
 
+import com.google.gson.Gson;
+import com.google.gson.GsonBuilder;
 import io.javalin.http.Context;
+import io.javalin.http.UploadedFile;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.springframework.context.ApplicationContext;
+import org.texttechnologylab.uce.common.config.CorpusConfig;
+import org.texttechnologylab.uce.common.config.corpusConfig.CorpusAnnotationConfig;
+import org.texttechnologylab.uce.common.config.corpusConfig.OtherConfig;
+import org.texttechnologylab.uce.common.config.corpusConfig.TaxonConfig;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
 import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
 import org.texttechnologylab.uce.common.models.imp.ImportStatus;
@@ -13,7 +20,13 @@ import org.texttechnologylab.uce.common.services.S3StorageService;
 import org.texttechnologylab.uce.common.utils.StringUtils;
 import org.texttechnologylab.uce.corpusimporter.Importer;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.nio.file.StandardCopyOption;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -175,6 +188,125 @@ public class ImportExportApi implements UceApi {
             ctx.status(500).result("Error initiating import: " + e.getMessage());
         }
 
+    }
+    
+    public void importCorpusFromUpload(Context ctx){
+        try{
+            String importId = UUID.randomUUID().toString();
+            Path rootDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "uce_uploads", importId);
+            Path inputDir = rootDir.resolve("input");
+            Files.createDirectories(inputDir);
+
+            var validFiles = ctx.uploadedFiles("files").stream()
+                    .filter(f -> f.size() > 0 && f.filename() != null && !f.filename().isBlank())
+                    .toList();
+
+            if (validFiles.isEmpty()) {
+                ctx.status(400).result("No files selected. Please select at least one XMI file or archive.");
+                return;
+            }
+            
+            for(UploadedFile uploadedFile : ctx.uploadedFiles("files")){
+                try(InputStream input = uploadedFile.content()){
+                    Files.copy(input,inputDir.resolve(uploadedFile.filename()), StandardCopyOption.REPLACE_EXISTING);
+                }
+            }
+            
+            CorpusConfig config = new CorpusConfig();
+            String name = ctx.formParam("name");
+            if (name == null || name.isBlank()){
+                ctx.status(400).result("No corpus name given");
+            }
+            config.setName(name);
+            String author = ctx.formParam("author");
+            if (author == null || author.isBlank()) {
+                ctx.status(400).result("Corpus Author is required.");
+                return;
+            }
+            config.setAuthor(author);
+            String language = ctx.formParam("language");
+            if (language == null || language.isBlank()) {
+                ctx.status(400).result("Corpus Language is required.");
+                return;
+            }
+            config.setLanguage(language);
+            config.setDescription(ctx.formParam("description"));
+            String addToExistingParam = ctx.formParam("addToExistingCorpus");
+            boolean addToExisting = addToExistingParam != null && Boolean.parseBoolean(addToExistingParam);
+            config.setAddToExistingCorpus(addToExisting);
+            
+//             Annotations
+            CorpusAnnotationConfig annotations = new CorpusAnnotationConfig();
+            annotations.setSentence(ctx.formParam("sentence") != null);
+            annotations.setLemma(ctx.formParam("lemma") != null);
+            annotations.setNamedEntity(ctx.formParam("namedEntity") != null);
+            annotations.setSentiment(ctx.formParam("sentiment") != null);
+            annotations.setEmotion(ctx.formParam("emotion") != null);
+            annotations.setTime(ctx.formParam("time") != null);
+            annotations.setGeoNames(ctx.formParam("geoNames") != null);
+            annotations.setWikipediaLink(ctx.formParam("wikipediaLink") != null);
+            annotations.setImage(ctx.formParam("image") != null);
+            annotations.setUnifiedTopic(ctx.formParam("unifiedTopic") != null);
+            annotations.setOCRPage(ctx.formParam("OCRPage") != null);
+            annotations.setOCRParagraph(ctx.formParam("OCRParagraph") != null);
+            annotations.setOCRBlock(ctx.formParam("OCRBlock") != null);
+            annotations.setOCRLine(ctx.formParam("OCRLine") != null);
+
+            TaxonConfig taxonConfig = new TaxonConfig();
+            taxonConfig.setAnnotated(ctx.formParam("taxonAnnotated") != null);
+            taxonConfig.setBiofidOnthologyAnnotated(ctx.formParam("biofidOnthologyAnnotated") != null);
+            
+            annotations.setTaxon(taxonConfig);
+            config.setAnnotations(annotations);
+            
+//          Other Settings
+            OtherConfig otherConfig = new OtherConfig();
+            otherConfig.setEnableEmbeddings(ctx.formParam("enableEmbeddings") != null);
+            otherConfig.setEnableRAGBot(ctx.formParam("enableRAGBot") != null);
+            otherConfig.setIncludeKeywordDistribution(ctx.formParam("includeKeywordDistribution") != null);
+            otherConfig.setEnableS3Storage(ctx.formParam("enableS3Storage") != null);
+            config.setOther(otherConfig);
+
+            Gson gson = new GsonBuilder().setPrettyPrinting().create();
+            String jsonString = gson.toJson(config);
+            Files.writeString(rootDir.resolve("corpusConfig.json"),jsonString,StandardCharsets.UTF_8);
+
+            String numThreadStr = ctx.formParam("numThreads");
+            int numThreads = (numThreadStr != null && !numThreadStr.isBlank()) ? Integer.parseInt(numThreadStr) : 1;
+            String casView = ctx.formParam("casView");
+            if(casView != null && casView.isBlank()) casView = null;
+            int importerNumber = 1;
+            Importer importer = new Importer(serviceContext,rootDir.toString(),importerNumber,importId,casView);
+            
+            String logTitle = (addToExisting ? "ADD_TO:" : "UPLOAD_NEW:") + name;
+            UCEImport uceImport = new UCEImport(importId,logTitle,ImportStatus.STARTING);
+            Integer fileCount = ExceptionUtils.tryCatchLog(importer::getXMICountInPath,
+                    (ex) -> logger.warn("IO Error counting upload files.",ex));
+            uceImport.setTotalDocuments(fileCount == null ? -1 : fileCount);
+            db.saveOrUpdateUceImport(uceImport);
+            CompletableFuture.runAsync(() -> {
+                try{
+                    importer.start(numThreads);
+                } catch (DatabaseOperationException e) {
+                    logger.error("Error during asynchronous corpus uplaod import",e);
+                }finally {
+                    try {
+                        org.apache.commons.io.FileUtils.deleteDirectory(rootDir.toFile());
+                    } catch (IOException e) {
+                        logger.warn("Could not delete temp upload dir: " + rootDir,e);
+                    }
+                }
+            });
+            
+            ctx.status(200).result("Upload sucessfull. Import started with ID: " + importId);
+            
+        } catch (IOException e) {
+            logger.error("Error handling file upload import", e);
+            ctx.status(500).result("Error during upload " + e.getMessage());
+        } catch (DatabaseOperationException e) {
+            logger.error("Error saving/updating database during Uce Import", e);
+            ctx.status(500).result("Error during saving/updating database " + e.getMessage());
+        }
     }
 
 }
