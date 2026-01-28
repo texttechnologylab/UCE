@@ -2122,7 +2122,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     public Map<Long, Long> getUnifiedTopicToSentenceMap(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
-            String sql = "SELECT unifiedtopic_id, sentence_id FROM sentencetopics WHERE document_id = :documentId";
+            String sql = "SELECT unifiedtopic_id, sentence_id " +
+                            "FROM sentencetopics " +
+                            "WHERE document_id = :documentId " +
+                            "AND unifiedtopic_id IS NOT NULL";
 
             var query = session.createNativeQuery(sql)
                     .setParameter("documentId", documentId);
@@ -2262,6 +2265,37 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
     private String escapeSql(String input) {
         return input.replace("(", "\\(").replace(")", "\\)").replace(":", "\\:").replace("|", "\\|");
+    }
+
+    /**
+     * Inserts a sentence-level topic classification into the database.
+     * This method matches a sentence by its begin and end
+     * offsets within a given document and inserts a corresponding entry into the sentencetopics table
+     */
+    public int insertSentenceTopicBySpan(long documentId, int begin, int end, String topicLabel, double score)
+            throws DatabaseOperationException {
+
+        return executeOperationSafely((session) -> {
+
+            String sql =
+                    "INSERT INTO sentencetopics (document_id, sentence_id, topiclabel, thetast) " +
+                            "SELECT :docId, s.id, :label, :score " +
+                            "FROM sentence s " +
+                            "WHERE s.document_id = :docId AND s.beginn = :begin AND s.endd = :end " +
+                            "AND NOT EXISTS ( " +
+                            "  SELECT 1 FROM sentencetopics st " +
+                            "  WHERE st.sentence_id = s.id AND st.topiclabel = :label " +
+                            ")";
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("docId", documentId);
+            query.setParameter("begin", begin);
+            query.setParameter("end", end);
+            query.setParameter("label", topicLabel);
+            query.setParameter("score", score);
+
+            return query.executeUpdate();
+        });
     }
 
 }
