@@ -80,11 +80,6 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
-import org.apache.uima.cas.Feature;
-import org.apache.uima.cas.FeatureStructure;
-import org.apache.uima.cas.Type;
-import org.apache.uima.cas.CAS;
-
 public class Importer {
 
     private static final Gson gson = new Gson();
@@ -1894,6 +1889,13 @@ public class Importer {
         // Import sentence-level topic annotations (News XMI: annotation2:Topic + AnnotationComment)
         importSentenceTopicsFromXmiIntoDb(document, filePath);
 
+        // build unifiedtopic + link sentencetopics.unifiedtopic_id
+        ExceptionUtils.tryCatchLog(
+                () -> db.ensureUnifiedTopicsForSentenceTopics(document.getId()),
+                (ex) -> logImportError("Error creating/linking unifiedtopic rows for sentence topics.", ex, filePath)
+        );
+
+
         // Store simple connections between Time, Geonames and Annotation to approximate the question:
         // This annotation occurred in context with this location at this time.
         // TODO: This needs a check if the document already was linked before. Sometimes docs are preprocessed when they already exist.
@@ -2057,13 +2059,14 @@ public class Importer {
             logger.info("Inserting Sentence and Document Topics...");
 
             try {
-                Path insertSentenceTopicsFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/1_updateSentenceTopics.sql");
+                /**Path insertSentenceTopicsFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/1_updateSentenceTopics.sql");
                 var insertSentenceTopicsScript = Files.readString(insertSentenceTopicsFilePath);
 
                 ExceptionUtils.tryCatchLog(
                         () -> db.executeSqlWithoutReturn(insertSentenceTopicsScript),
                         (ex) -> logImportError("Error executing SQL script to populate sentencetopics table", ex, filePath)
                 );
+                 */
 
                 Path insertDocumentTopicsFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/2_updateDocumentTopics.sql");
                 var insertDocumentTopicsScript = Files.readString(insertDocumentTopicsFilePath);

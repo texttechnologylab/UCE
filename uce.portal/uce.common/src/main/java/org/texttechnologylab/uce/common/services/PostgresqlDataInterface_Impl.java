@@ -2297,5 +2297,44 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return query.executeUpdate();
         });
     }
+    /**
+     * Create unifiedtopic rows if missing for sentences that have sentencetopics
+     * Backfill sentencetopics.unifiedtopic_id
+     */
+    public int ensureUnifiedTopicsForSentenceTopics(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely(session -> {
+
+
+            String insertUnifiedTopics =
+                    "INSERT INTO unifiedtopic (document_id, beginn, endd, coveredtext, islexicalized, page_id) " +
+                            "SELECT DISTINCT s.document_id, s.beginn, s.endd, s.coveredtext, s.islexicalized, s.page_id " +
+                            "FROM sentence s " +
+                            "JOIN sentencetopics st ON st.sentence_id = s.id AND st.document_id = :docId " +
+                            "LEFT JOIN unifiedtopic ut " +
+                            "  ON ut.document_id = s.document_id AND ut.beginn = s.beginn AND ut.endd = s.endd " +
+                            "WHERE ut.id IS NULL";
+
+            session.createNativeQuery(insertUnifiedTopics)
+                    .setParameter("docId", documentId)
+                    .executeUpdate();
+
+
+            String updateSentenceTopics =
+                    "UPDATE sentencetopics st " +
+                            "SET unifiedtopic_id = ut.id " +
+                            "FROM sentence s " +
+                            "JOIN unifiedtopic ut " +
+                            "  ON ut.document_id = s.document_id AND ut.beginn = s.beginn AND ut.endd = s.endd " +
+                            "WHERE st.document_id = :docId " +
+                            "  AND st.sentence_id = s.id " +
+                            "  AND st.unifiedtopic_id IS NULL";
+
+            int updated = session.createNativeQuery(updateSentenceTopics)
+                    .setParameter("docId", documentId)
+                    .executeUpdate();
+
+            return updated;
+        });
+    }
 
 }
