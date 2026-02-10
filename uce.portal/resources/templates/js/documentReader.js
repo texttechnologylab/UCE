@@ -916,6 +916,10 @@ $(document).on('click', '.viz-nav-btn', function () {
         setTimeout(() => renderSentenceTopicSankey('vp-5'), 500);
 
     }
+    if (target === '#viz-panel-6') {
+        setTimeout(() => renderTemporalExplorer('vp-6'), 500);
+
+    }
 });
 
 

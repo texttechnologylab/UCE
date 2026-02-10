@@ -26,7 +26,10 @@
                         <div class="analysis-topics-container">
                             <#list DUUI.textInformation.topicAVG as model>
                                 <div class="analysis-topic-card">
-                                    <div class="analysis-topic-card-title">${model.getModelInfo().getName()}</div>
+                                    <div class="analysis-topic-card-title d-flex align-items-center justify-content-between">
+                                        <span>${model.getModelInfo().getName()}</span>
+                                        <button type="button" class="btn btn-outline-primary btn-sm topic-visualize-btn">Visualize</button>
+                                    </div>
                                     <div class="analysis-topics-grid">
                                         <#list model.topics as topic>
                                             <#assign opacity = topic.getScore()?string?replace(",", ".")>
@@ -34,6 +37,9 @@
                                                 <div class="analysis-topic-score">${topic.getKey()}: ${topic.getScore()}</div>
                                             </div>
                                         </#list>
+                                    </div>
+                                    <div class="topic-chart-wrapper" style="display:none;">
+                                        <div class="topic-chart" style="width:100%;height:420px;"></div>
                                     </div>
                                 </div>
                             </#list>

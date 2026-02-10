@@ -1,0 +1,66 @@
+2025-11-27 20:53:27.127 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 5.6.15.Final
+2025-11-27 20:53:27.228 [main] INFO  org.hibernate.spatial.integration.SpatialService - HHH80000001: hibernate-spatial integration enabled : true
+2025-11-27 20:53:27.265 [main] INFO  org.hibernate.annotations.common.Version - HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2025-11-27 20:53:27.370 [main] WARN  org.hibernate.orm.connections.pooling - HHH10001002: Using Hibernate built-in connection pool (not for production use!)
+2025-11-27 20:53:27.370 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001005: using driver [null] at URL [jdbc:postgresql://localhost:8002/uce]
+2025-11-27 20:53:27.371 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001001: Connection properties: {password=****, user=postgres}
+2025-11-27 20:53:27.371 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001003: Autocommit mode: false
+2025-11-27 20:53:27.374 [main] INFO  org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl - HHH000115: Hibernate connection pool size: 20 (min=1)
+2025-11-27 20:53:27.532 [main] INFO  org.hibernate.dialect.Dialect - HHH000400: Using dialect: org.hibernate.dialect.PostgreSQL10Dialect
+2025-11-27 20:53:28.416 [main] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@1f7557fe] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+2025-11-27 20:53:29.335 [main] INFO  org.texttechnologylab.uce.corpusimporter.App - Executing external database scripts from ../database/
+2025-11-27 20:53:29.337 [main] WARN  org.texttechnologylab.uce.corpusimporter.App - Couldn't read the db scripts in the external database scripts folder; path wasn't found or other IO problems. 
+java.nio.file.NoSuchFileException: ..\database
+	at java.base/sun.nio.fs.WindowsException.translateToIOException(WindowsException.java:85) ~[?:?]
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:103) ~[?:?]
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:108) ~[?:?]
+	at java.base/sun.nio.fs.WindowsDirectoryStream.<init>(WindowsDirectoryStream.java:86) ~[?:?]
+	at java.base/sun.nio.fs.WindowsFileSystemProvider.newDirectoryStream(WindowsFileSystemProvider.java:541) ~[?:?]
+	at java.base/java.nio.file.Files.newDirectoryStream(Files.java:482) ~[?:?]
+	at java.base/java.nio.file.Files.list(Files.java:3785) ~[?:?]
+	at org.texttechnologylab.uce.common.utils.SystemStatus.executeExternalDatabaseScripts(SystemStatus.java:38) ~[classes/:?]
+	at org.texttechnologylab.uce.corpusimporter.App.lambda$main$0(App.java:44) ~[classes/:?]
+	at org.texttechnologylab.uce.common.exceptions.ExceptionUtils.tryCatchLog(ExceptionUtils.java:30) [classes/:?]
+	at org.texttechnologylab.uce.corpusimporter.App.main(App.java:43) [classes/:?]
+2025-11-27 20:53:29.341 [main] INFO  org.texttechnologylab.uce.corpusimporter.App - Finished with executing external database scripts.
+2025-11-27 20:55:05.236 [main] INFO  org.hibernate.Version - HHH000412: Hibernate ORM core version 5.6.15.Final
+2025-11-27 20:55:05.340 [main] INFO  org.hibernate.spatial.integration.SpatialService - HHH80000001: hibernate-spatial integration enabled : true
+2025-11-27 20:55:05.373 [main] INFO  org.hibernate.annotations.common.Version - HCANN000001: Hibernate Commons Annotations {5.1.2.Final}
+2025-11-27 20:55:05.475 [main] WARN  org.hibernate.orm.connections.pooling - HHH10001002: Using Hibernate built-in connection pool (not for production use!)
+2025-11-27 20:55:05.475 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001005: using driver [null] at URL [jdbc:postgresql://localhost:8002/uce]
+2025-11-27 20:55:05.475 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001001: Connection properties: {password=****, user=postgres}
+2025-11-27 20:55:05.475 [main] INFO  org.hibernate.orm.connections.pooling - HHH10001003: Autocommit mode: false
+2025-11-27 20:55:05.477 [main] INFO  org.hibernate.engine.jdbc.connections.internal.DriverManagerConnectionProviderImpl - HHH000115: Hibernate connection pool size: 20 (min=1)
+2025-11-27 20:55:05.624 [main] INFO  org.hibernate.dialect.Dialect - HHH000400: Using dialect: org.hibernate.dialect.PostgreSQL10Dialect
+2025-11-27 20:55:06.528 [main] INFO  org.hibernate.orm.connections.access - HHH10001501: Connection obtained from JdbcConnectionAccess [org.hibernate.engine.jdbc.env.internal.JdbcEnvironmentInitiator$ConnectionProviderJdbcConnectionAccess@52963839] for (non-JTA) DDL execution was not in auto-commit mode; the Connection 'local transaction' will be committed and the Connection will be set into auto-commit mode.
+2025-11-27 20:55:07.427 [main] INFO  org.texttechnologylab.uce.corpusimporter.App - Executing external database scripts from ../database/
+2025-11-27 20:55:07.430 [main] WARN  org.texttechnologylab.uce.corpusimporter.App - Couldn't read the db scripts in the external database scripts folder; path wasn't found or other IO problems. 
+java.nio.file.NoSuchFileException: ..\database
+	at java.base/sun.nio.fs.WindowsException.translateToIOException(WindowsException.java:85) ~[?:?]
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:103) ~[?:?]
+	at java.base/sun.nio.fs.WindowsException.rethrowAsIOException(WindowsException.java:108) ~[?:?]
+	at java.base/sun.nio.fs.WindowsDirectoryStream.<init>(WindowsDirectoryStream.java:86) ~[?:?]
+	at java.base/sun.nio.fs.WindowsFileSystemProvider.newDirectoryStream(WindowsFileSystemProvider.java:541) ~[?:?]
+	at java.base/java.nio.file.Files.newDirectoryStream(Files.java:482) ~[?:?]
+	at java.base/java.nio.file.Files.list(Files.java:3785) ~[?:?]
+	at org.texttechnologylab.uce.common.utils.SystemStatus.executeExternalDatabaseScripts(SystemStatus.java:38) ~[classes/:?]
+	at org.texttechnologylab.uce.corpusimporter.App.lambda$main$0(App.java:44) ~[classes/:?]
+	at org.texttechnologylab.uce.common.exceptions.ExceptionUtils.tryCatchLog(ExceptionUtils.java:30) [classes/:?]
+	at org.texttechnologylab.uce.corpusimporter.App.main(App.java:43) [classes/:?]
+2025-11-27 20:55:07.433 [main] INFO  org.texttechnologylab.uce.corpusimporter.App - Finished with executing external database scripts.
+2025-11-27 20:55:07.524 [main] INFO  org.texttechnologylab.uce.corpusimporter.Importer - 
+ _   _ _____  _____   _____                           _   
+| | | /  __ \|  ___| |_   _|                         | |  
+| | | | /  \/| |__     | | _ __ ___  _ __   ___  _ __| |_ 
+| | | | |    |  __|    | || '_ ` _ \| '_ \ / _ \| '__| __|
+| |_| | \__/\| |___   _| || | | | | | |_) | (_) | |  | |_ 
+ \___/ \____/\____/   \___/_| |_| |_| .__/ \___/|_|   \__|
+                                    | |                   
+                                    |_|
+2025-11-27 20:55:07.524 [main] INFO  org.texttechnologylab.uce.corpusimporter.Importer - ===========> Global Import Id: 07d96ad0-e619-4231-832a-e2202fc86c9d
+2025-11-27 20:55:07.525 [main] INFO  org.texttechnologylab.uce.corpusimporter.Importer - ===========> Importer Number: 1
+2025-11-27 20:55:07.525 [main] INFO  org.texttechnologylab.uce.corpusimporter.Importer - ===========> Used Threads: 1
+2025-11-27 20:55:07.525 [main] INFO  org.texttechnologylab.uce.corpusimporter.Importer - ===========> Importing from path: F:\Area51\UCE\corpora\my_first_corpus
+2025-11-27 20:55:07.525 [main] INFO  org.texttechnologylab.uce.corpusimporter.Importer - ===========> Reading view: null
+
+
