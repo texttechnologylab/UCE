@@ -231,6 +231,14 @@
     "de-DE": "Nur zugänglich, wenn eine aktive Graph-Datenbank mit hinterlegter Ontologie existiert. Durchsucht den Such-Query nach potentiellen Erweiterungen durch eben jene Ontologie der Datenbank.",
     "en-EN": "Only accessible if an active graph database with a stored ontology exists. Searches the search query for potential extensions using the same ontology of the database."
   },
+  "enrichmentCutoffTitle": {
+    "de-DE": "Diese Enrichment-Suche wurde abgeschnitten.",
+    "en-EN": "This enriched search got cutoff."
+  },
+  "enrichmentCutoffDescription": {
+    "de-DE": "Die Anreicherung wird nach einer bestimmten Anzahl von Tokens abgeschnitten (limitiert), da diese stringbasierte Volltext-Suche sonst zu komplex wird. Dies geschieht nur bei sehr umfangreicher Anreicherung, beispielsweise bei Commands. Um dies zu umgehen, verwenden Sie bitte die Layered Search, die nicht auf einer Volltextsuche basiert, sondern auf den importierten Annotationen, die nicht abgeschnitten werden.",
+    "en-EN": "Enrichment is truncated (limited) after a certain number of tokens, as otherwise this string-based search becomes too complex. This only happens in cases of very large enrichment, such as with commands. To get around this, please use layered search, which is not based on a full-text search but on the imported annotations, which are not truncated."
+  },
   "searchRankDescription": {
     "de-DE": "Die Relevanz des Dokuments für die gegebene Suchanfrage. Ein höherer Wert bedeutet eine höhere Relevanz des Dokuments.",
     "en-EN": "The relevance of the document to the given search query. A higher value indicates a higher relevance of the document."

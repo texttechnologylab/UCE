@@ -11,11 +11,11 @@
 </i>
 <hr/>
 <div align="center">
-  <a href="#"><img src="https://img.shields.io/static/v1?label=&message=Documentation&color=blueviolet&style=for-the-badge&logo=internetarchive" alt="Documentation"></a>
-  <a href="http://eval.uce.texttechnologylab.org/"><img src="https://img.shields.io/static/v1?label=&message=Demo&color=orange&style=for-the-badge&logo=abstract" alt="Demo"></a>
+  <a href="https://texttechnologylab.github.io/UCE/"><img src="https://img.shields.io/static/v1?label=&message=Documentation&color=blueviolet&style=for-the-badge&logo=internetarchive" alt="Documentation"></a>
+  <!--<a href="http://eval.uce.texttechnologylab.org/"><img src="https://img.shields.io/static/v1?label=&message=Demo&color=orange&style=for-the-badge&logo=abstract" alt="Demo"></a>-->
   <a href="#"><img src="https://img.shields.io/static/v1?label=Languages%3A&message=German|English&color=green&style=for-the-badge" alt="Languages: - German | English"></a>
   <a href="https://www.texttechnologylab.org/team/kevin-boenisch/"><img src="https://img.shields.io/static/v1?label=&message=Text+Technology+Lab&color=informational&style=for-the-badge&logo=buffer" alt="Text Technology Lab"></a>
-  <!--<a href="https://ebooks.iospress.nl/doi/10.3233/FAIA230996"> <img src="https://img.shields.io/static/v1?label=Paper%3A&message=IOS+Press&color=important&style=for-the-badge&logo=adobefonts" alt="Paper: - IOS Press"></a>-->
+  <a href="https://aclanthology.org/2025.naacl-demo.42/"> <img src="https://img.shields.io/static/v1?label=Paper%3A&message=ACL+Anthology&color=red&style=for-the-badge&logo=libreofficewriter" alt="Paper: - ACL"></a>
   <br/>
   <br/>
 </div>
@@ -24,23 +24,71 @@
   <video src="https://github.com/user-attachments/assets/6911aff1-71a7-4d17-9ffb-d45126cb0ea7" />
 </div>
 
+# Running UCE Instances
+
+UCE is used by different projects to visualize their corpora and to provide a generic, but flexible webportal for their users. Here we list some of those UCE instances.
+
+| Url        | Project           | Description  |
+| ------------- |:-------------:| :-----|
+| [URL](http://biofid.uce.texttechnologylab.org/)      | [BIOfid](https://www.biofid.de/de/) | The Specialised Information Service Biodiversity Research (BIOfid) provides access to current and historical biodiversity literature. |
+| [URL](http://prismai.uce.texttechnologylab.org/)      | PrismAI      |  A dataset for the systematic detection of AI-generated text, containg both English and German texts from 8 domains, synthesized using state-of-the-art LLMs. |
+
 # Quick Start
 
-Clone this repository:
+> [!TIP]
+> Please consult the [documentation page](https://texttechnologylab.github.io/UCE/) for a more detailled and customizable setup documentation. The `Quick Start` is just that: a short setup guide that sets up a default UCE instance. **Chances are**, that you might want to customize UCE and need to understand its possiblities beyond this simple quick start.
+
+## Usage
+
+When building from source, clone this repository:
 
 ```
 git clone https://github.com/texttechnologylab/UCE.git
 ```
 
-Start the docker containers:
+In the root folder, create a `.env` file that holds the variables for the `docker-compose.yaml` file. Example `.env`:
 
 ```
-docker-compose up
+UCE_CONFIG_PATH=./../uceConfig.json
+JVM_ARGS=-Xmx8g
+TDB2_DATA=./../tdb2-database
+TDB2_ENDPOINT=tdb2-database-name
+IMPORTER_THREADS=1
 ```
+
+Start the relevant docker containers:
+
+```
+docker-compose up --build uce-postgresql-db uce-web
+```
+
+*Optional containers, if applicable to your use-case: **[uce-fuseki-sparql], [uce-rag-service]***
+
+> [!WARNING]  
+> If the webportal container can't connect to the database, you can check the connectionstrings within the `common.conf` file. For the docker setup, the content of this file should match the `common-release.conf`.
 
 The web instance, by deafult, is reachable under: http://localhost:8008. If you're looking for a small demo without creating it yourself, please check our [open demo](http://eval.uce.texttechnologylab.org/).
 
-**We are currently creating a dedicated Documentation Page which will be up soon to explain the configuration in more detail and how you can customize UCE.**
+### Import Data
+
+Now that the webportal and database are both running, we will start the **uce-importer** docker container from within the compose to import data. To do so, first:
+
+- Create a folder `choose_any_name` that you can mount into the docker container.
+- Create a subfolder `input`. Copy all of your annotated UIMA XMI files that you want to import in there.
+- Copy a default `uce.common/src/main/resources/corpusConfig.json` file from the source code and put it into the `choose_any_name` folder.
+- Inside the `docker-compose.yaml`, find the `uce-importer` service and mount the `path/to/choose_any_name` to `:/app/input/corpora/choose_any_name` (example can be found within the compose file)
+- Finally, start the importer and import your corpus:
+
+```
+docker-compose up --build uce-importer
+```
+
+> [!IMPORTANT]  
+> More information about `corpusConfig.json`, `uceConfig.json`, annotations, enabling the RAGbot and other customizations can be found on the documentation page.
+
+## Development
+
+For setting up UCE in an development environment, refer to our [documentation](https://texttechnologylab.github.io/UCE/). When trying to contribute to UCE, also read through our [Developer Code](https://texttechnologylab.github.io/UCE/development/developer-code/).
 
 # About
 
@@ -84,18 +132,4 @@ Some, but not all of the search and visualization features within UCE:
   </tr>
 </table>
 
-## Annotations
-
-Currently supported annotations within UCE are outlined in the following table:
-
-| **Annotation**                        | **Description**                                                                                                                                                        |
-|---------------------------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| **Sentence**                          | Divides the documents into their respective sentences.                                                                                                                 |
-| **Named-Entity**                      | Extracts named entities from a document, categorizing them into four types: organization (ORG), person (PER), location (LOC), and miscellaneous (MISC). |                                                  |
-| **Lemma and POS**                             | Lemmatization reduces inflected words to their root form. Within UCE, searches are enhanced by considering these root forms.                                           |
-| **Semantic Role Labels (SRL)**        | SRL identifies semantic relations between the lexical constituents of a sentence, assigning labels to words or phrases that indicate their semantic roles, such as agent, goal, or result. | 
-| **Time**                              | Extracts temporal expressions, including time and date formats, from a document, analogous to Named-Entity Recognition tasks.                                          |
-| **Taxon**                             | The recognition of unambiguous names of biological entities is referred to as a taxon.                                                                                 |
-| **WikiLinks**                         | Maps potential words and phrases to their corresponding Wikidata URLs, facilitating the retrieval and access of additional information.                                |
-| **OCR**                               | Since much of the literature has yet to be digitized, UCE provides support for corpora containing documents that have undergone Optical Character Recognition (OCR) extraction. These annotations assist in reconstructing the physical layout of the pages within UCE. | 
 

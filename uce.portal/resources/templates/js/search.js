@@ -46,15 +46,11 @@ function updateSearchVizualization() {
     const data = window.searchVizualization.vizData["data"]
     const currentPage = window.searchVizualization.vizData["currentPage"]
     const nBins = window.searchVizualization.settings.nBins
+    if(data === undefined) return;
 
     // set the selected feature to the first one if not set
     const firstFeature = Object.keys(data).sort().shift()
     const selectedFeature = window.searchVizualization.settings.selectedFeature || firstFeature
-
-    console.log('selectedFeature', selectedFeature)
-    console.log("currentPage", currentPage)
-    console.log("nBins", nBins)
-    console.log("data", data)
 
     // update features options based on current data
     const selectElem = document.getElementById('search-viz-selected-feature')
