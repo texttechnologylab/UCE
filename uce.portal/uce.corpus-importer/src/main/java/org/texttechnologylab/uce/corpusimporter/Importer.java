@@ -35,6 +35,7 @@ import org.texttechnologylab.uce.common.config.CommonConfig;
 import org.texttechnologylab.uce.common.config.CorpusConfig;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
 import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
+import org.texttechnologylab.uce.common.models.ModelEntity;
 import org.texttechnologylab.uce.common.models.UIMAAnnotation;
 import org.texttechnologylab.uce.common.models.biofid.BiofidTaxon;
 import org.texttechnologylab.uce.common.models.biofid.GazetteerTaxon;
@@ -711,7 +712,24 @@ public class Importer {
             var emotion = new org.texttechnologylab.uce.common.models.corpus.emotion.Emotion(e.getBegin(), e.getEnd());
             emotion.setCoveredText(e.getCoveredText());
             var meta = e.getModel();
-            if (meta != null) emotion.setModel(meta.getModelName() + "__v::" + meta.getModelVersion());
+            ModelEntity foundModal = null;
+            if (meta != null){
+                String modelNameFromXmi = meta.getModelName();
+                logger.info("Searching for model " + modelNameFromXmi);
+                try{
+                    foundModal = db.getModelEntityByKey(meta.getModelName());
+                    if(foundModal == null){
+                        foundModal = db.getModelEntityByMap(modelNameFromXmi);
+                    }
+                } catch (DatabaseOperationException ex) {
+                   logger.error("Error when looking for model in database " + meta.getModelName());
+                }
+            }
+            if (foundModal != null){
+                emotion.setDbModel(foundModal);
+            }else{
+                logger.warn("Modal not found in database");
+            }
 
             var feelings = new ArrayList<Feeling>();
             for (var annotationComment : e.getEmotions()) {

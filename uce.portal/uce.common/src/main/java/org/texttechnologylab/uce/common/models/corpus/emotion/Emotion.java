@@ -3,6 +3,7 @@ package org.texttechnologylab.uce.common.models.corpus.emotion;
 import lombok.Getter;
 import lombok.Setter;
 import org.texttechnologylab.uce.common.annotations.Typesystem;
+import org.texttechnologylab.uce.common.models.ModelEntity;
 import org.texttechnologylab.uce.common.models.UIMAAnnotation;
 import org.texttechnologylab.uce.common.models.WikiModel;
 
@@ -26,6 +27,10 @@ public class Emotion extends UIMAAnnotation implements WikiModel {
 
     @OneToMany(mappedBy = "emotion", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<SentenceEmotion> sentenceEmotions;
+    
+    @ManyToOne
+    @JoinColumn(name = "model_id")
+    private ModelEntity dbModel;
 
 
     public String generateEmotionMarker() {

@@ -15,6 +15,7 @@ import org.texttechnologylab.uce.common.models.globe.GlobeTaxon;
 import org.texttechnologylab.uce.common.models.imp.ImportLog;
 import org.texttechnologylab.uce.common.models.imp.UCEImport;
 import org.texttechnologylab.uce.common.models.search.*;
+import org.texttechnologylab.uce.common.models.ModelEntity;
 
 import java.util.List;
 
@@ -366,4 +367,19 @@ public interface DataInterface {
      * @param corpus
      */
     public void saveCorpus(Corpus corpus) throws DatabaseOperationException;
+    
+    /**
+     * Stores or updates a ModelEntity in the database
+     */
+    public void saveOrUpdateModelEntity(ModelEntity model) throws DatabaseOperationException;
+
+    /**
+     * Gets a Model based on its JSON-Key
+     */
+    public ModelEntity getModelEntityByKey(String modelKey) throws DatabaseOperationException;
+
+    /**
+     * Gets a Model based on its map column value
+     */
+    public ModelEntity getModelEntityByMap(String mapString) throws DatabaseOperationException;
 }

@@ -15,6 +15,7 @@ import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
 import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
 import org.texttechnologylab.uce.common.models.Linkable;
 import org.texttechnologylab.uce.common.models.ModelBase;
+import org.texttechnologylab.uce.common.models.ModelEntity;
 import org.texttechnologylab.uce.common.models.UIMAAnnotation;
 import org.texttechnologylab.uce.common.models.biofid.BiofidTaxon;
 import org.texttechnologylab.uce.common.models.biofid.GazetteerTaxon;
@@ -42,6 +43,11 @@ import javax.persistence.NoResultException;
 import javax.persistence.criteria.Order;
 import javax.persistence.criteria.Path;
 import javax.persistence.criteria.Predicate;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.sql.Array;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
@@ -65,6 +71,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     public PostgresqlDataInterface_Impl() {
         sessionFactory = HibernateConf.buildSessionFactory();
         TestConnection();
+        initializeModelsFromJson();
     }
 
     public void TestConnection() {
@@ -2335,6 +2342,83 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             return updated;
         });
+    }
+    
+    @Override
+    public void saveOrUpdateModelEntity(ModelEntity model) throws DatabaseOperationException{
+        executeOperationSafely((session) -> {
+            session.saveOrUpdate(model);
+            return null;
+        });
+    }
+    
+    @Override
+    public ModelEntity getModelEntityByKey(String modelKey) throws DatabaseOperationException{
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var cq = cb.createQuery(ModelEntity.class);
+            var root = cq.from(ModelEntity.class);
+            
+            cq.select(root).where(cb.equal(root.get("modelKey"),modelKey));
+            
+            var query = session.createQuery(cq);
+            query.setMaxResults(1);
+            return query.uniqueResult();
+        });
+    }
+
+    @Override
+    public ModelEntity getModelEntityByMap(String mapString) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            var cb = session.getCriteriaBuilder();
+            var cq = cb.createQuery(org.texttechnologylab.uce.common.models.ModelEntity.class);
+            var root = cq.from(org.texttechnologylab.uce.common.models.ModelEntity.class);
+            
+            cq.select(root).where(cb.equal(root.get("map"), mapString));
+
+            var query = session.createQuery(cq);
+            query.setMaxResults(1);
+            return query.uniqueResult();
+        });
+    }
+
+    /**
+     * Creates a models table in the database and stores all models from models.json
+     */
+    public void initializeModelsFromJson(){
+        try(InputStream is = getClass().getClassLoader().getResourceAsStream("models.json");
+            InputStreamReader reader = new InputStreamReader(is, StandardCharsets.UTF_8)){
+            Type type = new TypeToken<Map<String, Map<String, String>>>(){}.getType();
+            Map<String, Map<String, String>> modelsMap = gson.fromJson(reader, type);
+            
+            if (modelsMap != null){
+                for (Map.Entry<String,Map<String,String>> entry : modelsMap.entrySet()){
+                    String key = entry.getKey();
+                    Map<String,String> info = entry.getValue();
+                    ModelEntity dbModel = getModelEntityByKey(key);
+                    if(dbModel == null){
+                        dbModel = new ModelEntity();
+                        dbModel.setModelKey(key);
+                    }
+                    dbModel.setName(info.get("Name"));
+                    dbModel.setUrl(info.get("url"));
+                    dbModel.setGithub(info.get("github"));
+                    dbModel.setHuggingface(info.get("huggingface"));
+                    dbModel.setPaper(info.get("paper"));
+                    dbModel.setMap(info.get("map"));
+                    dbModel.setVariant(info.get("Variant"));
+                    dbModel.setMainTool(info.get("Main Tool"));
+                    dbModel.setModelType(info.get("type"));
+                    
+                    saveOrUpdateModelEntity(dbModel);
+                }
+            }
+            
+        } catch (IOException e) {
+            System.err.println("Error during initializing models from models.json");
+        } catch (DatabaseOperationException e) {
+            System.err.println("Error during getting ModalEntity from database");
+        }
     }
 
 }
