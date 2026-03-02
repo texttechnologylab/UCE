@@ -144,7 +144,7 @@
       ]
     },
     "analysis": {
-      "enableAnalysisEngine": true
+      "enableAnalysisEngine": false
     },
     "authentication": {
       "isActivated": false,

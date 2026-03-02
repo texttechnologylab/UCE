@@ -24,10 +24,6 @@ public class Emotion extends UIMAAnnotation implements WikiModel {
     @JoinColumn(name = "emotion_id")
     private List<Feeling> feelings;
 
-    @OneToMany(mappedBy = "emotion", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SentenceEmotion> sentenceEmotions;
-
-
     public String generateEmotionMarker() {
         var tooltip = "";
         if (this.feelings != null && !this.feelings.isEmpty()) {

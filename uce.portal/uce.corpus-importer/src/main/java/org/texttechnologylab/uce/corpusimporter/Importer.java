@@ -41,7 +41,6 @@ import org.texttechnologylab.uce.common.models.biofid.GazetteerTaxon;
 import org.texttechnologylab.uce.common.models.biofid.GnFinderTaxon;
 import org.texttechnologylab.uce.common.models.corpus.*;
 import org.texttechnologylab.uce.common.models.corpus.emotion.Feeling;
-import org.texttechnologylab.uce.common.models.corpus.emotion.SentenceEmotion;
 import org.texttechnologylab.uce.common.models.corpus.links.AnnotationLink;
 import org.texttechnologylab.uce.common.models.corpus.links.AnnotationToDocumentLink;
 import org.texttechnologylab.uce.common.models.corpus.links.DocumentLink;
@@ -482,34 +481,6 @@ public class Importer {
         return XMIToDocument(jCas, corpus, filePath, null);
     }
 
-    private void linkSentenceEmotions(Document document) {
-        if (document.getSentences() == null || document.getEmotions() == null) return;
-
-        var sentenceBySpan = new java.util.HashMap<String, Sentence>();
-        for (var s : document.getSentences()) {
-            sentenceBySpan.put(s.getBegin() + ":" + s.getEnd(), s);
-        }
-
-        for (var e : document.getEmotions()) {
-            var s = sentenceBySpan.get(e.getBegin() + ":" + e.getEnd());
-            if (s == null) continue;
-
-            if (e.getSentenceEmotions() == null) {
-                e.setSentenceEmotions(new java.util.ArrayList<>());
-            }
-
-            var model = (e.getModel() != null) ? e.getModel() : "unknown";
-
-            if (e.getFeelings() == null) continue;
-
-            for (var f : e.getFeelings()) {
-                e.getSentenceEmotions().add(
-                        new SentenceEmotion(s, e, model, f.getFeeling(), f.getValue())
-                );
-            }
-        }
-    }
-
     /**
      * Convert a UIMA jCas to an OCRDocument
      *
@@ -634,10 +605,7 @@ public class Importer {
 
             if (corpusConfig.getAnnotations().isEmotion())
                 ExceptionUtils.tryCatchLog(
-                        () -> {
-                            setEmotions(document, jCas);
-                            linkSentenceEmotions(document);
-                        },
+                        () -> setEmotions(document, jCas),
                         (ex) -> logImportWarn("This file should have contained Emotion annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().isLemma())

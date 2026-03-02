@@ -538,9 +538,5 @@
   "sentenceTopicFlow": {
     "de-DE": "Satz-Themenfluss",
     "en-EN": "Sentence Topic Flow"
-  },
-  "sentenceSentiment": {
-    "de-DE": "Satz-Sentiment",
-    "en-EN": "Sentence Sentiment"
   }
 }

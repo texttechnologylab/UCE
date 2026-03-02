@@ -315,9 +315,6 @@
                                 <div class="viz-panel" id="viz-panel-5">
                                     <div id="vp-5" ></div>
                                 </div>
-                                <div class="viz-panel" id="viz-panel-6">
-                                    <div id="vp-6" ></div>
-                                </div>
                             </div>
 
                             <div class="viz-bottom-nav">
@@ -326,7 +323,6 @@
                                 <button class="viz-nav-btn" data-target="#viz-panel-3">${languageResource.get("topicLandscape")}</button>
                                 <button class="viz-nav-btn" data-target="#viz-panel-4">${languageResource.get("topicSimilarity")}</button>
                                 <button class="viz-nav-btn" data-target="#viz-panel-5">${languageResource.get("sentenceTopicFlow")}</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-6">${languageResource.get("sentenceSentiment")}</button>
                             </div>
 
                         </div>

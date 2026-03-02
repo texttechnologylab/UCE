@@ -776,7 +776,7 @@ body {
     outline: none;
 }
 
-#vp-3, #vp-4, #vp-5, #vp-2, #vp-1, #vp-6 {
+#vp-3, #vp-4, #vp-5, #vp-2, #vp-1 {
     display: flex;
     align-items: center;
     justify-content: center;
