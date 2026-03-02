@@ -1479,6 +1479,12 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 CompleteNegation neg = query.getSingleResult();
                 Hibernate.initialize(neg); // Ensure lazy-loaded properties are initialized
                 Hibernate.initialize(neg.getPage());
+                if (neg.getCue() != null) {
+                    Hibernate.initialize(neg.getCue());     // initialize cue
+                    if (neg.getCue().getPage() != null) {
+                        Hibernate.initialize(neg.getCue().getPage()); // initialize cue.page
+                    }
+                }
                 return neg;
             } catch (NoResultException e) {
                 return null; // Or throw an exception if no result is an error case

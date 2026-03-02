@@ -68,6 +68,7 @@ public class CommonConfig {
     public String getPostgresqlProperty(String prop) {
         return getProperty("postgresql." + prop);
     }
+    public int getLocationEnrichmentLimit() {return Integer.parseInt(getPostgresqlProperty("enrichment.location.max"));}
 
     public String getGbifOccurrencesSearchUrl() {
         return getProperty("gbif.occurrences.search.url");
@@ -80,6 +81,8 @@ public class CommonConfig {
     public String getSparqlEndpoint() {
         return getProperty("sparql.endpoint");
     }
+
+    public int getSparqlMaxEnrichment() { return Integer.parseInt(getProperty("sparql.max.enrichment")); }
 
     public long getSessionJobInterval() {
         return Long.parseLong(getProperty("session.job.interval"));

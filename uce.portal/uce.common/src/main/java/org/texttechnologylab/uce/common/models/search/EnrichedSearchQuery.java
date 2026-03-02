@@ -2,6 +2,7 @@ package org.texttechnologylab.uce.common.models.search;
 
 import lombok.Getter;
 import org.jetbrains.annotations.NotNull;
+import org.texttechnologylab.uce.common.config.CommonConfig;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
 import org.texttechnologylab.uce.common.models.corpus.GeoNameFeatureClass;
 import org.texttechnologylab.uce.common.models.dto.map.LocationDto;
@@ -27,6 +28,7 @@ public class EnrichedSearchQuery {
     public static final String[] TAX_RANKS = {"G::", "F::", "O::", "C::", "P::", "K::", "S::"};
     public static final String[] LOCATION_COMMANDS = {"LOC::", "R::"};
     public static final String[] TIME_COMMANDS = {"Y::", "M::", "D::", "E::", "T::"};
+    private static final CommonConfig config = new CommonConfig();
 
     public static String getFullTaxonRankByCode(String code) {
         return switch (code) {
@@ -59,6 +61,8 @@ public class EnrichedSearchQuery {
     private final String originalQuery;
     @Getter
     private String enrichedQuery;
+    @Getter
+    private boolean enrichedQueryIsCutOff;
     @Getter
     private List<EnrichedSearchToken> enrichedSearchTokens;
     private boolean parseTaxonomy;
@@ -173,15 +177,17 @@ public class EnrichedSearchQuery {
         if (command.equals("R::")) {
             // Syntax should be R::lng=5;lat=70;r=1000
             var locationDto = parseLocationRadiusCommand(value);
-            geoNames = db.getDistinctGeonamesNamesByRadius(locationDto.getLongitude(), locationDto.getLatitude(), locationDto.getRadius(), corpusId, 200);
+            geoNames = db.getDistinctGeonamesNamesByRadius(locationDto.getLongitude(), locationDto.getLatitude(), locationDto.getRadius(), corpusId, config.getLocationEnrichmentLimit());
         } else if (command.equals("LOC::")) {
             // The syntax should be  LOC::<FEATURE_CLASS>.<FEATURE_CODE>, so e.g.: LOC::A.ADMS
             var split = value.split("\\.");
             var featureClass = split[0];
             var featureCode = "";
             if (split.length > 1) featureCode = split[1];
-            geoNames = db.getDistinctGeonamesNamesByFeatureCode(GeoNameFeatureClass.valueOf(featureClass), featureCode, corpusId, 200);
+            geoNames = db.getDistinctGeonamesNamesByFeatureCode(GeoNameFeatureClass.valueOf(featureClass), featureCode, corpusId, config.getLocationEnrichmentLimit());
         }
+
+        if(geoNames.size() >= config.getLocationEnrichmentLimit()) this.enrichedQueryIsCutOff = true;
 
         if (geoNames.isEmpty()) {
             query.append(delimiter).append(value).append(delimiter).append(" ");
@@ -249,7 +255,6 @@ public class EnrichedSearchQuery {
         return true;
     }
 
-
     private boolean handleTaxonomicCommand(@NotNull String token,
                                            @NotNull EnrichedSearchToken enrichedToken,
                                            StringBuilder query,
@@ -261,7 +266,8 @@ public class EnrichedSearchQuery {
         enrichedToken.setValue(value);
 
         var speciesIds = jenaSparqlService.getSpeciesIdsOfUpperRank(
-                getFullTaxonRankByCode(command.replace("::", "")), value);
+                getFullTaxonRankByCode(command.replace("::", "")), value, config.getSparqlMaxEnrichment());
+        if(speciesIds.size() == config.getSparqlMaxEnrichment()) this.enrichedQueryIsCutOff = true;
         var names = jenaSparqlService.getAlternativeNamesOfTaxons(speciesIds);
 
         if (names == null || names.isEmpty()) {
@@ -307,7 +313,7 @@ public class EnrichedSearchQuery {
         query.append(" ( ");
         if (!original.isEmpty()) query.append(original).append(or);
         query.append(delimiter)
-                .append(String.join(or + delimiter, names.stream().map(n -> n.replace("'", "") + delimiter).toList()))
+                .append(String.join(or + delimiter, names.stream().filter(n -> !n.isBlank()).map(n -> n.replace("'", "") + delimiter).toList()))
                 .append(" ) ");
     }
 
