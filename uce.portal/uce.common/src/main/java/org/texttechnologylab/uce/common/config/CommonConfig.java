@@ -23,8 +23,16 @@ public class CommonConfig {
         // Load in the common conf in the java properties() style
         try {
             // Load the .conf file from the resources directory
-            var inputStream = getClass().getClassLoader().getResourceAsStream("common.conf");
+            // commonEmpty.conf is for loading with DUUI cas importer
+            var inputStream = getClass().getClassLoader().getResourceAsStream("commonEmpty.conf");
             if (inputStream != null) {
+                // Check inputStream is empty, if so load the default common.conf from the classpath
+                if (inputStream.available() == 0) {
+                    inputStream = getClass().getClassLoader().getResourceAsStream("common.conf");
+                    if (inputStream == null) {
+                        throw new RuntimeException("common.conf not found not found in the classpath");
+                    }
+                }
                 properties.load(inputStream);
             } else {
                 throw new RuntimeException("common.conf not found not found in the classpath");
