@@ -531,7 +531,7 @@ public class Importer {
                         + " already exists in the corpus " + corpus.getId() + ".");
                 logger.info("Checking if that document was also post-processed yet...");
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
-                importSentenceTopicsFromXmiIntoDb(document, filePath);
+                importSentenceTopicsFromXmiIntoDb(existingDoc, filePath);
 
                 if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
