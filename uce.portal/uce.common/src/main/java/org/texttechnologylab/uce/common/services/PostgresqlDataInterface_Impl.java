@@ -2343,6 +2343,26 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return updated;
         });
     }
+
+    public int createSentenceEmotions(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely(session -> {
+            String createSentenceEmotions =
+                    """
+                        INSERT INTO sentenceemotions (sentence_id, emotion_id, model_id, document_id)
+                        SELECT s.id, e.id, e.model_id, s.document_id
+                        FROM emotion e
+                        JOIN sentence s
+                          ON s.beginn = e.beginn AND s.endd = e.endd and s.document_id = :docId ;
+                    """;
+
+            System.out.println(documentId);
+            return session.createNativeQuery(createSentenceEmotions)
+                    .setParameter("docId", documentId)
+                    .executeUpdate();
+        });
+    }
+
+
     
     @Override
     public void saveOrUpdateModelEntity(ModelEntity model) throws DatabaseOperationException{

@@ -24,9 +24,6 @@ public class Emotion extends UIMAAnnotation implements WikiModel {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "emotion_id")
     private List<Feeling> feelings;
-
-    @OneToMany(mappedBy = "emotion", cascade = CascadeType.ALL, orphanRemoval = true)
-    private List<SentenceEmotion> sentenceEmotions;
     
     @ManyToOne
     @JoinColumn(name = "model_id")
