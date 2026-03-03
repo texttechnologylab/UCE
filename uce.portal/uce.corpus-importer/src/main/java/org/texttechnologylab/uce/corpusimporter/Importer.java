@@ -83,6 +83,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.texttechnologylab.uce.corpusimporter.DocumentImportContinuation;
+
 public class Importer {
 
     private static final Gson gson = new Gson();
@@ -108,6 +110,7 @@ public class Importer {
     private LexiconService lexiconService;
     private CommonConfig commonConfig = new CommonConfig();
     private String casView;
+    private JCas mainCas;
 
     public Importer(ApplicationContext serviceContext,
                     String foldername,
@@ -121,6 +124,21 @@ public class Importer {
         this.casView = casView;
     }
 
+    public Importer(ApplicationContext serviceContext,
+                    String foldername,
+                    int importerNumber,
+                    String importId,
+                    String casView,
+                    JCas mainCas
+    ) {
+        initServices(serviceContext);
+        this.importerNumber = importerNumber;
+        this.importId = importId;
+        this.path = foldername;
+        this.casView = casView;
+        this.mainCas = mainCas;
+    }
+
     public Importer(
             ApplicationContext serviceContext,
             int importerNumber,
@@ -128,6 +146,19 @@ public class Importer {
     ) {
         this.importerNumber = importerNumber;
         this.casView = casView;
+
+        initServices(serviceContext);
+    }
+
+    public Importer(
+            ApplicationContext serviceContext,
+            int importerNumber,
+            String casView,
+            JCas mainCas
+    ) {
+        this.importerNumber = importerNumber;
+        this.casView = casView;
+        this.mainCas = mainCas;
 
         initServices(serviceContext);
     }
@@ -164,7 +195,7 @@ public class Importer {
      * Starts the importing processing of this instance.
      *
      * @throws DatabaseOperationException
-     * @throws DocumentAccessDeniedException 
+     * @throws DocumentAccessDeniedException
      */
     public void start(int numThreads) throws DatabaseOperationException, DocumentAccessDeniedException {
         logger.info(
@@ -188,10 +219,10 @@ public class Importer {
 
     /**
      * Stores an uploaded xmi to a given corpus
-     * 
+     *
      * @throws DatabaseOperationException
      * @throws DocumentAccessDeniedException
-     * 
+     *
      */
     public Long storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus, String fileName, String documentId) throws DatabaseOperationException, DocumentAccessDeniedException {
         logger.info("Trying to store an uploaded UIMA file...");
@@ -215,7 +246,7 @@ public class Importer {
 
     /**
      * Imports all UIMA xmi files in a folder
-     * @throws DocumentAccessDeniedException 
+     * @throws DocumentAccessDeniedException
      */
     public void storeCorpusFromFolderAsync(String folderName, int numThreads) throws DatabaseOperationException, DocumentAccessDeniedException {
         var executor = Executors.newFixedThreadPool(numThreads);
@@ -230,7 +261,15 @@ public class Importer {
         // Read the corpus config. If this doesn't exist, we cannot import the corpus
         // NOTE the config is not updated if the corpus already exists!
         // TODO compare configs and show a warning if they differ (except name, ...)
-        try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString(), StandardCharsets.UTF_8)) {
+        String pathdefault = null;
+        if (folderName == null) {
+            // get path of defaultCorpusConfig.json
+            pathdefault = getClass().getClassLoader().getResource("defaultCorpusConfig.json").getPath();
+        } else {
+            pathdefault = Paths.get(folderName, "corpusConfig.json").toString();
+        }
+
+        try (var reader = new FileReader(pathdefault, StandardCharsets.UTF_8)) {
             corpusConfig = gson.fromJson(reader, CorpusConfig.class);
             try {
                 Corpus existingCorpus = CreateDBCorpus(corpus, corpusConfig, db);
@@ -257,7 +296,6 @@ public class Importer {
             db.saveOrUpdateUceImport(uceImport);
         }
 
-        var inputFolderName = Path.of(folderName, "input");
         final var corpusConfigFinal = corpusConfig;
         final var corpus1 = corpus;
 
@@ -266,113 +304,113 @@ public class Importer {
         var lock = new Object();
         var batchLatch = new AtomicReference<>(new CountDownLatch(0));
 
-        try (var fileStream = Files.walk(inputFolderName)) {
-            fileStream.filter(Files::isRegularFile)
-                    .filter(path -> StringUtils.checkIfFileHasExtension(path.toString().toLowerCase(), COMATIBLE_CAS_FILE_ENDINGS))
-                    .forEach(filePath -> {
-                        var docFuture = CompletableFuture.supplyAsync(() -> {
-                                    try {
-                                        batchLatch.get().await(); // wait if a batch is being postprocessed
-                                    } catch (InterruptedException e) {
-                                        Thread.currentThread().interrupt();
-                                    }
+        var continuation = new DocumentImportContinuation(
+                db,
+                lexiconService,
+                logger,
+                batchLatch,
+                docInBatch,
+                lock,
+                BATCH_SIZE,
+                corpus1,
+                corpusConfigFinal,
+                this.importerNumber,
+                this.importId
+        );
 
-                                    return XMIToDocument(filePath.toString(), corpus1);
-                                }, executor)
-                                .thenApply(doc -> {
-                                    if (doc == null) return null;
+        if (folderName == null) {
+            try {
+                var metadata = JCasUtil.selectSingle(this.mainCas, DocumentMetaData.class);
+                String documentId = metadata.getDocumentId();
+                Path filePath = Paths.get(pathdefault);
+                var docFuture = CompletableFuture.supplyAsync(() -> {
+                            try {
+                                batchLatch.get().await(); // wait if a batch is being postprocessed
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                            return XMIToDocument(this.mainCas, corpus1, "DUUI CAS Import - Document " + documentId, documentId);
+                        }, executor)
+                        .thenApply(doc -> continuation.saveDocument(doc, filePath))
+                        .thenAcceptAsync(doc -> continuation.postProcessDocumentAndBatch(doc, filePath), executor);
+                futures.add(docFuture);
+            }
+            catch (Exception e) {
+                logger.error("Error processing the main CAS document during import:", e);
+            }
+            // Final links updating
+            ExceptionUtils.tryCatchLog(
+                    () -> db.callLogicalLinksRefresh(),
+                    (ex) -> logger.error("Error in the final logical links update of the current corpus with id " + corpus1.getId()));
 
-                                    logger.info("Trying to store document with document id " + doc.getDocumentId() + "...");
-                                    ExceptionUtils.tryCatchLog(
-                                            () -> db.saveDocument(doc),
-                                            (ex) -> logImportError("Error saving document with id " + doc.getId(), ex, filePath.toString()));
-                                    return doc;
-                                })
-                                .thenAcceptAsync(doc -> {
-                                    if (doc != null) {
-                                        logImportInfo("Stored document " + filePath.getFileName(), LogStatus.SAVED, filePath.toString(), 0);
-                                        logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
+            // Final lexicon updating
+            ExceptionUtils.tryCatchLog(
+                    () -> lexiconService.updateLexicon(false),
+                    (ex) -> logger.error("Error in the final lexicon update of the current corpus with id " + corpus1.getId()));
 
-                                        ExceptionUtils.tryCatchLog(
-                                                () -> postProccessDocument(doc, corpus1, filePath.toString()),
-                                                (ex) -> logImportError("Error postprocessing a saved document with id " + doc.getId(), ex, filePath.toString()));
-                                        logImportInfo("Finished with import.", LogStatus.FINISHED, filePath.toString(), 0);
-                                    }
+            // Final geonames location updating
+            ExceptionUtils.tryCatchLog(
+                    () -> db.callGeonameLocationRefresh(),
+                    (ex) -> logger.error("Error in the final geoname location update of the current corpus with id " + corpus1.getId()));
 
-                                    int local = docInBatch.incrementAndGet();
-                                    if (local == BATCH_SIZE) {
-                                        synchronized (lock) {
-                                            // Double-check to avoid race
-                                            if (docInBatch.get() == BATCH_SIZE) {
-                                                docInBatch.set(0);
-                                                batchLatch.set(new CountDownLatch(1));
-                                            }
+            // Final corpus postprocessing
+            ExceptionUtils.tryCatchLog(
+                    () -> postProccessCorpus(corpus1, corpusConfigFinal),
+                    (ex) -> logger.error("Error in the final postprocessing of the current corpus with id " + corpus1.getId()));
+
+            logger.info("\n\n=================================\n Done with the corpus import.");
+            executor.shutdown();
+        } else {
+            var inputFolderName = Path.of(folderName, "input");
+            try (var fileStream = Files.walk(inputFolderName)) {
+                fileStream.filter(Files::isRegularFile)
+                        .filter(path -> StringUtils.checkIfFileHasExtension(path.toString().toLowerCase(), COMATIBLE_CAS_FILE_ENDINGS))
+                        .forEach(filePath -> {
+                            var docFuture = CompletableFuture.supplyAsync(() -> {
+                                        try {
+                                            batchLatch.get().await(); // wait if a batch is being postprocessed
+                                        } catch (InterruptedException e) {
+                                            Thread.currentThread().interrupt();
                                         }
 
-                                        // Block other threads by not releasing the latch yet. We want the postprocessing being done by a single thread,
-                                        // while all the others wait.
-                                        logImportInfo("=========== UPDATING THE LOGICAL LINKS...", LogStatus.POST_PROCESSING, "LINKS", 0);
-                                        var logicalLinksResult = ExceptionUtils.tryCatchLog(
-                                                () -> db.callLogicalLinksRefresh(),
-                                                (ex) -> logImportError("Error updating the logical links while postprocessing a batch.", ex, filePath.toString()));
-                                        if (logicalLinksResult != null)
-                                            logImportInfo("=========== Finished updating the logical links. Inserted new links: " + logicalLinksResult, LogStatus.SAVED, "LINKS", 0);
+                                        return XMIToDocument(filePath.toString(), corpus1);
+                                    }, executor)
+                                    .thenApply(doc -> continuation.saveDocument(doc, filePath))
+                                    .thenAcceptAsync(doc -> continuation.postProcessDocumentAndBatch(doc, filePath), executor);
 
-                                        logImportInfo("=========== UPDATING THE LEXICON...", LogStatus.POST_PROCESSING, "LEXICON", 0);
-                                        var lexiconResult = ExceptionUtils.tryCatchLog(
-                                                () -> lexiconService.updateLexicon(false),
-                                                (ex) -> logImportError("Error updating the lexicon while postprocessing a batch.", ex, filePath.toString()));
-                                        if (lexiconResult != null)
-                                            logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + lexiconResult, LogStatus.SAVED, "LEXICON", 0);
+                            futures.add(docFuture);
+                        });
 
-                                        logImportInfo("=========== UPDATING THE GEONAME LOCATIONS...", LogStatus.POST_PROCESSING, "GEONAME_LOCATION", 0);
-                                        var geonameLocationResult = ExceptionUtils.tryCatchLog(
-                                                () -> db.callGeonameLocationRefresh(),
-                                                (ex) -> logImportError("Error updating the geoname locations while postprocessing a batch.", ex, filePath.toString()));
-                                        if (geonameLocationResult != null)
-                                            logImportInfo("=========== Finished updating the geoname locations. Inserted new locations: " + geonameLocationResult, LogStatus.SAVED, "GEONAME_LOCATION", 0);
+            } catch (IOException ex) {
+                logger.error("Error walking the import path: " + inputFolderName, ex);
+            }
 
-                                        logImportInfo("=========== POSTPROCESSING THE CORPUS...", LogStatus.POST_PROCESSING, "CORPUS", 0);
-                                        postProccessCorpus(corpus1, corpusConfigFinal);
-                                        logImportInfo("=========== FINISHED POSTPROCESSING THE CORPUS...", LogStatus.POST_PROCESSING, "CORPUS", 0);
+            // Wait for all tasks to complete
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
 
-                                        // Allow all others to continue
-                                        batchLatch.get().countDown();
-                                    }
-                                });
+            // Final links updating
+            ExceptionUtils.tryCatchLog(
+                    () -> db.callLogicalLinksRefresh(),
+                    (ex) -> logger.error("Error in the final logical links update of the current corpus with id " + corpus1.getId()));
 
-                        futures.add(docFuture);
-                    });
+            // Final lexicon updating
+            ExceptionUtils.tryCatchLog(
+                    () -> lexiconService.updateLexicon(false),
+                    (ex) -> logger.error("Error in the final lexicon update of the current corpus with id " + corpus1.getId()));
 
-        } catch (IOException ex) {
-            logger.error("Error walking the import path: " + inputFolderName, ex);
+            // Final geonames location updating
+            ExceptionUtils.tryCatchLog(
+                    () -> db.callGeonameLocationRefresh(),
+                    (ex) -> logger.error("Error in the final geoname location update of the current corpus with id " + corpus1.getId()));
+
+            // Final corpus postprocessing
+            ExceptionUtils.tryCatchLog(
+                    () -> postProccessCorpus(corpus1, corpusConfigFinal),
+                    (ex) -> logger.error("Error in the final postprocessing of the current corpus with id " + corpus1.getId()));
+
+            logger.info("\n\n=================================\n Done with the corpus import.");
+            executor.shutdown();
         }
-
-        // Wait for all tasks to complete
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
-        // Final links updating
-        ExceptionUtils.tryCatchLog(
-                () -> db.callLogicalLinksRefresh(),
-                (ex) -> logger.error("Error in the final logical links update of the current corpus with id " + corpus1.getId()));
-
-        // Final lexicon updating
-        ExceptionUtils.tryCatchLog(
-                () -> lexiconService.updateLexicon(false),
-                (ex) -> logger.error("Error in the final lexicon update of the current corpus with id " + corpus1.getId()));
-
-        // Final geonames location updating
-        ExceptionUtils.tryCatchLog(
-                () -> db.callGeonameLocationRefresh(),
-                (ex) -> logger.error("Error in the final geoname location update of the current corpus with id " + corpus1.getId()));
-
-        // Final corpus postprocessing
-        ExceptionUtils.tryCatchLog(
-                () -> postProccessCorpus(corpus1, corpusConfigFinal),
-                (ex) -> logger.error("Error in the final postprocessing of the current corpus with id " + corpus1.getId()));
-
-        logger.info("\n\n=================================\n Done with the corpus import.");
-        executor.shutdown();
     }
 
     /**
@@ -381,7 +419,7 @@ public class Importer {
      * @param corpusConfig
      * @param db
      * @return A {@link Corpus} object if an existing corpus was found otherwise null
-     * @throws DocumentAccessDeniedException 
+     * @throws DocumentAccessDeniedException
      */
     public static Corpus CreateDBCorpus(Corpus corpus, CorpusConfig corpusConfig, PostgresqlDataInterface_Impl db) throws DatabaseOperationException, DocumentAccessDeniedException {
         corpus.setName(corpusConfig.getName());
@@ -800,7 +838,7 @@ public class Importer {
 
     /**
      * Selects and sets the logical links between documents, annotations and more.
-     * @throws DocumentAccessDeniedException 
+     * @throws DocumentAccessDeniedException
      */
     private void setLogicLinks(Document document, JCas jCas, long corpusId, String filePath) throws DatabaseOperationException, DocumentAccessDeniedException {
         // Document -> Document Links

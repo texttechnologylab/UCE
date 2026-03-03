@@ -52,12 +52,12 @@ public class App {
                     () -> SystemStatus.executeExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
                     (ex) -> logger.warn("Couldn't read the db scripts in the external database scripts folder; path wasn't found or other IO problems. ", ex));
             logger.info("Finished with executing external database scripts.");
-    
+
             // Read the import path from the CLI
             var options = getOptions();
             var parser = new DefaultParser();
             var cmd = parser.parse(options, args);
-    
+
             var importSrcPath = cmd.getOptionValue("importSrc");
             var importDirPath = cmd.getOptionValue("importDir");
             var importId = UUID.randomUUID().toString();
@@ -66,11 +66,11 @@ public class App {
             var casView = cmd.getOptionValue("casView");
             var numThreads = 1;
             if (numThreadsStr != null) numThreads = Integer.parseInt(numThreadsStr);
-    
+
             if (importerNumber != 1) {
                 throw new InvalidParameterException("For now, the -importerNumber must always be 1, since this will be the only instance. Canceling.");
             }
-    
+
             var importablePaths = new ArrayList<String>();
             // If no parent directory was given, we simply import the single src path
             if (importDirPath == null) importablePaths.add(importSrcPath);
@@ -81,10 +81,10 @@ public class App {
                     if (file.isDirectory()) importablePaths.add(file.getPath());
                 }
             }
-    
+
             for (var path : importablePaths) {
                 var importer = new Importer(context, path, importerNumber, importId, casView);
-    
+
                 // If this is the number 1 importer, he will create a Database entry for this import. The other importers will wait for that db entry.
                 if (importerNumber == 1) {
                     var uceImport = new UCEImport(importId, path, ImportStatus.STARTING);
