@@ -98,6 +98,7 @@ services:
       - app_net
     healthcheck:
         test: ["CMD-SHELL", "pg_isready -U postgres"]
+        start_period: 5s
         interval: 5s
         timeout: 5s
         start_interval: 1s

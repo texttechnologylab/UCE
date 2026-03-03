@@ -2279,19 +2279,22 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
      * This method matches a sentence by its begin and end
      * offsets within a given document and inserts a corresponding entry into the sentencetopics table
      */
-    public int insertSentenceTopicBySpan(long documentId, int begin, int end, String topicLabel, double score)
+    public int insertSentenceTopicBySpan(long documentId, int begin, int end,
+                                         String topicLabel, double score, String modelName)
             throws DatabaseOperationException {
 
         return executeOperationSafely((session) -> {
 
             String sql =
-                    "INSERT INTO sentencetopics (document_id, sentence_id, topiclabel, thetast) " +
-                            "SELECT :docId, s.id, :label, :score " +
+                    "INSERT INTO sentencetopics (document_id, sentence_id, topiclabel, thetast, model) " +
+                            "SELECT :docId, s.id, :label, :score, :model " +
                             "FROM sentence s " +
                             "WHERE s.document_id = :docId AND s.beginn = :begin AND s.endd = :end " +
                             "AND NOT EXISTS ( " +
                             "  SELECT 1 FROM sentencetopics st " +
-                            "  WHERE st.sentence_id = s.id AND st.topiclabel = :label " +
+                            "  WHERE st.sentence_id = s.id " +
+                            "    AND st.topiclabel = :label " +
+                            "    AND st.model = :model " +
                             ")";
 
             var query = session.createNativeQuery(sql);
@@ -2300,6 +2303,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             query.setParameter("end", end);
             query.setParameter("label", topicLabel);
             query.setParameter("score", score);
+            query.setParameter("model", modelName);
 
             return query.executeUpdate();
         });

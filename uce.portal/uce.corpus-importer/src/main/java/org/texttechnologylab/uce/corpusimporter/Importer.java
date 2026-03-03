@@ -531,6 +531,8 @@ public class Importer {
                         + " already exists in the corpus " + corpus.getId() + ".");
                 logger.info("Checking if that document was also post-processed yet...");
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
+                importSentenceTopicsFromXmiIntoDb(document, filePath);
+
                 if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
                     postProccessDocument(existingDoc, corpus, filePath);
@@ -1871,6 +1873,12 @@ public class Importer {
             for (var topicSpan : topicAnnos) {
                 int begin = topicSpan.getBegin();
                 int end = topicSpan.getEnd();
+                String model = "unknown";
+                try {
+                    if (topicSpan.getModel() != null && topicSpan.getModel().getModelName() != null) {
+                        model = topicSpan.getModel().getModelName();
+                    }
+                } catch (Exception ignored) { }
 
                 var topicsArr = topicSpan.getTopics();
                 if (topicsArr == null || topicsArr.size() == 0) continue;
@@ -1887,7 +1895,7 @@ public class Importer {
                     try { score = Double.parseDouble(valueStr); }
                     catch (NumberFormatException nfe) { continue; }
 
-                    inserted += db.insertSentenceTopicBySpan(document.getId(), begin, end, label, score);
+                    inserted += db.insertSentenceTopicBySpan(document.getId(), begin, end, label, score, model);
                 }
             }
 
@@ -1898,6 +1906,7 @@ public class Importer {
             logger.error("Error importing sentence topics from XMI into DB. xmi={}", xmiFilePath, ex);
         }
     }
+
 
     /**
      * Here we apply any postprocessing of a document that isn't DUUI and needs the document to be stored once like
