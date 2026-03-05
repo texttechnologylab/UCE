@@ -2066,42 +2066,45 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Object[]> getSentenceTopicsWithEntitiesByPageForDocument(long documentId) throws DatabaseOperationException {
+    public List<Object[]> getSentenceTopicsWithEntitiesByPageForDocument(long documentId)
+            throws DatabaseOperationException {
+
         return executeOperationSafely((session) -> {
+
             String sql = """
-                    WITH best_topic_per_sentence AS (
-                        SELECT DISTINCT ON (st.document_id, st.sentence_id)
-                            st.sentence_id,
-                            st.topiclabel
-                        FROM 
-                            sentencetopics st
-                        WHERE 
-                            st.document_id = :document_id
-                        ORDER BY 
-                            st.document_id, st.sentence_id, st.thetast DESC
-                    ),
-                    entities_in_sentences AS (
-                        SELECT DISTINCT
-                            s.id AS sentence_id,
-                            ne.typee AS entity_type
-                        FROM
-                            sentence s
-                            JOIN namedentity ne ON 
-                                ne.document_id = s.document_id AND
-                                ne.beginn >= s.beginn AND 
-                                ne.endd <= s.endd
-                        WHERE
-                            s.document_id = :document_id
-                    )
-                    SELECT
-                        btps.topiclabel,
-                        eis.entity_type
+                WITH best_topic_per_sentence AS (
+                    SELECT DISTINCT ON (st.document_id, st.sentence_id)
+                        st.sentence_id,
+                        st.topiclabel
+                    FROM 
+                        sentencetopics st
+                    WHERE 
+                        st.document_id = :document_id
+                    ORDER BY 
+                        st.document_id, st.sentence_id, st.thetast DESC
+                ),
+                entities_in_sentences AS (
+                    SELECT DISTINCT
+                        s.id AS sentence_id,
+                        ne.typee AS entity_type
                     FROM
-                        best_topic_per_sentence btps
-                        JOIN entities_in_sentences eis ON btps.sentence_id = eis.sentence_id
-                    ORDER BY
-                        btps.sentence_id, eis.entity_type
-                    """;
+                        sentence s
+                        JOIN namedentity ne ON 
+                            ne.document_id = s.document_id AND
+                            ne.beginn >= s.beginn AND 
+                            ne.endd <= s.endd
+                    WHERE
+                        s.document_id = :document_id
+                )
+                SELECT
+                    btps.topiclabel,
+                    eis.entity_type
+                FROM
+                    best_topic_per_sentence btps
+                    JOIN entities_in_sentences eis ON btps.sentence_id = eis.sentence_id
+                ORDER BY
+                    btps.sentence_id, eis.entity_type
+                """;
 
             Query<Object[]> query = session.createNativeQuery(sql)
                     .setParameter("document_id", documentId);
@@ -2280,21 +2283,22 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
      * offsets within a given document and inserts a corresponding entry into the sentencetopics table
      */
     public int insertSentenceTopicBySpan(long documentId, int begin, int end,
-                                         String topicLabel, double score, String modelName)
+                                         String topicLabel, double score, String modelMap)
             throws DatabaseOperationException {
 
         return executeOperationSafely((session) -> {
 
             String sql =
-                    "INSERT INTO sentencetopics (document_id, sentence_id, topiclabel, thetast, model) " +
-                            "SELECT :docId, s.id, :label, :score, :model " +
+                    "INSERT INTO sentencetopics (document_id, sentence_id, topiclabel, thetast, model_id) " +
+                            "SELECT :docId, s.id, :label, :score, m.id " +
                             "FROM sentence s " +
+                            "JOIN models m ON m.map = :modelMap " +
                             "WHERE s.document_id = :docId AND s.beginn = :begin AND s.endd = :end " +
                             "AND NOT EXISTS ( " +
                             "  SELECT 1 FROM sentencetopics st " +
                             "  WHERE st.sentence_id = s.id " +
                             "    AND st.topiclabel = :label " +
-                            "    AND st.model = :model " +
+                            "    AND st.model_id = m.id " +
                             ")";
 
             var query = session.createNativeQuery(sql);
@@ -2303,7 +2307,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             query.setParameter("end", end);
             query.setParameter("label", topicLabel);
             query.setParameter("score", score);
-            query.setParameter("model", modelName);
+            query.setParameter("modelMap", modelMap);
 
             return query.executeUpdate();
         });

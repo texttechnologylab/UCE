@@ -497,7 +497,6 @@ public class DocumentApi implements UceApi {
     public void getSentenceTopicsWithEntities(Context ctx) {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for sentence topics with entities. ", ex));
-
         if (documentId == null) {
             ctx.status(400);
             ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter for sentence topics with entities"));

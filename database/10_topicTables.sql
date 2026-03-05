@@ -5,7 +5,7 @@ CREATE TABLE IF NOT EXISTS sentencetopics (
                                                topicinstance_id BIGINT, -- refers to topicvaluebase.id
                                                topiclabel VARCHAR(255), -- refers to topicvaluebase.value
                                                thetast DOUBLE PRECISION,
-                                               model VARCHAR(255)
+                                               model_id BIGINT
 );
 CREATE TABLE IF NOT EXISTS documenttopicsraw (
                                                    document_id BIGINT,

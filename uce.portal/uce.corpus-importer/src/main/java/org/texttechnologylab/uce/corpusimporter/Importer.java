@@ -1921,10 +1921,10 @@ public class Importer {
         importSentenceTopicsFromXmiIntoDb(document, filePath);
 
         // build unifiedtopic + link sentencetopics.unifiedtopic_id
-        ExceptionUtils.tryCatchLog(
-                () -> db.ensureUnifiedTopicsForSentenceTopics(document.getId()),
-                (ex) -> logImportError("Error creating/linking unifiedtopic rows for sentence topics.", ex, filePath)
-        );
+        //ExceptionUtils.tryCatchLog(
+        //        () -> db.ensureUnifiedTopicsForSentenceTopics(document.getId()),
+        //        (ex) -> logImportError("Error creating/linking unifiedtopic rows for sentence topics.", ex, filePath)
+        //);
 
         ExceptionUtils.tryCatchLog(
                 () -> db.createSentenceEmotions(document.getId()),
