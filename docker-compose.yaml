@@ -342,7 +342,6 @@ services:
     networks:
       - app_net
 
-
 networks:
   app_net:
     driver: bridge
