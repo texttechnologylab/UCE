@@ -1,0 +1,2 @@
+type,name,email,firstName,lastName,password,temporary,groups
+USER,example-user,,,,K5fUD2MloA1V,true,core-admin

@@ -14,7 +14,7 @@ COPY ./uce.portal/uce.common/src/main/resources/common-release.conf /app/uce.por
 WORKDIR /app/uce.portal
 
 # We are also building the target jar here; we only need uce.web
-RUN mvn clean install -DskipTests -pl uce.web -am
+RUN mvn -T 1C clean install -DskipTests -pl uce.web -am
 
 FROM eclipse-temurin:21-jdk
 

@@ -6,6 +6,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.lang.reflect.Type;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.StandardOpenOption;
 import java.util.HashMap;
@@ -314,7 +315,6 @@ public class App {
                 "This process may take a while but will be executed asynchronous.");
 
         var parser = new DefaultParser();
-        var gson = new Gson();
 
         var cmd = parser.parse(options, args);
         forceLexicalization = cmd.hasOption("forceLexicalization");
@@ -322,11 +322,16 @@ public class App {
         var configJson = cmd.getOptionValue("configJson");
 
         if (configFile != null && !configFile.isEmpty()) {
-            var reader = new FileReader(configFile);
-            SystemStatus.UceConfig = gson.fromJson(reader, UceConfig.class);
-            logger.info("Read UCE Config from path: " + configFile);
+            String json;
+            try {
+                json = Files.readString(java.nio.file.Path.of(configFile));
+                SystemStatus.UceConfig = UceConfig.fromJson(json);
+                logger.info("Read UCE Config from path: " + configFile);
+            } catch (IOException e) {
+                throw new FileNotFoundException(e.getMessage() + ": " + configFile);
+            }
         } else if (configJson != null && !configJson.isEmpty()) {
-            SystemStatus.UceConfig = gson.fromJson(configJson, UceConfig.class);
+            SystemStatus.UceConfig = UceConfig.fromJson(configJson);
             logger.info("Parsed UCE Config from JSON.");
         }
 
@@ -334,7 +339,13 @@ public class App {
         if (SystemStatus.UceConfig == null) {
             var inputStream = App.class.getClassLoader().getResourceAsStream("defaultUceConfig.json");
             if (inputStream != null) {
-                SystemStatus.UceConfig = gson.fromJson(new InputStreamReader(inputStream), UceConfig.class);
+                String json;
+                try {
+                    json = new String(inputStream.readAllBytes(), StandardCharsets.UTF_8);
+                    SystemStatus.UceConfig = UceConfig.fromJson(json);
+                } catch (IOException e) {
+                    throw new FileNotFoundException(e.getMessage() + ": " + configFile);
+                }
             } else {
                 throw new RuntimeException("Default uceConfig.json not found in the classpath.");
             }
@@ -498,6 +509,10 @@ public class App {
                     // API routes
                     path("/api", () -> {
                         before("/*", (ctx) -> {
+                        });
+
+                        path("/auth", () -> {
+                            get("/ping", (ctx) -> (registry.get(AuthenticationApi.class)).authPing(ctx));
                         });
 
                         path("/ie", () -> {

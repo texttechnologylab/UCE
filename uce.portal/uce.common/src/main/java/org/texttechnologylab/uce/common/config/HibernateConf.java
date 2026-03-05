@@ -98,8 +98,10 @@ public class HibernateConf {
     private static HashMap<Object, Object> getSettings() {
         var settings = new HashMap<>();
         var config = new CommonConfig();
-        settings.put("connection.driver_class", config.getPostgresqlProperty("connection.driver_class"));
-        settings.put("dialect", config.getPostgresqlProperty("dialect"));
+        // Hibernate expects the fully-qualified keys here (hibernate.*). If these are wrong,
+        // Hibernate falls back and the logs show "using driver [null]".
+        settings.put("hibernate.connection.driver_class", config.getPostgresqlProperty("connection.driver_class"));
+        settings.put("hibernate.dialect", config.getPostgresqlProperty("dialect"));
         settings.put("hibernate.connection.url",config.getPostgresqlProperty("hibernate.connection.url"));
         settings.put("hibernate.connection.username", config.getPostgresqlProperty("hibernate.connection.username"));
         settings.put("hibernate.connection.password", config.getPostgresqlProperty("hibernate.connection.password"));

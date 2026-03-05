@@ -13,10 +13,7 @@ COPY ./uce.portal/uce.common/src/main/resources/common-release.conf /app/uce.por
 
 # Set the working directory to uce.portal
 WORKDIR /app/uce.portal
-RUN mvn clean install -DskipTests
-
-# Build uce.web
-RUN mvn clean package -DskipTests
+RUN mvn -T 1C -DskipTests -pl uce.corpus-importer -am clean package
 
 # Expose the port that your Spark application runs on
 # EXPOSE 4567
