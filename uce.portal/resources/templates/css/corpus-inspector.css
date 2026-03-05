@@ -21,6 +21,18 @@
     background-color: rgba(245, 245, 247, 1);
 }
 
+.corpus-inspector .cheader .cheader-side{
+    width: 40px;
+    min-width: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.corpus-inspector .cheader .cheader-center{
+    flex: 1;
+}
+
 .corpus-inspector .cheader a{
     border-radius: 50%;
     display: flex;

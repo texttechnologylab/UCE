@@ -2651,6 +2651,7 @@ public final class PostgresqlDataInterface_Impl implements DataInterface {
             session = sessionFactory.openSession();
             transaction = session.beginTransaction();
             T result = operation.apply(session);
+            result = enrichDocumentPublicationFallback(result, session);
             transaction.commit();
             return result;
         } catch (DocumentAccessDeniedException dade) {
@@ -2696,6 +2697,67 @@ public final class PostgresqlDataInterface_Impl implements DataInterface {
 
     private String escapeSql(String input) {
         return input.replace("(", "\\(").replace(")", "\\)").replace(":", "\\:").replace("|", "\\|");
+    }
+
+    private <T> T enrichDocumentPublicationFallback(T result, Session session) {
+        if (result == null || session == null) {
+            return result;
+        }
+
+        var corpusCreatedCache = new HashMap<Long, String>();
+        enrichObjectDocumentFallback(result, session, corpusCreatedCache);
+        return result;
+    }
+
+    private void enrichObjectDocumentFallback(Object value, Session session, HashMap<Long, String> corpusCreatedCache) {
+        if (value == null) {
+            return;
+        }
+        if (value instanceof Document document) {
+            enrichDocumentFallback(document, session, corpusCreatedCache);
+            return;
+        }
+        if (value instanceof DocumentChunkEmbeddingSearchResult embeddingResult) {
+            enrichDocumentFallback(embeddingResult.getDocument(), session, corpusCreatedCache);
+            return;
+        }
+        if (value instanceof Map<?, ?> map) {
+            for (var entryValue : map.values()) {
+                enrichObjectDocumentFallback(entryValue, session, corpusCreatedCache);
+            }
+            return;
+        }
+        if (value instanceof Iterable<?> iterable) {
+            for (var item : iterable) {
+                enrichObjectDocumentFallback(item, session, corpusCreatedCache);
+            }
+        }
+    }
+
+    private void enrichDocumentFallback(Document document, Session session, HashMap<Long, String> corpusCreatedCache) {
+        if (document == null || document.getMetadataTitleInfo() == null) {
+            return;
+        }
+
+        var corpusId = document.getCorpusId();
+        String fallbackDate;
+        if (corpusCreatedCache.containsKey(corpusId)) {
+            fallbackDate = corpusCreatedCache.get(corpusId);
+        } else {
+            fallbackDate = null;
+            try {
+                var corpus = session.get(Corpus.class, corpusId);
+                if (corpus != null && corpus.getCreated() != null) {
+                    fallbackDate = corpus.getCreated().toString();
+                }
+            } catch (Exception ignored) {
+            }
+            corpusCreatedCache.put(corpusId, fallbackDate);
+        }
+
+        if (fallbackDate != null && !fallbackDate.isBlank()) {
+            document.getMetadataTitleInfo().setPublished(fallbackDate);
+        }
     }
 
 }

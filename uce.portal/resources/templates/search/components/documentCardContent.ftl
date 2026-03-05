@@ -47,9 +47,11 @@
                                data-id="${document.getId()?string?replace('.', '')?replace(',', '')}">
                                 <i class="m-0 fas fa-globe-europe"></i></a>
                         </#if>
-                        <a class="title-btn open-wiki-page color-prime" data-trigger="hover" data-toggle="popover"
-                           data-wcovered="" data-wid="${document.getWikiId()}">
-                            <i class="m-0 fab fa-wikipedia-w"></i></a>
+                        <#if (uceConfig.settings.ui.mainPage.showWikiModal)!true>
+                            <a class="title-btn open-wiki-page color-prime" data-trigger="hover" data-toggle="popover"
+                            data-wcovered="" data-wid="${document.getWikiId()}">
+                                <i class="m-0 fab fa-wikipedia-w"></i></a>
+                        </#if>
                         <a class="title-btn open-document color-prime" data-trigger="hover" data-toggle="popover"
                            data-placement="top"
                            data-content="${languageResource.get("openDocumentReader")}"
@@ -100,51 +102,55 @@
                             class="fas fa-pen-nib mr-1"></i> ${document.getMetadataTitleInfo().getAuthor()}</label>
             </div>
             <div class="flexed align-items-center topic-list">
-                <#if document.getDocumentKeywordDistribution()?has_content>
-                    <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
-                           data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicOne()}"
-                           class="add-wiki-logo open-wiki-page">
-                        #${document.getDocumentKeywordDistribution().getYakeTopicOne()}
-                    </label>
-                    <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
-                           data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicTwo()}"
-                           class="add-wiki-logo open-wiki-page">
-                        #${document.getDocumentKeywordDistribution().getYakeTopicTwo()}
-                    </label>
-                    <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
-                           data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
-                           class="add-wiki-logo open-wiki-page">
-                        #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
-                    </label>
+                <#if (uceConfig.settings.ui.mainPage.showWikiModal)!true>
+                    <#if document.getDocumentKeywordDistribution()?has_content>
+                        <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                               data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicOne()}"
+                               class="add-wiki-logo open-wiki-page">
+                            #${document.getDocumentKeywordDistribution().getYakeTopicOne()}
+                        </label>
+                        <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                               data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicTwo()}"
+                               class="add-wiki-logo open-wiki-page">
+                            #${document.getDocumentKeywordDistribution().getYakeTopicTwo()}
+                        </label>
+                        <label data-wid="${document.getDocumentKeywordDistribution().getWikiId()}"
+                               data-wcovered="${document.getDocumentKeywordDistribution().getYakeTopicThree()}"
+                               class="add-wiki-logo open-wiki-page">
+                            #${document.getDocumentKeywordDistribution().getYakeTopicThree()}
+                        </label>
+                    </#if>
                 </#if>
 
-                <#if document.getDocumentTopThreeTopics()?has_content>
-                    <#assign documentTopThreeTopics = document.getDocumentTopThreeTopics()!>
-                    <#assign documentTopThreeTopicsWikiId = document.getDocumentTopThreeTopics().getWikiId()!>
-                    <#assign documentTopicOne = document.getDocumentTopThreeTopics().getTopicOne()!>
-                    <#assign documentTopicTwo = document.getDocumentTopThreeTopics().getTopicTwo()!>
-                    <#assign documentTopicThree = document.getDocumentTopThreeTopics().getTopicThree()!>
-                    <#if documentTopThreeTopics?has_content>
-                        <#if documentTopicOne?has_content>
-                            <label data-wid="${documentTopThreeTopicsWikiId}"
-                                   data-wcovered="${documentTopicOne}"
-                                   class="add-wiki-logo open-wiki-page">
-                                ${documentTopicOne}
-                            </label>
-                        </#if>
-                        <#if documentTopicTwo?has_content>
-                            <label data-wid="${documentTopThreeTopicsWikiId}"
-                                   data-wcovered="${documentTopicTwo}"
-                                   class="add-wiki-logo open-wiki-page">
-                                ${documentTopicTwo}
-                            </label>
-                        </#if>
-                        <#if documentTopicThree?has_content>
-                            <label data-wid="${documentTopThreeTopicsWikiId}"
-                                   data-wcovered="${documentTopicThree}"
-                                   class="add-wiki-logo open-wiki-page">
-                                ${documentTopicThree}
-                            </label>
+                <#if (uceConfig.settings.ui.mainPage.showWikiModal)!true>
+                    <#if document.getDocumentTopThreeTopics()?has_content>
+                        <#assign documentTopThreeTopics = document.getDocumentTopThreeTopics()!>
+                        <#assign documentTopThreeTopicsWikiId = document.getDocumentTopThreeTopics().getWikiId()!>
+                        <#assign documentTopicOne = document.getDocumentTopThreeTopics().getTopicOne()!>
+                        <#assign documentTopicTwo = document.getDocumentTopThreeTopics().getTopicTwo()!>
+                        <#assign documentTopicThree = document.getDocumentTopThreeTopics().getTopicThree()!>
+                        <#if documentTopThreeTopics?has_content>
+                            <#if documentTopicOne?has_content>
+                                <label data-wid="${documentTopThreeTopicsWikiId}"
+                                       data-wcovered="${documentTopicOne}"
+                                       class="add-wiki-logo open-wiki-page">
+                                    ${documentTopicOne}
+                                </label>
+                            </#if>
+                            <#if documentTopicTwo?has_content>
+                                <label data-wid="${documentTopThreeTopicsWikiId}"
+                                       data-wcovered="${documentTopicTwo}"
+                                       class="add-wiki-logo open-wiki-page">
+                                    ${documentTopicTwo}
+                                </label>
+                            </#if>
+                            <#if documentTopicThree?has_content>
+                                <label data-wid="${documentTopThreeTopicsWikiId}"
+                                       data-wcovered="${documentTopicThree}"
+                                       class="add-wiki-logo open-wiki-page">
+                                    ${documentTopicThree}
+                                </label>
+                            </#if>
                         </#if>
                     </#if>
                 </#if>
@@ -256,7 +262,7 @@
         -->
 
         <!-- metadata if it exists (and its not reduced view) -->
-        <#if !isReducedView && document.getUceMetadataWithoutJson()?size gt 0>
+        <#if !isReducedView && showFeatureValuesInCard && document.getUceMetadataWithoutJson()?size gt 0>
             <#assign uceMetadata = document.getUceMetadataWithoutJson()>
             <div class="metadata-div">
                 <#include "*/document/documentUceMetadata.ftl">

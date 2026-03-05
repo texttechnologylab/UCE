@@ -1,4 +1,6 @@
 <div class="mt-0 search-state" data-id="${searchState.getSearchId()}">
+    <#assign showSearchHint = (uceConfig.settings.ui.mainPage.showSearchHint)!true>
+    <#assign middleColumnClass = showSearchHint?then("col-lg-6", "col-lg-12")>
 
     <div class="header">
         <div class="flexed w-100 align-items-center justify-content-center">
@@ -10,7 +12,7 @@
         </div>
     </div>
 
-    <#if searchState.hasUceMetadataFilters()>
+    <#if showSearchHint && searchState.hasUceMetadataFilters()>
         <div id="search-results-visualization-container">
             <div class="group-box bg-ghost card-shadow w-100">
                 <div class="flexed align-items-center justify-content-between clickable"
@@ -28,29 +30,31 @@
 
     <div class="row mb-0 mr-0 ml-0 pb-5">
 
-        <div class="col-lg-3 position-relative search-row" data-type="left">
-            <div class="side-bar-container">
-                <div class="side-bar">
+        <#if showSearchHint>
+            <div class="col-lg-3 position-relative search-row" data-type="left">
+                <div class="side-bar-container">
+                    <div class="side-bar">
 
-                    <div class="content">
-                        <#assign contextState = searchState.getKeywordInContextState()!"">
-                        <div class="keyword-in-context-include">
-                            <#include "*/search/components/keywordInContext.ftl">
-                        </div>
+                        <div class="content">
+                            <#assign contextState = searchState.getKeywordInContextState()!"">
+                            <div class="keyword-in-context-include">
+                                <#include "*/search/components/keywordInContext.ftl">
+                            </div>
 
-                        <div class="pb-0 taxonomy-tree-include display-none">
-                            <hr class="mt-3 mb-3"/>
-                            <h6 class="text-center underlined mb-4">${languageResource.get("taxonomy")}</h6>
-                            <#include "*/search/components/taxonomyTree.ftl">
+                            <div class="pb-0 taxonomy-tree-include display-none">
+                                <hr class="mt-3 mb-3"/>
+                                <h6 class="text-center underlined mb-4">${languageResource.get("taxonomy")}</h6>
+                                <#include "*/search/components/taxonomyTree.ftl">
+                            </div>
+
                         </div>
 
                     </div>
-
                 </div>
             </div>
-        </div>
+        </#if>
 
-        <div class="col-lg-6 search-row" data-type="mid">
+        <div class="${middleColumnClass} search-row" data-type="mid">
 
             <div class="sort-container pl-3 pr-3 pt-2 pb-2 mb-3">
 
@@ -163,6 +167,7 @@
                             <#assign embedding = documentChunkEmbedding.getDocumentChunkEmbedding()>
                             <#assign documentIdx = 999999>
                             <#assign searchId = searchState.getSearchId()>
+                            <#assign showFeatureValuesInCard = (uceConfig.settings.ui.corpusInspector.showAnnotations)!true>
 
                             <div class="document-card">
                                 <div class="content">
@@ -183,10 +188,11 @@
             </div>
         </div>
 
-        <div class="col-lg-3 search-row position-relative" data-type="right">
-            <div class="side-bar-container">
-                <div class="side-bar">
-                    <div class="content">
+        <#if showSearchHint>
+            <div class="col-lg-3 search-row position-relative" data-type="right">
+                <div class="side-bar-container">
+                    <div class="side-bar">
+                        <div class="content">
 
                         <!-- the search tokens we finally took -->
                         <div>
@@ -226,11 +232,12 @@
                             </div>
                         </#if>
 
+                        </div>
                     </div>
-                </div>
 
+                </div>
             </div>
-        </div>
+        </#if>
     </div>
 
 </div>

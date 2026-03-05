@@ -33,6 +33,8 @@ public class CommonConfig {
             throw new RuntimeException("Error loading config.conf: " + e.getMessage());
         }
 
+        applyEnvironmentOverrides();
+
         // Now load in the GeoNames feature Codes.
         try {
             // Load the .conf file from the resources directory
@@ -51,6 +53,59 @@ public class CommonConfig {
         } catch (Exception e) {
             throw new RuntimeException("Error loading geonames_featurecodes_en.txt: " + e.getMessage());
         }
+    }
+
+    private void applyEnvironmentOverrides() {
+        // Convention: env var names mirror property keys:
+        // - dots become underscores, all uppercase
+        // Example: keycloak.auth_server_url -> KEYCLOAK_AUTH_SERVER_URL
+        //
+        // Only overrides existing keys to avoid silently accepting typos.
+        var env = System.getenv();
+        for (var key : properties.stringPropertyNames()) {
+            var envKey = toEnvVarName(key);
+            var value = env.get(envKey);
+            if (value == null || value.isBlank()) {
+                value = getEnvAliasValue(key, env);
+            }
+            if (value != null && !value.isBlank()) {
+                properties.setProperty(key, value);
+            }
+        }
+    }
+
+    private static String getEnvAliasValue(String propertyKey, Map<String, String> env) {
+        // Backward-/cross-compat aliases so users don't need to define the same concept multiple times.
+        //
+        // Keycloak:
+        // - keycloak.realm           <- KC_REALM
+        // - keycloak.client          <- KC_CLIENT_ID
+        // - keycloak.auth_server_url <- UCE_AUTH_PUBLIC_URL, then KC_BASE_URL
+        //
+        // PostgreSQL (app runtime):
+        // - postgresql.hibernate.connection.username <- POSTGRES_USER
+        // - postgresql.hibernate.connection.password <- POSTGRES_PASSWORD
+        return switch (propertyKey) {
+            case "keycloak.realm" -> env.get("KC_REALM");
+            case "keycloak.client" -> env.get("KC_CLIENT_ID");
+            case "keycloak.auth_server_url" -> {
+                var v = env.get("UCE_AUTH_PUBLIC_URL");
+                if (v == null || v.isBlank()) {
+                    v = env.get("KC_BASE_URL");
+                }
+                yield v;
+            }
+            case "postgresql.hibernate.connection.username" -> env.get("POSTGRES_USER");
+            case "postgresql.hibernate.connection.password" -> env.get("POSTGRES_PASSWORD");
+            default -> null;
+        };
+    }
+
+    private static String toEnvVarName(String propertyKey) {
+        return propertyKey
+                .replace('.', '_')
+                .replace('-', '_')
+                .toUpperCase();
     }
 
     public String getProperty(String key) {

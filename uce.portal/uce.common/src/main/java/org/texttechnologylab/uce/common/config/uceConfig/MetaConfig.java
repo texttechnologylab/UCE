@@ -4,6 +4,7 @@ public class MetaConfig {
     private String name;
     private String version;
     private String description;
+    private String corporaTitle;
 
     public MetaConfig(){}
 
@@ -29,5 +30,13 @@ public class MetaConfig {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getCorporaTitle() {
+        return corporaTitle;
+    }
+
+    public void setCorporaTitle(String corporaTitle) {
+        this.corporaTitle = corporaTitle;
     }
 }

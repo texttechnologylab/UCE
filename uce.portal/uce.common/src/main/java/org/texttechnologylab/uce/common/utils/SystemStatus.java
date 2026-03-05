@@ -27,6 +27,8 @@ public final class SystemStatus {
     public static UceConfig UceConfig = null;
     private static final Logger logger = LogManager.getLogger(SystemStatus.class);
 
+    private SystemStatus() {}
+
     public static void initSystemStatus(long cleanupInterval, ApplicationContext serviceContext) {
         var accessManager = serviceContext.getBean(DocumentAccessManager.class);
         

@@ -1,6 +1,6 @@
 :root {
     /* Variables prime and secondary MUST ALWAYS be in line 3 and 4! */
-    --prime: #00618f;
+    --prime: #36874a;
     --secondary: rgba(35, 35, 35, 1);
     --gold: rgba(255, 165, 0, 1);
     --dark: rgba(38, 38, 38, 1);

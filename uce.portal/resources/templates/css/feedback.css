@@ -1,4 +1,6 @@
 /* Feedback presentation styling */
+
+
 :root {
     --fb-bg: #f5f6f7;
     --fb-card: #ffffff;
@@ -6,7 +8,36 @@
     --fb-text: #1f2937;
     --fb-muted: #6b7280;
     --fb-border: #d7d9dc;
-    --fb-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+    /* --fb-shadow: 0 1px 3px rgba(17, 24, 39, 0.06); */
+}
+
+body {
+    background: var(--fb-card);
+}
+
+body,
+body.no-cursor,
+.site-container,
+.site-container.with-view-nav,
+.reader-container,
+.reader-container.container {
+  background-color: var(--fb-bg) !important;
+}
+
+
+/* consistent spacing between feedback blocks */
+.feedback-overview,
+.feedback-urls,
+.feedback-content {
+  margin: 0 0 24px 0;
+}
+
+/* don't add extra space on the last block */
+.feedback-content { margin-bottom: 0; }
+
+/* section title spacing (avoid huge jump) */
+.feedback-content h3 {
+  margin: 0 0 12px 0;
 }
 
 .feedback-mode {
@@ -18,6 +49,7 @@
 }
 
 .feedback-main {
+    background: var(--fb-bg);
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
@@ -26,9 +58,14 @@
 }
 
 .feedback-header {
+    background: var(--fb-card);
     display: flex;
     flex-direction: column;
     gap: 12px;
+    padding: 2rem 2rem 1rem 2rem;
+    border: 1px solid var(--fb-border);
+    border-radius: 5;
+    box-shadow: var(--fb-shadow);
 }
 
 .feedback-header h1 {
@@ -69,7 +106,7 @@
     background: var(--fb-card);
     border: 1px solid var(--fb-border);
     border-radius: 0;
-    padding: 16px;
+    padding: 24px;
     box-shadow: var(--fb-shadow);
 }
 
@@ -128,7 +165,7 @@
     background: var(--fb-card);
     border: 1px solid var(--fb-border);
     border-radius: 4px;
-    padding: 16px;
+    padding: 24px;
     box-shadow: var(--fb-shadow);
 }
 
@@ -142,6 +179,10 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+}
+
+.feedback-urls table {
+    margin-top: 12px;
 }
 
 .feedback-urls th,
@@ -182,7 +223,7 @@
     background: var(--fb-card);
     border: 1px solid var(--fb-border);
     border-radius: 0;
-    padding: 16px;
+    padding: 24px;
     box-shadow: var(--fb-shadow);
 }
 
@@ -220,8 +261,11 @@
 
 .feedback-chart-img {
     display: block;
-    height: 420px;
+    height: auto;
     width: auto;
+    min-width: 100%;
+    max-width: none;
+    max-height: 550px;
     border-radius: 0;
     border: 1px solid var(--fb-border);
     box-shadow: var(--fb-shadow);
@@ -246,12 +290,47 @@
     border-bottom: 1px solid var(--fb-border);
 }
 
+.url-cell { max-width: 0; }              /* allow shrinking inside table layout */
+.url-ellipsis{
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+table.top-urls { width: 100%; table-layout: fixed; }
+table.top-urls .url-cell { max-width: 0; }
+
+table.top-urls .url-ellipsis{
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feedback-chart-img{
+    border: 1px solid rgba(17,24,39,0.08);
+    box-shadow: 0 2px 8px rgba(17,24,39,0.06);
+  }
+
+
+
 @media (max-width: 768px) {
     .feedback-mode {
         padding: 20px 16px 32px;
     }
 
     .metric-card {
-        padding: 14px;
+        padding: 16px;
+    }
+
+    .feedback-urls,
+    .text-card,
+    .chart-card,
+    .table-card {
+        padding: 16px;
     }
 }

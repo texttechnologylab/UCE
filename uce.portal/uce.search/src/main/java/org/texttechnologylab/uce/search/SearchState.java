@@ -106,6 +106,7 @@ public class SearchState extends CacheItem {
 
     public void setSessionUser(String sessionUser) {
         this.sessionUser = sessionUser;
+    }
 
     public boolean isEnrichedSearchQueryIsCutoff() {
         return enrichedSearchQueryIsCutoff;

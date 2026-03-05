@@ -49,6 +49,19 @@ public class AuthenticationApi implements UceApi {
     };
 
     /**
+     * Used by the frontend to periodically detect expired sessions without waiting for a user action.
+     * Returns 204 if the session is still logged in, otherwise 401.
+     */
+    public void authPing(Context ctx) {
+        ctx.header("Cache-Control", "no-store");
+        if (ctx.sessionAttribute("uceUser") == null) {
+            ctx.status(401);
+            return;
+        }
+        ctx.status(204);
+    }
+
+    /**
      * A route that gets called by the keycloak server AFTER having a user logged in. In this request, we get a
      * code from keycloak which isn't yet a token. We need to again ask keycloak to send us, based on that code, the final
      * jtw token which then has all the claims of that user and which we can then work with.
@@ -161,8 +174,14 @@ public class AuthenticationApi implements UceApi {
             logger.info("Calculating effective permissions for username={} with groups size={}", user.getUsername(), user.getGroups().size());
             db.calculateEffectivePermissions(user.getUsername(), user.getGroups());
 
-            // We redirect back to the main page after logging in.
-            ctx.redirect("/");
+            // Redirect back to the calling page (OIDC `state`) after logging in.
+            // Only allow local relative paths to prevent open redirects.
+            var state = ctx.queryParam("state");
+            if (state != null && state.startsWith("/") && !state.startsWith("//") && !state.contains("\r") && !state.contains("\n")) {
+                ctx.redirect(state);
+            } else {
+                ctx.redirect("/");
+            }
         } catch (Exception ex){
             logger.error("Error in the authentication: a callback produced an error. Request " +
                          "with id=" + ctx.attribute("id") + " to this endpoint for URI parameters.", ex);

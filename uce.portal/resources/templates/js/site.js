@@ -256,7 +256,17 @@ function openNewDocumentReadView(id, searchId) {
     if (id === undefined || id === '') {
         return;
     }
-    window.open("/documentReader?id=" + id + "&searchId=" + searchId, '_blank');
+    const params = new URLSearchParams();
+    params.set("id", String(id));
+
+    if (searchId !== undefined && searchId !== null) {
+        const raw = String(searchId).trim();
+        if (raw !== "" && raw.toLowerCase() !== "undefined" && raw.toLowerCase() !== "null") {
+            params.set("searchId", raw);
+        }
+    }
+
+    window.open("/documentReader?" + params.toString(), '_blank');
 }
 
 function activatePopovers() {
@@ -278,3 +288,166 @@ $(document).ready(function () {
     if (window.wikiHandler) window.wikiHandler.fetchLexiconEntries(0, 24);
 })
 
+(function installSessionExpiredHandler() {
+    if (window.__uceSessionExpiredHandlerInstalled) return;
+    window.__uceSessionExpiredHandlerInstalled = true;
+
+    const modalSelector = '#sessionExpiredModal';
+    const countdownSelector = '#sessionExpiredCountdown';
+    const reloginBtnSelector = '#sessionExpiredReloginBtn';
+    const homeBtnSelector = '#sessionExpiredHomeBtn';
+
+    function safeReturnTo() {
+        return window.location.pathname + window.location.search + window.location.hash;
+    }
+
+    function getCountdownSeconds() {
+        const el = document.querySelector(modalSelector);
+        const raw = el ? el.getAttribute('data-countdown-seconds') : null;
+        const parsed = parseInt(raw || '30', 10);
+        return Number.isFinite(parsed) && parsed > 0 ? parsed : 30;
+    }
+
+    function getLoginBaseUrl() {
+        // keep this in sync with the login icon href in index.ftl
+        return "${uceConfig.getSettings().getAuthentication().getPublicUrl()}/realms/uce/protocol/openid-connect/auth" +
+            "?client_id=uce-web&response_type=code&scope=openid" +
+            "&redirect_uri=${uceConfig.getSettings().getAuthentication().getRedirectUrl()}/login";
+    }
+
+    let modalOpen = false;
+    let timerId = null;
+    let remainingSeconds = 0;
+    let lastAuthPingAt = 0;
+
+    function isLoggedInUiState() {
+        const el = document.querySelector('a.user-profile-btn');
+        if (!el) return false;
+        const href = el.getAttribute('href') || '';
+        // Logged-in: href="#" and onclick opens profile; logged-out: href points to Keycloak auth endpoint.
+        if (href === '#') return true;
+        if (el.getAttribute('onclick')) return true;
+        return false;
+    }
+
+    function hadSessionBefore() {
+        return sessionStorage.getItem('uce:hadSession') === '1';
+    }
+
+    function markHadSession() {
+        sessionStorage.setItem('uce:hadSession', '1');
+    }
+
+    function cleanup() {
+        if (timerId !== null) {
+            window.clearInterval(timerId);
+            timerId = null;
+        }
+        modalOpen = false;
+    }
+
+    function startAuthPingOnUserAttention() {
+        const authEnabled = ${uceConfig.authIsEnabled()?c};
+        if (!authEnabled) return;
+        if (!window.fetch) return;
+
+        function triggerAuthPing() {
+            if (modalOpen) return;
+            // Avoid popping "session expired" for users who were never logged in.
+            if (!hadSessionBefore() && !isLoggedInUiState()) return;
+            const now = Date.now();
+            if (now - lastAuthPingAt < 5000) return;
+            lastAuthPingAt = now;
+            window.fetch('/api/auth/ping', {cache: 'no-store'})
+                .then(function (res) {
+                    if (res && res.status === 204) {
+                        markHadSession();
+                    }
+                })
+                .catch(function () {});
+        }
+
+        window.addEventListener('focus', function () {
+            triggerAuthPing();
+        });
+        window.addEventListener('pageshow', function () {
+            triggerAuthPing();
+        });
+        document.addEventListener('visibilitychange', function () {
+            if (!document.hidden) {
+                triggerAuthPing();
+            }
+        });
+    }
+
+    function hardLogoutToHome() {
+        cleanup();
+        window.location.assign('/logout');
+    }
+
+    function relogin() {
+        cleanup();
+        const returnTo = sessionStorage.getItem('uce:returnTo') || '/';
+        const url = getLoginBaseUrl() + "&state=" + encodeURIComponent(returnTo);
+        window.location.assign(url);
+    }
+
+    function openModalOnce() {
+        if (modalOpen) return;
+        // Avoid showing this modal to users who never had a session.
+        if (!hadSessionBefore() && !isLoggedInUiState()) return;
+        modalOpen = true;
+
+        markHadSession();
+        sessionStorage.setItem('uce:returnTo', safeReturnTo());
+        remainingSeconds = getCountdownSeconds();
+
+        const $modal = $(modalSelector);
+        $modal.find(countdownSelector).text(String(remainingSeconds));
+        $modal.modal({backdrop: 'static', keyboard: false});
+
+        timerId = window.setInterval(function () {
+            remainingSeconds -= 1;
+            $(countdownSelector).text(String(Math.max(0, remainingSeconds)));
+            if (remainingSeconds <= 0) {
+                hardLogoutToHome();
+            }
+        }, 1000);
+    }
+
+    // Buttons (event delegation: safe even if modal is included once at page load)
+    $('body').on('click', reloginBtnSelector, function () {
+        relogin();
+    });
+    $('body').on('click', homeBtnSelector, function () {
+        hardLogoutToHome();
+    });
+    $(document).on('hidden.bs.modal', modalSelector, function () {
+        cleanup();
+    });
+
+    // Intercept fetch() centrally (covers code using fetch directly)
+    if (window.fetch) {
+        const originalFetch = window.fetch.bind(window);
+        window.fetch = function (input, init) {
+            return originalFetch(input, init).then(function (res) {
+                if (res && res.status === 401) {
+                    openModalOnce();
+                }
+                return res;
+            }).catch(function (err) {
+                throw err;
+            });
+        };
+    }
+
+    // Intercept jQuery ajax globally (covers $.ajax usage)
+    $(document).ajaxError(function (event, xhr) {
+        if (xhr && xhr.status === 401) {
+            openModalOnce();
+        }
+    });
+
+    // Detect session loss when the user returns to the tab/window (avoids keeping the session alive).
+    startAuthPingOnUserAttention();
+})();

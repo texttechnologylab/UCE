@@ -1,5 +1,5 @@
 <section class="feedback-header">
-    <h1>${middlePaneModel.title}</h1>
+    <h1>${middlePaneModel.title?replace("\\s*\\(Erhebung:.*\\)\\s*$", "", "r")}</h1>
     <p class="subtitle">${middlePaneModel.subtitle}</p>
     <div class="badges">
         <#list middlePaneModel.metaBadges as badge>

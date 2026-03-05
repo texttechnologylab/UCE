@@ -25,7 +25,11 @@
     <style>
         <#include "*/css/view-nav.css">
     </style>
-    <#if activeMode?has_content && activeMode == "document_reader_feedback_view">
+    <#assign activeKey = (activeModeKey!activeMode)!"" >
+    <#assign activeHandler = (activeModeHandler!"") >
+    <#assign isFeedbackMode = (activeHandler?has_content && activeHandler == "document_reader_feedback_view")
+        || (!activeHandler?has_content && activeKey == "document_reader_feedback_view") >
+    <#if isFeedbackMode>
     <style>
         <#include "*/css/feedback.css">
     </style>
@@ -67,79 +71,54 @@
         customElements.define('markdown-viewer', MarkdownViewer);
     </script>
 
-    <title>${document.getDocumentTitle()}</title>
-</head>
+	    <title>${document.getDocumentTitle()}</title>
+	</head>
+	
+	<body class="no-cursor">
 
-<body class="no-cursor">
+	    <#macro renderFallbackViewer>
+	        <#if document.getMimeType() == "application/pdf" || document.getMimeType() == "pdf">
+	            <#include '*/reader/components/viewerPdf.ftl' />
+	        <#elseif document.getMimeType()?starts_with("image/")>
+	            <#include '*/reader/components/viewerImage.ftl' />
+	        <#else>
+	            <div class="document-content">
+	                <!-- Here we lazily load in the pages -->
+	            </div>
+	            <!-- Scrollbar Minimap -->
+	            <div class="scrollbar-minimap">
+	                <div class="minimap-markers"></div>
+	                <div class="minimap-preview">
+	                    <div class="preview-content"></div>
+	                </div>
+	            </div>
+	        </#if>
+	    </#macro>
+	
+	    <#include "*/messageModal.ftl">
 
-    <#include "*/messageModal.ftl">
+        <#if ((uceConfig.settings.ui.documentReader.showViewModeNav)!true) && renderModes?has_content>
+            <div class="site-container with-view-nav">
 
-<#if activeMode?has_content && activeMode == "document_reader_feedback_view">
-    <div class="site-container feedback-mode with-view-nav">
-        <#if renderModes?has_content>
-            <nav class="view-mode-nav" aria-label="Views">
-                <#list renderModes as mode>
-                    <#assign modeKey = mode.key()>
-                    <#assign modeName = mode.name()>
-                    <a class="view-mode-link<#if modeKey == activeMode> active</#if>"
-                       href="?id=${document.id}&mode=${modeKey}">
-                        ${modeName}
-                    </a>
-                </#list>
-            </nav>
+                    <button class="view-mode-toggle" type="button" aria-label="Toggle Views">
+                        ☰
+                    </button>
+                    <nav class="view-mode-nav" aria-label="Views">
+                        <#list renderModes as mode>
+                            <#assign modeKey = mode.key()>
+                            <#assign modeName = mode.name()>
+                            <a class="view-mode-link<#if modeKey == activeKey> active</#if>"
+                            href="?id=${document.id}&mode=${modeKey}">
+                                ${modeName}
+                            </a>
+                        </#list>
+                    </nav>
+            </div>
         </#if>
 
-        <div class="feedback-main">
-            <#if middlePaneTemplate??>
-                <#include "/" + middlePaneTemplate>
-            <#else>
-                <p>Kein Renderer für diese Ansicht verfügbar.</p>
-            </#if>
-        </div>
-        <#if hasRightPane?? && hasRightPane>
-            <aside class="feedback-side">
-                <#if rightPaneTemplate??>
-                    <#include "/" + rightPaneTemplate>
-                </#if>
-            </aside>
+        <#if (uceConfig.settings.ui.mainPage.showWikiModal)!true>
+            <#include "*/wiki/components/wikiPageModal.ftl">
         </#if>
-    </div>
-
-    <#-- Ensure shared scripts still load in feedback mode -->
-    <#--<script type="module">
-        <#include "*/js/corpusUniverse.js">
-    </script>-->
-    <script type="module">
-        <#include "*/js/graphViz.js">
-        <#include "*/js/flowViz.js">
-    </script>
-
-    <script>
-        <#include "*/js/site.js">
-        <#include "*/js/customContextMenu.js">
-    </script>
-
-<#else>
-
-    <div class="site-container with-view-nav">
-
-        <#if renderModes?has_content>
-            <button class="view-mode-toggle" type="button" aria-label="Toggle Views">
-                ☰
-            </button>
-            <nav class="view-mode-nav" aria-label="Views">
-                <#list renderModes as mode>
-                    <#assign modeKey = mode.key()>
-                    <#assign modeName = mode.name()>
-                    <a class="view-mode-link<#if modeKey == activeMode> active</#if>"
-                       href="?id=${document.id}&mode=${modeKey}">
-                        ${modeName}
-                    </a>
-                </#list>
-            </nav>
-        </#if>
-
-        <#include "*/wiki/components/wikiPageModal.ftl">
 
         <div class="corpus-inspector-include display-none">
         </div>
@@ -155,14 +134,15 @@
             </div>
         </div>
 
-        <div class="dot" id="custom-cursor"></div>
+        <#if (uceConfig.settings.ui.documentReader.showCustomContextMenu)!true>
+            <div class="dot" id="custom-cursor"></div>
 
-        <ul class='custom-menu'>
-            <li data-action="open-more"><i class="fab fa-readme mr-2"></i> ${languageResource.get("more")}</li>
-            <!--<li data-action="search"><i class="fas fa-search mr-2"></i> ${languageResource.get("search")}</li>-->
-            <li data-action="highlight" data-target=""><i
-                        class="fas fa-highlighter mr-2"></i> ${languageResource.get("highlight")}</li>
-        </ul>
+            <ul class='custom-menu'>
+                <li data-action="open-more"><i class="fab fa-readme mr-2"></i> ${languageResource.get("more")}</li>
+                <!--<li data-action="search"><i class="fas fa-search mr-2"></i> ${languageResource.get("search")}</li>-->
+                <li data-action="highlight" data-target=""><i class="fas fa-highlighter mr-2"></i> ${languageResource.get("highlight")}</li>
+            </ul>
+        </#if>
 
         <div class="container-fluid">
             <div class="flexed m-0 p-0">
@@ -172,289 +152,309 @@
                         data-id="${document.getId()?string?replace('.', '')?replace(',', '')}"
                         data-pagescount="${document.getPages()?size?string?replace('.', '')?replace(',', '')}" data-searchtokens="${(searchTokens)!''}">
 
-                        <!-- Topic navigation buttons (hidden by default) -->
-                        <div class="topic-navigation-buttons">
-                            <button class="topic-nav-button prev-topic-button" title="Previous occurrence">
-                                <i class="fas fa-chevron-up"></i>
-                            </button>
-                            <button class="topic-nav-button next-topic-button" title="Next occurrence">
-                                <i class="fas fa-chevron-down"></i>
-                            </button>
-                        </div>
+                        <#if (uceConfig.settings.ui.documentReader.showTopicNavigationButtons)!true>
+                            <!-- Topic navigation buttons (hidden by default) -->
+                            <div class="topic-navigation-buttons">
+                                <button class="topic-nav-button prev-topic-button" title="Previous occurrence">
+                                    <i class="fas fa-chevron-up"></i>
+                                </button>
+                                <button class="topic-nav-button next-topic-button" title="Next occurrence">
+                                    <i class="fas fa-chevron-down"></i>
+                                </button>
+                            </div>
+                        </#if>
 
-                        <div class="header ">
-                            <div class="text-center flexed align-items-center justify-content-around w-100">
-                                <div class="flexed align-items-center">
-                                    <a class="header-btn open-wiki-page color-prime" data-wid="${document.getWikiId()}">
-                                        <i class="large-font m-0 fab fa-wikipedia-w"></i>
-                                    </a>
-                                    <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
-                                        <a class="header-btn open-metadata-url-btn m-0"
-                                        href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank">
-                                            <i class="color-prime m-0 large-font fas fa-university"></i>
-                                        </a>
+                        <#if (uceConfig.settings.ui.documentReader.showHeader)!true>
+                            <div class="header ">
+                                <div class="text-center flexed align-items-center justify-content-around w-100">
+                                    <div class="flexed align-items-center">
+                                        <#if (uceConfig.settings.ui.mainPage.showWikiModal)!true>
+                                            <a class="header-btn open-wiki-page color-prime" data-wid="${document.getWikiId()}">
+                                                <i class="large-font m-0 fab fa-wikipedia-w"></i>
+                                            </a>
+                                        </#if>
+
+                                        <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
+                                            <a class="header-btn open-metadata-url-btn m-0"
+                                            href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank">
+                                                <i class="color-prime m-0 large-font fas fa-university"></i>
+                                            </a>
+                                        </#if>
+                                    </div>
+
+                                    <div class="ml-2 mr-2">
+                                        <h5>${document.getDocumentTitle()}</h5>
+                                        <p class="text mb-0">${document.getMetadataTitleInfo().getPublished()}</p>
+                                    </div>
+                                    <p class="m-0 text">${document.getLanguage()?upper_case}</p>
+                                </div>
+                            </div>
+                        </#if>
+
+                        <#if (uceConfig.settings.ui.documentReader.showUceMetadata)!true>
+                            <#assign uceMetadata = document.getUceMetadataWithoutJson()>
+                            <#if uceMetadata?has_content && uceMetadata?size gt 0>
+                                <div class="w-100 pt-4 pl-4 pr-4 pb-1 mt-2">
+                                    <div class="small-font">
+                                        <#include "*/document/documentUceMetadata.ftl">
+                                    </div>
+                                    <#if document.hasJsonUceMetadata()>
+                                        <div class="flexed align-items-center justify-content-center text-center mt-1">
+                                            <#if (uceConfig.settings.ui.mainPage.showWikiModal)!true>
+                                                <a class="btn bg-lightgray rounded light-border xsmall-font open-wiki-page
+                                                align-items-center flexed hoverable"
+                                                data-wid="${document.getWikiId()}">
+                                                    <i class="fab fa-wikipedia-w bg-light light-border rounded p-1 mr-2"></i>
+                                                    <span class="font-italic text-secondary"
+                                                        style="margin-top: 3px">${languageResource.get("showUceMetadata")}...</span>
+                                                </a>
+                                            </#if>
+                                        </div>
                                     </#if>
                                 </div>
+                                <hr class="mb-0"/>
+                            </#if>
+                        </#if>
 
-                                <div class="ml-2 mr-2">
-                                    <h5>${document.getDocumentTitle()}</h5>
-                                    <p class="text mb-0">${document.getMetadataTitleInfo().getPublished()}</p>
-                                </div>
-                                <p class="m-0 text">${document.getLanguage()?upper_case}</p>
-                            </div>
-                        </div>
-
-                        <!-- metadata if exists -->
-                        <#assign uceMetadata = document.getUceMetadataWithoutJson()>
-                        <#if uceMetadata?has_content && uceMetadata?size gt 0>
-                            <div class="w-100 pt-4 pl-4 pr-4 pb-1 mt-2">
-                                <div class="small-font">
-                                    <#include "*/document/documentUceMetadata.ftl">
-                                </div>
-                                <#if document.hasJsonUceMetadata()>
-                                    <div class="flexed align-items-center justify-content-center text-center mt-1">
-                                        <a class="btn bg-lightgray rounded light-border xsmall-font open-wiki-page
-                                        align-items-center flexed hoverable"
-                                        data-wid="${document.getWikiId()}">
-                                            <i class="fab fa-wikipedia-w bg-light light-border rounded p-1 mr-2"></i>
-                                            <span class="font-italic text-secondary"
-                                                style="margin-top: 3px">${languageResource.get("showUceMetadata")}...</span>
-                                        </a>
-                                    </div>
+                        <#if middlePaneTemplate??>
+                            <#attempt>
+                                <#include "*/" + middlePaneTemplate>
+                                <#if hasRightPane?? && hasRightPane && rightPaneTemplate??>
+                                    <aside class="render-mode-side">
+                                        <#include "*/" + rightPaneTemplate>
+                                    </aside>
                                 </#if>
-                            </div>
-                            <hr class="mb-0"/>
+                            <#recover>
+                                <@renderFallbackViewer />
+                            </#attempt>
+                        <#else>
+                            <@renderFallbackViewer />
                         </#if>
 
-                        <#if document.getMimeType() == "application/pdf" ||  document.getMimeType() == "pdf">
-                            <#include '*/reader/components/viewerPdf.ftl' />
-                        <#elseif document.getMimeType()?starts_with("image/")>
-                            <#include '*/reader/components/viewerImage.ftl' />
-                        <#else>
-                            <div class="document-content">
-                                <!-- Here we lazily load in the pages -->
-                            </div>
-                            <!-- Scrollbar Minimap -->
-                            <div class="scrollbar-minimap">
-                                <div class="minimap-markers"></div>
-                                <div class="minimap-preview">
-                                    <div class="preview-content"></div>
-                                </div>
-                            </div>
-                        </#if>
+
 
 
                     </div>
                 </div>
 
-                <div class="side-bar">
+                <#if (uceConfig.settings.ui.documentReader.showSidebar)!true>
+                    <div class="side-bar">
 
-                    <div class="tab-header">
-                        <button class="tab-btn active" data-tab="navigator-tab">${languageResource.get("controlPanelTab")}</button>
-                        <button class="tab-btn" data-tab="visualization-tab">${languageResource.get("visualizationTab")}</button>
-    <#--                    <button class="tab-btn" data-tab="playground-tab">Playground</button>-->
+                        <div class="tab-header">
+                            <button class="tab-btn active" data-tab="navigator-tab">${languageResource.get("controlPanelTab")}</button>
+                            <#if (uceConfig.settings.ui.documentReader.showVisualizationTab)!true>
+                                <button class="tab-btn" data-tab="visualization-tab">${languageResource.get("visualizationTab")}</button>
+                            </#if>
+                            <#--<button class="tab-btn" data-tab="playground-tab">Playground</button>-->
 
-                    </div>
-
-                    <div class="tab-content">
-
-                        <div class="tab-pane active" id="navigator-tab">
-                            <div class="expander" data-expanded="true"><i class="m-0 xlarge-font fas fa-chevron-right"></i></div>
-                            <div class="side-bar-content">
-
-
-                                <div class="group-box">
-                                    <p class="text-center mb-0"><i class="fas fa-id-card-alt mr-1"></i> ${document.getDocumentId()}</p>
-                                </div>
-
-                                <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
-                                    <div class="group-box">
-                                        <p class="title">${languageResource.get("ogDocument")}</p>
-                                        <a href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank"
-                                        class="title-image mb-3">
-                                            <img src="${document.getMetadataTitleInfo().getTitleImageUrl()}"/>
-                                        </a>
-                                    </div>
-                                </#if>
-
-                                <div class="group-box">
-                                    <p class="title">${languageResource.get("settings")}</p>
-                                    <div class="flexed align-items-center">
-                                        <i class="fas fa-text-height mr-2"></i>
-                                        <input min="10" max="30" class="font-size-range w-100 hoverable" value="20" type="range"/>
-                                    </div>
-                                </div>
-
-                                <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
-                                    <div class="group-box">
-                                        <p class="title">${languageResource.get("page")} <span class="current-page">1</span></p>
-                                        <a class="btn open-metadata-url-page-btn" target="_blank"
-                                        data-href="${document.getMetadataTitleInfo().getPageViewStartUrl()}"
-                                        href="${document.getMetadataTitleInfo().getPageViewStartUrl()}">
-                                            <i class="mr-2 fas fa-university"></i> Original
-                                        </a>
-                                    </div>
-                                </#if>
-
-                                <div class="buttons group-box">
-                                    <p class="title">${languageResource.get("functions")}</p>
-                                    <button class="btn toggle-focus-btn">
-                                        <i class="fas fa-satellite-dish mr-2"></i> Toggle Focus
-                                    </button>
-                                    <button class="btn toggle-highlighting-btn" data-highlighted="true">
-                                        <i class="fas fa-highlighter mr-2"></i> Toggle Highlighting
-                                    </button>
-                                    <#if casDownloadName?has_content && casDownloadName != "">
-                                        <a href="/api/ie/download/uima?objectName=${casDownloadName}" class="btn">
-                                            <i class="fas fa-file-download mr-2"></i> Download XMI
-                                        </a>
-                                    </#if>
-                                </div>
-
-                                <#if (searchTokens?has_content) && (searchTokens?length gt 0)>
-                                    <div class="group-box search-tokens-box">
-                                        <p class="title"><span>${languageResource.get("searchTokens")}</span> <i
-                                                    class="ml-2 rotate fas fa-spinner"></i></p>
-                                        <div class="found-searchtokens-list"></div>
-                                    </div>
-                                </#if>
-
-                                <div class="group-box topics-box">
-                                    <div class="key-topics-title d-flex align-items-center justify-content-between mb-3">
-                                        <span class="title mx-auto" style="flex:1; text-align:center;">${languageResource.get("topics")}</span>
-                                        <i class="ml-2 fas fa-cog key-topics-settings" title="Settings"></i>
-                                    </div>
-
-
-
-                                    <div class="document-topics-list" data-document-id="${document.id}"></div>
-                                </div>
-                            </div>
                         </div>
 
-                        <!-- Visualization Tab -->
-                        <#assign documentTopics = document.getUnifiedTopics()![]>
-                        <div class="tab-pane" id="visualization-tab">
-                            <div class="visualization-wrapper">
-                                <div class="visualization-spinner">
-                                    <div class="visualization-spinner__icon">
-                                        <i class="fa fa-spinner fa-spin"></i>
+                        <div class="tab-content">
+
+                            <div class="tab-pane active" id="navigator-tab">
+                                <div class="expander" data-expanded="true"><i class="m-0 xlarge-font fas fa-chevron-right"></i></div>
+                                <div class="side-bar-content">
+
+
+                                    <div class="group-box">
+                                        <p class="text-center mb-0"><i class="fas fa-id-card-alt mr-1"></i> ${document.getDocumentId()}</p>
                                     </div>
-                                    <div class="visualization-spinner__text">
-                                        Loading visualization&hellip;
+
+                                    <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
+                                        <div class="group-box">
+                                            <p class="title">${languageResource.get("ogDocument")}</p>
+                                            <a href="${document.getMetadataTitleInfo().getScrapedUrl()}" target="_blank"
+                                            class="title-image mb-3">
+                                                <img src="${document.getMetadataTitleInfo().getTitleImageUrl()}"/>
+                                            </a>
+                                        </div>
+                                    </#if>
+
+                                    <div class="group-box">
+                                        <p class="title">${languageResource.get("settings")}</p>
+                                        <div class="flexed align-items-center">
+                                            <i class="fas fa-text-height mr-2"></i>
+                                            <input min="10" max="30" class="font-size-range w-100 hoverable" value="20" type="range"/>
+                                        </div>
+                                    </div>
+
+                                    <#if document.getMetadataTitleInfo().getScrapedUrl()?has_content>
+                                        <div class="group-box">
+                                            <p class="title">${languageResource.get("page")} <span class="current-page">1</span></p>
+                                            <a class="btn open-metadata-url-page-btn" target="_blank"
+                                            data-href="${document.getMetadataTitleInfo().getPageViewStartUrl()}"
+                                            href="${document.getMetadataTitleInfo().getPageViewStartUrl()}">
+                                                <i class="mr-2 fas fa-university"></i> Original
+                                            </a>
+                                        </div>
+                                    </#if>
+
+                                    <div class="buttons group-box">
+                                        <p class="title">${languageResource.get("functions")}</p>
+                                        <button class="btn toggle-focus-btn">
+                                            <i class="fas fa-satellite-dish mr-2"></i> Toggle Focus
+                                        </button>
+                                        <button class="btn toggle-highlighting-btn" data-highlighted="true">
+                                            <i class="fas fa-highlighter mr-2"></i> Toggle Highlighting
+                                        </button>
+                                        <#if casDownloadName?has_content && casDownloadName != "">
+                                            <a href="/api/ie/download/uima?objectName=${casDownloadName}" class="btn">
+                                                <i class="fas fa-file-download mr-2"></i> Download XMI
+                                            </a>
+                                        </#if>
+                                    </div>
+
+                                    <#if (searchTokens?has_content) && (searchTokens?length gt 0)>
+                                        <div class="group-box search-tokens-box">
+                                            <p class="title"><span>${languageResource.get("searchTokens")}</span> <i
+                                                        class="ml-2 rotate fas fa-spinner"></i></p>
+                                            <div class="found-searchtokens-list"></div>
+                                        </div>
+                                    </#if>
+
+                                    <div class="group-box topics-box">
+                                        <div class="key-topics-title d-flex align-items-center justify-content-between mb-3">
+                                            <span class="title mx-auto" style="flex:1; text-align:center;">${languageResource.get("topics")}</span>
+                                            <i class="ml-2 fas fa-cog key-topics-settings" title="Settings"></i>
+                                        </div>
+
+
+
+                                        <div class="document-topics-list" data-document-id="${document.id}"></div>
                                     </div>
                                 </div>
-                                <div class="visualization-content" id="viz-content" data-message="${languageResource.get('noDataAvailable')}">
-                                    <div class="viz-panel" id="viz-panel-1">
-                                        <div id="vp-1"></div>
-                                    </div>
-                                    <div class="viz-panel" id="viz-panel-2">
-                                        <div id="vp-2" ></div>
-                                    </div>
-                                    <div class="viz-panel" id="viz-panel-3">
-                                        <div id="vp-3"></div>
-                                    </div>
-                                    <div class="viz-panel" id="viz-panel-4">
-                                        <div id="vp-4-wrapper">
-                                            <div class="selector-container">
-                                                <label for="similarityTypeSelector">Similarity Type:</label>
-                                                <select id="similarityTypeSelector">
-                                                    <option value="cosine" title="${languageResource.get('cosine')}">Cosine</option>
-                                                    <option value="count" title="${languageResource.get('overlap')}">Shared Count</option>
-                                                </select>
+                            </div>
+
+                            <!-- Visualization Tab -->
+                            <#assign documentTopics = document.getUnifiedTopics()![]>
+                            <#if (uceConfig.settings.ui.documentReader.showVisualizationTab)!true>
+                                <div class="tab-pane" id="visualization-tab">
+                                    <div class="visualization-wrapper">
+                                        <div class="visualization-spinner">
+                                            <div class="visualization-spinner__icon">
+                                                <i class="fa fa-spinner fa-spin"></i>
                                             </div>
-                                            <div id="vp-4"></div>
+                                            <div class="visualization-spinner__text">
+                                                Loading visualization&hellip;
+                                            </div>
+                                        </div>
+                                        <div class="visualization-content" id="viz-content" data-message="${languageResource.get('noDataAvailable')}">
+                                            <div class="viz-panel" id="viz-panel-1">
+                                                <div id="vp-1"></div>
+                                            </div>
+                                            <div class="viz-panel" id="viz-panel-2">
+                                                <div id="vp-2" ></div>
+                                            </div>
+                                            <div class="viz-panel" id="viz-panel-3">
+                                                <div id="vp-3"></div>
+                                            </div>
+                                            <div class="viz-panel" id="viz-panel-4">
+                                                <div id="vp-4-wrapper">
+                                                    <div class="selector-container">
+                                                        <label for="similarityTypeSelector">Similarity Type:</label>
+                                                        <select id="similarityTypeSelector">
+                                                            <option value="cosine" title="${languageResource.get('cosine')}">Cosine</option>
+                                                            <option value="count" title="${languageResource.get('overlap')}">Shared Count</option>
+                                                        </select>
+                                                    </div>
+                                                    <div id="vp-4"></div>
+                                                </div>
+
+                                            </div>
+                                            <div class="viz-panel" id="viz-panel-5">
+                                                <div id="vp-5" ></div>
+                                            </div>
+                                        </div>
+
+                                        <div class="viz-bottom-nav">
+                                            <button class="viz-nav-btn active" data-target="#viz-panel-1">${languageResource.get("semanticDensity")}</button>
+                                            <button class="viz-nav-btn" data-target="#viz-panel-2">${languageResource.get("topicEntity")}</button>
+                                            <button class="viz-nav-btn" data-target="#viz-panel-3">${languageResource.get("topicLandscape")}</button>
+                                            <button class="viz-nav-btn" data-target="#viz-panel-4">${languageResource.get("topicSimilarity")}</button>
+                                            <button class="viz-nav-btn" data-target="#viz-panel-5">${languageResource.get("sentenceTopicFlow")}</button>
                                         </div>
 
                                     </div>
-                                    <div class="viz-panel" id="viz-panel-5">
-                                        <div id="vp-5" ></div>
+                                </div>
+                            </#if>
+                        </div>
+
+                    </div>
+                    <#if (uceConfig.settings.ui.documentReader.showTopicSettingsPanel)!true>
+                        <div class="key-topic-settings-panel" data-id="${document.getCorpusId()}">
+                            <div class="d-flex align-items-center justify-content-between mb-3">
+                                <h4 class="mb-0">${languageResource.get("topicSettings")}</h4>
+                                <div>
+                                    <button class="save-topic-setting btn btn-light btn-sm mr-2" title="Save" data-toggle="tooltip" data-placement="top" data-original-title="${languageResource.get("saveTopicSettings")}"><i class="fas fa-save"></i></button>
+                                    <button class="upload-topic-setting btn btn-light btn-sm" title="Upload" data-toggle="tooltip" data-placement="top" data-original-title="${languageResource.get("uploadTopicSettings")}"><i class="fas fa-upload"></i></button>
+                                </div>
+                            </div>
+
+                            <div class="setting-group">
+                                <label for="topic-count">${languageResource.get("numTopics")}</label>
+                                <select id="topic-count" class="form-control">
+                                </select>
+                            </div>
+
+                            <div class="setting-group">
+                                <label>${languageResource.get("topicColorMode")}</label>
+
+                                <div class="color-option">
+                                    <input type="radio" id="per-topic-colors" name="color-mode" value="per-topic">
+                                    <label for="per-topic-colors">${languageResource.get("perTopic")}</label>
+                                </div>
+
+                                <div class="color-option">
+                                    <input type="radio" id="gradient-range" name="color-mode" value="gradient">
+                                    <label for="gradient-range">Gradient range</label>
+                                </div>
+
+                                <div class="color-pickers" style="display:none;">
+                                    <div>
+                                        <input type="color" id="gradient-start-color">
+                                        <div class="color-label">Min</div>
+                                    </div>
+                                    <div>
+                                        <input type="color" id="gradient-end-color">
+                                        <div class="color-label">Max</div>
                                     </div>
                                 </div>
 
-                                <div class="viz-bottom-nav">
-                                    <button class="viz-nav-btn active" data-target="#viz-panel-1">${languageResource.get("semanticDensity")}</button>
-                                    <button class="viz-nav-btn" data-target="#viz-panel-2">${languageResource.get("topicEntity")}</button>
-                                    <button class="viz-nav-btn" data-target="#viz-panel-3">${languageResource.get("topicLandscape")}</button>
-                                    <button class="viz-nav-btn" data-target="#viz-panel-4">${languageResource.get("topicSimilarity")}</button>
-                                    <button class="viz-nav-btn" data-target="#viz-panel-5">${languageResource.get("sentenceTopicFlow")}</button>
+                                <div class="key-topic-color-grid" style="display:none;">
                                 </div>
+                            </div>
 
+                            <div style="display: flex; gap: 10px;">
+                                <button class="key-topics-setting-apply-btn">${languageResource.get("apply")}</button>
+                                <button class="key-topics-setting-reset-btn">${languageResource.get("reset")}</button>
                             </div>
                         </div>
-                    </div>
-
-                </div>
-                <div class="key-topic-settings-panel" data-id="${document.getCorpusId()}">
-                    <div class="d-flex align-items-center justify-content-between mb-3">
-                        <h4 class="mb-0">${languageResource.get("topicSettings")}</h4>
-                        <div>
-                            <button class="save-topic-setting btn btn-light btn-sm mr-2" title="Save" data-toggle="tooltip" data-placement="top" data-original-title="${languageResource.get("saveTopicSettings")}"><i class="fas fa-save"></i></button>
-                            <button class="upload-topic-setting btn btn-light btn-sm" title="Upload" data-toggle="tooltip" data-placement="top" data-original-title="${languageResource.get("uploadTopicSettings")}"><i class="fas fa-upload"></i></button>
-                        </div>
-                    </div>
-
-                    <div class="setting-group">
-                        <label for="topic-count">${languageResource.get("numTopics")}</label>
-                        <select id="topic-count" class="form-control">
-                        </select>
-                    </div>
-
-                    <div class="setting-group">
-                        <label>${languageResource.get("topicColorMode")}</label>
-
-                        <div class="color-option">
-                            <input type="radio" id="per-topic-colors" name="color-mode" value="per-topic">
-                            <label for="per-topic-colors">${languageResource.get("perTopic")}</label>
-                        </div>
-
-                        <div class="color-option">
-                            <input type="radio" id="gradient-range" name="color-mode" value="gradient">
-                            <label for="gradient-range">Gradient range</label>
-                        </div>
-
-                        <div class="color-pickers" style="display:none;">
-                            <div>
-                                <input type="color" id="gradient-start-color">
-                                <div class="color-label">Min</div>
-                            </div>
-                            <div>
-                                <input type="color" id="gradient-end-color">
-                                <div class="color-label">Max</div>
-                            </div>
-                        </div>
-
-                        <div class="key-topic-color-grid" style="display:none;">
-                        </div>
-                    </div>
-
-                    <div style="display: flex; gap: 10px;">
-                        <button class="key-topics-setting-apply-btn">${languageResource.get("apply")}</button>
-                        <button class="key-topics-setting-reset-btn">${languageResource.get("reset")}</button>
-                    </div>
-                </div>
+                    </#if>
+                </#if>
             </div>
 
         </div>
-    </div>
+    
     </div>
 
     <#--<script type="module">
         <#include "*/js/corpusUniverse.js">
     </script>-->
-    <script type="module">
-        <#include "*/js/graphViz.js">
-        <#include "*/js/flowViz.js">
-    </script>
+    <#if (uceConfig.settings.ui.documentReader.showVisualizationTab)!true>
+        <script type="module">
+            <#include "*/js/graphViz.js">
+            <#include "*/js/flowViz.js">
+        </script>
+    </#if>
 
     <script>
         <#include "*/js/site.js">
         <#include "*/js/documentReader.js">
-        <#include "*/js/customContextMenu.js">
+        <#if (uceConfig.settings.ui.documentReader.showCustomContextMenu)!true>
+            <#include "*/js/customContextMenu.js">
+        </#if>
         <#include "*/js/feedbackView.js">
     </script>
-
-</#if>
 
 <script>
     (function() {
