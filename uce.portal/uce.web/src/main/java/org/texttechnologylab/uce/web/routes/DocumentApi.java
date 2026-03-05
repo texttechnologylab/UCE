@@ -25,11 +25,13 @@ import org.texttechnologylab.uce.web.freeMarker.AccessDeniedRenderer;
 import org.texttechnologylab.uce.web.render.DefaultPaneRenderer;
 import org.texttechnologylab.uce.web.render.RenderContext;
 import org.texttechnologylab.uce.web.render.RenderException;
+import org.texttechnologylab.uce.web.render.RenderPrincipal;
 import org.texttechnologylab.uce.web.render.RenderModeDescriptor;
 import org.texttechnologylab.uce.web.render.RenderResult;
 import org.texttechnologylab.uce.web.render.RendererRegistry;
 import org.texttechnologylab.uce.web.render.feedback.FeedbackDocument;
 import org.texttechnologylab.uce.web.render.feedback.FeedbackDocumentMapper;
+import org.texttechnologylab.uce.web.render.feedback.FeedbackPaneRenderer;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -231,6 +233,12 @@ public class DocumentApi implements UceApi {
         // Check if we have an searchId parameter. This is optional
         var searchId = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("searchId"),
                 (ex) -> logger.warn("Opening a document view but no searchId parameter was provided. Currently, this shouldn't happen, but it didn't stop the procedure."));
+        if (searchId != null) {
+            searchId = searchId.trim();
+            if (searchId.isEmpty() || "undefined".equalsIgnoreCase(searchId) || "null".equalsIgnoreCase(searchId)) {
+                searchId = null;
+            }
+        }
 
         try {
 
@@ -245,16 +253,24 @@ public class DocumentApi implements UceApi {
 
             // Build render mode descriptors
             var modes = buildRenderModes(corpusConfig);
-            var selectedKey = Optional.ofNullable(ctx.queryParam("mode"))
-                    .filter(key -> modes.stream().anyMatch(m -> m.key().equals(key)))
-                    .orElse(DefaultPaneRenderer.HANDLER_KEY);
+            if (modes.isEmpty()) {
+                modes = List.of(buildDefaultPdfMode());
+            }
+
+            var requestedMode = ctx.queryParam("mode");
+            var selectedKey = (requestedMode != null && modes.stream().anyMatch(m -> m.key().equals(requestedMode)))
+                    ? requestedMode
+                    : modes.get(0).key();
+
             var activeMode = modes.stream()
                     .filter(m -> m.key().equals(selectedKey))
                     .findFirst()
-                    .orElseGet(() -> modes.get(0));
+                    .orElse(modes.get(0));
 
             model.put("renderModes", modes);
             model.put("activeMode", activeMode.key());
+            model.put("activeModeKey", activeMode.key());
+            model.put("activeModeHandler", activeMode.handler());
 
             var renderer = rendererRegistry
                     .renderer(activeMode.handler())
@@ -262,11 +278,19 @@ public class DocumentApi implements UceApi {
 
             UceUser currentUser = ctx.sessionAttribute("uceUser");
             var principal = currentUser != null ? currentUser.getUsername() : DocumentPermission.PUBLIC_USERNAME;
-            var feedback = feedbackMapper.map(doc, principal);
 
-            var renderContext = RenderContext.builder(corpus, doc)
-                    .payload(FeedbackDocument.class, feedback)
-                    .build();
+            var activeModeConfig = findRenderModeConfig(corpusConfig, activeMode.key()).orElse(null);
+
+            var renderContextBuilder = RenderContext.builder(corpus, doc)
+                    .payload(RenderPrincipal.class, new RenderPrincipal(principal));
+            if (activeModeConfig != null) {
+                renderContextBuilder.payload(RenderModeConfig.class, activeModeConfig);
+            }
+            if (FeedbackPaneRenderer.HANDLER_KEY.equals(activeMode.handler())) {
+                var feedback = feedbackMapper.map(doc, principal);
+                renderContextBuilder.payload(FeedbackDocument.class, feedback);
+            }
+            var renderContext = renderContextBuilder.build();
 
             RenderResult panes;
             try {
@@ -274,8 +298,15 @@ public class DocumentApi implements UceApi {
             } catch (RenderException ex) {
                 panes = rendererRegistry.renderer(DefaultPaneRenderer.HANDLER_KEY).orElseThrow()
                         .render(renderContext);
-                activeMode = modes.stream().filter(m -> m.key().equals("default")).findFirst().orElse(activeMode);
-                model.put("activeMode", activeMode.key());
+                // Fallback to PDF view as a last resort if the configured renderer fails.
+                if (modes.stream().noneMatch(m -> m.key().equals(DefaultPaneRenderer.HANDLER_KEY))) {
+                    modes = new ArrayList<>(modes);
+                    modes.add(buildDefaultPdfMode());
+                    model.put("renderModes", modes);
+                }
+                model.put("activeMode", DefaultPaneRenderer.HANDLER_KEY);
+                model.put("activeModeKey", DefaultPaneRenderer.HANDLER_KEY);
+                model.put("activeModeHandler", DefaultPaneRenderer.HANDLER_KEY);
             }
 
             model.put("middlePaneTemplate", panes.getMiddlePaneTemplate());
@@ -315,15 +346,6 @@ public class DocumentApi implements UceApi {
         List<RenderModeDescriptor> descriptors = new ArrayList<>();
         Set<String> seenKeys = new HashSet<>();
 
-        // Default-/PDF-View immer zuerst
-        descriptors.add(new RenderModeDescriptor(
-                "document_reader_pdf_view",
-                "PDF", // UI-Text holen wir später aus LanguageResources
-                DefaultPaneRenderer.HANDLER_KEY,
-                null
-        ));
-        seenKeys.add("document_reader_pdf_view");
-
         if (config != null && config.getRenderModes() != null) {
             for (RenderModeConfig mode : config.getRenderModes()) {
                 if (mode == null || mode.getKey() == null) {
@@ -333,15 +355,49 @@ public class DocumentApi implements UceApi {
                     continue;
                 }
 
+                // Only include render modes that have an actual renderer registered.
+                if (mode.getHandler() == null || rendererRegistry.renderer(mode.getHandler()).isEmpty()) {
+                    continue;
+                }
+
                 descriptors.add(new RenderModeDescriptor(
                         mode.getKey(),
                         mode.getName(),
                         mode.getHandler(),
                         mode.getDescription()
                 ));
+                seenKeys.add(mode.getKey());
             }
         }
+
+        // Only include PDF view if explicitly configured, or as a last resort if nothing else is available.
+        boolean pdfExplicitlyConfigured = config != null
+                && config.getRenderModes() != null
+                && config.getRenderModes().stream().anyMatch(m -> m != null && DefaultPaneRenderer.HANDLER_KEY.equals(m.getKey()));
+        boolean pdfAlreadyPresent = descriptors.stream().anyMatch(m -> DefaultPaneRenderer.HANDLER_KEY.equals(m.key()));
+        if (descriptors.isEmpty() || (pdfExplicitlyConfigured && !pdfAlreadyPresent)) {
+            descriptors.add(buildDefaultPdfMode());
+        }
         return descriptors;
+    }
+
+    private RenderModeDescriptor buildDefaultPdfMode() {
+        return new RenderModeDescriptor(
+                DefaultPaneRenderer.HANDLER_KEY,
+                "PDF",
+                DefaultPaneRenderer.HANDLER_KEY,
+                null
+        );
+    }
+
+    private Optional<RenderModeConfig> findRenderModeConfig(CorpusConfig config, String key) {
+        if (config == null || config.getRenderModes() == null || key == null) {
+            return Optional.empty();
+        }
+        return config.getRenderModes()
+                .stream()
+                .filter(mode -> mode != null && key.equals(mode.getKey()))
+                .findFirst();
     }
 
     /**

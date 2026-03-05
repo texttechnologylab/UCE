@@ -1,0 +1,12 @@
+{
+  "middle": {
+    "template": "feedback/middlePaneSpec.ftl",
+    "model": {
+      "documentTitle": { "$ref": "document.documentTitle" },
+      "documentId": { "$ref": "document.documentId" },
+      "metadata": { "$ref": "metadata" },
+      "images": { "$ref": "images" },
+      "effectivePermission": { "$ref": "effectivePermission" }
+    }
+  }
+}

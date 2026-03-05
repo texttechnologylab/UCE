@@ -9,7 +9,7 @@ import java.util.Map;
 public final class DefaultPaneRenderer implements PaneRenderer {
 
     public static final String HANDLER_KEY = "document_reader_pdf_view";
-    private static final String TEMPLATE = "documents/detail.ftl";
+    private static final String TEMPLATE = "reader/modes/defaultMiddlePane.ftl";
 
     @Override
     public RenderResult render(RenderContext context) {
