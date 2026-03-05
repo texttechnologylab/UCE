@@ -594,4 +594,76 @@ public class DocumentApi implements UceApi {
         }
     }
 
+    public void getDocumentEmotionsByPage(Context ctx) {
+        try {
+            long documentId = Long.parseLong(ctx.queryParam("documentId"));
+
+            // Optional: wenn du mehrere Emotion-Modelle hast
+            String modelParam = ctx.queryParam("modelId");
+            Long modelId = (modelParam == null || modelParam.isBlank()) ? null : Long.parseLong(modelParam);
+
+            // DB liefert rows: [page_id, emotion_label]
+            List<Object[]> rows = db.getEmotionByPage(documentId, modelId);
+
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Object[] r : rows) {
+                Number pageId = (Number) r[0];
+                String emotionLabel = (String) r[1];
+
+                Map<String, Object> obj = new HashMap<>();
+                obj.put("pageId", pageId == null ? null : pageId.longValue());
+                obj.put("emotionLabel", emotionLabel);
+                result.add(obj);
+            }
+
+            ctx.json(result);
+        } catch (Exception ex) {
+            ctx.status(500).json(Map.of("error", "Failed to load emotions", "details", ex.getMessage()));
+        }
+    }
+    public void getEmotionRadar(Context ctx) {
+        try {
+            long documentId = Long.parseLong(ctx.queryParam("documentId"));
+            String modelParam = ctx.queryParam("modelId");
+            Long modelId = (modelParam == null || modelParam.isBlank()) ? null : Long.parseLong(modelParam);
+
+            List<Object[]> rows = db.getEmotionRadarForDocument(documentId, modelId);
+
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Object[] r : rows) {
+                String label = (String) r[0];
+                Number avg = (Number) r[1];
+
+                Map<String, Object> obj = new HashMap<>();
+                obj.put("label", label);
+                obj.put("value", avg == null ? 0.0 : avg.doubleValue());
+                result.add(obj);
+            }
+
+            ctx.json(result);
+        } catch (Exception ex) {
+            ctx.status(500).json(Map.of("error", "Failed to load emotion radar", "details", ex.getMessage()));
+        }
+    }
+    public void getEmotionModels(Context ctx) {
+        try {
+            long documentId = Long.parseLong(ctx.queryParam("documentId"));
+            List<Object[]> rows = db.getEmotionModelsForDocumentWithName(documentId);
+
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Object[] r : rows) {
+                Number id = (Number) r[0];
+                String name = (String) r[1];
+
+                Map<String, Object> obj = new HashMap<>();
+                obj.put("modelId", id == null ? null : id.longValue());
+                obj.put("modelName", (name == null || name.isBlank()) ? ("Model " + id) : name);
+                result.add(obj);
+            }
+            ctx.json(result);
+        } catch (Exception ex) {
+            ctx.status(500).json(Map.of("error", "Failed to load emotion models", "details", ex.getMessage()));
+        }
+    }
+
 }

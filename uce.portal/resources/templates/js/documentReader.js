@@ -3,7 +3,7 @@ let searchTokens = "";
 let currentSelectedTopic = null;
 let currentTopicIndex = -1;
 let matchingTopics = [];
-
+let selectedEmotionModelId = null;
 let defaultTopicColorMap = getDefaultTopicColorMap();
 let defaultTopicSettings = {
     topicCount: 10,
@@ -873,6 +873,8 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             $('.scrollbar-minimap').show();
         }
         if (targetId === 'visualization-tab') {
+            const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+            loadEmotionModels(docId);
             setTimeout(() => renderTemporalExplorer('vp-1'), 500);
             $('.viz-nav-btn').removeClass('active');
             $('.viz-nav-btn').first().addClass('active');
@@ -880,6 +882,17 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             $('.viz-panel').removeClass('active');
             $('.viz-panel').first().addClass('active');
         }
+        $(document).on('click', '.emotion-model-item', function (e) {
+            e.preventDefault();
+            selectedEmotionModelId = $(this).data('model-id');
+
+            $('.emotion-model-item').removeClass('active');
+            $(this).addClass('active');
+
+            // mittig anzeigen (der Container in der Visualization ist vp-1)
+            $('#vp-1').removeClass('rendered');
+            renderEmotionRadar('vp-1');
+        });
     });
 
 });
@@ -1437,13 +1450,17 @@ function renderTemporalExplorer(containerId) {
     $('.visualization-spinner').show()
     const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
 
+    const emotionReq = $.get('/api/document/page/emotions', {
+        documentId: docId,
+        modelId: selectedEmotionModelId
+    });
     const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
     const topicReq = $.get('/api/document/page/topics', { documentId: docId });
     const entityReq = $.get('/api/document/page/namedEntities', { documentId: docId });
     const lemmaReq = $.get('/api/document/page/lemma', { documentId: docId });
     const geonameReq = $.get('/api/document/page/geoname', { documentId: docId });
 
-    Promise.all([taxonReq, topicReq, entityReq, lemmaReq, geonameReq]).then(([taxon, topics, entities, lemma, geoname]) => {
+    Promise.all([taxonReq, topicReq, entityReq, lemmaReq, geonameReq, emotionReq]).then(([taxon, topics, entities, lemma, geoname, emotions]) => {
         $('.visualization-spinner').hide()
         if ((!taxon || taxon.length === 0) && (!topics || topics.length === 0) && (!entities || entities.length === 0) && (!lemma || lemma.length === 0 && !geoname || geoname.length === 0)) {
             const container = document.getElementById(containerId);
@@ -1495,6 +1512,14 @@ function renderTemporalExplorer(containerId) {
                 valueField: 'geonameValue',
                 label: 'Geonames',
                 color: '#c680ff',
+            },
+            {
+                key: 'Emotions',
+                data: emotions,
+                pageField: 'pageId',
+                valueField: 'emotionLabel',
+                label: 'Emotions',
+                color: '#f5c542'
             }
         ];
 
@@ -1528,7 +1553,8 @@ function renderTemporalExplorer(containerId) {
                         Topics: [],
                         "Named Entities": [],
                         Lemmas: [],
-                        Geonames: []
+                        Geonames: [],
+                        Emotions: []
                     });
                 }
 
@@ -1619,7 +1645,85 @@ function renderTemporalExplorer(containerId) {
         console.error("Error loading or processing annotation data:", err);
     });
 }
+function loadEmotionModels(docId) {
+    return $.get('/api/document/emotionModels', { documentId: docId })
+        .then((models) => {
+            const $menu = $('#emotion-model-menu');
+            $menu.empty();
 
+            if (!models || models.length === 0) {
+                $menu.append('<span class="viz-nav-item viz-disabled">No models found</span>');
+                return;
+            }
+
+            models.forEach((m) => {
+                $menu.append(
+                    '<a class="viz-nav-item emotion-model-item" href="#" data-model-id="' + m.modelId + '">' +
+                    (m.modelName ? m.modelName : ('Model ' + m.modelId)) +
+                    '</a>'
+                );
+            });
+        })
+        .catch(() => {
+            $('#emotion-model-menu').html('<span class="viz-nav-item viz-disabled">Failed to load</span>');
+        });
+}
+function renderEmotionRadar(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    // jedes Mal neu zeichnen (bei Model-Wechsel)
+    container.classList.remove('rendered');
+    container.innerHTML = '<div style="width:100%;height:420px;" id="' + containerId + '-radar"></div>';
+
+    const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+    const modelId = selectedEmotionModelId || null;
+
+    $('.visualization-spinner').show();
+
+    $.get('/api/document/emotionRadar', { documentId: docId, modelId: modelId })
+        .then(data => {
+            $('.visualization-spinner').hide();
+
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                container.innerHTML = '<div style="color:#888;">No emotion data for this model</div>';
+                container.classList.add('rendered');
+                return;
+            }
+
+            // ECharts Radar expects indicators with max.
+            // feeling.value scheint bei dir oft 0..1 zu sein → max=1.
+            const indicators = data.map(d => ({ name: d.label, max: 1 }));
+            const values = data.map(d => d.value);
+
+            const chartDom = document.getElementById(containerId + '-radar');
+            const chart = echarts.init(chartDom);
+
+            const option = {
+                title: { text: 'Emotion Radar' },
+                tooltip: {},
+                radar: {
+                    indicator: indicators,
+                    radius: '65%'
+                },
+                series: [{
+                    type: 'radar',
+                    data: [{
+                        value: values,
+                        name: 'Avg intensity'
+                    }]
+                }]
+            };
+
+            chart.setOption(option);
+            container.classList.add('rendered');
+        })
+        .catch(() => {
+            $('.visualization-spinner').hide();
+            container.innerHTML = '<div style="color:#888;">Failed to load emotion radar</div>';
+            container.classList.add('rendered');
+        });
+}
 function initializeTopicSettingsPanel() {
 
     if (topicSettings.colorMode === 'per-topic') {

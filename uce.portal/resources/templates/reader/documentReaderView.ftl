@@ -362,13 +362,9 @@
 
                                 <!-- EMOTION  -->
                                 <div class="viz-nav-group" data-category="emotion">
-                                    <button class="viz-nav-btn viz-nav-parent" type="button">
-                                        Emotion <i class="fas fa-chevron-up ml-2"></i>
-                                    </button>
+                                    <button class="viz-nav-btn viz-nav-parent" type="button">Emotion</button>
 
-                                    <div class="viz-nav-menu">
-                                        <span class="viz-nav-item viz-disabled">No models yet</span>
-                                    </div>
+                                    <div class="viz-nav-menu" id="emotion-model-menu"></div>
                                 </div>
 
                             </div>

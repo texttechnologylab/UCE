@@ -503,6 +503,9 @@ public class App {
                     get("/page/namedEntities", (ctx) -> (registry.get(DocumentApi.class)).getDocumentNamedEntitiesByPage(ctx));
                     get("/page/lemma", (ctx) -> (registry.get(DocumentApi.class)).getDocumentLemmaByPage(ctx));
                     get("/page/geoname", (ctx) -> (registry.get(DocumentApi.class)).getDocumentGeonameByPage(ctx));
+                    get("/page/emotions", (ctx) -> (registry.get(DocumentApi.class)).getDocumentEmotionsByPage(ctx));
+                    get("/emotionModels", (ctx) -> (registry.get(DocumentApi.class)).getEmotionModels(ctx)); // optional fürs Dropdown
+                    get("/emotionRadar", (ctx) -> (registry.get(DocumentApi.class)).getEmotionRadar(ctx));
                     delete("/delete", (ctx) -> (registry.get(DocumentApi.class)).deleteDocument(ctx));
                     get("/findIdByMetadata", (ctx) -> (registry.get(DocumentApi.class)).findDocumentIdByMetadata(ctx));
                     get("/findIdsByMetadata", (ctx) -> (registry.get(DocumentApi.class)).findDocumentIdsByMetadata(ctx));

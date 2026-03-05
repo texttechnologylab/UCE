@@ -2469,5 +2469,76 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             System.err.println("Error during getting ModalEntity from database");
         }
     }
+    public List<Object[]> getEmotionByPage(long documentId, Long modelId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+
+            String sql = """
+            WITH best_emotion_per_sentence AS (
+                SELECT DISTINCT ON (se.document_id, se.sentence_id)
+                    se.sentence_id,
+                    f.feeling AS emotion_label,
+                    f.value   AS emotion_value
+                FROM sentenceemotions se
+                JOIN emotion e ON e.id = se.emotion_id
+                JOIN feeling f ON f.emotion_id = e.id
+                WHERE se.document_id = :documentId
+                  AND (:modelId IS NULL OR se.model_id = :modelId)
+                ORDER BY se.document_id, se.sentence_id, f.value DESC
+            )
+            SELECT
+                s.page_id,
+                bes.emotion_label
+            FROM best_emotion_per_sentence bes
+            JOIN sentence s ON s.id = bes.sentence_id
+            WHERE s.document_id = :documentId
+            ORDER BY s.page_id, bes.emotion_label
+        """;
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId)
+                    .setParameter("modelId", modelId);
+
+            return query.getResultList();
+        });
+    }
+    public List<Object[]> getEmotionRadarForDocument(long documentId, Long modelId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+
+            String sql = """
+            SELECT
+                f.feeling AS feeling_label,
+                AVG(f.value) AS avg_value
+            FROM sentenceemotions se
+            JOIN emotion e ON e.id = se.emotion_id
+            JOIN feeling f ON f.emotion_id = e.id
+            WHERE se.document_id = :documentId
+              AND (:modelId IS NULL OR se.model_id = :modelId)
+            GROUP BY f.feeling
+            ORDER BY avg_value DESC
+            LIMIT 12
+        """;
+
+            var query = session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId)
+                    .setParameter("modelId", modelId);
+
+            return query.getResultList();
+        });
+    }
+    public List<Object[]> getEmotionModelsForDocumentWithName(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = """
+            SELECT DISTINCT m.id AS model_id, m.name AS model_name
+            FROM sentenceemotions se
+            JOIN models m ON m.id = se.model_id
+            WHERE se.document_id = :documentId
+            ORDER BY m.id
+        """;
+
+            return session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId)
+                    .getResultList();
+        });
+    }
 
 }
