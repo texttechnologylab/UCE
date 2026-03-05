@@ -711,14 +711,16 @@ body {
 /* Bottom Navigation */
 .tab-pane .viz-bottom-nav {
     position: fixed;
-    right: 0%;
+    left: 50%;
     bottom: 30px;
     transform: translateX(-50%);
-    width: auto;
-    min-width: 320px;
-    max-width: 200vw;
+    right: auto;
+    width: max-content;
+    max-width: calc(100vw - 40px);
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
+    gap: 10px;
+    overflow: visible;
     border-radius: 24px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.12);
     background: #fff;
@@ -951,6 +953,7 @@ body {
     border-radius: 4px;
     cursor: pointer;
     padding: 0;
+}
 
 .paragraph .paragraph-header {
     border-radius: 16px;
@@ -964,5 +967,76 @@ body {
     background-color: white;
     color: var(--prime);
     border: 1px solid var(--prime);
-
 }
+
+    /* --- Dropdown Navigation Erweiterung (Hover) --- */
+    .tab-pane .viz-bottom-nav.viz-dropdown-nav{
+        justify-content: center;  /* statt space-around */
+        gap: 10px;
+        overflow: visible;        /* wichtig, damit Menüs nicht abgeschnitten werden */
+    }
+
+    .tab-pane .viz-nav-group{
+        position: relative;
+    }
+
+    /* Parent-Buttons bleiben optisch wie .viz-nav-btn */
+    .tab-pane .viz-nav-parent{
+        width: auto;              /* nicht auf 100% ziehen, sonst werden Gruppen riesig */
+        padding: 8px 14px;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    /* Dropdown-Menü */
+    .tab-pane .viz-nav-menu{
+        display: none;
+        position: absolute;
+        left: 0;
+        bottom: calc(100% + 10px);  /* klappt nach oben auf */
+        min-width: 240px;
+        background: #fff;
+        border: 1px solid #e0e0e0;
+        border-radius: 14px;
+        box-shadow: 0 10px 25px rgba(0,0,0,0.12);
+        padding: 6px;
+        z-index: 9999;
+    }
+
+    /* Öffnen per Hover */
+    .tab-pane .viz-nav-group:hover .viz-nav-menu{
+        display: block;
+    }
+
+    /* Menü-Items */
+    .tab-pane .viz-nav-item{
+        display: block;
+        padding: 8px 10px;
+        border-radius: 10px;
+        text-decoration: none;
+        color: #555;
+        font-weight: 600;
+        cursor: pointer;
+        white-space: nowrap;
+    }
+
+    .tab-pane .viz-nav-item:hover{
+        background: rgba(0,0,0,0.06);
+    }
+
+    /* Optional: Disabled */
+    .tab-pane .viz-nav-item.viz-disabled{
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+
+    /* Optional: kleiner “Puffer”, damit Menü nicht sofort schließt */
+    .tab-pane .viz-nav-menu::before{
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        bottom: -10px;
+        height: 10px;
+    }

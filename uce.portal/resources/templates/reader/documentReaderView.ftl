@@ -320,13 +320,57 @@
                                 </div>
                             </div>
 
-                            <div class="viz-bottom-nav">
-                                <button class="viz-nav-btn active" data-target="#viz-panel-1">${languageResource.get("semanticDensity")}</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-2">${languageResource.get("topicEntity")}</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-3">${languageResource.get("topicLandscape")}</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-4">${languageResource.get("topicSimilarity")}</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-5">${languageResource.get("sentenceTopicFlow")}</button>
-                                <button class="viz-nav-btn" data-target="#viz-panel-6">${languageResource.get("sentenceSentiment")}</button>
+                            <div class="viz-bottom-nav viz-dropdown-nav">
+
+                                <!-- TOPIC -->
+                                <div class="viz-nav-group" data-category="topic">
+                                    <button class="viz-nav-btn viz-nav-parent" type="button">
+                                        Topic <i class="fas fa-chevron-up ml-2"></i>
+                                    </button>
+
+                                    <div class="viz-nav-menu">
+                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-1">
+                                            ${languageResource.get("semanticDensity")}
+                                        </a>
+                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-2">
+                                            ${languageResource.get("topicEntity")}
+                                        </a>
+                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-3">
+                                            ${languageResource.get("topicLandscape")}
+                                        </a>
+                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-4">
+                                            ${languageResource.get("topicSimilarity")}
+                                        </a>
+                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-5">
+                                            ${languageResource.get("sentenceTopicFlow")}
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- SENTIMENT -->
+                                <div class="viz-nav-group" data-category="sentiment">
+                                    <button class="viz-nav-btn viz-nav-parent" type="button">
+                                        Sentiment <i class="fas fa-chevron-up ml-2"></i>
+                                    </button>
+
+                                    <div class="viz-nav-menu">
+                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-6">
+                                            ${languageResource.get("sentenceSentiment")}
+                                        </a>
+                                    </div>
+                                </div>
+
+                                <!-- EMOTION  -->
+                                <div class="viz-nav-group" data-category="emotion">
+                                    <button class="viz-nav-btn viz-nav-parent" type="button">
+                                        Emotion <i class="fas fa-chevron-up ml-2"></i>
+                                    </button>
+
+                                    <div class="viz-nav-menu">
+                                        <span class="viz-nav-item viz-disabled">No models yet</span>
+                                    </div>
+                                </div>
+
                             </div>
 
                         </div>

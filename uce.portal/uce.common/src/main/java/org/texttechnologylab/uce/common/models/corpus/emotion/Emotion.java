@@ -19,8 +19,6 @@ import java.util.Locale;
 @Typesystem(types = {Emotion.class})
 public class Emotion extends UIMAAnnotation implements WikiModel {
 
-    private String model;
-
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "emotion_id")
     private List<Feeling> feelings;
