@@ -2066,7 +2066,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
-    public List<Object[]> getSentenceTopicsWithEntitiesByPageForDocument(long documentId, int model_id)
+    public List<Object[]> getSentenceTopicsWithEntitiesByPageForDocument(long documentId)
             throws DatabaseOperationException {
 
         return executeOperationSafely((session) -> {
@@ -2080,7 +2080,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         sentencetopics st
                     WHERE 
                         st.document_id = :document_id
-                        AND st.model_id = :model_id
                     ORDER BY 
                         st.document_id, st.sentence_id, st.thetast DESC
                 ),
@@ -2108,8 +2107,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                 """;
 
             Query<Object[]> query = session.createNativeQuery(sql)
-                    .setParameter("document_id", documentId)
-                    .setParameter("model_id", model_id);
+                    .setParameter("document_id", documentId);
 
             return query.getResultList();
         });
