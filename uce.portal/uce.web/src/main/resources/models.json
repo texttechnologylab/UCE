@@ -43,6 +43,28 @@
     "Variant": "Topic",
     "type": ""
   },
+  "Topic ParlaCAP": {
+    "url": "",
+    "github": "",
+    "huggingface": "",
+    "paper": "",
+    "map": "classla/ParlaCAP-Topic-Classifier",
+    "Name": "Topic ParlaCap",
+    "Main Tool": "Topic Modeling",
+    "Variant": "Topic",
+    "type": ""
+  },
+  "Topic dstefa": {
+    "url": "",
+    "github": "",
+    "huggingface": "",
+    "paper": "",
+    "map": "dstefa/roberta-base_topic_classification_nyt_news",
+    "Name": "Topic dstefa",
+    "Main Tool": "Topic Modeling",
+    "Variant": "Topic",
+    "type": ""
+  },
   "Topic WebOrganizer (EN)": {
     "url": "http://topic-organize-web.service.component.duui.texttechnologylab.org",
     "github": "https://github.com/texttechnologylab/duui-uima/tree/main/duui-transformers-topic",
