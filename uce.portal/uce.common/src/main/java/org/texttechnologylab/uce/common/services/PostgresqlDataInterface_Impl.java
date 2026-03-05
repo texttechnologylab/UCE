@@ -2356,13 +2356,34 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         SELECT s.id, e.id, e.model_id, s.document_id
                         FROM emotion e
                         JOIN sentence s
-                          ON s.beginn = e.beginn AND s.endd = e.endd and s.document_id = :docId ;
+                          ON s.beginn = e.beginn AND s.endd = e.endd and s.document_id = :docId 
+                        WHERE NOT EXISTS(
+                          SELECT 1 FROM sentenceemotions se     
+                          WHERE se.sentence_id = s.id AND se.emotion_id = e.id
+                        );
                     """;
 
             System.out.println(documentId);
             return session.createNativeQuery(createSentenceEmotions)
                     .setParameter("docId", documentId)
                     .executeUpdate();
+        });
+    }
+
+    public void saveNewEmotionsForDocument(long documentId, List<org.texttechnologylab.uce.common.models.corpus.emotion.Emotion> newEmotions) throws DatabaseOperationException {
+        executeOperationSafely((session) -> {
+            Document doc = session.get(Document.class, documentId);
+            if (doc != null) {
+                Hibernate.initialize(doc.getEmotions());
+                for (var emotion : newEmotions) {
+                    if (emotion.getDbModel() != null) {
+                        emotion.setDbModel((ModelEntity) session.merge(emotion.getDbModel()));
+                    }
+                }
+                doc.getEmotions().addAll(newEmotions);
+                session.update(doc);
+            }
+            return null;
         });
     }
 

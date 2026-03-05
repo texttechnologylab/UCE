@@ -382,4 +382,11 @@ public interface DataInterface {
      * Gets a Model based on its map column value
      */
     public ModelEntity getModelEntityByMap(String mapString) throws DatabaseOperationException;
+
+    /**
+     * Adds new emotions to an existing document in the database
+     */
+    public void saveNewEmotionsForDocument(long documentId, List<org.texttechnologylab.uce.common.models.corpus.emotion.Emotion> newEmotions) throws DatabaseOperationException;
+    
+    
 }

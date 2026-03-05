@@ -532,6 +532,7 @@ public class Importer {
                 logger.info("Checking if that document was also post-processed yet...");
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
                 importSentenceTopicsFromXmiIntoDb(existingDoc, filePath);
+                appendNewEmotionsToExistingDocument(existingDoc,jCas);
 
                 if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
@@ -2262,6 +2263,52 @@ public class Importer {
         var importLog = new ImportLog(this.importerNumber.toString(), ex.getMessage(), LogStatus.ERROR, file, this.importId, 0);
         tryStoreUCEImportLog(importLog);
         logger.error(message, ex);
+    }
+    
+    private void appendNewEmotionsToExistingDocument(Document existingDoc, JCas jCas){
+        var newEmotions = new ArrayList<org.texttechnologylab.uce.common.models.corpus.emotion.Emotion>();
+        JCasUtil.select(jCas, Emotion.class).forEach(e -> {
+            var emotion = new org.texttechnologylab.uce.common.models.corpus.emotion.Emotion(e.getBegin(),e.getEnd());
+            emotion.setCoveredText(e.getCoveredText());
+            var meta = e.getModel();
+            ModelEntity foundModel = null;
+            if(meta!=null){
+                String modelNameFromXmi = meta.getModelName();
+                try{
+                    foundModel = db.getModelEntityByKey(modelNameFromXmi);
+                    if (foundModel == null) foundModel = db.getModelEntityByMap(modelNameFromXmi);
+                } catch (DatabaseOperationException ex) {
+                    logger.error("Error when looking for model in database" + modelNameFromXmi);
+                }
+            }
+            if(foundModel != null) emotion.setDbModel(foundModel);
+            
+            var feelings = new ArrayList<Feeling>();
+            for (var annotationComment : e.getEmotions()){
+                var feeling = new Feeling();
+                feeling.setEmotion(emotion);
+                ExceptionUtils.tryCatchLog(() -> feeling.setValue(Double.parseDouble(annotationComment.getValue())),(ex) -> {});
+                feeling.setFeeling(annotationComment.getKey());
+                feelings.add(feeling);
+            }
+            emotion.setFeelings(feelings);
+            newEmotions.add(emotion);
+        });
+        
+        if(!newEmotions.isEmpty()){
+            if(existingDoc.getEmotions() == null){
+                existingDoc.setEmotions(new ArrayList<>());
+            }
+            ExceptionUtils.tryCatchLog(
+                    () -> db.saveNewEmotionsForDocument(existingDoc.getId(),newEmotions),
+                    (ex) -> logger.error("Error when saving new emotions to existing document" + existingDoc.getId(), ex)
+            );
+            ExceptionUtils.tryCatchLog(
+                    () -> db.createSentenceEmotions(existingDoc.getId()),
+                    (ex) -> logger.error("Error when creating sentence emotions after saving new emotions to existing document" + existingDoc.getId(), ex)
+            );
+        }
+        
     }
 
 }
