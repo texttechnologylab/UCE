@@ -1,11 +1,7 @@
 <div class="mt-0 search-state" data-id="${searchState.getSearchId()}">
     <#assign showSearchHint = (uceConfig.settings.ui.mainPage.showSearchHint)!true>
     <#assign middleColumnClass = showSearchHint?then("col-lg-6", "col-lg-12")>
-    <#assign searchLayerSwitchInfo = "Switches between the available result layers of this search (e.g. Fulltext and Embedding).">
-    <#if languageResource.getDefaultLanguage()?starts_with("de")>
-        <#assign searchLayerSwitchInfo = "Wechselt zwischen den verfugbaren Ergebnis-Layern dieser Suche (z. B. Volltext und Embedding).">
-    </#if>
-
+    
     <div class="header">
         <div class="flexed w-100 align-items-center justify-content-center">
             <div class="btn rounded-0 selected-btn" data-trigger="hover" data-toggle="popover" data-placement="top"
@@ -121,25 +117,35 @@
                 <!-- search layers and such -->
                 <div class="flexed align-items-center justify-content-between">
                     <div class="flexed align-items-center">
-                        <#assign hasAlternateLayer = searchState.getFoundDocumentChunkEmbeddings()?exists>
-                        <#if hasAlternateLayer>
-                            <a class="btn switch-search-layer-result-btn text hoverable selected"
-                               data-trigger="hover"
-                               data-toggle="popover"
-                               data-placement="top"
-                               data-content="${searchLayerSwitchInfo}"
-                               data-layer="${searchState.getPrimarySearchLayer()}">
-                                <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}</a>
-                            <a class="btn switch-search-layer-result-btn text hoverable" data-layer="EMBEDDING">
-                                <i class="fab fa-searchengin mr-1"></i> Embedding</a>
+                        <#assign hasAlternateLayer = searchState.getFoundDocumentChunkEmbeddings()?exists />
+                        <#assign switchInfo = languageResource.get("searchLayerSwitchInfo")!"" />
+
+                        <#if hasAlternateLayer && switchInfo?has_content>
+                        <a class="btn switch-search-layer-result-btn text hoverable selected"
+                            data-trigger="hover"
+                            data-toggle="popover"
+                            data-placement="top"
+                            data-content="${switchInfo}"
+                            data-layer="${searchState.getPrimarySearchLayer()}">
+                            <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}
+                        </a>
+                        <a class="btn switch-search-layer-result-btn text hoverable" data-layer="EMBEDDING">
+                            <i class="fab fa-searchengin mr-1"></i> Embedding
+                        </a>
+
+                        <#elseif !hasAlternateLayer && switchInfo?has_content>
+                        <span class="btn switch-search-layer-result-btn is-static text selected"
+                                data-trigger="hover"
+                                data-toggle="popover"
+                                data-placement="top"
+                                data-content="${switchInfo}">
+                            <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}
+                        </span>
+
                         <#else>
-                            <span class="btn switch-search-layer-result-btn is-static text selected"
-                                  data-trigger="hover"
-                                  data-toggle="popover"
-                                  data-placement="top"
-                                  data-content="${searchLayerSwitchInfo}">
-                                <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}
-                            </span>
+                        <span class="btn switch-search-layer-result-btn is-static text selected">
+                            <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}
+                        </span>
                         </#if>
                     </div>
 

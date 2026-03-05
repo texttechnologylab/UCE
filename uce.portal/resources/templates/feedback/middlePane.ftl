@@ -1,7 +1,7 @@
 <div class="feedback-main">
 <section class="feedback-header">
     <div class="header-top">
-        <h1>${middlePaneModel.title?replace("\\s*\\(Erhebung:.*\\)\\s*$", "", "r")}</h1>
+        <h1>${middlePaneModel.title}</h1>
         <#if ((uceConfig.settings.ui.mainPage.showWikiModal)!true) && document??>
             <a class="header-btn open-wiki-page color-prime"
                data-wtype="D"

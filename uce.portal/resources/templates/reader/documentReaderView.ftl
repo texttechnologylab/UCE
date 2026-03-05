@@ -71,8 +71,10 @@
         customElements.define('markdown-viewer', MarkdownViewer);
     </script>
 
-    <title>${document.getDocumentTitle()}</title>
-</head>
+	    <title>${document.getDocumentTitle()}</title>
+	</head>
+	
+	<body class="no-cursor">
 
 <body class="no-cursor<#if isFeedbackMode> feedback-mode</#if><#if hasViewModeNav> has-view-nav</#if>">
 
