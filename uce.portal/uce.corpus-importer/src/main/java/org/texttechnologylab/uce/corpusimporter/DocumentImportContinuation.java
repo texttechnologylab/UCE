@@ -96,7 +96,7 @@ public class DocumentImportContinuation {
     private final CorpusConfig corpusConfig;
     private String importId;
     private Integer importerNumber;
-    private RAGService ragService;
+    private EmbeddingService embeddingService;
     private CommonConfig commonConfig = new CommonConfig();
 
 
@@ -111,7 +111,8 @@ public class DocumentImportContinuation {
             Corpus corpus,
             CorpusConfig corpusConfig,
             int importerNumber,
-            String importId
+            String importId,
+            EmbeddingService embeddingService
 
     ) {
         this.db = db;
@@ -125,7 +126,7 @@ public class DocumentImportContinuation {
         this.corpusConfig = corpusConfig;
         this.importerNumber = importerNumber;
         this.importId = importId;
-
+        this.embeddingService = embeddingService;
     }
 
     public Document saveDocument(Document doc, Path filePath) {
@@ -270,7 +271,7 @@ public class DocumentImportContinuation {
      * Here we apply any postprocessing of a document that isn't DUUI and needs the document to be stored once like
      * the rag vector embeddings.
      */
-    private void postProccessDocument(Document document, Corpus corpus, String filePath) {
+    protected void postProccessDocument(Document document, Corpus corpus, String filePath) {
         logImportInfo("Postprocessing " + filePath, LogStatus.POST_PROCESSING, filePath, 0);
         var start = System.currentTimeMillis();
         var corpusConfig = corpus.getViewModel().getCorpusConfig();
@@ -358,19 +359,19 @@ public class DocumentImportContinuation {
 
             // Chunk Embeddings
             var docHasChunkEmbeddings = ExceptionUtils.tryCatchLog(
-                    () -> ragService.documentHasDocumentChunkEmbeddings(document.getId()),
+                    () -> embeddingService.documentHasDocumentChunkEmbeddings(document.getId()),
                     (ex) -> logImportError("Error while checking if a document already has DocumentChunkEmbeddings.", ex, filePath));
             if (docHasChunkEmbeddings != null && !docHasChunkEmbeddings) {
                 // Build the chunks, which are the most crucial embeddings
                 var documentChunkEmbeddings = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getCompleteEmbeddingChunksFromDocument(document),
+                        () -> embeddingService.getCompleteEmbeddingChunksFromDocument(document),
                         (ex) -> logImportError("Error getting the complete embedding chunks for document: " + document.getId(), ex, filePath));
 
                 // Store the chunks
                 if (documentChunkEmbeddings != null)
                     for (var docEmbedding : documentChunkEmbeddings) {
                         ExceptionUtils.tryCatchLog(
-                                () -> ragService.saveDocumentChunkEmbedding(docEmbedding),
+                                () -> embeddingService.saveDocumentChunkEmbedding(docEmbedding),
                                 (ex) -> logImportError("Error saving a document chunk embeddings.", ex, filePath)
                         );
                     }
@@ -378,18 +379,18 @@ public class DocumentImportContinuation {
 
             // Document Embedding
             var docHasEmbedding = ExceptionUtils.tryCatchLog(
-                    () -> ragService.documentHasDocumentEmbedding(document.getId()),
+                    () -> embeddingService.documentHasDocumentEmbedding(document.getId()),
                     (ex) -> logImportError("Error while checking if a document already has a DocumentEmbedding.", ex, filePath));
             if (docHasEmbedding != null && !docHasEmbedding) {
                 // Build a single document embeddings for the whole text
                 var documentEmbedding = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getCompleteEmbeddingFromDocument(document),
+                        () -> embeddingService.getCompleteEmbeddingFromDocument(document),
                         (ex) -> logImportError("Error getting the complete embedding from a document.", ex, filePath));
 
                 // Store the single document embedding
                 if (documentEmbedding != null)
                     ExceptionUtils.tryCatchLog(
-                            () -> ragService.saveDocumentEmbedding(documentEmbedding),
+                            () -> embeddingService.saveDocumentEmbedding(documentEmbedding),
                             (ex) -> logImportError("Error saving a document embedding.", ex, filePath));
             }
         }
@@ -403,7 +404,7 @@ public class DocumentImportContinuation {
                 if (page.getPageKeywordDistribution() != null) continue;
 
                 var KeywordDistribution = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getTextKeywordDistribution(PageKeywordDistribution.class, page.getCoveredText(document.getFullText())),
+                        () -> embeddingService.getTextKeywordDistribution(PageKeywordDistribution.class, page.getCoveredText(document.getFullText())),
                         (ex) -> logImportError("Error getting the PageKeywordDistribution - the postprocessing continues. Document id: " + document.getId(), ex, filePath));
                 if (KeywordDistribution == null) continue;
 
@@ -420,7 +421,7 @@ public class DocumentImportContinuation {
             // And the document topic dist if this wasn't added before.
             if (document.getDocumentKeywordDistribution() == null) {
                 var documentKeywordDistribution = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getTextKeywordDistribution(DocumentKeywordDistribution.class, document.getFullText()),
+                        () -> embeddingService.getTextKeywordDistribution(DocumentKeywordDistribution.class, document.getFullText()),
                         (ex) -> logImportError("Error getting the DocumentKeywordDistribution - the postprocessing ends now. Document id: " + document.getId(), ex, filePath));
                 if (documentKeywordDistribution == null) return;
 
@@ -506,7 +507,7 @@ public class DocumentImportContinuation {
      * Apply any postprocessing once the corpus is finished calculating. This will be called even
      * when the corpus import didn't finish due to an error. We still postprocess what we have.
      */
-    private void postProccessCorpus(Corpus corpus, CorpusConfig corpusConfig) {
+    protected void postProccessCorpus(Corpus corpus, CorpusConfig corpusConfig) {
         logger.info("Postprocessing the Corpus " + corpus.getName());
 
         // Calculate the tsne reductions of the whole corpus and finally the tsne plot
@@ -526,7 +527,7 @@ public class DocumentImportContinuation {
                 // Get the complete list of document sentence embeddings of all documents
                 var docSentenceEmbeddings = documents.stream()
                         .flatMap(d -> ExceptionUtils.tryCatchLog(
-                                () -> ragService.getDocumentSentenceEmbeddingsOfDocument(d.getId()).stream(),
+                                () -> embeddingService.getDocumentSentenceEmbeddingsOfDocument(d.getId()).stream(),
                                 (ex) -> logger.error("Error getting the document sentence embeddings of document " + d.getId(), ex)))
                         .filter(Objects::nonNull)
                         .toList();
@@ -534,7 +535,7 @@ public class DocumentImportContinuation {
                 // Now, from these sentences - generate a 2D and 3D tsne reduction embedding and store it
                 // with the single document embedding
                 var reducedSEmbeddingDto = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getEmbeddingDimensionReductions(
+                        () -> embeddingService.getEmbeddingDimensionReductions(
                                 docSentenceEmbeddings.stream().map(DocumentSentenceEmbedding::getEmbedding).toList()),
                         (ex) -> logger.error("Error getting embedding dimension reductions in post processing a corpus.", ex));
 
@@ -546,14 +547,14 @@ public class DocumentImportContinuation {
                     }
                     // Update the changes (Could be a bulk Update... let's see :-)
                     docSentenceEmbeddings.forEach(de -> ExceptionUtils.tryCatchLog(
-                            () -> ragService.updateDocumentSentenceEmbedding(de),
+                            () -> embeddingService.updateDocumentSentenceEmbedding(de),
                             (ex) -> logger.error("Error updating and saving a document sentence embedding.", ex)));
                 }
 
                 // Get the complete list of document chunk embeddings of all documents
                 var docChunkEmbeddings = documents.stream()
                         .flatMap(d -> ExceptionUtils.tryCatchLog(
-                                () -> ragService.getDocumentChunkEmbeddingsOfDocument(d.getId()).stream(),
+                                () -> embeddingService.getDocumentChunkEmbeddingsOfDocument(d.getId()).stream(),
                                 (ex) -> logger.error("Error getting the document chunk embeddings of document " + d.getId(), ex)))
                         .filter(Objects::nonNull)
                         .toList();
@@ -561,7 +562,7 @@ public class DocumentImportContinuation {
                 // Now, from these chunks - generate a 2D and 3D tsne reduction embedding and store it
                 // with the single document embedding
                 var reducedEmbeddingDto = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getEmbeddingDimensionReductions(
+                        () -> embeddingService.getEmbeddingDimensionReductions(
                                 docChunkEmbeddings.stream().map(DocumentChunkEmbedding::getEmbedding).toList()),
                         (ex) -> logger.error("Error getting embedding dimension reductions in post processing a corpus.", ex));
 
@@ -573,13 +574,13 @@ public class DocumentImportContinuation {
                 }
                 // Update the changes (Could be a bulk Update... let's see :-)
                 docChunkEmbeddings.forEach(de -> ExceptionUtils.tryCatchLog(
-                        () -> ragService.updateDocumentChunkEmbedding(de),
+                        () -> embeddingService.updateDocumentChunkEmbedding(de),
                         (ex) -> logger.error("Error updating and saving a document chunk embedding.", ex)));
 
                 // And calculate a reduced embedding for the whole document as well!
                 for (var document : documents) {
                     var documentEmbedding = ExceptionUtils.tryCatchLog(
-                            () -> ragService.getDocumentEmbeddingOfDocument(document.getId()),
+                            () -> embeddingService.getDocumentEmbeddingOfDocument(document.getId()),
                             (ex) -> logger.error("Error getting the document embeddings of document: " + document.getId(), ex));
                     if (documentEmbedding == null) continue;
                     var chunkEmbeddingsOfDocument = docChunkEmbeddings
@@ -603,7 +604,7 @@ public class DocumentImportContinuation {
 
                     // Update the document embedding
                     ExceptionUtils.tryCatchLog(
-                            () -> ragService.updateDocumentEmbedding(documentEmbedding),
+                            () -> embeddingService.updateDocumentEmbedding(documentEmbedding),
                             (ex) -> logger.error("Error updating and saving a document embedding.", ex));
                 }
             }

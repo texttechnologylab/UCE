@@ -7,12 +7,14 @@ function serialize(inputCas, outputStream, params)
 
     if(params["common"] ~= nil and params["common"] ~= '') then
             parameterText = parameterText .. "-c " .. params["common"] .. " "
-            print("Using common names from " .. params["common"])
     end
 
     if(params["dokumentConf"] ~= nil and params["dokumentConf"] ~= '') then
             parameterText = parameterText .. "-d " .. params["dokumentConf"] .. " "
-            print("Using dokumentConf names from " .. params["dokumentConf"])
+    end
+
+    if(params["casView"] ~= nil and params["casView"] ~= '') then
+            parameterText = parameterText .. "-v " .. params["casView"] .. " "
     end
 
     outputStream:write(json.encode({args = parameterText}))

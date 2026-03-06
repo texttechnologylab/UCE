@@ -13,6 +13,7 @@ import org.texttechnologylab.uce.common.models.corpus.Document;
 import org.texttechnologylab.uce.common.models.rag.DocumentEmbedding;
 import org.texttechnologylab.uce.common.models.universe.CorpusUniverseNode;
 import org.texttechnologylab.uce.common.models.universe.UniverseLayer;
+import org.texttechnologylab.uce.common.services.EmbeddingService;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.uce.common.services.RAGService;
 import org.texttechnologylab.uce.common.utils.ListUtils;
@@ -33,12 +34,14 @@ public class CorpusUniverseApi implements UceApi {
     private static final Logger logger = LogManager.getLogger(CorpusUniverseApi.class);
     private ApplicationContext context;
     private RAGService ragService;
+    private EmbeddingService embeddingService;
     private PostgresqlDataInterface_Impl db;
     private Configuration freemarkerConfig;
 
     public CorpusUniverseApi(ApplicationContext serviceContext, Configuration freemarkerConfig) {
         this.context = serviceContext;
         this.ragService = serviceContext.getBean(RAGService.class);
+        this.embeddingService = serviceContext.getBean(EmbeddingService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.freemarkerConfig = freemarkerConfig;
     }
@@ -119,7 +122,7 @@ public class CorpusUniverseApi implements UceApi {
             case DOCUMENTS:
                 // First get the closest document embeddings to the current center
                 var docEmbeddings = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 1000, corpusId),
+                        () -> embeddingService.getClosest3dDocumentEmbeddingsOfCorpus(currentCenter, 1000, corpusId),
                         (ex) -> logger.error("Error getting the closest 3d document embeddings.", ex));
                 if (docEmbeddings == null) {
                     result.replace("status", 500);
@@ -177,7 +180,7 @@ public class CorpusUniverseApi implements UceApi {
         switch (level) {
             case DOCUMENTS:
                 var docEmbeddings = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getManyDocumentEmbeddingsOfDocuments(
+                        () -> embeddingService.getManyDocumentEmbeddingsOfDocuments(
                                 search.getSearchState().getCurrentDocuments().stream().map(ModelBase::getId).toList()),
                         (ex) -> logger.error("Error fetching document embeddings of many documents.", ex));
                 if (docEmbeddings == null) {

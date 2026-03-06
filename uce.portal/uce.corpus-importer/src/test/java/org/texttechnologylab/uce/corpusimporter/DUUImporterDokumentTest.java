@@ -44,10 +44,13 @@ public class DUUImporterDokumentTest {
             gbif.occurrences.search.url=https://api.gbif.org/v1/occurrence/search?limit=10&media_type=stillImage&taxon_key={TAXON_ID}
             
             # RAG Webserver properties
-            rag.webserver.base.url=http://localhost:5678/
+            ; rag.webserver.base.url=http://localhost:5678/
+            rag.webserver.base.url=http://isengart.hucompute.org:5678/
+            embedding.webserver.base.url=http://isengart.hucompute.org:5678/
             
             # JenaSparql properties
-            sparql.host=http://localhost:5430/
+            ; sparql.host=http://localhost:5430/
+            sparql.host=http://isengart.hucompute.org:8098/
             sparql.endpoint=biofid-search/sparql
             sparql.max.enrichment=100
             
@@ -55,16 +58,17 @@ public class DUUImporterDokumentTest {
             # We want to use an external path for developing to enable hot reloading
             external.public.use=true
             external.public.location=../uce.web/src/main/resources/public
-            database.scripts.location=../database/
-            
+            database.scripts.location=/app/database/
+            ; database.scripts.location=/storage/projects/bagci/BioFID/UCE_Releases/2026-02-06_BioFID/database
             log.db=false
             # Define the interval in seconds (3600s = 1 hour)
             session.job.interval = 3600
             system.job.interval = 10
             
             postgresql.connection.driver_class=org.postgresql.Driver
-            postgresql.dialect=org.hibernate.dialect.PostgreSQL162Dialect
-            postgresql.hibernate.connection.url=jdbc:postgresql://localhost:8002/uce
+            postgresql.dialect=org.hibernate.dialect.PostgreSQLDialect
+            postgresql.hibernate.connection.url=jdbc:postgresql://uce-postgresql-db:5432/uce
+            ; postgresql.hibernate.connection.url=jdbc:postgresql://isengart.hucompute.org:8217/uce
             postgresql.hibernate.connection.username=postgres
             postgresql.hibernate.connection.password=1234
             postgresql.hibernate.current_session_context_class=thread
@@ -83,6 +87,63 @@ public class DUUImporterDokumentTest {
             # Keycloak authentication
             keycloak.realm=uce
             keycloak.auth_server_url=http://localhost:8080
+            keycloak.client=uce-web
+            keycloak.credentials.secret=**********
+            """;
+    static String commonRelease= """
+            uce.version=1.0.4-debug
+            
+            # University scraping and bib properties
+            university.botanik.base.url=https://sammlungen.ub.uni-frankfurt.de/botanik/periodical/titleinfo/{ID}
+            university.collection.base.url=https://sammlungen.ub.uni-frankfurt.de
+            
+            # Gbif scraping properties
+            gbif.occurrences.search.url=https://api.gbif.org/v1/occurrence/search?limit=10&media_type=stillImage&taxon_key={TAXON_ID}
+            
+            # RAG Webserver properties
+            ; rag.webserver.base.url=http://localhost:5678/
+            rag.webserver.base.url=http://isengart.hucompute.org:5678/
+            embedding.webserver.base.url=http://isengart.hucompute.org:5678/
+            
+            # JenaSparql properties
+            ; sparql.host=http://localhost:5430/
+            sparql.host=http://isengart.hucompute.org:8098/
+            sparql.endpoint=biofid-search/sparql
+            sparql.max.enrichment=100
+            
+            templates.location=uce.portal/resources/templates/
+            # We want to use an external path for developing to enable hot reloading
+            external.public.use=true
+            external.public.location=../uce.web/src/main/resources/public
+            database.scripts.location=../database/
+            ; database.scripts.location=/storage/projects/bagci/BioFID/UCE_Releases/2026-02-06_BioFID/database
+            log.db=false
+            # Define the interval in seconds (3600s = 1 hour)
+            session.job.interval = 3600
+            system.job.interval = 10
+            
+            postgresql.connection.driver_class=org.postgresql.Driver
+            postgresql.dialect=org.hibernate.dialect.PostgreSQLDialect
+            postgresql.hibernate.connection.url=jdbc:postgresql://141.2.108.201:5432/uce
+            ; postgresql.hibernate.connection.url=jdbc:postgresql://isengart.hucompute.org:8217/uce
+            postgresql.hibernate.connection.username=postgres
+            postgresql.hibernate.connection.password=1234
+            postgresql.hibernate.current_session_context_class=thread
+            postgresql.hibernate.show_sql=false
+            postgresql.hibernate.format_sql=true
+            # !!! If you put this on "create" it will wipe the database (other is "update") !!!
+            postgresql.hibernate.hbm2ddl.auto=update
+            postgresql.enrichment.location.max=200
+            
+            # s3 storage
+            minio.endpoint = http://141.2.108.201:9000
+            minio.username = admin
+            minio.pwd = 12345678
+            minio.bucket = cas
+            
+            # Keycloak authentication
+            keycloak.realm=uce
+            keycloak.auth_server_url=http://141.2.108.201:8080
             keycloak.client=uce-web
             keycloak.credentials.secret=**********
             """;
@@ -121,7 +182,7 @@ public class DUUImporterDokumentTest {
                 "xscope": false,
                 "unifiedTopic": false
               },
-              "addToExistingCorpus": false,
+              "addToExistingCorpus": true,
               "other": {
                 "availableOnFrankfurtUniversityCollection": false,
                 "includeKeywordDistribution": false,
@@ -170,7 +231,8 @@ public class DUUImporterDokumentTest {
     @Test
     public void DokumentInputTest() throws Exception {
         // Load document cas
-        String file = "/home/bagci/data/biofid-mini/input/3664127.xmi.bz2";
+//        String file = "/home/bagci/data/biofid-mini/input/3664127.xmi.bz2";
+        String file = "/home/staff_homes/bagci/data/biofid-mini/input/3664127.xmi.bz2";
         var inputStream =  new BZip2CompressorInputStream(new FileInputStream(file));
         CasIOUtils.load(inputStream, null, cas.getCas(), CasLoadMode.LENIENT);
         composer.add(

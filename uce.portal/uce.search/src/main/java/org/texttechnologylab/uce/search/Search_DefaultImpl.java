@@ -10,6 +10,7 @@ import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
 import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.uce.common.models.search.*;
+import org.texttechnologylab.uce.common.services.EmbeddingService;
 import org.texttechnologylab.uce.common.services.JenaSparqlService;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.uce.common.services.RAGService;
@@ -34,7 +35,8 @@ public class Search_DefaultImpl implements Search {
     private SearchState searchState;
     private List<String> stopwords;
     private PostgresqlDataInterface_Impl db;
-    private RAGService ragService;
+//    private RAGService ragService;
+    private EmbeddingService embeddingService;
     private JenaSparqlService jenaSparqlService;
     public static final String[] QUERY_OPERATORS = {"&", "|", "!", "<->", "(", ")"};
     private Pair<String, ArrayList<EnrichedSearchToken>> enrichment;
@@ -146,7 +148,7 @@ public class Search_DefaultImpl implements Search {
         // This search is lose coupled from the rest and only done once in the initiation.
         if (searchState.getSearchLayers().contains(SearchLayer.EMBEDDINGS)) {
             var closestDocumentsEmbeddings = ExceptionUtils.tryCatchLog(
-                    () -> ragService.getClosestDocumentChunkEmbeddings(
+                    () -> embeddingService.getClosestDocumentChunkEmbeddings(
                             this.searchState.getSearchQuery(),
                             20,
                             this.searchState.getCorpusId()),
@@ -395,9 +397,10 @@ public class Search_DefaultImpl implements Search {
 
     private void initServices(ApplicationContext serviceContext, String languageCode) throws URISyntaxException, IOException {
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
-        this.ragService = serviceContext.getBean(RAGService.class);
+//        this.ragService = serviceContext.getBean(RAGService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
         this.stopwords = loadStopwords(languageCode);
+        this.embeddingService = serviceContext.getBean(EmbeddingService.class);
     }
 
 }

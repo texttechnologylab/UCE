@@ -27,6 +27,8 @@ import org.texttechnologylab.annotation.biofid.gnfinder.VerifiedTaxon;
 import org.texttechnologylab.uce.common.config.CommonConfig;
 import org.texttechnologylab.uce.common.config.SpringConfig;
 import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
+import org.texttechnologylab.uce.common.models.imp.ImportStatus;
+import org.texttechnologylab.uce.common.models.imp.UCEImport;
 import org.texttechnologylab.uce.common.security.DocumentAccessManager;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.uce.common.utils.SystemStatus;
@@ -36,8 +38,13 @@ import java.io.*;
 import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.UUID;
 import java.util.logging.Level;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DUUICorpusImporter {
     private static final Logger logger = LogManager.getLogger(DUUICorpusImporter.class);
@@ -61,7 +68,8 @@ public class DUUICorpusImporter {
             try {
                 jc = JCasFactory.createJCas();
             } catch (UIMAException e) {
-                e.printStackTrace();
+//                e.printStackTrace();
+                logger.error("Failed to create JCas instance in ProcessHandler static block. This should never happen, but if it does, the server will not be able to process any requests. ", e);
             }
         }
 
@@ -74,20 +82,26 @@ public class DUUICorpusImporter {
                 XmiSerializationSharedData sharedData = new XmiSerializationSharedData();
 
                 String body = new String(t.getRequestBody().readAllBytes());
+//                System.out.println(body);
                 String[] bodies = body.split("\"}", 2);
+//                System.out.println(bodies[0]);
                 String args = bodies[0].split("args\":\"")[1];
 
                 InputStream casBody = new ByteArrayInputStream(bodies[1].getBytes(StandardCharsets.UTF_8));
                 XmiCasDeserializer.deserialize(casBody, jc.getCas(), true, sharedData);
 
                 //dump the common into commonEmpty.conf in the resources folder, in that case the given configuration will be loaded by the Corpus Importer instead of the default common.conf
+                Path commonConfPath = Path.of("/app/config/commonEmpty.conf");
                 if(args.contains("-c")) {
-                    String commonConf = args.split("-c ")[1].split(" -")[0];
-                    try (FileWriter writer = new FileWriter("./uce.common/src/main/resources/commonEmpty.conf")) {
-                        writer.write(commonConf);
+                    String commonConf = args.split("-c ")[1].split(" -")[0].replace("\\n", System.lineSeparator());
+                    Path path = commonConfPath;
+                    try {
+                        Files.createDirectories(commonConfPath.getParent());
+                        Files.writeString(path, commonConf);
                     }
                     catch (IOException e) {
-                        e.printStackTrace();
+//                        e.printStackTrace();
+                        logger.error("Failed to write the given common conf to the commonEmpty.conf file in the resources folder. ", e);
                     }
                 }
                 // raise exception if the given conf is not found, otherwise the default common.conf will be loaded, which is not wanted in that case.
@@ -97,19 +111,39 @@ public class DUUICorpusImporter {
                 }
 
                 //Dokument conf is needed to load the correct configuration into the Database, instead of the given CorpusConf in the folder of the input files.
+
+                Path corpusPath = Path.of("/app/config/UCECorpusConfigEmpty.json");
                 if(args.contains("-d")) {
-                    String corpusConf = args.split("-d ")[1].split(" -")[0];
-//                    try (FileWriter writer = new FileWriter("./uce.corpus-importer/src/main/resources/corpusConfig.json")) {
-//                        writer.write(corpusConf);
-//                    }
-//                    catch (IOException e) {
-//                        e.printStackTrace();
-//                    }
+                    String corpusConf = args.split("-d ")[1].split(" -")[0]
+                            .replace("\\n", "\n");
+                    Files.createDirectories(corpusPath.getParent());
+                    try {
+                        ObjectMapper mapper = new ObjectMapper();
+
+                        // Falls der Input schon escaped ist, zuerst ent-escapen:
+                        corpusConf = corpusConf.replace("\\\"", "\"");
+
+                        JsonNode json = mapper.readTree(corpusConf);
+                        String prettyJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+
+                        Files.writeString(corpusPath, prettyJson, StandardCharsets.UTF_8);
+                    } catch (IOException e) {
+                        logger.error(
+                                "Failed to write the given corpus config to UCECorpusConfigEmpty.json in the resources folder.",
+                                e
+                        );
+                    }
                 }
                 else
                 {
                     throw new RuntimeException("No corpus conf given in the arguments, or the given corpus conf is not found. Canceling. Please provide a corpus conf with the -d argument, and make sure the path is correct.");
                 }
+                String casView=null;
+                if(args.contains("-v")) {
+                    casView = args.split("-v ")[1].split(" -")[0];
+                }
+
+                DisableLogging.enableLogging(Level.SEVERE);
 
                 var context = new AnnotationConfigApplicationContext(SpringConfig.class);
 
@@ -121,14 +155,44 @@ public class DUUICorpusImporter {
                             () -> SystemStatus.executeExternalDatabaseScripts(commonConfig.getDatabaseScriptsLocation(), context.getBean(PostgresqlDataInterface_Impl.class)),
                             (ex) -> logger.warn("Couldn't read the db scripts in the external database scripts folder; path wasn't found or other IO problems. ", ex));
                     var importId = UUID.randomUUID().toString();
-                    var importer = new Importer(context, null, 1, importId, null);
-
+                    var importer = new Importer(context, null, 1, importId, casView, jc, true);
+                    var uceImport = new UCEImport(importId, "import from DUUI corpus importer", ImportStatus.STARTING);
+                    importer.start(1);
                 }
 
+                //Delete commonEmpty.conf
+                try {
+                    Files.deleteIfExists(commonConfPath);
+                }
+                catch (IOException e) {
+                    logger.error("Failed to empty the commonEmpty.conf file in the resources folder after processing the request. ", e);
+                }
+                //Delete corpusConfig.json
+                try {
+                    Files.deleteIfExists(corpusPath);
+                }
+                catch (IOException e) {
+                    logger.error("Failed to delete the UCECorpusConfigEmpty.json file in the resources folder after processing the request. ", e);
+                }
 
+                // IMPORTANT: reply CAS back to DUUI
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                XmiCasSerializer.serialize(jc.getCas(), out);  // you said this compiles
+
+                byte[] resp = out.toByteArray();
+                t.getResponseHeaders().set("Content-Type", "application/xml; charset=utf-8");
+                t.sendResponseHeaders(200, resp.length);
+                try (OutputStream os = t.getResponseBody()) {
+                    os.write(resp);
+                }
+                catch (Exception e) {
+                logger.error("ProcessHandler failed", e);
+                t.sendResponseHeaders(500, -1);
+                t.close();
+                }
             }
             catch (Exception e) {
-                e.printStackTrace();
+                logger.error("An error occurred while processing the request in ProcessHandler. This likely means that the corpus import failed. ", e);
                 t.sendResponseHeaders(404, -1);
                 return;
             }
