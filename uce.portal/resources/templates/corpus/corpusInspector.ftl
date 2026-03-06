@@ -19,12 +19,18 @@
             </a>
             <div class="text-center pb-3">
                 <button class="btn btn-sm btn-outline-primary"
+                        data-name="${(corpus.getName()!"-")?html}"
+                        data-author="${(corpus.getAuthor()!"-")?html}"
+                        data-lang="${(corpus.getLanguage()!"-")?html}"
+                        data-desc="${(corpusConfig.getDescription()!"")?html}"
+                        data-config="${(corpus.getCorpusJsonConfig()!"{}")?html}"
                         onclick="openUploadForExistingCorpora(
-                                '${(corpus.getName()!"-")?js_string}',
-                                '${(corpus.getAuthor()!"-")?js_string}',
-                                '${(corpus.getLanguage()!"-")?js_string}',
-                                '${(corpusConfig.getDescription()!"")?js_string}'
-                                )">
+                                this.getAttribute('data-name'),
+                                this.getAttribute('data-author'),
+                                this.getAttribute('data-lang'),
+                                this.getAttribute('data-desc'),
+                                this.getAttribute('data-config')
+                               )">
                     <i class="fas fa-plus mr-1"></i> Upload files to this corpora
                 </button>
             </div>

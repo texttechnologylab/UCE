@@ -155,6 +155,14 @@
                         </div>
                         <small class="form-text text-muted mt-2">Select one or more <code>.xmi/.xml/.gz</code> files.</small>
                     </div>
+                    <div class="form-group mt-3" id="configUploadGroup">
+                        <label for="uploadConfigFile">Upload your CorpusConfig.json (Optional)</label>
+                        <div class="custom-file">
+                            <input type="file" class="custom-file-input" id="uploadConfigFile" name="configFile" accept=".json,application/json">
+                            <label class="custom-file-label" for="uploadConfigFile"> Choose config file...</label>
+                        </div>
+                        <small class="form-text text-muted mt-2">Upload a CorpusConfig file </small>
+                    </div>
 
                     <hr/>
                     
@@ -189,7 +197,7 @@
                     </div>
                     <hr/>
                     <div class="mb-2 clickable" data-toggle="collapse" data-target="#advancedSettings" aria-expanded="false" aria-controls="advancedSettings">
-                        <h6 class="mb-0 text-primary"><i class="fas fa-cogs mr-2"></i>Advanced Settings (Click to expand)</h6>
+                        <h6 class="mb-0 text-primary"><i class="fas fa-cogs mr-2"></i>Annotation & RAG-Service Flags (Click to expand)</h6>
                     </div>
 
                     <div class="collapse" id="advancedSettings">
@@ -308,7 +316,7 @@
     $(document).ready(() => {
         $('#uploadCorpusModal').appendTo('body');
     });
-    $('body').on('change','#uploadFiles',function(){
+    $('body').on('change','.custom-file-input',function(){
         const fileNames = [];
         for (var i = 0; i< this.files.length; i++){
             fileNames.push(this.files[i].name);
@@ -318,8 +326,96 @@
         if(labelText.length > maxLength){
             labelText= labelText.substring(0,maxLength) + '...'
         }
+        if(labelText == ''){
+            labelText = $(this).attr('id') === 'uploadConfigFile' ? 'Choose config file...' : 'Choose files...';
+        }
         $(this).next('.custom-file-label').html(labelText);
     })
+    $('body').on('change','#uploadConfigFile',function(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        
+        reader.onload = function (e){
+            try{
+                const config = JSON.parse(e.target.result);
+                // UI Reset
+                $('#advancedSettings input[type="checkbox"]').prop('checked', false);
+                if (!$('#uploadCorpusName').prop('readonly')) $('#uploadCorpusName').val('');
+                if (!$('#uploadCorpusAuthor').prop('readonly')) $('#uploadCorpusAuthor').val('');
+                if (!$('#uploadCorpusLanguage').prop('readonly')) $('#uploadCorpusLanguage').val('');
+                if (!$('#uploadCorpusDescription').prop('readonly')) $('#uploadCorpusDescription').val('');
+                
+                if (config.addToExistingCorpus === true && $('#uploadAddToExisting').val() === 'false') {
+                    $('#uploadResult').html(
+                        `<div class="alert alert-warning small mb-0">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            <strong>Note:</strong> Your uploaded config has <code>addToExistingCorpus: true</code>. 
+                            Since you are creating a new corpus, this will be automatically handled as <strong>false</strong>.
+                        </div>`
+                    );
+                } else {
+                    $('#uploadResult').html('');
+                }
+                
+                if (config.name && !$('#uploadCorpusName').prop('readonly')) $('#uploadCorpusName').val(config.name);
+                if (config.author && !$('#uploadCorpusAuthor').prop('readonly')) $('#uploadCorpusAuthor').val(config.author);
+                if (config.language && !$('#uploadCorpusLanguage').prop('readonly')) $('#uploadCorpusLanguage').val(config.language);
+                if (config.description && !$('#uploadCorpusDescription').prop('readonly')) $('#uploadCorpusDescription').val(config.description);
+
+                if (config.annotations) {
+                    const ann = config.annotations;
+                    if (ann.sentence) $('#annoSentence').prop('checked', true);
+                    if (ann.lemma) $('#annoLemma').prop('checked', true);
+                    if (ann.namedEntity) $('#annoNE').prop('checked', true);
+                    if (ann.sentiment) $('#annoSentiment').prop('checked', true);
+                    if (ann.emotion) $('#annoEmotion').prop('checked', true);
+                    if (ann.time) $('#annoTime').prop('checked', true);
+                    if (ann.geoNames) $('#annoGeo').prop('checked', true);
+                    if (ann.wikipediaLink) $('#annoWiki').prop('checked', true);
+                    if (ann.image) $('#annoImage').prop('checked', true);
+                    if (ann.annotatorMetadata) $('#annoAnnotatorMeta').prop('checked', true);
+                    if (ann.uceMetadata) $('#annoUceMeta').prop('checked', true);
+                    if (ann.logicalLinks) $('#annoLogical').prop('checked', true);
+                    if (ann.srLink) $('#annoSrLink').prop('checked', true);
+                    if (ann.unifiedTopic) $('#annoUnifiedTopic').prop('checked', true);
+                    if (ann.OCRPage) $('#annoOCRPage').prop('checked', true);
+                    if (ann.OCRParagraph) $('#annoOCRPara').prop('checked', true);
+                    if (ann.OCRBlock) $('#annoOCRBlock').prop('checked', true);
+                    if (ann.OCRLine) $('#annoOCRLine').prop('checked', true);
+                    if (ann.completeNegation) $('#annoNegation').prop('checked', true);
+                    if (ann.cue) $('#annoCue').prop('checked', true);
+                    if (ann.event) $('#annoEvent').prop('checked', true);
+                    if (ann.focus) $('#annoFocus').prop('checked', true);
+                    if (ann.scope) $('#annoScope').prop('checked', true);
+                    if (ann.xscope) $('#annoXScope').prop('checked', true);
+
+                    if (ann.taxon) {
+                        if (ann.taxon.annotated) $('#taxonAnnotated').prop('checked', true);
+                        if (ann.taxon.biofidOnthologyAnnotated) $('#taxonBiofid').prop('checked', true);
+                    }
+                }
+
+                if (config.other) {
+                    const oth = config.other;
+                    if (oth.enableEmbeddings) $('#otherEmbeddings').prop('checked', true);
+                    if (oth.enableRAGBot) $('#otherRAG').prop('checked', true);
+                    if (oth.availableOnFrankfurtUniversityCollection) $('#otherGoethe').prop('checked', true);
+                    if (oth.includeKeywordDistribution) $('#otherKeywords').prop('checked', true);
+                    if (oth.enableS3Storage) $('#otherS3').prop('checked', true);
+                }
+
+                if (!$('#advancedSettings').hasClass('show')) {
+                    $('#advancedSettings').collapse('show');
+                }
+            }catch (err) {
+                console.error("Error when parsing uploaded corpusConfig file", err);
+                alert("This corpusConfig file is invalid");
+            }
+        };
+        reader.readAsText(file);
+    })
+    
     function openUploadForNewCorpora(){
         const form = document.getElementById('uploadCorpusForm');
         form.reset();
@@ -330,12 +426,66 @@
         $('#uploadCorpusAuthor').prop('readonly',false);
         $('#uploadCorpusDescription').prop('readonly',false);
         $('#uploadFiles').next('.custom-file-label').html('Choose Files...');
+        $('#uploadConfigFile').next('.custom-file-label').html('Choose corpusConfig file...');
         $('#uploadResult').html('');
-        $('#uploadCorpusModal').modal('show');
+        
+        $('#uploadCorpusModal').modal('show');  
+        $('#configUploadGroup').show();
+        
     }
-    function openUploadForExistingCorpora(corpusName,author,language,description){
+    function openUploadForExistingCorpora(corpusName,author,language,description,configJsonStr){
         const form = document.getElementById('uploadCorpusForm');
         form.reset();
+        $('#advancedSettings input[type="checkbox"]').prop('checked',false).prop('disabled',false);
+        if (configJsonStr){
+            try{
+                const config = typeof configJsonStr === 'string' ? JSON.parse(configJsonStr) : configJsonStr;
+                if (config.annotations) {
+                    const ann = config.annotations;
+                    if (ann.sentence) $('#annoSentence').prop('checked', true).prop('disabled', true);
+                    if (ann.lemma) $('#annoLemma').prop('checked', true).prop('disabled', true);
+                    if (ann.namedEntity) $('#annoNE').prop('checked', true).prop('disabled', true);
+                    if (ann.sentiment) $('#annoSentiment').prop('checked', true).prop('disabled', true);
+                    if (ann.emotion) $('#annoEmotion').prop('checked', true).prop('disabled', true);
+                    if (ann.time) $('#annoTime').prop('checked', true).prop('disabled', true);
+                    if (ann.geoNames) $('#annoGeo').prop('checked', true).prop('disabled', true);
+                    if (ann.wikipediaLink) $('#annoWiki').prop('checked', true).prop('disabled', true);
+                    if (ann.image) $('#annoImage').prop('checked', true).prop('disabled', true);
+                    if (ann.annotatorMetadata) $('#annoAnnotatorMeta').prop('checked', true).prop('disabled', true);
+                    if (ann.uceMetadata) $('#annoUceMeta').prop('checked', true).prop('disabled', true);
+                    if (ann.logicalLinks) $('#annoLogical').prop('checked', true).prop('disabled', true);
+                    if (ann.srLink) $('#annoSrLink').prop('checked', true).prop('disabled', true);
+                    if (ann.unifiedTopic) $('#annoUnifiedTopic').prop('checked', true).prop('disabled', true);
+                    if (ann.OCRPage) $('#annoOCRPage').prop('checked', true).prop('disabled', true);
+                    if (ann.OCRParagraph) $('#annoOCRPara').prop('checked', true).prop('disabled', true);
+                    if (ann.OCRBlock) $('#annoOCRBlock').prop('checked', true).prop('disabled', true);
+                    if (ann.OCRLine) $('#annoOCRLine').prop('checked', true).prop('disabled', true);
+                    if (ann.completeNegation) $('#annoNegation').prop('checked', true).prop('disabled', true);
+                    if (ann.cue) $('#annoCue').prop('checked', true).prop('disabled', true);
+                    if (ann.event) $('#annoEvent').prop('checked', true).prop('disabled', true);
+                    if (ann.focus) $('#annoFocus').prop('checked', true).prop('disabled', true);
+                    if (ann.scope) $('#annoScope').prop('checked', true).prop('disabled', true);
+                    if (ann.xscope) $('#annoXScope').prop('checked', true).prop('disabled', true);
+                    
+                    if (ann.taxon) {
+                        if (ann.taxon.annotated) $('#taxonAnnotated').prop('checked', true).prop('disabled', true);
+                        if (ann.taxon.biofidOnthologyAnnotated) $('#taxonBiofid').prop('checked', true).prop('disabled', true);
+                    }
+                    if (config.other) {
+                        const oth = config.other;
+                        if (oth.enableEmbeddings) $('#otherEmbeddings').prop('checked', true).prop('disabled', true);
+                        if (oth.enableRAGBot) $('#otherRAG').prop('checked', true).prop('disabled', true);
+                        if (oth.availableOnFrankfurtUniversityCollection) $('#otherGoethe').prop('checked', true).prop('disabled', true);
+                        if (oth.includeKeywordDistribution) $('#otherKeywords').prop('checked', true).prop('disabled', true);
+                        if (oth.enableS3Storage) $('#otherS3').prop('checked', true).prop('disabled', true);
+                        if (oth.availableOnFrankfurtUniversityCollection) $('#otherGoethe').prop('checked', true).prop('disabled', true);
+                    }
+                }
+            }catch(e){
+                console.error("Error parsing config string for locking UI Components")
+            }
+        }
+        
         $('#uploadAddToExisting').val('true');
         $('#uploadModalTitle').html('Add Files to "' + corpusName + '"');
         $('#uploadCorpusName').val(corpusName).prop('readonly',true);
@@ -343,8 +493,11 @@
         $('#uploadCorpusAuthor').val(author).prop('readonly',true);
         $('#uploadCorpusDescription').val(description)  .prop('readonly',true);
         $('#uploadFiles').next('.custom-file-label').html('Choose Files...');
+        $('#uploadConfigFile').prop('disabled', true);
         $('#uploadResult').html('');
+        
         $('#uploadCorpusModal').modal('show');
+        $('#configUploadGroup').hide();
     }
     function submitCorpusUpload(){
         const form = document.getElementById('uploadCorpusForm');

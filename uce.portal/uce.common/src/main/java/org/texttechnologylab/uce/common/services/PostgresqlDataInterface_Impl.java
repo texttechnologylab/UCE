@@ -2540,5 +2540,16 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                     .getResultList();
         });
     }
+    
+    public void updateCorpusJsonConfig(long corpusId,String jsonConfig) throws DatabaseOperationException{
+        executeOperationSafely((session) -> {
+            Corpus corpus = session.get(Corpus.class,corpusId);
+            if (corpus != null){
+                corpus.setCorpusJsonConfig(jsonConfig);
+                session.update(corpus);
+            }
+            return null;
+        });
+    }
 
 }

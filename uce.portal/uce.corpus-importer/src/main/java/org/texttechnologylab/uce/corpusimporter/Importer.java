@@ -386,6 +386,8 @@ public class Importer {
         if (corpusConfig.isAddToExistingCorpus()) {
             var existingCorpus = db.getCorpusByName(corpusConfig.getName());
             if (existingCorpus != null) { // If we have the corpus, use that.
+                existingCorpus.setCorpusJsonConfig(gson.toJson(corpusConfig));
+                db.updateCorpusJsonConfig(existingCorpus.getId(),existingCorpus.getCorpusJsonConfig());
                 return existingCorpus;
             }
             throw new DatabaseOperationException("The corpus config specified to add to an existing corpus, " +

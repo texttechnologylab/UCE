@@ -387,6 +387,9 @@ public interface DataInterface {
      * Adds new emotions to an existing document in the database
      */
     public void saveNewEmotionsForDocument(long documentId, List<org.texttechnologylab.uce.common.models.corpus.emotion.Emotion> newEmotions) throws DatabaseOperationException;
-    
-    
+
+    /**
+     * Updates a corpusJsonConfig in the database
+     */
+    public void updateCorpusJsonConfig(long corpusId,String jsonConfig) throws DatabaseOperationException;
 }

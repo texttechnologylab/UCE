@@ -13,6 +13,7 @@ import org.texttechnologylab.uce.common.config.corpusConfig.OtherConfig;
 import org.texttechnologylab.uce.common.config.corpusConfig.TaxonConfig;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
 import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
+import org.texttechnologylab.uce.common.models.corpus.Corpus;
 import org.texttechnologylab.uce.common.models.imp.ImportStatus;
 import org.texttechnologylab.uce.common.models.imp.UCEImport;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
@@ -212,61 +213,90 @@ public class ImportExportApi implements UceApi {
                 }
             }
             
-            CorpusConfig config = new CorpusConfig();
             String name = ctx.formParam("name");
             if (name == null || name.isBlank()){
                 ctx.status(400).result("No corpus name given");
             }
+            String addToExistingParam = ctx.formParam("addToExistingCorpus");
+            boolean addToExisting = addToExistingParam != null && Boolean.parseBoolean(addToExistingParam);
+            CorpusConfig config = null;
+            if(addToExisting){
+                Corpus existingCorpus = ExceptionUtils.tryCatchLog(() -> 
+                        db.getCorpusByName(name),
+                        (ex) -> logger.warn("Could not fetch existing corpus config for merging",ex)
+                        );
+                if (existingCorpus != null && existingCorpus.getCorpusJsonConfig() != null) 
+                    config = CorpusConfig.fromJson(existingCorpus.getCorpusJsonConfig());
+            }
+            if (config == null){
+                config = new CorpusConfig();
+                config.setAnnotations(new CorpusAnnotationConfig());
+                config.getAnnotations().setTaxon(new TaxonConfig());
+                config.setOther(new OtherConfig());
+            } else{
+                if(config.getAnnotations() == null) config.setAnnotations(new CorpusAnnotationConfig());
+                if(config.getAnnotations().getTaxon() == null) config.getAnnotations().setTaxon(new TaxonConfig());
+                if(config.getOther() == null) config.setOther(new OtherConfig());
+            }
+            
             config.setName(name);
+            config.setAddToExistingCorpus(addToExisting);
             String author = ctx.formParam("author");
-            if (author == null || author.isBlank()) {
-                ctx.status(400).result("Corpus Author is required.");
+            if (author != null && !author.isBlank()) config.setAuthor(author);
+            else if (config.getAuthor() == null) {
+                ctx.status(400).result("Corpus Author is required");
                 return;
             }
-            config.setAuthor(author);
             String language = ctx.formParam("language");
-            if (language == null || language.isBlank()) {
+            if (language != null && !language.isBlank()) config.setLanguage(language);
+            else if (config.getLanguage() == null) {
                 ctx.status(400).result("Corpus Language is required.");
                 return;
             }
-            config.setLanguage(language);
-            config.setDescription(ctx.formParam("description"));
-            String addToExistingParam = ctx.formParam("addToExistingCorpus");
-            boolean addToExisting = addToExistingParam != null && Boolean.parseBoolean(addToExistingParam);
-            config.setAddToExistingCorpus(addToExisting);
-            
+            String description = ctx.formParam("description");
+            if (description != null && !description.isBlank()) config.setDescription(description);
 //             Annotations
-            CorpusAnnotationConfig annotations = new CorpusAnnotationConfig();
-            annotations.setSentence(ctx.formParam("sentence") != null);
-            annotations.setLemma(ctx.formParam("lemma") != null);
-            annotations.setNamedEntity(ctx.formParam("namedEntity") != null);
-            annotations.setSentiment(ctx.formParam("sentiment") != null);
-            annotations.setEmotion(ctx.formParam("emotion") != null);
-            annotations.setTime(ctx.formParam("time") != null);
-            annotations.setGeoNames(ctx.formParam("geoNames") != null);
-            annotations.setWikipediaLink(ctx.formParam("wikipediaLink") != null);
-            annotations.setImage(ctx.formParam("image") != null);
-            annotations.setUnifiedTopic(ctx.formParam("unifiedTopic") != null);
-            annotations.setOCRPage(ctx.formParam("OCRPage") != null);
-            annotations.setOCRParagraph(ctx.formParam("OCRParagraph") != null);
-            annotations.setOCRBlock(ctx.formParam("OCRBlock") != null);
-            annotations.setOCRLine(ctx.formParam("OCRLine") != null);
+             CorpusAnnotationConfig ann = config.getAnnotations();
+             ann.setSentence(ann.isSentence() || ctx.formParam("sentence") != null);
+             ann.setLemma(ann.isLemma() || ctx.formParam("lemma") != null);
+             ann.setNamedEntity(ann.isNamedEntity() || ctx.formParam("namedEntity") != null);
+             ann.setSentiment(ann.isSentiment() || ctx.formParam("sentiment") != null);
+             ann.setEmotion(ann.isEmotion() || ctx.formParam("emotion") != null);
+             ann.setTime(ann.isTime() || ctx.formParam("time") != null);
+             ann.setGeoNames(ann.isGeoNames() || ctx.formParam("geoNames") != null);
+             ann.setWikipediaLink(ann.isWikipediaLink() || ctx.formParam("wikipediaLink") != null);
+             ann.setImage(ann.isImage() || ctx.formParam("image") != null);
+             ann.setAnnotatorMetadata(ann.isAnnotatorMetadata() || ctx.formParam("annotatorMetadata") != null);
+             ann.setUceMetadata(ann.isUceMetadata() || ctx.formParam("uceMetadata") != null);
+             ann.setLogicalLinks(ann.isLogicalLinks() || ctx.formParam("logicalLinks") != null);
+             ann.setSrLink(ann.isSrLink() || ctx.formParam("srLink") != null);
+             ann.setUnifiedTopic(ann.isUnifiedTopic() || ctx.formParam("unifiedTopic") != null);
+             ann.setOCRPage(ann.isOCRPage() || ctx.formParam("OCRPage") != null);
+             ann.setOCRParagraph(ann.isOCRParagraph() || ctx.formParam("OCRParagraph") != null);
+             ann.setOCRBlock(ann.isOCRBlock() || ctx.formParam("OCRBlock") != null);
+             ann.setOCRLine(ann.isOCRLine() || ctx.formParam("OCRLine") != null);
+             ann.setCompleteNegation(ann.isCompleteNegation() || ctx.formParam("completeNegation") != null);
+             ann.setCue(ann.isCue() || ctx.formParam("cue") != null);
+             ann.setEvent(ann.isEvent() || ctx.formParam("event") != null);
+             ann.setFocus(ann.isFocus() || ctx.formParam("focus") != null);
+             ann.setScope(ann.isScope() || ctx.formParam("scope") != null);
+             ann.setXscope(ann.isXscope() || ctx.formParam("xscope") != null);
 
-            TaxonConfig taxonConfig = new TaxonConfig();
-            taxonConfig.setAnnotated(ctx.formParam("taxonAnnotated") != null);
-            taxonConfig.setBiofidOnthologyAnnotated(ctx.formParam("biofidOnthologyAnnotated") != null);
-            
-            annotations.setTaxon(taxonConfig);
-            config.setAnnotations(annotations);
-            
+
+            TaxonConfig taxonConfig = ann.getTaxon();
+            taxonConfig.setAnnotated(taxonConfig.isAnnotated() || ctx.formParam("taxonAnnotated") != null);
+            taxonConfig.setBiofidOnthologyAnnotated(taxonConfig.isBiofidOnthologyAnnotated() || ctx.formParam("biofidOnthologyAnnotated") != null);
 //          Other Settings
-            OtherConfig otherConfig = new OtherConfig();
-            otherConfig.setEnableEmbeddings(ctx.formParam("enableEmbeddings") != null);
-            otherConfig.setEnableRAGBot(ctx.formParam("enableRAGBot") != null);
-            otherConfig.setIncludeKeywordDistribution(ctx.formParam("includeKeywordDistribution") != null);
-            otherConfig.setEnableS3Storage(ctx.formParam("enableS3Storage") != null);
+            OtherConfig otherConfig = config.getOther();
+            otherConfig.setEnableEmbeddings(otherConfig.isEnableEmbeddings() || ctx.formParam("enableEmbeddings") != null);
+            otherConfig.setEnableRAGBot(otherConfig.isEnableRAGBot() ||  ctx.formParam("enableRAGBot") != null);
+            otherConfig.setIncludeKeywordDistribution(otherConfig.isIncludeKeywordDistribution()|| ctx.formParam("includeKeywordDistribution") != null);
+            otherConfig.setEnableS3Storage(otherConfig.isEnableS3Storage() || ctx.formParam("enableS3Storage") != null);
+            otherConfig.setAvailableOnFrankfurtUniversityCollection(otherConfig.isAvailableOnFrankfurtUniversityCollection() || ctx.formParam("availableOnFrankfurtUniversityCollection") != null);
+            
+            config.setAnnotations(ann);
             config.setOther(otherConfig);
-
+            
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String jsonString = gson.toJson(config);
             Files.writeString(rootDir.resolve("corpusConfig.json"),jsonString,StandardCharsets.UTF_8);
