@@ -1,3 +1,39 @@
+#treeview-panel {
+    width: 300px;
+    min-width: 300px;
+    overflow-x: auto;
+    transition: width 0.1s ease;
+    max-width: 100%;
+}
+
+.resizer {
+    width: 5px;
+    cursor: ew-resize;
+    background-color: #ccc;
+    z-index: 10;
+    position: relative;
+}
+
+.analysis-flex-layout {
+    display: flex;
+    flex-direction: row;
+    width: 100%;
+    height: 100%;
+}
+
+.input-panel {
+    min-width: 300px;
+    width: 100%;
+    padding: 10px;
+}
+
+.result-panel {
+    flex-grow: 1;
+    padding: 10px;
+    min-width: 300px;
+    width: 20%;
+}
+
 .resizable-container {
     display: flex;
     height: 100%;
@@ -9,37 +45,6 @@
     width: 100%;
     height: 100%;
     overflow: hidden;
-    position: relative;
-}
-
-.panel {
-    height: 100%;
-    overflow: auto;
-}
-
-.panel-left {
-    min-width: 200px;
-    max-width: 500px;
-    width: 25%;
-    resize: horizontal;
-}
-
-.panel-middle {
-    min-width: 300px;
-    width: 35%;
-}
-
-.panel-right {
-    flex: 1;
-    min-width: 300px;
-}
-
-/* Resizer Styling */
-.resizer {
-    width: 5px;
-    background: #ccc;
-    cursor: col-resize;
-    z-index: 10;
     position: relative;
 }
 
@@ -163,11 +168,11 @@
     list-style-type: none;
     padding-left: 0;
     color: #000;
-    overflow-x: auto;
+    /*overflow-x: auto;*/
     overflow-y: hidden;
-    white-space: nowrap;
-    display: inline-block;
-    min-width: max-content;
+    white-space: normal;
+    display: block;
+    /*min-width: max-content;*/
 }
 
 /* Wrapper for horizontal scrolling */
@@ -235,8 +240,40 @@
     border-left: 1px dotted #ccc;
 }
 
-.analysis-treeview .nested.active {
+.analysis-treeview ul.nested.active {
     display: block;
+}
+
+.analysis-treeview ol.nested.active {
+    display: flex;
+    flex-wrap: wrap;
+    /*gap: 0 5px;*/
+    align-items: start;
+    list-style: none;
+    padding-left: 0.1em;
+    counter-reset: model-counter;
+    width: 100%;
+}
+
+.analysis-treeview ol.nested.active > li {
+    display: flex;
+    align-items: center;
+    gap: 3px;
+    position: relative;
+    padding-left: 1.0em;
+    counter-increment: model-counter;
+}
+
+.analysis-treeview ol.nested.active > li::before {
+    content: counter(model-counter) ".";
+    flex-shrink: 0;
+    width: 1.5em;
+    text-align: right;
+    font-weight: bold;
+    color: #333;
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
 }
 
 /* Model-rows */
@@ -253,14 +290,13 @@
     gap: 6px;
     margin: 0;
     padding: 0;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 13px;
+    line-height: 1.2;
 }
 
-/* Modell-Checkboxes */
 .analysis-treeview .model-item input[type="checkbox"] {
-    margin-right: 0.4rem;
+    vertical-align: middle;
+    margin: 0;
 }
 
 .grow-text {

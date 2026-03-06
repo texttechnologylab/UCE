@@ -83,6 +83,8 @@ import java.util.zip.GZIPInputStream;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
+import org.texttechnologylab.uce.corpusimporter.DocumentImportContinuation;
+
 public class Importer {
 
     private static final Gson gson = new Gson();
@@ -98,7 +100,8 @@ public class Importer {
     private static final Set<String> MIME_TYPES_IMAGES = Set.of("image/jpeg", "image/png");
     private GoetheUniversityService goetheUniversityService;
     private PostgresqlDataInterface_Impl db;
-    private RAGService ragService;
+//    private RAGService ragService;
+    private EmbeddingService embeddingService;
     private JenaSparqlService jenaSparqlService;
     private S3StorageService s3StorageService;
     private String path;
@@ -108,6 +111,9 @@ public class Importer {
     private LexiconService lexiconService;
     private CommonConfig commonConfig = new CommonConfig();
     private String casView;
+    private JCas mainCas;
+    private boolean casOnlyRun=false;
+    private DocumentImportContinuation continuation;
 
     public Importer(ApplicationContext serviceContext,
                     String foldername,
@@ -121,6 +127,23 @@ public class Importer {
         this.casView = casView;
     }
 
+    public Importer(ApplicationContext serviceContext,
+                    String foldername,
+                    int importerNumber,
+                    String importId,
+                    String casView,
+                    JCas mainCas,
+                    boolean casOnlyRun
+    ) {
+        initServices(serviceContext);
+        this.importerNumber = importerNumber;
+        this.importId = importId;
+        this.path = foldername;
+        this.casView = casView;
+        this.mainCas = mainCas;
+        this.casOnlyRun = casOnlyRun;
+    }
+
     public Importer(
             ApplicationContext serviceContext,
             int importerNumber,
@@ -132,6 +155,19 @@ public class Importer {
         initServices(serviceContext);
     }
 
+    public Importer(
+            ApplicationContext serviceContext,
+            int importerNumber,
+            String casView,
+            JCas mainCas
+    ) {
+        this.importerNumber = importerNumber;
+        this.casView = casView;
+        this.mainCas = mainCas;
+
+        initServices(serviceContext);
+    }
+
     public Importer(ApplicationContext serviceContext) {
         initServices(serviceContext);
     }
@@ -139,7 +175,8 @@ public class Importer {
     private void initServices(ApplicationContext serviceContext) {
         this.goetheUniversityService = serviceContext.getBean(GoetheUniversityService.class);
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
-        this.ragService = serviceContext.getBean(RAGService.class);
+//        this.ragService = serviceContext.getBean(RAGService.class);
+        this.embeddingService = serviceContext.getBean(EmbeddingService.class);
         this.lexiconService = serviceContext.getBean(LexiconService.class);
         this.jenaSparqlService = serviceContext.getBean(JenaSparqlService.class);
         this.s3StorageService = serviceContext.getBean(S3StorageService.class);
@@ -164,7 +201,7 @@ public class Importer {
      * Starts the importing processing of this instance.
      *
      * @throws DatabaseOperationException
-     * @throws DocumentAccessDeniedException 
+     * @throws DocumentAccessDeniedException
      */
     public void start(int numThreads) throws DatabaseOperationException, DocumentAccessDeniedException {
         logger.info(
@@ -188,10 +225,10 @@ public class Importer {
 
     /**
      * Stores an uploaded xmi to a given corpus
-     * 
+     *
      * @throws DatabaseOperationException
      * @throws DocumentAccessDeniedException
-     * 
+     *
      */
     public Long storeUploadedXMIToCorpusAsync(InputStream inputStream, Corpus corpus, String fileName, String documentId) throws DatabaseOperationException, DocumentAccessDeniedException {
         logger.info("Trying to store an uploaded UIMA file...");
@@ -207,15 +244,24 @@ public class Importer {
         if (doc == null)
             throw new DatabaseOperationException("The document was already imported into the corpus according to its documentId.");
         db.saveDocument(doc);
-        postProccessDocument(doc, corpus, fileName);
+        this.continuation.postProccessDocument(doc, corpus, fileName);
 
         logger.info("Finished storing and uploaded UIMA file.");
         return doc.getId();
     }
 
+    private static boolean isNonEmptyFile(Path p) {
+        try {
+            return Files.exists(p) && Files.isRegularFile(p) && Files.size(p) > 0;
+        } catch (IOException e) {
+            logger.error("Error checking file size for path: " + p);
+            return false;
+        }
+    }
+
     /**
      * Imports all UIMA xmi files in a folder
-     * @throws DocumentAccessDeniedException 
+     * @throws DocumentAccessDeniedException
      */
     public void storeCorpusFromFolderAsync(String folderName, int numThreads) throws DatabaseOperationException, DocumentAccessDeniedException {
         var executor = Executors.newFixedThreadPool(numThreads);
@@ -227,29 +273,58 @@ public class Importer {
         if (!SystemStatus.PostgresqlDbStatus.isAlive())
             throw new DatabaseOperationException("Postgresql DB is not alive - cancelling import.");
 
-        // Read the corpus config. If this doesn't exist, we cannot import the corpus
-        // NOTE the config is not updated if the corpus already exists!
-        // TODO compare configs and show a warning if they differ (except name, ...)
-        try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString(), StandardCharsets.UTF_8)) {
-            corpusConfig = gson.fromJson(reader, CorpusConfig.class);
-            try {
-                Corpus existingCorpus = CreateDBCorpus(corpus, corpusConfig, db);
-                if (existingCorpus != null) {
-                    corpus = existingCorpus;
-                    if (corpusConfig.getAnnotations().isUceMetadata()) {
-                        this.uceMetadataFilters = new CopyOnWriteArrayList<>(db.getUCEMetadataFiltersByCorpusId(existingCorpus.getId()));
-                    }
-                }
-            } catch (DatabaseOperationException e) {
-                throw new DatabaseOperationException("Error creating or fetching the corpus from the database - cancelling import.", e);
+//        String pathdefault;
+//        if (folderName == null && casOnlyRun) {
+//            pathdefault = Objects.requireNonNull(
+//                    getClass().getClassLoader().getResource("UCECorpusConfigEmpty.json"),
+//                    "Resource UCECorpusConfigEmpty.json not found"
+//            ).getPath();
+//        } else {
+//            // Read the corpus config. If this doesn't exist, we cannot import the corpus
+//            // NOTE the config is not updated if the corpus already exists!
+//            // TODO compare configs and show a warning if they differ (except name, ...)
+//            if (folderName == null) {
+//                // get path of defaultCorpusConfig.json
+//                pathdefault = Objects.requireNonNull(
+//                        getClass().getClassLoader().getResource("defaultCorpusConfig.json"),
+//                        "Resource defaultCorpusConfig.json not found"
+//                ).getPath();
+//            } else {
+//                pathdefault = Paths.get(folderName, "corpusConfig.json").toString();
+//            }
+//        }
+//        Path filePathDefault = Paths.get(pathdefault);
+
+        String pathdefault;
+
+        if (folderName == null && casOnlyRun) {
+            Path external = Path.of("/app/config/UCECorpusConfigEmpty.json");
+            if (isNonEmptyFile(external)) {
+                pathdefault = external.toString();
+            } else {
+                pathdefault = Objects.requireNonNull(
+                        getClass().getClassLoader().getResource("defaultCorpusConfig.json"),
+                        "Resource defaultCorpusConfig.json not found"
+                ).getPath();
             }
-        } catch (JsonIOException | JsonSyntaxException | IOException e) {
-            throw new MissingResourceException(
-                    "The corpus folder did not contain a properly formatted corpusConfig.json", CorpusConfig.class.toString(), "");
+        } else {
+            if (folderName == null) {
+                pathdefault = Objects.requireNonNull(
+                        getClass().getClassLoader().getResource("defaultCorpusConfig.json"),
+                        "Resource defaultCorpusConfig.json not found"
+                ).getPath();
+            } else {
+                pathdefault = Paths.get(folderName, "corpusConfig.json").toString();
+            }
         }
 
+        Path filePathDefault = Paths.get(pathdefault);
+
+        var corpusInitializationResult = loadCorpusConfigInitializeCorpus(filePathDefault, corpusConfig, corpus, db);
+        corpusConfig = corpusInitializationResult.corpusConfig();
+        corpus = corpusInitializationResult.corpus();
         // Store some corpus information in the UCEImport logging if this is the main importer
-        if (this.importerNumber == 1) {
+        if (this.importerNumber == 1 && !this.casOnlyRun) {
             var uceImport = db.getUceImportByImportId(this.importId);
             uceImport.setTargetCorpusName(corpus.getName());
             uceImport.setTargetCorpusId(corpus.getId());
@@ -257,7 +332,6 @@ public class Importer {
             db.saveOrUpdateUceImport(uceImport);
         }
 
-        var inputFolderName = Path.of(folderName, "input");
         final var corpusConfigFinal = corpusConfig;
         final var corpus1 = corpus;
 
@@ -266,113 +340,159 @@ public class Importer {
         var lock = new Object();
         var batchLatch = new AtomicReference<>(new CountDownLatch(0));
 
-        try (var fileStream = Files.walk(inputFolderName)) {
-            fileStream.filter(Files::isRegularFile)
-                    .filter(path -> StringUtils.checkIfFileHasExtension(path.toString().toLowerCase(), COMATIBLE_CAS_FILE_ENDINGS))
-                    .forEach(filePath -> {
-                        var docFuture = CompletableFuture.supplyAsync(() -> {
-                                    try {
-                                        batchLatch.get().await(); // wait if a batch is being postprocessed
-                                    } catch (InterruptedException e) {
-                                        Thread.currentThread().interrupt();
-                                    }
+        this.continuation = new DocumentImportContinuation(
+                db,
+                lexiconService,
+                logger,
+                batchLatch,
+                docInBatch,
+                lock,
+                BATCH_SIZE,
+                corpus1,
+                corpusConfigFinal,
+                this.importerNumber,
+                this.importId,
+                this.embeddingService);
 
-                                    return XMIToDocument(filePath.toString(), corpus1);
-                                }, executor)
-                                .thenApply(doc -> {
-                                    if (doc == null) return null;
+        if (folderName == null && casOnlyRun) {
+            try {
+                // load corpus config and initialize corpus in the database
 
-                                    logger.info("Trying to store document with document id " + doc.getDocumentId() + "...");
-                                    ExceptionUtils.tryCatchLog(
-                                            () -> db.saveDocument(doc),
-                                            (ex) -> logImportError("Error saving document with id " + doc.getId(), ex, filePath.toString()));
-                                    return doc;
-                                })
-                                .thenAcceptAsync(doc -> {
-                                    if (doc != null) {
-                                        logImportInfo("Stored document " + filePath.getFileName(), LogStatus.SAVED, filePath.toString(), 0);
-                                        logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
+                        // Before we try to parse the document, we need to check if we have UCEMetadata filters for this corpus.
+                var metadata = JCasUtil.selectSingle(this.mainCas, DocumentMetaData.class);
+                String documentId = metadata.getDocumentId();
 
-                                        ExceptionUtils.tryCatchLog(
-                                                () -> postProccessDocument(doc, corpus1, filePath.toString()),
-                                                (ex) -> logImportError("Error postprocessing a saved document with id " + doc.getId(), ex, filePath.toString()));
-                                        logImportInfo("Finished with import.", LogStatus.FINISHED, filePath.toString(), 0);
-                                    }
-
-                                    int local = docInBatch.incrementAndGet();
-                                    if (local == BATCH_SIZE) {
-                                        synchronized (lock) {
-                                            // Double-check to avoid race
-                                            if (docInBatch.get() == BATCH_SIZE) {
-                                                docInBatch.set(0);
-                                                batchLatch.set(new CountDownLatch(1));
-                                            }
+                // NOTE we need to specify the view here, the serialized data is the full CAS even when starting with a selected view
+                if (casView != null) {
+                    this.mainCas = this.mainCas.getView(casView);
+                }
+//                Path filePath = Paths.get(pathdefault);
+                var docFuture = CompletableFuture.supplyAsync(() -> {
+                            try {
+                                batchLatch.get().await(); // wait if a batch is being postprocessed
+                            } catch (InterruptedException e) {
+                                Thread.currentThread().interrupt();
+                            }
+                            return XMIToDocument(this.mainCas, corpus1, "DUUI CAS Import - Document " + documentId, documentId);
+                        }, executor)
+                        .thenApply(doc -> this.continuation.saveDocument(doc, filePathDefault))
+                        .thenAcceptAsync(doc -> this.continuation.postProcessDocumentAndBatch(doc, filePathDefault), executor);
+                futures.add(docFuture);
+            }
+            catch (Exception e) {
+                logger.error("Error processing the main CAS document during import:", e);
+            }
+            // Wait for all tasks to complete
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            runFinalCorpusUpdates(corpus1, corpusConfigFinal);
+            executor.shutdown();
+        }
+        else {
+            var inputFolderName = Path.of(folderName, "input");
+            try (var fileStream = Files.walk(inputFolderName)) {
+                fileStream.filter(Files::isRegularFile)
+                        .filter(path -> StringUtils.checkIfFileHasExtension(path.toString().toLowerCase(), COMATIBLE_CAS_FILE_ENDINGS))
+                        .forEach(filePath -> {
+                            var docFuture = CompletableFuture.supplyAsync(() -> {
+                                        try {
+                                            batchLatch.get().await(); // wait if a batch is being postprocessed
+                                        } catch (InterruptedException e) {
+                                            Thread.currentThread().interrupt();
                                         }
 
-                                        // Block other threads by not releasing the latch yet. We want the postprocessing being done by a single thread,
-                                        // while all the others wait.
-                                        logImportInfo("=========== UPDATING THE LOGICAL LINKS...", LogStatus.POST_PROCESSING, "LINKS", 0);
-                                        var logicalLinksResult = ExceptionUtils.tryCatchLog(
-                                                () -> db.callLogicalLinksRefresh(),
-                                                (ex) -> logImportError("Error updating the logical links while postprocessing a batch.", ex, filePath.toString()));
-                                        if (logicalLinksResult != null)
-                                            logImportInfo("=========== Finished updating the logical links. Inserted new links: " + logicalLinksResult, LogStatus.SAVED, "LINKS", 0);
+                                        return XMIToDocument(filePath.toString(), corpus1);
+                                    }, executor)
+                                    .thenApply(doc -> this.continuation.saveDocument(doc, filePath))
+                                    .thenAcceptAsync(doc -> this.continuation.postProcessDocumentAndBatch(doc, filePath), executor);
 
-                                        logImportInfo("=========== UPDATING THE LEXICON...", LogStatus.POST_PROCESSING, "LEXICON", 0);
-                                        var lexiconResult = ExceptionUtils.tryCatchLog(
-                                                () -> lexiconService.updateLexicon(false),
-                                                (ex) -> logImportError("Error updating the lexicon while postprocessing a batch.", ex, filePath.toString()));
-                                        if (lexiconResult != null)
-                                            logImportInfo("=========== Finished updating the lexicon. Inserted new lex: " + lexiconResult, LogStatus.SAVED, "LEXICON", 0);
+                            futures.add(docFuture);
+                        });
 
-                                        logImportInfo("=========== UPDATING THE GEONAME LOCATIONS...", LogStatus.POST_PROCESSING, "GEONAME_LOCATION", 0);
-                                        var geonameLocationResult = ExceptionUtils.tryCatchLog(
-                                                () -> db.callGeonameLocationRefresh(),
-                                                (ex) -> logImportError("Error updating the geoname locations while postprocessing a batch.", ex, filePath.toString()));
-                                        if (geonameLocationResult != null)
-                                            logImportInfo("=========== Finished updating the geoname locations. Inserted new locations: " + geonameLocationResult, LogStatus.SAVED, "GEONAME_LOCATION", 0);
+            } catch (IOException ex) {
+                logger.error("Error walking the import path: " + inputFolderName, ex);
+            }
 
-                                        logImportInfo("=========== POSTPROCESSING THE CORPUS...", LogStatus.POST_PROCESSING, "CORPUS", 0);
-                                        postProccessCorpus(corpus1, corpusConfigFinal);
-                                        logImportInfo("=========== FINISHED POSTPROCESSING THE CORPUS...", LogStatus.POST_PROCESSING, "CORPUS", 0);
-
-                                        // Allow all others to continue
-                                        batchLatch.get().countDown();
-                                    }
-                                });
-
-                        futures.add(docFuture);
-                    });
-
-        } catch (IOException ex) {
-            logger.error("Error walking the import path: " + inputFolderName, ex);
+            // Wait for all tasks to complete
+            CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
+            runFinalCorpusUpdates(corpus1, corpusConfigFinal);
+            executor.shutdown();
         }
+    }
 
-        // Wait for all tasks to complete
-        CompletableFuture.allOf(futures.toArray(new CompletableFuture[0])).join();
-
+    private void runFinalCorpusUpdates(Corpus corpus, CorpusConfig corpusConfigFinal) {
         // Final links updating
         ExceptionUtils.tryCatchLog(
                 () -> db.callLogicalLinksRefresh(),
-                (ex) -> logger.error("Error in the final logical links update of the current corpus with id " + corpus1.getId()));
+                (ex) -> logger.error(
+                        "Error in the final logical links update of the current corpus with id " + corpus.getId(), ex
+                )
+        );
 
         // Final lexicon updating
         ExceptionUtils.tryCatchLog(
                 () -> lexiconService.updateLexicon(false),
-                (ex) -> logger.error("Error in the final lexicon update of the current corpus with id " + corpus1.getId()));
+                (ex) -> logger.error(
+                        "Error in the final lexicon update of the current corpus with id " + corpus.getId(), ex
+                )
+        );
 
         // Final geonames location updating
         ExceptionUtils.tryCatchLog(
                 () -> db.callGeonameLocationRefresh(),
-                (ex) -> logger.error("Error in the final geoname location update of the current corpus with id " + corpus1.getId()));
+                (ex) -> logger.error(
+                        "Error in the final geoname location update of the current corpus with id " + corpus.getId(), ex
+                )
+        );
 
         // Final corpus postprocessing
         ExceptionUtils.tryCatchLog(
-                () -> postProccessCorpus(corpus1, corpusConfigFinal),
-                (ex) -> logger.error("Error in the final postprocessing of the current corpus with id " + corpus1.getId()));
+                () -> this.continuation.postProccessCorpus(corpus, corpusConfigFinal),
+                (ex) -> logger.error(
+                        "Error in the final postprocessing of the current corpus with id " + corpus.getId(), ex
+                )
+        );
 
         logger.info("\n\n=================================\n Done with the corpus import.");
-        executor.shutdown();
+    }
+
+    private record CorpusInitializationResult(CorpusConfig corpusConfig, Corpus corpus) {}
+
+    private  CorpusInitializationResult loadCorpusConfigInitializeCorpus(
+            Path pathdefault,
+            CorpusConfig corpusConfig,
+            Corpus corpus,
+            PostgresqlDataInterface_Impl db
+    ) throws MissingResourceException, DatabaseOperationException {
+        try (var reader = new FileReader(pathdefault.toFile(), StandardCharsets.UTF_8)) {
+            corpusConfig = gson.fromJson(reader, CorpusConfig.class);
+
+            try {
+                Corpus existingCorpus = CreateDBCorpus(corpus, corpusConfig, db);
+                if (existingCorpus != null) {
+                    corpus = existingCorpus;
+                    if (corpusConfig.getAnnotations().isUceMetadata()) {
+                        this.uceMetadataFilters = new CopyOnWriteArrayList<>(
+                                db.getUCEMetadataFiltersByCorpusId(existingCorpus.getId())
+                        );
+                    }
+                }
+
+                return new CorpusInitializationResult(corpusConfig, corpus);
+
+            } catch (DatabaseOperationException e) {
+                throw new DatabaseOperationException(
+                        "Error creating or fetching the corpus from the database - cancelling import.", e
+                );
+            } catch (DocumentAccessDeniedException e) {
+                throw new RuntimeException(e);
+            }
+        } catch (JsonIOException | JsonSyntaxException | IOException e) {
+            throw new MissingResourceException(
+                    "The corpus folder did not contain a properly formatted corpusConfig.json",
+                    CorpusConfig.class.toString(),
+                    ""
+            );
+        }
     }
 
     /**
@@ -381,7 +501,7 @@ public class Importer {
      * @param corpusConfig
      * @param db
      * @return A {@link Corpus} object if an existing corpus was found otherwise null
-     * @throws DocumentAccessDeniedException 
+     * @throws DocumentAccessDeniedException
      */
     public static Corpus CreateDBCorpus(Corpus corpus, CorpusConfig corpusConfig, PostgresqlDataInterface_Impl db) throws DatabaseOperationException, DocumentAccessDeniedException {
         corpus.setName(corpusConfig.getName());
@@ -554,7 +674,7 @@ public class Importer {
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
                 if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
-                    postProccessDocument(existingDoc, corpus, filePath);
+                    this.continuation.postProccessDocument(existingDoc, corpus, filePath);
                 } else
                     logger.info("Document was already post-processed.");
                 logger.info("Done.");
@@ -800,7 +920,7 @@ public class Importer {
 
     /**
      * Selects and sets the logical links between documents, annotations and more.
-     * @throws DocumentAccessDeniedException 
+     * @throws DocumentAccessDeniedException
      */
     private void setLogicLinks(Document document, JCas jCas, long corpusId, String filePath) throws DatabaseOperationException, DocumentAccessDeniedException {
         // Document -> Document Links
@@ -1697,405 +1817,6 @@ public class Importer {
             if (coveredAnomalies == 0) cleanedText.add(t.getCoveredText());
         });
         document.setFullTextCleaned(cleanedText.toString());
-    }
-
-    /**
-     * Apply any postprocessing once the corpus is finished calculating. This will be called even
-     * when the corpus import didn't finish due to an error. We still postprocess what we have.
-     */
-    private void postProccessCorpus(Corpus corpus, CorpusConfig corpusConfig) {
-        logger.info("Postprocessing the Corpus " + corpus.getName());
-
-        // Calculate the tsne reductions of the whole corpus and finally the tsne plot
-        if (corpusConfig.getOther().isEnableEmbeddings()) {
-            logger.info("Embeddings...");
-
-            // The corpus can be gigantic and we cant pass hundreds of thousand of embeddings into
-            // a rest API and perform reductions on them. Instead, we sample them.
-            var corpusDocuments = ExceptionUtils.tryCatchLog(() -> db.getNonePostprocessedDocumentsByCorpusId(corpus.getId()),
-                    (ex) -> logger.error("Error while fetching none postprocessed documents of corpus with id " + corpus.getId(), ex));
-            if (corpusDocuments == null) return;
-
-            Collections.shuffle(corpusDocuments); // We want random samples of size CHUNKSIZE
-            var chunked = ListUtils.partitionList(corpusDocuments, 100);
-
-            for (var documents : chunked) {
-                // Get the complete list of document sentence embeddings of all documents
-                var docSentenceEmbeddings = documents.stream()
-                        .flatMap(d -> ExceptionUtils.tryCatchLog(
-                                () -> ragService.getDocumentSentenceEmbeddingsOfDocument(d.getId()).stream(),
-                                (ex) -> logger.error("Error getting the document sentence embeddings of document " + d.getId(), ex)))
-                        .filter(Objects::nonNull)
-                        .toList();
-
-                // Now, from these sentences - generate a 2D and 3D tsne reduction embedding and store it
-                // with the single document embedding
-                var reducedSEmbeddingDto = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getEmbeddingDimensionReductions(
-                                docSentenceEmbeddings.stream().map(DocumentSentenceEmbedding::getEmbedding).toList()),
-                        (ex) -> logger.error("Error getting embedding dimension reductions in post processing a corpus.", ex));
-
-                if (!(reducedSEmbeddingDto == null || reducedSEmbeddingDto.getTsne2D() == null)) {
-                    // Store the tsne reduction in each sentence - this is basically now a 2D and 3D coordinate
-                    for (var i = 0; i < reducedSEmbeddingDto.getTsne2D().length; i++) {
-                        docSentenceEmbeddings.get(i).setTsne2d(reducedSEmbeddingDto.getTsne2D()[i]);
-                        docSentenceEmbeddings.get(i).setTsne3d(reducedSEmbeddingDto.getTsne3D()[i]);
-                    }
-                    // Update the changes (Could be a bulk Update... let's see :-)
-                    docSentenceEmbeddings.forEach(de -> ExceptionUtils.tryCatchLog(
-                            () -> ragService.updateDocumentSentenceEmbedding(de),
-                            (ex) -> logger.error("Error updating and saving a document sentence embedding.", ex)));
-                }
-
-                // Get the complete list of document chunk embeddings of all documents
-                var docChunkEmbeddings = documents.stream()
-                        .flatMap(d -> ExceptionUtils.tryCatchLog(
-                                () -> ragService.getDocumentChunkEmbeddingsOfDocument(d.getId()).stream(),
-                                (ex) -> logger.error("Error getting the document chunk embeddings of document " + d.getId(), ex)))
-                        .filter(Objects::nonNull)
-                        .toList();
-
-                // Now, from these chunks - generate a 2D and 3D tsne reduction embedding and store it
-                // with the single document embedding
-                var reducedEmbeddingDto = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getEmbeddingDimensionReductions(
-                                docChunkEmbeddings.stream().map(DocumentChunkEmbedding::getEmbedding).toList()),
-                        (ex) -> logger.error("Error getting embedding dimension reductions in post processing a corpus.", ex));
-
-                if (reducedEmbeddingDto == null || reducedEmbeddingDto.getTsne2D() == null) continue;
-                // Store the tsne reduction in each chunk - this is basically now a 2D and 3D coordinate
-                for (var i = 0; i < reducedEmbeddingDto.getTsne2D().length; i++) {
-                    docChunkEmbeddings.get(i).setTsne2D(reducedEmbeddingDto.getTsne2D()[i]);
-                    docChunkEmbeddings.get(i).setTsne3D(reducedEmbeddingDto.getTsne3D()[i]);
-                }
-                // Update the changes (Could be a bulk Update... let's see :-)
-                docChunkEmbeddings.forEach(de -> ExceptionUtils.tryCatchLog(
-                        () -> ragService.updateDocumentChunkEmbedding(de),
-                        (ex) -> logger.error("Error updating and saving a document chunk embedding.", ex)));
-
-                // And calculate a reduced embedding for the whole document as well!
-                for (var document : documents) {
-                    var documentEmbedding = ExceptionUtils.tryCatchLog(
-                            () -> ragService.getDocumentEmbeddingOfDocument(document.getId()),
-                            (ex) -> logger.error("Error getting the document embeddings of document: " + document.getId(), ex));
-                    if (documentEmbedding == null) continue;
-                    var chunkEmbeddingsOfDocument = docChunkEmbeddings
-                            .stream()
-                            .filter(e -> e.getDocument_id() == document.getId())
-                            .toList();
-
-                    // And mean pool the tsne chunk embeddings for the whole document
-                    documentEmbedding.setTsne2d(EmbeddingUtils.meanPooling(chunkEmbeddingsOfDocument
-                            .stream()
-                            .map(DocumentChunkEmbedding::getTsne2D)
-                            .toList()));
-                    documentEmbedding.setTsne3d(EmbeddingUtils.meanPooling(chunkEmbeddingsOfDocument
-                            .stream()
-                            .map(DocumentChunkEmbedding::getTsne3D)
-                            .toList()));
-                    // Mark it as fully post processed
-                    document.setPostProcessed(true);
-                    ExceptionUtils.tryCatchLog(() -> db.updateDocument(document),
-                            (ex) -> logger.error("Error updating the document while post processing corpus. Postprocessing continues", ex));
-
-                    // Update the document embedding
-                    ExceptionUtils.tryCatchLog(
-                            () -> ragService.updateDocumentEmbedding(documentEmbedding),
-                            (ex) -> logger.error("Error updating and saving a document embedding.", ex));
-                }
-            }
-
-            // Update: we used to calculate a tsne plot here, but we replace this in the future. This didnt work well
-            // anyways.
-            /*logger.info("Corpus TSNE Plot...");
-
-            // Now that we have the reduced coordinates, lets plot a tsne plot of the corpus and cache it!
-            // If we have an existing plot, then update that
-            var corpusTsnePlot = corpus.getCorpusTsnePlot();
-            if (corpusTsnePlot == null) {
-                corpusTsnePlot = new CorpusTsnePlot();
-            }
-            var htmlPlot = ExceptionUtils.tryCatchLog(
-                    () -> ragService.getCorpusTsnePlot(corpus.getId()),
-                    (ex) -> logger.error("Error building the corpus tsne plot of corpus: " + corpus.getId(), ex));
-            if (htmlPlot == null) return;
-            corpusTsnePlot.setPlotHtml(htmlPlot);
-            corpusTsnePlot.setCorpus(corpus);
-            corpusTsnePlot.setCreated(DateTime.now().toDate());
-
-            // Assign to a final variable because of the weird java restriction of needing effectively
-            // final variables for lambda calls. What a shitshow.
-            final CorpusTsnePlot finalCorpusTsnePlot = corpusTsnePlot;
-            corpus.setCorpusTsnePlot(finalCorpusTsnePlot);
-
-            ExceptionUtils.tryCatchLog(() -> db.saveOrUpdateCorpusTsnePlot(finalCorpusTsnePlot, corpus),
-                    (ex) -> logger.error("Error saving or updating the corpus tsne plot.", ex));*/
-        }
-
-        if (corpusConfig.getAnnotations().isUnifiedTopic()) {
-            logger.info("Inserting into Document and Corpus Topic word tables...");
-
-            try {
-                Path insertDocumentTopicWordFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/3_updateDocumentTopicWord.sql");
-                var insertDocumentTopicWordScript = Files.readString(insertDocumentTopicWordFilePath);
-
-                ExceptionUtils.tryCatchLog(
-                        () -> db.executeSqlWithoutReturn(insertDocumentTopicWordScript),
-                        (ex) -> logger.error("Error executing SQL script to populate documenttopicword table", ex)
-                );
-
-                Path insertCorpusTopicWordFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/4_updateCorpusTopicWord.sql");
-                var insertCorpusTopicWordScript = Files.readString(insertCorpusTopicWordFilePath);
-
-                ExceptionUtils.tryCatchLog(
-                        () -> db.executeSqlWithoutReturn(insertCorpusTopicWordScript),
-                        (ex) -> logger.error("Error executing SQL script to populate corpustopicword table", ex)
-                );
-
-                logger.info("Successfully created and populated word based topic tables");
-            } catch (Exception e) {
-                logger.error("Error reading or executing SQL script for topic distribution", e);
-            }
-
-        }
-        logger.info("Done with the corpus postprocessing.");
-    }
-
-    /**
-     * Here we apply any postprocessing of a document that isn't DUUI and needs the document to be stored once like
-     * the rag vector embeddings.
-     */
-    private void postProccessDocument(Document document, Corpus corpus, String filePath) {
-        logImportInfo("Postprocessing " + filePath, LogStatus.POST_PROCESSING, filePath, 0);
-        var start = System.currentTimeMillis();
-        var corpusConfig = corpus.getViewModel().getCorpusConfig();
-
-        // Store simple connections between Time, Geonames and Annotation to approximate the question:
-        // This annotation occurred in context with this location at this time.
-        // TODO: This needs a check if the document already was linked before. Sometimes docs are preprocessed when they already exist.
-        if (corpusConfig.getAnnotations().isGeoNames() || corpusConfig.getAnnotations().isTime()) {
-            logger.info("Doing contextualized Links between Annotations...");
-            // For now we assume that, IF the annotations are on the same page, they are somewhat linked.
-            // For now, we link NamedEntities and taxa to Geonames and/or Time
-            for (var page : document.getPages()) {
-
-                // Geonames and Times
-                var contextAnnotations = new ArrayList<UIMAAnnotation>();
-                if (corpusConfig.getAnnotations().isGeoNames())
-                    contextAnnotations.addAll(document.getGeoNames().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
-                if (corpusConfig.getAnnotations().isTime())
-                    contextAnnotations.addAll(document.getTimes().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
-
-                // Link them to other annotations, such as Taxa, NamedEntity (e.g. PERSON)
-                var linkedAnnotations = new ArrayList<UIMAAnnotation>();
-                if (corpusConfig.getAnnotations().isNamedEntity() && document.getNamedEntities() != null)
-                    linkedAnnotations.addAll(document.getNamedEntities().stream().filter(g -> !g.getType().equals("LOCATION") && g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
-                if (corpusConfig.getAnnotations().getTaxon().isAnnotated() && document.getAllTaxa() != null) {
-                    linkedAnnotations.addAll(document.getGazetteerTaxons().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
-                    linkedAnnotations.addAll(document.getGnFinderTaxons().stream().filter(g -> g.getBegin() >= page.getBegin() && g.getEnd() <= page.getEnd()).toList());
-                }
-
-                // We link FROM the ANNOTATION TO the CONTEXT
-                var links = new ArrayList<AnnotationLink>();
-                for (var context : contextAnnotations) {
-                    for (var anno : linkedAnnotations) {
-                        var annoLink = new AnnotationLink();
-                        annoLink.setCorpusId(corpus.getId());
-                        annoLink.setFrom(document.getDocumentId());
-                        annoLink.setTo(document.getDocumentId());
-                        annoLink.setType(context instanceof Time ? "time" : "location");
-                        annoLink.setLinkId("context");
-                        annoLink.setFromId(anno.getId());
-                        annoLink.setToId(context.getId());
-                        annoLink.setFromAnnotationTypeTable(ReflectionUtils.getTableAnnotationName(anno.getClass()));
-                        annoLink.setToAnnotationTypeTable(ReflectionUtils.getTableAnnotationName(context.getClass()));
-                        annoLink.setFromAnnotationType(anno.getClass().getName());
-                        annoLink.setToAnnotationType(context.getClass().getName());
-                        annoLink.setFromCoveredText(anno.getCoveredText());
-                        annoLink.setToCoveredText(context.getCoveredText());
-                        annoLink.setFromBegin(anno.getBegin());
-                        annoLink.setToBegin(context.getBegin());
-                        annoLink.setFromEnd(anno.getEnd());
-                        annoLink.setToEnd(context.getEnd());
-
-                        links.add(annoLink);
-                    }
-                }
-                ExceptionUtils.tryCatchLog(() -> db.saveOrUpdateManyAnnotationLinks(links),
-                        (ex) -> logImportError("Couldn't build contextual annotation links while postprocessing.", ex, filePath));
-            }
-        }
-
-        // Calculate embeddings if they are activated
-        if (corpusConfig.getOther().isEnableEmbeddings()) {
-            logger.info("Embeddings...");
-
-            // Sentence Embeddings
-            /* TODO: Dont see the sentence embeddings use case yet and they are really ressource heavy.
-            var docHasSentenceEmbeddings = ExceptionUtils.tryCatchLog(
-                    () -> ragService.documentHasDocumentSentenceEmbeddings(document.getId()),
-                    (ex) -> logImportError("Error while checking if a document already has DocumentSentenceEmbeddings.", ex, filePath));
-            if (docHasSentenceEmbeddings != null && !docHasSentenceEmbeddings) {
-                // Build the sentences, which are the most crucial embeddings
-                var documentSentenceEmbeddings = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getSentenceEmbeddingFromDocument(document),
-                        (ex) -> logImportError("Error getting the complete embedding sentences for document: " + document.getId(), ex, filePath));
-
-                // Store the sentences
-                if (documentSentenceEmbeddings != null)
-                    for (var docEmbedding : documentSentenceEmbeddings) {
-                        ExceptionUtils.tryCatchLog(
-                                () -> ragService.saveDocumentSentenceEmbedding(docEmbedding),
-                                (ex) -> logImportError("Error saving a document sentence embeddings.", ex, filePath)
-                        );
-                    }
-            }*/
-
-            // Chunk Embeddings
-            var docHasChunkEmbeddings = ExceptionUtils.tryCatchLog(
-                    () -> ragService.documentHasDocumentChunkEmbeddings(document.getId()),
-                    (ex) -> logImportError("Error while checking if a document already has DocumentChunkEmbeddings.", ex, filePath));
-            if (docHasChunkEmbeddings != null && !docHasChunkEmbeddings) {
-                // Build the chunks, which are the most crucial embeddings
-                var documentChunkEmbeddings = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getCompleteEmbeddingChunksFromDocument(document),
-                        (ex) -> logImportError("Error getting the complete embedding chunks for document: " + document.getId(), ex, filePath));
-
-                // Store the chunks
-                if (documentChunkEmbeddings != null)
-                    for (var docEmbedding : documentChunkEmbeddings) {
-                        ExceptionUtils.tryCatchLog(
-                                () -> ragService.saveDocumentChunkEmbedding(docEmbedding),
-                                (ex) -> logImportError("Error saving a document chunk embeddings.", ex, filePath)
-                        );
-                    }
-            }
-
-            // Document Embedding
-            var docHasEmbedding = ExceptionUtils.tryCatchLog(
-                    () -> ragService.documentHasDocumentEmbedding(document.getId()),
-                    (ex) -> logImportError("Error while checking if a document already has a DocumentEmbedding.", ex, filePath));
-            if (docHasEmbedding != null && !docHasEmbedding) {
-                // Build a single document embeddings for the whole text
-                var documentEmbedding = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getCompleteEmbeddingFromDocument(document),
-                        (ex) -> logImportError("Error getting the complete embedding from a document.", ex, filePath));
-
-                // Store the single document embedding
-                if (documentEmbedding != null)
-                    ExceptionUtils.tryCatchLog(
-                            () -> ragService.saveDocumentEmbedding(documentEmbedding),
-                            (ex) -> logImportError("Error saving a document embedding.", ex, filePath));
-            }
-        }
-
-        if (corpusConfig.getOther().isIncludeKeywordDistribution()) {
-            logger.info("Keyword Distribution...");
-
-            // Calculate the page keyword distribution if activated
-            for (var page : document.getPages()) {
-                // If this page already has a keyword dist, continue.
-                if (page.getPageKeywordDistribution() != null) continue;
-
-                var KeywordDistribution = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getTextKeywordDistribution(PageKeywordDistribution.class, page.getCoveredText(document.getFullText())),
-                        (ex) -> logImportError("Error getting the PageKeywordDistribution - the postprocessing continues. Document id: " + document.getId(), ex, filePath));
-                if (KeywordDistribution == null) continue;
-
-                KeywordDistribution.setBegin(page.getBegin());
-                KeywordDistribution.setEnd(page.getEnd());
-                KeywordDistribution.setPage(page);
-                KeywordDistribution.setPageId(page.getId());
-                page.setPageKeywordDistribution(KeywordDistribution);
-                // Store it in the db
-                ExceptionUtils.tryCatchLog(() -> db.savePageKeywordDistribution(page),
-                        (ex) -> logImportError("Error storing the page keyword distribution - the postprocessing continues.", ex, filePath));
-            }
-
-            // And the document topic dist if this wasn't added before.
-            if (document.getDocumentKeywordDistribution() == null) {
-                var documentKeywordDistribution = ExceptionUtils.tryCatchLog(
-                        () -> ragService.getTextKeywordDistribution(DocumentKeywordDistribution.class, document.getFullText()),
-                        (ex) -> logImportError("Error getting the DocumentKeywordDistribution - the postprocessing ends now. Document id: " + document.getId(), ex, filePath));
-                if (documentKeywordDistribution == null) return;
-
-                documentKeywordDistribution.setDocument(document);
-                documentKeywordDistribution.setDocumentId(document.getId());
-                document.setDocumentKeywordDistribution(documentKeywordDistribution);
-                // Store it
-                ExceptionUtils.tryCatchLog(() -> db.saveDocumentKeywordDistribution(document),
-                        (ex) -> logImportError("Error storing the document keyword distribution - the postprocessing ends now.", ex, filePath));
-            }
-        }
-
-        if (corpusConfig.getAnnotations().isUnifiedTopic()) {
-
-            logger.info("Inserting Sentence and Document Topics...");
-
-            try {
-                Path insertSentenceTopicsFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/1_updateSentenceTopics.sql");
-                var insertSentenceTopicsScript = Files.readString(insertSentenceTopicsFilePath);
-
-                ExceptionUtils.tryCatchLog(
-                        () -> db.executeSqlWithoutReturn(insertSentenceTopicsScript),
-                        (ex) -> logImportError("Error executing SQL script to populate sentencetopics table", ex, filePath)
-                );
-
-                Path insertDocumentTopicsFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/2_updateDocumentTopics.sql");
-                var insertDocumentTopicsScript = Files.readString(insertDocumentTopicsFilePath);
-
-                ExceptionUtils.tryCatchLog(
-                        () -> db.executeSqlWithoutReturn(insertDocumentTopicsScript),
-                        (ex) -> logImportError("Error executing SQL script to populate documenttopicsraw table", ex, filePath)
-                );
-
-                logger.info("Successfully created and populated sentencetopics and documenttopicsraw tables");
-            } catch (Exception e) {
-                logger.error("Error reading or executing SQL script for topic distribution", e);
-            }
-
-            logger.info("Topic Three Topics...");
-
-            if (document.getDocumentTopThreeTopics() == null) {
-                var topTopics = ExceptionUtils.tryCatchLog(
-                        () -> db.getTopTopicsByDocument(document.getId(), 3),
-                        (ex) -> logImportError("Error getting top three topics for document: " + document.getId(), ex, filePath));
-
-                if (topTopics != null && !topTopics.isEmpty()) {
-                    var documentTopThreeTopics = new DocumentTopThreeTopics();
-                    documentTopThreeTopics.setDocument(document);
-                    documentTopThreeTopics.setDocumentId(document.getId());
-
-                    if (topTopics.size() >= 1) {
-                        Object[] topic1 = topTopics.get(0);
-                        documentTopThreeTopics.setTopicOne((String) topic1[0]);
-                        documentTopThreeTopics.setTopicOneScore((Double) topic1[1]);
-                    }
-                    if (topTopics.size() >= 2) {
-                        Object[] topic2 = topTopics.get(1);
-                        documentTopThreeTopics.setTopicTwo((String) topic2[0]);
-                        documentTopThreeTopics.setTopicTwoScore((Double) topic2[1]);
-                    }
-                    if (topTopics.size() >= 3) {
-                        Object[] topic3 = topTopics.get(2);
-                        documentTopThreeTopics.setTopicThree((String) topic3[0]);
-                        documentTopThreeTopics.setTopicThreeScore((Double) topic3[1]);
-                    }
-
-                    document.setDocumentTopThreeTopics(documentTopThreeTopics);
-
-                    ExceptionUtils.tryCatchLog(
-                            () -> db.saveDocumentTopThreeTopics(document),
-                            (ex) -> logImportError("Error storing document top three topics", ex, filePath));
-
-                    logImportInfo("Successfully added top three topics to document: " + document.getId(), LogStatus.SAVED, filePath, System.currentTimeMillis() - start);
-                }
-            }
-        }
-
-        logImportInfo("Successfully post processed document " + filePath, LogStatus.SAVED, filePath, System.currentTimeMillis() - start);
-        document.setPostProcessed(true);
-        ExceptionUtils.tryCatchLog(() -> db.updateDocument(document), (ex) -> logImportError("Couldn't save the document postprocessing flag", ex, filePath));
     }
 
     /**

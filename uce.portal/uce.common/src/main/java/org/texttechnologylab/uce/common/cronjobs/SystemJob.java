@@ -32,6 +32,9 @@ public class SystemJob implements Runnable {
                 // RAG
                 this.serviceContext.getBean(RAGService.class).TestConnection();
 
+                // RAG
+                this.serviceContext.getBean(EmbeddingService.class).TestConnection();
+
                 // S3Storage
                 this.serviceContext.getBean(S3StorageService.class).TestConnection();
 
