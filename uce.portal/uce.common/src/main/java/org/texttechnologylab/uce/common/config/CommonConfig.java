@@ -6,7 +6,10 @@ import org.texttechnologylab.uce.common.models.geonames.FeatureCode;
 import org.texttechnologylab.uce.common.utils.SystemStatus;
 
 import java.io.BufferedReader;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.nio.file.Files;
+import java.nio.file.Path;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -20,25 +23,59 @@ public class CommonConfig {
     public CommonConfig() {
         properties = new Properties();
 
+//        // Load in the common conf in the java properties() style
+//        try {
+//            // Load the .conf file from the resources directory
+//            // commonEmpty.conf is for loading with DUUI cas importer
+//            Path external = Path.of("/app/config/commonEmpty.conf");
+//            var inputStream = getClass().getClassLoader().getResourceAsStream("commonEmpty.conf");
+//            if (inputStream != null) {
+//                // Check inputStream is empty, if so load the default common.conf from the classpath
+//                if (inputStream.available() == 0) {
+//                    inputStream = getClass().getClassLoader().getResourceAsStream("common.conf");
+//                    if (inputStream == null) {
+//                        throw new RuntimeException("common.conf not found not found in the classpath");
+//                    }
+//                }
+//                properties.load(inputStream);
+//            } else {
+//                throw new RuntimeException("common.conf not found not found in the classpath");
+//            }
+//        } catch (Exception e) {
+//            throw new RuntimeException("Error loading config.conf: " + e.getMessage());
+//        }
+
         // Load in the common conf in the java properties() style
         try {
-            // Load the .conf file from the resources directory
-            // commonEmpty.conf is for loading with DUUI cas importer
-            var inputStream = getClass().getClassLoader().getResourceAsStream("commonEmpty.conf");
-            if (inputStream != null) {
-                // Check inputStream is empty, if so load the default common.conf from the classpath
-                if (inputStream.available() == 0) {
-                    inputStream = getClass().getClassLoader().getResourceAsStream("common.conf");
-                    if (inputStream == null) {
-                        throw new RuntimeException("common.conf not found not found in the classpath");
-                    }
-                }
-                properties.load(inputStream);
+            InputStream inputStream = null;
+
+            // 1) Prefer an external config file (works in Docker + fat JAR)
+            Path external = Path.of("/app/config/commonEmpty.conf");
+            if (Files.exists(external) && Files.isRegularFile(external) && Files.size(external) > 0) {
+                inputStream = Files.newInputStream(external);
             } else {
-                throw new RuntimeException("common.conf not found not found in the classpath");
+//                // 2) Fallback to classpath resource commonEmpty.conf (if present and non-empty)
+//                inputStream = getClass().getClassLoader().getResourceAsStream("commonEmpty.conf");
+//                if (inputStream != null) {
+//                    // If commonEmpty.conf exists but is empty, fallback to common.conf
+//                    if (inputStream.available() == 0) {
+//                        inputStream.close();
+//                        inputStream = null;
+//                    }
+//                }
+
+                // 3) Final fallback: default common.conf from classpath
+                inputStream = getClass().getClassLoader().getResourceAsStream("common.conf");
+                if (inputStream == null) {
+                    throw new RuntimeException("common.conf not found in the classpath");
+                }
+            }
+
+            try (InputStream is = inputStream) {
+                properties.load(is);
             }
         } catch (Exception e) {
-            throw new RuntimeException("Error loading config.conf: " + e.getMessage());
+            throw new RuntimeException("Error loading common config: " + e.getMessage(), e);
         }
 
         // Now load in the GeoNames feature Codes.
@@ -102,6 +139,10 @@ public class CommonConfig {
 
     public String getRAGWebserverBaseUrl() {
         return getProperty("rag.webserver.base.url");
+    }
+
+    public String getEmbeddingWebserverBaseUrl() {
+        return getProperty("embedding.webserver.base.url");
     }
 
     public Configuration getKeyCloakConfiguration() {

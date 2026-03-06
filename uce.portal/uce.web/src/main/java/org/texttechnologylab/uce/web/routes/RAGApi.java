@@ -17,6 +17,7 @@ import org.texttechnologylab.uce.common.models.corpus.Document;
 import org.texttechnologylab.uce.common.models.corpus.Image;
 import org.texttechnologylab.uce.common.models.rag.*;
 import org.texttechnologylab.uce.common.security.DocumentAccessManager;
+import org.texttechnologylab.uce.common.services.EmbeddingService;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.uce.common.services.RAGService;
 import org.texttechnologylab.uce.common.utils.SystemStatus;
@@ -32,6 +33,7 @@ public class RAGApi implements UceApi {
     private static final Logger logger = LogManager.getLogger(RAGApi.class);
     private Configuration freemarkerConfig;
     private RAGService ragService;
+    private EmbeddingService embeddingService;
     private PostgresqlDataInterface_Impl db;
     private final CommonConfig commonConfig = new CommonConfig();
     private final Map<UUID, RAGChatState> activeRagChatStates = new HashMap<>();
@@ -43,6 +45,7 @@ public class RAGApi implements UceApi {
         this.freemarkerConfig = freemarkerConfig;
         this.db = serviceContext.getBean(PostgresqlDataInterface_Impl.class);
         this.ragService = serviceContext.getBean(RAGService.class);
+        this.embeddingService = serviceContext.getBean(EmbeddingService.class);
         this.accessManager = serviceContext.getBean(DocumentAccessManager.class);
     }
 
@@ -326,7 +329,7 @@ public class RAGApi implements UceApi {
                     prompt = prompt.replace(prompt_replace_text, contextText);
                 }
                 else {
-                    nearestDocumentChunkEmbeddings = ragService.getClosestDocumentChunkEmbeddings(userMessage, amountOfDocs, -1);
+                    nearestDocumentChunkEmbeddings = embeddingService.getClosestDocumentChunkEmbeddings(userMessage, amountOfDocs, -1);
                     // foreach fetched document embedding, we also fetch the actual documents so the chat can show them
 
                     // TODO Why is converting to int necessary here? document_id is long
@@ -527,7 +530,7 @@ public class RAGApi implements UceApi {
         try {
 
             ArrayList<DocumentSentenceEmbedding> result =
-                    ragService.getDocumentSentenceEmbeddingsOfDocument(documentId);
+                    embeddingService.getDocumentSentenceEmbeddingsOfDocument(documentId);
 
             List<Map<String, Object>> simplified = result.stream()
                     .map(e -> {
