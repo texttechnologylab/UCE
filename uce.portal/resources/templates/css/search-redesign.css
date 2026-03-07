@@ -397,6 +397,14 @@
     color: black !important;
 }
 
+.sort-container .switch-search-layer-result-btn.is-static {
+    cursor: default;
+}
+
+.sort-container .switch-search-layer-result-btn.is-static:hover {
+    border-bottom-color: var(--secondary) !important;
+}
+
 .pagination {
     width: 100%;
     align-items: center;

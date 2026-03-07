@@ -1,6 +1,10 @@
 <div class="mt-0 search-state" data-id="${searchState.getSearchId()}">
     <#assign showSearchHint = (uceConfig.settings.ui.mainPage.showSearchHint)!true>
     <#assign middleColumnClass = showSearchHint?then("col-lg-6", "col-lg-12")>
+    <#assign searchLayerSwitchInfo = "Switches between the available result layers of this search (e.g. Fulltext and Embedding).">
+    <#if languageResource.getDefaultLanguage()?starts_with("de")>
+        <#assign searchLayerSwitchInfo = "Wechselt zwischen den verfugbaren Ergebnis-Layern dieser Suche (z. B. Volltext und Embedding).">
+    </#if>
 
     <div class="header">
         <div class="flexed w-100 align-items-center justify-content-center">
@@ -15,8 +19,7 @@
     <#if showSearchHint && searchState.hasUceMetadataFilters()>
         <div id="search-results-visualization-container">
             <div class="group-box bg-ghost card-shadow w-100">
-                <div class="flexed align-items-center justify-content-between clickable"
-                     onclick="$(this).closest('.group-box').find('.expanded').fadeToggle(75)">
+                <div class="flexed align-items-center justify-content-between clickable">
                     <h6 class="mb-0 w-100">${languageResource.get("searchVisualizationSummaryTitle")}</h6>
                     <a class="rounded-a"><i class="far fa-chart-bar"></i></a>
                 </div>
@@ -118,12 +121,25 @@
                 <!-- search layers and such -->
                 <div class="flexed align-items-center justify-content-between">
                     <div class="flexed align-items-center">
-                        <a class="btn switch-search-layer-result-btn text hoverable selected"
-                           data-layer="${searchState.getPrimarySearchLayer()}">
-                            <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}</a>
-                        <#if searchState.getFoundDocumentChunkEmbeddings()?exists>
+                        <#assign hasAlternateLayer = searchState.getFoundDocumentChunkEmbeddings()?exists>
+                        <#if hasAlternateLayer>
+                            <a class="btn switch-search-layer-result-btn text hoverable selected"
+                               data-trigger="hover"
+                               data-toggle="popover"
+                               data-placement="top"
+                               data-content="${searchLayerSwitchInfo}"
+                               data-layer="${searchState.getPrimarySearchLayer()}">
+                                <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}</a>
                             <a class="btn switch-search-layer-result-btn text hoverable" data-layer="EMBEDDING">
                                 <i class="fab fa-searchengin mr-1"></i> Embedding</a>
+                        <#else>
+                            <span class="btn switch-search-layer-result-btn is-static text selected"
+                                  data-trigger="hover"
+                                  data-toggle="popover"
+                                  data-placement="top"
+                                  data-content="${searchLayerSwitchInfo}">
+                                <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}
+                            </span>
                         </#if>
                     </div>
 
