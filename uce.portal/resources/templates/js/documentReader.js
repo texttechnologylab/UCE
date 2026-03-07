@@ -45,6 +45,43 @@ function setupImageZoomOverlay() {
     });
 }
 
+function enforceFeedbackCenterLayout() {
+    // Runtime fallback: detect feedback by actual DOM, not only mode flags.
+    const hasFeedbackDom = !!document.querySelector('.feedback-main');
+    if (!hasFeedbackDom && !document.body.classList.contains('feedback-layout')) return;
+
+    document.body.classList.add('feedback-layout');
+    document.body.classList.add('feedback-layout-detected');
+
+    const row = document.querySelector('.container-fluid > .flexed');
+    const readerMain = document.querySelector('.reader-main');
+    const readerContainer = document.querySelector('.reader-main > .reader-container.container');
+    if (row) row.classList.add('feedback-row-centered');
+    if (readerMain) readerMain.classList.add('reader-feedback-centered');
+    if (readerMain) readerMain.classList.add('feedback-layout-main');
+    if (readerContainer) readerContainer.classList.add('feedback-layout-container');
+    applyFeedbackCenterInlineLayout();
+}
+
+function applyFeedbackCenterInlineLayout() {
+    const hasFeedbackLayout = document.body.classList.contains('feedback-layout') || !!document.querySelector('.feedback-main');
+    if (!hasFeedbackLayout) return;
+
+    const readerMain = document.querySelector('.reader-main');
+    const readerContainer = document.querySelector('.reader-main > .reader-container.container');
+    if (!readerMain || !readerContainer) return;
+
+    // Keep layout deterministic in CSS; remove stale inline overrides.
+    readerMain.style.removeProperty('display');
+    readerMain.style.removeProperty('justify-content');
+    readerMain.style.removeProperty('padding-right');
+    readerMain.style.removeProperty('box-sizing');
+    readerContainer.style.removeProperty('width');
+    readerContainer.style.removeProperty('max-width');
+    readerContainer.style.removeProperty('margin-left');
+    readerContainer.style.removeProperty('margin-right');
+}
+
 function imageZoom(img_src) {
     window.uceDocumentViewerOverlayImg.src = img_src;
     window.uceDocumentViewerOverlay.style.display = 'flex';
@@ -52,28 +89,341 @@ function imageZoom(img_src) {
 
 setupImageZoomOverlay();
 
+function isSidebarDrawerMode() {
+    return document.body.classList.contains('sidebar-drawer-mode');
+}
+
+function syncMinimapVisibility() {
+    const minimap = document.querySelector('.scrollbar-minimap');
+    if (!minimap) return;
+    // Disable minimap rail in the new reader shell to avoid overlap artifacts
+    // beside the right sidebar when collapsing/reopening.
+    minimap.style.display = 'none';
+}
+
+function updateSidebarDrawerTogglePosition() {
+    const sidebar = document.querySelector('.side-bar');
+    if (!sidebar) return;
+    const openWidth = Math.round(sidebar.getBoundingClientRect().width || 0);
+    if (openWidth > 0) {
+        document.body.style.setProperty('--sidebar-drawer-open-width', openWidth + 'px');
+    } else {
+        document.body.style.removeProperty('--sidebar-drawer-open-width');
+    }
+}
+
+function refreshSidebarDrawerTogglePositionSmooth() {
+    // Keep drawer toggle pinned to the live sidebar edge while width transitions run.
+    updateSidebarDrawerTogglePosition();
+    requestAnimationFrame(() => updateSidebarDrawerTogglePosition());
+    window.setTimeout(() => updateSidebarDrawerTogglePosition(), 90);
+    window.setTimeout(() => updateSidebarDrawerTogglePosition(), 220);
+    window.setTimeout(() => updateSidebarDrawerTogglePosition(), 380);
+}
+
+function setSidebarDrawerOpen(open) {
+    if (open) {
+        $('.side-bar').removeClass('sidebar-collapsed').css({
+            'width': '',
+            'flex-basis': '',
+            'max-width': '',
+            'min-width': ''
+        });
+    }
+    document.body.classList.toggle('sidebar-drawer-open', !!open);
+    syncMinimapVisibility();
+    refreshSidebarDrawerTogglePositionSmooth();
+    applyFeedbackCenterInlineLayout();
+}
+
+const SIDEBAR_RESIZE_DEBOUNCE_MS = 120;
+const SIDEBAR_LAYOUT_COOLDOWN_MS = 320;
+const SIDEBAR_AUTO_CLOSE_DELAY_MS = 90;
+const SIDEBAR_AUTO_OPEN_DELAY_MS = 650;
+let sidebarResizeDebounceTimer = null;
+let sidebarAutoLayoutLockedUntil = 0;
+let sidebarPendingModeTimer = null;
+let sidebarPendingMode = null;
+
+function computeShouldUseSidebarDrawerMode() {
+    const sidebar = document.querySelector('.side-bar');
+    const main = document.querySelector('.reader-main');
+    if (!sidebar || !main) return document.body.classList.contains('sidebar-drawer-mode');
+
+    const hasFeedbackLayout = document.body.classList.contains('feedback-layout') || !!document.querySelector('.feedback-main');
+    const activeTabId = getActiveSidebarTabId();
+    const COLLAPSE_MIN_MAIN_WIDTH = activeTabId === 'visualization-tab' ? 620 : 760;
+    const EXPAND_MIN_MAIN_WIDTH = activeTabId === 'visualization-tab' ? 760 : 900; // hysteresis
+    const currentModeIsDrawer = document.body.classList.contains('sidebar-drawer-mode');
+
+    const sidebarRect = sidebar.getBoundingClientRect();
+    const sidebarWidth = sidebarRect.width || 0;
+    const availableMainWidth = Math.max(0, window.innerWidth - sidebarWidth);
+    const readerContainer = document.querySelector('.reader-container');
+    const readerRect = readerContainer ? readerContainer.getBoundingClientRect() : null;
+    const overlapPx = readerRect ? (readerRect.right - sidebarRect.left) : 0;
+    const overlayCollision = overlapPx > 24 && window.innerWidth < 1450;
+    // Middle pane has priority: once available room drops below threshold, use drawer mode.
+    const notEnoughMainSpace = availableMainWidth > 0 && availableMainWidth < COLLAPSE_MIN_MAIN_WIDTH;
+    const keepDrawerUntilSafe = currentModeIsDrawer && (availableMainWidth > 0 && availableMainWidth < EXPAND_MIN_MAIN_WIDTH);
+    // In feedback layout, intentional fixed sidebar overlap should not force drawer mode on desktop.
+    const collidingWithMainPane = hasFeedbackLayout ? false : overlayCollision;
+
+    return collidingWithMainPane || notEnoughMainSpace || keepDrawerUntilSafe;
+}
+
+function updateSidebarLayoutMode(options = {}) {
+    const force = !!options.force;
+    const shouldUseDrawer = computeShouldUseSidebarDrawerMode();
+    const currentModeIsDrawer = document.body.classList.contains('sidebar-drawer-mode');
+
+    const now = Date.now();
+    if (!force && now < sidebarAutoLayoutLockedUntil && shouldUseDrawer !== currentModeIsDrawer) return;
+
+    if (!force && shouldUseDrawer !== currentModeIsDrawer) {
+        if (sidebarPendingMode === shouldUseDrawer) return;
+        if (sidebarPendingModeTimer) window.clearTimeout(sidebarPendingModeTimer);
+        sidebarPendingMode = shouldUseDrawer;
+
+        const delay = shouldUseDrawer ? SIDEBAR_AUTO_CLOSE_DELAY_MS : SIDEBAR_AUTO_OPEN_DELAY_MS;
+        sidebarPendingModeTimer = window.setTimeout(() => {
+            sidebarPendingModeTimer = null;
+            const pendingTarget = sidebarPendingMode;
+            sidebarPendingMode = null;
+            if (pendingTarget === computeShouldUseSidebarDrawerMode()) {
+                updateSidebarLayoutMode({ force: true });
+            }
+        }, delay);
+        return;
+    }
+
+    if (sidebarPendingModeTimer) {
+        window.clearTimeout(sidebarPendingModeTimer);
+        sidebarPendingModeTimer = null;
+    }
+    sidebarPendingMode = null;
+
+    if (shouldUseDrawer !== currentModeIsDrawer) {
+        document.body.classList.toggle('sidebar-drawer-mode', shouldUseDrawer);
+        const $sidebar = $('.side-bar');
+        const activeTabId = getActiveSidebarTabId();
+        if (shouldUseDrawer) {
+            $sidebar.removeClass('sidebar-collapsed').css({
+                'width': '',
+                'flex-basis': '',
+                'max-width': '',
+                'min-width': ''
+            });
+        } else {
+            // Reset stale constrained widths when moving back to regular desktop sidebar.
+            $sidebar.removeClass('sidebar-collapsed').css({
+                'width': '',
+                'flex-basis': '',
+                'max-width': '',
+                'min-width': ''
+            });
+            if (activeTabId === 'visualization-tab') {
+                $sidebar.addClass('visualization-expanded');
+            } else {
+                $sidebar.removeClass('visualization-expanded');
+            }
+            $('.side-bar .side-bar-content').show();
+        }
+        // Middle pane has priority: whenever auto-switching mode, collapse the drawer.
+        setSidebarDrawerOpen(false);
+        sidebarAutoLayoutLockedUntil = now + SIDEBAR_LAYOUT_COOLDOWN_MS;
+        applyFeedbackCenterInlineLayout();
+        return;
+    }
+
+    if (!shouldUseDrawer && document.body.classList.contains('sidebar-drawer-open')) {
+        setSidebarDrawerOpen(false);
+    }
+    syncMinimapVisibility();
+    applyFeedbackCenterInlineLayout();
+}
+
+function scheduleSidebarLayoutRefresh() {
+    if (sidebarResizeDebounceTimer) window.clearTimeout(sidebarResizeDebounceTimer);
+    sidebarResizeDebounceTimer = window.setTimeout(() => {
+        updateSidebarLayoutMode({ force: true });
+        syncMinimapVisibility();
+        refreshSidebarDrawerTogglePositionSmooth();
+        updateFloatingUIPositions();
+        applyFeedbackCenterInlineLayout();
+    }, SIDEBAR_RESIZE_DEBOUNCE_MS);
+}
+
+function stabilizeDesktopSidebarMode() {
+    // Guardrail: on wide screens we should never remain in drawer mode if collision
+    // checks say there is enough room; prevents stale lock-in after transitions.
+    if (window.innerWidth < 1450) return;
+    if (!isSidebarDrawerMode()) return;
+    if (computeShouldUseSidebarDrawerMode()) return;
+    document.body.classList.remove('sidebar-drawer-mode', 'sidebar-drawer-open');
+}
+
+function getActiveSidebarTabId() {
+    const activeBtn = document.querySelector('.tab-btn.active');
+    return activeBtn ? activeBtn.getAttribute('data-tab') : 'navigator-tab';
+}
+
+function normalizeSidebarForTab(targetId) {
+    const $sidebar = $('.side-bar');
+    if ($sidebar.length === 0) return;
+    $sidebar.removeClass('sidebar-collapsed').css({
+        'width': '',
+        'flex-basis': '',
+        'max-width': '',
+        'min-width': ''
+    });
+    if (targetId === 'visualization-tab') {
+        $sidebar.addClass('visualization-expanded');
+    } else {
+        $sidebar.removeClass('visualization-expanded');
+    }
+}
+
+function isVizContainerReady(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return false;
+    const rect = container.getBoundingClientRect();
+    return rect.width > 80 && rect.height > 80;
+}
+
+function renderVizPanelByTarget(target, attempt = 0) {
+    const maxAttempts = 20;
+    const retryDelayMs = 120;
+    const targetToContainer = {
+        '#viz-panel-1': 'vp-1',
+        '#viz-panel-2': 'vp-2',
+        '#viz-panel-3': 'vp-3',
+        '#viz-panel-4': 'vp-4',
+        '#viz-panel-5': 'vp-5'
+    };
+    const targetToRenderer = {
+        '#viz-panel-1': renderTemporalExplorer,
+        '#viz-panel-2': renderTopicEntityChordDiagram,
+        '#viz-panel-3': renderSentenceTopicNetwork,
+        '#viz-panel-4': renderTopicSimilarityMatrix,
+        '#viz-panel-5': renderSentenceTopicSankey
+    };
+
+    const containerId = targetToContainer[target] || 'vp-1';
+    const renderer = targetToRenderer[target] || renderTemporalExplorer;
+    if (typeof renderer !== 'function') return;
+
+    if (!isVizContainerReady(containerId)) {
+        if (attempt < maxAttempts) {
+            window.setTimeout(() => renderVizPanelByTarget(target, attempt + 1), retryDelayMs);
+        }
+        return;
+    }
+
+    renderer(containerId);
+}
+
+function resetVizPanelContainer(panelContainer) {
+    if (!panelContainer) return;
+    if (window.echarts && typeof window.echarts.getInstanceByDom === 'function') {
+        const existingInstance = window.echarts.getInstanceByDom(panelContainer);
+        if (existingInstance) {
+            existingInstance.dispose();
+        }
+    }
+    panelContainer.removeAttribute('_echarts_instance_');
+    panelContainer.classList.remove('rendered');
+    panelContainer.innerHTML = '';
+}
+
+function rerenderVisualizationForCurrentPanel() {
+    const activeBtn = document.querySelector('.viz-nav-btn.active');
+    const target = activeBtn ? activeBtn.getAttribute('data-target') : '#viz-panel-1';
+    const targetIdMatch = String(target || '').match(/#viz-panel-(\d+)/);
+    const panelId = targetIdMatch && targetIdMatch[1] ? targetIdMatch[1] : '1';
+    const panelContainer = document.getElementById('vp-' + panelId);
+    resetVizPanelContainer(panelContainer);
+
+    window.setTimeout(() => renderVizPanelByTarget(target), 120);
+}
+
+$('body').on('click', '.sidebar-drawer-toggle', function () {
+    if (isSidebarDrawerMode()) {
+        setSidebarDrawerOpen(!document.body.classList.contains('sidebar-drawer-open'));
+        return;
+    }
+
+    // Non-drawer mode: use the same collapse/expand behavior as the classic sidebar expander.
+    const $expander = $('.side-bar .expander');
+    if ($expander.length > 0) {
+        $expander.trigger('click');
+    } else {
+        const $sidebar = $('.side-bar');
+        const collapsed = ($sidebar.width() || 0) <= 40;
+        if (collapsed) {
+            const activeTabId = getActiveSidebarTabId();
+            $sidebar.removeClass('sidebar-collapsed').css({
+                'width': '',
+                'flex-basis': '',
+                'max-width': '',
+                'min-width': ''
+            });
+            if (activeTabId === 'visualization-tab') {
+                $sidebar.addClass('visualization-expanded');
+            } else {
+                $sidebar.removeClass('visualization-expanded');
+            }
+            $sidebar.removeClass('sidebar-collapsed');
+            $('.side-bar .side-bar-content').fadeIn(250);
+        } else {
+            $sidebar.css('width', '20px');
+            $sidebar.addClass('sidebar-collapsed');
+            $('.side-bar .side-bar-content').fadeOut(150);
+        }
+    }
+    syncMinimapVisibility();
+    refreshSidebarDrawerTogglePositionSmooth();
+    updateFloatingUIPositions();
+});
+
+$('body').on('click', '.sidebar-drawer-backdrop', function () {
+    setSidebarDrawerOpen(false);
+});
+
 /**
  * Handles the expanding and de-expanding of the side bar
  */
 $('body').on('click', '.side-bar .expander', function () {
+    if (isSidebarDrawerMode()) {
+        setSidebarDrawerOpen(!document.body.classList.contains('sidebar-drawer-open'));
+        return;
+    }
     let expanded = $(this).data('expanded');
 
     if (expanded) {
         $('.side-bar').css('width', '20px');
+        $('.side-bar').addClass('sidebar-collapsed');
         $('.side-bar .side-bar-content').fadeOut(150);
         $(this).find('i').css({
             'transform': 'rotate(180deg)',
             'transition': '0.35s'
         });
     } else {
+        $('.side-bar').removeClass('sidebar-collapsed');
         $(this).find('i').css({
             'transform': 'rotate(0deg)',
             'transition': '0.35s'
         });
         $('.side-bar .side-bar-content').fadeIn(500);
-        $('.side-bar').css('width', '500px');
+        $('.side-bar').css({
+            'width': '',
+            'flex-basis': '',
+            'max-width': '',
+            'min-width': ''
+        });
     }
     $(this).data('expanded', !expanded);
+    syncMinimapVisibility();
 })
 
 /**
@@ -155,11 +505,15 @@ function handleFocusedPageChanged() {
 /**
  * Handle the changing of the font size
  */
-$('body').on('change', '.font-size-range', function () {
+$('body').on('input change', '.font-size-range', function () {
     const fontSize = $(this).val();
-    $('.document-content *').each(function () {
-        $(this).css('font-size', fontSize + 'px');
-    });
+    const selectors = [
+        'p', 'span', 'label', 'li', 'a', 'td', 'th',
+        'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote', 'small'
+    ].join(', ');
+
+    // Keep structural elements/icons untouched; update readable text only.
+    $('.document-content').find(selectors).css('font-size', fontSize + 'px');
 })
 
 $('body').on('mouseenter', '.reader-container .annotation', function () {
@@ -180,6 +534,9 @@ $('body').on('click', '.found-searchtokens-list .found-search-token', function (
 });
 
 $(document).ready(function () {
+    enforceFeedbackCenterLayout();
+    updateSidebarLayoutMode({ force: true });
+    updateFloatingUIPositions();
     checkScroll();
 
     // we want to continously lazy load new pages
@@ -901,6 +1258,14 @@ function updateFloatingUIPositions() {
     const navButtons = document.querySelector('.topic-navigation-buttons');
 
     if (!sidebar || !minimap) return;
+    syncMinimapVisibility();
+    if (getComputedStyle(minimap).display === 'none') return;
+
+    if (isSidebarDrawerMode() && !document.body.classList.contains('sidebar-drawer-open')) {
+        minimap.style.right = '10px';
+        if (navButtons) navButtons.style.right = '50px';
+        return;
+    }
 
     const sidebarRect = sidebar.getBoundingClientRect();
 
@@ -912,43 +1277,105 @@ function updateFloatingUIPositions() {
     }
 }
 
-window.addEventListener('resize', updateFloatingUIPositions);
-window.addEventListener('DOMContentLoaded', updateFloatingUIPositions);
-
-document.querySelectorAll('.tab-btn').forEach(btn => {
-    btn.addEventListener('click', async () => {
-        const targetId = btn.getAttribute('data-tab');
-        const sideBar = document.querySelector('.side-bar');
-
-        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-        btn.classList.add('active');
-
-        document.querySelectorAll('.tab-pane').forEach(pane => {
-            pane.classList.toggle('active', pane.id === targetId);
+window.addEventListener('resize', scheduleSidebarLayoutRefresh);
+window.addEventListener('DOMContentLoaded', () => {
+    enforceFeedbackCenterLayout();
+    updateSidebarLayoutMode({ force: true });
+    syncMinimapVisibility();
+    refreshSidebarDrawerTogglePositionSmooth();
+    updateFloatingUIPositions();
+    const sideBar = document.querySelector('.side-bar');
+    if (sideBar) {
+        sideBar.addEventListener('transitionend', (event) => {
+            if (event && (event.propertyName === 'width' || event.propertyName === 'flex-basis' || event.propertyName === 'transform')) {
+                refreshSidebarDrawerTogglePositionSmooth();
+                updateFloatingUIPositions();
+            }
         });
+    }
+});
 
-        hideTopicNavButtons();
-        clearTopicColoring();
+function activateSidebarTab(targetId, triggerButton) {
+    const sideBar = document.querySelector('.side-bar');
+    if (!sideBar || !targetId) return;
+    const drawerMode = isSidebarDrawerMode();
 
-        if (targetId !== 'navigator-tab') {
-            $('.scrollbar-minimap').hide();
-            sideBar.classList.add('visualization-expanded');
-        } else {
-            setTimeout(updateFloatingUIPositions,500) ;
-            currentSelectedTopic = null;
-            sideBar.classList.remove('visualization-expanded');
-            $('.scrollbar-minimap').show();
-        }
-        if (targetId === 'visualization-tab') {
-            setTimeout(() => renderTemporalExplorer('vp-1'), 500);
-            $('.viz-nav-btn').removeClass('active');
-            $('.viz-nav-btn').first().addClass('active');
+    document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+    if (triggerButton) triggerButton.classList.add('active');
 
-            $('.viz-panel').removeClass('active');
-            $('.viz-panel').first().addClass('active');
-        }
+    document.querySelectorAll('.tab-pane').forEach(pane => {
+        pane.classList.toggle('active', pane.id === targetId);
     });
 
+    hideTopicNavButtons();
+    clearTopicColoring();
+
+    if (targetId !== 'navigator-tab') {
+        $('.scrollbar-minimap').hide();
+        sideBar.classList.add('visualization-expanded');
+    } else {
+        setTimeout(updateFloatingUIPositions, 500);
+        currentSelectedTopic = null;
+        sideBar.classList.remove('visualization-expanded');
+        $('.scrollbar-minimap').show();
+    }
+
+    normalizeSidebarForTab(targetId);
+    if (drawerMode) {
+        setSidebarDrawerOpen(true);
+    } else {
+        if (targetId === 'visualization-tab') {
+            $('.side-bar').removeClass('sidebar-collapsed').css({
+                'width': '',
+                'flex-basis': '',
+                'max-width': '',
+                'min-width': ''
+            }).addClass('visualization-expanded');
+        } else {
+            $('.side-bar').removeClass('sidebar-collapsed visualization-expanded').css({
+                'width': '',
+                'flex-basis': '',
+                'max-width': '',
+                'min-width': ''
+            });
+        }
+        $('.side-bar .side-bar-content').show();
+    }
+
+    updateSidebarLayoutMode({ force: true });
+    // Re-evaluate after width transitions settle; avoids false drawer-mode lock-in
+    // when switching from visualization-expanded back to control on wide screens.
+    window.setTimeout(() => {
+        updateSidebarLayoutMode({ force: true });
+        stabilizeDesktopSidebarMode();
+        refreshSidebarDrawerTogglePositionSmooth();
+        updateFloatingUIPositions();
+    }, 360);
+    window.setTimeout(() => {
+        stabilizeDesktopSidebarMode();
+        refreshSidebarDrawerTogglePositionSmooth();
+        updateFloatingUIPositions();
+    }, 900);
+    scheduleSidebarLayoutRefresh();
+    syncMinimapVisibility();
+    refreshSidebarDrawerTogglePositionSmooth();
+    updateFloatingUIPositions();
+
+    if (targetId === 'visualization-tab') {
+        const firstPanelContainer = document.getElementById('vp-1');
+        resetVizPanelContainer(firstPanelContainer);
+        window.setTimeout(() => renderVizPanelByTarget('#viz-panel-1'), 220);
+        $('.viz-nav-btn').removeClass('active');
+        $('.viz-nav-btn').first().addClass('active');
+        $('.viz-panel').removeClass('active');
+        $('.viz-panel').first().addClass('active');
+    }
+}
+
+$(document).off('click', '.tab-btn').on('click', '.tab-btn', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+    activateSidebarTab($(this).attr('data-tab'), this);
 });
 
 $(document).on('click', '.viz-nav-btn', function () {
@@ -965,24 +1392,18 @@ $(document).on('click', '.viz-nav-btn', function () {
     $('.viz-panel').removeClass('active');
     $(target).addClass('active');
 
-    if (target === '#viz-panel-1') {
-        setTimeout(() => renderTemporalExplorer('vp-1'), 500);
+    // Force a fresh render for the selected visualization panel.
+    const targetIdMatch = String(target || '').match(/#viz-panel-(\d+)/);
+    if (targetIdMatch && targetIdMatch[1]) {
+        resetVizPanelContainer(document.getElementById('vp-' + targetIdMatch[1]));
     }
-    if (target === '#viz-panel-2') {
-        setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
-    }
-    if (target === '#viz-panel-3') {
-        setTimeout(() => renderSentenceTopicNetwork('vp-3'), 500);
-    }
+
     if (target === '#viz-panel-4') {
         $('.selector-container').hide();
-        setTimeout(() => renderTopicSimilarityMatrix('vp-4'), 500);
-
     }
-    if (target === '#viz-panel-5') {
-        setTimeout(() => renderSentenceTopicSankey('vp-5'), 500);
-
-    }
+    window.setTimeout(() => renderVizPanelByTarget(target), 220);
+    refreshSidebarDrawerTogglePositionSmooth();
+    updateFloatingUIPositions();
 });
 
 
@@ -1680,6 +2101,7 @@ function renderTemporalExplorer(containerId) {
         container.classList.add('rendered');
     }).catch(err => {
         console.error("Error loading or processing annotation data:", err);
+        container.classList.remove('rendered');
     });
 }
 
