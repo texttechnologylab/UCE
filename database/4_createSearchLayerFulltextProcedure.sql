@@ -89,7 +89,7 @@ BEGIN
 								
 		-- If we dont search for any string, we dont need to fulltext search all documents
 		ranked_pages_cte := 'WITH limited_docs AS NOT MATERIALIZED (
-				SELECT id, documenttitle FROM permitted_documents($13, $14) WHERE corpusid = $2 LIMIT 999
+				SELECT id, documenttitle FROM permitted_documents($13, $14) pd WHERE pd.corpusid = $2 LIMIT 999
 			)
 			SELECT 
                 p.document_id AS doc_id, 

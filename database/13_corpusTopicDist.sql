@@ -1,5 +1,7 @@
+DROP FUNCTION IF EXISTS get_normalized_topic_scores(BIGINT, text, integer);
+
 CREATE OR REPLACE FUNCTION get_normalized_topic_scores(
-    corpusid BIGINT,
+    p_corpusid BIGINT,
     p_user_name text DEFAULT NULL,
     p_min_level integer DEFAULT 1
     )
@@ -16,8 +18,8 @@ FROM (
          FROM documenttopicsraw
          WHERE document_id IN (
              SELECT id
-             FROM permitted_documents(get_normalized_topic_scores.p_user_name, get_normalized_topic_scores.p_min_level)
-             WHERE corpusid = get_normalized_topic_scores.corpusid
+             FROM permitted_documents(get_normalized_topic_scores.p_user_name, get_normalized_topic_scores.p_min_level) pd
+             WHERE pd.corpusid = get_normalized_topic_scores.p_corpusid
          )
          GROUP BY topiclabel
      ) subquery
