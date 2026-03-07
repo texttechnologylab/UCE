@@ -110,6 +110,8 @@ public class App {
 
         commonConfig = new CommonConfig();
         logger.info("Loaded the common config.");
+        LanguageResources.setTemplatesLocationOverride(commonConfig.getTemplatesLocation());
+        logger.info("Language resources templates override path: " + commonConfig.getTemplatesLocation());
 
         logger.info("Adjusting UCE to the UceConfig...");
         ExceptionUtils.tryCatchLog(
@@ -293,6 +295,9 @@ public class App {
      * @throws IOException
      */
     private static String convertConfigImageString(String imgString) throws Exception {
+        if (imgString == null || imgString.isBlank()) {
+            return "";
+        }
         if (imgString.startsWith("BASE64::")) {
             // If the logo is a base64 string, we only need to remove the prefix
             return imgString.replace("BASE64::", "");

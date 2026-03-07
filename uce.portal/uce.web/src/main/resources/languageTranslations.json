@@ -255,6 +255,10 @@
     "de-DE": "Zeigt nur eine Schätzung der gefundenen Dokumente an, die in den meisten Fällen niedriger angesetzt ist.",
     "en-EN": "Displays only an estimate of the documents found, which in most cases is understated."
   },
+  "searchLayerSwitchInfo": {
+    "de-DE": "Wechselt zwischen den verfügbaren Ergebnis-Layern dieser Suche (z. B. Volltext und Embedding).",
+    "en-EN": "Switches between the available result layers of this search (e.g. Fulltext and Embedding)."
+  },
   "showUceMetadata": {
     "de-DE": "Zeige alle Metadaten an",
     "en-EN": "Show all metadata"
