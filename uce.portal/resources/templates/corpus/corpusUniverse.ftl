@@ -21,6 +21,8 @@
 </head>
 
 <div id="inputs-parameters" data-corpusid="${corpusId}" data-currentcenter="${currentCenter}"></div>
+<#include "*/sessionExpiredModal.ftl">
+<#include "*/auth/userShortProfile.ftl">
 
 <div id="universe-container" class="corpus-universe-container">
 </div>

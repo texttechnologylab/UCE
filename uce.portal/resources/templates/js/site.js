@@ -2,6 +2,37 @@ var selectedCorpus = -1;
 var currentView = undefined;
 var reloadTimelineMap = false;
 
+function getUiStateParams() {
+    const rawHash = window.location.hash && window.location.hash.startsWith('#')
+        ? window.location.hash.substring(1)
+        : '';
+    return new URLSearchParams(rawHash);
+}
+
+function updateUiState(mutator) {
+    const params = getUiStateParams();
+    mutator(params);
+    const serialized = params.toString();
+    const nextUrl = window.location.pathname + window.location.search + (serialized ? ('#' + serialized) : '');
+    history.replaceState(null, '', nextUrl);
+}
+
+window.uceUiState = {
+    get: function (key) {
+        const value = getUiStateParams().get(key);
+        return value === null ? undefined : value;
+    },
+    set: function (key, value) {
+        updateUiState((params) => {
+            if (value === undefined || value === null || value === '') params.delete(key);
+            else params.set(key, String(value));
+        });
+    },
+    remove: function (key) {
+        updateUiState((params) => params.delete(key));
+    }
+};
+
 function generateUUID() {
     return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function (c) {
         var r = Math.random() * 16 | 0,
@@ -19,18 +50,22 @@ $('body').on('click', 'nav .switch-view-btn', function () {
     navigateToView(id);
 })
 
-function navigateToView(id) {
+function navigateToView(id, options = {}) {
+    const preserveInspectorRoute = !!options.preserveInspectorRoute;
     // Close any potential modals:
-    $('.corpus-inspector-include').hide(150)
+    closeCorpusInspector(!preserveInspectorRoute);
 
     // Now adjust the main content
+    let foundView = false;
     $('.main-content-container .view').each(function () {
         if ($(this).data('id') === id) {
             $(this).show(50);
+            foundView = true;
         } else {
             $(this).hide();
         }
     })
+    if (!foundView) return;
 
     // Show the correct button
     $('nav .switch-view-btn').each(function (b) {
@@ -52,6 +87,93 @@ function navigateToView(id) {
     }
 
     currentView = id;
+    if (window.uceUiState) {
+        window.uceUiState.set('view', id);
+        if (id !== 'search') {
+            [
+                'q',
+                'searchId',
+                'page',
+                'sortBy',
+                'sortOrder',
+                'bins',
+                'feature',
+                'chartType',
+                'svOpen',
+                'ls',
+                'proMode',
+                'corpusId'
+            ].forEach((key) => window.uceUiState.remove(key));
+        }
+    }
+    if (id === 'search' && typeof ensureSearchViewStateOnEnter === 'function') {
+        window.setTimeout(() => ensureSearchViewStateOnEnter(), 0);
+    }
+}
+
+function setCorpusInspectorRouteState(corpusId) {
+    if (!window.uceUiState) return;
+    if (corpusId === undefined || corpusId === null || String(corpusId).trim() === '') {
+        window.uceUiState.remove('ci');
+        window.uceUiState.remove('ciCorpusId');
+        return;
+    }
+    window.uceUiState.set('ci', 'true');
+    window.uceUiState.set('ciCorpusId', String(corpusId));
+}
+
+function closeCorpusInspector(clearRouteState = true) {
+    $('.corpus-inspector-include').hide(150);
+    $('.corpus-inspector-include').removeAttr('data-active-corpus-id');
+    if (clearRouteState) {
+        setCorpusInspectorRouteState(undefined);
+    }
+}
+
+function openCorpusInspector(corpusId) {
+    if (corpusId === undefined || corpusId === null || String(corpusId).trim() === '') return;
+
+    $('.corpus-inspector-include').show(0);
+    $('.corpus-inspector-include').attr('data-active-corpus-id', String(corpusId));
+    $('.wiki-page-modal').addClass('wiki-page-modal-minimized');
+    setCorpusInspectorRouteState(corpusId);
+
+    $.ajax({
+        url: "/api/corpus/inspector?id=" + corpusId,
+        type: "GET",
+        success: function (response) {
+            // Render the corpus view
+            $('.corpus-inspector-include').html(response);
+            if (window.wikiHandler && typeof window.wikiHandler.syncCurrentPageLinks === 'function') {
+                window.wikiHandler.syncCurrentPageLinks();
+            }
+
+            // After that, we load documentsListView
+            loadCorpusDocuments(corpusId, $('.corpus-inspector-include .corpus-documents-list-include'));
+        },
+        error: function (xhr, status, error) {
+            console.error(xhr.responseText);
+            $('.corpus-inspector-include').html(xhr.responseText);
+        }
+    });
+}
+
+function restoreCorpusInspectorFromRoute() {
+    if (!window.uceUiState) return;
+    const routeCi = String(window.uceUiState.get('ci') || '').toLowerCase();
+    const routeCiCorpusId = String(window.uceUiState.get('ciCorpusId') || '');
+    const shouldOpen = routeCi === 'true' && routeCiCorpusId !== '';
+    const isOpen = $('.corpus-inspector-include:visible').length > 0;
+
+    if (!shouldOpen && isOpen) {
+        $('.corpus-inspector-include').hide(150);
+        return;
+    }
+    if (!shouldOpen) return;
+
+    const currentInspectorCorpus = String($('.corpus-inspector-include').attr('data-active-corpus-id') || '');
+    if (isOpen && currentInspectorCorpus === routeCiCorpusId) return;
+    openCorpusInspector(routeCiCorpusId);
 }
 
 /**
@@ -85,7 +207,10 @@ $('body').on('click', '.view .search-btn', function (event) {
  * Fires whenever a new corpus is selected. We update some UI components then
  */
 $('body').on('change', '#corpus-select', function () {
-    const selectedOption = $(this).get(0).options[$(this).get(0).selectedIndex];
+    const selectEl = $(this).get(0);
+    if (!selectEl || !selectEl.options || selectEl.selectedIndex < 0) return;
+    const selectedOption = selectEl.options[selectEl.selectedIndex];
+    if (!selectedOption) return;
     const hasSr = selectedOption.getAttribute("data-hassr");
     const hasBiofidOnthology = selectedOption.getAttribute("data-hasbiofid");
     const sparqlAlive = selectedOption.getAttribute("data-sparqlalive");
@@ -96,7 +221,8 @@ $('body').on('change', '#corpus-select', function () {
     const hasGeoNameAnnotations = selectedOption.getAttribute("data-hasgeonameannotations");
     const oldCorpusId = selectedCorpus;
     selectedCorpus = parseInt(selectedOption.getAttribute("data-id"));
-    if (oldCorpusId !== selectedCorpus) {
+    // Do not auto-run a search during first-time initialization.
+    if (!window.__uceSuppressAutoSearchOnCorpusChange && oldCorpusId !== -1 && oldCorpusId !== selectedCorpus) {
         // We have switched corpora then, start a new empty search.
         startNewSearch("", false);
     }
@@ -157,26 +283,27 @@ $('body').on('click', '.open-corpus-inspector-btn', function () {
         corpusId = selectedOption.getAttribute("data-id");
     }
 
-    // If the wiki modal is currently open, close it.
-    $('.corpus-inspector-include').show(0);
-    $('.wiki-page-modal').addClass('wiki-page-modal-minimized');
-
-    $.ajax({
-        url: "/api/corpus/inspector?id=" + corpusId,
-        type: "GET",
-        success: function (response) {
-            // Render the corpus view
-            $('.corpus-inspector-include').html(response);
-
-            // After that, we load documentsListView
-            loadCorpusDocuments(corpusId, $('.corpus-inspector-include .corpus-documents-list-include'));
-        },
-        error: function (xhr, status, error) {
-            console.error(xhr.responseText);
-            $('.corpus-inspector-include').html(xhr.responseText);
-        }
-    });
+    openCorpusInspector(corpusId);
 })
+
+$('body').on('click', '.close-corpus-inspector-btn', function () {
+    closeCorpusInspector();
+});
+
+/**
+ * Generic disabled-action guard for links/buttons.
+ * Any interactive element can opt in by using class `ui-action-disabled`
+ * or `aria-disabled="true"` (optionally with `data-disabled-reason`).
+ */
+$('body').on('click', 'a.ui-action-disabled, button.ui-action-disabled, [role="button"].ui-action-disabled, a[aria-disabled="true"][data-disabled-reason], button[aria-disabled="true"][data-disabled-reason], [role="button"][aria-disabled="true"][data-disabled-reason]', function (event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    const reason = $(this).attr('data-disabled-reason');
+    if (reason) {
+        showMessageModal("Unavailable action", reason);
+    }
+});
 
 /**
  * Loads the raw document list to a corpus into a target include.
@@ -269,9 +396,58 @@ function openNewDocumentReadView(id, searchId) {
     window.open("/documentReader?" + params.toString(), '_blank');
 }
 
-function activatePopovers() {
-    $('[data-toggle="popover"]').popover();
+function dismissAllPopovers(options = {}) {
+    const opts = Object.assign({ dispose: false, removeOrphans: true }, options);
+    const $targets = $('[data-toggle="popover"]');
+    $targets.each(function () {
+        const $el = $(this);
+        const hasPopover = !!$el.data('bs.popover');
+        if (!hasPopover) return;
+        try {
+            $el.popover('hide');
+            if (opts.dispose) {
+                $el.popover('dispose');
+            }
+        } catch (e) {
+            // Ignore stale plugin instances; we'll still remove dangling DOM below.
+        }
+    });
+
+    if (opts.removeOrphans) {
+        $('.popover').remove();
+    }
 }
+
+function activatePopovers() {
+    dismissAllPopovers({ dispose: true, removeOrphans: true });
+    $('[data-toggle="popover"]').popover({
+        container: 'body'
+    });
+}
+
+(function installPopoverPersistenceGuards() {
+    if (window.__ucePopoverPersistenceGuardsInstalled) return;
+    window.__ucePopoverPersistenceGuardsInstalled = true;
+
+    $('body').on('mouseleave', '.breadcrumbs [data-toggle="popover"]', function () {
+        try {
+            $(this).popover('hide');
+        } finally {
+            // In case hide event is missed due to DOM updates.
+            window.setTimeout(function () {
+                $('.popover').remove();
+            }, 120);
+        }
+    });
+
+    $('body').on('click', '.breadcrumbs [data-toggle="popover"]', function () {
+        dismissAllPopovers({ dispose: false, removeOrphans: true });
+    });
+
+    $(document).on('scroll touchmove', function () {
+        dismissAllPopovers({ dispose: false, removeOrphans: false });
+    });
+})();
 
 /**
  * We have some UI components that need to be refreshed when the corpus is loaded.
@@ -280,13 +456,43 @@ function reloadCorpusComponents() {
     $('#corpus-select').change();
 }
 
+function sanitizeLegacyVizQueryParams() {
+    const params = new URLSearchParams(window.location.search || '');
+    let changed = false;
+    ['search-viz-n-bins', 'search-viz-selected-feature'].forEach((key) => {
+        if (params.has(key)) {
+            params.delete(key);
+            changed = true;
+        }
+    });
+    if (!changed) return;
+    const nextSearch = params.toString();
+    const nextUrl = window.location.pathname + (nextSearch ? ('?' + nextSearch) : '') + window.location.hash;
+    history.replaceState(null, '', nextUrl);
+}
+
 $(document).ready(function () {
     console.log('Webpage loaded!');
+    sanitizeLegacyVizQueryParams();
     activatePopovers();
     reloadCorpusComponents();
+    const initialView = window.uceUiState ? window.uceUiState.get('view') : undefined;
+    if (initialView) {
+        navigateToView(initialView, { preserveInspectorRoute: true });
+    }
+    restoreCorpusInspectorFromRoute();
     // Init the lexicon
     if (window.wikiHandler) window.wikiHandler.fetchLexiconEntries(0, 24);
 })
+
+$(window).on('hashchange', function () {
+    if (!window.uceUiState) return;
+    const routeView = window.uceUiState.get('view');
+    if (routeView && routeView !== currentView) {
+        navigateToView(routeView);
+    }
+    restoreCorpusInspectorFromRoute();
+});
 
 (function installSessionExpiredHandler() {
     if (window.__uceSessionExpiredHandlerInstalled) return;

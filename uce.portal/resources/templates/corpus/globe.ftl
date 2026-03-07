@@ -14,6 +14,8 @@
     </style>
 </head>
 <body>
+<#include "*/sessionExpiredModal.ftl">
+<#include "*/auth/userShortProfile.ftl">
 
 <div class="site-container">
 

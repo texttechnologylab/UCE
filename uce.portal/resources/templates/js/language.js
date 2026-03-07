@@ -7,10 +7,10 @@ $(document).ready(function () {
     }
     console.log("Sent Content Language: " + contentLanguage);
 
-    // Handle the caching of the language in the browser storage and reload the page should the server have sent wrong language
+    // Keep cookie in sync with server language.
     const storedLanguage = getLanguage();
     if (storedLanguage !== undefined && storedLanguage != null && storedLanguage !== contentLanguage) {
-        location.reload();
+        // We intentionally avoid forced auto-reloads here because that can create loops.
     } else {
         setLanguage(contentLanguage);
     }
@@ -31,11 +31,12 @@ $(document).ready(function () {
 
 function switchLanguage(language){
     setLanguage(language);
-    location.reload();
+    // Server-side rendered FTL text needs exactly one reload.
+    window.location.reload();
 }
 
 function setLanguage(language) {
-    document.cookie = "language=" + language;
+    document.cookie = "language=" + language + "; path=/; max-age=31536000";
 }
 
 function getLanguage() {

@@ -8,7 +8,7 @@
         <#if (uceConfig.settings.ui.corpusInspector.showHeader)!true>
             <div class="cheader w-100 flexed align-items-center p-4">
                 <div class="cheader-side">
-                    <a class="btn" onclick="$('.corpus-inspector-include').hide(150)">
+                    <a class="btn close-corpus-inspector-btn">
                         <i class="fas fa-long-arrow-alt-left m-0 color-prime"></i>
                     </a>
                 </div>
@@ -19,7 +19,10 @@
                 </div>
                 <div class="cheader-side">
                     <#if (uceConfig.settings.ui.mainPage.showWikiModal)!true>
-                        <a class="w-rounded-btn open-wiki-page" data-wid="${corpus.getWikiId()}" data-wcovered="${corpus.getName()}">
+                        <a class="w-rounded-btn open-wiki-page"
+                           data-wtype="C"
+                           data-wid="${corpus.getWikiId()}"
+                           data-wcovered="${corpus.getName()}">
                             <i class="fab fa-wikipedia-w m-0 color-prime large-font"></i>
                         </a>
                     </#if>

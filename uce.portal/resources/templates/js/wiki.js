@@ -7,6 +7,9 @@ let WikiHandler = (function () {
     WikiHandler.prototype.lexiconState = {
         skip: 0,
         take: 24,
+        hasMoreEntries: true,
+        lastPageSize: 0,
+        knownEmptySkip: null,
         selectedChar: '',
         searchInput: '',
         annotationFilters: [],
@@ -15,7 +18,14 @@ let WikiHandler = (function () {
     }
 
     function WikiHandler() {
+        this.brokenWikiTargets = new Set();
     }
+
+    WikiHandler.prototype.homePage = {
+        wid: "DOC-SEARCH",
+        coveredText: "-",
+        hash: "DOC-SEARCH|-"
+    };
 
     // =================== Lexicon Methods ===================
     WikiHandler.prototype.updateLexiconPage = function () {
@@ -23,9 +33,10 @@ let WikiHandler = (function () {
         let start = 1;
         if (curPage <= 3) start = 1;
         else if (curPage > 4) start = curPage - 3;
+        const end = this.lexiconState.hasMoreEntries ? curPage + 3 : curPage;
         const btnList = $('.lexicon-view .lexicon-navigation .pages-count');
         btnList.html("");
-        for (let i = start; i < curPage + 4; i++) {
+        for (let i = start; i <= end; i++) {
             const selected = i === curPage ? "cur-page" : "";
             btnList.append(
                 "<a class='rounded-a SELECTED' onclick='window.wikiHandler.fetchLexiconPage(PAGE)'>PAGE</a>"
@@ -33,11 +44,27 @@ let WikiHandler = (function () {
                     .replace("SELECTED", selected)
             );
         }
+        this.updateLexiconNavigationButtons();
+    }
+
+    WikiHandler.prototype.updateLexiconNavigationButtons = function () {
+        const curPage = this.lexiconState.skip / this.lexiconState.take + 1;
+        const canGoPrevious = curPage > 1;
+        const canGoNext = this.lexiconState.hasMoreEntries;
+
+        const $prev = $('.lexicon-view .lexicon-navigation .lexicon-prev-page-btn');
+        const $next = $('.lexicon-view .lexicon-navigation .lexicon-next-page-btn');
+
+        $prev.toggleClass('ui-action-disabled', !canGoPrevious);
+        $prev.attr('aria-disabled', canGoPrevious ? 'false' : 'true');
+        $next.toggleClass('ui-action-disabled', !canGoNext);
+        $next.attr('aria-disabled', canGoNext ? 'false' : 'true');
     }
 
     WikiHandler.prototype.handleLexiconSearchInputChanged = function ($source) {
         this.lexiconState.searchInput = $source.val();
         this.lexiconState.skip = 0;
+        this.lexiconState.knownEmptySkip = null;
         this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
     }
 
@@ -56,6 +83,7 @@ let WikiHandler = (function () {
 
         $source.toggleClass('turn-180');
         $source.data('dir', this.lexiconState.sortDirection);
+        this.lexiconState.knownEmptySkip = null;
         this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
     }
 
@@ -67,6 +95,7 @@ let WikiHandler = (function () {
         });
         this.lexiconState.annotationFilters = activeFilters;
         this.lexiconState.skip = 0;
+        this.lexiconState.knownEmptySkip = null;
         this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
     }
 
@@ -85,6 +114,7 @@ let WikiHandler = (function () {
 
         // In any case, we reset the list to page 1.
         this.lexiconState.skip = 0;
+        this.lexiconState.knownEmptySkip = null;
         this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
     }
 
@@ -98,6 +128,8 @@ let WikiHandler = (function () {
 
     WikiHandler.prototype.fetchLexiconPage = function (pageNum) {
         if (pageNum < 1) return;
+        const curPage = this.lexiconState.skip / this.lexiconState.take + 1;
+        if (!this.lexiconState.hasMoreEntries && pageNum > curPage) return;
         this.lexiconState.skip = this.lexiconState.take * (pageNum - 1);
         this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
     }
@@ -109,11 +141,12 @@ let WikiHandler = (function () {
     }
 
     WikiHandler.prototype.fetchNextLexiconEntries = function () {
+        if (!this.lexiconState.hasMoreEntries) return;
         this.lexiconState.skip += this.lexiconState.take;
         this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
     }
 
-    WikiHandler.prototype.fetchLexiconEntries = function (skip, take) {
+    WikiHandler.prototype.fetchLexiconEntries = function (skip, take, allowRetryOnEmpty = true) {
         const alphabet = this.getLexiconAlphabet();
         $.ajax({
             url: '/api/wiki/lexicon/entries',
@@ -132,9 +165,24 @@ let WikiHandler = (function () {
             success: (response) => {
                 activatePopovers();
                 console.log(response);
+                const entries = Array.isArray(response && response.entries) ? response.entries : [];
+                this.lexiconState.lastPageSize = entries.length;
+                const knownEmptySkip = this.lexiconState.knownEmptySkip;
+                this.lexiconState.hasMoreEntries = entries.length >= take &&
+                    (knownEmptySkip === null || (skip + take) < knownEmptySkip);
+
+                if (entries.length === 0 && skip > 0 && allowRetryOnEmpty) {
+                    this.lexiconState.knownEmptySkip = skip;
+                    this.lexiconState.hasMoreEntries = false;
+                    this.lexiconState.skip = Math.max(0, skip - take);
+                    this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take, false);
+                    return;
+                }
+
                 if(response.rendered) $('.lexicon-content-include').html(response.rendered);
                 else $('.lexicon-content-include').html(response);
                 this.updateLexiconPage();
+                this.setLexiconLoadMoreState(false, "Choose a lexicon entry first.");
             },
             error: (xhr, status, error) => {
                 showMessageModal("Unknown Error", "There was an unknown error loading the lexicon entries.")
@@ -143,11 +191,32 @@ let WikiHandler = (function () {
         });
     }
 
+    WikiHandler.prototype.setLexiconLoadMoreState = function (enabled, reason = "") {
+        const $btn = $('.lexicon-view .lexicon-entry-inspector .lexicon-load-more-btn');
+        if ($btn.length === 0) return;
+        const disabled = !enabled;
+        $btn.toggleClass('ui-action-disabled', disabled);
+        $btn.attr('aria-disabled', disabled ? 'true' : 'false');
+        if (disabled && reason) {
+            $btn.attr('data-disabled-reason', reason);
+            $btn.attr('title', reason);
+        } else {
+            $btn.removeAttr('data-disabled-reason');
+            $btn.removeAttr('title');
+        }
+    }
+
     WikiHandler.prototype.handleLoadMoreOccurrences = function () {
         const $target = $('.lexicon-view .lexicon-entry-inspector .occurrences-list');
+        const covered = String($target.data('covered') || '').trim();
+        const type = String($target.data('type') || '').trim();
+        if (!covered || !type) {
+            this.setLexiconLoadMoreState(false, "Choose a lexicon entry first.");
+            return;
+        }
         let skip = $target.data('skip') + this.occurrencesTake;
         $target.data('skip', skip);
-        this.fetchLexiconEntryOccurrences($target.data('covered'), $target.data('type'),
+        this.fetchLexiconEntryOccurrences(covered, type,
             skip, $target);
     }
 
@@ -155,12 +224,17 @@ let WikiHandler = (function () {
         const $lexiconEntry = $source.closest('.lexicon-entry');
         const type = $lexiconEntry.data('type');
         const covered = $lexiconEntry.data('covered');
+        if (!String(type || '').trim() || !String(covered || '').trim()) {
+            this.setLexiconLoadMoreState(false, "Choose a valid lexicon entry first.");
+            return;
+        }
         const $target = $('.lexicon-view .lexicon-entry-inspector .occurrences-list');
         // clean the inspector list
         $target.html('');
         $target.data('skip', 0);
         $target.data('covered', covered);
         $target.data('type', type);
+        this.setLexiconLoadMoreState(true);
         this.fetchLexiconEntryOccurrences(covered, type, 0, $target);
     }
 
@@ -199,15 +273,184 @@ let WikiHandler = (function () {
         this.loadPage(lastPage, true);
     }
 
+    WikiHandler.prototype.handleHomeBtnClicked = function () {
+        this.loadPage(this.homePage);
+    }
+
+    WikiHandler.prototype.normalizeCoveredText = function ($wikiEl) {
+        const rawCovered = $wikiEl.data('wcovered');
+        if (rawCovered !== undefined && rawCovered !== null) {
+            const normalized = String(rawCovered).trim();
+            if (normalized !== '' && normalized.toLowerCase() !== 'undefined' && normalized.toLowerCase() !== 'null') {
+                return normalized;
+            }
+        }
+
+        const text = String($wikiEl.text() || '').trim();
+        if (text !== '') return text;
+        return '-';
+    }
+
+    WikiHandler.prototype.normalizeWikiId = function (wid, $wikiEl = undefined) {
+        if (wid === undefined || wid === null) return '';
+        let normalized = String(wid).trim();
+        if (normalized === '' || normalized === '-' || normalized.toLowerCase() === 'undefined' || normalized.toLowerCase() === 'null') {
+            return '';
+        }
+
+        // Some legacy ids use underscores instead of hyphens.
+        normalized = normalized.replace(/^([A-Za-z_]+)_/, '$1-');
+
+        const inBreadcrumbs = !!($wikiEl && $wikiEl.closest('.breadcrumbs').length > 0);
+        const inCorpusInspector = !!($wikiEl && $wikiEl.closest('.corpus-inspector').length > 0);
+        const isCorpusBreadcrumb = !!($wikiEl && $wikiEl.find('.fa-globe').length > 0);
+        const isDocumentBreadcrumb = !!($wikiEl && $wikiEl.find('.fa-book').length > 0);
+
+        if (normalized.includes('-')) return normalized;
+
+        const elementTypeHint = $wikiEl ? String($wikiEl.data('wtype') || '').trim().toUpperCase() : '';
+
+        // If we only received a numeric id, derive its type from explicit data hint first.
+        if (/^\d+$/.test(normalized) && elementTypeHint) {
+            return elementTypeHint + "-" + normalized;
+        }
+
+        // Corpus inspector links often point to corpus wiki pages; force numeric ids into corpus ids.
+        if (/^\d+$/.test(normalized) && inCorpusInspector) {
+            return "C-" + normalized;
+        }
+
+        // Legacy/faulty ids can come without separator (e.g. "C123"), normalize to "C-123".
+        const match = normalized.match(/^([A-Za-z_]+)(\d+)$/);
+        if (match) return match[1] + "-" + match[2];
+
+        // Last-resort inference for breadcrumb links if data-wtype is missing.
+        if (/^\d+$/.test(normalized) && $wikiEl && $wikiEl.closest('.breadcrumbs').length > 0) {
+            if ($wikiEl.find('.fa-book').length > 0) return "D-" + normalized;
+            if ($wikiEl.find('.fa-globe').length > 0) return "C-" + normalized;
+        }
+
+        // Breadcrumb corpus links can come from stale cached markup; use context-derived id only as final fallback.
+        if (inBreadcrumbs && isCorpusBreadcrumb) {
+            const corpusIdFromPage = Number($wikiEl.closest('.wiki-page').data('corpusid'));
+            if (Number.isFinite(corpusIdFromPage) && corpusIdFromPage > 0) {
+                return "C-" + corpusIdFromPage;
+            }
+        }
+
+        // Additional last resort: parse document wiki id from the current page text if needed.
+        if (inBreadcrumbs && isDocumentBreadcrumb) {
+            const pageText = String($wikiEl.closest('.wiki-page').text() || '');
+            const docMatch = pageText.match(/\bD-\d+\b/);
+            if (docMatch) return docMatch[0];
+        }
+
+        return normalized;
+    }
+
+    WikiHandler.prototype.buildWikiDtoFromElement = function ($wikiEl) {
+        const wid = this.normalizeWikiId($wikiEl.data('wid'), $wikiEl);
+        const coveredText = this.normalizeCoveredText($wikiEl);
+        if (!wid) return undefined;
+        return {
+            wid: wid,
+            coveredText: coveredText,
+            hash: wid + "|" + coveredText
+        };
+    }
+
+    WikiHandler.prototype.getWikiTargetKey = function (wikiDto) {
+        if (!wikiDto || !wikiDto.wid) return '';
+        const coveredText = String(wikiDto.coveredText || '').trim() || '-';
+        return String(wikiDto.wid).trim() + "|" + coveredText;
+    }
+
+    WikiHandler.prototype.isErrorTemplateResponse = function (response) {
+        if (typeof response !== 'string') return false;
+        const $root = $('<div>').html(response);
+        const hasErrorBanner = $root.find('.text-danger').length > 0;
+        const hasDefaultLogo = $root.find('img[src*=\"img/logo.png\"]').length > 0;
+        return hasErrorBanner && hasDefaultLogo;
+    }
+
+    WikiHandler.prototype.markWikiTargetAsBroken = function (wikiDto) {
+        const key = this.getWikiTargetKey(wikiDto);
+        if (!key) return;
+        this.brokenWikiTargets.add(key);
+        this.syncCurrentPageLinks();
+    }
+
+    WikiHandler.prototype.syncCurrentPageLinks = function () {
+        const current = this.currentPage;
+        const isModalOpen = $('.wiki-page-modal').length > 0 && !$('.wiki-page-modal').hasClass('wiki-page-modal-minimized');
+        $('.open-wiki-page').each((_, node) => {
+            const $el = $(node);
+            const dto = this.buildWikiDtoFromElement($el);
+            const hasConfiguredWid = String($el.data('wid') || '').trim() !== '';
+            const isInvalidTarget = hasConfiguredWid && !dto;
+            const isCurrent = !!(current && dto && dto.hash === current.hash);
+            const isBroken = !!(dto && this.brokenWikiTargets.has(this.getWikiTargetKey(dto)));
+            const shouldDisable = (isCurrent && isModalOpen) || isBroken || isInvalidTarget;
+            const disabledReason = isBroken
+                ? 'This link target is currently unavailable.'
+                : ((isCurrent && isModalOpen)
+                    ? 'You are already on this page.'
+                    : (isInvalidTarget ? 'This link has an invalid wiki target.' : ''));
+            $el.toggleClass('wiki-link-current', isCurrent);
+            $el.toggleClass('wiki-link-broken', isBroken);
+            $el.toggleClass('ui-action-disabled', shouldDisable);
+            if (isCurrent) {
+                $el.attr('aria-current', 'page');
+            } else {
+                $el.removeAttr('aria-current');
+            }
+            if (shouldDisable) {
+                $el.attr('aria-disabled', 'true');
+                if (disabledReason) {
+                    $el.attr('title', disabledReason);
+                    $el.attr('data-disabled-reason', disabledReason);
+                } else {
+                    $el.removeAttr('title');
+                    $el.removeAttr('data-disabled-reason');
+                }
+            } else {
+                $el.removeAttr('aria-disabled');
+                $el.removeAttr('data-disabled-reason');
+                if ($el.hasClass('open-wiki-page')) {
+                    $el.removeAttr('title');
+                }
+            }
+        });
+    }
+
     WikiHandler.prototype.loadPage = function (wikiDto, calledFromBackBtn = false) {
+        if (!wikiDto || !wikiDto.wid) return;
+
+        const safeCoveredText = String(wikiDto.coveredText || '').trim() || '-';
+        const safeHash = wikiDto.hash || (wikiDto.wid + "|" + safeCoveredText);
+        const normalizedWikiDto = {
+            wid: wikiDto.wid,
+            coveredText: safeCoveredText,
+            hash: safeHash
+        };
+
         // If the current open page is the clicked wiki annotation, don't reload it.
-        if (window.wikiHandler.currentPage !== undefined && window.wikiHandler.currentPage.hash === wikiDto.hash) return;
-        $('.wiki-page-modal .page-content .loading-div').fadeIn(100);
+        if (window.wikiHandler.currentPage !== undefined && window.wikiHandler.currentPage.hash === normalizedWikiDto.hash) return;
+        const $loading = $('.wiki-page-modal .page-content .loading-div');
+        $loading.stop(true, true).addClass('is-active');
 
         $.ajax({
-            url: "/api/wiki/page?wid=" + wikiDto.wid + "&covered=" + encodeURIComponent(wikiDto.coveredText),
+            url: "/api/wiki/page?wid=" + encodeURIComponent(normalizedWikiDto.wid) + "&covered=" + encodeURIComponent(normalizedWikiDto.coveredText),
             type: "GET",
             success: (response) => {
+                if (this.isErrorTemplateResponse(response)) {
+                    this.markWikiTargetAsBroken(normalizedWikiDto);
+                    showMessageModal("Unavailable link", "This wiki target is currently unavailable and has been disabled.");
+                    return;
+                }
+                if (typeof dismissAllPopovers === 'function') {
+                    dismissAllPopovers({ dispose: true, removeOrphans: true });
+                }
                 $('.wiki-page-modal .page-content .include').html(response);
                 activatePopovers();
 
@@ -216,34 +459,29 @@ let WikiHandler = (function () {
                     if (this.currentPage) {
                         this.addPageToHistory(this.currentPage);
                     }
-                    this.currentPage = wikiDto;
+                    this.currentPage = normalizedWikiDto;
                 } else {
                     // Update current page without adding to history
-                    this.currentPage = wikiDto;
+                    this.currentPage = normalizedWikiDto;
                 }
+                this.syncCurrentPageLinks();
             },
             error: (xhr, status, error) => {
+                this.markWikiTargetAsBroken(normalizedWikiDto);
                 console.error(xhr.responseText);
                 showMessageModal("Unknown Error", "There was an unknown error loading your page.")
             }
         }).always(() => {
-            $('.wiki-page-modal .page-content .loading-div').fadeOut(100);
+            $loading.stop(true, true).removeClass('is-active');
         });
     }
 
     WikiHandler.prototype.handleAnnotationClicked = function ($wikiEl) {
-        const wid = $wikiEl.data('wid');
-        let coveredText = String($wikiEl.data('wcovered'));
-        if (coveredText === undefined || coveredText === '') {
-            coveredText = $wikiEl.html();
-        }
+        ensureSingleWikiOverlays();
+        const wikiDto = this.buildWikiDtoFromElement($wikiEl);
+        if (!wikiDto) return;
         // Show the modal
         $('.wiki-page-modal').removeClass('wiki-page-modal-minimized');
-        const wikiDto = {
-            wid: wid,
-            coveredText: coveredText,
-            hash: wid + coveredText
-        }
 
         this.loadPage(wikiDto);
     }
@@ -310,41 +548,115 @@ function getNewWikiHandler() {
     return new WikiHandler();
 }
 
+function ensureSingleWikiOverlays() {
+    const $modals = $('.wiki-page-modal');
+    if ($modals.length > 1) {
+        $modals.slice(0, -1).remove();
+    }
+    const $expanded = $('.wiki-metadata-expanded-view');
+    if ($expanded.length > 1) {
+        $expanded.slice(0, -1).remove();
+    }
+}
+
+function closeExpandedTextView() {
+    ensureSingleWikiOverlays();
+    const $overlay = $('.wiki-metadata-expanded-view');
+    $overlay.removeClass('is-active').attr('aria-hidden', 'true');
+}
+
 $(document).ready(function () {
-    window.wikiHandler = getNewWikiHandler();
-    $('.wiki-page-modal .page-content .loading-div').fadeOut();
+    ensureSingleWikiOverlays();
+    if (!window.wikiHandler) {
+        window.wikiHandler = getNewWikiHandler();
+    }
+    $('.wiki-page-modal .page-content .loading-div').removeClass('is-active');
+    closeExpandedTextView();
+    window.wikiHandler.syncCurrentPageLinks();
+    bindWikiDomHandlers();
     console.log('Created Wiki Handler');
 });
 
-/**
- * Triggers whenever someone clicks onto an annotation that has a wiki page.
- */
-$('body').on('click', '.open-wiki-page', function () {
-    window.wikiHandler.handleAnnotationClicked($(this));
-});
+function bindWikiDomHandlers() {
+    if (window.__wikiDomHandlersBound) return;
+    window.__wikiDomHandlersBound = true;
 
-/**
- * Triggers whenever someone wants to go a wiki page back.
- */
-$('body').on('click', '.wiki-page-modal .go-back-btn', function () {
-    window.wikiHandler.handleGoBackBtnClicked();
-});
+    /**
+     * Triggers whenever someone clicks onto an annotation that has a wiki page.
+     */
+    $('body').on('click.wiki', '.open-wiki-page', function (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        const isModalOpen = $('.wiki-page-modal').length > 0 && !$('.wiki-page-modal').hasClass('wiki-page-modal-minimized');
+        if ($(this).hasClass('ui-action-disabled') || $(this).attr('aria-disabled') === 'true') {
+            const reason = $(this).attr('data-disabled-reason');
+            if (reason) showMessageModal("Unavailable action", reason);
+            return;
+        }
+        if ($(this).hasClass('wiki-link-current') && isModalOpen) return;
+        if ($(this).hasClass('wiki-link-broken')) {
+            showMessageModal("Unavailable link", "This wiki target is currently unavailable.");
+            return;
+        }
+        if ($(this).closest('.wiki-metadata-expanded-view').length > 0) {
+            closeExpandedTextView();
+        }
+        window.wikiHandler.handleAnnotationClicked($(this));
+    });
 
-/**
- * Triggers when the user presses on a clickable rdf node
- */
-$('body').on('click', '.clickable-rdf-node', function () {
-    window.wikiHandler.handleRdfNodeClicked($(this));
-});
+    /**
+     * Keep wiki trigger links usable after closing/minimizing modal.
+     */
+    $('body').on('click.wiki', '.wiki-page-modal .backdrop, .wiki-page-modal .close-wiki-modal-btn, .wiki-page-modal .minimized-content', function () {
+        closeExpandedTextView();
+        setTimeout(function () {
+            if (window.wikiHandler && typeof window.wikiHandler.syncCurrentPageLinks === 'function') {
+                window.wikiHandler.syncCurrentPageLinks();
+            }
+        }, 0);
+    });
 
-/**
- * Triggers when the user wants to expand a long metadata string
- */
-$('body').on('click', '.expand-metadata-string-btn', function () {
-    const expandedContent = $(this).closest('.item-container').find('md-block').html();
-    const title = $(this).closest('.item-container').find('label,.key').html();
-    openInExpandedTextView(title, expandedContent);
-});
+    /**
+     * Triggers whenever someone wants to go a wiki page back.
+     */
+    $('body').on('click.wiki', '.wiki-page-modal .go-back-btn', function () {
+        window.wikiHandler.handleGoBackBtnClicked();
+    });
+
+    /**
+     * Triggers whenever someone wants to navigate to the wiki home page.
+     */
+    $('body').on('click.wiki', '.wiki-page-modal .wiki-home-btn', function () {
+        window.wikiHandler.handleHomeBtnClicked();
+    });
+
+    /**
+     * Triggers when the user presses on a clickable rdf node
+     */
+    $('body').on('click.wiki', '.clickable-rdf-node', function () {
+        window.wikiHandler.handleRdfNodeClicked($(this));
+    });
+
+    /**
+     * Triggers when the user wants to expand a long metadata string
+     */
+    $('body').on('click.wiki', '.expand-metadata-string-btn', function () {
+        const expandedContent = $(this).closest('.item-container').find('md-block').html();
+        const title = $(this).closest('.item-container').find('label,.key').html();
+        openInExpandedTextView(title, expandedContent);
+    });
+
+    $('body').on('click.wiki', '.wiki-metadata-expanded-view .close-expanded-view-btn', function (event) {
+        event.preventDefault();
+        closeExpandedTextView();
+    });
+
+    $('body').on('click.wiki', '.wiki-metadata-expanded-view', function (event) {
+        if (event.target === this) {
+            closeExpandedTextView();
+        }
+    });
+}
 
 /**
  * Opens something in a large text window, give title, content and a highlight array
@@ -354,6 +666,7 @@ function openInExpandedTextView(title,
                                 highlightedWords = [],
                                 wikiId = undefined,
                                 wikiCoveredText = undefined) {
+    ensureSingleWikiOverlays();
     if (highlightedWords && highlightedWords.length > 0) {
         highlightedWords.forEach(function (word) {
             if (word !== '') content = content.replaceAll(word, "<b>" + word + "</b>");
@@ -370,8 +683,10 @@ function openInExpandedTextView(title,
     } else {
         $wikiButton.hide();
     }
-    $('.wiki-metadata-expanded-view').fadeIn(25);
+    $('.wiki-metadata-expanded-view').addClass('is-active').attr('aria-hidden', 'false');
 }
+
+bindWikiDomHandlers();
 
 /**
  * retrieve and display the list of words for a selected topic
