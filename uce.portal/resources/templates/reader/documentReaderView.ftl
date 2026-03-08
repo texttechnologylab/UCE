@@ -318,6 +318,9 @@
                                 <div class="viz-panel" id="viz-panel-6">
                                     <div id="vp-6" ></div>
                                 </div>
+                                <div class="viz-panel" id="viz-panel-7">
+                                    <div id="vp-7"></div>
+                                </div>
                             </div>
 
                             <div class="viz-bottom-nav viz-dropdown-nav">
@@ -362,7 +365,9 @@
 
                                 <!-- EMOTION  -->
                                 <div class="viz-nav-group" data-category="emotion">
-                                    <button class="viz-nav-btn viz-nav-parent" type="button">Emotion</button>
+                                    <button class="viz-nav-btn viz-nav-parent" type="button">
+                                        Emotion <i class="fas fa-chevron-up ml-2"></i>
+                                    </button>
 
                                     <div class="viz-nav-menu" id="emotion-model-menu"></div>
                                 </div>

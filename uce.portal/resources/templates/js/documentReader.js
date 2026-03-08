@@ -4,6 +4,7 @@ let currentSelectedTopic = null;
 let currentTopicIndex = -1;
 let matchingTopics = [];
 let selectedEmotionModelId = null;
+let selectedEmotionVizType = 'radar';
 let defaultTopicColorMap = getDefaultTopicColorMap();
 let defaultTopicSettings = {
     topicCount: 10,
@@ -848,6 +849,22 @@ function updateFloatingUIPositions() {
 window.addEventListener('resize', updateFloatingUIPositions);
 window.addEventListener('DOMContentLoaded', updateFloatingUIPositions);
 
+function activateVisualizationPanel(target, $button) {
+    clearTopicColoring();
+    hideTopicNavButtons();
+    $('.scrollbar-minimap').hide();
+
+    $('.viz-nav-btn').removeClass('active');
+    $('.viz-nav-parent').removeClass('active');
+
+    if ($button && $button.length) {
+        $button.addClass('active');
+    }
+
+    $('.viz-panel').removeClass('active');
+    $(target).addClass('active');
+}
+
 document.querySelectorAll('.tab-btn').forEach(btn => {
     btn.addEventListener('click', async () => {
         const targetId = btn.getAttribute('data-tab');
@@ -867,49 +884,27 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             $('.scrollbar-minimap').hide();
             sideBar.classList.add('visualization-expanded');
         } else {
-            setTimeout(updateFloatingUIPositions,500) ;
+            setTimeout(updateFloatingUIPositions, 500);
             currentSelectedTopic = null;
             sideBar.classList.remove('visualization-expanded');
             $('.scrollbar-minimap').show();
         }
+
         if (targetId === 'visualization-tab') {
             const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
             loadEmotionModels(docId);
+            activateVisualizationPanel('#viz-panel-1', $('.viz-nav-group[data-category="topic"] .viz-nav-parent'));
             setTimeout(() => renderTemporalExplorer('vp-1'), 500);
-            $('.viz-nav-btn').removeClass('active');
-            $('.viz-nav-btn').first().addClass('active');
-
-            $('.viz-panel').removeClass('active');
-            $('.viz-panel').first().addClass('active');
         }
-        $(document).on('click', '.emotion-model-item', function (e) {
-            e.preventDefault();
-            selectedEmotionModelId = $(this).data('model-id');
-
-            $('.emotion-model-item').removeClass('active');
-            $(this).addClass('active');
-
-            // mittig anzeigen (der Container in der Visualization ist vp-1)
-            $('#vp-1').removeClass('rendered');
-            renderEmotionRadar('vp-1');
-        });
     });
-
 });
 
-$(document).on('click', '.viz-nav-btn', function () {
+$(document).on('click', '.viz-nav-item[data-target]', function (e) {
+    e.preventDefault();
+
     const target = $(this).data('target');
-    clearTopicColoring();
-    hideTopicNavButtons();
-    $('.scrollbar-minimap').hide();
-
-    // Update active button
-    $('.viz-nav-btn').removeClass('active');
-    $(this).addClass('active');
-
-    // Update visible panel
-    $('.viz-panel').removeClass('active');
-    $(target).addClass('active');
+    const $group = $(this).closest('.viz-nav-group');
+    activateVisualizationPanel(target, $group.find('.viz-nav-parent'));
 
     if (target === '#viz-panel-1') {
         setTimeout(() => renderTemporalExplorer('vp-1'), 500);
@@ -923,15 +918,66 @@ $(document).on('click', '.viz-nav-btn', function () {
     if (target === '#viz-panel-4') {
         $('.selector-container').hide();
         setTimeout(() => renderTopicSimilarityMatrix('vp-4'), 500);
-
     }
     if (target === '#viz-panel-5') {
         setTimeout(() => renderSentenceTopicSankey('vp-5'), 500);
-
     }
     if (target === '#viz-panel-6') {
         setTimeout(() => renderTemporalExplorer('vp-6'), 500);
+    }
+});
 
+$(document).on('click', '.emotion-model-item', function (e) {
+    e.preventDefault();
+
+    selectedEmotionModelId = $(this).data('model-id');
+    $('.emotion-model-item').removeClass('active');
+    $(this).addClass('active');
+
+    activateVisualizationPanel('#viz-panel-7', $('.viz-nav-group[data-category="emotion"] .viz-nav-parent'));
+    $('#vp-7').removeClass('rendered');
+    renderEmotionViz('vp-7');
+});
+
+$(document).on('click', '.emotion-viz-toggle-btn', function (e) {
+    e.preventDefault();
+
+    const nextVizType = $(this).data('viz-type');
+    if (!nextVizType || nextVizType === selectedEmotionVizType) return;
+
+    selectedEmotionVizType = nextVizType;
+    $('#vp-7').removeClass('rendered');
+    renderEmotionViz('vp-7');
+});
+
+$(document).on('click', '.viz-nav-btn', function (e) {
+    const target = $(this).data('target');
+
+    if (!target) {
+        return;
+    }
+
+    e.preventDefault();
+    activateVisualizationPanel(target, $(this));
+
+    if (target === '#viz-panel-1') {
+        setTimeout(() => renderTemporalExplorer('vp-1'), 500);
+    }
+    if (target === '#viz-panel-2') {
+        setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
+    }
+    if (target === '#viz-panel-3') {
+        setTimeout(() => renderSentenceTopicNetwork('vp-3'), 500);
+    }
+    if (target === '#viz-panel-4') {
+        $('.selector-container').hide();
+        setTimeout(() => renderTopicSimilarityMatrix('vp-4'), 500);
+    }
+    if (target === '#viz-panel-5') {
+        setTimeout(() => renderSentenceTopicSankey('vp-5'), 500);
+    }
+    if (target === '#viz-panel-6') {
+        setTimeout(() => renderTemporalExplorer('vp-6'), 500);
     }
 });
 
@@ -1652,29 +1698,100 @@ function loadEmotionModels(docId) {
             $menu.empty();
 
             if (!models || models.length === 0) {
+                selectedEmotionModelId = null;
                 $menu.append('<span class="viz-nav-item viz-disabled">No models found</span>');
                 return;
             }
 
+            const hasSelectedModel = models.some(function (m) {
+                return String(m.modelId) === String(selectedEmotionModelId);
+            });
+
+            if (!hasSelectedModel) {
+                selectedEmotionModelId = models[0].modelId;
+            }
+
             models.forEach((m) => {
+                const isActive = String(m.modelId) === String(selectedEmotionModelId) ? ' active' : '';
                 $menu.append(
-                    '<a class="viz-nav-item emotion-model-item" href="#" data-model-id="' + m.modelId + '">' +
+                    '<a class="viz-nav-item emotion-model-item' + isActive + '" href="#" data-model-id="' + m.modelId + '">' +
                     (m.modelName ? m.modelName : ('Model ' + m.modelId)) +
                     '</a>'
                 );
             });
         })
         .catch(() => {
+            selectedEmotionModelId = null;
             $('#emotion-model-menu').html('<span class="viz-nav-item viz-disabled">Failed to load</span>');
         });
+}
+function getSelectedEmotionModelName() {
+    const $activeModel = $('.emotion-model-item.active');
+    if ($activeModel.length > 0) {
+        return $.trim($activeModel.text());
+    }
+
+    if (selectedEmotionModelId) {
+        return 'Model ' + selectedEmotionModelId;
+    }
+
+    return 'Emotion model';
+}
+
+function renderEmotionViz(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (!selectedEmotionModelId) {
+        container.classList.remove('rendered');
+        container.innerHTML = '<div style="color:#888;">Please choose an emotion model</div>';
+        container.classList.add('rendered');
+        return;
+    }
+
+    const modelName = getSelectedEmotionModelName();
+
+    const radarBtnClass = selectedEmotionVizType === 'radar'
+        ? 'btn btn-sm btn-primary emotion-viz-toggle-btn'
+        : 'btn btn-sm btn-light emotion-viz-toggle-btn';
+
+    const timelineBtnClass = selectedEmotionVizType === 'timeline'
+        ? 'btn btn-sm btn-primary emotion-viz-toggle-btn'
+        : 'btn btn-sm btn-light emotion-viz-toggle-btn';
+
+    const heatmapBtnClass = selectedEmotionVizType === 'heatmap'
+        ? 'btn btn-sm btn-primary emotion-viz-toggle-btn'
+        : 'btn btn-sm btn-light emotion-viz-toggle-btn';
+
+    container.classList.remove('rendered');
+    container.innerHTML = '' +
+        '<div class="d-flex align-items-center justify-content-between flex-wrap mb-3">' +
+        '<div class="mb-2">' +
+        '<div><strong>Emotion</strong></div>' +
+        '<div class="text-muted small">' + modelName + '</div>' +
+        '</div>' +
+        '<div class="btn-group btn-group-sm mb-2" role="group" aria-label="Emotion visualizations">' +
+        '<button type="button" class="' + radarBtnClass + '" data-viz-type="radar">Radar</button>' +
+        '<button type="button" class="' + timelineBtnClass + '" data-viz-type="timeline">Timeline</button>' +
+        '<button type="button" class="' + heatmapBtnClass + '" data-viz-type="heatmap">Heatmap</button>' +
+        '</div>' +
+        '</div>' +
+        '<div id="' + containerId + '-body" style="width:100%;height:420px;"></div>';
+
+    if (selectedEmotionVizType === 'timeline') {
+        renderEmotionTimeline(containerId + '-body');
+    } else if (selectedEmotionVizType === 'heatmap') {
+        renderEmotionHeatmap(containerId + '-body');
+    } else {
+        renderEmotionRadar(containerId + '-body');
+    }
 }
 function renderEmotionRadar(containerId) {
     const container = document.getElementById(containerId);
     if (!container) return;
 
-    // jedes Mal neu zeichnen (bei Model-Wechsel)
     container.classList.remove('rendered');
-    container.innerHTML = '<div style="width:100%;height:420px;" id="' + containerId + '-radar"></div>';
+    container.innerHTML = '<div style="width:100%;height:100%;min-height:380px;" id="' + containerId + '-radar"></div>';
 
     const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
     const modelId = selectedEmotionModelId || null;
@@ -1691,8 +1808,6 @@ function renderEmotionRadar(containerId) {
                 return;
             }
 
-            // ECharts Radar expects indicators with max.
-            // feeling.value scheint bei dir oft 0..1 zu sein → max=1.
             const indicators = data.map(d => ({ name: d.label, max: 1 }));
             const values = data.map(d => d.value);
 
@@ -1721,6 +1836,285 @@ function renderEmotionRadar(containerId) {
         .catch(() => {
             $('.visualization-spinner').hide();
             container.innerHTML = '<div style="color:#888;">Failed to load emotion radar</div>';
+            container.classList.add('rendered');
+        });
+}
+function scrollToEmotionPage(pageNumber) {
+    const pageElement = document.querySelector('.page[data-id="' + pageNumber + '"]');
+    if (pageElement) {
+        pageElement.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+function loadEmotionPageCounts() {
+    const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+    const modelId = selectedEmotionModelId || null;
+
+    return $.get('/api/document/page/emotions', { documentId: docId, modelId: modelId })
+        .then(function (data) {
+            if (!data || !Array.isArray(data) || data.length === 0) {
+                return null;
+            }
+
+            const rawPageIds = [];
+            data.forEach(function (item) {
+                const pid = parseInt(item.pageId, 10);
+                if (!isNaN(pid)) rawPageIds.push(pid);
+            });
+
+            const uniqueSortedPageIds = Array.from(new Set(rawPageIds)).sort(function (a, b) {
+                return a - b;
+            });
+
+            const pageIdToPageNumber = new Map();
+            uniqueSortedPageIds.forEach(function (pid, idx) {
+                pageIdToPageNumber.set(pid, idx + 1);
+            });
+
+            const pageEmotionCounts = new Map();
+            const totalEmotionCounts = {};
+
+            data.forEach(function (item) {
+                const pid = parseInt(item.pageId, 10);
+                const pageNumber = pageIdToPageNumber.get(pid);
+                const label = item.emotionLabel ? String(item.emotionLabel).trim() : '';
+
+                if (!pageNumber || !label) return;
+
+                if (!pageEmotionCounts.has(pageNumber)) {
+                    pageEmotionCounts.set(pageNumber, {});
+                }
+
+                const currentPageMap = pageEmotionCounts.get(pageNumber);
+                currentPageMap[label] = (currentPageMap[label] || 0) + 1;
+                totalEmotionCounts[label] = (totalEmotionCounts[label] || 0) + 1;
+            });
+
+            const pages = Array.from(pageEmotionCounts.keys()).sort(function (a, b) {
+                return a - b;
+            })
+            const topLabels = Object.keys(totalEmotionCounts)
+                .sort(function (a, b) {
+                    return totalEmotionCounts[b] - totalEmotionCounts[a];
+                })
+                .slice(0, 6);
+
+            return {
+                pages: pages,
+                labels: topLabels,
+                pageEmotionCounts: pageEmotionCounts,
+                totalEmotionCounts: totalEmotionCounts
+            };
+        });
+}
+
+function renderEmotionTimeline(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.classList.remove('rendered');
+    container.innerHTML = '<div style="width:100%;height:100%;min-height:420px;" id="' + containerId + '-timeline"></div>';
+
+    $('.visualization-spinner').show();
+
+    loadEmotionPageCounts()
+        .then(function (result) {
+            $('.visualization-spinner').hide();
+
+            if (!result || !result.pages || result.pages.length === 0 || !result.labels || result.labels.length === 0) {
+                container.innerHTML = '<div style="color:#888;">No emotion timeline data for this model</div>';
+                container.classList.add('rendered');
+                return;
+            }
+
+            const pages = result.pages;
+            const labels = result.labels;
+            const pageEmotionCounts = result.pageEmotionCounts;
+
+            const series = labels.map(function (label) {
+                return {
+                    name: label,
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    data: pages.map(function (page) {
+                        const counts = pageEmotionCounts.get(page) || {};
+                        return counts[label] || 0;
+                    })
+                };
+            });
+
+            const chartDom = document.getElementById(containerId + '-timeline');
+            const chart = echarts.init(chartDom);
+
+            const option = {
+                title: { text: 'Emotion Timeline' },
+                tooltip: {
+                    trigger: 'axis',
+                    formatter: function (params) {
+                        if (!params || params.length === 0) return '';
+
+                        const page = params[0].axisValue;
+                        let html = '<div><b>Page ' + page + '</b></div>';
+
+                        params
+                            .slice()
+                            .sort(function (a, b) { return b.value - a.value; })
+                            .forEach(function (p) {
+                                html += '<div>' + p.seriesName + ': ' + p.value + '</div>';
+                            });
+
+                        return html;
+                    }
+                },
+                legend: {
+                    type: 'scroll',
+                    top: 30
+                },
+                grid: {
+                    left: 50,
+                    right: 20,
+                    top: 80,
+                    bottom: 50
+                },
+                xAxis: {
+                    type: 'category',
+                    name: 'Page',
+                    data: pages
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'Count'
+                },
+                series: series
+            };
+
+            chart.setOption(option);
+
+            chart.on('click', function (params) {
+                const pageNumber = parseInt(params.name, 10);
+                if (!isNaN(pageNumber)) {
+                    scrollToEmotionPage(pageNumber);
+                }
+            });
+
+            container.classList.add('rendered');
+        })
+        .catch(function () {
+            $('.visualization-spinner').hide();
+            container.innerHTML = '<div style="color:#888;">Failed to load emotion timeline</div>';
+            container.classList.add('rendered');
+        });
+}
+
+function renderEmotionHeatmap(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.classList.remove('rendered');
+    container.innerHTML = '<div style="width:100%;height:100%;min-height:420px;" id="' + containerId + '-heatmap"></div>';
+
+    $('.visualization-spinner').show();
+
+    loadEmotionPageCounts()
+        .then(function (result) {
+            $('.visualization-spinner').hide();
+
+            if (!result || !result.pages || result.pages.length === 0 || !result.labels || result.labels.length === 0) {
+                container.innerHTML = '<div style="color:#888;">No emotion heatmap data for this model</div>';
+                container.classList.add('rendered');
+                return;
+            }
+
+            const pages = result.pages;
+            const labels = result.labels;
+            const pageEmotionCounts = result.pageEmotionCounts;
+
+            const heatmapData = [];
+            let maxValue = 0;
+
+            pages.forEach(function (page, pageIndex) {
+                const counts = pageEmotionCounts.get(page) || {};
+
+                labels.forEach(function (label, labelIndex) {
+                    const value = counts[label] || 0;
+                    if (value > maxValue) maxValue = value;
+                    heatmapData.push([pageIndex, labelIndex, value]);
+                });
+            });
+
+            const chartDom = document.getElementById(containerId + '-heatmap');
+            const chart = echarts.init(chartDom);
+
+            const option = {
+                title: { text: 'Emotion Heatmap' },
+                tooltip: {
+                    position: 'top',
+                    formatter: function (params) {
+                        const page = pages[params.value[0]];
+                        const label = labels[params.value[1]];
+                        const value = params.value[2];
+                        return '<div><b>Page ' + page + '</b></div><div>' + label + ': ' + value + '</div>';
+                    }
+                },
+                grid: {
+                    left: 90,
+                    right: 30,
+                    top: 60,
+                    bottom: 60
+                },
+                xAxis: {
+                    type: 'category',
+                    name: 'Page',
+                    data: pages,
+                    splitArea: { show: true }
+                },
+                yAxis: {
+                    type: 'category',
+                    name: 'Emotion',
+                    data: labels,
+                    splitArea: { show: true }
+                },
+                visualMap: {
+                    min: 0,
+                    max: maxValue > 0 ? maxValue : 1,
+                    calculable: true,
+                    orient: 'horizontal',
+                    left: 'center',
+                    bottom: 10
+                },
+                series: [{
+                    name: 'Emotion Count',
+                    type: 'heatmap',
+                    data: heatmapData,
+                    label: {
+                        show: false
+                    },
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(0, 0, 0, 0.35)'
+                        }
+                    }
+                }]
+            };
+
+            chart.setOption(option);
+
+            chart.on('click', function (params) {
+                const pageIndex = params.value[0];
+                const pageNumber = pages[pageIndex];
+                if (pageNumber) {
+                    scrollToEmotionPage(pageNumber);
+                }
+            });
+
+            container.classList.add('rendered');
+        })
+        .catch(function () {
+            $('.visualization-spinner').hide();
+            container.innerHTML = '<div style="color:#888;">Failed to load emotion heatmap</div>';
             container.classList.add('rendered');
         });
 }
