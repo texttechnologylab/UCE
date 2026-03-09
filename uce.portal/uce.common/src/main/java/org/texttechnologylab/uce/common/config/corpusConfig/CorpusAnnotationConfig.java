@@ -32,4 +32,5 @@ public class CorpusAnnotationConfig {
     private boolean scope;
     private boolean xscope;
     private boolean unifiedTopic;
+    public boolean topic;
 }

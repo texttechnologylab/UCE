@@ -56,10 +56,7 @@ import org.texttechnologylab.uce.common.models.imp.LogStatus;
 import org.texttechnologylab.uce.common.models.negation.*;
 import org.texttechnologylab.uce.common.models.rag.DocumentChunkEmbedding;
 import org.texttechnologylab.uce.common.models.rag.DocumentSentenceEmbedding;
-import org.texttechnologylab.uce.common.models.topic.TopicValueBase;
-import org.texttechnologylab.uce.common.models.topic.TopicValueBaseWithScore;
-import org.texttechnologylab.uce.common.models.topic.TopicWord;
-import org.texttechnologylab.uce.common.models.topic.UnifiedTopic;
+import org.texttechnologylab.uce.common.models.topic.*;
 import org.texttechnologylab.uce.common.services.*;
 import org.texttechnologylab.uce.common.utils.*;
 
@@ -533,8 +530,10 @@ public class Importer {
                         + " already exists in the corpus " + corpus.getId() + ".");
                 logger.info("Checking if that document was also post-processed yet...");
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
-                importSentenceTopicsFromXmiIntoDb(existingDoc, filePath);
+
+                //importSentenceTopicsFromXmiIntoDb(existingDoc, filePath);
                 appendNewEmotionsToExistingDocument(existingDoc,jCas);
+                appendNewSentenceTopicsToExistingDocument(existingDoc, jCas);
 
                 if (!existingDoc.isPostProcessed()) {
                     logger.info("Not yet post-processed. Doing that now.");
@@ -616,6 +615,13 @@ public class Importer {
                             setEmotions(document, jCas);
                         },
                         (ex) -> logImportWarn("This file should have contained Emotion annotations, but selecting them caused an error.", ex, filePath));
+
+            if (corpusConfig.getAnnotations().isTopic())
+                ExceptionUtils.tryCatchLog(
+                        () -> {
+                            setSentenceTopics(document, jCas);
+                        },
+                        (ex) -> logImportWarn("This file should have contained Topic annotations, but selecting them caused an error.", ex, filePath));
 
             if (corpusConfig.getAnnotations().isLemma())
                 ExceptionUtils.tryCatchLog(
@@ -1456,6 +1462,97 @@ public class Importer {
         document.setNamedEntities(nes);
         logger.info("Setting Named-Entities done.");
     }
+    private void setSentenceTopics(Document document, JCas jCas) {
+        List<SentenceTopic> newTopics = extractSentenceTopics(document, jCas);
+
+        List<SentenceTopic> sentenceTopics = document.getSentenceTopics();
+        if (sentenceTopics == null) {
+            sentenceTopics = new ArrayList<>();
+            document.setSentenceTopics(sentenceTopics);
+        }
+
+        sentenceTopics.addAll(newTopics);
+
+        logger.info("Setting SentenceTopics done. Count={}", sentenceTopics.size());
+    }
+
+    private List<SentenceTopic> extractSentenceTopics(Document document, JCas jCas) {
+        List<SentenceTopic> sentenceTopics = new ArrayList<>();
+
+        Map<String, Sentence> sentenceBySpan = document.getSentences().stream()
+                .collect(Collectors.toMap(
+                        s -> s.getBegin() + "_" + s.getEnd(),
+                        s -> s,
+                        (a, b) -> a
+                ));
+
+        for (org.texttechnologylab.annotation.Topic topicSpan : JCasUtil.select(jCas, org.texttechnologylab.annotation.Topic.class)) {
+            Sentence sentence = sentenceBySpan.get(topicSpan.getBegin() + "_" + topicSpan.getEnd());
+            if (sentence == null) {
+                continue;
+            }
+
+            String modelName = "unknown";
+            try {
+                if (topicSpan.getModel() != null && topicSpan.getModel().getModelName() != null) {
+                    modelName = topicSpan.getModel().getModelName();
+                }
+            } catch (Exception ignored) {
+            }
+
+            ModelEntity foundModel = null;
+            try {
+                foundModel = db.getModelEntityByKey(modelName);
+                if (foundModel == null) {
+                    foundModel = db.getModelEntityByMap(modelName);
+                }
+            } catch (DatabaseOperationException ex) {
+                logger.error("Error when looking for topic model in database {}", modelName, ex);
+            }
+
+            if (foundModel == null) {
+                logger.warn("Topic model not found in DB: {}", modelName);
+                continue;
+            }
+
+            var topicsArr = topicSpan.getTopics();
+            if (topicsArr == null || topicsArr.size() == 0) {
+                continue;
+            }
+
+            for (int i = 0; i < topicsArr.size(); i++) {
+                var fs = topicsArr.get(i);
+                if (!(fs instanceof AnnotationComment comment)) {
+                    continue;
+                }
+
+                String label = comment.getKey();
+                String valueStr = comment.getValue();
+                if (label == null || label.isBlank() || valueStr == null || valueStr.isBlank()) {
+                    continue;
+                }
+
+                double score;
+                try {
+                    score = Double.parseDouble(valueStr);
+                } catch (NumberFormatException ex) {
+                    continue;
+                }
+
+                SentenceTopic st = new SentenceTopic();
+                st.setDocument(document);
+                st.setSentence(sentence);
+                st.setModel(foundModel);
+                st.setTopicLabel(label);
+                st.setScore(score);
+                //st.setUnifiedTopic(foundUnifiedTopic);
+
+                sentenceTopics.add(st);
+            }
+        }
+
+        return sentenceTopics;
+    }
 
     /**
      * Selects and sets the sentences to a document
@@ -1818,6 +1915,14 @@ public class Importer {
             logger.info("Inserting into Document and Corpus Topic word tables...");
 
             try {
+                Path insertDocumentTopicsFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/2_updateDocumentTopics.sql");
+                var insertDocumentTopicsScript = Files.readString(insertDocumentTopicsFilePath);
+
+                ExceptionUtils.tryCatchLog(
+                        () -> db.executeSqlWithoutReturn(insertDocumentTopicsScript),
+                        (ex) -> logger.error("Error executing SQL script to populate documenttopicsraw table", ex)
+                );
+
                 Path insertDocumentTopicWordFilePath = Paths.get(commonConfig.getDatabaseScriptsLocation(), "topic/3_updateDocumentTopicWord.sql");
                 var insertDocumentTopicWordScript = Files.readString(insertDocumentTopicWordFilePath);
 
@@ -1920,13 +2025,13 @@ public class Importer {
         var start = System.currentTimeMillis();
         var corpusConfig = corpus.getViewModel().getCorpusConfig();
         // Import sentence-level topic annotations (News XMI: annotation2:Topic + AnnotationComment)
-        importSentenceTopicsFromXmiIntoDb(document, filePath);
+        //importSentenceTopicsFromXmiIntoDb(document, filePath);
 
         // build unifiedtopic + link sentencetopics.unifiedtopic_id
-        //ExceptionUtils.tryCatchLog(
-        //        () -> db.ensureUnifiedTopicsForSentenceTopics(document.getId()),
-        //        (ex) -> logImportError("Error creating/linking unifiedtopic rows for sentence topics.", ex, filePath)
-        //);
+        ExceptionUtils.tryCatchLog(
+                () -> db.ensureUnifiedTopicsForSentenceTopics(document.getId()),
+                (ex) -> logImportError("Error creating/linking unifiedtopic rows for sentence topics.", ex, filePath)
+        );
 
         ExceptionUtils.tryCatchLog(
                 () -> db.createSentenceEmotions(document.getId()),
@@ -2312,5 +2417,32 @@ public class Importer {
         }
         
     }
+    private void appendNewSentenceTopicsToExistingDocument(Document existingDoc, JCas jCas) {
+        List<SentenceTopic> newSentenceTopics = extractSentenceTopics(existingDoc, jCas);
+
+        if (newSentenceTopics.isEmpty()) {
+            return;
+        }
+
+        ExceptionUtils.tryCatchLog(
+                () -> db.saveNewSentenceTopicsForDocument(existingDoc.getId(), newSentenceTopics),
+                (ex) -> logger.error(
+                        "Error when saving new sentence topics to existing document {}",
+                        existingDoc.getId(),
+                        ex
+                )
+        );
+        ExceptionUtils.tryCatchLog(
+                () -> db.ensureUnifiedTopicsForSentenceTopics(existingDoc.getId()),
+                (ex) -> logger.error(
+                        "Error when ensuring unified topics for existing document {}",
+                        existingDoc.getId(),
+                        ex
+                )
+        );
+
+        logger.info("Added {} sentence topics to existing document {}", newSentenceTopics.size(), existingDoc.getId());
+    }
+
 
 }

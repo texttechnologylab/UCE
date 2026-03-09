@@ -21,10 +21,7 @@ import org.texttechnologylab.uce.common.models.gbif.GbifOccurrence;
 import org.texttechnologylab.uce.common.models.imp.ImportLog;
 import org.texttechnologylab.uce.common.models.imp.UCEImport;
 import org.texttechnologylab.uce.common.models.negation.*;
-import org.texttechnologylab.uce.common.models.topic.TopicValueBase;
-import org.texttechnologylab.uce.common.models.topic.TopicValueBaseWithScore;
-import org.texttechnologylab.uce.common.models.topic.TopicWord;
-import org.texttechnologylab.uce.common.models.topic.UnifiedTopic;
+import org.texttechnologylab.uce.common.models.topic.*;
 
 import java.util.HashMap;
 
@@ -89,6 +86,7 @@ public class HibernateConf {
         metadataSources.addAnnotatedClass(TopicWord.class);
         metadataSources.addAnnotatedClass(TopicValueBase.class);
         metadataSources.addAnnotatedClass(TopicValueBaseWithScore.class);
+        metadataSources.addAnnotatedClass(SentenceTopic.class);
         //models
         metadataSources.addAnnotatedClass(ModelEntity.class);
 
