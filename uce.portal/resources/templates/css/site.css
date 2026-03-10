@@ -1147,6 +1147,13 @@ nav .selected-nav-btn.text::before {
     border-color: var(--prime) !important;
 }
 
+/* lighter blue for already checked checkboxes/flags (Import Modal) */
+.custom-control-input:checked:disabled ~ .custom-control-label::before {
+    background-color: #6da2bc !important;
+    border-color: #6da2bc !important;
+    opacity: 1 !important; 
+}
+
 /*Custom button switches */
 
 /* UCE Map styles */
