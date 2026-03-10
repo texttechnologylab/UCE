@@ -260,6 +260,7 @@ public class ImportExportApi implements UceApi {
              ann.setSentence(ann.isSentence() || ctx.formParam("sentence") != null);
              ann.setLemma(ann.isLemma() || ctx.formParam("lemma") != null);
              ann.setNamedEntity(ann.isNamedEntity() || ctx.formParam("namedEntity") != null);
+             ann.setTopic(ann.isNamedEntity() || ctx.formParam("topic") != null);
              ann.setSentiment(ann.isSentiment() || ctx.formParam("sentiment") != null);
              ann.setEmotion(ann.isEmotion() || ctx.formParam("emotion") != null);
              ann.setTime(ann.isTime() || ctx.formParam("time") != null);

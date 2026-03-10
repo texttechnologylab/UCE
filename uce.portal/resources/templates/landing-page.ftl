@@ -210,7 +210,7 @@
                                 <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="annoNE" name="namedEntity"><label class="custom-control-label small" for="annoNE">Named Entity</label></div>
                                 <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="annoSentiment" name="sentiment"><label class="custom-control-label small" for="annoSentiment">Sentiment</label></div>
                                 <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="annoEmotion" name="emotion"><label class="custom-control-label small" for="annoEmotion">Emotion</label></div>
-                                <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="annoTime" name="time"><label class="custom-control-label small" for="annoTime">Time</label></div>
+                                <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="annoTopic" name="topic"><label class="custom-control-label small" for="annoTopic">Topic</label></div>
                             </div>
                             <div class="col-md-3">
                                 <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="annoGeo" name="geoNames"><label class="custom-control-label small" for="annoGeo">GeoNames</label></div>
@@ -234,6 +234,9 @@
                                 <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="annoEvent" name="event"><label class="custom-control-label small" for="annoEvent">Event</label></div>
                                 <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="annoFocus" name="focus"><label class="custom-control-label small" for="annoFocus">Focus</label></div>
                                 <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="annoScope" name="scope"><label class="custom-control-label small" for="annoScope">Scope</label></div>
+                                <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="annoTime" name="time"><label class="custom-control-label small" for="annoTime">Time</label></div>
+                            </div>
+                            <div class="col-md-3">
                                 <div class="custom-control custom-checkbox"><input type="checkbox" class="custom-control-input" id="annoXScope" name="xscope"><label class="custom-control-label small" for="annoXScope">X-Scope</label></div>
                             </div>
                         </div>
