@@ -655,7 +655,9 @@ body {
 }
 
 .tab-content .tab-pane.active {
-    display: block;
+    display: flex;
+    flex-direction: column;
+    height: calc(100vh - 50px);
 }
 .side-bar.visualization-expanded {
     width: 150vw !important;
@@ -665,7 +667,7 @@ body {
 .tab-pane .visualization-wrapper {
     display: flex;
     flex-direction: column;
-    height: 100%;
+    flex: 1;
     position: relative;
 }
 .visualization-wrapper .visualization-content {
@@ -710,13 +712,12 @@ body {
 
 /* Bottom Navigation */
 .tab-pane .viz-bottom-nav {
-    position: fixed;
-    left: 50%;
-    bottom: 30px;
-    transform: translateX(-50%);
-    right: auto;
+    position: absolute;
+    bottom: 80px;
+    left: 16px;
     width: max-content;
-    max-width: calc(100vw - 40px);
+    max-width: calc(100% - 32px);
+    align-self: flex-end;
     display: flex;
     justify-content: center;
     gap: 10px;
@@ -778,7 +779,7 @@ body {
     outline: none;
 }
 
-#vp-3, #vp-4, #vp-5, #vp-2, #vp-1, #vp-6 {
+#vp-4, #vp-5, #vp-2, #vp-1, #vp-6 {
     display: flex;
     align-items: center;
     justify-content: center;
@@ -786,8 +787,20 @@ body {
     overflow: hidden;
     position: relative;
 }
+#vp-3 {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
 
+#vp-3 > div[id$="-body"] {
+    flex: 1;
+}
 
+#vp-3 > .d-flex {
+    width: 100%;
+    padding: 0;
+}
 .key-topic-settings-panel {
     position: absolute;
     top: 160px;
@@ -971,7 +984,8 @@ body {
 
     /* --- Dropdown Navigation Erweiterung (Hover) --- */
     .tab-pane .viz-bottom-nav.viz-dropdown-nav{
-        justify-content: center;  /* statt space-around */
+        justify-content: flex-start;
+        overflow: visible;
         gap: 10px;
         overflow: visible;        /* wichtig, damit Menüs nicht abgeschnitten werden */
     }

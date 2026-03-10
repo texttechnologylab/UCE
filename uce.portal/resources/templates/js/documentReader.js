@@ -897,26 +897,28 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
 
             loadEmotionModels(docId);
-
+            loadSentimentMenu(docId);
             loadTopicMenu(docId).then(function (topicState) {
-                if (topicState.hasSemanticDensity) {
-                    activateVisualizationPanel('#viz-panel-1', $('.viz-nav-group[data-category="topic"] .viz-nav-parent'));
+                if (topicState.models && topicState.models.length > 0) {
+                    activateVisualizationPanel('#viz-panel-3', $('.viz-nav-group[data-category="topic"] .viz-nav-parent'));
+                    $('#vp-3').removeClass('rendered');
+                    setTimeout(() => renderTopicViz('vp-3'), 500);
+                }
+            });
+
+            loadOthersMenu(docId).then(function (othersState) {
+                if (othersState.hasSemanticDensity) {
+                    activateVisualizationPanel('#viz-panel-1', $('.viz-nav-group[data-category="others"] .viz-nav-parent'));
                     $('#vp-1').removeClass('rendered');
                     setTimeout(() => renderTemporalExplorer('vp-1'), 500);
                     return;
                 }
 
-                if (topicState.hasTopicEntity) {
-                    activateVisualizationPanel('#viz-panel-2', $('.viz-nav-group[data-category="topic"] .viz-nav-parent'));
+                if (othersState.hasTopicEntity) {
+                    activateVisualizationPanel('#viz-panel-2', $('.viz-nav-group[data-category="others"] .viz-nav-parent'));
                     $('#vp-2').removeClass('rendered');
                     setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
                     return;
-                }
-
-                if (topicState.models && topicState.models.length > 0) {
-                    activateVisualizationPanel('#viz-panel-3', $('.viz-nav-group[data-category="topic"] .viz-nav-parent'));
-                    $('#vp-3').removeClass('rendered');
-                    setTimeout(() => renderTopicViz('vp-3'), 500);
                 }
             });
         }
@@ -976,7 +978,31 @@ $(document).on('click', '.emotion-model-item', function (e) {
     $('#vp-7').removeClass('rendered');
     renderEmotionViz('vp-7');
 });
+$(document).on('click', '.others-menu-item[data-target]', function (e) {
+    e.preventDefault();
 
+    const target = $(this).data('target');
+    const $group = $(this).closest('.viz-nav-group');
+
+    activateVisualizationPanel(target, $group.find('.viz-nav-parent'));
+
+    if (target === '#viz-panel-1') {
+        $('#vp-1').removeClass('rendered');
+        setTimeout(() => renderTemporalExplorer('vp-1'), 500);
+    }
+    if (target === '#viz-panel-2') {
+        $('#vp-2').removeClass('rendered');
+        setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
+    }
+    if (target === '#viz-panel-4') {
+        $('#vp-4').removeClass('rendered');
+        setTimeout(() => renderTopicSimilarityMatrix('vp-4'), 500);
+    }
+    if (target === '#viz-panel-5') {
+        $('#vp-5').removeClass('rendered');
+        setTimeout(() => renderSentenceTopicSankey('vp-5'), 500);
+    }
+});
 $(document).on('click', '.emotion-viz-toggle-btn', function (e) {
     e.preventDefault();
 
@@ -1230,7 +1256,7 @@ function renderTopicViz(containerId) {
         '<button type="button" class="' + heatmapBtnClass + '" data-viz-type="heatmap">Heatmap</button>' +
         '</div>' +
         '</div>' +
-        '<div id="' + containerId + '-body" style="width:100%;height:420px;"></div>';
+        '<div id="' + containerId + '-body" style="width:100%;flex:1;min-height:380px;"></div>';
 
     if (selectedTopicVizType === 'timeline') {
         renderTopicTimeline(containerId + '-body');
@@ -1779,48 +1805,16 @@ function loadEmotionModels(docId) {
 }
 function loadTopicMenu(docId) {
     const $menu = $('#topic-menu');
-    const semanticLabel = $menu.attr('data-label-semantic-density') || 'Semantic Density';
-    const entityLabel = $menu.attr('data-label-topic-entity') || 'Topic Entity';
     const noDataLabel = $menu.attr('data-label-no-data') || 'No data available';
 
     $menu.empty();
-
-    const topicPageReq = $.get('/api/document/page/topics', { documentId: docId })
-        .then(function (data) { return data; })
-        .catch(function () { return []; });
-
-    const topicEntityReq = $.get('/api/document/page/topicEntityRelation', { documentId: docId })
-        .then(function (data) { return data; })
-        .catch(function () { return []; });
 
     const topicModelsReq = $.get('/api/document/topicModels', { documentId: docId })
         .then(function (data) { return data; })
         .catch(function () { return []; });
 
-    return Promise.all([topicPageReq, topicEntityReq, topicModelsReq]).then(function (results) {
-        const topicPageData = results[0] || [];
-        const topicEntityData = results[1] || [];
-        const topicModels = results[2] || [];
-
-        const hasSemanticDensity = Array.isArray(topicPageData) && topicPageData.length > 0;
-        const hasTopicEntity = Array.isArray(topicEntityData) && topicEntityData.length > 0;
+    return topicModelsReq.then(function (topicModels) {
         const hasModels = Array.isArray(topicModels) && topicModels.length > 0;
-
-        if (hasSemanticDensity) {
-            $menu.append(
-                '<a class="viz-nav-item topic-menu-item" href="#" data-target="#viz-panel-1">' +
-                semanticLabel +
-                '</a>'
-            );
-        }
-
-        if (hasTopicEntity) {
-            $menu.append(
-                '<a class="viz-nav-item topic-menu-item" href="#" data-target="#viz-panel-2">' +
-                entityLabel +
-                '</a>'
-            );
-        }
 
         if (hasModels) {
             const selectedStillExists = topicModels.some(function (m) {
@@ -1844,16 +1838,91 @@ function loadTopicMenu(docId) {
             });
         }
 
-        if (!hasSemanticDensity && !hasTopicEntity && !hasModels) {
-            $menu.append('<span class="viz-nav-item viz-disabled">' + noDataLabel + '</span>');
+        if (!hasModels) {
+            $menu.append('<span class="viz-nav-item viz-disabled">No models found</span>');
         }
 
         return {
-            hasSemanticDensity: hasSemanticDensity,
-            hasTopicEntity: hasTopicEntity,
             models: topicModels
         };
     });
+}
+function loadOthersMenu(docId) {
+    const $menu = $('#others-menu');
+    const noDataLabel = $menu.attr('data-label-no-data') || 'No data available';
+
+    $menu.empty();
+
+    const topicPageReq = $.get('/api/document/page/topics', { documentId: docId })
+        .then(function (data) { return data; })
+        .catch(function () { return []; });
+
+    const topicEntityReq = $.get('/api/document/page/topicEntityRelation', { documentId: docId })
+        .then(function (data) { return data; })
+        .catch(function () { return []; });
+
+    return Promise.all([topicPageReq, topicEntityReq]).then(function (results) {
+        const topicPageData = results[0] || [];
+        const topicEntityData = results[1] || [];
+
+        const hasSemanticDensity = Array.isArray(topicPageData) && topicPageData.length > 0;
+        const hasTopicEntity = Array.isArray(topicEntityData) && topicEntityData.length > 0;
+
+        $menu.append(
+            '<a class="viz-nav-item others-menu-item" href="#" data-target="#viz-panel-1">' +
+            'Semantic Density' +
+            '</a>'
+        );
+
+        $menu.append(
+            '<a class="viz-nav-item others-menu-item" href="#" data-target="#viz-panel-2">' +
+            'Topic Entity' +
+            '</a>'
+        );
+
+        $menu.append(
+            '<a class="viz-nav-item others-menu-item" href="#" data-target="#viz-panel-4">' +
+            'Topic Landscape' +
+            '</a>'
+        );
+
+        $menu.append(
+            '<a class="viz-nav-item others-menu-item" href="#" data-target="#viz-panel-5">' +
+            'Topic Similarity' +
+            '</a>'
+        );
+
+        $menu.append(
+            '<a class="viz-nav-item others-menu-item" href="#" data-target="#viz-panel-5">' +
+            'Sentence Topic Flow' +
+            '</a>'
+        );
+
+        return {
+            hasSemanticDensity: hasSemanticDensity,
+            hasTopicEntity: hasTopicEntity
+        };
+    });
+}
+function loadSentimentMenu(docId) {
+    const $menu = $('#sentiment-menu');
+    $menu.empty();
+
+    $.get('/api/document/page/sentiments', { documentId: docId })
+        .then(function (data) {
+            if (Array.isArray(data) && data.length > 0) {
+                $menu.append(
+                    '<a class="viz-nav-item" href="#" data-target="#viz-panel-6">' +
+                    'Sentence Sentiment' +
+                    '</a>'
+                );
+            } else {
+                $menu.append('<span class="viz-nav-item viz-disabled">No models found</span>');
+            }
+        })
+        .catch(function () {
+            $menu.append('<span class="viz-nav-item viz-disabled">No models found</span>');
+        });
 }
 function renderTopicModelOverview(containerId) {
     const container = document.getElementById(containerId);

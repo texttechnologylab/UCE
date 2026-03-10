@@ -531,7 +531,6 @@ public class Importer {
                 logger.info("Checking if that document was also post-processed yet...");
                 var existingDoc = db.getDocumentByCorpusAndDocumentId(corpus.getId(), document.getDocumentId());
 
-                //importSentenceTopicsFromXmiIntoDb(existingDoc, filePath);
                 appendNewEmotionsToExistingDocument(existingDoc,jCas);
                 appendNewSentenceTopicsToExistingDocument(existingDoc, jCas);
 
@@ -1948,73 +1947,6 @@ public class Importer {
         logger.info("Done with the corpus postprocessing.");
     }
 
-    /**
-     * Each topic annotation is matched to an existing sentence using
-     * its begin and end offsets. For every (label, score) pair found,
-     * a corresponding entry is inserted into the
-     * table, linking the topic classification to the sentence.
-     * The method only performs sentence-level imports and does not
-     * create unified or aggregated topic representations
-     */
-    private void importSentenceTopicsFromXmiIntoDb(Document document, String xmiFilePath) {
-        try {
-            var jCas = JCasFactory.createJCas();
-
-            try (InputStream raw = Files.newInputStream(Paths.get(xmiFilePath));
-                 InputStream in = xmiFilePath.endsWith(".gz") ? new GZIPInputStream(raw) : raw) {
-
-                CasIOUtils.load(in, jCas.getCas());
-            }
-
-            if (casView != null) {
-                jCas = jCas.getView(casView);
-            }
-
-            var topicAnnos = JCasUtil.select(jCas, org.texttechnologylab.annotation.Topic.class);
-            if (topicAnnos.isEmpty()) {
-                logger.info("No Topic annotations found in XMI: {}", xmiFilePath);
-                return;
-            }
-
-            int inserted = 0;
-
-            for (var topicSpan : topicAnnos) {
-                int begin = topicSpan.getBegin();
-                int end = topicSpan.getEnd();
-                String model = "unknown";
-                try {
-                    if (topicSpan.getModel() != null && topicSpan.getModel().getModelName() != null) {
-                        model = topicSpan.getModel().getModelName();
-                    }
-                } catch (Exception ignored) { }
-
-                var topicsArr = topicSpan.getTopics();
-                if (topicsArr == null || topicsArr.size() == 0) continue;
-
-                for (int i = 0; i < topicsArr.size(); i++) {
-                    var fs = topicsArr.get(i);
-                    if (!(fs instanceof AnnotationComment comment)) continue;
-
-                    String label = comment.getKey();
-                    String valueStr = comment.getValue();
-                    if (label == null || label.isBlank() || valueStr == null || valueStr.isBlank()) continue;
-
-                    double score;
-                    try { score = Double.parseDouble(valueStr); }
-                    catch (NumberFormatException nfe) { continue; }
-
-                    inserted += db.insertSentenceTopicBySpan(document.getId(), begin, end, label, score, model);
-                }
-            }
-
-            logger.info("Imported sentence topic annotations into sentencetopics: documentId={}, insertedRows={}",
-                    document.getId(), inserted);
-
-        } catch (Exception ex) {
-            logger.error("Error importing sentence topics from XMI into DB. xmi={}", xmiFilePath, ex);
-        }
-    }
-
 
     /**
      * Here we apply any postprocessing of a document that isn't DUUI and needs the document to be stored once like
@@ -2024,8 +1956,6 @@ public class Importer {
         logImportInfo("Postprocessing " + filePath, LogStatus.POST_PROCESSING, filePath, 0);
         var start = System.currentTimeMillis();
         var corpusConfig = corpus.getViewModel().getCorpusConfig();
-        // Import sentence-level topic annotations (News XMI: annotation2:Topic + AnnotationComment)
-        //importSentenceTopicsFromXmiIntoDb(document, filePath);
 
         // build unifiedtopic + link sentencetopics.unifiedtopic_id
         ExceptionUtils.tryCatchLog(

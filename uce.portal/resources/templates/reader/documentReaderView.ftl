@@ -333,8 +333,6 @@
 
                                     <div class="viz-nav-menu"
                                          id="topic-menu"
-                                         data-label-semantic-density="${languageResource.get('semanticDensity')}"
-                                         data-label-topic-entity="${languageResource.get('topicEntity')}"
                                          data-label-no-data="${languageResource.get('noDataAvailable')}">
                                     </div>
                                 </div>
@@ -345,11 +343,7 @@
                                         Sentiment <i class="fas fa-chevron-up ml-2"></i>
                                     </button>
 
-                                    <div class="viz-nav-menu">
-                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-6">
-                                            ${languageResource.get("sentenceSentiment")}
-                                        </a>
-                                    </div>
+                                    <div class="viz-nav-menu" id="sentiment-menu"></div>
                                 </div>
 
                                 <!-- EMOTION  -->
@@ -361,6 +355,17 @@
                                     <div class="viz-nav-menu" id="emotion-model-menu"></div>
                                 </div>
 
+                                <!-- OTHERS -->
+                                <div class="viz-nav-group" data-category="others">
+                                    <button class="viz-nav-btn viz-nav-parent" type="button">
+                                        Others <i class="fas fa-chevron-up ml-2"></i>
+                                    </button>
+
+                                    <div class="viz-nav-menu"
+                                         id="others-menu"
+                                         data-label-no-data="${languageResource.get('noDataAvailable')}">
+                                    </div>
+                                </div>
                             </div>
 
                         </div>
