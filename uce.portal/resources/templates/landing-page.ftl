@@ -427,6 +427,8 @@
     function openUploadForNewCorpora(){
         const form = document.getElementById('uploadCorpusForm');
         form.reset();
+        $('#advancedSettings input[type="checkbox"]').prop('checked',false).prop('disabled',false);
+        $('#uploadConfigFile').prop('disabled', false);
         $('#uploadAddToExisting').val('false');
         $('#uploadModalTitle').html('Create new Corpora');
         $('#uploadCorpusName').val('').prop('readonly',false);
@@ -545,6 +547,8 @@
         if (!confirm("Are you sure you want to delete this corpus?")){
             return;
         }
+        
+        
 
         fetch('/api/corpus/delete?corpusId=' + corpusId, {
             method: 'DELETE'
