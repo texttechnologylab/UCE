@@ -2027,45 +2027,123 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return query.getResultList();
         });
     }
-
-
     public List<Object[]> getTopicDistributionByPageForDocument(long documentId) throws DatabaseOperationException {
+        return getTopicDistributionByPageForDocument(documentId, null);
+    }
+
+    public List<Object[]> getTopicDistributionByPageForDocument(long documentId, Long modelId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = """
-                    WITH best_topic_per_sentence AS (
-                        SELECT DISTINCT ON (st.document_id, st.sentence_id)
-                            st.unifiedtopic_id,
-                            st.document_id,
-                            st.sentence_id,
-                            st.topiclabel,
-                            st.thetast
-                        FROM 
-                            sentencetopics st
-                        WHERE 
-                            st.document_id = :documentId
-                        ORDER BY 
-                            st.document_id, st.sentence_id, st.thetast DESC
-                    )
-                    SELECT 
-                        ut.page_id,
-                        btp.topiclabel
+                WITH best_topic_per_sentence AS (
+                    SELECT DISTINCT ON (st.document_id, st.sentence_id)
+                        st.unifiedtopic_id,
+                        st.document_id,
+                        st.sentence_id,
+                        st.topiclabel,
+                        st.thetast
                     FROM 
-                        best_topic_per_sentence btp
-                    JOIN 
-                        unifiedtopic ut ON btp.unifiedtopic_id = ut.id
+                        sentencetopics st
                     WHERE 
-                        ut.document_id = :documentId
+                        st.document_id = :documentId
+                        AND (:modelId IS NULL OR st.model_id = :modelId)
                     ORDER BY 
-                        ut.page_id, btp.topiclabel
-                    """;
+                        st.document_id, st.sentence_id, st.thetast DESC
+                )
+                SELECT 
+                    ut.page_id,
+                    btp.topiclabel
+                FROM 
+                    best_topic_per_sentence btp
+                JOIN 
+                    unifiedtopic ut ON btp.unifiedtopic_id = ut.id
+                WHERE 
+                    ut.document_id = :documentId
+                ORDER BY 
+                    ut.page_id, btp.topiclabel
+                """;
 
             var query = session.createNativeQuery(sql)
-                    .setParameter("documentId", documentId);
+                    .setParameter("documentId", documentId)
+                    .setParameter("modelId", modelId);
 
             return query.getResultList();
         });
     }
+    public List<Object[]> getTopicModelsForDocumentWithName(long documentId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = """
+            SELECT DISTINCT m.id AS model_id, m.name AS model_name
+            FROM sentencetopics st
+            JOIN models m ON m.id = st.model_id
+            WHERE st.document_id = :documentId
+            ORDER BY m.id
+        """;
 
+            return session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId)
+                    .getResultList();
+        });
+    }
+    public List<Object[]> getTopicModelOverview(long documentId, long modelId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = """
+            WITH best_topic_per_sentence AS (
+                SELECT DISTINCT ON (st.document_id, st.sentence_id)
+                    st.sentence_id,
+                    st.topiclabel,
+                    st.thetast
+                FROM sentencetopics st
+                WHERE st.document_id = :documentId
+                  AND st.model_id = :modelId
+                ORDER BY st.document_id, st.sentence_id, st.thetast DESC
+            )
+            SELECT
+                b.topiclabel,
+                COUNT(*) AS topic_count
+            FROM best_topic_per_sentence b
+            WHERE b.topiclabel IS NOT NULL
+              AND TRIM(b.topiclabel) <> ''
+            GROUP BY b.topiclabel
+            ORDER BY topic_count DESC, b.topiclabel
+        """;
+
+            return session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId)
+                    .setParameter("modelId", modelId)
+                    .getResultList();
+        });
+    }
+    public List<Object[]> getTopicModelPageCounts(long documentId, long modelId) throws DatabaseOperationException {
+        return executeOperationSafely((session) -> {
+            String sql = """
+            WITH best_topic_per_sentence AS (
+                SELECT DISTINCT ON (st.document_id, st.sentence_id)
+                    st.sentence_id,
+                    st.topiclabel,
+                    st.thetast
+                FROM sentencetopics st
+                WHERE st.document_id = :documentId
+                  AND st.model_id = :modelId
+                ORDER BY st.document_id, st.sentence_id, st.thetast DESC
+            )
+            SELECT
+                s.page_id,
+                b.topiclabel,
+                COUNT(*) AS topic_count
+            FROM best_topic_per_sentence b
+            JOIN sentence s ON s.id = b.sentence_id
+            WHERE b.topiclabel IS NOT NULL
+              AND TRIM(b.topiclabel) <> ''
+            GROUP BY s.page_id, b.topiclabel
+            ORDER BY s.page_id, topic_count DESC, b.topiclabel
+        """;
+
+            return session.createNativeQuery(sql)
+                    .setParameter("documentId", documentId)
+                    .setParameter("modelId", modelId)
+                    .getResultList();
+        });
+    }
     public List<Object[]> getSentenceTopicsWithEntitiesByPageForDocument(long documentId)
             throws DatabaseOperationException {
 

@@ -85,3 +85,12 @@
     border-bottom: lightgray 1px solid;
     padding:16px;
 }
+.corpus-inspector .annotation-entry:not(:has(input[type="checkbox"]:checked)) > div {
+    background: #e3e3e3;
+    border: 1px solid #cfcfcf !important;
+    border-radius: 6px;
+}
+
+.corpus-inspector .annotation-entry:not(:has(input[type="checkbox"]:checked)) > div label {
+    color: #666;
+}

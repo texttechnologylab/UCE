@@ -383,10 +383,16 @@ public class DocumentApi implements UceApi {
         if (documentId == null) {
             ctx.status(400);
             ctx.render("defaultError.ftl", Map.of("information", "Missing documentId parameter"));
+            return;
         }
 
+        Long modelId = ExceptionUtils.tryCatchLog(() -> {
+            String modelParam = ctx.queryParam("modelId");
+            return (modelParam == null || modelParam.isBlank()) ? null : Long.parseLong(modelParam);
+        }, (ex) -> logger.error("Error: couldn't determine the modelId for topics. ", ex));
+
         try {
-            var topicDistPerPage = db.getTopicDistributionByPageForDocument(documentId);
+            var topicDistPerPage = db.getTopicDistributionByPageForDocument(documentId, modelId);
             var result = new ArrayList<Map<String, Object>>();
 
             for (Object[] row : topicDistPerPage) {
@@ -403,7 +409,86 @@ public class DocumentApi implements UceApi {
             ctx.render("defaultError.ftl", Map.of("information", "Error retrieving document topics."));
         }
     }
+    public void getTopicModels(Context ctx) {
+        try {
+            long documentId = Long.parseLong(ctx.queryParam("documentId"));
+            List<Object[]> rows = db.getTopicModelsForDocumentWithName(documentId);
 
+            List<Map<String, Object>> result = new ArrayList<>();
+            for (Object[] r : rows) {
+                Number id = (Number) r[0];
+                String name = (String) r[1];
+
+                Map<String, Object> obj = new HashMap<>();
+                obj.put("modelId", id == null ? null : id.longValue());
+                obj.put("modelName", (name == null || name.isBlank()) ? ("Model " + id) : name);
+                result.add(obj);
+            }
+
+            ctx.json(result);
+        } catch (Exception ex) {
+            ctx.status(500).json(Map.of("error", "Failed to load topic models", "details", ex.getMessage()));
+        }
+    }
+    public void getTopicModelOverview(Context ctx) {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for topic model overview. ", ex));
+
+        var modelId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("modelId")),
+                (ex) -> logger.error("Error: couldn't determine the modelId for topic model overview. ", ex));
+
+        if (documentId == null || modelId == null) {
+            ctx.status(400).json(Map.of("error", "Missing documentId or modelId"));
+            return;
+        }
+
+        try {
+            var rows = db.getTopicModelOverview(documentId, modelId);
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : rows) {
+                var obj = new HashMap<String, Object>();
+                obj.put("label", row[0]);
+                obj.put("value", ((Number) row[1]).longValue());
+                result.add(obj);
+            }
+
+            ctx.json(result);
+        } catch (Exception ex) {
+            logger.error("Error getting topic model overview.", ex);
+            ctx.status(500).json(Map.of("error", "Failed to load topic model overview"));
+        }
+    }
+    public void getTopicModelPageCounts(Context ctx) {
+        var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
+                (ex) -> logger.error("Error: couldn't determine the documentId for topic model page counts. ", ex));
+
+        var modelId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("modelId")),
+                (ex) -> logger.error("Error: couldn't determine the modelId for topic model page counts. ", ex));
+
+        if (documentId == null || modelId == null) {
+            ctx.status(400).json(Map.of("error", "Missing documentId or modelId"));
+            return;
+        }
+
+        try {
+            var rows = db.getTopicModelPageCounts(documentId, modelId);
+            var result = new ArrayList<Map<String, Object>>();
+
+            for (Object[] row : rows) {
+                var obj = new HashMap<String, Object>();
+                obj.put("pageId", row[0]);
+                obj.put("label", row[1]);
+                obj.put("value", ((Number) row[2]).longValue());
+                result.add(obj);
+            }
+
+            ctx.json(result);
+        } catch (Exception ex) {
+            logger.error("Error getting topic model page counts.", ex);
+            ctx.status(500).json(Map.of("error", "Failed to load topic model page counts"));
+        }
+    }
     public void getDocumentNamedEntitiesByPage(Context ctx) {
         var documentId = ExceptionUtils.tryCatchLog(() -> Long.parseLong(ctx.queryParam("documentId")),
                 (ex) -> logger.error("Error: couldn't determine the documentId for entities. ", ex));
@@ -665,5 +750,4 @@ public class DocumentApi implements UceApi {
             ctx.status(500).json(Map.of("error", "Failed to load emotion models", "details", ex.getMessage()));
         }
     }
-
 }

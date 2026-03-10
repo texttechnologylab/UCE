@@ -3,6 +3,9 @@ let searchTokens = "";
 let currentSelectedTopic = null;
 let currentTopicIndex = -1;
 let matchingTopics = [];
+let selectedTopicModelId = null;
+let selectedTopicModelName = null;
+let selectedTopicVizType = 'overview';
 let selectedEmotionModelId = null;
 let selectedEmotionVizType = 'radar';
 let defaultTopicColorMap = getDefaultTopicColorMap();
@@ -783,7 +786,7 @@ function minimapToDocumentPosition(minimapPos, dimensions) {
 
 function createMinimapMarker(options) {
     const { top, height, color, elementId, topic, className } = options;
-    
+
     const $marker = $('<div></div>')
         .addClass('minimap-marker')
         .addClass(className || '')
@@ -892,9 +895,30 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 
         if (targetId === 'visualization-tab') {
             const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
             loadEmotionModels(docId);
-            activateVisualizationPanel('#viz-panel-1', $('.viz-nav-group[data-category="topic"] .viz-nav-parent'));
-            setTimeout(() => renderTemporalExplorer('vp-1'), 500);
+
+            loadTopicMenu(docId).then(function (topicState) {
+                if (topicState.hasSemanticDensity) {
+                    activateVisualizationPanel('#viz-panel-1', $('.viz-nav-group[data-category="topic"] .viz-nav-parent'));
+                    $('#vp-1').removeClass('rendered');
+                    setTimeout(() => renderTemporalExplorer('vp-1'), 500);
+                    return;
+                }
+
+                if (topicState.hasTopicEntity) {
+                    activateVisualizationPanel('#viz-panel-2', $('.viz-nav-group[data-category="topic"] .viz-nav-parent'));
+                    $('#vp-2').removeClass('rendered');
+                    setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
+                    return;
+                }
+
+                if (topicState.models && topicState.models.length > 0) {
+                    activateVisualizationPanel('#viz-panel-3', $('.viz-nav-group[data-category="topic"] .viz-nav-parent'));
+                    $('#vp-3').removeClass('rendered');
+                    setTimeout(() => renderTopicViz('vp-3'), 500);
+                }
+            });
         }
     });
 });
@@ -904,29 +928,43 @@ $(document).on('click', '.viz-nav-item[data-target]', function (e) {
 
     const target = $(this).data('target');
     const $group = $(this).closest('.viz-nav-group');
+
     activateVisualizationPanel(target, $group.find('.viz-nav-parent'));
 
     if (target === '#viz-panel-1') {
+        $('#vp-1').removeClass('rendered');
         setTimeout(() => renderTemporalExplorer('vp-1'), 500);
     }
+
     if (target === '#viz-panel-2') {
+        $('#vp-2').removeClass('rendered');
         setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
-    }
-    if (target === '#viz-panel-3') {
-        setTimeout(() => renderSentenceTopicNetwork('vp-3'), 500);
-    }
-    if (target === '#viz-panel-4') {
-        $('.selector-container').hide();
-        setTimeout(() => renderTopicSimilarityMatrix('vp-4'), 500);
-    }
-    if (target === '#viz-panel-5') {
-        setTimeout(() => renderSentenceTopicSankey('vp-5'), 500);
-    }
-    if (target === '#viz-panel-6') {
-        setTimeout(() => renderTemporalExplorer('vp-6'), 500);
     }
 });
 
+$(document).on('click', '.topic-model-item', function (e) {
+    e.preventDefault();
+
+    selectedTopicModelId = $(this).data('model-id');
+    selectedTopicModelName = $.trim($(this).text());
+
+    $('.topic-model-item').removeClass('active');
+    $(this).addClass('active');
+
+    activateVisualizationPanel('#viz-panel-3', $('.viz-nav-group[data-category="topic"] .viz-nav-parent'));
+    $('#vp-3').removeClass('rendered');
+    renderTopicViz('vp-3');
+});
+$(document).on('click', '.topic-viz-toggle-btn', function (e) {
+    e.preventDefault();
+
+    const nextVizType = $(this).data('viz-type');
+    if (!nextVizType || nextVizType === selectedTopicVizType) return;
+
+    selectedTopicVizType = nextVizType;
+    $('#vp-3').removeClass('rendered');
+    renderTopicViz('vp-3');
+});
 $(document).on('click', '.emotion-model-item', function (e) {
     e.preventDefault();
 
@@ -949,39 +987,6 @@ $(document).on('click', '.emotion-viz-toggle-btn', function (e) {
     $('#vp-7').removeClass('rendered');
     renderEmotionViz('vp-7');
 });
-
-$(document).on('click', '.viz-nav-btn', function (e) {
-    const target = $(this).data('target');
-
-    if (!target) {
-        return;
-    }
-
-    e.preventDefault();
-    activateVisualizationPanel(target, $(this));
-
-    if (target === '#viz-panel-1') {
-        setTimeout(() => renderTemporalExplorer('vp-1'), 500);
-    }
-    if (target === '#viz-panel-2') {
-        setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
-    }
-    if (target === '#viz-panel-3') {
-        setTimeout(() => renderSentenceTopicNetwork('vp-3'), 500);
-    }
-    if (target === '#viz-panel-4') {
-        $('.selector-container').hide();
-        setTimeout(() => renderTopicSimilarityMatrix('vp-4'), 500);
-    }
-    if (target === '#viz-panel-5') {
-        setTimeout(() => renderSentenceTopicSankey('vp-5'), 500);
-    }
-    if (target === '#viz-panel-6') {
-        setTimeout(() => renderTemporalExplorer('vp-6'), 500);
-    }
-});
-
-
 function renderSentenceTopicNetwork(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')) return;
@@ -1187,7 +1192,54 @@ function computeTopicSimilarityMatrix(data, type = "cosine") {
         matrix: matrix
     };
 }
+function renderTopicViz(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
 
+    if (!selectedTopicModelId) {
+        container.classList.remove('rendered');
+        container.innerHTML = '<div style="color:#888;">Please choose a topic model</div>';
+        container.classList.add('rendered');
+        return;
+    }
+
+    const modelName = selectedTopicModelName || ('Model ' + selectedTopicModelId);
+
+    const overviewBtnClass = selectedTopicVizType === 'overview'
+        ? 'btn btn-sm btn-primary topic-viz-toggle-btn'
+        : 'btn btn-sm btn-light topic-viz-toggle-btn';
+
+    const timelineBtnClass = selectedTopicVizType === 'timeline'
+        ? 'btn btn-sm btn-primary topic-viz-toggle-btn'
+        : 'btn btn-sm btn-light topic-viz-toggle-btn';
+
+    const heatmapBtnClass = selectedTopicVizType === 'heatmap'
+        ? 'btn btn-sm btn-primary topic-viz-toggle-btn'
+        : 'btn btn-sm btn-light topic-viz-toggle-btn';
+
+    container.classList.remove('rendered');
+    container.innerHTML = '' +
+        '<div class="d-flex align-items-center justify-content-between flex-wrap mb-3">' +
+        '<div class="mb-2">' +
+        '<div><strong>Topic</strong></div>' +
+        '<div class="text-muted small">' + modelName + '</div>' +
+        '</div>' +
+        '<div class="btn-group btn-group-sm mb-2" role="group" aria-label="Topic visualizations">' +
+        '<button type="button" class="' + overviewBtnClass + '" data-viz-type="overview">Overview</button>' +
+        '<button type="button" class="' + timelineBtnClass + '" data-viz-type="timeline">Timeline</button>' +
+        '<button type="button" class="' + heatmapBtnClass + '" data-viz-type="heatmap">Heatmap</button>' +
+        '</div>' +
+        '</div>' +
+        '<div id="' + containerId + '-body" style="width:100%;height:420px;"></div>';
+
+    if (selectedTopicVizType === 'timeline') {
+        renderTopicTimeline(containerId + '-body');
+    } else if (selectedTopicVizType === 'heatmap') {
+        renderTopicHeatmap(containerId + '-body');
+    } else {
+        renderTopicModelOverview(containerId + '-body');
+    }
+}
 function renderTopicSimilarityMatrix(containerId) {
     const container = document.getElementById(containerId);
     if (!container || container.classList.contains('rendered')){
@@ -1714,7 +1766,7 @@ function loadEmotionModels(docId) {
             models.forEach((m) => {
                 const isActive = String(m.modelId) === String(selectedEmotionModelId) ? ' active' : '';
                 $menu.append(
-                    '<a class="viz-nav-item emotion-model-item' + isActive + '" href="#" data-model-id="' + m.modelId + '">' +
+                    '<a class="viz-nav-item emotion-model-item viz-nav-model-item' + isActive + '" href="#" data-model-id="' + m.modelId + '">' +
                     (m.modelName ? m.modelName : ('Model ' + m.modelId)) +
                     '</a>'
                 );
@@ -1723,6 +1775,466 @@ function loadEmotionModels(docId) {
         .catch(() => {
             selectedEmotionModelId = null;
             $('#emotion-model-menu').html('<span class="viz-nav-item viz-disabled">Failed to load</span>');
+        });
+}
+function loadTopicMenu(docId) {
+    const $menu = $('#topic-menu');
+    const semanticLabel = $menu.attr('data-label-semantic-density') || 'Semantic Density';
+    const entityLabel = $menu.attr('data-label-topic-entity') || 'Topic Entity';
+    const noDataLabel = $menu.attr('data-label-no-data') || 'No data available';
+
+    $menu.empty();
+
+    const topicPageReq = $.get('/api/document/page/topics', { documentId: docId })
+        .then(function (data) { return data; })
+        .catch(function () { return []; });
+
+    const topicEntityReq = $.get('/api/document/page/topicEntityRelation', { documentId: docId })
+        .then(function (data) { return data; })
+        .catch(function () { return []; });
+
+    const topicModelsReq = $.get('/api/document/topicModels', { documentId: docId })
+        .then(function (data) { return data; })
+        .catch(function () { return []; });
+
+    return Promise.all([topicPageReq, topicEntityReq, topicModelsReq]).then(function (results) {
+        const topicPageData = results[0] || [];
+        const topicEntityData = results[1] || [];
+        const topicModels = results[2] || [];
+
+        const hasSemanticDensity = Array.isArray(topicPageData) && topicPageData.length > 0;
+        const hasTopicEntity = Array.isArray(topicEntityData) && topicEntityData.length > 0;
+        const hasModels = Array.isArray(topicModels) && topicModels.length > 0;
+
+        if (hasSemanticDensity) {
+            $menu.append(
+                '<a class="viz-nav-item topic-menu-item" href="#" data-target="#viz-panel-1">' +
+                semanticLabel +
+                '</a>'
+            );
+        }
+
+        if (hasTopicEntity) {
+            $menu.append(
+                '<a class="viz-nav-item topic-menu-item" href="#" data-target="#viz-panel-2">' +
+                entityLabel +
+                '</a>'
+            );
+        }
+
+        if (hasModels) {
+            const selectedStillExists = topicModels.some(function (m) {
+                return String(m.modelId) === String(selectedTopicModelId);
+            });
+
+            if (!selectedStillExists) {
+                selectedTopicModelId = topicModels[0].modelId;
+                selectedTopicModelName = topicModels[0].modelName || ('Model ' + topicModels[0].modelId);
+            }
+
+            topicModels.forEach(function (m) {
+                const isActive = String(m.modelId) === String(selectedTopicModelId) ? ' active' : '';
+                const label = m.modelName ? m.modelName : ('Model ' + m.modelId);
+
+                $menu.append(
+                    '<a class="viz-nav-item topic-model-item viz-nav-model-item' + isActive + '" href="#" data-model-id="' + m.modelId + '">' +
+                    label +
+                    '</a>'
+                );
+            });
+        }
+
+        if (!hasSemanticDensity && !hasTopicEntity && !hasModels) {
+            $menu.append('<span class="viz-nav-item viz-disabled">' + noDataLabel + '</span>');
+        }
+
+        return {
+            hasSemanticDensity: hasSemanticDensity,
+            hasTopicEntity: hasTopicEntity,
+            models: topicModels
+        };
+    });
+}
+function renderTopicModelOverview(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    if (!selectedTopicModelId) {
+        container.classList.remove('rendered');
+        container.innerHTML = '<div style="color:#888;">Please choose a topic model</div>';
+        container.classList.add('rendered');
+        return;
+    }
+
+    container.classList.remove('rendered');
+    container.innerHTML = '<div style="width:100%;height:100%;min-height:380px;" id="' + containerId + '-topic-model"></div>';
+
+    const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
+    $('.visualization-spinner').show();
+
+    $.get('/api/document/topicModelOverview', {
+        documentId: docId,
+        modelId: selectedTopicModelId
+    }).then(function (data) {
+        $('.visualization-spinner').hide();
+
+        if (!data || !Array.isArray(data) || data.length === 0) {
+            container.innerHTML = '<div style="color:#888;">No topic data for this model</div>';
+            container.classList.add('rendered');
+            return;
+        }
+
+        const sortedTopics = data
+            .filter(function (item) {
+                return item && item.label && String(item.label).trim() !== '';
+            })
+            .slice(0, 10);
+
+        if (sortedTopics.length === 0) {
+            container.innerHTML = '<div style="color:#888;">No topic data for this model</div>';
+            container.classList.add('rendered');
+            return;
+        }
+
+        const labels = sortedTopics.map(function (item) {
+            return String(item.label).trim();
+        });
+
+        const values = sortedTopics.map(function (item) {
+            return item.value || 0;
+        });
+
+        const maxValue = Math.max.apply(null, values);
+
+        function formatTopicLabel(label) {
+            const text = String(label || '');
+            if (text.length <= 28) return text;
+            return text.slice(0, 25) + '...';
+        }
+
+        const chartDom = document.getElementById(containerId + '-topic-model');
+        const chart = echarts.init(chartDom);
+
+        const option = {
+            title: {
+                text: 'Topic Overview',
+                left: 0,
+                top: 0
+            },
+            tooltip: {
+                trigger: 'item',
+                formatter: function (params) {
+                    return '<div><b>' + labels[params.dataIndex] + '</b></div>' +
+                        '<div>Occurrences: ' + params.value + '</div>';
+                }
+            },
+            grid: {
+                left: '15%',
+                right: '12%',
+                top: 45,
+                bottom: 60,
+                containLabel: false
+            },
+            xAxis: {
+                type: 'value',
+                minInterval: 1,
+                max: maxValue < 5 ? 5 : null,
+                splitLine: {
+                    show: true
+                },
+                axisLine: {
+                    show: false
+                },
+                axisTick: {
+                    show: false
+                },
+                name: 'Count',
+                nameLocation: 'middle',
+                nameGap: 28
+            },
+            yAxis: {
+                type: 'category',
+                inverse: true,
+                data: labels,
+                axisLine: {
+                    show: false
+                },
+                axisTick: {
+                    show: false
+                },
+                axisLabel: {
+                    width: 180,
+                    overflow: 'truncate',
+                    formatter: function (value) {
+                        return formatTopicLabel(value);
+                    }
+                }
+            },
+            series: [{
+                type: 'bar',
+                data: values,
+                barWidth: 22,
+                label: {
+                    show: true,
+                    position: 'right',
+                    formatter: '{c}'
+                },
+                emphasis: {
+                    focus: 'series'
+                }
+            }]
+        };
+
+        chart.setOption(option);
+
+        window.addEventListener('resize', function () {
+            chart.resize();
+        });
+
+        container.classList.add('rendered');
+    }).catch(function () {
+        $('.visualization-spinner').hide();
+        container.innerHTML = '<div style="color:#888;">Failed to load topic model data</div>';
+        container.classList.add('rendered');
+    });
+}
+function loadTopicModelPageCounts() {
+    const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
+
+    return $.get('/api/document/topicModelPageCounts', {
+        documentId: docId,
+        modelId: selectedTopicModelId
+    }).then(function (data) {
+        if (!data || !Array.isArray(data) || data.length === 0) {
+            return null;
+        }
+
+        const rawPageIds = [];
+        data.forEach(function (item) {
+            const pid = parseInt(item.pageId, 10);
+            if (!isNaN(pid)) rawPageIds.push(pid);
+        });
+
+        const uniqueSortedPageIds = Array.from(new Set(rawPageIds)).sort(function (a, b) {
+            return a - b;
+        });
+
+        const pageIdToPageNumber = new Map();
+        uniqueSortedPageIds.forEach(function (pid, idx) {
+            pageIdToPageNumber.set(pid, idx + 1);
+        });
+
+        const pageTopicCounts = new Map();
+        const totalTopicCounts = {};
+
+        data.forEach(function (item) {
+            const pid = parseInt(item.pageId, 10);
+            const pageNumber = pageIdToPageNumber.get(pid);
+            const label = item.label ? String(item.label).trim() : '';
+            const value = parseInt(item.value, 10) || 0;
+
+            if (!pageNumber || !label) return;
+
+            if (!pageTopicCounts.has(pageNumber)) {
+                pageTopicCounts.set(pageNumber, {});
+            }
+
+            pageTopicCounts.get(pageNumber)[label] = value;
+            totalTopicCounts[label] = (totalTopicCounts[label] || 0) + value;
+        });
+
+        const pages = Array.from(pageTopicCounts.keys()).sort(function (a, b) {
+            return a - b;
+        });
+
+        const topLabels = Object.keys(totalTopicCounts)
+            .sort(function (a, b) { return totalTopicCounts[b] - totalTopicCounts[a]; })
+            .slice(0, 8);
+
+        return {
+            pages: pages,
+            labels: topLabels,
+            pageTopicCounts: pageTopicCounts
+        };
+    });
+}
+function renderTopicTimeline(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.classList.remove('rendered');
+    container.innerHTML = '<div style="width:100%;height:100%;min-height:520px;" id="' + containerId + '-timeline"></div>';
+
+    $('.visualization-spinner').show();
+
+    loadTopicModelPageCounts()
+        .then(function (result) {
+            $('.visualization-spinner').hide();
+
+            if (!result || !result.pages.length || !result.labels.length) {
+                container.innerHTML = '<div style="color:#888;">No topic timeline data for this model</div>';
+                container.classList.add('rendered');
+                return;
+            }
+
+            const pages = result.pages;
+            const labels = result.labels;
+            const pageTopicCounts = result.pageTopicCounts;
+
+            const series = labels.map(function (label) {
+                return {
+                    name: label,
+                    type: 'line',
+                    smooth: true,
+                    symbol: 'circle',
+                    symbolSize: 6,
+                    data: pages.map(function (page) {
+                        const counts = pageTopicCounts.get(page) || {};
+                        return counts[label] || 0;
+                    })
+                };
+            });
+
+            const chart = echarts.init(document.getElementById(containerId + '-timeline'));
+
+            chart.setOption({
+                title: {
+                    text: 'Topic Timeline',
+                    left: 0,
+                    top: 0
+                },
+                tooltip: {
+                    trigger: 'axis'
+                },
+                legend: {
+                    type: 'scroll',
+                    top: 30
+                },
+                grid: {
+                    left: '12%',
+                    right: '8%',
+                    top: 85,
+                    bottom: 50
+                },
+                xAxis: {
+                    type: 'category',
+                    name: 'Page',
+                    data: pages
+                },
+                yAxis: {
+                    type: 'value',
+                    name: 'Count'
+                },
+                series: series
+            });
+
+            container.classList.add('rendered');
+        })
+        .catch(function () {
+            $('.visualization-spinner').hide();
+            container.innerHTML = '<div style="color:#888;">Failed to load topic timeline</div>';
+            container.classList.add('rendered');
+        });
+}
+function renderTopicHeatmap(containerId) {
+    const container = document.getElementById(containerId);
+    if (!container) return;
+
+    container.classList.remove('rendered');
+    container.innerHTML = '<div style="width:100%;height:100%;min-height:520px;" id="' + containerId + '-heatmap"></div>';
+
+    $('.visualization-spinner').show();
+
+    loadTopicModelPageCounts()
+        .then(function (result) {
+            $('.visualization-spinner').hide();
+
+            if (!result || !result.pages.length || !result.labels.length) {
+                container.innerHTML = '<div style="color:#888;">No topic heatmap data for this model</div>';
+                container.classList.add('rendered');
+                return;
+            }
+
+            const pages = result.pages;
+            const labels = result.labels;
+            const pageTopicCounts = result.pageTopicCounts;
+
+            const heatmapData = [];
+            let maxValue = 0;
+
+            pages.forEach(function (page, pageIndex) {
+                const counts = pageTopicCounts.get(page) || {};
+
+                labels.forEach(function (label, labelIndex) {
+                    const value = counts[label] || 0;
+                    if (value > maxValue) maxValue = value;
+                    heatmapData.push([pageIndex, labelIndex, value]);
+                });
+            });
+
+            const chart = echarts.init(document.getElementById(containerId + '-heatmap'));
+
+            chart.setOption({
+                title: {
+                    text: 'Topic Heatmap',
+                    left: 0,
+                    top: 0
+                },
+                tooltip: {
+                    position: 'top',
+                    formatter: function (params) {
+                        const page = pages[params.value[0]];
+                        const label = labels[params.value[1]];
+                        const value = params.value[2];
+                        return '<div><b>Page ' + page + '</b></div><div>' + label + ': ' + value + '</div>';
+                    }
+                },
+                grid: {
+                    left: 120,
+                    right: 30,
+                    top: 75,
+                    bottom: 60
+                },
+                xAxis: {
+                    type: 'category',
+                    name: 'Page',
+                    data: pages,
+                    splitArea: { show: true }
+                },
+                yAxis: {
+                    type: 'category',
+                    name: 'Topic',
+                    data: labels,
+                    splitArea: { show: true }
+                },
+                visualMap: {
+                    min: 0,
+                    max: maxValue > 0 ? maxValue : 1,
+                    calculable: true,
+                    orient: 'horizontal',
+                    left: 'center',
+                    bottom: 10
+                },
+                series: [{
+                    name: 'Topic Count',
+                    type: 'heatmap',
+                    data: heatmapData,
+                    emphasis: {
+                        itemStyle: {
+                            shadowBlur: 10,
+                            shadowColor: 'rgba(0, 0, 0, 0.35)'
+                        }
+                    }
+                }]
+            });
+
+            container.classList.add('rendered');
+        })
+        .catch(function () {
+            $('.visualization-spinner').hide();
+            container.innerHTML = '<div style="color:#888;">Failed to load topic heatmap</div>';
+            container.classList.add('rendered');
         });
 }
 function getSelectedEmotionModelName() {

@@ -497,6 +497,9 @@ public class App {
                     get("/topics", (ctx) -> (registry.get(DocumentApi.class)).getDocumentTopics(ctx));
                     get("/page/taxon", (ctx) -> (registry.get(DocumentApi.class)).getTaxonCountByPage(ctx));
                     get("/page/topics", (ctx) -> (registry.get(DocumentApi.class)).getDocumentTopicDistributionByPage(ctx));
+                    get("/topicModels", (ctx) -> (registry.get(DocumentApi.class)).getTopicModels(ctx));
+                    get("/topicModelOverview", (ctx) -> (registry.get(DocumentApi.class)).getTopicModelOverview(ctx));
+                    get("/topicModelPageCounts", (ctx) -> (registry.get(DocumentApi.class)).getTopicModelPageCounts(ctx));
                     get("/page/topicEntityRelation", (ctx) -> (registry.get(DocumentApi.class)).getSentenceTopicsWithEntities(ctx));
                     get("/page/topicWords", (ctx) -> (registry.get(DocumentApi.class)).getTopicWordsByDocument(ctx));
                     get("/unifiedTopicSentenceMap", (ctx) -> (registry.get(DocumentApi.class)).getUnifiedTopicToSentenceMap(ctx));

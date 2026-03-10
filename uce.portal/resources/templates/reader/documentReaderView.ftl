@@ -331,22 +331,11 @@
                                         Topic <i class="fas fa-chevron-up ml-2"></i>
                                     </button>
 
-                                    <div class="viz-nav-menu">
-                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-1">
-                                            ${languageResource.get("semanticDensity")}
-                                        </a>
-                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-2">
-                                            ${languageResource.get("topicEntity")}
-                                        </a>
-                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-3">
-                                            ${languageResource.get("topicLandscape")}
-                                        </a>
-                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-4">
-                                            ${languageResource.get("topicSimilarity")}
-                                        </a>
-                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-5">
-                                            ${languageResource.get("sentenceTopicFlow")}
-                                        </a>
+                                    <div class="viz-nav-menu"
+                                         id="topic-menu"
+                                         data-label-semantic-density="${languageResource.get('semanticDensity')}"
+                                         data-label-topic-entity="${languageResource.get('topicEntity')}"
+                                         data-label-no-data="${languageResource.get('noDataAvailable')}">
                                     </div>
                                 </div>
 
