@@ -21,6 +21,7 @@ import org.texttechnologylab.uce.common.models.corpus.links.AnnotationToDocument
 import org.texttechnologylab.uce.common.models.corpus.links.DocumentLink;
 import org.texttechnologylab.uce.common.models.corpus.links.DocumentToAnnotationLink;
 import org.texttechnologylab.uce.common.models.negation.*;
+import org.texttechnologylab.uce.common.models.topic.SentenceTopic;
 import org.texttechnologylab.uce.common.models.topic.TopicValueBase;
 import org.texttechnologylab.uce.common.models.topic.TopicValueBaseWithScore;
 import org.texttechnologylab.uce.common.models.topic.UnifiedTopic;
@@ -233,6 +234,11 @@ public class Document extends ModelBase implements WikiModel, Linkable {
     @OneToMany(cascade = CascadeType.ALL)
     @JoinColumn(name = "document_Id")
     private List<Image> images;
+
+    @Getter
+    @Setter
+    @OneToMany(mappedBy = "document", cascade = CascadeType.ALL, orphanRemoval = false)
+    private List<SentenceTopic> sentenceTopics = new ArrayList<>();
 
     public Document() {
         metadataTitleInfo = new MetadataTitleInfo();
