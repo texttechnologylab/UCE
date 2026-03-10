@@ -343,11 +343,7 @@
                                         Sentiment <i class="fas fa-chevron-up ml-2"></i>
                                     </button>
 
-                                    <div class="viz-nav-menu">
-                                        <a class="viz-nav-item" href="#" data-target="#viz-panel-6">
-                                            ${languageResource.get("sentenceSentiment")}
-                                        </a>
-                                    </div>
+                                    <div class="viz-nav-menu" id="sentiment-menu"></div>
                                 </div>
 
                                 <!-- EMOTION  -->

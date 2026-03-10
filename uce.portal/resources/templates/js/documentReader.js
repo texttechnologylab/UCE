@@ -897,7 +897,7 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             const docId = document.getElementsByClassName('reader-container')[0].getAttribute('data-id');
 
             loadEmotionModels(docId);
-
+            loadSentimentMenu(docId);
             loadTopicMenu(docId).then(function (topicState) {
                 if (topicState.models && topicState.models.length > 0) {
                     activateVisualizationPanel('#viz-panel-3', $('.viz-nav-group[data-category="topic"] .viz-nav-parent'));
@@ -1256,7 +1256,7 @@ function renderTopicViz(containerId) {
         '<button type="button" class="' + heatmapBtnClass + '" data-viz-type="heatmap">Heatmap</button>' +
         '</div>' +
         '</div>' +
-        '<div id="' + containerId + '-body" style="width:100%;height:420px;"></div>';
+        '<div id="' + containerId + '-body" style="width:100%;flex:1;min-height:380px;"></div>';
 
     if (selectedTopicVizType === 'timeline') {
         renderTopicTimeline(containerId + '-body');
@@ -1839,7 +1839,7 @@ function loadTopicMenu(docId) {
         }
 
         if (!hasModels) {
-            $menu.append('<span class="viz-nav-item viz-disabled">' + noDataLabel + '</span>');
+            $menu.append('<span class="viz-nav-item viz-disabled">No models found</span>');
         }
 
         return {
@@ -1868,21 +1868,17 @@ function loadOthersMenu(docId) {
         const hasSemanticDensity = Array.isArray(topicPageData) && topicPageData.length > 0;
         const hasTopicEntity = Array.isArray(topicEntityData) && topicEntityData.length > 0;
 
-        if (hasSemanticDensity) {
-            $menu.append(
-                '<a class="viz-nav-item others-menu-item" href="#" data-target="#viz-panel-1">' +
-                'Semantic Density' +
-                '</a>'
-            );
-        }
+        $menu.append(
+            '<a class="viz-nav-item others-menu-item" href="#" data-target="#viz-panel-1">' +
+            'Semantic Density' +
+            '</a>'
+        );
 
-        if (hasTopicEntity) {
-            $menu.append(
-                '<a class="viz-nav-item others-menu-item" href="#" data-target="#viz-panel-2">' +
-                'Topic Entity' +
-                '</a>'
-            );
-        }
+        $menu.append(
+            '<a class="viz-nav-item others-menu-item" href="#" data-target="#viz-panel-2">' +
+            'Topic Entity' +
+            '</a>'
+        );
 
         $menu.append(
             '<a class="viz-nav-item others-menu-item" href="#" data-target="#viz-panel-4">' +
@@ -1907,6 +1903,26 @@ function loadOthersMenu(docId) {
             hasTopicEntity: hasTopicEntity
         };
     });
+}
+function loadSentimentMenu(docId) {
+    const $menu = $('#sentiment-menu');
+    $menu.empty();
+
+    $.get('/api/document/page/sentiments', { documentId: docId })
+        .then(function (data) {
+            if (Array.isArray(data) && data.length > 0) {
+                $menu.append(
+                    '<a class="viz-nav-item" href="#" data-target="#viz-panel-6">' +
+                    'Sentence Sentiment' +
+                    '</a>'
+                );
+            } else {
+                $menu.append('<span class="viz-nav-item viz-disabled">No models found</span>');
+            }
+        })
+        .catch(function () {
+            $menu.append('<span class="viz-nav-item viz-disabled">No models found</span>');
+        });
 }
 function renderTopicModelOverview(containerId) {
     const container = document.getElementById(containerId);
