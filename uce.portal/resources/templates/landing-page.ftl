@@ -61,6 +61,11 @@
                                    onclick="$(this).closest('.corpus-card').find('.expanded-content').toggle(75)">
                                     <i class="fas fa-info-circle color-prime"></i>
                                 </a>
+                                <a class="btn btn-outline-danger flexed clickable align-items-center pl-1 pr-1 mt-1 justify-content-center"
+                                   title="Delete this Corpus"
+                                   onclick="deleteCorpus(${corpusVm.getCorpus().getId()})">
+                                    <i class="fas fa-trash-alt"></i>
+                                </a>
                             </div>
 
                         </div>
@@ -534,5 +539,28 @@
                 console.error(err);
                 resultDiv.innerHTML = '<div class="text-danger mt-2"><i class="fas fa-exclamation-triangle mr-1"></i> Error: ' + err.message + '</div>';
             });
+    }
+    
+    function deleteCorpus(corpusId){
+        if (!confirm("Are you sure you want to delete this corpus?")){
+            return;
+        }
+
+        fetch('/api/corpus/delete?corpusId=' + corpusId, {
+            method: 'DELETE'
+        })
+            .then(async response => {
+                if (response.ok){
+                    alert("Corpus successfully deleted");
+                    location.reload();
+                }else{
+                    const msg = await response.text();
+                    alert("Error when trying to delete corpus " + msg);
+                }
+            })
+            .catch(e => {
+                console.eor(e);
+                alert("Unexpected Error " + err.message);
+            })
     }
 </script>

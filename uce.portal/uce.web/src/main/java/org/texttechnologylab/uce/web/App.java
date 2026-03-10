@@ -464,6 +464,7 @@ public class App {
                         post("/linkedOccurrences", (ctx) -> (registry.get(MapApi.class)).getLinkedOccurrences(ctx));
                         post("/linkedOccurrenceClusters", (ctx) -> (registry.get(MapApi.class)).getLinkedOccurrenceClusters(ctx));
                     });
+                    delete("/delete",(ctx) -> (registry.get(DocumentApi.class)).deleteCorpus(ctx));
                 });
 
                 path("/search", () -> {

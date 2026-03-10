@@ -31,7 +31,11 @@
                                 this.getAttribute('data-desc'),
                                 this.getAttribute('data-config')
                                )">
-                    <i class="fas fa-plus mr-1"></i> Upload files to this corpora
+                    <i class="fas fa-plus mr-1"></i> Upload documents
+                </button>
+
+                <button class="btn btn-sm btn-outline-danger ml-1" onclick="deleteCorpus(${corpus.getId()})" title="Delete this Corpus">
+                    <i class="fas fa-trash-alt"></i> Delete this corpus
                 </button>
             </div>
         </div>

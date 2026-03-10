@@ -392,4 +392,9 @@ public interface DataInterface {
      * Updates a corpusJsonConfig in the database
      */
     public void updateCorpusJsonConfig(long corpusId,String jsonConfig) throws DatabaseOperationException;
+
+    /**
+     * Deletes a corpus by id
+     */
+    public void deleteCorpusById(long corpusId) throws DatabaseOperationException;
 }

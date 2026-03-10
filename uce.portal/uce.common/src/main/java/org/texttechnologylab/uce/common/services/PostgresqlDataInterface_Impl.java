@@ -1205,9 +1205,77 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         // NOTE this only cleans up everything directly connected to the document
         // TODO also remove embeddings and other data
         executeOperationSafely((session) -> {
+            List<String> queries = List.of(
+                    "DELETE FROM sentenceemotions WHERE emotion_id IN (SELECT id FROM emotion WHERE document_id = :did)",
+                    "DELETE FROM sentencetopics WHERE unifiedtopic_id IN (SELECT id FROM unifiedtopic WHERE document_id = :did)",
+                    "DELETE FROM sentenceemotions WHERE document_id = :did",
+                    "DELETE FROM sentencetopics WHERE document_id = :did",
+                    "DELETE FROM documenttopicsraw WHERE document_id = :did",
+                    "DELETE FROM documenttopicwords WHERE document_id = :did",
+                    "DELETE FROM feeling WHERE emotion_id IN (SELECT id FROM emotion WHERE document_id = :did)",
+                    "DELETE FROM documentchunkembeddings WHERE document_id = :did",
+                    "DELETE FROM documentembeddings WHERE document_id = :did",
+                    "DELETE FROM documentsentenceembeddings WHERE document_id = :did"
+            );
+            for (String sql : queries) {
+                session.createNativeQuery(sql)
+                        .setParameter("did", id)
+                        .executeUpdate();
+            }
+            
             var doc = session.get(Document.class, id);
             if (doc != null) {
                 session.delete(doc);
+            }
+            return null;
+        });
+    }
+    
+    public void deleteCorpusById(long corpusId) throws DatabaseOperationException{
+        executeOperationSafely((session) -> {
+            List<String> queries = List.of(
+                    "DELETE FROM sentenceemotions WHERE emotion_id IN (SELECT e.id FROM emotion e JOIN document d ON e.document_id = d.id WHERE d.corpusid = :cid)",
+                    "DELETE FROM sentencetopics WHERE unifiedtopic_id IN (SELECT ut.id FROM unifiedtopic ut JOIN document d ON ut.document_id = d.id WHERE d.corpusid = :cid)",
+                    "DELETE FROM sentenceemotions USING document WHERE sentenceemotions.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM sentencetopics USING document WHERE sentencetopics.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM documenttopicsraw USING document WHERE documenttopicsraw.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM documenttopicwords USING document WHERE documenttopicwords.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM corpustopicwords WHERE corpus_id = :cid",
+                    "DELETE FROM feeling WHERE emotion_id IN (SELECT e.id FROM emotion e JOIN document d ON e.document_id = d.id WHERE d.corpusid = :cid)",
+                    "DELETE FROM emotion USING document WHERE emotion.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM unifiedtopic USING document WHERE unifiedtopic.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM xscope USING document WHERE xscope.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM scope USING document WHERE scope.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM event USING document WHERE event.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM focus USING document WHERE focus.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM cue USING document WHERE cue.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM completenegation USING document WHERE completenegation.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM documentchunkembeddings USING document WHERE documentchunkembeddings.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM documentembeddings USING document WHERE documentembeddings.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM documentsentenceembeddings USING document WHERE documentsentenceembeddings.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM ucemetadata USING document WHERE ucemetadata.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM ucemetadatafilter WHERE ucemetadatafilter.corpusid = :cid",
+                    "DELETE FROM biofidtaxon USING document WHERE biofidtaxon.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM lemma USING document WHERE lemma.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM namedentity USING document WHERE namedentity.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM geoname USING document WHERE geoname.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM time USING document WHERE time.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM srlink USING document WHERE srlink.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM gazetteertaxon USING document WHERE gazetteertaxon.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM gnfindertaxon USING document WHERE gnfindertaxon.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM sentence USING document WHERE sentence.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM documentlink WHERE documentlink.corpusid = :cid",
+                    "DELETE FROM annotationlink WHERE annotationlink.corpusid = :cid",
+                    "DELETE FROM documenttoannotationlink WHERE documenttoannotationlink.corpusid = :cid",
+                    "DELETE FROM annotationtodocumentlink WHERE annotationtodocumentlink.corpusid = :cid",
+                    "DELETE FROM page USING document WHERE page.document_id = document.id AND document.corpusid = :cid",
+                    "DELETE FROM document WHERE corpusid = :cid",
+                    "DELETE FROM corpus WHERE id = :cid"
+            );
+            for (String sql : queries) {
+                session.createNativeQuery(sql)
+                        .setParameter("cid", corpusId)
+                        .executeUpdate();
             }
             return null;
         });
@@ -2440,7 +2508,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         SELECT s.id, e.id, e.model_id, s.document_id
                         FROM emotion e
                         JOIN sentence s
-                          ON s.beginn = e.beginn AND s.endd = e.endd and s.document_id = :docId 
+                          ON s.beginn = e.beginn AND s.endd = e.endd and s.document_id = :docId AND e.document_id = :docId
                         WHERE NOT EXISTS(
                           SELECT 1 FROM sentenceemotions se     
                           WHERE se.sentence_id = s.id AND se.emotion_id = e.id

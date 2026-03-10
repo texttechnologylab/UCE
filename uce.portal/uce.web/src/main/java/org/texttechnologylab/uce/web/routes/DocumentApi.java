@@ -274,6 +274,7 @@ public class DocumentApi implements UceApi {
         var id = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("id"),
                 (ex) -> logger.error("Error: document deletion requires an 'id' query parameter. ", ex));
         if (id == null) {
+            ctx.status(400);
             ctx.render("defaultError.ftl");
             return;
         }
@@ -282,9 +283,22 @@ public class DocumentApi implements UceApi {
 
         Map<String, Object> result = new HashMap<>();
         result.put("status", "success");
-        result.put("message", "NOTE Document deletion is not fully implemented yet.");
+        result.put("message", "Document successfully deleted");
 
         ctx.json(result);
+    }
+    
+    public void deleteCorpus(Context ctx) throws DatabaseOperationException{
+        var id = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("corpusId"),ex -> logger.error("Error: corpus deletion required a corpusId parameter"));
+        if (id == null){
+            ctx.status(400);
+            ctx.render("defaultError.ftl");
+            return;
+        }
+        db.deleteCorpusById(Long.parseLong(id));
+        Map<String,Object> result = new HashMap<>();
+        result.put("status","success");
+        result.put("message","Corpus successfully deleted");
     }
 
     public void getPagesListView(Context ctx) {
