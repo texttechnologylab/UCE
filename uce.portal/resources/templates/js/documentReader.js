@@ -1577,12 +1577,12 @@ function renderTemporalExplorer(containerId) {
     const emotionReq = $.get('/api/document/page/emotions', {
         documentId: docId,
         modelId: selectedEmotionModelId
-    });
-    const taxonReq = $.get('/api/document/page/taxon', { documentId: docId });
-    const topicReq = $.get('/api/document/page/topics', { documentId: docId });
-    const entityReq = $.get('/api/document/page/namedEntities', { documentId: docId });
-    const lemmaReq = $.get('/api/document/page/lemma', { documentId: docId });
-    const geonameReq = $.get('/api/document/page/geoname', { documentId: docId });
+    }).then(d => d).catch(() => []);
+    const taxonReq = $.get('/api/document/page/taxon', { documentId: docId }).then(d => d).catch(() => []);
+    const topicReq = $.get('/api/document/page/topics', { documentId: docId }).then(d => d).catch(() => []);
+    const entityReq = $.get('/api/document/page/namedEntities', { documentId: docId }).then(d => d).catch(() => []);
+    const lemmaReq = $.get('/api/document/page/lemma', { documentId: docId }).then(d => d).catch(() => []);
+    const geonameReq = $.get('/api/document/page/geoname', { documentId: docId }).then(d => d).catch(() => []);
 
     Promise.all([taxonReq, topicReq, entityReq, lemmaReq, geonameReq, emotionReq]).then(([taxon, topics, entities, lemma, geoname, emotions]) => {
         $('.visualization-spinner').hide()
