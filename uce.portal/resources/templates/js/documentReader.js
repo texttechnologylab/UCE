@@ -907,12 +907,6 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
             });
 
             loadOthersMenu(docId).then(function (othersState) {
-                if (othersState.hasSemanticDensity) {
-                    activateVisualizationPanel('#viz-panel-1', $('.viz-nav-group[data-category="others"] .viz-nav-parent'));
-                    $('#vp-1').removeClass('rendered');
-                    setTimeout(() => renderTemporalExplorer('vp-1'), 500);
-                    return;
-                }
             });
         }
     });
