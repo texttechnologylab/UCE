@@ -2134,7 +2134,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
 
             var query = session.createNativeQuery(sql)
                     .setParameter("documentId", documentId)
-                    .setParameter("modelId", modelId);
+                    .setParameter("modelId", modelId, org.hibernate.type.LongType.INSTANCE);
 
             return query.getResultList();
         });

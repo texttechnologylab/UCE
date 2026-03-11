@@ -355,7 +355,9 @@ public class DocumentApi implements UceApi {
         } catch (Exception ex) {
             logger.error("Error getting document topics.", ex);
             ctx.status(500);
-            ctx.render("defaultError.ftl", Map.of("information", "Error retrieving document topics."));
+            var errorModel = new HashMap<String, Object>();
+            errorModel.put("information", "Error retrieving document topics.");
+            ctx.render("defaultError.ftl", errorModel);
         }
     }
 

@@ -913,19 +913,12 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
                     setTimeout(() => renderTemporalExplorer('vp-1'), 500);
                     return;
                 }
-
-                if (othersState.hasTopicEntity) {
-                    activateVisualizationPanel('#viz-panel-2', $('.viz-nav-group[data-category="others"] .viz-nav-parent'));
-                    $('#vp-2').removeClass('rendered');
-                    setTimeout(() => renderTopicEntityChordDiagram('vp-2'), 500);
-                    return;
-                }
             });
         }
     });
 });
 
-$(document).on('click', '.viz-nav-item[data-target]', function (e) {
+$(document).on('click', '.viz-nav-item[data-target]:not(.others-menu-item)', function (e) {
     e.preventDefault();
 
     const target = $(this).data('target');
@@ -1327,6 +1320,7 @@ function renderTopicEntityChordDiagram(containerId) {
 
 
     $.get('/api/document/page/topicEntityRelation', { documentId: docId })
+        .catch(() => [])
         .then(data => {
             $('.visualization-spinner').hide()
             if (!data || !Array.isArray(data) || data.length === 0) {
