@@ -378,6 +378,7 @@
                     if (ann.namedEntity) $('#annoNE').prop('checked', true);
                     if (ann.sentiment) $('#annoSentiment').prop('checked', true);
                     if (ann.emotion) $('#annoEmotion').prop('checked', true);
+                    if (ann.topic) $('#annoTopic').prop('checked', true);
                     if (ann.time) $('#annoTime').prop('checked', true);
                     if (ann.geoNames) $('#annoGeo').prop('checked', true);
                     if (ann.wikipediaLink) $('#annoWiki').prop('checked', true);
@@ -457,6 +458,7 @@
                     if (ann.namedEntity) $('#annoNE').prop('checked', true).prop('disabled', true);
                     if (ann.sentiment) $('#annoSentiment').prop('checked', true).prop('disabled', true);
                     if (ann.emotion) $('#annoEmotion').prop('checked', true).prop('disabled', true);
+                    if (ann.topic) $('#annoTopic').prop('checked', true).prop('disabled', true);
                     if (ann.time) $('#annoTime').prop('checked', true).prop('disabled', true);
                     if (ann.geoNames) $('#annoGeo').prop('checked', true).prop('disabled', true);
                     if (ann.wikipediaLink) $('#annoWiki').prop('checked', true).prop('disabled', true);
