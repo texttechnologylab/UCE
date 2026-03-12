@@ -191,8 +191,8 @@
                     </div>
                     
                     <div class="form-group">
-                        <label for="uploadImportHash">Import ID (Optional)</label>
-                        <input type="text" class="form-control" id="uploadImportHash" name="importHash" placeholder="Enter custom hash or leave empty for auto-generation">
+                        <label for="uploadImportId">Import ID (Optional)</label>
+                        <input type="text" class="form-control" id="uploadImportId" name="importId" placeholder="Enter custom hash or leave empty for auto-generation">
                         <small class="form-text text-muted">If empty, the import ID will be auto generated </small>
                     </div>
 
