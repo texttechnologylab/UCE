@@ -279,6 +279,10 @@ public class Importer {
                                     return doc;
                                 })
                                 .thenAcceptAsync(doc -> {
+                                        // Incrementing Counter for UI 
+                                        if (Importer.IMPORT_PROGRESS != null && Importer.IMPORT_PROGRESS .containsKey(importId)){
+                                            Importer.IMPORT_PROGRESS.get(importId).incrementAndGet();
+                                        }
                                     if (doc != null) {
                                         logImportInfo("Stored document " + filePath.getFileName(), LogStatus.SAVED, filePath.toString(), 0);
                                         logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
@@ -287,10 +291,6 @@ public class Importer {
                                                 () -> postProccessDocument(doc, corpus1, filePath.toString()),
                                                 (ex) -> logImportError("Error postprocessing a saved document with id " + doc.getId(), ex, filePath.toString()));
                                         logImportInfo("Finished with import.", LogStatus.FINISHED, filePath.toString(), 0);
-                                        // Incrementing Counter for UI 
-                                        if (Importer.IMPORT_PROGRESS != null && Importer.IMPORT_PROGRESS .containsKey(importId)){
-                                            Importer.IMPORT_PROGRESS.get(importId).incrementAndGet();
-                                        }
                                     }
 
                                     int local = docInBatch.incrementAndGet();

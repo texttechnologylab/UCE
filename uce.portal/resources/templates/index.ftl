@@ -221,21 +221,7 @@
             </#if>
 
         </div>
-        <div id="importProgressWrapper">
-            <div id="allImportsList"></div>
-            <div id="primaryImport" class="bg-white border rounded p-2 shadow-sm" style="cursor: pointer;">
-                <div id="primaryStatusText" class="bg-white border rounded p-2 shadow-sm" style="font-size: 14px;">
-                    Importing...
-                </div>
-                    <div class="progress mt-1" style="height: 15px;">
-                        <div id="primaryProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;"></div>
-                    </div>
-            </div> 
-            <div class="progress">
-                <div id="globalImportProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%">
-                </div>
-            </div>
-        </div>
+        
     </nav>
 
     <div class="layered-search-builder-include display-none">
@@ -518,6 +504,22 @@
     </div>
 </div>
 
+<div id="importProgressWrapper">
+    <div id="allImportsList"></div>
+    <div id="primaryImport" class="bg-white border rounded p-2 shadow-sm" style="cursor: pointer;">
+        <div id="primaryStatusText" class="bg-white border rounded p-2 shadow-sm" style="font-size: 14px;">
+            Importing...
+        </div>
+        <div class="progress mt-1" style="height: 15px;">
+            <div id="primaryProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;"></div>
+        </div>
+    </div>
+    <div class="progress">
+        <div id="globalImportProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%">
+        </div>
+    </div>
+</div>
+
 </body>
 
 <footer class="bg-lightgray pt-5 pb-5">
@@ -576,7 +578,7 @@
 </footer>
 
 <script type="module">
-    <#--<#include "js/corpusUniverse.js">-->
+<#--<#include "js/corpusUniverse.js">-->
 </script>
 <script type="module">
     <#include "js/graphViz.js">
