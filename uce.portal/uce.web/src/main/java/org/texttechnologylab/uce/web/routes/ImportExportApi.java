@@ -193,7 +193,8 @@ public class ImportExportApi implements UceApi {
     
     public void importCorpusFromUpload(Context ctx){
         try{
-            String importId = UUID.randomUUID().toString();
+            String customImportId = ctx.formParam("importId");
+            String importId = (customImportId != null && !customImportId.isBlank() ? customImportId :  UUID.randomUUID().toString());
             Path rootDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "uce_uploads", importId);
             Path inputDir = rootDir.resolve("input");
             Files.createDirectories(inputDir);
@@ -318,13 +319,26 @@ public class ImportExportApi implements UceApi {
             CompletableFuture.runAsync(() -> {
                 try{
                     importer.start(numThreads);
+                    UCEImport finishedImport = db.getUceImportByImportId(importId);
+                    if (finishedImport != null) {
+                        finishedImport.setStatus(ImportStatus.FINISHED);
+                        db.saveOrUpdateUceImport(finishedImport);
+                    }
                 } catch (DatabaseOperationException e) {
                     logger.error("Error during asynchronous corpus uplaod import",e);
+                    try {
+                        UCEImport errImport = db.getUceImportByImportId(importId);
+                        if (errImport != null) {
+                            errImport.setStatus(ImportStatus.ERROR);
+                            db.saveOrUpdateUceImport(errImport);
+                        }
+                    } catch (Exception ignored) {}
+                    
                 }finally {
                     try {
                         org.apache.commons.io.FileUtils.deleteDirectory(rootDir.toFile());
-                    } catch (IOException e) {
-                        logger.warn("Could not delete temp upload dir: " + rootDir,e);
+                    } catch (IOException ex) {
+                        logger.warn("Could not delete temp upload dir: " + rootDir,ex);
                     }
                 }
             });
@@ -337,6 +351,36 @@ public class ImportExportApi implements UceApi {
         } catch (DatabaseOperationException e) {
             logger.error("Error saving/updating database during Uce Import", e);
             ctx.status(500).result("Error during saving/updating database " + e.getMessage());
+        }
+    }
+    
+    public void getImportStatus(Context ctx){
+        String importId = ctx.pathParam("importId");
+        
+        try{
+            UCEImport uceImport = db.getUceImportByImportId(importId);
+            if (uceImport == null){
+                ctx.status(400).result("Import %s not found".formatted(importId));
+                return;
+            }
+            
+            Map<String,Object> statusData = new HashMap<>();
+            statusData.put("status",uceImport.getStatus().name());
+            statusData.put("total",uceImport.getTotalDocuments());
+            int processed = 0;
+            
+            if(uceImport.getStatus() == ImportStatus.FINISHED || uceImport.getStatus() == ImportStatus.ERROR){
+                processed = uceImport.getTotalDocuments();
+                Importer.IMPORT_PROGRESS.remove(importId);
+            }else if (Importer.IMPORT_PROGRESS.containsKey(importId)){
+                processed = Importer.IMPORT_PROGRESS.get(importId).get();
+            }
+            
+            statusData.put("processed",processed);
+            ctx.json((statusData));
+        } catch (DatabaseOperationException e) {
+            logger.error("Error when trying to get import-status");
+            ctx.status(500).result("Error when trying to get import-status");
         }
     }
 

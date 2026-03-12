@@ -221,6 +221,21 @@
             </#if>
 
         </div>
+        <div id="importProgressWrapper">
+            <div id="allImportsList"></div>
+            <div id="primaryImport" class="bg-white border rounded p-2 shadow-sm" style="cursor: pointer;">
+                <div id="primaryStatusText" class="bg-white border rounded p-2 shadow-sm" style="font-size: 14px;">
+                    Importing...
+                </div>
+                    <div class="progress mt-1" style="height: 15px;">
+                        <div id="primaryProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%;"></div>
+                    </div>
+            </div> 
+            <div class="progress">
+                <div id="globalImportProgressBar" class="progress-bar progress-bar-striped progress-bar-animated bg-primary" role="progressbar" style="width: 0%">
+                </div>
+            </div>
+        </div>
     </nav>
 
     <div class="layered-search-builder-include display-none">
@@ -576,6 +591,107 @@
     <#include "js/keywordInContext.js">
     <#include "js/analysis.js">
     <#include "js/analysisAPI.js">
+</script>
+
+<script>
+    let importPollingInterval = null;
+    function startImportProgress(importId){
+        if (importPollingInterval) return;
+
+        const wrapper = document.getElementById('importProgressWrapper');
+        const primaryStatusText = document.getElementById('primaryStatusText');
+        const primaryProgressBar = document.getElementById('primaryProgressBar');
+        const allImportsList = document.getElementById('allImportsList');
+        if(wrapper) wrapper.style.display = 'block';
+        
+        importPollingInterval = setInterval(() => {
+            let activeImports = JSON.parse(localStorage.getItem('activeUceImports') || '[]');
+            if (activeImports.length === 0) {
+                clearInterval(importPollingInterval);
+                importPollingInterval = null;
+                if (wrapper) wrapper.style.display = 'none';
+                return;
+            }
+            
+            const fetchPromises = activeImports.map(importId =>
+                fetch('/api/ie/import/status/' + importId)
+                    .then(response => {
+                        if (!response.ok) throw new Error("Status Api failed");
+                        return response.json().then(data => ({importId, data}));
+                    }).catch(err => ({importId, error: true}))
+            );
+            Promise.all(fetchPromises).then(results => {
+                let newActiveImports = [];
+                allImportsList.innerHTML = '';
+                
+                results.forEach((result,index) => {
+                    const {importId, data, error } = result;
+                    let percent = 0;
+                    let text = 'Import ' + importId.substring(0,8) + '...';
+                    let barClass = 'bg-primary progress-bar-striped progess-bar-animated';
+                    let isFinished = false;
+                    
+                    if (error){
+                        text = 'Error during import ' + importId.substring(0,8);
+                        barClass = 'bg-danger';
+                    }else{
+                        if (data.total > 0){
+                            percent = Math.round((data.processed / data.total) * 100);
+                        }
+                        text = 'Import (' + data.processed + ' / ' + data.total + ') - ' + percent + '%';
+                        
+                        if (data.status === 'FINISHED'){
+                            barClass = 'bg-success';
+                            text = 'Import successfully completed!';
+                            isFinished = true;
+                        } else if (data.status === 'ERROR'){
+                            barClass = 'bg-danger';
+                            text = 'Error during import';
+                            isFinished = true;
+                        } else {
+                            newActiveImports.push(importId);
+                        }
+                    }
+                    
+                    if (index === 0){
+                        primaryStatusText.innerText = text;
+                        primaryProgressBar.style.width = percent + '%';
+                        primaryProgressBar.className = 'progress-bar ' + barClass;
+                    }
+                    allImportsList.innerHTML +=
+                        '<div class="mb-2 border-bottom pb-2">' +
+                            '<small class="text-muted d-block">ID: ' + importId + '</small>' +
+                            '<div class="d-flex justify-content-between font-weight-bold" style="font-size: 12px;">' + text + '</div>' +
+                            '<div class="progress mt-1" style="height: 10px;">' +
+                                '<div class="progress-bar ' + barClass + '" role="progressbar" style="width: ' + percent + '%"></div>' +
+                            '</div>' +
+                        '</div>';
+                });
+                
+                localStorage.setItem('activeUceImports', JSON.stringify(newActiveImports));
+                
+                if (newActiveImports.length === 0){
+                    setTimeout(() => {
+                        clearInterval(importPollingInterval);
+                        importPollingInterval = null;
+                        if (typeof $ !== 'undefined'){
+                            $(wrapper).fadeOut(500);
+                        } else {
+                            wrapper.style.display = 'none';
+                        }
+                        location.reload();
+                    },3000);
+                }
+            })
+        },2000);
+    }
+
+    document.addEventListener('DOMContentLoaded', () => {
+        let activeImports = JSON.parse(localStorage.getItem('activeUceImports') || '[]');
+        if (activeImports.length > 0) {
+            startImportProgress();
+        }
+    });
 </script>
 
 </html>

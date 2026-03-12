@@ -442,6 +442,7 @@ public class App {
                     get("/download/uima", (ctx) -> (registry.get(ImportExportApi.class)).downloadUIMA(ctx));
                     post("/import/path", (ctx) -> (registry.get(ImportExportApi.class)).importCorpusFromPath(ctx));
                     post("/import/upload",(ctx) -> (registry.get(ImportExportApi.class)).importCorpusFromUpload(ctx));
+                    get("import/status/{importId}",(ctx) -> (registry.get(ImportExportApi.class)).getImportStatus(ctx));
                 });
 
                 path("/wiki", () -> {

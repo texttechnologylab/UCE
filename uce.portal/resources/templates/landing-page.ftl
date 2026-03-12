@@ -189,6 +189,12 @@
                         <label for="uploadCorpusDescription">Description</label>
                         <textarea class="form-control" id="uploadCorpusDescription" name="description" rows="2" placeholder="Description..."></textarea>
                     </div>
+                    
+                    <div class="form-group">
+                        <label for="uploadImportHash">Import ID (Optional)</label>
+                        <input type="text" class="form-control" id="uploadImportHash" name="importHash" placeholder="Enter custom hash or leave empty for auto-generation">
+                        <small class="form-text text-muted">If empty, the import ID will be auto generated </small>
+                    </div>
 
                     <div class="form-row border-top pt-3">
                         <div class="form-group col-md-6">
@@ -528,14 +534,24 @@
             body: formData
         })
             .then(async response => {
+                const msg = await response.text();
                 if (response.ok) {
                     resultDiv.innerHTML = '<div class="text-success font-weight-bold"><i class="fas fa-check-circle mr-1"></i> Upload successful! Reloading...</div>';
 
-                    setTimeout(() => {
-                        location.reload();
-                    }, 3000);
+                    $('#uploadCorpusModal').modal('hide');
+                    const idMatch = msg.match(/ID:\s*(.+)/);
+                    if(idMatch && idMatch[1]){
+                        const importId = idMatch[1].trim();
+                        let activeImports = JSON.parse(localStorage.getItem('activeUceImports') || '[]');
+                        if (!activeImports.includes(importId)) {
+                            activeImports.push(importId);
+                            localStorage.setItem('activeUceImports', JSON.stringify(activeImports));
+                        }
+                        if(typeof startImportProgress === 'function') startImportProgress();
+                    }else{
+                        console.warn("No import Id extracted: ",msg);
+                    }
                 } else {
-                    const msg = await response.text();
                     throw new Error(msg);
                 }
             })
@@ -549,9 +565,6 @@
         if (!confirm("Are you sure you want to delete this corpus?")){
             return;
         }
-        
-        
-
         fetch('/api/corpus/delete?corpusId=' + corpusId, {
             method: 'DELETE'
         })
