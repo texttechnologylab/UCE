@@ -252,24 +252,6 @@ public class Importer {
         return doc.getId();
     }
 
-    private static boolean isNonEmptyFile(Path p) {
-        try {
-            return Files.exists(p) && Files.isRegularFile(p) && Files.size(p) > 0;
-        } catch (IOException e) {
-            logger.error("Error checking file size for path: " + p);
-            return false;
-        }
-    }
-
-    private static Path getDuuiCorpusConfigPath() {
-        for (var path : List.of(EXTERNAL_CORPUS_CONFIG_PATH, LEGACY_CORPUS_CONFIG_PATH)) {
-            if (isNonEmptyFile(path)) {
-                return path;
-            }
-        }
-        return null;
-    }
-
     /**
      * Imports all UIMA xmi files in a folder
      * @throws DocumentAccessDeniedException
@@ -284,56 +266,27 @@ public class Importer {
         if (!SystemStatus.PostgresqlDbStatus.isAlive())
             throw new DatabaseOperationException("Postgresql DB is not alive - cancelling import.");
 
-//        String pathdefault;
-//        if (folderName == null && casOnlyRun) {
-//            pathdefault = Objects.requireNonNull(
-//                    getClass().getClassLoader().getResource("UCECorpusConfigEmpty.json"),
-//                    "Resource UCECorpusConfigEmpty.json not found"
-//            ).getPath();
-//        } else {
-//            // Read the corpus config. If this doesn't exist, we cannot import the corpus
-//            // NOTE the config is not updated if the corpus already exists!
-//            // TODO compare configs and show a warning if they differ (except name, ...)
-//            if (folderName == null) {
-//                // get path of defaultCorpusConfig.json
-//                pathdefault = Objects.requireNonNull(
-//                        getClass().getClassLoader().getResource("defaultCorpusConfig.json"),
-//                        "Resource defaultCorpusConfig.json not found"
-//                ).getPath();
-//            } else {
-//                pathdefault = Paths.get(folderName, "corpusConfig.json").toString();
-//            }
-//        }
-//        Path filePathDefault = Paths.get(pathdefault);
-
-        String pathdefault;
-
-        if (folderName == null && casOnlyRun) {
-            var duuiCorpusConfig = getDuuiCorpusConfigPath();
-            if (duuiCorpusConfig != null) {
-                pathdefault = duuiCorpusConfig.toString();
-            } else {
-                pathdefault = Objects.requireNonNull(
-                        getClass().getClassLoader().getResource("defaultCorpusConfig.json"),
-                        "Resource defaultCorpusConfig.json not found"
-                ).getPath();
+        // Read the corpus config. If this doesn't exist, we cannot import the corpus
+        // NOTE the config is not updated if the corpus already exists!
+        // TODO compare configs and show a warning if they differ (except name, ...)
+        try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString(), StandardCharsets.UTF_8)) {
+            corpusConfig = gson.fromJson(reader, CorpusConfig.class);
+            try {
+                Corpus existingCorpus = CreateDBCorpus(corpus, corpusConfig, db);
+                if (existingCorpus != null) {
+                    corpus = existingCorpus;
+                    if (corpusConfig.getAnnotations().isUceMetadata()) {
+                        this.uceMetadataFilters = new CopyOnWriteArrayList<>(db.getUCEMetadataFiltersByCorpusId(existingCorpus.getId()));
+                    }
+                }
+            } catch (DatabaseOperationException e) {
+                throw new DatabaseOperationException("Error creating or fetching the corpus from the database - cancelling import.", e);
             }
-        } else {
-            if (folderName == null) {
-                pathdefault = Objects.requireNonNull(
-                        getClass().getClassLoader().getResource("defaultCorpusConfig.json"),
-                        "Resource defaultCorpusConfig.json not found"
-                ).getPath();
-            } else {
-                pathdefault = Paths.get(folderName, "corpusConfig.json").toString();
-            }
+        } catch (JsonIOException | JsonSyntaxException | IOException e) {
+            throw new MissingResourceException(
+                    "The corpus folder did not contain a properly formatted corpusConfig.json", CorpusConfig.class.toString(), "");
         }
 
-        Path filePathDefault = Paths.get(pathdefault);
-
-        var corpusInitializationResult = loadCorpusConfigInitializeCorpus(filePathDefault, corpusConfig, corpus, db);
-        corpusConfig = corpusInitializationResult.corpusConfig();
-        corpus = corpusInitializationResult.corpus();
         // Store some corpus information in the UCEImport logging if this is the main importer
         if (this.importerNumber == 1 && !this.casOnlyRun) {
             var uceImport = db.getUceImportByImportId(this.importId);
