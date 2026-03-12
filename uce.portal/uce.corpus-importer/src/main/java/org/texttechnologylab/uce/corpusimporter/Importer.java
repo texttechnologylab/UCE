@@ -330,7 +330,7 @@ public class Importer {
                 if (casView != null) {
                     this.mainCas = this.mainCas.getView(casView);
                 }
-//                Path filePath = Paths.get(pathdefault);
+                Path filePathDefault = Paths.get("DUUI-CAS-Import-" + documentId + ".xmi");
                 var docFuture = CompletableFuture.supplyAsync(() -> {
                             try {
                                 batchLatch.get().await(); // wait if a batch is being postprocessed

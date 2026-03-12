@@ -145,9 +145,11 @@ public final class PostgresqlDataInterface_Impl implements DataInterface {
             String sql = """
                 SELECT pd.id
                 FROM permitted_documents(:principal, :minLevel) AS pd
-                WHERE pd.id = ANY(:documentIds)
+                WHERE pd.id IN (:documentIds)
                 """;
-            var query = session.createNativeQuery(sql, Long.class);
+            var query = session.createNativeQuery(sql)
+                    .unwrap(org.hibernate.query.NativeQuery.class)
+                    .addScalar("id", LongType.INSTANCE);
             query.setParameter("principal", principal);
             query.setParameter("minLevel", minLevel.ordinal());
             query.setParameter("documentIds", documentIds);

@@ -144,8 +144,18 @@ public class SearchApi implements UceApi {
         var languageResources = LanguageResources.fromRequest(ctx);
 
         try {
+            if (requestBody == null || !requestBody.containsKey("corpusId") || requestBody.get("corpusId") == null) {
+                ctx.status(400);
+                ctx.result("No corpus selected.");
+                return;
+            }
             var searchInput = requestBody.get("searchInput").toString();
             var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
+            if (corpusId <= 0) {
+                ctx.status(400);
+                ctx.result("No corpus selected.");
+                return;
+            }
             model.put("corpusVm", db.getCorpusById(corpusId).getViewModel());
             var fulltextOrNeLayer = requestBody.get("fulltextOrNeLayer").toString();
             var useEmbeddings = Boolean.parseBoolean(requestBody.get("useEmbeddings").toString());

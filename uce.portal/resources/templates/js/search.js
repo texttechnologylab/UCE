@@ -617,12 +617,19 @@ function startNewSearch(searchInput, reloadCorpus = true, options = {}) {
         return;
     }
 
-    $('.search-menu-div').hide();
-    $('.view[data-id="search"] .loader-container').first().fadeIn(150);
     // Get the selected corpus
     const selectElement = document.getElementById("corpus-select");
-    const selectedOption = selectElement.options[selectElement.selectedIndex];
-    const corpusId = selectedOption.getAttribute("data-id");
+    const selectedOption = selectElement && selectElement.options
+        ? selectElement.options[selectElement.selectedIndex]
+        : null;
+    const corpusId = selectedOption ? selectedOption.getAttribute("data-id") : null;
+    if (!corpusId || corpusId === 'null' || corpusId === 'undefined') {
+        showMessageModal("No Corpus Selected", "Please select a corpus before starting a search.");
+        return;
+    }
+
+    $('.search-menu-div').hide();
+    $('.view[data-id="search"] .loader-container').first().fadeIn(150);
 
     // Get the selected search layers
     const fulltextOrNeLayer = $('.search-menu-div .search-settings-div input[name="searchLayerRadioOptions"]:checked').val() || 'FULLTEXT';
