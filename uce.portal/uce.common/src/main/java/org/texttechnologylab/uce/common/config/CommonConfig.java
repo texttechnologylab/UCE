@@ -16,6 +16,8 @@ import java.util.Map;
 import java.util.Properties;
 
 public class CommonConfig {
+    private static final Path EXTERNAL_COMMON_CONFIG_PATH = Path.of("/app/config/commonEmpty.conf");
+    private static final Path LEGACY_COMMON_CONFIG_PATH = Path.of("uce.common/src/main/resources/commonEmpty.conf");
 
     private final Properties properties;
     private final List<FeatureCode> geoNamesFeatureCodes;
@@ -45,32 +47,8 @@ public class CommonConfig {
 //            throw new RuntimeException("Error loading config.conf: " + e.getMessage());
 //        }
 
-        // Load in the common conf in the java properties() style
         try {
-            InputStream inputStream = null;
-
-            // 1) Prefer an external config file (works in Docker + fat JAR)
-            Path external = Path.of("/app/config/commonEmpty.conf");
-            if (Files.exists(external) && Files.isRegularFile(external) && Files.size(external) > 0) {
-                inputStream = Files.newInputStream(external);
-            } else {
-//                // 2) Fallback to classpath resource commonEmpty.conf (if present and non-empty)
-//                inputStream = getClass().getClassLoader().getResourceAsStream("commonEmpty.conf");
-//                if (inputStream != null) {
-//                    // If commonEmpty.conf exists but is empty, fallback to common.conf
-//                    if (inputStream.available() == 0) {
-//                        inputStream.close();
-//                        inputStream = null;
-//                    }
-//                }
-
-                // 3) Final fallback: default common.conf from classpath
-                inputStream = getClass().getClassLoader().getResourceAsStream("common.conf");
-                if (inputStream == null) {
-                    throw new RuntimeException("common.conf not found in the classpath");
-                }
-            }
-
+            InputStream inputStream = resolveCommonConfigInputStream();
             try (InputStream is = inputStream) {
                 properties.load(is);
             }
@@ -153,6 +131,32 @@ public class CommonConfig {
                 .toUpperCase();
     }
 
+    private InputStream resolveCommonConfigInputStream() throws Exception {
+        for (var path : List.of(EXTERNAL_COMMON_CONFIG_PATH, LEGACY_COMMON_CONFIG_PATH)) {
+            if (isNonEmptyFile(path)) {
+                return Files.newInputStream(path);
+            }
+        }
+
+        var classpathOverride = getClass().getClassLoader().getResourceAsStream("commonEmpty.conf");
+        if (classpathOverride != null) {
+            if (classpathOverride.available() > 0) {
+                return classpathOverride;
+            }
+            classpathOverride.close();
+        }
+
+        var defaultConfig = getClass().getClassLoader().getResourceAsStream("common.conf");
+        if (defaultConfig == null) {
+            throw new RuntimeException("common.conf not found in the classpath");
+        }
+        return defaultConfig;
+    }
+
+    private static boolean isNonEmptyFile(Path path) throws Exception {
+        return Files.exists(path) && Files.isRegularFile(path) && Files.size(path) > 0;
+    }
+
     public String getProperty(String key) {
         return properties.getProperty(key);
     }
@@ -197,7 +201,11 @@ public class CommonConfig {
     }
 
     public String getEmbeddingWebserverBaseUrl() {
-        return getProperty("embedding.webserver.base.url");
+        var embeddingUrl = getProperty("embedding.webserver.base.url");
+        if (embeddingUrl != null && !embeddingUrl.isBlank()) {
+            return embeddingUrl;
+        }
+        return getRAGWebserverBaseUrl();
     }
 
     public Configuration getKeyCloakConfiguration() {

@@ -48,6 +48,8 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 
 public class DUUICorpusImporter {
     private static final Logger logger = LogManager.getLogger(DUUICorpusImporter.class);
+    private static final Path COMMON_CONFIG_PATH = Path.of("/app/config/commonEmpty.conf");
+    private static final Path CORPUS_CONFIG_PATH = Path.of("/app/config/UCECorpusConfigEmpty.json");
 
     public static void main(String[] args) throws Exception {
         DisableLogging.enableLogging(Level.SEVERE);
@@ -75,7 +77,7 @@ public class DUUICorpusImporter {
 
         @Override
         public void handle(HttpExchange t) throws IOException {
-            File tf = null;
+            boolean responseStarted = false;
             try {
                 jc.reset();
 
@@ -90,19 +92,9 @@ public class DUUICorpusImporter {
                 InputStream casBody = new ByteArrayInputStream(bodies[1].getBytes(StandardCharsets.UTF_8));
                 XmiCasDeserializer.deserialize(casBody, jc.getCas(), true, sharedData);
 
-                //dump the common into commonEmpty.conf in the resources folder, in that case the given configuration will be loaded by the Corpus Importer instead of the default common.conf
-                Path commonConfPath = Path.of("/app/config/commonEmpty.conf");
                 if(args.contains("-c")) {
                     String commonConf = args.split("-c ")[1].split(" -")[0].replace("\\n", System.lineSeparator());
-                    Path path = commonConfPath;
-                    try {
-                        Files.createDirectories(commonConfPath.getParent());
-                        Files.writeString(path, commonConf);
-                    }
-                    catch (IOException e) {
-//                        e.printStackTrace();
-                        logger.error("Failed to write the given common conf to the commonEmpty.conf file in the resources folder. ", e);
-                    }
+                    writeConfigFile(COMMON_CONFIG_PATH, commonConf);
                 }
                 // raise exception if the given conf is not found, otherwise the default common.conf will be loaded, which is not wanted in that case.
                 else
@@ -111,28 +103,18 @@ public class DUUICorpusImporter {
                 }
 
                 //Dokument conf is needed to load the correct configuration into the Database, instead of the given CorpusConf in the folder of the input files.
-
-                Path corpusPath = Path.of("/app/config/UCECorpusConfigEmpty.json");
                 if(args.contains("-d")) {
                     String corpusConf = args.split("-d ")[1].split(" -")[0]
                             .replace("\\n", "\n");
-                    Files.createDirectories(corpusPath.getParent());
-                    try {
-                        ObjectMapper mapper = new ObjectMapper();
+                    ObjectMapper mapper = new ObjectMapper();
 
-                        // Falls der Input schon escaped ist, zuerst ent-escapen:
-                        corpusConf = corpusConf.replace("\\\"", "\"");
+                    // Falls der Input schon escaped ist, zuerst ent-escapen:
+                    corpusConf = corpusConf.replace("\\\"", "\"");
 
-                        JsonNode json = mapper.readTree(corpusConf);
-                        String prettyJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
+                    JsonNode json = mapper.readTree(corpusConf);
+                    String prettyJson = mapper.writerWithDefaultPrettyPrinter().writeValueAsString(json);
 
-                        Files.writeString(corpusPath, prettyJson, StandardCharsets.UTF_8);
-                    } catch (IOException e) {
-                        logger.error(
-                                "Failed to write the given corpus config to UCECorpusConfigEmpty.json in the resources folder.",
-                                e
-                        );
-                    }
+                    writeConfigFile(CORPUS_CONFIG_PATH, prettyJson);
                 }
                 else
                 {
@@ -160,21 +142,6 @@ public class DUUICorpusImporter {
                     importer.start(1);
                 }
 
-                //Delete commonEmpty.conf
-                try {
-                    Files.deleteIfExists(commonConfPath);
-                }
-                catch (IOException e) {
-                    logger.error("Failed to empty the commonEmpty.conf file in the resources folder after processing the request. ", e);
-                }
-                //Delete corpusConfig.json
-                try {
-                    Files.deleteIfExists(corpusPath);
-                }
-                catch (IOException e) {
-                    logger.error("Failed to delete the UCECorpusConfigEmpty.json file in the resources folder after processing the request. ", e);
-                }
-
                 // IMPORTANT: reply CAS back to DUUI
                 ByteArrayOutputStream out = new ByteArrayOutputStream();
                 XmiCasSerializer.serialize(jc.getCas(), out);  // you said this compiles
@@ -182,22 +149,39 @@ public class DUUICorpusImporter {
                 byte[] resp = out.toByteArray();
                 t.getResponseHeaders().set("Content-Type", "application/xml; charset=utf-8");
                 t.sendResponseHeaders(200, resp.length);
+                responseStarted = true;
                 try (OutputStream os = t.getResponseBody()) {
                     os.write(resp);
                 }
                 catch (Exception e) {
-                logger.error("ProcessHandler failed", e);
-                t.sendResponseHeaders(500, -1);
-                t.close();
+                    logger.error("ProcessHandler failed", e);
+                    t.close();
                 }
             }
             catch (Exception e) {
                 logger.error("An error occurred while processing the request in ProcessHandler. This likely means that the corpus import failed. ", e);
-                t.sendResponseHeaders(404, -1);
-                return;
+                if (!responseStarted) {
+                    t.sendResponseHeaders(404, -1);
+                }
+            } finally {
+                deleteConfigFile(COMMON_CONFIG_PATH, "common config");
+                deleteConfigFile(CORPUS_CONFIG_PATH, "corpus config");
             }
         }
 
+    }
+
+    private static void writeConfigFile(Path path, String content) throws IOException {
+        Files.createDirectories(path.getParent());
+        Files.writeString(path, content, StandardCharsets.UTF_8);
+    }
+
+    private static void deleteConfigFile(Path path, String label) {
+        try {
+            Files.deleteIfExists(path);
+        } catch (IOException e) {
+            logger.error("Failed to delete temporary {} at {}.", label, path, e);
+        }
     }
 
     static class TypesystemHandler implements HttpHandler {

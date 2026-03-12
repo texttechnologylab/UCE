@@ -90,6 +90,8 @@ public class Importer {
     private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger(Importer.class);
     private static final int BATCH_SIZE = 2000;
+    private static final Path EXTERNAL_CORPUS_CONFIG_PATH = Path.of("/app/config/UCECorpusConfigEmpty.json");
+    private static final Path LEGACY_CORPUS_CONFIG_PATH = Path.of("uce.corpus-importer/src/main/resources/UCECorpusConfigEmpty.json");
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
@@ -259,6 +261,15 @@ public class Importer {
         }
     }
 
+    private static Path getDuuiCorpusConfigPath() {
+        for (var path : List.of(EXTERNAL_CORPUS_CONFIG_PATH, LEGACY_CORPUS_CONFIG_PATH)) {
+            if (isNonEmptyFile(path)) {
+                return path;
+            }
+        }
+        return null;
+    }
+
     /**
      * Imports all UIMA xmi files in a folder
      * @throws DocumentAccessDeniedException
@@ -298,9 +309,9 @@ public class Importer {
         String pathdefault;
 
         if (folderName == null && casOnlyRun) {
-            Path external = Path.of("/app/config/UCECorpusConfigEmpty.json");
-            if (isNonEmptyFile(external)) {
-                pathdefault = external.toString();
+            var duuiCorpusConfig = getDuuiCorpusConfigPath();
+            if (duuiCorpusConfig != null) {
+                pathdefault = duuiCorpusConfig.toString();
             } else {
                 pathdefault = Objects.requireNonNull(
                         getClass().getClassLoader().getResource("defaultCorpusConfig.json"),
