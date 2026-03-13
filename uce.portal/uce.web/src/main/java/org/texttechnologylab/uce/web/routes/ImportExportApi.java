@@ -190,14 +190,28 @@ public class ImportExportApi implements UceApi {
             String addToExistingParam = ctx.formParam("addToExistingCorpus");
             boolean addToExisting = addToExistingParam != null && Boolean.parseBoolean(addToExistingParam);
             CorpusConfig config = null;
+            
+            Corpus existingCorpus = ExceptionUtils.tryCatchLog(() ->
+                            db.getCorpusByName(name),
+                    (ex) -> logger.warn("Could not fetch existing corpus by name " + name, ex)
+                    
+            );
+            // Check if it's either an import via new corpus or the user wants to import documents to an existing document
             if(addToExisting){
-                Corpus existingCorpus = ExceptionUtils.tryCatchLog(() -> 
-                        db.getCorpusByName(name),
-                        (ex) -> logger.warn("Could not fetch existing corpus config for merging",ex)
-                        );
                 if (existingCorpus != null && existingCorpus.getCorpusJsonConfig() != null) 
                     config = CorpusConfig.fromJson(existingCorpus.getCorpusJsonConfig());
+            }else{
+                if (existingCorpus != null){
+                    ctx.status(409).result("A corpus with that name already exists. Please Change the name or add these documents to the existing corpus!");
+                    try{
+                        org.apache.commons.io.FileUtils.deleteDirectory(rootDir.toFile());
+                    }catch (IOException ex){
+                        logger.warn("Could not delete temp dir after name conflict: " + rootDir,ex);
+                    }
+                    return;
+                }
             }
+            
             if (config == null){
                 config = new CorpusConfig();
                 config.setAnnotations(new CorpusAnnotationConfig());

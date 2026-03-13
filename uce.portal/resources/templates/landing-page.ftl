@@ -266,25 +266,6 @@
 </div>
 
 <script>
-    function submitCorpusImport() {
-        const form = document.getElementById('importCorpusForm');
-        const formData = new FormData(form);
-        const resultDiv = document.getElementById('importResult');
-        resultDiv.innerHTML = '<div class="spinner-border text-primary" role="status">' +
-            '<span class="sr-only">Loading...</span>' +
-            '</div> Starting import...';
-
-        fetch('/api/ie/import/path', {
-            method: 'POST',
-            body: formData
-        }).then(response => response.text())
-            .then(data => {
-                resultDiv.innerHTML = '<div class="alert alert-success">' + data + '</div>';
-            })
-            .catch(error => {
-                resultDiv.innerHTML = '<div class="alert alert-danger"> Error:' + error + '</div>';
-            });
-    }
     
     $(document).ready(() => {
         $('#uploadCorpusModal').appendTo('body');
