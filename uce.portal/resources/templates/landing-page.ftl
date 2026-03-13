@@ -96,47 +96,6 @@
     </div>
 </div>
 
-<#--Modal for importing files via a path-->
-<div class="modal fade" id="importCorpusModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-file-import mr-2"></i> Import Corpus</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="importCorpusForm">
-                    <div class="form-group">
-                        <label for="importPath">Source Path (Server-side)</label>
-                        <input type="text" class="form-control" id="importPath" name="path"
-                               placeholder="/path/to/corpus/folder" required>
-                        <small class="form-text text-muted">The folder must contain a <code>corpusConfig.json</code> and
-                            an <code>input</code> folder with UIMA files.</small>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="numThreads">Number of Threads</label>
-                            <input type="number" class="form-control" id="numThreads" name="numThreads" value="1"
-                                   min="1" max="16">
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="casView">Name of the CAS view to import from (Optional)</label>
-                            <input type="text" class="form-control" id="casView" name="casView"
-                                   placeholder="If not set, the default view (initial view) is used">
-                        </div>
-                    </div>
-                </form>
-                <div id="importResult" class="mt-3"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick="submitCorpusImport()">Import</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <#--Modal for uploading files-->
 <div class="modal fade" id="uploadCorpusModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
