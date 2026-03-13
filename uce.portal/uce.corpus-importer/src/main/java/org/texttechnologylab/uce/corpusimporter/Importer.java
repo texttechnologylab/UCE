@@ -78,7 +78,7 @@ import java.util.zip.ZipInputStream;
 
 public class Importer {
     
-    public static final Map<String,AtomicInteger> IMPORT_PROGRESS = new ConcurrentHashMap<>();
+    public static final Map<String,AtomicInteger> IMPORT_PROGRESS = new ConcurrentHashMap<>(); // Counter for UI Import Loading Bar
     private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger(Importer.class);
     private static final int BATCH_SIZE = 2000;
@@ -279,7 +279,7 @@ public class Importer {
                                     return doc;
                                 })
                                 .thenAcceptAsync(doc -> {
-                                        // Incrementing Counter for UI 
+                                        // Incrementing Counter of an import for UI 
                                         if (Importer.IMPORT_PROGRESS != null && Importer.IMPORT_PROGRESS .containsKey(importId)){
                                             Importer.IMPORT_PROGRESS.get(importId).incrementAndGet();
                                         }
@@ -707,6 +707,8 @@ public class Importer {
             var emotion = new org.texttechnologylab.uce.common.models.corpus.emotion.Emotion(e.getBegin(), e.getEnd());
             emotion.setCoveredText(e.getCoveredText());
             var meta = e.getModel();
+            // set emotion model
+            // Usually getModel() returns the map (at least for the models we tested it with), so getModelEntityByKey might be redundant
             ModelEntity foundModal = null;
             if (meta != null){
                 String modelNameFromXmi = meta.getModelName();
@@ -2315,25 +2317,34 @@ public class Importer {
         tryStoreUCEImportLog(importLog);
         logger.error(message, ex);
     }
-    
+
+    /**
+     * Extracts Emotion annotations from a given JCas,
+     * then appends them to an already existing Document.
+     */
     private void appendNewEmotionsToExistingDocument(Document existingDoc, JCas jCas){
         var newEmotions = new ArrayList<org.texttechnologylab.uce.common.models.corpus.emotion.Emotion>();
+        // Iterating over all Emotion annotations found in JCas and add them to newEmotions
         JCasUtil.select(jCas, Emotion.class).forEach(e -> {
+            // extract emotion
             var emotion = new org.texttechnologylab.uce.common.models.corpus.emotion.Emotion(e.getBegin(),e.getEnd());
             emotion.setCoveredText(e.getCoveredText());
+            // extract model
             var meta = e.getModel();
             ModelEntity foundModel = null;
             if(meta!=null){
                 String modelNameFromXmi = meta.getModelName();
                 try{
+                    // Usually getModel() returns the map (at least for the models we tested it with), so getModelEntityByKey might be redundant
                     foundModel = db.getModelEntityByKey(modelNameFromXmi);
                     if (foundModel == null) foundModel = db.getModelEntityByMap(modelNameFromXmi);
                 } catch (DatabaseOperationException ex) {
-                    logger.error("Error when looking for model in database" + modelNameFromXmi);
+                    logger.error("Error when looking for model in database when trying to append new emotions to an existing document" + modelNameFromXmi);
                 }
             }
             if(foundModel != null) emotion.setDbModel(foundModel);
             
+            // extract feelings
             var feelings = new ArrayList<Feeling>();
             for (var annotationComment : e.getEmotions()){
                 var feeling = new Feeling();
@@ -2346,6 +2357,7 @@ public class Importer {
             newEmotions.add(emotion);
         });
         
+        // if new emotions were found, save them in the database and link them with sentenceEmotions table
         if(!newEmotions.isEmpty()){
             if(existingDoc.getEmotions() == null){
                 existingDoc.setEmotions(new ArrayList<>());

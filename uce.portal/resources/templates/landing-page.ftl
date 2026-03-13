@@ -192,7 +192,7 @@
                     
                     <div class="form-group">
                         <label for="uploadImportId">Import ID (Optional)</label>
-                        <input type="text" class="form-control" id="uploadImportId" name="importId" placeholder="Enter custom hash or leave empty for auto-generation">
+                        <input type="text" class="form-control" id="uploadImportId" name="importId" placeholder="Enter custom import id or leave empty for auto-generation">
                         <small class="form-text text-muted">If empty, the import ID will be auto generated </small>
                     </div>
 
@@ -330,6 +330,11 @@
     $(document).ready(() => {
         $('#uploadCorpusModal').appendTo('body');
     });
+    
+    /**
+     * EventListener for custom file inputs
+     * Updates the label to show selected file names, truncates if names are too long
+    */
     $('body').on('change','.custom-file-input',function(){
         const fileNames = [];
         for (var i = 0; i< this.files.length; i++){
@@ -345,6 +350,11 @@
         }
         $(this).next('.custom-file-label').html(labelText);
     })
+    
+    /**
+     * EventListener for corpusConfig.json file upload
+     * Reads the corpusConfig.json file and fills out fields/checkboxes
+     */
     $('body').on('change','#uploadConfigFile',function(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -360,6 +370,8 @@
                 if (!$('#uploadCorpusLanguage').prop('readonly')) $('#uploadCorpusLanguage').val('');
                 if (!$('#uploadCorpusDescription').prop('readonly')) $('#uploadCorpusDescription').val('');
                 
+                // warns user that if they have the option 'addToExistingCorpus' selected as 'true', it will get set to false,
+                // since uploading a config file is only available when creating a new corpus
                 if (config.addToExistingCorpus === true && $('#uploadAddToExisting').val() === 'false') {
                     $('#uploadResult').html(
                         `<div class="alert alert-warning small mb-0">
@@ -419,7 +431,8 @@
                     if (oth.includeKeywordDistribution) $('#otherKeywords').prop('checked', true);
                     if (oth.enableS3Storage) $('#otherS3').prop('checked', true);
                 }
-
+                
+                // automatically expands the advancedSettings panel
                 if (!$('#advancedSettings').hasClass('show')) {
                     $('#advancedSettings').collapse('show');
                 }
@@ -431,6 +444,9 @@
         reader.readAsText(file);
     })
     
+    /** 
+     * opens modal for creating new corpus 
+     */
     function openUploadForNewCorpora(){
         const form = document.getElementById('uploadCorpusForm');
         form.reset();
@@ -450,6 +466,10 @@
         $('#configUploadGroup').show();
         
     }
+
+    /**
+     * opens modal for adding documents to an existing corpora
+     */
     function openUploadForExistingCorpora(corpusName,author,language,description,configJsonStr){
         const form = document.getElementById('uploadCorpusForm');
         form.reset();
@@ -517,6 +537,10 @@
         $('#uploadCorpusModal').modal('show');
         $('#configUploadGroup').hide();
     }
+
+    /**
+     * Submits the uploaded Files and CorpusConfig Settings to the backend
+     */
     function submitCorpusUpload(){
         const form = document.getElementById('uploadCorpusForm');
         const formData = new FormData(form)
@@ -547,6 +571,7 @@
                             activeImports.push(importId);
                             localStorage.setItem('activeUceImports', JSON.stringify(activeImports));
                         }
+                        // trigger the import progress polling
                         if(typeof startImportProgress === 'function') startImportProgress();
                     }else{
                         console.warn("No import Id extracted: ",msg);
@@ -560,7 +585,10 @@
                 resultDiv.innerHTML = '<div class="text-danger mt-2"><i class="fas fa-exclamation-triangle mr-1"></i> Error: ' + err.message + '</div>';
             });
     }
-    
+
+    /**
+     * Deletes a corpus based on its ID
+     */
     function deleteCorpus(corpusId){
         if (!confirm("Are you sure you want to delete this corpus?")){
             return;

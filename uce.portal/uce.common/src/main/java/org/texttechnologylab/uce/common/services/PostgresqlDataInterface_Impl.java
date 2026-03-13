@@ -1201,6 +1201,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    /**
+     * Deletes a document from the database
+     */
     public void deleteDocumentById(long id) throws DatabaseOperationException {
         // NOTE this only cleans up everything directly connected to the document
         // TODO also remove embeddings and other data
@@ -1231,6 +1234,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
     
+    /**
+     * Deletes a corpus from the database
+     */
     public void deleteCorpusById(long corpusId) throws DatabaseOperationException{
         executeOperationSafely((session) -> {
             List<String> queries = List.of(
@@ -2522,13 +2528,18 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    /**
+     * Adds new emotions to an existing document in the database
+     */
     public void saveNewEmotionsForDocument(long documentId, List<org.texttechnologylab.uce.common.models.corpus.emotion.Emotion> newEmotions) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             Document doc = session.get(Document.class, documentId);
             if (doc != null) {
+                // Initialize to prevent a LazyInitializationException
                 Hibernate.initialize(doc.getEmotions());
                 for (var emotion : newEmotions) {
                     if (emotion.getDbModel() != null) {
+                        // Merge detached model entity intp the current active session
                         emotion.setDbModel((ModelEntity) session.merge(emotion.getDbModel()));
                     }
                 }

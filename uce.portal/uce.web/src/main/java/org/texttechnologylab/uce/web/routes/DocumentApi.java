@@ -270,6 +270,9 @@ public class DocumentApi implements UceApi {
         }
     }
 
+    /**
+     * Delete Document from Database
+     */
     public void deleteDocument(Context ctx) throws DatabaseOperationException {
         var id = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("id"),
                 (ex) -> logger.error("Error: document deletion requires an 'id' query parameter. ", ex));
@@ -287,7 +290,10 @@ public class DocumentApi implements UceApi {
 
         ctx.json(result);
     }
-    
+
+    /**
+     * Delete Corpus from Database
+     */
     public void deleteCorpus(Context ctx) throws DatabaseOperationException{
         var id = ExceptionUtils.tryCatchLog(() -> ctx.queryParam("corpusId"),ex -> logger.error("Error: corpus deletion required a corpusId parameter"));
         if (id == null){

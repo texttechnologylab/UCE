@@ -504,6 +504,7 @@
     </div>
 </div>
 
+<#--Import Loading Box -->
 <div id="importProgressWrapper">
     <div id="allImportsList"></div>
     <div id="primaryImport" class="bg-white border rounded p-2 shadow-sm" style="cursor: pointer;">
@@ -597,17 +598,26 @@
 
 <script>
     let importPollingInterval = null;
-    function startImportProgress(importId){
+    /**
+     * Starts polling the server for the progress of active imports and updates the UI.
+     */
+    function startImportProgress(){
+        // prevent multiple polling intervals from running simultaneously
         if (importPollingInterval) return;
 
         const wrapper = document.getElementById('importProgressWrapper');
         const primaryStatusText = document.getElementById('primaryStatusText');
         const primaryProgressBar = document.getElementById('primaryProgressBar');
         const allImportsList = document.getElementById('allImportsList');
+        
+        // show wrapper
         if(wrapper) wrapper.style.display = 'block';
         
+        // polling intervall every 2000ms
         importPollingInterval = setInterval(() => {
+            // retrieve all active importId's
             let activeImports = JSON.parse(localStorage.getItem('activeUceImports') || '[]');
+            // hide UI,stop polling when there are no imports
             if (activeImports.length === 0) {
                 clearInterval(importPollingInterval);
                 importPollingInterval = null;
@@ -615,6 +625,7 @@
                 return;
             }
             
+            // get the status of each active import
             const fetchPromises = activeImports.map(importId =>
                 fetch('/api/ie/import/status/' + importId)
                     .then(response => {
@@ -626,12 +637,12 @@
                 let newActiveImports = [];
                 allImportsList.innerHTML = '';
                 
+                //update the progress for every import
                 results.forEach((result,index) => {
                     const {importId, data, error } = result;
                     let percent = 0;
-                    let text = 'Import ' + importId.substring(0,8) + '...';
+                    let text = '';
                     let barClass = 'bg-primary progress-bar-striped progess-bar-animated';
-                    let isFinished = false;
                     
                     if (error){
                         text = 'Error during import ' + importId.substring(0,8);
@@ -645,21 +656,21 @@
                         if (data.status === 'FINISHED'){
                             barClass = 'bg-success';
                             text = 'Import successfully completed!';
-                            isFinished = true;
                         } else if (data.status === 'ERROR'){
                             barClass = 'bg-danger';
                             text = 'Error during import';
-                            isFinished = true;
                         } else {
                             newActiveImports.push(importId);
                         }
                     }
                     
+                    // updates the primary import, that is seen all the time (without hovering)
                     if (index === 0){
                         primaryStatusText.innerText = text;
                         primaryProgressBar.style.width = percent + '%';
                         primaryProgressBar.className = 'progress-bar ' + barClass;
                     }
+                    // appends progress to the list
                     allImportsList.innerHTML +=
                         '<div class="mb-2 border-bottom pb-2">' +
                             '<small class="text-muted d-block">ID: ' + importId + '</small>' +
@@ -670,8 +681,10 @@
                         '</div>';
                 });
                 
+                // updates localstorage to track only the remaining active imports
                 localStorage.setItem('activeUceImports', JSON.stringify(newActiveImports));
                 
+                // if all imports are finished => stop polling, refresh page
                 if (newActiveImports.length === 0){
                     setTimeout(() => {
                         clearInterval(importPollingInterval);
@@ -687,7 +700,8 @@
             })
         },2000);
     }
-
+    
+    // check if there are any active imports if user reloads page
     document.addEventListener('DOMContentLoaded', () => {
         let activeImports = JSON.parse(localStorage.getItem('activeUceImports') || '[]');
         if (activeImports.length > 0) {

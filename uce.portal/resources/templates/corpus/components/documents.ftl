@@ -17,6 +17,9 @@
 </#list>
 
 <script>
+    /**
+     * Deletes a document based on its ID
+     */
     function deleteDocument(documentId){
         if (!confirm("Are you sure you want to delete this document?")){
             return;
