@@ -1963,7 +1963,6 @@ public class Importer {
         logger.info("Done with the corpus postprocessing.");
     }
 
-
     /**
      * Here we apply any postprocessing of a document that isn't DUUI and needs the document to be stored once like
      * the rag vector embeddings.
@@ -2373,6 +2372,11 @@ public class Importer {
         }
         
     }
+
+    /**
+     * Extracts and appends new sentence topics to an existing document,
+     * then ensures unified topics are updated accordingly.
+     */
     private void appendNewSentenceTopicsToExistingDocument(Document existingDoc, JCas jCas) {
         List<SentenceTopic> newSentenceTopics = extractSentenceTopics(existingDoc, jCas);
 
