@@ -279,7 +279,6 @@ public class Importer {
                                     return doc;
                                 })
                                 .thenAcceptAsync(doc -> {
-                                        // Incrementing Counter of an import for UI 
                                         if (Importer.IMPORT_PROGRESS != null && Importer.IMPORT_PROGRESS .containsKey(importId)){
                                             Importer.IMPORT_PROGRESS.get(importId).incrementAndGet();
                                         }
@@ -2324,7 +2323,6 @@ public class Importer {
      */
     private void appendNewEmotionsToExistingDocument(Document existingDoc, JCas jCas){
         var newEmotions = new ArrayList<org.texttechnologylab.uce.common.models.corpus.emotion.Emotion>();
-        // Iterating over all Emotion annotations found in JCas and add them to newEmotions
         JCasUtil.select(jCas, Emotion.class).forEach(e -> {
             // extract emotion
             var emotion = new org.texttechnologylab.uce.common.models.corpus.emotion.Emotion(e.getBegin(),e.getEnd());
@@ -2357,7 +2355,6 @@ public class Importer {
             newEmotions.add(emotion);
         });
         
-        // if new emotions were found, save them in the database and link them with sentenceEmotions table
         if(!newEmotions.isEmpty()){
             if(existingDoc.getEmotions() == null){
                 existingDoc.setEmotions(new ArrayList<>());

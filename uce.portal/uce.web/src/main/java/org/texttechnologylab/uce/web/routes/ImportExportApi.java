@@ -155,7 +155,6 @@ public class ImportExportApi implements UceApi {
      */
     public void importCorpusFromUpload(Context ctx) {
         try{
-            // if no custom import ID is given, generates one
             String customImportId = ctx.formParam("importId");
             String importId = (customImportId != null && !customImportId.isBlank() ? customImportId :  UUID.randomUUID().toString());
             // Set up directory, folder structure
@@ -163,11 +162,9 @@ public class ImportExportApi implements UceApi {
             Path inputDir = rootDir.resolve("input");
             Files.createDirectories(inputDir);
             
-            // Filters valid uploaded Files
             var validFiles = ctx.uploadedFiles("files").stream()
                     .filter(f -> f.size() > 0 && f.filename() != null && !f.filename().isBlank())
                     .toList();
-            // aborts if no valid files were uploaded
             if (validFiles.isEmpty()) {
                 ctx.status(400).result("No files selected. Please select at least one XMI file or archive.");
                 return;
@@ -305,7 +302,6 @@ public class ImportExportApi implements UceApi {
             CompletableFuture.runAsync(() -> {
                 try{
                     importer.start(numThreads);
-                    // On success, update status in the database
                     UCEImport finishedImport = db.getUceImportByImportId(importId);
                     if (finishedImport != null) {
                         finishedImport.setStatus(ImportStatus.FINISHED);
@@ -314,7 +310,6 @@ public class ImportExportApi implements UceApi {
                 } catch (DatabaseOperationException e) {
                     logger.error("Error during asynchronous corpus uplaod import",e);
                     try {
-                        // On failure, update status in the database
                         UCEImport errImport = db.getUceImportByImportId(importId);
                         if (errImport != null) {
                             errImport.setStatus(ImportStatus.ERROR);
@@ -324,7 +319,6 @@ public class ImportExportApi implements UceApi {
                     
                 }finally {
                     try {
-                        // always clean up temp directory
                         org.apache.commons.io.FileUtils.deleteDirectory(rootDir.toFile());
                     } catch (IOException ex) {
                         logger.warn("Could not delete temp upload dir: " + rootDir,ex);
@@ -332,7 +326,6 @@ public class ImportExportApi implements UceApi {
                 }
             });
             
-            // show the user the import has successfully started
             ctx.status(200).result("Upload successful. Import started with ID: " + importId);
             
         } catch (IOException e) {
@@ -358,13 +351,11 @@ public class ImportExportApi implements UceApi {
                 return;
             }
             
-            // Build a map of the current state
             Map<String,Object> statusData = new HashMap<>();
             statusData.put("status",uceImport.getStatus().name());
             statusData.put("total",uceImport.getTotalDocuments());
             int processed = 0;
             
-            // get the current processed count
             if(uceImport.getStatus() == ImportStatus.FINISHED || uceImport.getStatus() == ImportStatus.ERROR){
                 processed = uceImport.getTotalDocuments();
                 Importer.IMPORT_PROGRESS.remove(importId);

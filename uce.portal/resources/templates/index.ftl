@@ -610,14 +610,11 @@
         const primaryProgressBar = document.getElementById('primaryProgressBar');
         const allImportsList = document.getElementById('allImportsList');
         
-        // show wrapper
         if(wrapper) wrapper.style.display = 'block';
         
-        // polling intervall every 2000ms
         importPollingInterval = setInterval(() => {
-            // retrieve all active importId's
             let activeImports = JSON.parse(localStorage.getItem('activeUceImports') || '[]');
-            // hide UI,stop polling when there are no imports
+            
             if (activeImports.length === 0) {
                 clearInterval(importPollingInterval);
                 importPollingInterval = null;
@@ -625,7 +622,6 @@
                 return;
             }
             
-            // get the status of each active import
             const fetchPromises = activeImports.map(importId =>
                 fetch('/api/ie/import/status/' + importId)
                     .then(response => {
@@ -637,7 +633,6 @@
                 let newActiveImports = [];
                 allImportsList.innerHTML = '';
                 
-                //update the progress for every import
                 results.forEach((result,index) => {
                     const {importId, data, error } = result;
                     let percent = 0;
@@ -670,7 +665,7 @@
                         primaryProgressBar.style.width = percent + '%';
                         primaryProgressBar.className = 'progress-bar ' + barClass;
                     }
-                    // appends progress to the list
+                    
                     allImportsList.innerHTML +=
                         '<div class="mb-2 border-bottom pb-2">' +
                             '<small class="text-muted d-block">ID: ' + importId + '</small>' +
@@ -681,7 +676,6 @@
                         '</div>';
                 });
                 
-                // updates localstorage to track only the remaining active imports
                 localStorage.setItem('activeUceImports', JSON.stringify(newActiveImports));
                 
                 // if all imports are finished => stop polling, refresh page

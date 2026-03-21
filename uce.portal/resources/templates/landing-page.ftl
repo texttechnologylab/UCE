@@ -511,7 +511,6 @@
                             activeImports.push(importId);
                             localStorage.setItem('activeUceImports', JSON.stringify(activeImports));
                         }
-                        // trigger the import progress polling
                         if(typeof startImportProgress === 'function') startImportProgress();
                     }else{
                         console.warn("No import Id extracted: ",msg);
