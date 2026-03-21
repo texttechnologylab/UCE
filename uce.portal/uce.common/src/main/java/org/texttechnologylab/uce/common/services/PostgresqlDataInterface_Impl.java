@@ -2432,41 +2432,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     /**
-     * Inserts a sentence-level topic classification into the database.
-     * This method matches a sentence by its begin and end
-     * offsets within a given document and inserts a corresponding entry into the sentencetopics table
-     */
-    public int insertSentenceTopicBySpan(long documentId, int begin, int end,
-                                         String topicLabel, double score, String modelMap)
-            throws DatabaseOperationException {
-
-        return executeOperationSafely((session) -> {
-
-            String sql =
-                    "INSERT INTO sentencetopics (document_id, sentence_id, topiclabel, thetast, model_id) " +
-                            "SELECT :docId, s.id, :label, :score, m.id " +
-                            "FROM sentence s " +
-                            "JOIN models m ON m.map = :modelMap " +
-                            "WHERE s.document_id = :docId AND s.beginn = :begin AND s.endd = :end " +
-                            "AND NOT EXISTS ( " +
-                            "  SELECT 1 FROM sentencetopics st " +
-                            "  WHERE st.sentence_id = s.id " +
-                            "    AND st.topiclabel = :label " +
-                            "    AND st.model_id = m.id " +
-                            ")";
-
-            var query = session.createNativeQuery(sql);
-            query.setParameter("docId", documentId);
-            query.setParameter("begin", begin);
-            query.setParameter("end", end);
-            query.setParameter("label", topicLabel);
-            query.setParameter("score", score);
-            query.setParameter("modelMap", modelMap);
-
-            return query.executeUpdate();
-        });
-    }
-    /**
      * Create unifiedtopic rows if missing for sentences that have sentencetopics
      * Backfill sentencetopics.unifiedtopic_id
      */
@@ -2628,6 +2593,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             System.err.println("Error during getting ModalEntity from database");
         }
     }
+    /**
+     * Retrieves the strongest emotion per sentence and maps it to its page.
+     * Optionally filters by modelId.
+     */
     public List<Object[]> getEmotionByPage(long documentId, Long modelId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
 
@@ -2740,6 +2709,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    /**
+     * Saves new sentence-topic assignments for a document,
+     * linking them to the corresponding sentence and model.
+     */
     public void saveNewSentenceTopicsForDocument(long documentId, List<SentenceTopic> newSentenceTopics)
             throws DatabaseOperationException {
 
