@@ -2499,7 +2499,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return updated;
         });
     }
-
+    /**
+     * Erstellt sentenceemotion-Einträge für ein Dokument, indem Emotionen
+     * anhand von Satzgrenzen den passenden Sätzen zugeordnet werden.
+     */
     public int createSentenceEmotions(long documentId) throws DatabaseOperationException {
         return executeOperationSafely(session -> {
             String createSentenceEmotions =
@@ -2515,7 +2518,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         );
                     """;
 
-            System.out.println(documentId);
             return session.createNativeQuery(createSentenceEmotions)
                     .setParameter("docId", documentId)
                     .executeUpdate();
@@ -2617,6 +2619,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             System.err.println("Error during getting ModalEntity from database");
         }
     }
+    /**
+     * Ermittelt pro Seite die jeweils stärkste Emotion pro Satz
+     * und liefert die Emotionen gruppiert nach page_id zurück.
+     */
     public List<Object[]> getEmotionByPage(long documentId, Long modelId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
 
@@ -2678,6 +2684,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return query.getResultList();
         });
     }
+    /**
+     * Berechnet die durchschnittlichen Emotionswerte eines Dokuments
+     * für das Emotion-Radar, optional gefiltert nach Modell.
+     */
     public List<Object[]> getEmotionRadarForDocument(long documentId, Long modelId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
 
@@ -2702,6 +2712,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return query.getResultList();
         });
     }
+    /**
+     * Liefert alle in einem Dokument verwendeten Emotionsmodelle
+     * inklusive Modell-ID und Modellname zurück.
+     */
     public List<Object[]> getEmotionModelsForDocumentWithName(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = """

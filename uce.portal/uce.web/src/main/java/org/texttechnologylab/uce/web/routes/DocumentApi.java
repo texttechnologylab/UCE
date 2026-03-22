@@ -699,11 +699,9 @@ public class DocumentApi implements UceApi {
         try {
             long documentId = Long.parseLong(ctx.queryParam("documentId"));
 
-            // Optional: wenn du mehrere Emotion-Modelle hast
             String modelParam = ctx.queryParam("modelId");
             Long modelId = (modelParam == null || modelParam.isBlank()) ? null : Long.parseLong(modelParam);
 
-            // DB liefert rows: [page_id, emotion_label]
             List<Object[]> rows = db.getEmotionByPage(documentId, modelId);
 
             List<Map<String, Object>> result = new ArrayList<>();
