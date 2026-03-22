@@ -1201,6 +1201,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    /**
+     * Deletes a document from the database
+     */
     public void deleteDocumentById(long id) throws DatabaseOperationException {
         // NOTE this only cleans up everything directly connected to the document
         // TODO also remove embeddings and other data
@@ -1231,6 +1234,9 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
     
+    /**
+     * Deletes a corpus from the database
+     */
     public void deleteCorpusById(long corpusId) throws DatabaseOperationException{
         executeOperationSafely((session) -> {
             List<String> queries = List.of(
@@ -2426,41 +2432,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
     }
 
     /**
-     * Inserts a sentence-level topic classification into the database.
-     * This method matches a sentence by its begin and end
-     * offsets within a given document and inserts a corresponding entry into the sentencetopics table
-     */
-    public int insertSentenceTopicBySpan(long documentId, int begin, int end,
-                                         String topicLabel, double score, String modelMap)
-            throws DatabaseOperationException {
-
-        return executeOperationSafely((session) -> {
-
-            String sql =
-                    "INSERT INTO sentencetopics (document_id, sentence_id, topiclabel, thetast, model_id) " +
-                            "SELECT :docId, s.id, :label, :score, m.id " +
-                            "FROM sentence s " +
-                            "JOIN models m ON m.map = :modelMap " +
-                            "WHERE s.document_id = :docId AND s.beginn = :begin AND s.endd = :end " +
-                            "AND NOT EXISTS ( " +
-                            "  SELECT 1 FROM sentencetopics st " +
-                            "  WHERE st.sentence_id = s.id " +
-                            "    AND st.topiclabel = :label " +
-                            "    AND st.model_id = m.id " +
-                            ")";
-
-            var query = session.createNativeQuery(sql);
-            query.setParameter("docId", documentId);
-            query.setParameter("begin", begin);
-            query.setParameter("end", end);
-            query.setParameter("label", topicLabel);
-            query.setParameter("score", score);
-            query.setParameter("modelMap", modelMap);
-
-            return query.executeUpdate();
-        });
-    }
-    /**
      * Create unifiedtopic rows if missing for sentences that have sentencetopics
      * Backfill sentencetopics.unifiedtopic_id
      */
@@ -2499,10 +2470,7 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return updated;
         });
     }
-    /**
-     * Erstellt sentenceemotion-Einträge für ein Dokument, indem Emotionen
-     * anhand von Satzgrenzen den passenden Sätzen zugeordnet werden.
-     */
+
     public int createSentenceEmotions(long documentId) throws DatabaseOperationException {
         return executeOperationSafely(session -> {
             String createSentenceEmotions =
@@ -2518,19 +2486,25 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
                         );
                     """;
 
+            System.out.println(documentId);
             return session.createNativeQuery(createSentenceEmotions)
                     .setParameter("docId", documentId)
                     .executeUpdate();
         });
     }
 
+    /**
+     * Adds new emotions to an existing document in the database
+     */
     public void saveNewEmotionsForDocument(long documentId, List<org.texttechnologylab.uce.common.models.corpus.emotion.Emotion> newEmotions) throws DatabaseOperationException {
         executeOperationSafely((session) -> {
             Document doc = session.get(Document.class, documentId);
             if (doc != null) {
+                // Initialize to prevent a LazyInitializationException
                 Hibernate.initialize(doc.getEmotions());
                 for (var emotion : newEmotions) {
                     if (emotion.getDbModel() != null) {
+                        // Merge detached model entity intp the current active session
                         emotion.setDbModel((ModelEntity) session.merge(emotion.getDbModel()));
                     }
                 }
@@ -2620,8 +2594,8 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         }
     }
     /**
-     * Ermittelt pro Seite die jeweils stärkste Emotion pro Satz
-     * und liefert die Emotionen gruppiert nach page_id zurück.
+     * Retrieves the strongest emotion per sentence and maps it to its page.
+     * Optionally filters by modelId.
      */
     public List<Object[]> getEmotionByPage(long documentId, Long modelId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
@@ -2684,10 +2658,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return query.getResultList();
         });
     }
-    /**
-     * Berechnet die durchschnittlichen Emotionswerte eines Dokuments
-     * für das Emotion-Radar, optional gefiltert nach Modell.
-     */
     public List<Object[]> getEmotionRadarForDocument(long documentId, Long modelId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
 
@@ -2712,10 +2682,6 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
             return query.getResultList();
         });
     }
-    /**
-     * Liefert alle in einem Dokument verwendeten Emotionsmodelle
-     * inklusive Modell-ID und Modellname zurück.
-     */
     public List<Object[]> getEmotionModelsForDocumentWithName(long documentId) throws DatabaseOperationException {
         return executeOperationSafely((session) -> {
             String sql = """
@@ -2743,6 +2709,10 @@ public class PostgresqlDataInterface_Impl implements DataInterface {
         });
     }
 
+    /**
+     * Saves new sentence-topic assignments for a document,
+     * linking them to the corresponding sentence and model.
+     */
     public void saveNewSentenceTopicsForDocument(long documentId, List<SentenceTopic> newSentenceTopics)
             throws DatabaseOperationException {
 

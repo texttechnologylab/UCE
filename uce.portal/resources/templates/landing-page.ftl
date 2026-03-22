@@ -96,47 +96,6 @@
     </div>
 </div>
 
-<#--Modal for importing files via a path-->
-<div class="modal fade" id="importCorpusModal" tabindex="-1" role="dialog" aria-hidden="true">
-    <div class="modal-dialog modal-lg" role="document">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h5 class="modal-title"><i class="fas fa-file-import mr-2"></i> Import Corpus</h5>
-                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
-                    <span aria-hidden="true">×</span>
-                </button>
-            </div>
-            <div class="modal-body">
-                <form id="importCorpusForm">
-                    <div class="form-group">
-                        <label for="importPath">Source Path (Server-side)</label>
-                        <input type="text" class="form-control" id="importPath" name="path"
-                               placeholder="/path/to/corpus/folder" required>
-                        <small class="form-text text-muted">The folder must contain a <code>corpusConfig.json</code> and
-                            an <code>input</code> folder with UIMA files.</small>
-                    </div>
-                    <div class="form-row">
-                        <div class="form-group col-md-6">
-                            <label for="numThreads">Number of Threads</label>
-                            <input type="number" class="form-control" id="numThreads" name="numThreads" value="1"
-                                   min="1" max="16">
-                        </div>
-                        <div class="form-group col-md-6">
-                            <label for="casView">Name of the CAS view to import from (Optional)</label>
-                            <input type="text" class="form-control" id="casView" name="casView"
-                                   placeholder="If not set, the default view (initial view) is used">
-                        </div>
-                    </div>
-                </form>
-                <div id="importResult" class="mt-3"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-primary" onclick="submitCorpusImport()">Import</button>
-            </div>
-        </div>
-    </div>
-</div>
-
 <#--Modal for uploading files-->
 <div class="modal fade" id="uploadCorpusModal" tabindex="-1" role="dialog" aria-hidden="true">
     <div class="modal-dialog modal-lg" role="document">
@@ -188,6 +147,12 @@
                     <div class="form-group">
                         <label for="uploadCorpusDescription">Description</label>
                         <textarea class="form-control" id="uploadCorpusDescription" name="description" rows="2" placeholder="Description..."></textarea>
+                    </div>
+                    
+                    <div class="form-group">
+                        <label for="uploadImportId">Import ID (Optional)</label>
+                        <input type="text" class="form-control" id="uploadImportId" name="importId" placeholder="Enter custom import id or leave empty for auto-generation">
+                        <small class="form-text text-muted">If empty, the import ID will be auto generated </small>
                     </div>
 
                     <div class="form-row border-top pt-3">
@@ -301,29 +266,15 @@
 </div>
 
 <script>
-    function submitCorpusImport() {
-        const form = document.getElementById('importCorpusForm');
-        const formData = new FormData(form);
-        const resultDiv = document.getElementById('importResult');
-        resultDiv.innerHTML = '<div class="spinner-border text-primary" role="status">' +
-            '<span class="sr-only">Loading...</span>' +
-            '</div> Starting import...';
-
-        fetch('/api/ie/import/path', {
-            method: 'POST',
-            body: formData
-        }).then(response => response.text())
-            .then(data => {
-                resultDiv.innerHTML = '<div class="alert alert-success">' + data + '</div>';
-            })
-            .catch(error => {
-                resultDiv.innerHTML = '<div class="alert alert-danger"> Error:' + error + '</div>';
-            });
-    }
     
     $(document).ready(() => {
         $('#uploadCorpusModal').appendTo('body');
     });
+    
+    /**
+     * EventListener for custom file inputs
+     * Updates the label to show selected file names, truncates if names are too long
+    */
     $('body').on('change','.custom-file-input',function(){
         const fileNames = [];
         for (var i = 0; i< this.files.length; i++){
@@ -339,6 +290,11 @@
         }
         $(this).next('.custom-file-label').html(labelText);
     })
+    
+    /**
+     * EventListener for corpusConfig.json file upload
+     * Reads the corpusConfig.json file and fills out fields/checkboxes
+     */
     $('body').on('change','#uploadConfigFile',function(event) {
         const file = event.target.files[0];
         if (!file) return;
@@ -354,6 +310,8 @@
                 if (!$('#uploadCorpusLanguage').prop('readonly')) $('#uploadCorpusLanguage').val('');
                 if (!$('#uploadCorpusDescription').prop('readonly')) $('#uploadCorpusDescription').val('');
                 
+                // warns user that if they have the option 'addToExistingCorpus' selected as 'true', it will get set to false,
+                // since uploading a config file is only available when creating a new corpus
                 if (config.addToExistingCorpus === true && $('#uploadAddToExisting').val() === 'false') {
                     $('#uploadResult').html(
                         `<div class="alert alert-warning small mb-0">
@@ -413,7 +371,8 @@
                     if (oth.includeKeywordDistribution) $('#otherKeywords').prop('checked', true);
                     if (oth.enableS3Storage) $('#otherS3').prop('checked', true);
                 }
-
+                
+                // automatically expands the advancedSettings panel
                 if (!$('#advancedSettings').hasClass('show')) {
                     $('#advancedSettings').collapse('show');
                 }
@@ -425,6 +384,9 @@
         reader.readAsText(file);
     })
     
+    /** 
+     * opens modal for creating new corpus 
+     */
     function openUploadForNewCorpora(){
         const form = document.getElementById('uploadCorpusForm');
         form.reset();
@@ -444,6 +406,10 @@
         $('#configUploadGroup').show();
         
     }
+
+    /**
+     * opens modal for adding documents to an existing corpora
+     */
     function openUploadForExistingCorpora(corpusName,author,language,description,configJsonStr){
         const form = document.getElementById('uploadCorpusForm');
         form.reset();
@@ -511,6 +477,10 @@
         $('#uploadCorpusModal').modal('show');
         $('#configUploadGroup').hide();
     }
+
+    /**
+     * Submits the uploaded Files and CorpusConfig Settings to the backend
+     */
     function submitCorpusUpload(){
         const form = document.getElementById('uploadCorpusForm');
         const formData = new FormData(form)
@@ -528,14 +498,24 @@
             body: formData
         })
             .then(async response => {
+                const msg = await response.text();
                 if (response.ok) {
                     resultDiv.innerHTML = '<div class="text-success font-weight-bold"><i class="fas fa-check-circle mr-1"></i> Upload successful! Reloading...</div>';
 
-                    setTimeout(() => {
-                        location.reload();
-                    }, 3000);
+                    $('#uploadCorpusModal').modal('hide');
+                    const idMatch = msg.match(/ID:\s*(.+)/);
+                    if(idMatch && idMatch[1]){
+                        const importId = idMatch[1].trim();
+                        let activeImports = JSON.parse(localStorage.getItem('activeUceImports') || '[]');
+                        if (!activeImports.includes(importId)) {
+                            activeImports.push(importId);
+                            localStorage.setItem('activeUceImports', JSON.stringify(activeImports));
+                        }
+                        if(typeof startImportProgress === 'function') startImportProgress();
+                    }else{
+                        console.warn("No import Id extracted: ",msg);
+                    }
                 } else {
-                    const msg = await response.text();
                     throw new Error(msg);
                 }
             })
@@ -544,14 +524,14 @@
                 resultDiv.innerHTML = '<div class="text-danger mt-2"><i class="fas fa-exclamation-triangle mr-1"></i> Error: ' + err.message + '</div>';
             });
     }
-    
+
+    /**
+     * Deletes a corpus based on its ID
+     */
     function deleteCorpus(corpusId){
         if (!confirm("Are you sure you want to delete this corpus?")){
             return;
         }
-        
-        
-
         fetch('/api/corpus/delete?corpusId=' + corpusId, {
             method: 'DELETE'
         })

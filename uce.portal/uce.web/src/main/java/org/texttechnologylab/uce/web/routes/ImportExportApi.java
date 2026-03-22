@@ -146,73 +146,40 @@ public class ImportExportApi implements UceApi {
             ctx.result("Error uploading a file: " + e.getMessage());
         }
     }
-
-
-    public void importCorpusFromPath(Context ctx) {
-        try {
-            String path = ctx.formParam("path");
-            String numThreadStr = ctx.formParam("numThreads");
-            int numThreads = (numThreadStr != null && !numThreadStr.isBlank()) ? Integer.parseInt(numThreadStr) : 1;
-            String casView = ctx.formParam("casView");
-
-            if (casView != null && casView.isBlank()) {
-                casView = null;
-            }
-
-            if (path == null || path.isBlank()) {
-                ctx.status(400).result("Path is required");
-                return;
-            }
-
-            String importId = UUID.randomUUID().toString();
-            int importerNumber = 1;
-            Importer importer = new Importer(serviceContext, path, importerNumber, importId, casView);
-            UCEImport uceImport = new UCEImport(importId, path, ImportStatus.STARTING);
-            Integer fileCount = ExceptionUtils.tryCatchLog(importer::getXMICountInPath,
-                    (ex) -> logger.warn("There was an IO error counting the importable UIMA files - the import will probably fail at some point.", ex));
-            uceImport.setTotalDocuments(fileCount == null ? -1 : fileCount);
-            db.saveOrUpdateUceImport(uceImport);
-            CompletableFuture.runAsync(() -> {
-                try {
-                    importer.start(numThreads);
-                } catch (DatabaseOperationException e) {
-                    logger.error("Error during asynchronous corpus import", e);
-                }
-            });
-            ctx.status(200).result("Import started. Import ID: " + importId);
-        } catch (DatabaseOperationException e) {
-            logger.error("Error when creating saving/updating to database" + e);
-            ctx.status(500).result("Database error initiating corpus import" + e.getMessage());
-
-        } catch (Exception e) {
-            logger.error("Error initiating corpus import", e);
-            ctx.status(500).result("Error initiating import: " + e.getMessage());
-        }
-
-    }
     
-    public void importCorpusFromUpload(Context ctx){
+    /**
+     * Handles the HTTP request to upload and import a corpus from user-provided files.
+     * Extracts files and configuration parameters, sets up a temporary directory,
+     * and triggers the background import process.
+     *
+     */
+    public void importCorpusFromUpload(Context ctx) {
         try{
-            String importId = UUID.randomUUID().toString();
+            String customImportId = ctx.formParam("importId");
+            String importId = (customImportId != null && !customImportId.isBlank() ? customImportId :  UUID.randomUUID().toString());
+            // Set up directory, folder structure
             Path rootDir = java.nio.file.Paths.get(System.getProperty("java.io.tmpdir"), "uce_uploads", importId);
             Path inputDir = rootDir.resolve("input");
             Files.createDirectories(inputDir);
-
+            
             var validFiles = ctx.uploadedFiles("files").stream()
                     .filter(f -> f.size() > 0 && f.filename() != null && !f.filename().isBlank())
                     .toList();
-
             if (validFiles.isEmpty()) {
                 ctx.status(400).result("No files selected. Please select at least one XMI file or archive.");
                 return;
             }
             
+            // put all files into the input directory
             for(UploadedFile uploadedFile : ctx.uploadedFiles("files")){
                 try(InputStream input = uploadedFile.content()){
                     Files.copy(input,inputDir.resolve(uploadedFile.filename()), StandardCopyOption.REPLACE_EXISTING);
                 }
             }
-            
+
+            /**
+             * Extract details and create a corpusConfig.json file
+             */
             String name = ctx.formParam("name");
             if (name == null || name.isBlank()){
                 ctx.status(400).result("No corpus name given");
@@ -220,14 +187,28 @@ public class ImportExportApi implements UceApi {
             String addToExistingParam = ctx.formParam("addToExistingCorpus");
             boolean addToExisting = addToExistingParam != null && Boolean.parseBoolean(addToExistingParam);
             CorpusConfig config = null;
+            
+            Corpus existingCorpus = ExceptionUtils.tryCatchLog(() ->
+                            db.getCorpusByName(name),
+                    (ex) -> logger.warn("Could not fetch existing corpus by name " + name, ex)
+                    
+            );
+            // Check if it's either an import via new corpus or the user wants to import documents to an existing document
             if(addToExisting){
-                Corpus existingCorpus = ExceptionUtils.tryCatchLog(() -> 
-                        db.getCorpusByName(name),
-                        (ex) -> logger.warn("Could not fetch existing corpus config for merging",ex)
-                        );
                 if (existingCorpus != null && existingCorpus.getCorpusJsonConfig() != null) 
                     config = CorpusConfig.fromJson(existingCorpus.getCorpusJsonConfig());
+            }else{
+                if (existingCorpus != null){
+                    ctx.status(409).result("A corpus with that name already exists. Please Change the name or add these documents to the existing corpus!");
+                    try{
+                        org.apache.commons.io.FileUtils.deleteDirectory(rootDir.toFile());
+                    }catch (IOException ex){
+                        logger.warn("Could not delete temp dir after name conflict: " + rootDir,ex);
+                    }
+                    return;
+                }
             }
+            
             if (config == null){
                 config = new CorpusConfig();
                 config.setAnnotations(new CorpusAnnotationConfig());
@@ -298,6 +279,7 @@ public class ImportExportApi implements UceApi {
             config.setAnnotations(ann);
             config.setOther(otherConfig);
             
+            // create corpusConfig.json inside the root directory
             Gson gson = new GsonBuilder().setPrettyPrinting().create();
             String jsonString = gson.toJson(config);
             Files.writeString(rootDir.resolve("corpusConfig.json"),jsonString,StandardCharsets.UTF_8);
@@ -315,21 +297,36 @@ public class ImportExportApi implements UceApi {
                     (ex) -> logger.warn("IO Error counting upload files.",ex));
             uceImport.setTotalDocuments(fileCount == null ? -1 : fileCount);
             db.saveOrUpdateUceImport(uceImport);
+            
+            // run import
             CompletableFuture.runAsync(() -> {
                 try{
                     importer.start(numThreads);
+                    UCEImport finishedImport = db.getUceImportByImportId(importId);
+                    if (finishedImport != null) {
+                        finishedImport.setStatus(ImportStatus.FINISHED);
+                        db.saveOrUpdateUceImport(finishedImport);
+                    }
                 } catch (DatabaseOperationException e) {
                     logger.error("Error during asynchronous corpus uplaod import",e);
+                    try {
+                        UCEImport errImport = db.getUceImportByImportId(importId);
+                        if (errImport != null) {
+                            errImport.setStatus(ImportStatus.ERROR);
+                            db.saveOrUpdateUceImport(errImport);
+                        }
+                    } catch (Exception ignored) {}
+                    
                 }finally {
                     try {
                         org.apache.commons.io.FileUtils.deleteDirectory(rootDir.toFile());
-                    } catch (IOException e) {
-                        logger.warn("Could not delete temp upload dir: " + rootDir,e);
+                    } catch (IOException ex) {
+                        logger.warn("Could not delete temp upload dir: " + rootDir,ex);
                     }
                 }
             });
             
-            ctx.status(200).result("Upload sucessfull. Import started with ID: " + importId);
+            ctx.status(200).result("Upload successful. Import started with ID: " + importId);
             
         } catch (IOException e) {
             logger.error("Error handling file upload import", e);
@@ -337,6 +334,40 @@ public class ImportExportApi implements UceApi {
         } catch (DatabaseOperationException e) {
             logger.error("Error saving/updating database during Uce Import", e);
             ctx.status(500).result("Error during saving/updating database " + e.getMessage());
+        }
+    }
+
+    /**
+     * Retrieves the current progress and status of an import
+     * Sends back a JSON Object containing the count of total and processed documents
+     */
+    public void getImportStatus(Context ctx){
+        String importId = ctx.pathParam("importId");
+        
+        try{
+            UCEImport uceImport = db.getUceImportByImportId(importId);
+            if (uceImport == null){
+                ctx.status(400).result("Import %s not found".formatted(importId));
+                return;
+            }
+            
+            Map<String,Object> statusData = new HashMap<>();
+            statusData.put("status",uceImport.getStatus().name());
+            statusData.put("total",uceImport.getTotalDocuments());
+            int processed = 0;
+            
+            if(uceImport.getStatus() == ImportStatus.FINISHED || uceImport.getStatus() == ImportStatus.ERROR){
+                processed = uceImport.getTotalDocuments();
+                Importer.IMPORT_PROGRESS.remove(importId);
+            }else if (Importer.IMPORT_PROGRESS.containsKey(importId)){
+                processed = Importer.IMPORT_PROGRESS.get(importId).get();
+            }
+            
+            statusData.put("processed",processed);
+            ctx.json((statusData));
+        } catch (DatabaseOperationException e) {
+            logger.error("Error when trying to get import-status");
+            ctx.status(500).result("Error when trying to get import-status");
         }
     }
 

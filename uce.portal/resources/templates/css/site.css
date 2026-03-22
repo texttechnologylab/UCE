@@ -1247,3 +1247,27 @@ nav .selected-nav-btn.text::before {
 }
 
 /* UCE Map styles end */
+
+/* Import Loading Bar Styles */
+#importProgressWrapper{
+    display: none;
+    position: fixed;
+    bottom: 20px;
+    right: 20px;
+    width: 300px;
+    z-index: 1050;
+}
+
+#importProgressWrapper:hover #allImportsList{
+    display: block !important;
+}
+
+#allImportsList{
+    display: none;
+    position: absolute;
+    bottom: 100%;
+    right: 0;
+    width: 300px;
+    max-height: 400px;
+    overflow-y: auto;
+}

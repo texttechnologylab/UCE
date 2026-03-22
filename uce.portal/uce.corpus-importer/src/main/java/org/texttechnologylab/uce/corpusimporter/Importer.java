@@ -68,10 +68,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.concurrent.CompletableFuture;
-import java.util.concurrent.CopyOnWriteArrayList;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Executors;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.stream.Collectors;
@@ -80,7 +77,8 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipInputStream;
 
 public class Importer {
-
+    
+    public static final Map<String,AtomicInteger> IMPORT_PROGRESS = new ConcurrentHashMap<>(); // Counter for UI Import Loading Bar
     private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger(Importer.class);
     private static final int BATCH_SIZE = 2000;
@@ -255,6 +253,8 @@ public class Importer {
         var docInBatch = new AtomicInteger(0);
         var lock = new Object();
         var batchLatch = new AtomicReference<>(new CountDownLatch(0));
+        
+        IMPORT_PROGRESS.put(this.importId,new AtomicInteger(0));
 
         try (var fileStream = Files.walk(inputFolderName)) {
             fileStream.filter(Files::isRegularFile)
@@ -279,6 +279,9 @@ public class Importer {
                                     return doc;
                                 })
                                 .thenAcceptAsync(doc -> {
+                                        if (Importer.IMPORT_PROGRESS != null && Importer.IMPORT_PROGRESS .containsKey(importId)){
+                                            Importer.IMPORT_PROGRESS.get(importId).incrementAndGet();
+                                        }
                                     if (doc != null) {
                                         logImportInfo("Stored document " + filePath.getFileName(), LogStatus.SAVED, filePath.toString(), 0);
                                         logger.info("Finished with the UIMA annotations - postprocessing the doc now.");
@@ -360,6 +363,16 @@ public class Importer {
         ExceptionUtils.tryCatchLog(
                 () -> postProccessCorpus(corpus1, corpusConfigFinal),
                 (ex) -> logger.error("Error in the final postprocessing of the current corpus with id " + corpus1.getId()));
+        
+        // Setting Import-Status to FINISHED
+        if (this.importerNumber == 1){
+            ExceptionUtils.tryCatchLog(()->{
+                var finalUceImport = db.getUceImportByImportId(this.importId);
+                finalUceImport.setStatus(ImportStatus.FINISHED);
+                db.saveOrUpdateUceImport(finalUceImport);
+                return null;
+            },ex -> logger.error("Error when trying to set import-status to FINISHED"));
+        }
 
         logger.info("\n\n=================================\n Done with the corpus import.");
         executor.shutdown();
@@ -693,6 +706,8 @@ public class Importer {
             var emotion = new org.texttechnologylab.uce.common.models.corpus.emotion.Emotion(e.getBegin(), e.getEnd());
             emotion.setCoveredText(e.getCoveredText());
             var meta = e.getModel();
+            // set emotion model
+            // Usually getModel() returns the map (at least for the models we tested it with), so getModelEntityByKey might be redundant
             ModelEntity foundModal = null;
             if (meta != null){
                 String modelNameFromXmi = meta.getModelName();
@@ -1947,7 +1962,6 @@ public class Importer {
         logger.info("Done with the corpus postprocessing.");
     }
 
-
     /**
      * Here we apply any postprocessing of a document that isn't DUUI and needs the document to be stored once like
      * the rag vector embeddings.
@@ -2301,25 +2315,33 @@ public class Importer {
         tryStoreUCEImportLog(importLog);
         logger.error(message, ex);
     }
-    
+
+    /**
+     * Extracts Emotion annotations from a given JCas,
+     * then appends them to an already existing Document.
+     */
     private void appendNewEmotionsToExistingDocument(Document existingDoc, JCas jCas){
         var newEmotions = new ArrayList<org.texttechnologylab.uce.common.models.corpus.emotion.Emotion>();
         JCasUtil.select(jCas, Emotion.class).forEach(e -> {
+            // extract emotion
             var emotion = new org.texttechnologylab.uce.common.models.corpus.emotion.Emotion(e.getBegin(),e.getEnd());
             emotion.setCoveredText(e.getCoveredText());
+            // extract model
             var meta = e.getModel();
             ModelEntity foundModel = null;
             if(meta!=null){
                 String modelNameFromXmi = meta.getModelName();
                 try{
+                    // Usually getModel() returns the map (at least for the models we tested it with), so getModelEntityByKey might be redundant
                     foundModel = db.getModelEntityByKey(modelNameFromXmi);
                     if (foundModel == null) foundModel = db.getModelEntityByMap(modelNameFromXmi);
                 } catch (DatabaseOperationException ex) {
-                    logger.error("Error when looking for model in database" + modelNameFromXmi);
+                    logger.error("Error when looking for model in database when trying to append new emotions to an existing document" + modelNameFromXmi);
                 }
             }
             if(foundModel != null) emotion.setDbModel(foundModel);
             
+            // extract feelings
             var feelings = new ArrayList<Feeling>();
             for (var annotationComment : e.getEmotions()){
                 var feeling = new Feeling();
@@ -2347,6 +2369,11 @@ public class Importer {
         }
         
     }
+
+    /**
+     * Extracts and appends new sentence topics to an existing document,
+     * then ensures unified topics are updated accordingly.
+     */
     private void appendNewSentenceTopicsToExistingDocument(Document existingDoc, JCas jCas) {
         List<SentenceTopic> newSentenceTopics = extractSentenceTopics(existingDoc, jCas);
 
