@@ -34,9 +34,9 @@ services:
   uce-web:
     container_name: uce-web
     image: ${UCE_WEB_IMAGE:-docker.texttechnologylab.org/uce-web-deploy:0.0.3}
-    build:
-      context: .
-      dockerfile: ./uce.portal/uce.web/Dockerfile
+    # build:
+    #   context: .
+    #   dockerfile: ./uce.portal/uce.web/Dockerfile
     pull_policy: always
     profiles:
       - local
@@ -142,9 +142,9 @@ services:
       - import
     image: ${IMPORTER_IMAGE:-docker.texttechnologylab.org/uce-importer-deploy:0.0.1}
     pull_policy: always
-    build:
-      context: .
-      dockerfile: ./uce.portal/uce.corpus-importer/Dockerfile
+    # build:
+    #   context: .
+    #   dockerfile: ./uce.portal/uce.corpus-importer/Dockerfile
     env_file:
       - .env
     environment:
@@ -184,6 +184,7 @@ services:
     ports:
       - "${DB_PORT:-5432}:${DB_INTERNAL_PORT:-5432}"
     volumes:
+      - ${POSTGRES_DATA_HOST_PATH:-./.dev/storage/postgres}:/var/lib/postgresql/data
       #- ./../backups/2025-07-03_BIOfid_Nova-Data/db-data:/var/lib/postgresql/data
       - ${POSTGRESQL_CONFIG:-./database/postgresql.conf}:/etc/postgresql.conf
     command: -c config_file=/etc/postgresql.conf

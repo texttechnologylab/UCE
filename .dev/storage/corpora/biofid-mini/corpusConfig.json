@@ -1,0 +1,43 @@
+{
+  "name": "biofid-mini-kubernetes",
+  "author": "Fachinformationsdienst Biodiversitätsforschung (BIOfid)",
+  "language": "de-DE",
+  "description": "<b>Im Aufbau!</b><br/><br/>Im Rahmen des <b>Fachinformationsdienstes (FID) Biodiversitätsforschung</b> digitalisiert die <b>Universitätsbibliothek Johann Christian Senckenberg</b> (Frankfurt am Main) Literatur zur Biodiversität mit Schwerpunkt auf <i>Zeitschriften des 20. Jahrhunderts</i>.<br/><br/>Zu geringen Anteilen umfasst die <b>Sammlung Biodiversität</b> auch Teile der älteren, <i>urheberrechtsfreien Literatur</i>, die bislang noch nirgends digitalisiert wurde.<br/><br/>Ein wesentlicher Zweck der Digitalisierung im FID ist – neben einer besseren Verfügbarkeit der Inhalte – die <b>Schaffung eines Korpus</b> für ein <i>Pilotvorhaben zum Text-Mining</i> in Biodiversitäts-Literatur. Dabei steht Literatur zur Diversität von <b>Gefäßpflanzen, Schmetterlingen und Vögeln in Mitteleuropa</b> im Vordergrund.<br/><br/>Der FID Biodiversitätsforschung wird durch die <b>Universitätsbibliothek Johann Christian Senckenberg</b> gemeinsam mit der <b>Senckenberg Gesellschaft für Naturforschung</b> und der <b>AG Texttechnologie</b> am <b>Institut für Informatik der Goethe-Universität</b> in den Jahren <i>2017 bis 2020</i> aufgebaut.<br/><br/>Der FID einschließlich der Digitalisierung von Biodiversitäts-Literatur wird von der <b>Deutschen Forschungsgemeinschaft (DFG)</b> gefördert.",
+  "annotations": {
+    "annotatorMetadata": false,
+    "uceMetadata": true,
+    "logicalLinks": false,
+    "OCRPage": true,
+    "OCRParagraph": true,
+    "OCRBlock": true,
+    "OCRLine": true,
+    "taxon": {
+      "annotated": true,
+      "biofidOnthologyAnnotated": true
+    },
+    "srLink": false,
+    "lemma": false,
+    "namedEntity": true,
+    "geoNames": true,
+    "sentence": true,
+    "time": true,
+    "sentiment": false,
+    "emotion": false,
+    "wikipediaLink": false,
+    "completeNegation": false,
+    "cue": false,
+    "event": false,
+    "focus": false,
+    "scope": false,
+    "xscope": false,
+    "unifiedTopic": false
+  },
+  "addToExistingCorpus": true,
+  "other": {
+    "availableOnFrankfurtUniversityCollection": false,
+    "includeTopicDistribution": false,
+    "enableEmbeddings": true,
+    "enableRAGBot": false,
+    "enableS3Storage": false
+  }
+}

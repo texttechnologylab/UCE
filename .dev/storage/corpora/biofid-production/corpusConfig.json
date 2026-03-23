@@ -1,0 +1,43 @@
+{
+  "name": "biofid-production",
+  "author": "Fachinformationsdienst Biodiversitaetsforschung (BIOfid)",
+  "language": "de-DE",
+  "description": "<b>Im Aufbau!</b><br/><br/>Im Rahmen des <b>Fachinformationsdienstes (FID) Biodiversitaetsforschung</b> digitalisiert die <b>Universitaetsbibliothek Johann Christian Senckenberg</b> (Frankfurt am Main) Literatur zur Biodiversitaet mit Schwerpunkt auf <i>Zeitschriften des 20. Jahrhunderts</i>.<br/><br/>Zu geringen Anteilen umfasst die <b>Sammlung Biodiversitaet</b> auch Teile der aelteren, <i>urheberrechtsfreien Literatur</i>, die bislang noch nirgends digitalisiert wurde.<br/><br/>Ein wesentlicher Zweck der Digitalisierung im FID ist neben einer besseren Verfuegbarkeit der Inhalte die <b>Schaffung eines Korpus</b> fuer ein <i>Pilotvorhaben zum Text-Mining</i> in Biodiversitaets-Literatur. Dabei steht Literatur zur Diversitaet von <b>Gefaesspflanzen, Schmetterlingen und Voegeln in Mitteleuropa</b> im Vordergrund.",
+  "annotations": {
+    "annotatorMetadata": false,
+    "uceMetadata": true,
+    "logicalLinks": false,
+    "OCRPage": true,
+    "OCRParagraph": true,
+    "OCRBlock": true,
+    "OCRLine": true,
+    "taxon": {
+      "annotated": true,
+      "biofidOnthologyAnnotated": true
+    },
+    "srLink": false,
+    "lemma": false,
+    "namedEntity": true,
+    "geoNames": true,
+    "sentence": true,
+    "time": true,
+    "sentiment": false,
+    "emotion": false,
+    "wikipediaLink": false,
+    "completeNegation": false,
+    "cue": false,
+    "event": false,
+    "focus": false,
+    "scope": false,
+    "xscope": false,
+    "unifiedTopic": false
+  },
+  "addToExistingCorpus": true,
+  "other": {
+    "availableOnFrankfurtUniversityCollection": false,
+    "includeTopicDistribution": false,
+    "enableEmbeddings": true,
+    "enableRAGBot": false,
+    "enableS3Storage": false
+  }
+}

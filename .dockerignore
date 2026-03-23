@@ -1,0 +1,5 @@
+.git
+.dev/storage
+uce.portal/**/target
+uce.portal/uce.corpus-importer/logs
+node_modules

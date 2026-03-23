@@ -1,19 +1,33 @@
-# Use an appropriate base image with Java (e.g., OpenJDK)
-FROM eclipse-temurin:21-jdk
+# syntax=docker/dockerfile:1.7
+FROM maven:3.9.6-eclipse-temurin-21 AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
-RUN apt-get update && apt-get install -y maven
 
-# Copy the entire uce.portal directory
+COPY ./uce.portal/pom.xml ./uce.portal/pom.xml
+COPY ./uce.portal/settings.xml ./uce.portal/settings.xml
+COPY ./uce.portal/uce.common/pom.xml ./uce.portal/uce.common/pom.xml
+COPY ./uce.portal/uce.corpus-importer/pom.xml ./uce.portal/uce.corpus-importer/pom.xml
+COPY ./uce.portal/uce.web/pom.xml ./uce.portal/uce.web/pom.xml
+COPY ./uce.portal/uce.search/pom.xml ./uce.portal/uce.search/pom.xml
+COPY ./uce.portal/uce.analysis/pom.xml ./uce.portal/uce.analysis/pom.xml
+
+WORKDIR /app/uce.portal
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B -T 1C -DskipTests dependency:go-offline -pl uce.corpus-importer -am
+
+WORKDIR /app
 COPY ./uce.portal ./uce.portal
-
-# Override the default config with release settings (container-to-container hosts)
 COPY ./uce.portal/uce.common/src/main/resources/common-release.conf /app/uce.portal/uce.common/src/main/resources/common.conf
 
-# Set the working directory to uce.portal
 WORKDIR /app/uce.portal
-RUN mvn -T 1C -DskipTests -pl uce.corpus-importer -am clean package
+RUN --mount=type=cache,target=/root/.m2 \
+    mvn -B -T 1C -DskipTests package -pl uce.corpus-importer -am
+
+FROM eclipse-temurin:21-jdk
+
+WORKDIR /app
+
+COPY --from=builder /app/uce.portal/uce.corpus-importer/target/importer.jar /app/uce.portal/uce.corpus-importer/target/importer.jar
 
 # Expose the port that your Spark application runs on
 # EXPOSE 4567
