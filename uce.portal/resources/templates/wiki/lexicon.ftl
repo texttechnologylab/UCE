@@ -10,7 +10,8 @@
             </div>
             <div class="flexed align-items-center ml-1 w-100 justify-content-end">
                 <input class="form-control rounded-0 w-100 search-lexicon-input" type="text"
-                       onchange="window.wikiHandler.handleLexiconSearchInputChanged($(this))"
+                       oninput="window.wikiHandler.handleLexiconSearchInputTyped($(this))"
+                       onkeyup="window.wikiHandler.handleLexiconSearchInputKeyup($(this), event)"
                        placeholder="${languageResource.get("search")}"/>
                 <button class="btn rounded-0 bg-lightgray search-lexicon-btn"
                         onclick="window.wikiHandler.handleLexiconSearchInputChanged($(this).prev())"><i
@@ -52,8 +53,21 @@
 
                         <div class="row ml-0 mr-0 mt-3 mb-0 p-0">
                             <!-- lexicon list -->
-                            <div class="col-lg-8 lexicon-content-include pl-3 pb-3 pr-3 m-0">
-
+                            <div class="col-lg-8 lexicon-content-include pl-3 pb-3 pr-3 m-0 position-relative">
+                                <div class="lexicon-loader-container display-none">
+                                    <div class="lexicon-loader-content">
+                                        <div class="loader book">
+                                            <figure class="page"></figure>
+                                            <figure class="page"></figure>
+                                            <figure class="page"></figure>
+                                        </div>
+                                        <h1 class="text color-prime"><i class="fas fa-circle-notch rotate"></i> ${languageResource.get("searchPlaceholder")?replace("...", "")}</h1>
+                                    </div>
+                                </div>
+                                <div class="lexicon-update-status display-none">
+                                    <i class="fas fa-check-circle mr-1"></i> Updated
+                                </div>
+                                <div class="lexicon-entry-list-region"></div>
                             </div>
 
                             <!-- lexicon inspector -->

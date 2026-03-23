@@ -15,6 +15,7 @@ let WikiHandler = (function () {
         annotationFilters: [],
         sortColumn: 'occurrence',
         sortDirection: 'DESC',
+        searchDebounceHandle: null,
     }
 
     function WikiHandler() {
@@ -61,11 +62,152 @@ let WikiHandler = (function () {
         $next.attr('aria-disabled', canGoNext ? 'false' : 'true');
     }
 
+    WikiHandler.prototype.getLexiconUrlParams = function () {
+        return new URLSearchParams(window.location.search || '');
+    }
+
+    WikiHandler.prototype.persistLexiconStateToUrl = function () {
+        const params = this.getLexiconUrlParams();
+        const searchInput = String(this.lexiconState.searchInput || '').trim();
+        const selectedChar = String(this.lexiconState.selectedChar || '').trim();
+        const filters = Array.isArray(this.lexiconState.annotationFilters)
+            ? this.lexiconState.annotationFilters.filter(Boolean)
+            : [];
+
+        if (searchInput) params.set('lex_q', searchInput);
+        else params.delete('lex_q');
+
+        if (selectedChar) params.set('lex_char', selectedChar);
+        else params.delete('lex_char');
+
+        if (filters.length > 0) params.set('lex_filters', filters.join(','));
+        else params.delete('lex_filters');
+
+        if (this.lexiconState.sortColumn) params.set('lex_sort', this.lexiconState.sortColumn);
+        else params.delete('lex_sort');
+
+        if (this.lexiconState.sortDirection) params.set('lex_dir', this.lexiconState.sortDirection);
+        else params.delete('lex_dir');
+
+        const page = Math.floor(this.lexiconState.skip / this.lexiconState.take) + 1;
+        if (page > 1) params.set('lex_page', String(page));
+        else params.delete('lex_page');
+
+        const nextSearch = params.toString();
+        const nextUrl = window.location.pathname + (nextSearch ? ('?' + nextSearch) : '') + window.location.hash;
+        history.replaceState(null, '', nextUrl);
+    }
+
+    WikiHandler.prototype.applyLexiconStateFromUrl = function () {
+        const params = this.getLexiconUrlParams();
+        const rawSearch = String(params.get('lex_q') || '');
+        const rawChar = String(params.get('lex_char') || '').trim();
+        const rawFilters = String(params.get('lex_filters') || '').trim();
+        const rawSort = String(params.get('lex_sort') || '').trim().toLowerCase();
+        const rawDir = String(params.get('lex_dir') || '').trim().toUpperCase();
+        const rawPage = parseInt(String(params.get('lex_page') || '1'), 10);
+
+        this.lexiconState.searchInput = rawSearch;
+        $('.lexicon-view .search-lexicon-input').val(rawSearch);
+
+        if (rawChar) {
+            this.lexiconState.selectedChar = rawChar;
+            $('.lexicon-view .alphabet .char').each(function () {
+                $(this).toggleClass('selected-char', $(this).html() === rawChar);
+            });
+        } else {
+            this.lexiconState.selectedChar = '';
+            $('.lexicon-view .alphabet .selected-char').removeClass('selected-char');
+        }
+
+        const requestedFilters = rawFilters
+            ? rawFilters.split(',').map(value => value.trim()).filter(Boolean)
+            : [];
+        if (requestedFilters.length > 0) {
+            const requestedFilterSet = new Set(requestedFilters);
+            let activeFilters = [];
+            $('.lexicon-view .filter-container .annotation-filter').each(function () {
+                const label = String($(this).find('label').html() || '').trim();
+                const checked = requestedFilterSet.has(label);
+                $(this).find('input').prop('checked', checked);
+                if (checked) activeFilters.push(label);
+            });
+            this.lexiconState.annotationFilters = activeFilters;
+        }
+
+        if (rawSort === 'occurrence' || rawSort === 'alphabet') {
+            this.lexiconState.sortColumn = rawSort;
+        }
+        if (rawDir === 'ASC' || rawDir === 'DESC') {
+            this.lexiconState.sortDirection = rawDir;
+        }
+
+        $('.lexicon-view .sortings a').each((_, node) => {
+            const $node = $(node);
+            const isSelected = $node.data('id') === this.lexiconState.sortColumn;
+            $node.toggleClass('selected-sort', isSelected);
+            if (isSelected) {
+                $node.data('dir', this.lexiconState.sortDirection);
+                $node.toggleClass('turn-180', this.lexiconState.sortDirection === 'DESC');
+            } else {
+                $node.removeClass('turn-180');
+            }
+        });
+
+        const safePage = Number.isFinite(rawPage) && rawPage > 1 ? rawPage : 1;
+        this.lexiconState.skip = this.lexiconState.take * (safePage - 1);
+        this.lexiconState.knownEmptySkip = null;
+    }
+
+    WikiHandler.prototype.initializeLexicon = function () {
+        this.applyLexiconStateFromUrl();
+        this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
+    }
+
     WikiHandler.prototype.handleLexiconSearchInputChanged = function ($source) {
+        if (this.lexiconState.searchDebounceHandle) {
+            clearTimeout(this.lexiconState.searchDebounceHandle);
+            this.lexiconState.searchDebounceHandle = null;
+        }
         this.lexiconState.searchInput = $source.val();
         this.lexiconState.skip = 0;
         this.lexiconState.knownEmptySkip = null;
         this.fetchLexiconEntries(this.lexiconState.skip, this.lexiconState.take);
+    }
+
+    WikiHandler.prototype.handleLexiconSearchInputTyped = function ($source) {
+        if (this.lexiconState.searchDebounceHandle) {
+            clearTimeout(this.lexiconState.searchDebounceHandle);
+        }
+        this.lexiconState.searchDebounceHandle = setTimeout(() => {
+            this.handleLexiconSearchInputChanged($source);
+        }, 300);
+    }
+
+    WikiHandler.prototype.handleLexiconSearchInputKeyup = function ($source, event) {
+        if (event && event.key === 'Enter') {
+            event.preventDefault();
+            this.handleLexiconSearchInputChanged($source);
+        }
+    }
+
+    WikiHandler.prototype.setLexiconLoadingState = function (isLoading) {
+        const $loader = $('.lexicon-view .lexicon-content-include .lexicon-loader-container');
+        const $status = $('.lexicon-view .lexicon-content-include .lexicon-update-status');
+        if (isLoading) {
+            $status.stop(true, true).addClass('display-none');
+            $loader.stop(true, true).fadeIn(120).removeClass('display-none');
+            $('.lexicon-view .lexicon-content-include').addClass('is-loading');
+            return;
+        }
+
+        $loader.stop(true, true).fadeOut(100, function () {
+            $(this).addClass('display-none');
+        });
+        $('.lexicon-view .lexicon-content-include').removeClass('is-loading');
+        $status.stop(true, true).removeClass('display-none').fadeIn(80).delay(600).fadeOut(300, function () {
+            $(this).addClass('display-none');
+        });
     }
 
     WikiHandler.prototype.handleLexiconSortingChanged = function ($source) {
@@ -147,7 +289,10 @@ let WikiHandler = (function () {
     }
 
     WikiHandler.prototype.fetchLexiconEntries = function (skip, take, allowRetryOnEmpty = true) {
+        this.lexiconState.skip = skip;
         const alphabet = this.getLexiconAlphabet();
+        this.persistLexiconStateToUrl();
+        this.setLexiconLoadingState(true);
         $.ajax({
             url: '/api/wiki/lexicon/entries',
             type: "POST",
@@ -179,8 +324,9 @@ let WikiHandler = (function () {
                     return;
                 }
 
-                if(response.rendered) $('.lexicon-content-include').html(response.rendered);
-                else $('.lexicon-content-include').html(response);
+                const $entryRegion = $('.lexicon-content-include .lexicon-entry-list-region');
+                if(response.rendered) $entryRegion.html(response.rendered);
+                else $entryRegion.html(response);
                 this.updateLexiconPage();
                 this.setLexiconLoadMoreState(false, "Choose a lexicon entry first.");
             },
@@ -188,6 +334,7 @@ let WikiHandler = (function () {
                 showMessageModal("Unknown Error", "There was an unknown error loading the lexicon entries.")
             }
         }).always(() => {
+            this.setLexiconLoadingState(false);
         });
     }
 

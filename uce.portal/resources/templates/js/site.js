@@ -482,7 +482,7 @@ $(document).ready(function () {
     }
     restoreCorpusInspectorFromRoute();
     // Init the lexicon
-    if (window.wikiHandler) window.wikiHandler.fetchLexiconEntries(0, 24);
+    if (window.wikiHandler) window.wikiHandler.initializeLexicon();
 })
 
 $(window).on('hashchange', function () {

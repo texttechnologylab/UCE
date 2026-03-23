@@ -49,6 +49,173 @@
     border:lightgray 1px solid;
 }
 
+.lexicon-view .lexicon-content-include{
+    min-height: 220px;
+}
+
+.lexicon-view .lexicon-content-include.is-loading .lexicon-entry-list-region{
+    opacity: 0.35;
+    transition: opacity 0.18s ease;
+}
+
+.lexicon-view .lexicon-loader-container{
+    position: absolute;
+    width: calc(100% - 24px);
+    top: 0;
+    left: 12px;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.88);
+    z-index: 10;
+}
+
+.lexicon-view .lexicon-loader-content{
+    position: sticky;
+    top: 120px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.lexicon-view .lexicon-loader-content h1 {
+    color: rgba(0, 0, 0, 0.5);
+    text-align: center;
+    font-size: 17px;
+    position: relative;
+}
+
+.lexicon-view .lexicon-loader-content h1:after {
+    position: absolute;
+    content: "";
+    -webkit-animation: lexiconDots 2s cubic-bezier(0, .39, 1, .68) infinite;
+    animation: lexiconDots 2s cubic-bezier(0, .39, 1, .68) infinite;
+}
+
+.lexicon-view .loader {
+    position: relative;
+    margin: 5% auto 15px;
+}
+
+.lexicon-view .book {
+    border: 2px solid var(--secondary);
+    width: 60px;
+    height: 45px;
+    position: relative;
+    perspective: 150px;
+}
+
+.lexicon-view .page {
+    display: block;
+    width: 30px;
+    height: 45px;
+    border: 2px solid white;
+    border-left: 1px solid white;
+    margin: 0;
+    position: absolute;
+    right: -4px;
+    top: -4px;
+    overflow: hidden;
+    background: var(--prime);
+    transform-style: preserve-3d;
+    -webkit-transform-origin: left center;
+    transform-origin: left center;
+}
+
+.lexicon-view .book .page:nth-child(1) {
+    -webkit-animation: lexiconPageTurn 1.2s cubic-bezier(0, .39, 1, .68) 1.6s infinite;
+    animation: lexiconPageTurn 1.2s cubic-bezier(0, .39, 1, .68) 1.6s infinite;
+}
+
+.lexicon-view .book .page:nth-child(2) {
+    -webkit-animation: lexiconPageTurn 1.2s cubic-bezier(0, .39, 1, .68) 1.45s infinite;
+    animation: lexiconPageTurn 1.2s cubic-bezier(0, .39, 1, .68) 1.45s infinite;
+}
+
+.lexicon-view .book .page:nth-child(3) {
+    -webkit-animation: lexiconPageTurn 1.2s cubic-bezier(0, .39, 1, .68) 1.2s infinite;
+    animation: lexiconPageTurn 1.2s cubic-bezier(0, .39, 1, .68) 1.2s infinite;
+}
+
+.lexicon-view .lexicon-update-status{
+    position: fixed;
+    right: 24px;
+    bottom: 24px;
+    z-index: 1200;
+    background: rgba(31, 113, 57, 0.88);
+    color: white;
+    padding: 6px 10px;
+    border-radius: 2px;
+    font-size: 13px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.20);
+    pointer-events: none;
+}
+
+@-webkit-keyframes lexiconPageTurn {
+    0% {
+        -webkit-transform: rotateY(0deg);
+        transform: rotateY(0deg);
+    }
+    20% {
+        background: lightgray;
+    }
+    40% {
+        background: var(--secondary);
+        -webkit-transform: rotateY(-180deg);
+        transform: rotateY(-180deg);
+    }
+    100% {
+        background: var(--secondary);
+        -webkit-transform: rotateY(-180deg);
+        transform: rotateY(-180deg);
+    }
+}
+
+@keyframes lexiconPageTurn {
+    0% {
+        transform: rotateY(0deg);
+    }
+    20% {
+        background: lightgray;
+    }
+    40% {
+        background: var(--secondary);
+        transform: rotateY(-180deg);
+    }
+    100% {
+        background: var(--secondary);
+        transform: rotateY(-180deg);
+    }
+}
+
+@-webkit-keyframes lexiconDots {
+    0% {
+        content: "";
+    }
+    33% {
+        content: ".";
+    }
+    66% {
+        content: "..";
+    }
+    100% {
+        content: "...";
+    }
+}
+
+@keyframes lexiconDots {
+    0% {
+        content: "";
+    }
+    33% {
+        content: ".";
+    }
+    66% {
+        content: "..";
+    }
+    100% {
+        content: "...";
+    }
+}
+
 .lexicon-view .lexicon-entry{
     border-bottom: lightgrey 1px solid;
     border-left:8px solid transparent;
