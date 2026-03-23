@@ -33,11 +33,10 @@ services:
 
   uce-web:
     container_name: uce-web
-    image: ${UCE_WEB_IMAGE:-docker.texttechnologylab.org/uce-web-deploy:0.0.3}
-    # build:
-    #   context: .
-    #   dockerfile: ./uce.portal/uce.web/Dockerfile
-    pull_policy: always
+    image: uce-web:local-fast
+    build:
+      context: .
+      dockerfile: ./uce.portal/uce.web/Dockerfile
     profiles:
       - local
       - remote
@@ -140,11 +139,10 @@ services:
     container_name: uce-importer
     profiles:
       - import
-    image: ${IMPORTER_IMAGE:-docker.texttechnologylab.org/uce-importer-deploy:0.0.1}
-    pull_policy: always
-    # build:
-    #   context: .
-    #   dockerfile: ./uce.portal/uce.corpus-importer/Dockerfile
+    image: uce-importer:local-fast
+    build:
+      context: .
+      dockerfile: ./uce.portal/uce.corpus-importer/Dockerfile
     env_file:
       - .env
     environment:

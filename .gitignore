@@ -60,3 +60,4 @@ data/*
 .dev/storage/corpora/biofid-production/input/*
 .dev/storage/corpora/biofid-mini/input/*
 .dev/storage/tdb/biofid-search/Data-0002/*
+.dev/storage/buildkit/*

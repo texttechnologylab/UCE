@@ -12,16 +12,18 @@ COPY ./uce.portal/uce.search/pom.xml ./uce.portal/uce.search/pom.xml
 COPY ./uce.portal/uce.analysis/pom.xml ./uce.portal/uce.analysis/pom.xml
 
 WORKDIR /app/uce.portal
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn -B -T 1C -DskipTests dependency:go-offline -pl uce.corpus-importer -am
+RUN --mount=type=cache,id=uce-m2-repo,target=/root/.m2/repository,sharing=locked \
+    mvn -B -T 1C -nsu -DskipTests -Dmaven.repo.local=/root/.m2/repository \
+    dependency:go-offline -pl uce.corpus-importer -am
 
 WORKDIR /app
 COPY ./uce.portal ./uce.portal
 COPY ./uce.portal/uce.common/src/main/resources/common-release.conf /app/uce.portal/uce.common/src/main/resources/common.conf
 
 WORKDIR /app/uce.portal
-RUN --mount=type=cache,target=/root/.m2 \
-    mvn -B -T 1C -DskipTests package -pl uce.corpus-importer -am
+RUN --mount=type=cache,id=uce-m2-repo,target=/root/.m2/repository,sharing=locked \
+    mvn -B -T 1C -nsu -DskipTests -Dmaven.repo.local=/root/.m2/repository \
+    package -pl uce.corpus-importer -am
 
 FROM eclipse-temurin:21-jdk
 
