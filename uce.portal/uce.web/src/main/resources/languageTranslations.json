@@ -255,6 +255,10 @@
     "de-DE": "Zeigt nur eine Schätzung der gefundenen Dokumente an, die in den meisten Fällen niedriger angesetzt ist.",
     "en-EN": "Displays only an estimate of the documents found, which in most cases is understated."
   },
+  "searchLayerSwitchInfo": {
+    "de-DE": "Wechselt zwischen den verfügbaren Ergebnis-Layern dieser Suche (z. B. Volltext und Embedding).",
+    "en-EN": "Switches between the available result layers of this search (e.g. Fulltext and Embedding)."
+  },
   "showUceMetadata": {
     "de-DE": "Zeige alle Metadaten an",
     "en-EN": "Show all metadata"
@@ -562,5 +566,25 @@
   "documentAccessDeniedError": {
     "en-EN": "You are not allowed to view this document.",
     "de-DE": "Sie haben keine Berechtigung, dieses Dokument zu sehen."
+  },
+  "sessionExpiredTitle": {
+    "en-EN": "Session expired",
+    "de-DE": "Sitzung abgelaufen"
+  },
+  "sessionExpiredBody": {
+    "en-EN": "Your login session ended. Please log in again to continue.",
+    "de-DE": "Ihre Anmeldung ist abgelaufen. Bitte melden Sie sich erneut an, um fortzufahren."
+  },
+  "sessionExpiredCountdownPrefix": {
+    "en-EN": "Redirecting to home in",
+    "de-DE": "Weiterleitung zur Startseite in"
+  },
+  "sessionExpiredReloginBtn": {
+    "en-EN": "Log back in",
+    "de-DE": "Erneut anmelden"
+  },
+  "sessionExpiredHomeBtn": {
+    "en-EN": "Go to home now",
+    "de-DE": "Jetzt zur Startseite"
   }
 }

@@ -61,6 +61,7 @@
 
 <body>
 <#include "*/messageModal.ftl">
+<#include "*/sessionExpiredModal.ftl">
 <#include "*/auth/userShortProfile.ftl">
 
 <!-- The flow chart of the Linkable objects -->
@@ -107,81 +108,92 @@
 
             <div class="flexed align-items-stretch">
                 <!-- system alive buttons -->
-                <div class="system-status-bar border-right">
-                    <p class="mb-3 text-center text">System Status</p>
-                    <div class="flexed align-items-center">
-                        <i class="fas fa-project-diagram ml-3 mr-1"
-                           style="color: ${isSparqlAlive?string("var(--prime)", "darkgray")}"></i>
-                        <i class="fas fa-robot ml-1 mr-1"
-                           style="color: ${isRagAlive?string("var(--prime)", "darkgray")}"></i>
-                        <i class="fas fa-hdd ml-1 mr-1"
-                           style="color: ${isS3StorageAlive?string("var(--prime)", "darkgray")}"></i>
-                        <i class="fas fa-database ml-1 mr-1"
-                           style="color: ${isDbAlive?string("var(--prime)", "darkgray")}"></i>
-                        <i class="fas fa-key ml-1 mr-3"
-                           style="color: ${isAuthAlive?string("var(--prime)", "darkgray")}"></i>
+                <#if (uceConfig.settings.ui.mainPage.showSystemStatus)!true>
+                    <div class="system-status-bar border-right">
+                        <p class="mb-3 text-center text">System Status</p>
+                        <div class="flexed align-items-center">
+                            <i class="fas fa-project-diagram ml-3 mr-1"
+                               style="color: ${isSparqlAlive?string("var(--prime)", "darkgray")}"></i>
+                            <i class="fas fa-robot ml-1 mr-1"
+                               style="color: ${isRagAlive?string("var(--prime)", "darkgray")}"></i>
+                            <i class="fas fa-hdd ml-1 mr-1"
+                               style="color: ${isS3StorageAlive?string("var(--prime)", "darkgray")}"></i>
+                            <i class="fas fa-database ml-1 mr-1"
+                               style="color: ${isDbAlive?string("var(--prime)", "darkgray")}"></i>
+                            <i class="fas fa-key ml-1 mr-3"
+                               style="color: ${isAuthAlive?string("var(--prime)", "darkgray")}"></i>
+                        </div>
                     </div>
-                </div>
+                </#if>
 
                 <!-- select the current focused corpus -->
-                <div class="corpus-selection-div">
-                    <div class="flexed">
-                        <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover"
-                           data-toggle="popover" data-placement="left"
-                           data-content="${languageResource.get("openCorpus")}">
-                            <i class="fas fa-globe large-font mt-1 text-dark mr-1 ml-1"></i>
-                        </a>
-                        <select class="form-control" id="corpus-select" aria-label="Default select example"
-                                data-trigger="hover"
-                                data-toggle="popover" data-placement="right"
-                                data-content="${languageResource.get("selectCorpus")}">
-                            <#list corpora as corpusVm>
-                                <option data-id="${corpusVm.getCorpus().getId()}"
-                                        data-hasbiofid="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()?c}"
-                                        data-hasembeddings="${corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()?c}"
-                                        data-hasragbot="${corpusVm.getCorpusConfig().getOther().isEnableRAGBot()?c}"
-                                        data-hastaxonannotations="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isAnnotated()?c}"
-                                        data-hastimeannotations="${corpusVm.getCorpusConfig().getAnnotations().isTime()?c}"
-                                        data-hasgeonameannotations="${corpusVm.getCorpusConfig().getAnnotations().isGeoNames()?c}"
-                                        data-sparqlalive="${isSparqlAlive?c}"
-                                        data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
-                            </#list>
-                        </select>
+                <#if (uceConfig.settings.ui.mainPage.showCorpusSelector)!true>
+                    <div class="corpus-selection-div">
+                        <div class="flexed">
+                            <a class="btn btn-light rounded-0 open-corpus-inspector-btn" data-trigger="hover"
+                               data-toggle="popover" data-placement="left"
+                               data-content="${languageResource.get("openCorpus")}">
+                                <i class="fas fa-globe large-font mt-1 text-dark mr-1 ml-1"></i>
+                            </a>
+                            <select class="form-control" id="corpus-select" aria-label="Default select example"
+                                    data-trigger="hover"
+                                    data-toggle="popover" data-placement="right"
+                                    data-content="${languageResource.get("selectCorpus")}">
+                                <#list corpora as corpusVm>
+                                    <option data-id="${corpusVm.getCorpus().getId()}"
+                                            data-hasbiofid="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isBiofidOnthologyAnnotated()?c}"
+                                            data-hasembeddings="${corpusVm.getCorpusConfig().getOther().isEnableEmbeddings()?c}"
+                                            data-hasragbot="${corpusVm.getCorpusConfig().getOther().isEnableRAGBot()?c}"
+                                            data-hastaxonannotations="${corpusVm.getCorpusConfig().getAnnotations().getTaxon().isAnnotated()?c}"
+                                            data-hastimeannotations="${corpusVm.getCorpusConfig().getAnnotations().isTime()?c}"
+                                            data-hasgeonameannotations="${corpusVm.getCorpusConfig().getAnnotations().isGeoNames()?c}"
+                                            data-sparqlalive="${isSparqlAlive?c}"
+                                            data-hassr="${corpusVm.getCorpusConfig().getAnnotations().isSrLink()?c}">${corpusVm.getCorpus().getName()}</option>
+                                </#list>
+                            </select>
+                        </div>
                     </div>
-                </div>
+                </#if>
 
                 <!-- right side buttons -->
-                <div class="flexed align-items-center nav-container">
+                <div class="flexed align-items-center nav-container pr-3">
                     <div class="flexed align-items-center nav-buttons">
-                        <a class="switch-view-btn btn text" data-id="search" data-trigger="hover" data-toggle="popover"
-                           data-placement="bottom" data-content="Portal"><i class="fas fa-globe-europe color-prime"></i></a>
-                        <a class="switch-view-btn btn text" data-id="lexicon" data-trigger="hover" data-toggle="popover"
-                           data-placement="bottom" data-content="${languageResource.get("lexicon")}"><i
-                                    class="fas fa-atlas color-prime"></i></a>
-                        <a class="switch-view-btn btn text" data-id="timeline-map" data-trigger="hover"
-                           data-toggle="popover"
-                           data-placement="bottom" data-content="${languageResource.get("map")}"><i
-                                    class="fas fa-map-marked-alt color-prime"></i></a>
-                        <#if uceConfig.getSettings().getAnalysis().isEnableAnalysisEngine()>
-                            <a class="switch-view-btn btn text" data-id="analysis" data-trigger="hover"
-                               data-toggle="popover"
-                               data-placement="bottom" data-content="${languageResource.get("analysis")}"><i
-                                        class="fas fa-chart-pie color-prime"></i>
+                        <#if (uceConfig.settings.ui.corpusInspector.showSearchHint)!true>
+                            <a class="switch-view-btn btn text" data-id="search" data-trigger="hover" data-toggle="popover"
+                                data-placement="bottom" data-content="Portal"><i class="fas fa-globe-europe color-prime"></i></a>
+                        </#if>
+                        <#if (uceConfig.settings.ui.mainPage.showNavButtons)!true>
+                            <a class="switch-view-btn btn text" data-id="lexicon" data-trigger="hover" data-toggle="popover"
+                            data-placement="bottom" data-content="${languageResource.get("lexicon")}"><i
+                                        class="fas fa-atlas color-prime"></i></a>
+                            <a class="switch-view-btn btn text" data-id="timeline-map" data-trigger="hover"
+                            data-toggle="popover"
+                            data-placement="bottom" data-content="${languageResource.get("map")}"><i
+                                        class="fas fa-map-marked-alt color-prime"></i></a>
+                            <#if uceConfig.getSettings().getAnalysis().isEnableAnalysisEngine()>
+                                <a class="switch-view-btn btn text" data-id="analysis" data-trigger="hover"
+                                data-toggle="popover"
+                                data-placement="bottom" data-content="${languageResource.get("analysis")}"><i
+                                            class="fas fa-chart-pie color-prime"></i>
+                                </a>
+                            </#if>
+                            <a class="switch-view-btn btn text" data-id="team" data-trigger="hover" data-toggle="popover"
+                            data-placement="bottom" data-content="${languageResource.get("team")}">
+                                <i class="fas fa-users color-prime"></i>
                             </a>
                         </#if>
-                        <a class="switch-view-btn btn text" data-id="team" data-trigger="hover" data-toggle="popover"
-                           data-placement="bottom" data-content="${languageResource.get("team")}"><i
-                                    class="fas fa-users color-prime"></i></a>
                     </div>
 
-                    <select class="form-control bg-default rounded-0 color-prime border-right-0 large-font switch-language-select">
-                        <option data-lang="en-EN">Englisch</option>
-                        <option data-lang="de-DE">Deutsch</option>
-                    </select>
+                    <#if (uceConfig.settings.ui.mainPage.showLanguageSelector)!true>
+                        <select class="form-control bg-default rounded-0 color-prime large-font switch-language-select">
+                            <option data-lang="en-EN">Englisch</option>
+                            <option data-lang="de-DE">Deutsch</option>
+                        </select>
+                    </#if>
                 </div>
             </div>
 
-            <#if uceConfig.authIsEnabled()>
+            <#if (uceConfig.settings.ui.mainPage.showAuthButton)!true && uceConfig.authIsEnabled()>
                 <div class="ml-1">
                     <#if uceUser?has_content>
                         <div>
@@ -477,14 +489,18 @@
         </div>
     </div>
 
-    <#include "*/wiki/components/wikiPageModal.ftl">
+    <#if (uceConfig.settings.ui.mainPage.showWikiModal)!true>
+        <#include "*/wiki/components/wikiPageModal.ftl">
+    </#if>
 
     <div class="corpus-inspector-include corpus-inspector display-none">
     </div>
 
-    <div class="ragbot-chat-include">
-        <#include "*/ragbot/chatwindow.ftl"/>
-    </div>
+    <#if (uceConfig.settings.ui.mainPage.showRagbotChat)!true>
+        <div class="ragbot-chat-include">
+            <#include "*/ragbot/chatwindow.ftl"/>
+        </div>
+    </#if>
 </div>
 
 </body>

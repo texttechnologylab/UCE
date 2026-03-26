@@ -94,6 +94,84 @@ let LayeredSearchHandler = (function () {
         this.updateUIBatch();
     }
 
+    LayeredSearchHandler.prototype.clearAllLayers = function () {
+        this.layers = {};
+        $('.layered-search-builder-container .layers-container').html('');
+        this.updateUIBatch();
+    }
+
+    LayeredSearchHandler.prototype.addSlotToLayer = function (depth, type, value) {
+        const $layer = $('.layered-search-builder-container .layer-container[data-depth="' + depth + '"] .layer');
+        if ($layer.length === 0) return;
+
+        const $emptySlot = $layer.find('.empty-slot').first();
+        if ($emptySlot.length > 0) {
+            $emptySlot.get(0).style.maxWidth = '100px';
+        }
+
+        const $htmlTemplate = $('.layered-search-builder-container .slot-templates .template-' + type).clone();
+        if ($htmlTemplate.length === 0) return;
+
+        const id = generateUUID();
+        $htmlTemplate.attr('data-id', id);
+        $layer.prepend($htmlTemplate);
+        if (!this.layers[depth]) this.layers[depth] = [];
+        this.layers[depth].push($htmlTemplate);
+        if (value !== undefined && value !== null) {
+            $htmlTemplate.find('.slot-value').val(String(value));
+        }
+
+        if (type === "LOCATION") {
+            const uceMap = graphVizHandler.createUceMap(
+                $layer.find('.slot[data-id="[ID]"] .location-map'.replace('[ID]', id)).get(0)
+            );
+            uceMap.twoDim();
+            const $slot = $('.slot[data-id="[ID]"]'.replace('[ID]', id));
+            const $slotInput = $slot.find('.slot-value');
+            const ctx = this;
+            uceMap.on('stateChanged', function (e) {
+                if (e.longLat && e.radius) {
+                    $slotInput.val('R::lng=' + e.longLat.lng.toFixed(2) + ";lat=" + e.longLat.lat.toFixed(2) + ";r=" + e.radius.toFixed(2));
+                    ctx.markLayersAsDirty(depth, false);
+                }
+            });
+            $slot.find('.location-map').hide();
+        }
+    }
+
+    LayeredSearchHandler.prototype.hydrateFromRouteState = function (state) {
+        if (!state || state.submit !== true || !Array.isArray(state.layers)) return false;
+
+        this.clearAllLayers();
+        this.searchId = state.searchId ? String(state.searchId) : generateUUID().toString().replaceAll("-", "");
+
+        const sortedLayers = state.layers
+            .filter((layer) => layer && Array.isArray(layer.slots))
+            .slice()
+            .sort((a, b) => parseInt(a.depth || 0, 10) - parseInt(b.depth || 0, 10));
+
+        for (let i = 0; i < sortedLayers.length; i++) {
+            const layer = sortedLayers[i];
+            const depth = i + 1;
+            this.addNewLayer(depth);
+            for (let s = 0; s < layer.slots.length; s++) {
+                const slot = layer.slots[s];
+                if (!slot || !slot.type) continue;
+                this.addSlotToLayer(depth, String(slot.type), slot.value);
+            }
+            this.markLayersAsDirty(depth, false);
+        }
+
+        this.submitStatus = true;
+        $('.search-settings-div .submit-layered-search-input').val('true');
+        $('.layered-search-builder-container .submit-div a').each(function () {
+            const isOn = $(this).attr('data-submit') === 'true';
+            $(this).toggleClass('activated', isOn);
+        });
+        this.updateUIBatch();
+        return true;
+    }
+
     LayeredSearchHandler.prototype.addNewSlot = function ($btn) {
         const type = $btn.data('type');
         const depth = parseInt($btn.closest('.layer-container').attr('data-depth'));

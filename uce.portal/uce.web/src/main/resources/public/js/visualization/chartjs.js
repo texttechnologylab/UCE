@@ -45,6 +45,9 @@ class ChartJS {
         this.dataDict = data;
         const chartType = this.config.type;
         const isSegmentedChart = ['pie', 'doughnut', 'polarArea', 'radar'].includes(chartType);
+        const labelName = typeof this.dataDict.labelName === 'string'
+            ? this.dataDict.labelName
+            : '';
 
         // Derive the color pallete from our primary color of UCE
         const baseHex = this.primaryColor.startsWith('#') ? this.primaryColor : rgbToHex(this.primaryColor);
@@ -56,7 +59,7 @@ class ChartJS {
             labels: this.dataDict.labels,
             datasets: [
                 {
-                    label: this.dataDict.labelName,
+                    label: labelName,
                     data: this.dataDict.data,
                     backgroundColor,
                     borderColor: backgroundColor

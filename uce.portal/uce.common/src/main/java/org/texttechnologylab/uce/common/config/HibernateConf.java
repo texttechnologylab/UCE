@@ -98,8 +98,10 @@ public class HibernateConf {
     private static HashMap<Object, Object> getSettings() {
         var settings = new HashMap<>();
         var config = new CommonConfig();
-        settings.put("connection.driver_class", config.getPostgresqlProperty("connection.driver_class"));
-        settings.put("dialect", config.getPostgresqlProperty("dialect"));
+        // Hibernate expects the fully-qualified keys here (hibernate.*). If these are wrong,
+        // Hibernate falls back and the logs show "using driver [null]".
+        settings.put("hibernate.connection.driver_class", config.getPostgresqlProperty("connection.driver_class"));
+        settings.put("hibernate.dialect", config.getPostgresqlProperty("dialect"));
         settings.put("hibernate.connection.url",config.getPostgresqlProperty("hibernate.connection.url"));
         settings.put("hibernate.connection.username", config.getPostgresqlProperty("hibernate.connection.username"));
         settings.put("hibernate.connection.password", config.getPostgresqlProperty("hibernate.connection.password"));
@@ -107,6 +109,20 @@ public class HibernateConf {
         settings.put("hibernate.show_sql", config.getPostgresqlProperty("hibernate.show_sql"));
         settings.put("hibernate.format_sql", config.getPostgresqlProperty("hibernate.format_sql"));
         settings.put("hibernate.hbm2ddl.auto", config.getPostgresqlProperty("hibernate.hbm2ddl.auto"));
+        
+        // Keep pool implementation internal to the PostgreSQL adapter boundary.
+        settings.put("hibernate.hikari.connectionTimeout", String.valueOf(config.getPostgresqlPoolConnectionTimeoutMs()));
+        settings.put("hibernate.hikari.minimumIdle", String.valueOf(config.getPostgresqlPoolMinimumIdle()));
+        settings.put("hibernate.hikari.maximumPoolSize", String.valueOf(config.getPostgresqlPoolMaximumSize()));
+        settings.put("hibernate.hikari.idleTimeout", String.valueOf(config.getPostgresqlPoolIdleTimeoutMs()));
+        settings.put("hibernate.hikari.maxLifetime", String.valueOf(config.getPostgresqlPoolMaxLifetimeMs()));
+        settings.put("hibernate.hikari.autoCommit", "false");
+        settings.put("hibernate.hikari.poolName", "UCEHikariPool");
+        settings.put("hibernate.hikari.leakDetectionThreshold", String.valueOf(config.getPostgresqlPoolLeakDetectionThresholdMs()));
+        
+        // Enable HikariCP as connection provider
+        settings.put("hibernate.connection.provider_class", "com.zaxxer.hikari.hibernate.HikariConnectionProvider");
+        
         return settings;
     }
 }

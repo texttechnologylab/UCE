@@ -180,7 +180,7 @@ BEGIN
         )
 
         -- Filter by specific corpus ID
-        AND corpusid = corpus
+        AND geoname_context_timeline_cache.corpusid = corpus
 
     -- Group nearby points based on a fixed spatial grid to create clusters
     GROUP BY ST_SnapToGrid(location_geom, grid_size, grid_size);

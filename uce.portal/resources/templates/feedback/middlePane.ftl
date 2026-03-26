@@ -1,5 +1,16 @@
+<div class="feedback-main">
 <section class="feedback-header">
-    <h1>${middlePaneModel.title}</h1>
+    <div class="header-top">
+        <h1>${middlePaneModel.title}</h1>
+        <#if ((uceConfig.settings.ui.mainPage.showWikiModal)!true) && document??>
+            <a class="header-btn open-wiki-page color-prime"
+               data-wtype="D"
+               data-wid="${document.getWikiId()}"
+               data-wcovered="${middlePaneModel.title!''}">
+                <i class="large-font m-0 fab fa-wikipedia-w"></i>
+            </a>
+        </#if>
+    </div>
     <p class="subtitle">${middlePaneModel.subtitle}</p>
     <div class="badges">
         <#list middlePaneModel.metaBadges as badge>
@@ -97,3 +108,4 @@
         </#if>
     </#list>
 </section>
+</div>

@@ -90,6 +90,8 @@ public class Importer {
     private static final Gson gson = new Gson();
     private static final Logger logger = LogManager.getLogger(Importer.class);
     private static final int BATCH_SIZE = 2000;
+    private static final Path EXTERNAL_CORPUS_CONFIG_PATH = Path.of("/app/config/UCECorpusConfigEmpty.json");
+    private static final Path LEGACY_CORPUS_CONFIG_PATH = Path.of("uce.corpus-importer/src/main/resources/UCECorpusConfigEmpty.json");
     private static final Set<String> WANTED_NE_TYPES = Set.of(
             "LOCATION", "MISC", "PERSON", "ORGANIZATION"
     );
@@ -250,15 +252,6 @@ public class Importer {
         return doc.getId();
     }
 
-    private static boolean isNonEmptyFile(Path p) {
-        try {
-            return Files.exists(p) && Files.isRegularFile(p) && Files.size(p) > 0;
-        } catch (IOException e) {
-            logger.error("Error checking file size for path: " + p);
-            return false;
-        }
-    }
-
     /**
      * Imports all UIMA xmi files in a folder
      * @throws DocumentAccessDeniedException
@@ -273,56 +266,27 @@ public class Importer {
         if (!SystemStatus.PostgresqlDbStatus.isAlive())
             throw new DatabaseOperationException("Postgresql DB is not alive - cancelling import.");
 
-//        String pathdefault;
-//        if (folderName == null && casOnlyRun) {
-//            pathdefault = Objects.requireNonNull(
-//                    getClass().getClassLoader().getResource("UCECorpusConfigEmpty.json"),
-//                    "Resource UCECorpusConfigEmpty.json not found"
-//            ).getPath();
-//        } else {
-//            // Read the corpus config. If this doesn't exist, we cannot import the corpus
-//            // NOTE the config is not updated if the corpus already exists!
-//            // TODO compare configs and show a warning if they differ (except name, ...)
-//            if (folderName == null) {
-//                // get path of defaultCorpusConfig.json
-//                pathdefault = Objects.requireNonNull(
-//                        getClass().getClassLoader().getResource("defaultCorpusConfig.json"),
-//                        "Resource defaultCorpusConfig.json not found"
-//                ).getPath();
-//            } else {
-//                pathdefault = Paths.get(folderName, "corpusConfig.json").toString();
-//            }
-//        }
-//        Path filePathDefault = Paths.get(pathdefault);
-
-        String pathdefault;
-
-        if (folderName == null && casOnlyRun) {
-            Path external = Path.of("/app/config/UCECorpusConfigEmpty.json");
-            if (isNonEmptyFile(external)) {
-                pathdefault = external.toString();
-            } else {
-                pathdefault = Objects.requireNonNull(
-                        getClass().getClassLoader().getResource("defaultCorpusConfig.json"),
-                        "Resource defaultCorpusConfig.json not found"
-                ).getPath();
+        // Read the corpus config. If this doesn't exist, we cannot import the corpus
+        // NOTE the config is not updated if the corpus already exists!
+        // TODO compare configs and show a warning if they differ (except name, ...)
+        try (var reader = new FileReader(Paths.get(folderName, "corpusConfig.json").toString(), StandardCharsets.UTF_8)) {
+            corpusConfig = gson.fromJson(reader, CorpusConfig.class);
+            try {
+                Corpus existingCorpus = CreateDBCorpus(corpus, corpusConfig, db);
+                if (existingCorpus != null) {
+                    corpus = existingCorpus;
+                    if (corpusConfig.getAnnotations().isUceMetadata()) {
+                        this.uceMetadataFilters = new CopyOnWriteArrayList<>(db.getUCEMetadataFiltersByCorpusId(existingCorpus.getId()));
+                    }
+                }
+            } catch (DatabaseOperationException e) {
+                throw new DatabaseOperationException("Error creating or fetching the corpus from the database - cancelling import.", e);
             }
-        } else {
-            if (folderName == null) {
-                pathdefault = Objects.requireNonNull(
-                        getClass().getClassLoader().getResource("defaultCorpusConfig.json"),
-                        "Resource defaultCorpusConfig.json not found"
-                ).getPath();
-            } else {
-                pathdefault = Paths.get(folderName, "corpusConfig.json").toString();
-            }
+        } catch (JsonIOException | JsonSyntaxException | IOException e) {
+            throw new MissingResourceException(
+                    "The corpus folder did not contain a properly formatted corpusConfig.json", CorpusConfig.class.toString(), "");
         }
 
-        Path filePathDefault = Paths.get(pathdefault);
-
-        var corpusInitializationResult = loadCorpusConfigInitializeCorpus(filePathDefault, corpusConfig, corpus, db);
-        corpusConfig = corpusInitializationResult.corpusConfig();
-        corpus = corpusInitializationResult.corpus();
         // Store some corpus information in the UCEImport logging if this is the main importer
         if (this.importerNumber == 1 && !this.casOnlyRun) {
             var uceImport = db.getUceImportByImportId(this.importId);
@@ -366,7 +330,7 @@ public class Importer {
                 if (casView != null) {
                     this.mainCas = this.mainCas.getView(casView);
                 }
-//                Path filePath = Paths.get(pathdefault);
+                Path filePathDefault = Paths.get("DUUI-CAS-Import-" + documentId + ".xmi");
                 var docFuture = CompletableFuture.supplyAsync(() -> {
                             try {
                                 batchLatch.get().await(); // wait if a batch is being postprocessed
@@ -1367,26 +1331,47 @@ public class Importer {
             }
 
             taxon.setVerified(true);
-            ExceptionUtils.tryCatchLog(
-                    () -> taxon.setRecordId(Long.parseLong(Arrays.stream(taxon.getIdentifier().split("/")).toList().getLast())),
-                    (ex) -> logger.warn("Setting the recordId of a Taxon failed, but continuing the import: ", ex));
             taxon.setMatchedName(t.getMatchedName());
-            taxon.setIdentifier(t.getIdentifier());
             taxon.setMatchedCanonical(t.getMatchedCanonicalFull());
 
-            var biofidUrl = StringUtils.BIOFID_URL_BASE + taxon.getRecordId();
-            var newBiofidTaxons = ExceptionUtils.tryCatchLog(
-                    () -> jenaSparqlService.queryBiofidTaxon(biofidUrl),
-                    (ex) -> logger.error("Error building a BiofidTaxon object from a potential id.", ex));
-            if (newBiofidTaxons != null) {
-                for (var biofidTaxon : newBiofidTaxons) {
-                    biofidTaxon.setCoveredText(t.getCoveredText());
-                    biofidTaxon.setBegin(t.getBegin());
-                    biofidTaxon.setEnd(t.getEnd());
-                    biofidTaxon.setDocument(document);
-                    biofidTaxon.setBiofidUrl(biofidUrl);
-                    biofidTaxon.setOriginalAnnotatedTaxonTable(ReflectionUtils.getTableAnnotationName(GnFinderTaxon.class));
-                    biofidTaxa.add(biofidTaxon);
+            // Identifier can be a list (space and/or pipe separated), similar to Gazetteer.
+            // Keep the original identifier string unchanged in GnFinderTaxon.
+            var splited = new ArrayList<String>();
+            for (var split : taxon.getIdentifier().split("\\|")) {
+                splited.addAll(Arrays.asList(split.split(" ")));
+            }
+            final var splitIds = splited.stream().filter(id -> id != null && !id.isBlank()).collect(Collectors.toCollection(ArrayList::new));
+            if (splitIds.isEmpty()) {
+                gnFinderTaxa.add(taxon);
+                return;
+            }
+
+            // Primary record id from first identifier for compatibility with existing schema behavior.
+            final var primaryIdentifier = splitIds.getFirst();
+            ExceptionUtils.tryCatchLog(
+                    () -> taxon.setRecordId(Long.parseLong(Arrays.stream(primaryIdentifier.split("/")).toList().getLast())),
+                    (ex) -> logger.warn("Setting the recordId of a Taxon failed, but continuing the import: ", ex));
+
+            // Build BioFID taxon entries for each potential identifier.
+            for (var potentialBiofidId : splitIds) {
+                var biofidId = potentialBiofidId;
+                if (potentialBiofidId.contains("gbif.org"))
+                    biofidId = StringUtils.gbifToBIOfidUrl(potentialBiofidId);
+
+                final var biofidUrl = biofidId;
+                var newBiofidTaxons = ExceptionUtils.tryCatchLog(
+                        () -> jenaSparqlService.queryBiofidTaxon(biofidUrl),
+                        (ex) -> logger.error("Error building a BiofidTaxon object from a potential id.", ex));
+                if (newBiofidTaxons != null) {
+                    for (var biofidTaxon : newBiofidTaxons) {
+                        biofidTaxon.setCoveredText(t.getCoveredText());
+                        biofidTaxon.setBegin(t.getBegin());
+                        biofidTaxon.setEnd(t.getEnd());
+                        biofidTaxon.setDocument(document);
+                        biofidTaxon.setBiofidUrl(biofidUrl);
+                        biofidTaxon.setOriginalAnnotatedTaxonTable(ReflectionUtils.getTableAnnotationName(GnFinderTaxon.class));
+                        biofidTaxa.add(biofidTaxon);
+                    }
                 }
             }
             gnFinderTaxa.add(taxon);

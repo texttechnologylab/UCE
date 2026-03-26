@@ -1,0 +1,42 @@
+map $http_x_forwarded_proto $uce_x_forwarded_proto {
+  default $http_x_forwarded_proto;
+  ""      $scheme;
+}
+
+map $http_x_forwarded_port $uce_x_forwarded_port {
+  default $http_x_forwarded_port;
+  ""      $server_port;
+}
+
+server {
+  listen 80;
+  server_name ${UCE_VIRTUAL_HOST};
+
+  location / {
+    proxy_http_version 1.1;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host  $host;
+    proxy_set_header X-Forwarded-Port  $uce_x_forwarded_port;
+    proxy_set_header X-Forwarded-Proto $uce_x_forwarded_proto;
+    proxy_pass http://uce-web:${UCE_INTERNAL_PORT};
+  }
+}
+
+server {
+  listen 80;
+  server_name ${KEYCLOAK_VIRTUAL_HOST};
+
+  location / {
+    proxy_http_version 1.1;
+    proxy_set_header Host              $host;
+    proxy_set_header X-Real-IP         $remote_addr;
+    proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Host  $host;
+    proxy_set_header X-Forwarded-Port  $uce_x_forwarded_port;
+    proxy_set_header X-Forwarded-Proto $uce_x_forwarded_proto;
+    proxy_pass http://uce-keycloak-auth:${KEYCLOAK_INTERNAL_PORT};
+  }
+}
+

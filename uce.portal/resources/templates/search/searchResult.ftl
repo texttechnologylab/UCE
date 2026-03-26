@@ -1,5 +1,7 @@
 <div class="mt-0 search-state" data-id="${searchState.getSearchId()}">
-
+    <#assign showSearchHint = (uceConfig.settings.ui.mainPage.showSearchHint)!true>
+    <#assign middleColumnClass = showSearchHint?then("col-lg-6", "col-lg-12")>
+    
     <div class="header">
         <div class="flexed w-100 align-items-center justify-content-center">
             <div class="btn rounded-0 selected-btn" data-trigger="hover" data-toggle="popover" data-placement="top"
@@ -10,11 +12,10 @@
         </div>
     </div>
 
-    <#if searchState.hasUceMetadataFilters()>
+    <#if showSearchHint && searchState.hasUceMetadataFilters()>
         <div id="search-results-visualization-container">
             <div class="group-box bg-ghost card-shadow w-100">
-                <div class="flexed align-items-center justify-content-between clickable"
-                     onclick="$(this).closest('.group-box').find('.expanded').fadeToggle(75)">
+                <div class="flexed align-items-center justify-content-between clickable">
                     <h6 class="mb-0 w-100">${languageResource.get("searchVisualizationSummaryTitle")}</h6>
                     <a class="rounded-a"><i class="far fa-chart-bar"></i></a>
                 </div>
@@ -28,29 +29,31 @@
 
     <div class="row mb-0 mr-0 ml-0 pb-5">
 
-        <div class="col-lg-3 position-relative search-row" data-type="left">
-            <div class="side-bar-container">
-                <div class="side-bar">
+        <#if showSearchHint>
+            <div class="col-lg-3 position-relative search-row" data-type="left">
+                <div class="side-bar-container">
+                    <div class="side-bar">
 
-                    <div class="content">
-                        <#assign contextState = searchState.getKeywordInContextState()!"">
-                        <div class="keyword-in-context-include">
-                            <#include "*/search/components/keywordInContext.ftl">
-                        </div>
+                        <div class="content">
+                            <#assign contextState = searchState.getKeywordInContextState()!"">
+                            <div class="keyword-in-context-include">
+                                <#include "*/search/components/keywordInContext.ftl">
+                            </div>
 
-                        <div class="pb-0 taxonomy-tree-include display-none">
-                            <hr class="mt-3 mb-3"/>
-                            <h6 class="text-center underlined mb-4">${languageResource.get("taxonomy")}</h6>
-                            <#include "*/search/components/taxonomyTree.ftl">
+                            <div class="pb-0 taxonomy-tree-include display-none">
+                                <hr class="mt-3 mb-3"/>
+                                <h6 class="text-center underlined mb-4">${languageResource.get("taxonomy")}</h6>
+                                <#include "*/search/components/taxonomyTree.ftl">
+                            </div>
+
                         </div>
 
                     </div>
-
                 </div>
             </div>
-        </div>
+        </#if>
 
-        <div class="col-lg-6 search-row" data-type="mid">
+        <div class="${middleColumnClass} search-row" data-type="mid">
 
             <div class="sort-container pl-3 pr-3 pt-2 pb-2 mb-3">
 
@@ -77,7 +80,7 @@
                                 <div class="enriched-token ml-1 mr-1 ${width}" data-type="${token.getType().name()}">
                                     <div class="flexed align-items-center justify-content-between">
                                         <label class="mb-0 text-dark font-italic ml-1 mr-1 text-center w-100 clickable hoverable value"
-                                               onclick="$(this).closest('.enriched-token').find('.expanded-content').toggle(75)">
+                                               onclick="toggleEnrichedTokenValue(this)">
                                             <span>${token.getValue()}</span><span
                                                     class="ml-1 xsmall-font text">(${token.getType().name()})</span>
                                         </label>
@@ -86,18 +89,170 @@
                                         <div class="display-none expanded-content">
                                             <hr class="mt-1 mb-2 bg-lightgray"/>
                                             <div class="w-100 children-container">
-                                                <label class="mb-0 text">( </label>
-                                                <#list token.getChildren() as child>
-                                                    <label class="mb-0 text small-font block-text">'${child.getValue()}'
-                                                        | </label>
-                                                </#list>
-                                                <label class="mb-0 text"> ) </label>
+                                                <#if token.hasGroupedChildren()>
+                                                    <label class="display-none grouped-children-json">${token.getGroupedChildrenJson()}</label>
+                                                    <div class="grouped-children-chips mb-2"></div>
+                                                    <div class="grouped-children-json-list"></div>
+                                                <#else>
+                                                    <#list token.getChildren() as child>
+                                                        <span class="grouped-child-value-chip <#if child.getMetadata()?has_content>has-meta-tooltip</#if>"
+                                                              <#if child.getMetadata()?has_content>
+                                                                data-toggle="popover"
+                                                                data-container="body"
+                                                                data-boundary="viewport"
+                                                                data-trigger="hover"
+                                                                data-placement="top"
+                                                                data-content="${child.getMetadata()?html}"
+                                                                data-delay='{"show":120,"hide":220}'
+                                                              </#if>>
+                                                            <span class="chip-value-text">${child.getValue()}</span>
+                                                            <#if child.getBadgeText()?has_content>
+                                                                <span class="chip-meta-badge badge-${(child.getBadgeTone()!'neutral')?lower_case}">${child.getBadgeText()}</span>
+                                                            </#if>
+                                                        </span>
+                                                    </#list>
+                                                </#if>
                                             </div>
                                         </div>
                                     </#if>
                                 </div>
                             </#list>
                         </div>
+                        <script>
+                            function toggleEnrichedTokenValue(labelEl) {
+                                var $token = $(labelEl).closest('.enriched-token');
+                                if (!$token.length) return;
+
+                                var $expanded = $token.find('.expanded-content').first();
+                                if (!$expanded.length) return;
+
+                                if ($expanded.is(':visible')) {
+                                    $expanded.stop(true, true).slideUp(75, function () {
+                                        $expanded.removeClass('is-open');
+                                        var $container = $expanded.find('.children-container').first();
+                                        if ($container.length) $container.scrollTop(0);
+                                    });
+                                } else {
+                                    $expanded.stop(true, true).slideDown(75, function () {
+                                        $expanded.addClass('is-open');
+                                        var $container = $expanded.find('.children-container').first();
+                                        if ($container.length) initGroupedChildrenFromJsonStrict($container);
+                                    });
+                                }
+                            }
+
+                            function buildDisplayGroups(grouped) {
+                                var out = {};
+                                if (!grouped || typeof grouped !== 'object') return out;
+                                Object.keys(grouped).forEach(function (k) {
+                                    if (Array.isArray(grouped[k]) && grouped[k].length > 0) {
+                                        out[k] = grouped[k];
+                                    }
+                                });
+                                return out;
+                            }
+
+                            function initGroupedChildrenFromJsonStrict(containerNode) {
+                                var $container = $(containerNode);
+                                if (!$container.length) return;
+                                var jsonText = ($container.find('.grouped-children-json').first().text() || '').trim();
+                                if (!jsonText) return;
+
+                                var grouped;
+                                try {
+                                    grouped = JSON.parse(jsonText);
+                                } catch (e) {
+                                    console.error('Invalid grouped-children JSON payload', e);
+                                    return;
+                                }
+
+                                var displayGroups = buildDisplayGroups(grouped);
+                                var labels = Object.keys(displayGroups);
+                                if (labels.length === 0) return;
+
+                                var $chips = $container.find('.grouped-children-chips').first();
+                                var $list = $container.find('.grouped-children-json-list').first();
+                                if ($chips.length === 0 || $list.length === 0) return;
+                                if ($chips.children().length > 0) return;
+
+                                labels.forEach(function (label, idx) {
+                                    var $btn = $('<button type=\"button\" class=\"btn grouped-children-chip\"></button>');
+                                    if (idx === 0) $btn.addClass('selected');
+                                    $btn.attr('data-group-key', label);
+                                    $btn.text(label);
+                                    $btn.on('click', function () {
+                                        renderGroupedChildrenFromJsonStrict(this, label);
+                                    });
+                                    $chips.append($btn);
+                                });
+
+                                renderGroupedChildrenFromJsonStrict($chips.find('.grouped-children-chip').first(), labels[0]);
+                            }
+
+                            function renderGroupedChildrenFromJsonStrict(btn, key) {
+                                function esc(s) {
+                                    return String(s == null ? '' : s)
+                                        .replace(/&/g, '&amp;')
+                                        .replace(/</g, '&lt;')
+                                        .replace(/>/g, '&gt;')
+                                        .replace(/\"/g, '&quot;')
+                                        .replace(/'/g, '&#39;');
+                                }
+
+                                function renderValueChip(entry) {
+                                    var value = '';
+                                    var meta = '';
+                                    var badgeText = '';
+                                    var badgeTone = 'neutral';
+
+                                    if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+                                        value = String(entry.value || '');
+                                        meta = String(entry.meta || '');
+                                        badgeText = String(entry.badgeText || '');
+                                        badgeTone = String(entry.badgeTone || 'neutral').toLowerCase();
+                                    } else {
+                                        value = String(entry || '');
+                                    }
+
+                                    var popoverAttr = meta
+                                        ? ' data-toggle=\"popover\" data-container=\"body\" data-boundary=\"viewport\" data-trigger=\"hover\" data-placement=\"top\" data-delay=\"{&quot;show&quot;:120,&quot;hide&quot;:220}\" data-content=\"' + esc(meta) + '\"'
+                                        : '';
+                                    var badgeHtml = badgeText
+                                        ? '<span class=\"chip-meta-badge badge-' + esc(badgeTone) + '\">' + esc(badgeText) + '</span>'
+                                        : '';
+                                    var extraClass = meta ? ' has-meta-tooltip' : '';
+                                    return '<span class=\"grouped-child-value-chip' + extraClass + '\"' + popoverAttr + '>'
+                                        + '<span class=\"chip-value-text\">' + esc(value) + '</span>'
+                                        + badgeHtml
+                                        + '</span>';
+                                }
+
+                                var $btn = $(btn);
+                                var $container = $btn.closest('.children-container');
+                                if (!$container.length) return;
+
+                                var jsonText = ($container.find('.grouped-children-json').first().text() || '').trim();
+                                if (!jsonText) return;
+
+                                var grouped;
+                                try {
+                                    grouped = JSON.parse(jsonText);
+                                } catch (e) {
+                                    console.error('Invalid grouped-children JSON payload', e);
+                                    return;
+                                }
+
+                                var values = Array.isArray(buildDisplayGroups(grouped)[key]) ? buildDisplayGroups(grouped)[key] : [];
+                                var html = values.map(function (v) {
+                                    return renderValueChip(v);
+                                }).join('');
+
+                                $container.find('.grouped-children-chip').removeClass('selected');
+                                $btn.addClass('selected');
+                                $container.find('.grouped-children-json-list').first().html(html);
+                                if (typeof activatePopovers === 'function') activatePopovers();
+                            }
+                        </script>
                         <#if searchState.isEnrichedSearchQueryIsCutoff()>
                             <div class="mb-0 mt-2 alert alert-warning ml-1 mr-1 pt-1 pb-1 pl-2 pr-2 text-center light-border flexed align-items-center justify-content-between">
                                 <i class="fas fa-exclamation-circle"></i>
@@ -114,12 +269,35 @@
                 <!-- search layers and such -->
                 <div class="flexed align-items-center justify-content-between">
                     <div class="flexed align-items-center">
+                        <#assign hasAlternateLayer = searchState.getFoundDocumentChunkEmbeddings()?exists />
+                        <#assign switchInfo = languageResource.get("searchLayerSwitchInfo")!"" />
+
+                        <#if hasAlternateLayer && switchInfo?has_content>
                         <a class="btn switch-search-layer-result-btn text hoverable selected"
-                           data-layer="${searchState.getPrimarySearchLayer()}">
-                            <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}</a>
-                        <#if searchState.getFoundDocumentChunkEmbeddings()?exists>
-                            <a class="btn switch-search-layer-result-btn text hoverable" data-layer="EMBEDDING">
-                                <i class="fab fa-searchengin mr-1"></i> Embedding</a>
+                            data-trigger="hover"
+                            data-toggle="popover"
+                            data-placement="top"
+                            data-content="${switchInfo}"
+                            data-layer="${searchState.getPrimarySearchLayer()}">
+                            <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}
+                        </a>
+                        <a class="btn switch-search-layer-result-btn text hoverable" data-layer="EMBEDDING">
+                            <i class="fab fa-searchengin mr-1"></i> Embedding
+                        </a>
+
+                        <#elseif !hasAlternateLayer && switchInfo?has_content>
+                        <span class="btn switch-search-layer-result-btn is-static text selected"
+                                data-trigger="hover"
+                                data-toggle="popover"
+                                data-placement="top"
+                                data-content="${switchInfo}">
+                            <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}
+                        </span>
+
+                        <#else>
+                        <span class="btn switch-search-layer-result-btn is-static text selected">
+                            <i class="fas fa-search mr-1"></i> ${searchState.getPrimarySearchLayer()}
+                        </span>
                         </#if>
                     </div>
 
@@ -163,6 +341,7 @@
                             <#assign embedding = documentChunkEmbedding.getDocumentChunkEmbedding()>
                             <#assign documentIdx = 999999>
                             <#assign searchId = searchState.getSearchId()>
+                            <#assign showFeatureValuesInCard = (uceConfig.settings.ui.corpusInspector.showAnnotations)!true>
 
                             <div class="document-card">
                                 <div class="content">
@@ -183,10 +362,11 @@
             </div>
         </div>
 
-        <div class="col-lg-3 search-row position-relative" data-type="right">
-            <div class="side-bar-container">
-                <div class="side-bar">
-                    <div class="content">
+        <#if showSearchHint>
+            <div class="col-lg-3 search-row position-relative" data-type="right">
+                <div class="side-bar-container">
+                    <div class="side-bar">
+                        <div class="content">
 
                         <!-- the search tokens we finally took -->
                         <div>
@@ -226,11 +406,12 @@
                             </div>
                         </#if>
 
+                        </div>
                     </div>
-                </div>
 
+                </div>
             </div>
-        </div>
+        </#if>
     </div>
 
 </div>

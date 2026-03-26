@@ -12,6 +12,9 @@
     <title>${languageResource.get("imprint")}</title>
 </head>
 
+<#include "*/sessionExpiredModal.ftl">
+<#include "*/auth/userShortProfile.ftl">
+
 <div class="site-container">
     <div class="container pt-5 pb-5">
         <header class="mb-3">

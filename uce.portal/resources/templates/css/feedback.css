@@ -1,4 +1,6 @@
 /* Feedback presentation styling */
+
+
 :root {
     --fb-bg: #f5f6f7;
     --fb-card: #ffffff;
@@ -6,18 +8,81 @@
     --fb-text: #1f2937;
     --fb-muted: #6b7280;
     --fb-border: #d7d9dc;
-    --fb-shadow: 0 10px 24px rgba(0, 0, 0, 0.08);
+    /* --fb-shadow: 0 1px 3px rgba(17, 24, 39, 0.06); */
+}
+
+body {
+    background: var(--fb-card);
+}
+
+body,
+body.no-cursor,
+.site-container,
+.site-container.with-view-nav,
+.reader-container,
+.reader-container.container {
+  background-color: var(--fb-bg) !important;
+}
+
+body.feedback-mode .site-container,
+body.feedback-layout .site-container {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
+body.feedback-mode .container-fluid,
+body.feedback-layout .container-fluid {
+    padding-top: 0 !important;
+    margin-top: 0 !important;
+}
+
+/* In feedback document-reader mode, avoid flex row competition with the fixed sidebar. */
+body.feedback-mode .container-fluid > .flexed,
+body.feedback-layout .container-fluid > .flexed {
+    display: block !important;
+    position: relative;
+}
+
+/* In feedback mode, use only the feedback header as the top header. */
+body.feedback-mode .reader-container > .header,
+body.feedback-layout .reader-container > .header {
+    display: none !important;
+}
+
+
+/* consistent spacing between feedback blocks */
+.feedback-overview,
+.feedback-urls,
+.feedback-content {
+  margin: 0 0 24px 0;
+}
+
+/* don't add extra space on the last block */
+.feedback-content { margin-bottom: 0; }
+
+/* section title spacing (avoid huge jump) */
+.feedback-content h3 {
+  margin: 0 0 12px 0;
 }
 
 .feedback-mode {
     background: var(--fb-bg);
     min-height: 100vh;
-    padding: 32px 24px 48px;
+    padding: 0;
     color: var(--fb-text);
     font-family: "Inter", system-ui, -apple-system, sans-serif;
 }
 
+/* Document-reader feedback layout must not get top dead space from body padding. */
+body.feedback-layout.feedback-mode {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+}
+
 .feedback-main {
+    background: var(--fb-bg);
     max-width: 1200px;
     margin: 0 auto;
     display: flex;
@@ -25,9 +90,64 @@
     gap: 24px;
 }
 
+/* Keep feedback middle pane centrally aligned like a news/article column. */
+body.feedback-mode .reader-main,
+body.feedback-layout .reader-main {
+    width: clamp(760px, 56vw, 1180px) !important;
+    max-width: calc(100vw - 48px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    flex: none !important;
+}
+
+body.feedback-mode .reader-main > .reader-container.container,
+body.feedback-layout .reader-main > .reader-container.container {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+body.feedback-mode .reader-container .feedback-main,
+body.feedback-mode .feedback-main,
+body.feedback-layout .reader-container .feedback-main,
+body.feedback-layout .feedback-main {
+    width: 100%;
+    max-width: none;
+    margin: 0;
+}
+
+/* Drawer mode may use a wider center pane, but still keep it centered. */
+body.feedback-mode.sidebar-drawer-mode .reader-main,
+body.feedback-layout.sidebar-drawer-mode .reader-main {
+    width: clamp(760px, 62vw, 1280px);
+}
+
 .feedback-header {
+    background: var(--fb-card);
     display: flex;
     flex-direction: column;
+    gap: 12px;
+    padding: 2rem 2rem 1rem 2rem;
+    border: 1px solid var(--fb-border);
+    border-radius: 5;
+    box-shadow: var(--fb-shadow);
+    position: sticky;
+    top: 0;
+    z-index: 20;
+}
+
+/* Keep feedback header sticky in the reader viewport while scrolling document content. */
+body.feedback-layout .feedback-main .feedback-header {
+    position: sticky !important;
+    top: 0 !important;
+    z-index: 30 !important;
+}
+
+.feedback-header .header-top {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
     gap: 12px;
 }
 
@@ -69,7 +189,7 @@
     background: var(--fb-card);
     border: 1px solid var(--fb-border);
     border-radius: 0;
-    padding: 16px;
+    padding: 24px;
     box-shadow: var(--fb-shadow);
 }
 
@@ -128,7 +248,7 @@
     background: var(--fb-card);
     border: 1px solid var(--fb-border);
     border-radius: 4px;
-    padding: 16px;
+    padding: 24px;
     box-shadow: var(--fb-shadow);
 }
 
@@ -142,6 +262,10 @@
     width: 100%;
     border-collapse: collapse;
     font-size: 14px;
+}
+
+.feedback-urls table {
+    margin-top: 12px;
 }
 
 .feedback-urls th,
@@ -182,7 +306,7 @@
     background: var(--fb-card);
     border: 1px solid var(--fb-border);
     border-radius: 0;
-    padding: 16px;
+    padding: 24px;
     box-shadow: var(--fb-shadow);
 }
 
@@ -220,8 +344,11 @@
 
 .feedback-chart-img {
     display: block;
-    height: 420px;
+    height: auto;
     width: auto;
+    min-width: 100%;
+    max-width: none;
+    max-height: 550px;
     border-radius: 0;
     border: 1px solid var(--fb-border);
     box-shadow: var(--fb-shadow);
@@ -246,12 +373,47 @@
     border-bottom: 1px solid var(--fb-border);
 }
 
+.url-cell { max-width: 0; }              /* allow shrinking inside table layout */
+.url-ellipsis{
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  vertical-align: bottom;
+}
+
+table.top-urls { width: 100%; table-layout: fixed; }
+table.top-urls .url-cell { max-width: 0; }
+
+table.top-urls .url-ellipsis{
+  display: inline-block;
+  max-width: 100%;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.feedback-chart-img{
+    border: 1px solid rgba(17,24,39,0.08);
+    box-shadow: 0 2px 8px rgba(17,24,39,0.06);
+  }
+
+
+
 @media (max-width: 768px) {
     .feedback-mode {
         padding: 20px 16px 32px;
     }
 
     .metric-card {
-        padding: 14px;
+        padding: 16px;
+    }
+
+    .feedback-urls,
+    .text-card,
+    .chart-card,
+    .table-card {
+        padding: 16px;
     }
 }

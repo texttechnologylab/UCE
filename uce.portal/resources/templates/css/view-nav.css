@@ -1,6 +1,11 @@
+.view-mode-nav-shell {
+    position: relative;
+    z-index: 2000;
+}
+
 .view-mode-nav {
     position: fixed;
-    left: 16px;
+    left: 0;
     top: 80px;
     z-index: 2000;
 
@@ -13,6 +18,12 @@
     border: 1px solid #d7d9dc;
     border-radius: 0;
     box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    transform: translateX(-115%);
+    transition: transform 0.25s ease;
+}
+
+.view-mode-nav.is-open {
+    transform: translateX(0);
 }
 
 .view-mode-link {
@@ -37,57 +48,115 @@
     background: transparent;
 }
 
-.with-view-nav {
-    margin-left: 220px;
+.view-mode-link.is-current {
+    pointer-events: none;
+    cursor: default;
+    text-decoration: none;
 }
 
-.feedback-mode.with-view-nav {
-    display: flex;
-    align-items: flex-start;
-    gap: 24px;
+body.has-view-nav .container-fluid {
     margin-left: 0;
 }
 
-.feedback-mode.with-view-nav .view-mode-nav {
+body.feedback-mode.has-view-nav .container-fluid {
+    margin-left: 0;
+}
+
+body.feedback-layout.has-view-nav .container-fluid {
+    margin-left: 0;
+}
+
+body.has-view-nav:has(.feedback-main) .container-fluid {
+    margin-left: 0;
+}
+
+body.feedback-mode.has-view-nav:not(.view-nav-drawer-mode) .view-mode-nav {
+    position: sticky;
+    top: 80px;
+    left: auto;
+}
+
+body.feedback-layout.has-view-nav:not(.view-nav-drawer-mode) .view-mode-nav {
+    position: sticky;
+    top: 80px;
+    left: auto;
+}
+
+body.has-view-nav:has(.feedback-main):not(.view-nav-drawer-mode) .view-mode-nav {
     position: sticky;
     top: 80px;
     left: auto;
 }
 
 .view-mode-toggle {
-    display: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     position: fixed;
-    z-index: 2100;
+    left: var(--view-nav-toggle-left, 0px);
+    top: var(--view-nav-toggle-top, 80px);
+    height: var(--view-nav-toggle-height, 72px);
+    z-index: 2102;
+    border: 1px solid #d7d9dc;
+    background: ghostwhite;
+    color: var(--secondary);
+    border-left: 0;
+    border-radius: 0 12px 12px 0;
+    width: 40px;
+    transform: translateX(0);
+    transition: left 0.25s ease, top 0.25s ease, height 0.25s ease;
 }
 
-@media (max-width: 1024px) {
-    .view-mode-toggle {
-        display: inline-flex;
-    }
+.view-nav-backdrop {
+    display: none;
+}
 
+body.view-nav-drawer-mode .view-nav-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 2100;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+body.view-nav-drawer-mode .view-mode-nav {
+    top: 80px;
+    left: 0;
+    width: 210px;
+    z-index: 2101;
+    border-right: 0;
+    border-radius: 0;
+    box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+}
+
+body.view-nav-drawer-mode .view-mode-nav-shell {
+    height: 0;
+}
+
+body.view-nav-drawer-mode .view-mode-nav.is-open {
+    transform: translateX(0);
+}
+
+body.view-nav-drawer-mode.view-nav-open .view-nav-backdrop {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+body.view-nav-drawer-mode.has-view-nav .container-fluid {
+    margin-left: 0;
+}
+
+body.view-nav-drawer-mode .view-mode-link {
+    border-bottom: 1px solid #e5e7eb;
+}
+
+@media (max-width: 768px) {
     .view-mode-nav {
-        top: 80px;
-        left: 16px;
         width: 180px;
-        height: auto;
-        padding: 10px 14px;
-        background: #f5f6f7;
-        border: 1px solid #d7d9dc;
-        border-radius: 0;
-        box-shadow: 0 12px 28px rgba(0,0,0,0.12);
-        transform: translateX(-110%);
-        transition: transform 0.25s ease;
-    }
-
-    .view-mode-nav.is-open {
-        transform: translateX(0);
-    }
-
-    .with-view-nav {
-        margin-left: 0;
-    }
-
-    .view-mode-link {
-        border-bottom: 1px solid #e5e7eb;
     }
 }

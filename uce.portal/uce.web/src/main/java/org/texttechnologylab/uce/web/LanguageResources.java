@@ -9,14 +9,24 @@ import org.texttechnologylab.uce.common.utils.SupportedLanguages;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.InputStream;
 import java.nio.charset.StandardCharsets;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.stream.Collectors;
 
 public final class LanguageResources {
 
+    private static final String TRANSLATIONS_FILE_NAME = "languageTranslations.json";
+    private static volatile String templatesLocationOverride = null;
     private final Document languageTranslations;
     private final String defaultLanguage;
     private SupportedLanguages supportedLanguage;
+
+    public static void setTemplatesLocationOverride(String templatesLocation) {
+        templatesLocationOverride = templatesLocation;
+    }
 
     public LanguageResources(String defaultLanguage) throws IOException {
         this.defaultLanguage = defaultLanguage;
@@ -31,13 +41,28 @@ public final class LanguageResources {
                 supportedLanguage = SupportedLanguages.GERMAN;
                 break;
         }
-        var inputStream = getClass().getClassLoader().getResourceAsStream("languageTranslations.json");
+        InputStream inputStream = resolveLanguageResourceInputStream();
+        if (inputStream == null) {
+            throw new IOException("Could not locate " + TRANSLATIONS_FILE_NAME + " in templates override or classpath.");
+        }
         String jsonData;
         try (var reader = new BufferedReader(new InputStreamReader(inputStream, StandardCharsets.UTF_8))) {
             jsonData = reader.lines().collect(Collectors.joining(System.lineSeparator()));
         }
         var gson = new Gson();
         languageTranslations = gson.fromJson(jsonData, Document.class);
+    }
+
+    private InputStream resolveLanguageResourceInputStream() throws IOException {
+        var override = templatesLocationOverride;
+        if (override != null && !override.isBlank()) {
+            Path path = Paths.get(override, TRANSLATIONS_FILE_NAME);
+            if (Files.isRegularFile(path)) {
+                return Files.newInputStream(path);
+            }
+        }
+
+        return getClass().getClassLoader().getResourceAsStream(TRANSLATIONS_FILE_NAME);
     }
 
     /**
@@ -73,7 +98,19 @@ public final class LanguageResources {
     }
 
     public String get(String resourceName, String lang) {
-        return languageTranslations.get(resourceName, LinkedTreeMap.class).get(lang).toString();
+        var resource = languageTranslations.get(resourceName, LinkedTreeMap.class);
+        if (resource == null) return resourceName;
+
+        var byRequestedLang = resource.get(lang);
+        if (byRequestedLang != null) return byRequestedLang.toString();
+
+        var byDefaultLang = resource.get(defaultLanguage);
+        if (byDefaultLang != null) return byDefaultLang.toString();
+
+        var byEnglish = resource.get("en-EN");
+        if (byEnglish != null) return byEnglish.toString();
+
+        return resourceName;
     }
 
 }

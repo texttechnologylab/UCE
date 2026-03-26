@@ -151,6 +151,35 @@
       "publicUrl": "http://localhost:8080",
       "redirectUrl": "http://localhost:4567/auth"
     },
+    "ui": {
+      "documentReader": {
+        "showViewModeNav": true,
+        "showWikiModal": true,
+        "showCustomContextMenu": true,
+        "showTopicNavigationButtons": true,
+        "showHeader": true,
+        "showUceMetadata": true,
+        "showSidebar": true,
+        "showVisualizationTab": true,
+        "showTopicSettingsPanel": true
+      },
+      "mainPage": {
+        "showSystemStatus": true,
+        "showCorpusSelector": true,
+        "showNavButtons": true,
+        "showLanguageSelector": true,
+        "showAuthButton": true,
+        "showWikiModal": true,
+        "showRagbotChat": true
+      },
+      "corpusInspector": {
+        "showHeader": true,
+        "showMeta": true,
+        "showAnnotations": true,
+        "showDocuments": true,
+        "showSearchHint": true
+      }
+    },
     "embeddings": {
     }
   }

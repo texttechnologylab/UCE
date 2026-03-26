@@ -40,7 +40,7 @@ BEGIN
         -- First, try to get the internal document ID
         SELECT id INTO doc_internal_id
         FROM document
-        WHERE corpusid = rec.corpusid AND documentid = rec.fromm;
+        WHERE document.corpusid = rec.corpusid AND document.documentid = rec.fromm;
 
         IF doc_internal_id IS NOT NULL THEN
             BEGIN
@@ -99,7 +99,7 @@ BEGIN
         -- First, try to get the internal document ID
         SELECT id INTO doc_internal_id
         FROM document
-        WHERE corpusid = rec.corpusid AND documentid = rec.too;
+        WHERE document.corpusid = rec.corpusid AND document.documentid = rec.too;
 
         IF doc_internal_id IS NOT NULL THEN
             BEGIN

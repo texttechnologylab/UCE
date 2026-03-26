@@ -7,7 +7,7 @@
 <div class="search-visualization-container">
     <div id="search-results-visualization-graph"></div>
 
-    <form>
+    <form id="search-viz-form" action="javascript:void(0);" onsubmit="return false;" novalidate>
         <div class="row mb-0 mx-0 mt-3">
             <div class="col-md-4 mb-0">
                 <div class="form-group">
@@ -29,7 +29,6 @@
                         type="number"
                         class="form-control"
                         id="search-viz-n-bins"
-                        name="search-viz-n-bins"
                         min="1"
                         step="1"
                         placeholder="Number of bins"
@@ -40,13 +39,13 @@
             </div>
             <div class="col-md-4 mt-0">
                 <div class="form-group">
-                    <select id="search-viz-selected-feature" name="search-viz-selected-feature" class="form-control" required>
+                    <select id="search-viz-selected-feature" class="form-control" required>
                     </select>
                 </div>
             </div>
             <div class="col-md-4 mt-0">
                 <div class="form-group">
-                    <button type="submit" id="search-viz-update-button" class="form-control p-0 btn btn-primary"><i class="fas fa-sync mr-1"></i> ${languageResource.get("searchVisualizationPlotUpdateButton")}</button>
+                    <button type="button" id="search-viz-update-button" class="form-control p-0 btn btn-primary"><i class="fas fa-sync mr-1"></i> ${languageResource.get("searchVisualizationPlotUpdateButton")}</button>
                 </div>
             </div>
         </div>
@@ -60,6 +59,7 @@
         settings: {
             nBins: 10,
             selectedFeature: "",
+            chartType: "bar",
         }
     }
 

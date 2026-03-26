@@ -6,6 +6,7 @@ import io.javalin.rendering.FileRenderer;
 import org.jetbrains.annotations.NotNull;
 import org.texttechnologylab.uce.web.freeMarker.RequestContextHolder;
 
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -21,23 +22,25 @@ public class CustomFreeMarkerEngine implements FileRenderer {
     }
 
     public String render(String templatePath, Map<String, Object> model) {
+        Map<String, Object> mutableModel = model == null ? new HashMap<>() : new HashMap<>(model);
+
         // Always inject the uceConfig
-        model.put("uceConfig", RequestContextHolder.getUceConfig());
+        mutableModel.put("uceConfig", RequestContextHolder.getUceConfig());
 
         // Add the LanguageResources object to the model if available in the request
         var languageResources = RequestContextHolder.getLanguageResources();
         if (languageResources != null) {
-            model.put("languageResource", languageResources);
+            mutableModel.put("languageResource", languageResources);
         }
 
         // Add the UceUser object to the model if available in the session
         var uceUser = RequestContextHolder.getAuthenticatedUceUser();
         if(uceUser != null){
-            model.put("uceUser", uceUser);
+            mutableModel.put("uceUser", uceUser);
         }
 
         try {
-            return process(configuration, templatePath, model);
+            return process(configuration, templatePath, mutableModel);
         } catch (Exception e) {
             throw new RuntimeException(e);
         }

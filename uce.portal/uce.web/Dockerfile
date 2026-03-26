@@ -1,20 +1,29 @@
-# Use an appropriate base image with Java (e.g., OpenJDK)
+# syntax=docker/dockerfile:1.7
 FROM maven:3.9.6-eclipse-temurin-21 AS builder
 
-# Set the working directory inside the container
 WORKDIR /app
 
-# Copy the entire uce.portal directory
-COPY ./uce.portal ./uce.portal
+COPY ./uce.portal/pom.xml ./uce.portal/pom.xml
+COPY ./uce.portal/settings.xml ./uce.portal/settings.xml
+COPY ./uce.portal/uce.common/pom.xml ./uce.portal/uce.common/pom.xml
+COPY ./uce.portal/uce.corpus-importer/pom.xml ./uce.portal/uce.corpus-importer/pom.xml
+COPY ./uce.portal/uce.web/pom.xml ./uce.portal/uce.web/pom.xml
+COPY ./uce.portal/uce.search/pom.xml ./uce.portal/uce.search/pom.xml
+COPY ./uce.portal/uce.analysis/pom.xml ./uce.portal/uce.analysis/pom.xml
 
-# Override the default config
+WORKDIR /app/uce.portal
+RUN --mount=type=cache,id=uce-m2-repo,target=/root/.m2/repository,sharing=locked \
+    mvn -B -T 1C -nsu -DskipTests -Dmaven.repo.local=/root/.m2/repository \
+    dependency:go-offline -pl uce.web -am
+
+WORKDIR /app
+COPY ./uce.portal ./uce.portal
 COPY ./uce.portal/uce.common/src/main/resources/common-release.conf /app/uce.portal/uce.common/src/main/resources/common.conf
 
-# Set the working directory to uce.portal
 WORKDIR /app/uce.portal
-
-# We are also building the target jar here; we only need uce.web
-RUN mvn clean install -DskipTests -pl uce.web -am
+RUN --mount=type=cache,id=uce-m2-repo,target=/root/.m2/repository,sharing=locked \
+    mvn -B -T 1C -nsu -DskipTests -Dmaven.repo.local=/root/.m2/repository \
+    package -pl uce.web -am
 
 FROM eclipse-temurin:21-jdk
 

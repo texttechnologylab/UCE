@@ -3,13 +3,13 @@ set -euo pipefail
 
 # --- CONFIGURATION ---
 
-KEYCLOAK_URL="${KEYCLOAK_URL:-http://localhost:8080/auth}"  # adjust if needed
+KEYCLOAK_URL="${KEYCLOAK_AUTH_SERVER_URL:-${UCE_AUTH_PUBLIC_URL:-${KEYCLOAK_URL:-http://localhost:8080}}}"
 ADMIN_REALM="${ADMIN_REALM:-master}"
-ADMIN_USER="${ADMIN_USER:-admin}"
-ADMIN_PASSWORD="${ADMIN_PASSWORD:-admin}"
-REALM="uce"
+ADMIN_USER="${KC_ADMIN_USERNAME:-${ADMIN_USER:-admin}}"
+ADMIN_PASSWORD="${KC_ADMIN_PW:-${ADMIN_PASSWORD:-admin}}"
+REALM="${KEYCLOAK_REALM:-${KC_REALM:-uce}}"
 GROUP_NAME="CORE-Proband"
-CLIENT_ID="uce-web"   # only for building login URL
+CLIENT_ID="${KEYCLOAK_CLIENT:-${KC_CLIENT_ID:-uce-web}}"   # only for building login URL
 
 INPUT_FILE="${1:-}"
 OUTPUT_FILE="${2:-provisioned-users.csv}"
@@ -56,8 +56,9 @@ echo "Using group '$GROUP_NAME' (id=$GROUP_ID)"
 
 echo "hash,username,userId,tempPassword,loginUrl" > "$OUTPUT_FILE"
 
-LOGIN_BASE="${KEYCLOAK_URL%/auth}/realms/${REALM}/protocol/openid-connect/auth"
-REDIRECT_URI="${REDIRECT_URI:-https://your-app.example/uce/callback}"
+KEYCLOAK_BASE="$(echo "${KEYCLOAK_URL}" | sed -E 's#/*$##; s#/auth$##')"
+LOGIN_BASE="${KEYCLOAK_BASE}/realms/${REALM}/protocol/openid-connect/auth"
+REDIRECT_URI="${UCE_AUTH_REDIRECT_URL:-${REDIRECT_URI:-https://your-app.example/uce/callback}}"
 
 # --- MAIN LOOP ---
 

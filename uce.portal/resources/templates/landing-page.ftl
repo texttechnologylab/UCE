@@ -15,8 +15,9 @@
     </div>
 
     <div class="corpora-list">
-        <h3 class="text-center font-weight-bold text-dark"><i
-                    class="color-prime fas fa-database mr-2"></i> ${languageResource.get("corpora")}</h3>
+        <h3 class="text-center font-weight-bold text-dark">
+            <i class="color-prime fas fa-database mr-2"></i> 
+            ${(uceConfig.getMeta().getCorporaTitle())!languageResource.get("corpora")}</h3>
         <div class="row m-0 p-0 ">
             <#if corpora?size == 0>
                 <div class="group-box mt-2 bg-ghost">

@@ -8,28 +8,30 @@
                         <i class="fas fa-info-circle mr-1 color-prime" data-trigger="hover" data-toggle="popover"
                            data-placement="top"
                            data-content="${languageResource.get("topicModellingInfo")}"></i>
-                        <div class="text small-font font-italic text-center mb-0 flexed align-items-center justify-content-center wrapped">
-                            <span data-wid="${page.getPageKeywordDistribution().getWikiId()}"
-                                  data-wcovered="${page.getPageKeywordDistribution().getYakeTopicOne()}"
-                                  class="open-wiki-page">
-                                #${page.getPageKeywordDistribution().getYakeTopicOne()}
-                            </span>
-                            <span data-wid="${page.getPageKeywordDistribution().getWikiId()}"
-                                  data-wcovered="${page.getPageKeywordDistribution().getYakeTopicTwo()}"
-                                  class="ml-2 open-wiki-page">
-                                #${page.getPageKeywordDistribution().getYakeTopicTwo()}
-                            </span>
-                            <span data-wid="${page.getPageKeywordDistribution().getWikiId()}"
-                                  data-wcovered="${page.getPageKeywordDistribution().getYakeTopicThree()}"
-                                  class="ml-2 open-wiki-page">
-                                #${page.getPageKeywordDistribution().getYakeTopicThree()}
-                            </span>
-                            <span data-wid="${page.getPageKeywordDistribution().getWikiId()}"
-                                  data-wcovered="${page.getPageKeywordDistribution().getYakeTopicFour()}"
-                                  class="ml-2 open-wiki-page">
-                                #${page.getPageKeywordDistribution().getYakeTopicFour()}
-                            </span>
-                        </div>
+                        <#if (uceConfig.settings.ui.mainPage.showWikiModal)!true>
+                            <div class="text small-font font-italic text-center mb-0 flexed align-items-center justify-content-center wrapped">
+                                <span data-wid="${page.getPageKeywordDistribution().getWikiId()}"
+                                      data-wcovered="${page.getPageKeywordDistribution().getYakeTopicOne()}"
+                                      class="open-wiki-page">
+                                    #${page.getPageKeywordDistribution().getYakeTopicOne()}
+                                </span>
+                                <span data-wid="${page.getPageKeywordDistribution().getWikiId()}"
+                                      data-wcovered="${page.getPageKeywordDistribution().getYakeTopicTwo()}"
+                                      class="ml-2 open-wiki-page">
+                                    #${page.getPageKeywordDistribution().getYakeTopicTwo()}
+                                </span>
+                                <span data-wid="${page.getPageKeywordDistribution().getWikiId()}"
+                                      data-wcovered="${page.getPageKeywordDistribution().getYakeTopicThree()}"
+                                      class="ml-2 open-wiki-page">
+                                    #${page.getPageKeywordDistribution().getYakeTopicThree()}
+                                </span>
+                                <span data-wid="${page.getPageKeywordDistribution().getWikiId()}"
+                                      data-wcovered="${page.getPageKeywordDistribution().getYakeTopicFour()}"
+                                      class="ml-2 open-wiki-page">
+                                    #${page.getPageKeywordDistribution().getYakeTopicFour()}
+                                </span>
+                            </div>
+                        </#if>
                         <div></div>
                     </div>
                 </div>

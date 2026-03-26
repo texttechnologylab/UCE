@@ -56,3 +56,18 @@ build/
 __pycache__
 data/*
 
+.dev/
+.dev/storage/aux/gnfinder-taxon/*
+.dev/storage/corpora/biofid-production/input/*
+.dev/storage/corpora/biofid-mini/input/*
+.dev/storage/tdb/biofid-search/Data-0002/*
+.dev/storage/buildkit/*
+.dev/storage/corpora/biofid-production-preprocessed/input/*
+.dev/tmp/preprocess-test-sample/raw/input/*
+.dev/tmp/preprocess-test-sample/pre/input/*
+.dev/tmp/preprocess-test-targeted/raw/input/*
+.dev/tmp/preprocess-single-10773164/pre/input/*
+.dev/storage/corpora/biofid-production-preprocessed-eschar-full-20260323/out/input/*
+.dev/storage/corpora/biofid-preprocessed-eschar-4/input/*
+.dev/tmp/preprocess-check-one3/pre/input/*
+dev/venv/*

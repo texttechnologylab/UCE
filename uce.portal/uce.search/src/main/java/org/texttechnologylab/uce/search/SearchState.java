@@ -19,6 +19,7 @@ import org.texttechnologylab.uce.common.models.corpus.UCEMetadataValueType;
 import org.texttechnologylab.uce.common.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.uce.common.models.search.AnnotationSearchResult;
 import org.texttechnologylab.uce.common.models.search.CacheItem;
+import org.texttechnologylab.uce.common.models.search.DocumentSearchResult;
 import org.texttechnologylab.uce.common.models.search.DocumentChunkEmbeddingSearchResult;
 import org.texttechnologylab.uce.common.models.search.EnrichedSearchToken;
 import org.texttechnologylab.uce.common.models.search.OrderByColumn;
@@ -55,6 +56,7 @@ public class SearchState extends CacheItem {
     private Integer currentPage = 1;
     private Integer take = 10;
     private long corpusId;
+    private List<String> expandedTerms;
     private CorpusConfig corpusConfig;
     private Integer totalHits;
     private SearchOrder order = SearchOrder.DESC;
@@ -106,6 +108,7 @@ public class SearchState extends CacheItem {
 
     public void setSessionUser(String sessionUser) {
         this.sessionUser = sessionUser;
+    }
 
     public boolean isEnrichedSearchQueryIsCutoff() {
         return enrichedSearchQueryIsCutoff;
@@ -249,6 +252,14 @@ public class SearchState extends CacheItem {
 
     public void setCurrentDocumentHits(List<Integer> currentDocumentHits) {
         this.currentDocumentHits = currentDocumentHits;
+    }
+
+    public CommonConfig getConfig() {
+        return config;
+    }
+
+    public void setConfig(CommonConfig config) {
+        this.config = config;
     }
 
     public CorpusConfig getCorpusConfig() {
@@ -446,6 +457,14 @@ public class SearchState extends CacheItem {
         this.searchTokens = searchTokens;
     }
 
+    public List<String> getExpandedTerms() {
+        return expandedTerms;
+    }
+
+    public void setExpandedTerms(List<String> expandedTerms) {
+        this.expandedTerms = expandedTerms;
+    }
+
     public List<SearchLayer> getSearchLayers() {
         return searchLayers;
     }
@@ -538,4 +557,5 @@ public class SearchState extends CacheItem {
         data.put("currentPage", this.getCurrentPage());
         return new Gson().toJson(data);
     }
+
 }

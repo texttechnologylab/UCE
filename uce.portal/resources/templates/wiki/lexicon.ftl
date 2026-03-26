@@ -10,7 +10,8 @@
             </div>
             <div class="flexed align-items-center ml-1 w-100 justify-content-end">
                 <input class="form-control rounded-0 w-100 search-lexicon-input" type="text"
-                       onchange="window.wikiHandler.handleLexiconSearchInputChanged($(this))"
+                       oninput="window.wikiHandler.handleLexiconSearchInputTyped($(this))"
+                       onkeyup="window.wikiHandler.handleLexiconSearchInputKeyup($(this), event)"
                        placeholder="${languageResource.get("search")}"/>
                 <button class="btn rounded-0 bg-lightgray search-lexicon-btn"
                         onclick="window.wikiHandler.handleLexiconSearchInputChanged($(this).prev())"><i
@@ -52,8 +53,21 @@
 
                         <div class="row ml-0 mr-0 mt-3 mb-0 p-0">
                             <!-- lexicon list -->
-                            <div class="col-lg-8 lexicon-content-include pl-3 pb-3 pr-3 m-0">
-
+                            <div class="col-lg-8 lexicon-content-include pl-3 pb-3 pr-3 m-0 position-relative">
+                                <div class="lexicon-loader-container display-none">
+                                    <div class="lexicon-loader-content">
+                                        <div class="loader book">
+                                            <figure class="page"></figure>
+                                            <figure class="page"></figure>
+                                            <figure class="page"></figure>
+                                        </div>
+                                        <h1 class="text color-prime"><i class="fas fa-circle-notch rotate"></i> ${languageResource.get("searchPlaceholder")?replace("...", "")}</h1>
+                                    </div>
+                                </div>
+                                <div class="lexicon-update-status display-none">
+                                    <i class="fas fa-check-circle mr-1"></i> Updated
+                                </div>
+                                <div class="lexicon-entry-list-region"></div>
                             </div>
 
                             <!-- lexicon inspector -->
@@ -70,8 +84,10 @@
                                         </div>
 
                                         <div class="navigation mt-1 w-100">
-                                            <button class="btn btn-light w-100 rounded-0 border-bottom-0 border-left-0 border-right-0 light-border color-prime clickable"
-                                            onclick="window.wikiHandler.handleLoadMoreOccurrences()">
+                                            <button class="btn btn-light w-100 rounded-0 border-bottom-0 border-left-0 border-right-0 light-border color-prime clickable lexicon-load-more-btn ui-action-disabled"
+                                                    aria-disabled="true"
+                                                    data-disabled-reason="${languageResource.get("chooseLexiconEntry")}"
+                                                    onclick="window.wikiHandler.handleLoadMoreOccurrences()">
                                                 ${languageResource.get("loadMore")}
                                             </button>
                                         </div>
@@ -103,10 +119,10 @@
                                     </div>
                                     <!-- siwtch pages -->
                                     <div class="ml-1 flexed align-items-center">
-                                        <a class="rounded-a" onclick="window.wikiHandler.fetchPreviousLexiconEntries()"><i
+                                        <a class="rounded-a lexicon-prev-page-btn ui-action-disabled" aria-disabled="true" onclick="window.wikiHandler.fetchPreviousLexiconEntries()"><i
                                                     class="fas fa-chevron-left"></i></a>
                                         <i class="fas fa-compass color-prime xlarge-font ml-2 mr-2"></i>
-                                        <a class="rounded-a" onclick="window.wikiHandler.fetchNextLexiconEntries()"><i
+                                        <a class="rounded-a lexicon-next-page-btn" aria-disabled="false" onclick="window.wikiHandler.fetchNextLexiconEntries()"><i
                                                     class="fas fa-chevron-right"></i></a>
                                     </div>
                                 </div>

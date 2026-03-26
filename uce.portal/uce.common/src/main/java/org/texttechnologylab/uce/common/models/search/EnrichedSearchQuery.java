@@ -7,6 +7,15 @@ import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
 import org.texttechnologylab.uce.common.exceptions.DocumentAccessDeniedException;
 import org.texttechnologylab.uce.common.models.corpus.GeoNameFeatureClass;
 import org.texttechnologylab.uce.common.models.dto.map.LocationDto;
+import org.texttechnologylab.uce.common.models.search.promode.CommandExpansionPass;
+import org.texttechnologylab.uce.common.models.search.promode.EnrichedTokenViewAdapter;
+import org.texttechnologylab.uce.common.models.search.promode.ExpandedTermsExtractor;
+import org.texttechnologylab.uce.common.models.search.promode.NormalizationPass;
+import org.texttechnologylab.uce.common.models.search.promode.ProExpansionResolver;
+import org.texttechnologylab.uce.common.models.search.promode.ProModeSyntaxException;
+import org.texttechnologylab.uce.common.models.search.promode.ProQueryParser;
+import org.texttechnologylab.uce.common.models.search.promode.ProTsQueryCompiler;
+import org.texttechnologylab.uce.common.models.search.promode.TaxonEnrichmentPass;
 import org.texttechnologylab.uce.common.models.viewModels.CorpusViewModel;
 import org.texttechnologylab.uce.common.services.JenaSparqlService;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
@@ -16,7 +25,11 @@ import org.texttechnologylab.uce.common.utils.SystemStatus;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Set;
 import java.util.stream.Stream;
 
 /**
@@ -30,6 +43,8 @@ public class EnrichedSearchQuery {
     public static final String[] LOCATION_COMMANDS = {"LOC::", "R::"};
     public static final String[] TIME_COMMANDS = {"Y::", "M::", "D::", "E::", "T::"};
     private static final CommonConfig config = new CommonConfig();
+    @Getter
+    private List<String> expandedTerms;
 
     public static String getFullTaxonRankByCode(String code) {
         return switch (code) {
@@ -80,12 +95,18 @@ public class EnrichedSearchQuery {
 
     public EnrichedSearchQuery parse(boolean proModeEnabled, long corpusId) throws DatabaseOperationException, IOException, DocumentAccessDeniedException {
         var corpusVm = db.getCorpusById(corpusId).getViewModel();
+        this.enrichedQueryIsCutOff = false;
+        if (proModeEnabled) {
+            return parseProMode(corpusVm, corpusId);
+        }
+
         var searchQuery = StringUtils.replaceSpacesInQuotes(this.originalQuery);
         var tokens = searchQuery.split(" ");
         var delimiter = proModeEnabled ? "'" : "\"";
         var or = proModeEnabled ? " | " : " or ";
 
         this.enrichedSearchTokens = new ArrayList<>();
+        this.expandedTerms = new ArrayList<>();
         var enrichedSearchQuery = new StringBuilder();
 
         for (var token : tokens) {
@@ -124,6 +145,167 @@ public class EnrichedSearchQuery {
                 .toList();
 
         return this;
+    }
+
+    private EnrichedSearchQuery parseProMode(CorpusViewModel corpusVm,
+                                             long corpusId) throws DatabaseOperationException, IOException, DocumentAccessDeniedException {
+        this.enrichedSearchTokens = new ArrayList<>();
+        this.expandedTerms = new ArrayList<>();
+
+        var ast = new ProQueryParser().parse(this.originalQuery);
+        ProExpansionResolver resolver = new ProExpansionResolver() {
+            @Override
+            public ExpansionResult resolveCommand(String command, String value) throws Exception {
+                return resolveCommandExpansion(command, value, corpusVm, corpusId);
+            }
+
+            @Override
+            public ExpansionResult resolveTaxonTerm(String value) throws Exception {
+                return resolveTaxonTermExpansion(value);
+            }
+        };
+
+        try {
+            new CommandExpansionPass().apply(ast, resolver);
+            if (this.parseTaxonomy && SystemStatus.JenaSparqlStatus.isAlive()) {
+                new TaxonEnrichmentPass().apply(ast, resolver);
+            }
+        } catch (ProModeSyntaxException ex) {
+            throw ex;
+        } catch (Exception ex) {
+            if (ex instanceof DatabaseOperationException dbEx) throw dbEx;
+            if (ex instanceof IOException ioEx) throw ioEx;
+            if (ex instanceof DocumentAccessDeniedException daEx) throw daEx;
+            throw new IOException("Failed to apply pro-mode enrichment passes", ex);
+        }
+        new NormalizationPass().apply(ast);
+
+        this.expandedTerms = new ExpandedTermsExtractor().extract(ast);
+        this.enrichedSearchTokens = new EnrichedTokenViewAdapter().fromAst(ast);
+        this.enrichedQuery = new ProTsQueryCompiler().compile(ast);
+        this.enrichedSearchTokens = enrichedSearchTokens.stream()
+                .filter(t -> t.getValue() != null && !t.getValue().trim().isBlank())
+                .toList();
+
+        return this;
+    }
+
+    private ProExpansionResolver.ExpansionResult resolveCommandExpansion(String command,
+                                                                         String value,
+                                                                         CorpusViewModel corpusVm,
+                                                                         long corpusId) throws DatabaseOperationException, DocumentAccessDeniedException, IOException {
+        var token = command + value;
+        if (Stream.of(LOCATION_COMMANDS).anyMatch(command::equals)) {
+            if (!shouldHandleLocationCommand(token, corpusVm)) {
+                return new ProExpansionResolver.ExpansionResult(Collections.emptyList(), new LinkedHashMap<>(), EnrichedSearchTokenType.LOCATION_COMMAND);
+            }
+            var geoNames = fetchLocationNames(command, value, corpusId);
+            if (geoNames.size() >= config.getLocationEnrichmentLimit()) this.enrichedQueryIsCutOff = true;
+            return new ProExpansionResolver.ExpansionResult(geoNames, new LinkedHashMap<>(), EnrichedSearchTokenType.LOCATION_COMMAND);
+        }
+        if (Stream.of(TIME_COMMANDS).anyMatch(command::equals)) {
+            if (!shouldHandleTimeCommand(token, corpusVm)) {
+                return new ProExpansionResolver.ExpansionResult(Collections.emptyList(), new LinkedHashMap<>(), EnrichedSearchTokenType.TIME_COMMAND);
+            }
+            var times = fetchTimeNames(command, value, corpusId);
+            return new ProExpansionResolver.ExpansionResult(times, new LinkedHashMap<>(), EnrichedSearchTokenType.TIME_COMMAND);
+        }
+        if (Stream.of(TAX_RANKS).anyMatch(command::equals)) {
+            if (!shouldHandleTaxonomicCommand(token)) {
+                return new ProExpansionResolver.ExpansionResult(Collections.emptyList(), new LinkedHashMap<>(), EnrichedSearchTokenType.TAXON_COMMAND);
+            }
+            var rank = getFullTaxonRankByCode(command.replace("::", ""));
+            var speciesIds = jenaSparqlService.getSpeciesIdsOfUpperRank(rank, value, config.getSparqlMaxEnrichment());
+            if (speciesIds.size() >= config.getSparqlMaxEnrichment()) this.enrichedQueryIsCutOff = true;
+            var grouped = jenaSparqlService.getAlternativeNamesGroupedDetailedOfTaxons(speciesIds);
+            return new ProExpansionResolver.ExpansionResult(
+                    flattenGroupedNames(grouped),
+                    mapGroupedTaxonChildren(grouped),
+                    EnrichedSearchTokenType.TAXON_COMMAND
+            );
+        }
+        return new ProExpansionResolver.ExpansionResult(Collections.emptyList(), new LinkedHashMap<>(), EnrichedSearchTokenType.TOKEN);
+    }
+
+    private ProExpansionResolver.ExpansionResult resolveTaxonTermExpansion(String value) throws DatabaseOperationException, IOException, DocumentAccessDeniedException {
+        var cleaned = cleanToken(value);
+        if (cleaned.isBlank()) {
+            return new ProExpansionResolver.ExpansionResult(Collections.emptyList(), new LinkedHashMap<>(), EnrichedSearchTokenType.TOKEN);
+        }
+        if (!this.parseTaxonomy || !SystemStatus.JenaSparqlStatus.isAlive()) {
+            return new ProExpansionResolver.ExpansionResult(Collections.emptyList(), new LinkedHashMap<>(), EnrichedSearchTokenType.TOKEN);
+        }
+        var taxonIds = db.getIdentifiableTaxonsByValue(cleaned.toLowerCase());
+        if (taxonIds == null || taxonIds.isEmpty()) {
+            return new ProExpansionResolver.ExpansionResult(Collections.emptyList(), new LinkedHashMap<>(), EnrichedSearchTokenType.TOKEN);
+        }
+
+        var grouped = jenaSparqlService.getAlternativeNamesGroupedDetailedOfTaxons(taxonIds);
+        return new ProExpansionResolver.ExpansionResult(
+                flattenGroupedNames(grouped),
+                mapGroupedTaxonChildren(grouped),
+                EnrichedSearchTokenType.TAXON
+        );
+    }
+
+    private List<String> fetchLocationNames(String command,
+                                            String value,
+                                            long corpusId) throws DatabaseOperationException, DocumentAccessDeniedException {
+        if ("R::".equals(command)) {
+            LocationDto locationDto;
+            try {
+                locationDto = parseLocationRadiusCommand("R::" + value);
+            } catch (Exception ex) {
+                throw new ProModeSyntaxException("Invalid R:: command payload. Use lng=<LONGITUDE>;lat=<LATITUDE>;r=<RADIUS>.");
+            }
+            return db.getDistinctGeonamesNamesByRadius(
+                    locationDto.getLongitude(),
+                    locationDto.getLatitude(),
+                    locationDto.getRadius(),
+                    corpusId,
+                    config.getLocationEnrichmentLimit()
+            );
+        }
+        if ("LOC::".equals(command)) {
+            var split = value.split("\\.");
+            var featureClass = split[0];
+            var featureCode = split.length > 1 ? split[1] : "";
+            GeoNameFeatureClass geoNameFeatureClass;
+            try {
+                geoNameFeatureClass = GeoNameFeatureClass.valueOf(featureClass);
+            } catch (Exception ex) {
+                throw new ProModeSyntaxException("Invalid LOC:: feature class '" + featureClass + "'.");
+            }
+            return db.getDistinctGeonamesNamesByFeatureCode(
+                    geoNameFeatureClass,
+                    featureCode,
+                    corpusId,
+                    config.getLocationEnrichmentLimit()
+            );
+        }
+        return Collections.emptyList();
+    }
+
+    private List<String> fetchTimeNames(String command,
+                                        String value,
+                                        long corpusId) throws DatabaseOperationException, DocumentAccessDeniedException {
+        var unitCode = command.replace("::", "");
+        var unitName = getFullTimeUnitByCode(unitCode).toLowerCase();
+
+        String condition;
+        if (!unitName.equals("range")) {
+            var formattedValue = unitName.equals("year") ? value : "'" + value + "'";
+            condition = String.format("t.%s = %s AND t.pageId IS NOT NULL", unitName, formattedValue);
+        } else if (value.contains("-")) {
+            var split = value.split("-");
+            var from = split[0].trim();
+            var to = split[1].trim();
+            condition = String.format("t.year >= %s AND t.year <= %s AND t.pageId IS NOT NULL", from, to);
+        } else {
+            condition = "1=0";
+        }
+        var matched = db.getDistinctTimesByCondition(condition, corpusId, 200);
+        return matched == null ? Collections.emptyList() : matched;
     }
 
     private boolean isOperator(String token) {
@@ -189,6 +371,7 @@ public class EnrichedSearchQuery {
         }
 
         if(geoNames.size() >= config.getLocationEnrichmentLimit()) this.enrichedQueryIsCutOff = true;
+        expandedTerms.addAll(geoNames);
 
         if (geoNames.isEmpty()) {
             query.append(delimiter).append(value).append(delimiter).append(" ");
@@ -269,7 +452,9 @@ public class EnrichedSearchQuery {
         var speciesIds = jenaSparqlService.getSpeciesIdsOfUpperRank(
                 getFullTaxonRankByCode(command.replace("::", "")), value, config.getSparqlMaxEnrichment());
         if(speciesIds.size() == config.getSparqlMaxEnrichment()) this.enrichedQueryIsCutOff = true;
-        var names = jenaSparqlService.getAlternativeNamesOfTaxons(speciesIds);
+        var grouped = jenaSparqlService.getAlternativeNamesGroupedDetailedOfTaxons(speciesIds);
+        var names = flattenGroupedNames(grouped);
+        if (names != null) expandedTerms.addAll(names);
 
         if (names == null || names.isEmpty()) {
             query.append(delimiter).append(value).append(delimiter).append(" ");
@@ -277,6 +462,7 @@ public class EnrichedSearchQuery {
             appendEnrichedNames(query, names, value, delimiter, or);
             enrichedToken.setChildren(names.stream()
                     .map(n -> new EnrichedSearchToken(n, EnrichedSearchTokenType.TAXON)).toList());
+            enrichedToken.setGroupedChildren(mapGroupedTaxonChildren(grouped));
         }
         return true;
     }
@@ -294,7 +480,9 @@ public class EnrichedSearchQuery {
         }
 
         enrichedToken.setType(EnrichedSearchTokenType.TAXON);
-        var names = jenaSparqlService.getAlternativeNamesOfTaxons(taxonIds);
+        var grouped = jenaSparqlService.getAlternativeNamesGroupedDetailedOfTaxons(taxonIds);
+        var names = flattenGroupedNames(grouped);
+        if (names != null) expandedTerms.addAll(names);
         if (names == null || names.isEmpty()) {
             query.append(originalToken).append(" ");
             return true;
@@ -303,8 +491,41 @@ public class EnrichedSearchQuery {
         appendEnrichedNames(query, names, originalToken.replaceAll("__", " "), delimiter, or);
         enrichedToken.setChildren(names.stream()
                 .map(n -> new EnrichedSearchToken(n, EnrichedSearchTokenType.TAXON)).toList());
+        enrichedToken.setGroupedChildren(mapGroupedTaxonChildren(grouped));
 
         return true;
+    }
+
+    private List<String> flattenGroupedNames(LinkedHashMap<String, List<JenaSparqlService.GroupedTaxonChild>> grouped) {
+        var flattened = new ArrayList<String>();
+        if (grouped == null || grouped.isEmpty()) return flattened;
+        for (var children : grouped.values()) {
+            if (children == null || children.isEmpty()) continue;
+            for (var child : children) {
+                if (child == null || child.value() == null || child.value().isBlank()) continue;
+                flattened.add(child.value());
+            }
+        }
+        return flattened.stream().distinct().toList();
+    }
+
+    private LinkedHashMap<String, List<EnrichedSearchToken>> mapGroupedTaxonChildren(LinkedHashMap<String, List<JenaSparqlService.GroupedTaxonChild>> grouped) {
+        var mapped = new LinkedHashMap<String, List<EnrichedSearchToken>>();
+        if (grouped == null || grouped.isEmpty()) return mapped;
+        for (var entry : grouped.entrySet()) {
+            if (entry.getValue() == null || entry.getValue().isEmpty()) continue;
+            mapped.put(entry.getKey(),
+                    entry.getValue().stream()
+                            .map(child -> {
+                                var token = new EnrichedSearchToken(child.value(), EnrichedSearchTokenType.TAXON);
+                                token.setMetadata(child.meta());
+                                token.setBadgeText(child.badgeText());
+                                token.setBadgeTone(child.badgeTone());
+                                return token;
+                            })
+                            .toList());
+        }
+        return mapped;
     }
 
     private void appendEnrichedNames(StringBuilder query,
@@ -337,4 +558,41 @@ public class EnrichedSearchQuery {
         this.parseGeonames = true;
         return this;
     }
+
+    // Note: PostgreSQL safe functions handle escaping internally
+    // No Java-side preprocessing needed
+
+    /**
+     * Chunk a list of terms into smaller batches for PostgreSQL tsquery.
+     * PostgreSQL tsquery has limits on query size, so we need to chunk large lists.
+     *
+     * @param terms The list of terms to chunk
+     * @param chunkSize Maximum size of each chunk (default 20)
+     * @return List of chunks
+     */
+    public static List<List<String>> chunkTerms(List<String> terms, int chunkSize) {
+        if (terms == null || terms.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<List<String>> chunks = new ArrayList<>();
+        for (int i = 0; i < terms.size(); i += chunkSize) {
+            int end = Math.min(terms.size(), i + chunkSize);
+            chunks.add(new ArrayList<>(terms.subList(i, end)));
+        }
+        return chunks;
+    }
+
+    /**
+     * Chunk a list of terms into smaller batches for PostgreSQL tsquery.
+     * Uses default chunk size of 20.
+     *
+     * @param terms The list of terms to chunk
+     * @return List of chunks
+     */
+    public static List<List<String>> chunkTerms(List<String> terms) {
+        return chunkTerms(terms, 20);
+    }
+
+
 }

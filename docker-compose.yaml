@@ -7,106 +7,300 @@
 
 services:
 
-  # uce-fuseki-sparql:
-  #   container_name: uce-fuseki-sparql
-  #   image: docker.texttechnologylab.org/uce/uce-fuseki-sparql:0.0.1
-  #   ports:
-  #     - "8030:5430"
-  #   volumes:
-  #     - ${TDB2_DATA}:/fuseki/databases/${TDB2_ENDPOINT}
-  #   environment:
-  #     - JAVA_OPTIONS=${JAVA_OPTIONS}
-  #   command: --update --tdb2 --port 5430 --loc /fuseki/databases/${TDB2_ENDPOINT} /${TDB2_ENDPOINT}
-  #   networks:
-  #     - app_net
-    
-  # uce-rag-service:
-  #   container_name: uce-rag-service
-  #   build:
-  #     context: .
-  #     dockerfile: ./rag/Dockerfile
-  #   ports:
-  #     - "8080:5678" 
-  #   depends_on:
-  #     - uce-postgresql-db 
-  #   networks:
-  #     - app_net
+  nginx:
+    container_name: uce-nginx
+    image: nginx:1.27-alpine
+    pull_policy: always
+    profiles:
+      - proxy
+    ports:
+      - "${NGINX_PROXY_HTTP_PORT:-80}:80"
+    environment:
+      # Used by /etc/nginx/templates/*.template via envsubst (official nginx image feature)
+      UCE_VIRTUAL_HOST: ${UCE_PUBLIC_HOST:-}
+      UCE_VIRTUAL_PORT: ${UCE_PUBLISHED_PORT:-}
+      KEYCLOAK_VIRTUAL_HOST: ${KEYCLOAK_PUBLIC_HOST:-}
+      KEYCLOAK_VIRTUAL_PORT: ${KEYCLOAK_PUBLISHED_PORT:-}
+    volumes:
+      - ./deploy/nginx/templates:/etc/nginx/templates:ro
+    depends_on:
+      uce-web:
+        condition: service_started
+      uce-keycloak-auth:
+        condition: service_started
+    networks:
+      - app_net
 
   uce-web:
     container_name: uce-web
+    image: uce-web:local-fast
     build:
       context: .
       dockerfile: ./uce.portal/uce.web/Dockerfile
+    profiles:
+      - local
+      - remote
+      - remotekc
+      - remotedb
+      - ssh
+      - proxy
+    env_file:
+      - .env
+    environment:
+      VIRTUAL_HOST: ${UCE_PUBLIC_HOST:-}
+      VIRTUAL_PORT: ${UCE_PUBLISHED_PORT:-}
+      # Compose-derived legacy runtime vars (deduplicated from .env host/port primitives).
+      UCE_AUTH_PUBLIC_URL: ${KEYCLOAK_PUBLIC_SCHEME:-http}://${KEYCLOAK_PUBLIC_HOST:-}:${KEYCLOAK_PUBLISHED_PORT:-}
+      UCE_AUTH_REDIRECT_URL: ${UCE_SCHEME:-http}://${KEYCLOAK_PUBLIC_HOST:-}:${UCE_PUBLISHED_PORT:-}/auth
+      KEYCLOAK_AUTH_SERVER_URL: ${KEYCLOAK_INTERNAL_SCHEME:-http}://uce-keycloak-auth:${KEYCLOAK_INTERNAL_PORT:-8080}
+      POSTGRESQL_HIBERNATE_CONNECTION_URL: jdbc:postgresql://${DB_HOST:-}:${DB_RUNTIME_PORT:-5432}/${DB_NAME:-}
+      POSTGRESQL_HIBERNATE_CONNECTION_USERNAME: ${DB_USER:-}
+      POSTGRESQL_HIBERNATE_CONNECTION_PASSWORD: ${DB_PASSWORD:-}
     ports:
-      - "8008:4567"
+      - "${UCE_PUBLISHED_PORT:-}:${UCE_INTERNAL_PORT:-4567}"
     depends_on:
       uce-postgresql-db:
         condition: service_healthy
+        required: false
     networks:
       - app_net
     volumes:
-      - "${UCE_CONFIG_PATH}:/app/config/uceConfig.json"
-      - "./database:/app/database"
+      - "${UCE_CONFIG_PATH:-./uce.portal/uce.common/src/main/resources/defaultUceConfig.json}:/app/config/uceConfig.json:ro"
+      - "${UCE_DATABASE_SCRIPTS_HOST_PATH:-./database}:${DATABASE_SCRIPTS_LOCATION:-/app/database}"
+      # External templates (host-mounted) so UI can be edited without rebuilding the image
+      - "${UCE_TEMPLATES_HOST_PATH:-./uce.portal/resources/templates}:${TEMPLATES_LOCATION:-/app/uce.portal/resources/templates}"
     command: [
       "java",
       "--add-opens=java.base/java.util=ALL-UNNAMED",
-      "--add-opens=java.util/java.base=ALL-UNNAMED",
       "-jar",
       "./target/webportal-jar-with-dependencies.jar",
       "-cf",
       "/app/config/uceConfig.json"
     ]
 
+  uce-ssh-pg-db-tunnel:
+    container_name: uce-ssh-pg-db-tunnel
+    image: alpine:3.21
+    pull_policy: always
+    env_file:
+      - .env
+    environment:
+      UCE_SSH_HOST: ${SSH_HOST:-}
+      UCE_DB_HOST: ${SSH_REMOTE_DB_HOST:-}
+      UCE_DB_PORT: ${SSH_REMOTE_DB_PORT:-}
+      UCE_LOCAL_FORWARD_PORT: ${SSH_LOCAL_PORT:-}
+      UCE_SSH_PASSWORD: ${SSH_PASSWORD:-}
+    profiles:
+      - ssh
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-ec"]
+    command:
+      - |
+        apk add --no-cache openssh-client sshpass
+        mkdir -p /root/.ssh
+        chmod 700 /root/.ssh
+        if [ -z "$${UCE_SSH_HOST:-}" ]; then
+          echo "UCE_SSH_HOST is not set. Configure .env before enabling profile ssh."
+          sleep infinity
+        fi
+        while true; do
+          if [ -n "$${UCE_SSH_PASSWORD:-}" ]; then
+            SSHPASS="$${UCE_SSH_PASSWORD}" sshpass -e ssh \
+              -N \
+              -o ExitOnForwardFailure=yes \
+              -o ServerAliveInterval=30 \
+              -o ServerAliveCountMax=3 \
+              -o TCPKeepAlive=yes \
+              -o StrictHostKeyChecking=accept-new \
+              -L 0.0.0.0:$${UCE_LOCAL_FORWARD_PORT:-}:$${UCE_DB_HOST:-}:$${UCE_DB_PORT:-} \
+              "$${UCE_SSH_HOST}"
+          else
+            ssh -i /root/.ssh/id_key \
+              -N \
+              -o ExitOnForwardFailure=yes \
+              -o ServerAliveInterval=30 \
+              -o ServerAliveCountMax=3 \
+              -o TCPKeepAlive=yes \
+              -o StrictHostKeyChecking=accept-new \
+              -L 0.0.0.0:$${UCE_LOCAL_FORWARD_PORT:-}:$${UCE_DB_HOST:-}:$${UCE_DB_PORT:-} \
+              "$${UCE_SSH_HOST}"
+          fi
+          echo "SSH tunnel disconnected, retrying in 5s..."
+          sleep 5
+        done
+    volumes:
+      - ${UCE_SSH_KEY_PATH:-/dev/null}:/root/.ssh/id_key:ro
+    expose:
+      - "${UCE_LOCAL_FORWARD_PORT:-}"
+    networks:
+      - app_net
 
   uce-importer:
     container_name: uce-importer
+    profiles:
+      - import
+    image: uce-importer:local-fast
     build:
       context: .
       dockerfile: ./uce.portal/uce.corpus-importer/Dockerfile
-    depends_on:
-      uce-postgresql-db:
-        condition: service_healthy
+    env_file:
+      - .env
+    environment:
+      POSTGRESQL_HIBERNATE_CONNECTION_URL: jdbc:postgresql://${DB_HOST:-}:${DB_RUNTIME_PORT:-5432}/${DB_NAME:-}
+      POSTGRESQL_HIBERNATE_CONNECTION_USERNAME: ${DB_USER:-}
+      POSTGRESQL_HIBERNATE_CONNECTION_PASSWORD: ${DB_PASSWORD:-}
     networks:
       - app_net
     volumes:
-      - "./database:/app/database"
-      # MOUNT HERE ALL UIMA CORPORA INTO THE '/app/input/corpora/' PATH - EXAMPLE BELOW FOR ZOBODAT CORPUS: 
-      # - "./../test_data/corpora/zobodat:/app/input/corpora/zobodat"
-      - "./../uce_testcorpora:/app/input/corpora/uce_testcorpora"
+      # Optional: DB scripts for triggers/procedures. The importer will attempt to run them; if missing it continues.
+      - "${IMPORTER_DATABASE_HOST_PATH:-./database}:/app/database:ro"
+      # Mount the corpus input directory (XMI/archives + corpusConfig.json)
+      - "${IMPORTER_CORPORA_HOST_PATH:-./data/importer}:/app/input:ro"
     command: [
       "java",
       "-jar",
       "./target/importer.jar",
-      "-srcDir", "/app/input/corpora/",
-      "-num", "1",
-      "-t", "${IMPORTER_THREADS}"
+      "-src", "${IMPORTER_IMPORT_SRC:-/app/input}",
+      "-num", "${IMPORTER_NUMBER:-1}",
+      "-t", "${IMPORTER_THREADS:-4}"
     ]
 
   uce-postgresql-db:
     container_name: uce-postgresql-db
-    image: docker.texttechnologylab.org/uce/uce-postgresql:0.0.1
+    image: ${POSTGRES_IMAGE:-docker.texttechnologylab.org/uce/uce-postgresql:latest}
+    pull_policy: always
+    profiles:
+      - local
+      - remotekc
+      - db
+    env_file:
+      - .env
     environment:
-      POSTGRES_DB: uce
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: 1234 
+      POSTGRES_DB: ${DB_NAME:-}
+      POSTGRES_USER: ${DB_USER:-}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-}
     ports:
-      - "8002:5432"
+      - "${DB_PORT:-5432}:${DB_INTERNAL_PORT:-5432}"
     volumes:
+      - ${POSTGRES_DATA_HOST_PATH:-./.dev/storage/postgres}:/var/lib/postgresql/data
       #- ./../backups/2025-07-03_BIOfid_Nova-Data/db-data:/var/lib/postgresql/data
-      - ${POSTGRESQL_CONFIG}:/etc/postgresql.conf
+      - ${POSTGRESQL_CONFIG:-./database/postgresql.conf}:/etc/postgresql.conf
     command: -c config_file=/etc/postgresql.conf
     networks:
       - app_net
     healthcheck:
-        test: ["CMD-SHELL", "pg_isready -U postgres"]
+        test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-}"]
         interval: 5s
         timeout: 5s
         start_period: 10s
         retries: 20
 
+  uce-keycloak-auth:
+    container_name: uce-keycloak-auth
+    image: ${KEYCLOAK_IMAGE:-quay.io/keycloak/keycloak:26.2.5}
+    pull_policy: always
+    profiles:
+      - local
+      - remotedb
+      - ssh
+      - proxy
+    env_file:
+      - .env
+    ports:
+      - "${KEYCLOAK_PUBLISHED_PORT:-}:${KEYCLOAK_INTERNAL_PORT:-8080}"
+    volumes:
+      - ${KC_REALM_IMPORT_PATH:-./auth/uce-realm.json}:/opt/keycloak/data/import/uce-realm.json
+      # Persist Keycloak data (incl. embedded DB) outside the container
+      # - ${KEYCLOAK_DATA_HOST_PATH:-./data/keycloak}:/opt/keycloak/data
+    command:
+      - ${KEYCLOAK_START_CMD:-start}
+      - --features=${KEYCLOAK_FEATURES:-scripts}
+      - --import-realm
+      - --import-path=${KEYCLOAK_IMPORT_PATH:-/opt/keycloak/data/import/uce-realm.json}
+    environment:
+      VIRTUAL_HOST: ${KEYCLOAK_PUBLIC_HOST:-}
+      VIRTUAL_PORT: ${KEYCLOAK_PUBLISHED_PORT:-}
+      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USERNAME:-}
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PW:-}
+      KC_HOSTNAME_STRICT_BACKCHANNEL: ${KC_HOSTNAME_STRICT_BACKCHANNEL:-true}
+      KC_HOSTNAME_STRICT: ${KC_HOSTNAME_STRICT:-false}
+      KC_HTTP_RELATIVE_PATH: ${KC_HTTP_RELATIVE_PATH:-/}
+      KC_HTTP_ENABLED: ${KC_HTTP_ENABLED:-true}
+      KC_HEALTH_ENABLED: ${KC_HEALTH_ENABLED:-true}
+      KC_METRICS_ENABLED: ${KC_METRICS_ENABLED:-true}
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    healthcheck:
+      # Keycloak 26 exposes health endpoints on the management interface (port 9000).
+      test: ['CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)new java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:9000/health/live']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    networks:
+      - app_net
+
+  uce-keycloak-config:
+    image: ${KEYCLOAK_CONFIG_IMAGE:-docker.texttechnologylab.org/uce-core-feedback-keycloak-config:latest}
+    pull_policy: always
+    container_name: uce-keycloak-config
+    profiles:
+      - local
+      - remotedb
+      - ssh
+      - proxy
+    env_file:
+      - .env
+    depends_on:
+      uce-keycloak-auth:
+        condition: service_healthy
+    environment:
+      KC_BASE_URL: ${KEYCLOAK_INTERNAL_SCHEME:-http}://uce-keycloak-auth:${KEYCLOAK_INTERNAL_PORT:-8080}
+      KC_MGMT_URL: ${KEYCLOAK_INTERNAL_SCHEME:-http}://uce-keycloak-auth:${KEYCLOAK_MGMT_PORT:-9003}
+      KC_REALM: ${KC_REALM:-uce}
+      KC_CLIENT_ID: ${KC_CLIENT_ID:-uce-web}
+      KC_ADMIN_USERNAME: ${KC_ADMIN_USERNAME:-}
+      KC_ADMIN_PW: ${KC_ADMIN_PW:-}
+      UCE_PUBLIC_URL: ${UCE_SCHEME:-http}://${UCE_PUBLIC_HOST:-localhost}:${UCE_PUBLISHED_PORT:-}
+      KEYCLOAK_CREDENTIALS_SECRET: ${KEYCLOAK_CREDENTIALS_SECRET:-}
+      KC_SSL_REQUIRED: ${KC_SSL_REQUIRED:-none}
+      KC_SSO_SESSION_IDLE_TIMEOUT: ${KC_SSO_SESSION_IDLE_TIMEOUT:-}
+    networks:
+      - app_net
+
+  uce-keycloak-sync-from-csv:
+    container_name: uce-keycloak-sync-from-csv
+    profiles:
+      - keycloak-csv
+    image: ${KEYCLOAK_SYNC_IMAGE:-docker.texttechnologylab.org/uce-core-feedback-keycloak-sync-from-csv:latest}
+    pull_policy: always
+    # build:
+    #   context: .
+    #   dockerfile: ./deploy/keycloak-sync-from-csv.Dockerfile
+    env_file:
+      - .env
+    environment:
+      KC_BASE_URL: ${KEYCLOAK_INTERNAL_SCHEME:-http}://${KEYCLOAK_PUBLIC_HOST:-}:${KEYCLOAK_PUBLISHED_PORT:-}
+      KC_REALM: ${KC_REALM:-}
+      KC_ADMIN_USERNAME: ${KC_ADMIN_USERNAME:-}
+      KC_ADMIN_PW: ${KC_ADMIN_PW:-}
+      CSV_PATH: ${KEYCLOAK_SYNC_CSV_PATH_CONTAINER:-/data/principals.csv}
+      MAX_ROWS: ${KEYCLOAK_SYNC_MAX_ROWS:-}
+      DRY_RUN: ${KEYCLOAK_SYNC_DRY_RUN:-false}
+      CREATE_GROUPS: ${KEYCLOAK_SYNC_CREATE_GROUPS:-true}
+      CREATE_USERS: ${KEYCLOAK_SYNC_CREATE_USERS:-true}
+      UPDATE_USERS: ${KEYCLOAK_SYNC_UPDATE_USERS:-true}
+    volumes:
+      - ${KEYCLOAK_SYNC_CSV_PATH_HOST:-./principals.csv}:${KEYCLOAK_SYNC_CSV_PATH_CONTAINER:-/data/principals.csv}:ro
+    networks:
+      - app_net
+
   uce-minio-storage:
     image: minio/minio
     container_name: minio
+    profiles:
+      - minio
+    env_file:
+      - .env
     ports:
       - "9000:9000"
       - "9001:9001"
@@ -114,39 +308,39 @@ services:
       - MINIO_ROOT_USER=admin
       - MINIO_ROOT_PASSWORD=12345678
     volumes:
-      - ${MINIO_STORAGE_DATA}:/data
+      - ${MINIO_STORAGE_DATA:-./data/minio}:/data
     command: server /data --console-address ":9001"
     networks:
       - app_net
-
-  uce-keycloak-auth:
-    container_name: uce-keycloak-auth
-    image: quay.io/keycloak/keycloak:26.2.5
+  
+  uce-fuseki-sparql:
+    container_name: uce-fuseki-sparql
+    image: docker.texttechnologylab.org/uce/uce-fuseki-sparql:0.0.1
+    profiles:
+      - fuseki
     ports:
-      - "8080:8080"
+      - "8030:5430"
     volumes:
-      - ${KC_REALM_IMPORT_PATH}:/opt/keycloak/data/import/uce-realm.json
-    command:
-      - start
-      - --features=scripts
-      - --import-realm
-      - --import-path=/opt/keycloak/data/import/uce-realm.json
+      - ${TDB2_DATA}:/fuseki/databases/${TDB2_ENDPOINT}
     environment:
-      KC_BOOTSTRAP_ADMIN_USERNAME: ${KC_ADMIN_USERNAME}
-      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KC_ADMIN_PW}
-      KC_HOSTNAME_STRICT_BACKCHANNEL: true
-      KC_HOSTNAME_STRICT: false
-      KC_HTTP_RELATIVE_PATH: /
-      KC_HTTP_ENABLED: true
-      KC_HEALTH_ENABLED: true
-      KC_METRICS_ENABLED: true
-    extra_hosts:
-      - "host.docker.internal:host-gateway"
-    healthcheck:
-      test: ['CMD-SHELL', '[ -f /tmp/HealthCheck.java ] || echo "public class HealthCheck { public static void main(String[] args) throws java.lang.Throwable { System.exit(java.net.HttpURLConnection.HTTP_OK == ((java.net.HttpURLConnection)new java.net.URL(args[0]).openConnection()).getResponseCode() ? 0 : 1); } }" > /tmp/HealthCheck.java && java /tmp/HealthCheck.java http://localhost:8080/auth/health/live']
-      interval: 5s
-      timeout: 5s
-      retries: 20
+      - JAVA_OPTIONS=${JAVA_OPTIONS}
+    command: --update --tdb2 --port 5430 --loc /fuseki/databases/${TDB2_ENDPOINT} /${TDB2_ENDPOINT}
+    networks:
+      - app_net
+    
+  uce-rag-service:
+    container_name: uce-rag-service
+    profiles:
+      - rag
+    build:
+      context: .
+      dockerfile: ./rag/Dockerfile
+    ports:
+      - "8080:5678" 
+    depends_on:
+      uce-postgresql-db:
+        condition: service_started
+        required: false
     networks:
       - app_net
 

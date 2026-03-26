@@ -17,6 +17,7 @@ import org.texttechnologylab.uce.common.models.search.OrderByColumn;
 import org.texttechnologylab.uce.common.models.search.SearchLayer;
 import org.texttechnologylab.uce.common.models.search.SearchOrder;
 import org.texttechnologylab.uce.common.models.search.SearchType;
+import org.texttechnologylab.uce.common.models.search.promode.ProModeSyntaxException;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
 import org.texttechnologylab.uce.search.*;
 import org.texttechnologylab.uce.web.CustomFreeMarkerEngine;
@@ -144,8 +145,18 @@ public class SearchApi implements UceApi {
         var languageResources = LanguageResources.fromRequest(ctx);
 
         try {
+            if (requestBody == null || !requestBody.containsKey("corpusId") || requestBody.get("corpusId") == null) {
+                ctx.status(400);
+                ctx.result("No corpus selected.");
+                return;
+            }
             var searchInput = requestBody.get("searchInput").toString();
             var corpusId = Long.parseLong(requestBody.get("corpusId").toString());
+            if (corpusId <= 0) {
+                ctx.status(400);
+                ctx.result("No corpus selected.");
+                return;
+            }
             model.put("corpusVm", db.getCorpusById(corpusId).getViewModel());
             var fulltextOrNeLayer = requestBody.get("fulltextOrNeLayer").toString();
             var useEmbeddings = Boolean.parseBoolean(requestBody.get("useEmbeddings").toString());
@@ -221,6 +232,9 @@ public class SearchApi implements UceApi {
         } catch (SQLGrammarException grammarException) {
             ctx.status(406);
             ctx.result(languageResources.get("searchGrammarError"));
+        } catch (ProModeSyntaxException syntaxException) {
+            ctx.status(406);
+            ctx.result(syntaxException.getMessage());
         } catch (DocumentAccessDeniedException dade) {
             AccessDeniedRenderer.render(
                     ctx,
@@ -269,6 +283,47 @@ public class SearchApi implements UceApi {
             logger.error("Error starting a new layered search with the request body:\n " + gson.toJson(requestBody), ex);
             ctx.status(500);
             ctx.render("defaultError.ftl");
+        }
+    }
+
+    public void batchStatus(Context ctx) {
+        var result = new HashMap<String, Object>();
+        try {
+            result.put("status", 410);
+            result.put("message", "batch mode is disabled");
+            ctx.json(result);
+        } catch (Exception ex) {
+            logger.error("Error loading batch status.", ex);
+            ctx.status(500);
+            result.put("status", 500);
+            result.put("message", "error loading batch status");
+            ctx.json(result);
+        }
+    }
+
+    public void batchCancel(Context ctx) {
+        var result = new HashMap<String, Object>();
+        try {
+            result.put("status", 410);
+            result.put("cancelled", false);
+            result.put("message", "batch mode is disabled");
+            ctx.json(result);
+        } catch (Exception ex) {
+            logger.error("Error cancelling batch search.", ex);
+            ctx.status(500);
+            result.put("status", 500);
+            result.put("message", "error cancelling batch search");
+            ctx.json(result);
+        }
+    }
+
+    public void batchEvents(Context ctx) {
+        try {
+            ctx.status(410);
+            ctx.result("batch mode is disabled");
+        } catch (Exception ex) {
+            logger.error("Error streaming batch SSE events.", ex);
+            ctx.status(500);
         }
     }
 

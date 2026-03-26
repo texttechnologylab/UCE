@@ -32,4 +32,15 @@ public class RenderModeConfig {
      * Optional description so UIs can surface more context about the mode.
      */
     private String description;
+
+    /**
+     * Optional pointer to a JSON render specification used by generic renderers.
+     * <p>
+     * Supported prefixes:
+     * <ul>
+     *     <li>{@code FILE::/absolute/or/relative/path.json}</li>
+     *     <li>{@code CLASSPATH::render-specs/mySpec.json}</li>
+     * </ul>
+     */
+    private String specPath;
 }

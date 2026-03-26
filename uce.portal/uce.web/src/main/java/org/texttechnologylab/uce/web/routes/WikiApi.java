@@ -104,9 +104,10 @@ public class WikiApi implements UceApi {
                 return;
             }
 
-            // Determine the type. A wikiID always has the following format: <type>-<model_id>
+            // Determine the type. Typical formats are <type>-<id> and taxon variants like TA-GA-<id> / TA-GN-<id>.
             var split = wid.split("-");
             var type = split[0];
+            String taxonSubtype = null;
 
             // Check if we have loaded, built and cached that wiki page before. We don't re-render it then.
             // BUT: We have different wiki views for different languages so the lang needs to be part of the key!
@@ -122,8 +123,21 @@ public class WikiApi implements UceApi {
             }
 
             // A missing id isn't necessarily bad, as we also have documentation pages etc.
-            var id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(split[1]), (ex) -> {
-            });
+            Long id = null;
+            if (type.equals("TA") && split.length >= 3) {
+                taxonSubtype = split[1];
+                id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(split[2]), (ex) -> {
+                });
+            } else {
+                if (type.startsWith("TA_")) {
+                    taxonSubtype = type.substring(3);
+                    type = "TA";
+                }
+                if (split.length >= 2) {
+                    id = ExceptionUtils.tryCatchLog(() -> Long.parseLong(split[1]), (ex) -> {
+                    });
+                }
+            }
 
             var renderView = "";
             if (type.startsWith("DOC")) {
@@ -138,7 +152,12 @@ public class WikiApi implements UceApi {
                 renderView = "/wiki/pages/namedEntityAnnotationPage.ftl";
             } else if (type.startsWith("TA")) {
                 // We then clicked onto a Taxon wiki item, but which one?
-                var clazz = type.equals("TA_GN") ? GnFinderTaxon.class : GazetteerTaxon.class;
+                if (id == null) {
+                    model.put("information", languageResources.get("missingParameterError"));
+                    ctx.render("defaultError.ftl");
+                    return;
+                }
+                var clazz = "GN".equalsIgnoreCase(taxonSubtype) ? GnFinderTaxon.class : GazetteerTaxon.class;
                 model.put("vm", wikiService.buildTaxonWikipageViewModel(id, coveredText, clazz));
                 renderView = "/wiki/pages/taxonAnnotationPage.ftl";
             } else if (type.equals("TP") || type.equals("TD")) {

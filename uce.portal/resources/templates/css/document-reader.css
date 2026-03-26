@@ -31,9 +31,18 @@
 }*/
 
 body {
+    --reader-sidebar-width: 500px;
+    --reader-sidebar-viz-width: min(74vw, 1240px);
+    --reader-sidebar-drawer-width: min(92vw, 620px);
+    --reader-sidebar-drawer-viz-width: min(96vw, 840px);
+    --reader-middle-min: 640px;
+    --reader-middle-ideal: 52vw;
+    --reader-middle-max: 1120px;
+    overflow-x: hidden;
 }
 
 .pages-loader-popup {
+    /* display: none !important; */
     position: fixed;
     left: 12px;
     bottom: 12px;
@@ -50,14 +59,145 @@ body {
     padding-bottom: 3rem;
 }
 
+.reader-shell-container {
+    padding-top: 0;
+    padding-bottom: 0;
+}
+
+.reader-view-slot {
+    min-width: 0;
+}
+
+.reader-view-layout {
+    display: flex;
+    align-items: stretch;
+    width: 100%;
+    min-height: 100vh;
+    position: relative;
+}
+
+/* Reader annotation popovers/tooltips must render above both left/right drawer handles. */
+body .popover,
+body .tooltip {
+    z-index: 2306 !important;
+}
+
+.reader-middle-pane {
+    flex: 1 1 auto;
+    min-width: 0;
+    display: flex;
+    justify-content: center;
+}
+
+.reader-news-column {
+    width: clamp(var(--reader-middle-min), var(--reader-middle-ideal), var(--reader-middle-max));
+    max-width: calc(100vw - 48px);
+}
+
+/* Feedback reader view: no artificial top/bottom spacing around the central pane. */
+body.feedback-layout .site-container,
+body.feedback-layout .site-container.with-view-nav {
+    padding-top: 0 !important;
+    padding-bottom: 0 !important;
+}
+
 .reader-container {
     padding: 0 !important;
     background-color: ghostwhite;
     border: lightgray 1px solid;
     box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
+    min-height: 100vh;
 }
 
-.reader-container .header {
+.reader-main {
+    min-width: 0;
+    flex: 1 1 auto;
+}
+
+/* Feedback-only fallback: keep feedback middle pane centered. */
+body.feedback-layout .container-fluid > .flexed.m-0.p-0 {
+    display: block !important;
+    position: relative;
+}
+
+body.feedback-layout .reader-main.w-100 {
+    width: clamp(760px, 56vw, 1180px) !important;
+    max-width: calc(100vw - 48px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    flex: none !important;
+}
+
+body.feedback-layout .reader-main.w-100 > .reader-container.container {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+body.feedback-layout.sidebar-drawer-mode .reader-main.w-100 {
+    width: clamp(760px, 62vw, 1280px) !important;
+}
+
+/* Feedback reader hard-centering fallback (class-driven, browser-proof). */
+body.feedback-layout .container-fluid > .flexed.feedback-row-centered {
+    display: block !important;
+    position: relative;
+}
+
+body.feedback-layout .reader-main.reader-feedback-centered {
+    width: clamp(760px, 56vw, 1180px) !important;
+    max-width: calc(100vw - 48px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    flex: none !important;
+}
+
+/* DOM-driven fallback: if feedback content exists, center regardless of body mode classes. */
+.container-fluid > .flexed.m-0.p-0:has(.feedback-main) {
+    display: block !important;
+    position: relative;
+}
+
+.reader-main:has(.feedback-main) {
+    width: clamp(760px, 56vw, 1180px) !important;
+    max-width: calc(100vw - 48px) !important;
+    margin-left: auto !important;
+    margin-right: auto !important;
+    flex: none !important;
+}
+
+.reader-main:has(.feedback-main) > .reader-container.container {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+.reader-main:has(.feedback-main) .reader-container > .reader-middle-header {
+    display: none !important;
+}
+
+body.sidebar-drawer-mode .reader-main:has(.feedback-main) {
+    width: clamp(760px, 62vw, 1280px) !important;
+}
+
+body.feedback-layout .reader-main.reader-feedback-centered > .reader-container.container {
+    width: 100% !important;
+    max-width: none !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+}
+
+body.feedback-layout .reader-main.reader-feedback-centered .reader-container > .reader-middle-header {
+    display: none !important;
+}
+
+body.feedback-layout.sidebar-drawer-mode .reader-main.reader-feedback-centered {
+    width: clamp(760px, 62vw, 1280px) !important;
+}
+
+.reader-middle-header {
     position: sticky;
     box-shadow: rgba(0, 0, 0, 0.1) 0px 10px 50px;
     padding: 2.5rem;
@@ -65,6 +205,35 @@ body {
     z-index: 4;
     top: 0;
     background-color: ghostwhite;
+}
+
+.reader-middle-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+}
+
+.reader-middle-header-title-wrap {
+    margin-left: 0.5rem;
+    margin-right: 0.5rem;
+    text-align: center;
+    flex: 1 1 auto;
+}
+
+.reader-middle-header-title-wrap h5 {
+    margin-bottom: 0.35rem;
+}
+
+.reader-middle-header-actions {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+}
+
+.reader-middle-header-language {
+    min-width: 2ch;
+    text-align: right;
 }
 
 /* Topic navigation buttons */
@@ -395,18 +564,58 @@ body {
 }
 
 .side-bar {
-    width: 500px;
+    width: var(--reader-sidebar-width);
+    flex: 0 0 auto;
     transition: 0.5s;
     background-color: ghostwhite;
     border-left: lightgray 1px solid;
     border-top: lightgray 1px solid;
     border-right: lightgray 1px solid;
-    position: sticky;
+    position: fixed;
     right: 0;
-    top: -1px;
+    top: 0;
     overflow-y: auto;
     box-shadow: rgba(0, 0, 0, 0.16) 0px 1px 4px;
     height: 100vh;
+    z-index: 1100;
+}
+
+.side-bar.sidebar-collapsed {
+    width: 20px !important;
+    min-width: 20px !important;
+    max-width: 20px !important;
+    overflow: hidden !important;
+}
+
+.side-bar.sidebar-collapsed .tab-header,
+.side-bar.sidebar-collapsed .side-bar-content,
+.side-bar.sidebar-collapsed .title-image,
+.side-bar.sidebar-collapsed .tab-content {
+    opacity: 0 !important;
+    visibility: hidden !important;
+    pointer-events: none !important;
+}
+
+.sidebar-drawer-toggle {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    position: fixed;
+    right: var(--sidebar-drawer-open-width, var(--reader-sidebar-width));
+    top: 50%;
+    transform: translateY(-50%);
+    z-index: 1205;
+    border: 1px solid lightgray;
+    background: ghostwhite;
+    color: var(--secondary);
+    border-right: 0;
+    border-radius: 12px 0 0 12px;
+    width: 40px;
+    height: 72px;
+}
+
+.sidebar-drawer-backdrop {
+    display: none;
 }
 
 .side-bar .title-image {
@@ -626,6 +835,11 @@ body {
     display: flex;
     border-bottom: 1px solid #ccc;
     margin-bottom: 10px;
+    position: sticky;
+    top: 0;
+    z-index: 1110;
+    background: ghostwhite;
+    pointer-events: auto;
 }
 
 .tab-header .tab-btn {
@@ -636,6 +850,9 @@ body {
     background: #f7f7f7;
     border-right: 1px solid #ccc;
     font-weight: bold;
+    position: relative;
+    z-index: 1111;
+    pointer-events: auto;
 }
 
 .tab-header .tab-btn:last-child {
@@ -651,14 +868,16 @@ body {
     display: none;
     height: 100%;
     position: relative;
+    z-index: 1;
 }
 
 .tab-content .tab-pane.active {
     display: block;
 }
 .side-bar.visualization-expanded {
-    width: 150vw !important;
-    transition: width 0.3s ease;
+    width: var(--reader-sidebar-viz-width) !important;
+    flex-basis: var(--reader-sidebar-viz-width) !important;
+    transition: width 0.3s ease, flex-basis 0.3s ease;
 }
 
 .tab-pane .visualization-wrapper {
@@ -708,27 +927,36 @@ body {
 }
 
 /* Bottom Navigation */
-.tab-pane .viz-bottom-nav {
-    position: fixed;
-    right: 0%;
-    bottom: 30px;
-    transform: translateX(-50%);
+.side-bar .tab-pane .viz-bottom-nav {
+    position: absolute;
+    left: 16px;
+    right: 16px;
+    bottom: 16px;
+    transform: none;
     width: auto;
     min-width: 320px;
-    max-width: 200vw;
+    max-width: none;
     display: flex;
-    justify-content: space-around;
+    justify-content: center;
+    gap: 6px;
     border-radius: 24px;
     box-shadow: 0 4px 24px rgba(0,0,0,0.12);
     background: #fff;
     border: 1px solid #e0e0e0;
     padding: 0.5rem 1.5rem;
-    z-index: 100;
+    z-index: 10;
     white-space: nowrap;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: thin;
 }
 
 .tab-pane .viz-nav-btn {
-    width: 100%;
+    width: auto;
+    min-width: max-content;
+    flex: 0 0 auto;
+    max-width: 180px;
     padding: 8px;
     border: none;
     background: none;
@@ -737,6 +965,9 @@ body {
     font-weight: 600;
     color: #555;
     transition: color 0.2s, background 0.2s;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
 }
 .viz-nav-btn.active {
     color: #007bff;
@@ -773,6 +1004,64 @@ body {
 .viz-panel .selector-container #similarityTypeSelector:focus {
     border-color: #007bff;
     outline: none;
+}
+
+body.sidebar-drawer-mode:not(.sidebar-drawer-open) .sidebar-drawer-toggle {
+    right: 0;
+}
+
+body.sidebar-drawer-mode.sidebar-drawer-open .sidebar-drawer-toggle {
+    right: var(--sidebar-drawer-open-width, var(--reader-sidebar-drawer-width));
+}
+
+body.sidebar-drawer-mode .sidebar-drawer-backdrop {
+    display: block;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.35);
+    z-index: 1200;
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+    transition: opacity 0.2s ease;
+}
+
+body.sidebar-drawer-mode .side-bar {
+    position: fixed;
+    top: 0;
+    right: 0;
+    width: var(--reader-sidebar-drawer-width);
+    flex-basis: var(--reader-sidebar-drawer-width);
+    max-width: 620px;
+    height: 100vh;
+    z-index: 1201;
+    transform: translateX(102%);
+    transition: transform 0.25s ease, width 0.25s ease, flex-basis 0.25s ease;
+}
+
+body.sidebar-drawer-mode:not(.feedback-layout) .reader-main:not(:has(.feedback-main)) {
+    width: 100% !important;
+    max-width: 100% !important;
+    flex: 1 1 100% !important;
+}
+
+body.sidebar-drawer-mode .side-bar .expander {
+    display: none;
+}
+
+body.sidebar-drawer-mode.sidebar-drawer-open .side-bar {
+    transform: translateX(0);
+}
+
+body.sidebar-drawer-mode.sidebar-drawer-open .sidebar-drawer-backdrop {
+    opacity: 1;
+    visibility: visible;
+    pointer-events: auto;
+}
+
+body.sidebar-drawer-mode .side-bar.visualization-expanded {
+    width: var(--reader-sidebar-drawer-viz-width) !important;
+    flex-basis: var(--reader-sidebar-drawer-viz-width) !important;
 }
 
 #vp-3, #vp-4, #vp-5, #vp-2, #vp-1 {
@@ -950,6 +1239,7 @@ body {
     border-radius: 4px;
     cursor: pointer;
     padding: 0;
+}
 
 .paragraph .paragraph-header {
     border-radius: 16px;
@@ -963,5 +1253,44 @@ body {
     background-color: white;
     color: var(--prime);
     border: 1px solid var(--prime);
+}
 
+.default-reader-view .reader-middle-pane {
+    padding-right: clamp(16px, 2vw, 28px);
+}
+
+.feedback-reader-view .reader-middle-pane {
+    padding-left: clamp(12px, 2vw, 24px);
+    padding-right: clamp(12px, 2vw, 24px);
+}
+
+@media (max-width: 1400px) {
+    body {
+        --reader-sidebar-width: 460px;
+        --reader-sidebar-viz-width: min(72vw, 1080px);
+        --reader-middle-ideal: 56vw;
+    }
+}
+
+@media (max-width: 1200px) {
+    body {
+        --reader-middle-min: 560px;
+        --reader-middle-ideal: 62vw;
+        --reader-sidebar-width: 430px;
+    }
+}
+
+@media (max-width: 980px) {
+    body {
+        --reader-middle-min: min(100vw - 24px, 480px);
+        --reader-middle-ideal: 100%;
+    }
+
+    .reader-news-column {
+        max-width: calc(100vw - 24px);
+    }
+
+    .reader-middle-header {
+        padding: 1.4rem 1rem;
+    }
 }

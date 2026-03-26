@@ -10,6 +10,7 @@
 
                             <#assign corpusConfig = searchState.getCorpusConfig()>
                             <#assign searchId = searchState.getSearchId()>
+                            <#assign showFeatureValuesInCard = (uceConfig.settings.ui.corpusInspector.showAnnotations)!true>
                             <#include '*/search/components/documentCardContent.ftl'>
 
                             <!-- We need to really rethink this UI here. We're adding so many annotations, the UX is horrible
