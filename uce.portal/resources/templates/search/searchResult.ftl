@@ -80,7 +80,7 @@
                                 <div class="enriched-token ml-1 mr-1 ${width}" data-type="${token.getType().name()}">
                                     <div class="flexed align-items-center justify-content-between">
                                         <label class="mb-0 text-dark font-italic ml-1 mr-1 text-center w-100 clickable hoverable value"
-                                               onclick="$(this).closest('.enriched-token').find('.expanded-content').toggle(75)">
+                                               onclick="toggleEnrichedTokenValue(this)">
                                             <span>${token.getValue()}</span><span
                                                     class="ml-1 xsmall-font text">(${token.getType().name()})</span>
                                         </label>
@@ -89,18 +89,170 @@
                                         <div class="display-none expanded-content">
                                             <hr class="mt-1 mb-2 bg-lightgray"/>
                                             <div class="w-100 children-container">
-                                                <label class="mb-0 text">( </label>
-                                                <#list token.getChildren() as child>
-                                                    <label class="mb-0 text small-font block-text">'${child.getValue()}'
-                                                        | </label>
-                                                </#list>
-                                                <label class="mb-0 text"> ) </label>
+                                                <#if token.hasGroupedChildren()>
+                                                    <label class="display-none grouped-children-json">${token.getGroupedChildrenJson()}</label>
+                                                    <div class="grouped-children-chips mb-2"></div>
+                                                    <div class="grouped-children-json-list"></div>
+                                                <#else>
+                                                    <#list token.getChildren() as child>
+                                                        <span class="grouped-child-value-chip <#if child.getMetadata()?has_content>has-meta-tooltip</#if>"
+                                                              <#if child.getMetadata()?has_content>
+                                                                data-toggle="popover"
+                                                                data-container="body"
+                                                                data-boundary="viewport"
+                                                                data-trigger="hover"
+                                                                data-placement="top"
+                                                                data-content="${child.getMetadata()?html}"
+                                                                data-delay='{"show":120,"hide":220}'
+                                                              </#if>>
+                                                            <span class="chip-value-text">${child.getValue()}</span>
+                                                            <#if child.getBadgeText()?has_content>
+                                                                <span class="chip-meta-badge badge-${(child.getBadgeTone()!'neutral')?lower_case}">${child.getBadgeText()}</span>
+                                                            </#if>
+                                                        </span>
+                                                    </#list>
+                                                </#if>
                                             </div>
                                         </div>
                                     </#if>
                                 </div>
                             </#list>
                         </div>
+                        <script>
+                            function toggleEnrichedTokenValue(labelEl) {
+                                var $token = $(labelEl).closest('.enriched-token');
+                                if (!$token.length) return;
+
+                                var $expanded = $token.find('.expanded-content').first();
+                                if (!$expanded.length) return;
+
+                                if ($expanded.is(':visible')) {
+                                    $expanded.stop(true, true).slideUp(75, function () {
+                                        $expanded.removeClass('is-open');
+                                        var $container = $expanded.find('.children-container').first();
+                                        if ($container.length) $container.scrollTop(0);
+                                    });
+                                } else {
+                                    $expanded.stop(true, true).slideDown(75, function () {
+                                        $expanded.addClass('is-open');
+                                        var $container = $expanded.find('.children-container').first();
+                                        if ($container.length) initGroupedChildrenFromJsonStrict($container);
+                                    });
+                                }
+                            }
+
+                            function buildDisplayGroups(grouped) {
+                                var out = {};
+                                if (!grouped || typeof grouped !== 'object') return out;
+                                Object.keys(grouped).forEach(function (k) {
+                                    if (Array.isArray(grouped[k]) && grouped[k].length > 0) {
+                                        out[k] = grouped[k];
+                                    }
+                                });
+                                return out;
+                            }
+
+                            function initGroupedChildrenFromJsonStrict(containerNode) {
+                                var $container = $(containerNode);
+                                if (!$container.length) return;
+                                var jsonText = ($container.find('.grouped-children-json').first().text() || '').trim();
+                                if (!jsonText) return;
+
+                                var grouped;
+                                try {
+                                    grouped = JSON.parse(jsonText);
+                                } catch (e) {
+                                    console.error('Invalid grouped-children JSON payload', e);
+                                    return;
+                                }
+
+                                var displayGroups = buildDisplayGroups(grouped);
+                                var labels = Object.keys(displayGroups);
+                                if (labels.length === 0) return;
+
+                                var $chips = $container.find('.grouped-children-chips').first();
+                                var $list = $container.find('.grouped-children-json-list').first();
+                                if ($chips.length === 0 || $list.length === 0) return;
+                                if ($chips.children().length > 0) return;
+
+                                labels.forEach(function (label, idx) {
+                                    var $btn = $('<button type=\"button\" class=\"btn grouped-children-chip\"></button>');
+                                    if (idx === 0) $btn.addClass('selected');
+                                    $btn.attr('data-group-key', label);
+                                    $btn.text(label);
+                                    $btn.on('click', function () {
+                                        renderGroupedChildrenFromJsonStrict(this, label);
+                                    });
+                                    $chips.append($btn);
+                                });
+
+                                renderGroupedChildrenFromJsonStrict($chips.find('.grouped-children-chip').first(), labels[0]);
+                            }
+
+                            function renderGroupedChildrenFromJsonStrict(btn, key) {
+                                function esc(s) {
+                                    return String(s == null ? '' : s)
+                                        .replace(/&/g, '&amp;')
+                                        .replace(/</g, '&lt;')
+                                        .replace(/>/g, '&gt;')
+                                        .replace(/\"/g, '&quot;')
+                                        .replace(/'/g, '&#39;');
+                                }
+
+                                function renderValueChip(entry) {
+                                    var value = '';
+                                    var meta = '';
+                                    var badgeText = '';
+                                    var badgeTone = 'neutral';
+
+                                    if (entry && typeof entry === 'object' && !Array.isArray(entry)) {
+                                        value = String(entry.value || '');
+                                        meta = String(entry.meta || '');
+                                        badgeText = String(entry.badgeText || '');
+                                        badgeTone = String(entry.badgeTone || 'neutral').toLowerCase();
+                                    } else {
+                                        value = String(entry || '');
+                                    }
+
+                                    var popoverAttr = meta
+                                        ? ' data-toggle=\"popover\" data-container=\"body\" data-boundary=\"viewport\" data-trigger=\"hover\" data-placement=\"top\" data-delay=\"{&quot;show&quot;:120,&quot;hide&quot;:220}\" data-content=\"' + esc(meta) + '\"'
+                                        : '';
+                                    var badgeHtml = badgeText
+                                        ? '<span class=\"chip-meta-badge badge-' + esc(badgeTone) + '\">' + esc(badgeText) + '</span>'
+                                        : '';
+                                    var extraClass = meta ? ' has-meta-tooltip' : '';
+                                    return '<span class=\"grouped-child-value-chip' + extraClass + '\"' + popoverAttr + '>'
+                                        + '<span class=\"chip-value-text\">' + esc(value) + '</span>'
+                                        + badgeHtml
+                                        + '</span>';
+                                }
+
+                                var $btn = $(btn);
+                                var $container = $btn.closest('.children-container');
+                                if (!$container.length) return;
+
+                                var jsonText = ($container.find('.grouped-children-json').first().text() || '').trim();
+                                if (!jsonText) return;
+
+                                var grouped;
+                                try {
+                                    grouped = JSON.parse(jsonText);
+                                } catch (e) {
+                                    console.error('Invalid grouped-children JSON payload', e);
+                                    return;
+                                }
+
+                                var values = Array.isArray(buildDisplayGroups(grouped)[key]) ? buildDisplayGroups(grouped)[key] : [];
+                                var html = values.map(function (v) {
+                                    return renderValueChip(v);
+                                }).join('');
+
+                                $container.find('.grouped-children-chip').removeClass('selected');
+                                $btn.addClass('selected');
+                                $container.find('.grouped-children-json-list').first().html(html);
+                                if (typeof activatePopovers === 'function') activatePopovers();
+                            }
+                        </script>
                         <#if searchState.isEnrichedSearchQueryIsCutoff()>
                             <div class="mb-0 mt-2 alert alert-warning ml-1 mr-1 pt-1 pb-1 pl-2 pr-2 text-center light-border flexed align-items-center justify-content-between">
                                 <i class="fas fa-exclamation-circle"></i>

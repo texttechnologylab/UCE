@@ -5,7 +5,7 @@
 
 .view-mode-nav {
     position: fixed;
-    left: 16px;
+    left: 0;
     top: 80px;
     z-index: 2000;
 
@@ -18,6 +18,12 @@
     border: 1px solid #d7d9dc;
     border-radius: 0;
     box-shadow: 0 12px 28px rgba(0,0,0,0.12);
+    transform: translateX(-115%);
+    transition: transform 0.25s ease;
+}
+
+.view-mode-nav.is-open {
+    transform: translateX(0);
 }
 
 .view-mode-link {
@@ -83,10 +89,12 @@ body.has-view-nav:has(.feedback-main):not(.view-nav-drawer-mode) .view-mode-nav 
 }
 
 .view-mode-toggle {
-    display: none;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
     position: fixed;
-    left: var(--view-nav-toggle-left, -1px);
-    top: var(--view-nav-toggle-top, 84px);
+    left: var(--view-nav-toggle-left, 0px);
+    top: var(--view-nav-toggle-top, 80px);
     height: var(--view-nav-toggle-height, 72px);
     z-index: 2102;
     border: 1px solid #d7d9dc;
@@ -97,12 +105,6 @@ body.has-view-nav:has(.feedback-main):not(.view-nav-drawer-mode) .view-mode-nav 
     width: 40px;
     transform: translateX(0);
     transition: left 0.25s ease, top 0.25s ease, height 0.25s ease;
-}
-
-body.view-nav-drawer-mode .view-mode-toggle {
-    display: inline-flex;
-    align-items: center;
-    justify-content: center;
 }
 
 .view-nav-backdrop {
@@ -125,8 +127,6 @@ body.view-nav-drawer-mode .view-mode-nav {
     top: 80px;
     left: 0;
     width: 210px;
-    transform: translateX(-115%);
-    transition: transform 0.25s ease;
     z-index: 2101;
     border-right: 0;
     border-radius: 0;

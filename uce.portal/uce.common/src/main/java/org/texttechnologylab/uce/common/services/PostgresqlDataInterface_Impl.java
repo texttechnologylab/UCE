@@ -16,6 +16,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.context.annotation.Lazy;
 import org.texttechnologylab.models.authentication.DocumentPermission;
 import org.texttechnologylab.uce.common.annotations.Searchable;
+import org.texttechnologylab.uce.common.config.CommonConfig;
 import org.texttechnologylab.uce.common.config.HibernateConf;
 import org.texttechnologylab.uce.common.exceptions.DatabaseOperationException;
 import org.texttechnologylab.uce.common.exceptions.DocumentAccessDeniedException;
@@ -362,10 +363,56 @@ public final class PostgresqlDataInterface_Impl implements DataInterface {
     @Override
     public List<String> getIdentifiableTaxonsByValue(String token) throws DatabaseOperationException, DocumentAccessDeniedException {
         return executeOperationSafely((session) -> {
-            String sql = "SELECT DISTINCT biofidurl FROM biofidtaxon WHERE primaryname ILIKE :token LIMIT 100";
+            String normalized = token == null ? "" : token.trim();
+            if (normalized.isEmpty()) {
+                return List.of();
+            }
+            String lowered = normalized.toLowerCase(Locale.ROOT);
+            boolean allowContains = lowered.length() >= 7;
+            boolean allowFuzzy = lowered.length() >= 8 && !lowered.contains(" ");
+            int resultLimit = lowered.length() <= 5 ? 30 : 60;
+            double minSimilarity = 0.60d;
 
-            var query = session.createNativeQuery(sql); // No type/class here
-            query.setParameter("token", "%" + token + "%");
+            String sql = """
+                    WITH ranked AS (
+                        SELECT DISTINCT
+                            biofidurl,
+                            CASE
+                                WHEN LOWER(primaryname) = :exact THEN 0
+                                WHEN EXISTS (
+                                    SELECT 1
+                                    FROM regexp_split_to_table(LOWER(primaryname), '[^[:alnum:]]+') AS part
+                                    WHERE part = :exact
+                                ) THEN 1
+                                WHEN :allowContains = TRUE AND LOWER(primaryname) LIKE :contains THEN 3
+                                WHEN :allowFuzzy = TRUE AND similarity(LOWER(primaryname), :exact) >= :minSimilarity THEN 4
+                                ELSE 99
+                            END AS rank_bucket,
+                            similarity(LOWER(primaryname), :exact) AS sim_score
+                        FROM biofidtaxon
+                        WHERE LOWER(primaryname) = :exact
+                           OR EXISTS (
+                               SELECT 1
+                               FROM regexp_split_to_table(LOWER(primaryname), '[^[:alnum:]]+') AS part
+                               WHERE part = :exact
+                           )
+                           OR (:allowContains = TRUE AND LOWER(primaryname) LIKE :contains)
+                           OR (:allowFuzzy = TRUE AND similarity(LOWER(primaryname), :exact) >= :minSimilarity)
+                    )
+                    SELECT biofidurl
+                    FROM ranked
+                    WHERE rank_bucket < 99
+                    ORDER BY rank_bucket ASC, sim_score DESC
+                    LIMIT :resultLimit
+                    """;
+
+            var query = session.createNativeQuery(sql);
+            query.setParameter("exact", lowered);
+            query.setParameter("contains", "%" + lowered + "%");
+            query.setParameter("allowContains", allowContains);
+            query.setParameter("allowFuzzy", allowFuzzy);
+            query.setParameter("minSimilarity", minSimilarity);
+            query.setParameter("resultLimit", resultLimit);
 
             @SuppressWarnings("unchecked")
             List<Object> result = query.getResultList();
@@ -993,7 +1040,9 @@ public final class PostgresqlDataInterface_Impl implements DataInterface {
             if (filters == null || filters.isEmpty()) {
                 useFilters = false;
             } else {
-                var applicableFilters = filters.stream().filter(f -> !(f.getValue().isEmpty() || f.getValue().equals("{ANY}"))).toList();
+                var applicableFilters = filters.stream()
+                        .filter(f -> !(f.getValue().isEmpty() || f.getValue().equals("{ANY}")))
+                        .toList();
                 if (applicableFilters.isEmpty()) {
                     useFilters = false;
                 }
@@ -1240,15 +1289,42 @@ public final class PostgresqlDataInterface_Impl implements DataInterface {
                                                           List<UCEMetadataFilterDto> uceMetadataFilters,
                                                           boolean useTsVectorSearch,
                                                           String schema,
-                                                          String sourceTable
+                                                          String sourceTable,
+                                                          List<String> expandedTerms
                                                           ) throws DatabaseOperationException, DocumentAccessDeniedException {
 
         return executeOperationSafely((session) -> session.doReturningWork((connection) -> {
             DocumentSearchResult search = null;
-            try (var storedProcedure = connection.prepareCall("{call uce_search_layer_" + layer.name().toLowerCase() +
-                                                              "(?::bigint, ?::text[], ?::text, ?::integer, ?::integer, ?::boolean, ?::text, ?::text, ?::jsonb, ?::boolean, ?::text, ?::text, ?::text, ?::integer)}")) {
+            List<String> processedExpandedTerms = expandedTerms == null ? null :
+                    expandedTerms.stream()
+                            .filter(Objects::nonNull)
+                            .map(String::trim)
+                            .filter(s -> !s.isEmpty())
+                            .toList();
+            
+            // Use baseline fulltext function only (no enhanced/safe variants)
+            String functionName = "uce_search_layer_" + layer.name().toLowerCase();
+            
+            try (var storedProcedure = connection.prepareCall("{call " + functionName +
+                                                              "(?::bigint, ?::text[], ?::text, ?::integer, ?::integer, ?::boolean, ?::text, ?::text, ?::jsonb, ?::boolean, ?::text, ?::text, ?::text, ?::integer, ?::text[])}")) {
+                var config = new CommonConfig();
+                int statementTimeoutMs = config.getPostgresqlSearchStatementTimeoutMs();
+                int lockTimeoutMs = config.getPostgresqlSearchLockTimeoutMs();
+                if (statementTimeoutMs > 0 || lockTimeoutMs > 0) {
+                    try (var timeoutStatement = connection.createStatement()) {
+                        if (statementTimeoutMs > 0) {
+                            // Query execution timeout only - Hikari handles connection pooling
+                            timeoutStatement.execute("SET LOCAL statement_timeout = '" + statementTimeoutMs + "ms'");
+                            storedProcedure.setQueryTimeout(Math.max(1, (int) Math.ceil(statementTimeoutMs / 1000d)));
+                        }
+                        if (lockTimeoutMs > 0) {
+                            timeoutStatement.execute("SET LOCAL lock_timeout = '" + lockTimeoutMs + "ms'");
+                        }
+                    }
+                }
+
                 storedProcedure.setInt(1, (int) corpusId);
-                storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.stream().map(this::escapeSql).toArray()));
+                storedProcedure.setArray(2, connection.createArrayOf("text", searchTokens.toArray()));
                 storedProcedure.setString(3, ogSearchQuery);
                 storedProcedure.setInt(4, take);
                 storedProcedure.setInt(5, skip);
@@ -1272,6 +1348,13 @@ public final class PostgresqlDataInterface_Impl implements DataInterface {
 
                 // Document access level
                 storedProcedure.setInt(14, DocumentPermission.DOCUMENT_PERMISSION_LEVEL.READ.ordinal());
+
+                // Expanded search terms (batch processing for enriched search)
+                if (processedExpandedTerms == null || processedExpandedTerms.isEmpty()) {
+                    storedProcedure.setNull(15, java.sql.Types.ARRAY);
+                } else {
+                    storedProcedure.setArray(15, connection.createArrayOf("text", processedExpandedTerms.toArray()));
+                }
 
                 var result = storedProcedure.executeQuery();
                 while (result.next()) {
@@ -1938,19 +2021,10 @@ public final class PostgresqlDataInterface_Impl implements DataInterface {
 
     @Override
     public void saveOrUpdateManyAnnotationLinks(List<AnnotationLink> links) throws DatabaseOperationException, DocumentAccessDeniedException {
-        final int BATCH_SIZE = 1000;
-        // Since the links go in the hundred of millions for giant documents, we have to chunk the bulk inserts...
         executeOperationSafely(session -> {
-            for (int i = 0; i < links.size(); i++) {
-                session.saveOrUpdate(links.get(i));
-
-                // Flush and clear the session every BATCH_SIZE records
-                if (i % BATCH_SIZE == 0 && i > 0) {
-                    session.flush();
-                    session.clear();
-                }
+            for (AnnotationLink link : links) {
+                session.saveOrUpdate(link);
             }
-
             session.flush();
             session.clear();
             return null;
@@ -1959,32 +2033,32 @@ public final class PostgresqlDataInterface_Impl implements DataInterface {
 
     @Override
     public void saveOrUpdateManyDocumentToAnnotationLinks(List<DocumentToAnnotationLink> links) throws DatabaseOperationException, DocumentAccessDeniedException {
-        executeOperationSafely((session -> {
+        executeOperationSafely((session) -> {
             for (var link : links) {
                 session.saveOrUpdate(link);
             }
             return null;
-        }));
+        });
     }
 
     @Override
     public void saveOrUpdateManyAnnotationToDocumentLinks(List<AnnotationToDocumentLink> links) throws DatabaseOperationException, DocumentAccessDeniedException {
-        executeOperationSafely((session -> {
+        executeOperationSafely((session) -> {
             for (var link : links) {
                 session.saveOrUpdate(link);
             }
             return null;
-        }));
+        });
     }
 
     @Override
     public void saveOrUpdateManyDocumentLinks(List<DocumentLink> documentLinks) throws DatabaseOperationException, DocumentAccessDeniedException {
-        executeOperationSafely((session -> {
+        executeOperationSafely((session) -> {
             for (var link : documentLinks) {
                 session.saveOrUpdate(link);
             }
             return null;
-        }));
+        });
     }
 
     @Override

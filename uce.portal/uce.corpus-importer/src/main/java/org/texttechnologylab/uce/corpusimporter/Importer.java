@@ -1331,26 +1331,47 @@ public class Importer {
             }
 
             taxon.setVerified(true);
-            ExceptionUtils.tryCatchLog(
-                    () -> taxon.setRecordId(Long.parseLong(Arrays.stream(taxon.getIdentifier().split("/")).toList().getLast())),
-                    (ex) -> logger.warn("Setting the recordId of a Taxon failed, but continuing the import: ", ex));
             taxon.setMatchedName(t.getMatchedName());
-            taxon.setIdentifier(t.getIdentifier());
             taxon.setMatchedCanonical(t.getMatchedCanonicalFull());
 
-            var biofidUrl = StringUtils.BIOFID_URL_BASE + taxon.getRecordId();
-            var newBiofidTaxons = ExceptionUtils.tryCatchLog(
-                    () -> jenaSparqlService.queryBiofidTaxon(biofidUrl),
-                    (ex) -> logger.error("Error building a BiofidTaxon object from a potential id.", ex));
-            if (newBiofidTaxons != null) {
-                for (var biofidTaxon : newBiofidTaxons) {
-                    biofidTaxon.setCoveredText(t.getCoveredText());
-                    biofidTaxon.setBegin(t.getBegin());
-                    biofidTaxon.setEnd(t.getEnd());
-                    biofidTaxon.setDocument(document);
-                    biofidTaxon.setBiofidUrl(biofidUrl);
-                    biofidTaxon.setOriginalAnnotatedTaxonTable(ReflectionUtils.getTableAnnotationName(GnFinderTaxon.class));
-                    biofidTaxa.add(biofidTaxon);
+            // Identifier can be a list (space and/or pipe separated), similar to Gazetteer.
+            // Keep the original identifier string unchanged in GnFinderTaxon.
+            var splited = new ArrayList<String>();
+            for (var split : taxon.getIdentifier().split("\\|")) {
+                splited.addAll(Arrays.asList(split.split(" ")));
+            }
+            final var splitIds = splited.stream().filter(id -> id != null && !id.isBlank()).collect(Collectors.toCollection(ArrayList::new));
+            if (splitIds.isEmpty()) {
+                gnFinderTaxa.add(taxon);
+                return;
+            }
+
+            // Primary record id from first identifier for compatibility with existing schema behavior.
+            final var primaryIdentifier = splitIds.getFirst();
+            ExceptionUtils.tryCatchLog(
+                    () -> taxon.setRecordId(Long.parseLong(Arrays.stream(primaryIdentifier.split("/")).toList().getLast())),
+                    (ex) -> logger.warn("Setting the recordId of a Taxon failed, but continuing the import: ", ex));
+
+            // Build BioFID taxon entries for each potential identifier.
+            for (var potentialBiofidId : splitIds) {
+                var biofidId = potentialBiofidId;
+                if (potentialBiofidId.contains("gbif.org"))
+                    biofidId = StringUtils.gbifToBIOfidUrl(potentialBiofidId);
+
+                final var biofidUrl = biofidId;
+                var newBiofidTaxons = ExceptionUtils.tryCatchLog(
+                        () -> jenaSparqlService.queryBiofidTaxon(biofidUrl),
+                        (ex) -> logger.error("Error building a BiofidTaxon object from a potential id.", ex));
+                if (newBiofidTaxons != null) {
+                    for (var biofidTaxon : newBiofidTaxons) {
+                        biofidTaxon.setCoveredText(t.getCoveredText());
+                        biofidTaxon.setBegin(t.getBegin());
+                        biofidTaxon.setEnd(t.getEnd());
+                        biofidTaxon.setDocument(document);
+                        biofidTaxon.setBiofidUrl(biofidUrl);
+                        biofidTaxon.setOriginalAnnotatedTaxonTable(ReflectionUtils.getTableAnnotationName(GnFinderTaxon.class));
+                        biofidTaxa.add(biofidTaxon);
+                    }
                 }
             }
             gnFinderTaxa.add(taxon);

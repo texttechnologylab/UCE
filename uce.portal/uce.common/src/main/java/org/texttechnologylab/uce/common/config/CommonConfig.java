@@ -198,6 +198,53 @@ public class CommonConfig {
         return getProperty("postgresql." + prop);
     }
     public int getLocationEnrichmentLimit() {return Integer.parseInt(getPostgresqlProperty("enrichment.location.max"));}
+    public int getPostgresqlSearchStatementTimeoutMs() {
+        var value = getPostgresqlProperty("search.statement.timeout.ms");
+        if (value == null || value.isBlank()) return 90000;
+        return Math.max(0, Integer.parseInt(value));
+    }
+
+    public int getPostgresqlSearchLockTimeoutMs() {
+        var value = getPostgresqlProperty("search.lock.timeout.ms");
+        if (value == null || value.isBlank()) return 5000;
+        return Math.max(0, Integer.parseInt(value));
+    }
+
+    public int getPostgresqlPoolConnectionTimeoutMs() {
+        var value = getPostgresqlProperty("pool.connection.timeout.ms");
+        if (value == null || value.isBlank()) return 30000;
+        return Math.max(1000, Integer.parseInt(value));
+    }
+
+    public int getPostgresqlPoolMinimumIdle() {
+        var value = getPostgresqlProperty("pool.minimum.idle");
+        if (value == null || value.isBlank()) return 2;
+        return Math.max(0, Integer.parseInt(value));
+    }
+
+    public int getPostgresqlPoolMaximumSize() {
+        var value = getPostgresqlProperty("pool.maximum.size");
+        if (value == null || value.isBlank()) return 10;
+        return Math.max(1, Integer.parseInt(value));
+    }
+
+    public int getPostgresqlPoolIdleTimeoutMs() {
+        var value = getPostgresqlProperty("pool.idle.timeout.ms");
+        if (value == null || value.isBlank()) return 600000;
+        return Math.max(10000, Integer.parseInt(value));
+    }
+
+    public int getPostgresqlPoolMaxLifetimeMs() {
+        var value = getPostgresqlProperty("pool.max.lifetime.ms");
+        if (value == null || value.isBlank()) return 1800000;
+        return Math.max(30000, Integer.parseInt(value));
+    }
+
+    public int getPostgresqlPoolLeakDetectionThresholdMs() {
+        var value = getPostgresqlProperty("pool.leak.detection.threshold.ms");
+        if (value == null || value.isBlank()) return 60000;
+        return Math.max(0, Integer.parseInt(value));
+    }
 
     public String getGbifOccurrencesSearchUrl() {
         return getProperty("gbif.occurrences.search.url");
@@ -212,6 +259,24 @@ public class CommonConfig {
     }
 
     public int getSparqlMaxEnrichment() { return Integer.parseInt(getProperty("sparql.max.enrichment")); }
+
+    public int getSparqlBatchSize() {
+        var value = getProperty("sparql.batch.size");
+        if (value == null || value.isBlank()) return 10;
+        return Math.max(1, Integer.parseInt(value));
+    }
+
+    public int getSparqlConcurrentRequestsMax() {
+        var value = getProperty("sparql.concurrent.requests.max");
+        if (value == null || value.isBlank()) return 8;
+        return Math.max(1, Integer.parseInt(value));
+    }
+
+    public int getQueryCacheMaxEntries() {
+        var value = getProperty("query.cache.max.entries");
+        if (value == null || value.isBlank()) return 5000;
+        return Math.max(1, Integer.parseInt(value));
+    }
 
     public long getSessionJobInterval() {
         return Long.parseLong(getProperty("session.job.interval"));

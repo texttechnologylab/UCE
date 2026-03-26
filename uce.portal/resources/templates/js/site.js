@@ -17,6 +17,22 @@ function updateUiState(mutator) {
     history.replaceState(null, '', nextUrl);
 }
 
+function stripLegacyLexiconQueryParams() {
+    const searchParams = new URLSearchParams(window.location.search || '');
+    const keys = ['lex_q', 'lex_char', 'lex_filters', 'lex_sort', 'lex_dir', 'lex_page'];
+    let changed = false;
+    keys.forEach((key) => {
+        if (searchParams.has(key)) {
+            searchParams.delete(key);
+            changed = true;
+        }
+    });
+    if (!changed) return;
+    const cleanSearch = searchParams.toString();
+    const nextUrl = window.location.pathname + (cleanSearch ? ('?' + cleanSearch) : '') + window.location.hash;
+    history.replaceState(null, '', nextUrl);
+}
+
 window.uceUiState = {
     get: function (key) {
         const value = getUiStateParams().get(key);
@@ -87,6 +103,7 @@ function navigateToView(id, options = {}) {
     }
 
     currentView = id;
+    stripLegacyLexiconQueryParams();
     if (window.uceUiState) {
         window.uceUiState.set('view', id);
         if (id !== 'search') {
@@ -103,6 +120,16 @@ function navigateToView(id, options = {}) {
                 'ls',
                 'proMode',
                 'corpusId'
+            ].forEach((key) => window.uceUiState.remove(key));
+        }
+        if (id !== 'lexicon') {
+            [
+                'lex_q',
+                'lex_char',
+                'lex_filters',
+                'lex_sort',
+                'lex_dir',
+                'lex_page'
             ].forEach((key) => window.uceUiState.remove(key));
         }
     }

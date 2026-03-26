@@ -10,10 +10,10 @@ import org.texttechnologylab.uce.common.exceptions.ExceptionUtils;
 import org.texttechnologylab.uce.common.models.authentication.UceUser;
 import org.texttechnologylab.uce.common.models.dto.UCEMetadataFilterDto;
 import org.texttechnologylab.uce.common.models.search.*;
+import org.texttechnologylab.uce.common.models.search.promode.ProModeSyntaxException;
 import org.texttechnologylab.uce.common.services.EmbeddingService;
 import org.texttechnologylab.uce.common.services.JenaSparqlService;
 import org.texttechnologylab.uce.common.services.PostgresqlDataInterface_Impl;
-import org.texttechnologylab.uce.common.services.RAGService;
 import org.texttechnologylab.uce.common.utils.Pair;
 import org.texttechnologylab.uce.common.utils.StringUtils;
 import org.texttechnologylab.uce.common.utils.SystemStatus;
@@ -25,7 +25,10 @@ import java.io.InputStreamReader;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Locale;
+import java.util.Map;
 
 /**
  * Class that encapsulates all search layers within the biofid class
@@ -67,15 +70,21 @@ public class Search_DefaultImpl implements Search {
 
         // First: enrich if wanted (and we can; we need the graph database for it)
         if (enrichSearchTerm && !searchPhrase.isBlank()) {
-            var enrichedSearchQuery = ExceptionUtils.tryCatchLog(
-                    () -> new EnrichedSearchQuery(searchPhrase, db, jenaSparqlService)
-                            .withAll()
-                            .parse(proModeActivated, corpusId),
-                    (ex) -> logger.error("There was an error enriching the following search phrase: " + searchPhrase, ex));
+            EnrichedSearchQuery enrichedSearchQuery = null;
+            try {
+                enrichedSearchQuery = new EnrichedSearchQuery(searchPhrase, db, jenaSparqlService)
+                        .withAll()
+                        .parse(proModeActivated, corpusId);
+            } catch (ProModeSyntaxException syntaxEx) {
+                throw syntaxEx;
+            } catch (Exception ex) {
+                logger.error("There was an error enriching the following search phrase: " + searchPhrase, ex);
+            }
             if(enrichedSearchQuery != null){
                 this.searchState.setEnrichedSearchQuery(enrichedSearchQuery.getEnrichedQuery());
                 this.searchState.setEnrichedSearchTokens(enrichedSearchQuery.getEnrichedSearchTokens());
                 this.searchState.setEnrichedSearchQueryIsCutoff(enrichedSearchQuery.isEnrichedQueryIsCutOff());
+                this.searchState.setExpandedTerms(enrichedSearchQuery.getExpandedTerms());
             }
         }
 
@@ -124,8 +133,19 @@ public class Search_DefaultImpl implements Search {
     public SearchState initSearch(UceUser user) throws SQLGrammarException {
         //var countAll = !this.searchState.getSearchQuery().isEmpty();
         DocumentSearchResult documentSearchResult = executeSearchOnDatabases(true);
-        if (documentSearchResult == null)
-            throw new NullPointerException("Document Init Search returned null - not empty.");
+        if (documentSearchResult == null) {
+            logger.warn("Document init search returned null. Returning empty search state instead of failing hard.");
+            searchState.setCurrentDocuments(new ArrayList<>());
+            searchState.setCurrentDocumentHits(new ArrayList<>());
+            searchState.setDocumentIdxToSnippets(new HashMap<>());
+            searchState.setDocumentIdxToRank(new HashMap<>());
+            searchState.setTotalHits(0);
+            searchState.setFoundNamedEntities(new ArrayList<>());
+            searchState.setFoundTaxons(new ArrayList<>());
+            searchState.setFoundTimes(new ArrayList<>());
+            searchState.setSessionUser(user != null ? user.getUsername() : DocumentPermission.PUBLIC_USERNAME);
+            return searchState;
+        }
 
         var documents = ExceptionUtils.tryCatchLog(() -> db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()),
                 (ex) -> logger.error("Error getting many documents by a list of ids in the search init. " +
@@ -181,7 +201,10 @@ public class Search_DefaultImpl implements Search {
         // Adjust the current page and execute the search again
         this.searchState.setCurrentPage(page);
         var documentSearchResult = executeSearchOnDatabases(false);
-        if (documentSearchResult == null) throw new NullPointerException("Document Search returned null - not empty.");
+        if (documentSearchResult == null) {
+            logger.warn("Document page search returned null for page {}. Keeping previous state.", page);
+            return searchState;
+        }
         var documents = ExceptionUtils.tryCatchLog(() -> db.getManyDocumentsByIds(documentSearchResult.getDocumentIds()),
                 (ex) -> logger.error("Error getting many documents by a list of ids while getting hits for page " + page +
                         " hence returning the last state.", ex));
@@ -200,11 +223,26 @@ public class Search_DefaultImpl implements Search {
      * @return
      */
     private DocumentSearchResult executeSearchOnDatabases(boolean countAll) throws SQLGrammarException {
+        String queryForDb = searchState.getEnrichedSearchQuery() == null
+                ? searchState.getSearchQuery()
+                : searchState.getEnrichedSearchQuery();
+        // For enrichment-heavy searches, pass the original user query and let expanded_terms
+        // drive widening in SQL to avoid giant tsquery strings.
+        if (!searchState.isProModeActivated()
+                && searchState.getExpandedTerms() != null
+                && !searchState.getExpandedTerms().isEmpty()) {
+            queryForDb = searchState.getSearchQuery();
+        }
+
+        var expandedTermsForDb = searchState.isProModeActivated() ? null : searchState.getExpandedTerms();
+        final String dbQuery = queryForDb;
+
+        // Execute search directly without batch processing
         if (searchState.getSearchLayers().contains(SearchLayer.FULLTEXT)) {
             try {
                 return db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
                         searchState.getTake(),
-                        searchState.getEnrichedSearchQuery() == null ? searchState.getSearchQuery() : searchState.getEnrichedSearchQuery(),
+                        dbQuery,
                         searchState.getSearchTokens(),
                         SearchLayer.FULLTEXT,
                         countAll,
@@ -214,7 +252,8 @@ public class Search_DefaultImpl implements Search {
                         searchState.getUceMetadataFilters(),
                         searchState.isProModeActivated(),
                         searchState.getDbSchema(),
-                        searchState.getSourceTable()
+                        searchState.getSourceTable(),
+                        expandedTermsForDb
                         );
             } catch (Exception ex) {
                 logger.error("Error executing a search on the database with search layer FULLTEXT. Search can't be executed.", ex);
@@ -223,12 +262,12 @@ public class Search_DefaultImpl implements Search {
             }
         }
 
-        // Execute the Named Entity search
+        // Execute the Named Entity search (batch processing not applicable for NAMED_ENTITIES)
         if (searchState.getSearchLayers().contains(SearchLayer.NAMED_ENTITIES)) {
             return ExceptionUtils.tryCatchLog(
                     () -> db.defaultSearchForDocuments((searchState.getCurrentPage() - 1) * searchState.getTake(),
                             searchState.getTake(),
-                            searchState.getEnrichedSearchQuery() == null ? searchState.getSearchQuery() : searchState.getEnrichedSearchQuery(),
+                            dbQuery,
                             searchState.getSearchTokens(),
                             SearchLayer.NAMED_ENTITIES,
                             countAll,
@@ -238,7 +277,8 @@ public class Search_DefaultImpl implements Search {
                             searchState.getUceMetadataFilters(),
                             searchState.isProModeActivated(),
                             searchState.getDbSchema(),
-                            searchState.getSourceTable()),
+                            searchState.getSourceTable(),
+                            expandedTermsForDb),
                     (ex) -> logger.error("Error executing a search on the database with search layer NAMED_ENTITIES. Search can't be executed.", ex));
         }
 
@@ -403,5 +443,6 @@ public class Search_DefaultImpl implements Search {
         this.embeddingService = serviceContext.getBean(EmbeddingService.class);
     }
 
-}
+    
 
+}

@@ -74,8 +74,6 @@
 	    <title>${document.getDocumentTitle()}</title>
 	</head>
 	
-	<body class="no-cursor">
-
 <body class="no-cursor<#if isFeedbackMode> feedback-mode</#if><#if hasViewModeNav> has-view-nav</#if>">
 
     <#include "*/messageModal.ftl">
@@ -200,25 +198,25 @@
 
             function updateViewNavTogglePosition() {
                 if (!body.classList.contains('view-nav-drawer-mode')) {
-                    body.style.setProperty('--view-nav-toggle-left', '-1px');
-                    body.style.setProperty('--view-nav-toggle-top', '84px');
+                    body.style.setProperty('--view-nav-toggle-left', '0px');
+                    body.style.setProperty('--view-nav-toggle-top', '80px');
                     body.style.setProperty('--view-nav-toggle-height', '72px');
                     return;
                 }
 
                 if (!nav.classList.contains('is-open')) {
-                    body.style.setProperty('--view-nav-toggle-left', '-1px');
-                    body.style.setProperty('--view-nav-toggle-top', '84px');
+                    body.style.setProperty('--view-nav-toggle-left', '0px');
+                    body.style.setProperty('--view-nav-toggle-top', '80px');
                     body.style.setProperty('--view-nav-toggle-height', '72px');
                     return;
                 }
 
                 const navRect = nav.getBoundingClientRect();
                 if (!navRect || !Number.isFinite(navRect.right)) return;
-                const edgeAlignedLeft = Math.max(0, Math.round(navRect.right));
+                const edgeAlignedLeft = Math.max(0, Math.round(navRect.right) - 1);
                 const toggleHeight = Math.max(40, Math.round(navRect.height));
                 const topAligned = Math.round(navRect.top);
-                const clampedTop = Math.max(16, Math.min(window.innerHeight - toggleHeight - 16, topAligned));
+                const clampedTop = Math.max(0, Math.min(window.innerHeight - toggleHeight, topAligned));
                 body.style.setProperty('--view-nav-toggle-left', edgeAlignedLeft + 'px');
                 body.style.setProperty('--view-nav-toggle-top', clampedTop + 'px');
                 body.style.setProperty('--view-nav-toggle-height', toggleHeight + 'px');
@@ -234,15 +232,7 @@
             }
 
             function computeShouldUseViewNavDrawer() {
-                const currentModeIsDrawer = body.classList.contains('view-nav-drawer-mode');
-                const mainRect = main.getBoundingClientRect();
-                const navRect = nav.getBoundingClientRect();
-                const geometricOverlap = !currentModeIsDrawer && (navRect.right - mainRect.left) > 2;
-                const keepDrawerUntilSafe = currentModeIsDrawer && (navRect.right - mainRect.left) > -24;
-                const mainWidth = mainRect.width || 0;
-                const emergencyNarrow = mainWidth > 0 && mainWidth < VIEW_NAV_COLLAPSE_WIDTH;
-                const leaveEmergency = currentModeIsDrawer && mainWidth > 0 && mainWidth < VIEW_NAV_EXPAND_WIDTH;
-                return geometricOverlap || keepDrawerUntilSafe || emergencyNarrow || leaveEmergency;
+                return true;
             }
 
             function updateViewNavMode(options = {}) {
@@ -307,6 +297,8 @@
             });
 
             updateViewNavMode({ force: true });
+            body.classList.add('view-nav-drawer-mode');
+            close();
             refreshViewNavTogglePositionSmooth();
         })();
     </script>

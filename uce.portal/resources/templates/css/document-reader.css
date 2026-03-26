@@ -42,7 +42,7 @@ body {
 }
 
 .pages-loader-popup {
-    display: none !important;
+    /* display: none !important; */
     position: fixed;
     left: 12px;
     bottom: 12px;

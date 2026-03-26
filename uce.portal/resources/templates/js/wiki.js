@@ -22,6 +22,16 @@ let WikiHandler = (function () {
         this.brokenWikiTargets = new Set();
     }
 
+    WikiHandler.prototype.isLexiconRouteActive = function () {
+        if (typeof currentView !== 'undefined' && currentView) {
+            return currentView === 'lexicon';
+        }
+        if (window.uceUiState && typeof window.uceUiState.get === 'function') {
+            return String(window.uceUiState.get('view') || '') === 'lexicon';
+        }
+        return false;
+    }
+
     WikiHandler.prototype.homePage = {
         wid: "DOC-SEARCH",
         coveredText: "-",
@@ -62,50 +72,43 @@ let WikiHandler = (function () {
         $next.attr('aria-disabled', canGoNext ? 'false' : 'true');
     }
 
-    WikiHandler.prototype.getLexiconUrlParams = function () {
-        return new URLSearchParams(window.location.search || '');
-    }
-
     WikiHandler.prototype.persistLexiconStateToUrl = function () {
-        const params = this.getLexiconUrlParams();
+        if (!this.isLexiconRouteActive()) return;
         const searchInput = String(this.lexiconState.searchInput || '').trim();
         const selectedChar = String(this.lexiconState.selectedChar || '').trim();
         const filters = Array.isArray(this.lexiconState.annotationFilters)
             ? this.lexiconState.annotationFilters.filter(Boolean)
             : [];
 
-        if (searchInput) params.set('lex_q', searchInput);
-        else params.delete('lex_q');
+        if (!window.uceUiState) return;
 
-        if (selectedChar) params.set('lex_char', selectedChar);
-        else params.delete('lex_char');
+        if (searchInput) window.uceUiState.set('lex_q', searchInput);
+        else window.uceUiState.remove('lex_q');
 
-        if (filters.length > 0) params.set('lex_filters', filters.join(','));
-        else params.delete('lex_filters');
+        if (selectedChar) window.uceUiState.set('lex_char', selectedChar);
+        else window.uceUiState.remove('lex_char');
 
-        if (this.lexiconState.sortColumn) params.set('lex_sort', this.lexiconState.sortColumn);
-        else params.delete('lex_sort');
+        if (filters.length > 0) window.uceUiState.set('lex_filters', filters.join(','));
+        else window.uceUiState.remove('lex_filters');
 
-        if (this.lexiconState.sortDirection) params.set('lex_dir', this.lexiconState.sortDirection);
-        else params.delete('lex_dir');
+        if (this.lexiconState.sortColumn) window.uceUiState.set('lex_sort', this.lexiconState.sortColumn);
+        else window.uceUiState.remove('lex_sort');
+
+        if (this.lexiconState.sortDirection) window.uceUiState.set('lex_dir', this.lexiconState.sortDirection);
+        else window.uceUiState.remove('lex_dir');
 
         const page = Math.floor(this.lexiconState.skip / this.lexiconState.take) + 1;
-        if (page > 1) params.set('lex_page', String(page));
-        else params.delete('lex_page');
-
-        const nextSearch = params.toString();
-        const nextUrl = window.location.pathname + (nextSearch ? ('?' + nextSearch) : '') + window.location.hash;
-        history.replaceState(null, '', nextUrl);
+        if (page > 1) window.uceUiState.set('lex_page', String(page));
+        else window.uceUiState.remove('lex_page');
     }
 
     WikiHandler.prototype.applyLexiconStateFromUrl = function () {
-        const params = this.getLexiconUrlParams();
-        const rawSearch = String(params.get('lex_q') || '');
-        const rawChar = String(params.get('lex_char') || '').trim();
-        const rawFilters = String(params.get('lex_filters') || '').trim();
-        const rawSort = String(params.get('lex_sort') || '').trim().toLowerCase();
-        const rawDir = String(params.get('lex_dir') || '').trim().toUpperCase();
-        const rawPage = parseInt(String(params.get('lex_page') || '1'), 10);
+        const rawSearch = String((window.uceUiState && window.uceUiState.get('lex_q')) || '');
+        const rawChar = String((window.uceUiState && window.uceUiState.get('lex_char')) || '').trim();
+        const rawFilters = String((window.uceUiState && window.uceUiState.get('lex_filters')) || '').trim();
+        const rawSort = String((window.uceUiState && window.uceUiState.get('lex_sort')) || '').trim().toLowerCase();
+        const rawDir = String((window.uceUiState && window.uceUiState.get('lex_dir')) || '').trim().toUpperCase();
+        const rawPage = parseInt(String((window.uceUiState && window.uceUiState.get('lex_page')) || '1'), 10);
 
         this.lexiconState.searchInput = rawSearch;
         $('.lexicon-view .search-lexicon-input').val(rawSearch);

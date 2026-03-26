@@ -362,7 +362,112 @@
 .enriched-search-tokens-list .enriched-token .children-container{
     max-height: 200px;
     overflow-y: auto;
+    overflow-x: hidden;
     padding: 3px;
+}
+
+.enriched-search-tokens-list .enriched-token .expanded-content{
+    overflow: hidden;
+}
+
+.enriched-search-tokens-list .enriched-token .children-container .grouped-children-chips{
+    display: flex;
+    gap: 6px;
+    overflow-x: auto;
+    white-space: nowrap;
+    padding: 4px 0 6px;
+    margin-bottom: 2px;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background: linear-gradient(to bottom, rgba(244, 248, 255, 0.98), rgba(244, 248, 255, 0.9));
+    border-bottom: 1px solid rgba(130, 145, 166, 0.28);
+    backdrop-filter: blur(2px);
+}
+
+.enriched-search-tokens-list .enriched-token .children-container .grouped-children-chip{
+    border: 1px solid #b9c4d3;
+    background-color: #fff;
+    color: #2f3f57;
+    border-radius: 999px;
+    font-size: 11px;
+    padding: 2px 10px;
+    cursor: pointer;
+    text-transform: none;
+    font-weight: 600;
+}
+
+.enriched-search-tokens-list .enriched-token .children-container .grouped-children-chip.selected{
+    background-color: var(--prime);
+    border-color: var(--prime);
+    color: #fff;
+}
+
+.enriched-search-tokens-list .enriched-token .children-container .grouped-children-json-list{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    align-items: flex-start;
+    padding-top: 2px;
+}
+
+.enriched-search-tokens-list .enriched-token .children-container .grouped-child-value-chip{
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid #d7dde8;
+    background-color: #f4f6fa;
+    color: #32425a;
+    border-radius: 12px;
+    font-size: 12px;
+    line-height: 1.25;
+    padding: 2px 8px;
+    max-width: 100%;
+    overflow-wrap: anywhere;
+}
+
+.enriched-search-tokens-list .enriched-token .children-container .grouped-child-value-chip .chip-value-text{
+    overflow-wrap: anywhere;
+}
+
+.enriched-search-tokens-list .enriched-token .children-container .grouped-child-value-chip .chip-meta-badge{
+    margin-left: 8px;
+    position: relative;
+    width: 13px;
+    height: 13px;
+    min-width: 13px;
+    border-radius: 999px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 8px;
+    font-weight: 700;
+    line-height: 13px;
+    text-align: center;
+}
+
+.enriched-search-tokens-list .enriched-token .children-container .grouped-child-value-chip .chip-meta-badge::before{
+    content: "";
+    position: absolute;
+    left: -5px;
+    top: 1px;
+    width: 1px;
+    height: 11px;
+    background-color: #c7cfdb;
+}
+
+.enriched-search-tokens-list .enriched-token .children-container .grouped-child-value-chip .chip-meta-badge.badge-accepted{
+    background-color: #6fbf73;
+    color: #fff;
+}
+
+.enriched-search-tokens-list .enriched-token .children-container .grouped-child-value-chip .chip-meta-badge.badge-doubtful{
+    background-color: #e1c75d;
+    color: #3f3320;
+}
+
+.enriched-search-tokens-list .enriched-token .children-container .grouped-child-value-chip .chip-meta-badge.badge-neutral{
+    background-color: #ebeff5;
+    color: #4e5d74;
 }
 
 .sort-container {

@@ -208,7 +208,8 @@ public interface DataInterface {
                                                           List<UCEMetadataFilterDto> uceMetadataFilters,
                                                           boolean useTsVectorSearch,
                                                           String schema,
-                                                          String sourceTable
+                                                          String sourceTable,
+                                                          List<String> expandedTerms
                                                           ) throws DatabaseOperationException, DocumentAccessDeniedException;
 
     /**

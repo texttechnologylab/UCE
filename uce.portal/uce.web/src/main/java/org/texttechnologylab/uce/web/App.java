@@ -189,9 +189,6 @@ public class App {
             try {
                 var result = context.getBean(PostgresqlDataInterface_Impl.class).callGeonameLocationRefresh();
                 logger.info("Finished updating the geoname locations. Updated locations: " + result);
-                logger.info("Trying to refresh the timeline map cache...");
-                context.getBean(MapService.class).refreshCachedTimelineMap(false);
-                logger.info("Finished refreshing the timeline map.");
             } catch (Exception ex){
                 logger.error("There was an error trying to refresh geoname locations in the startup of the web app. App starts normally though.");
             }

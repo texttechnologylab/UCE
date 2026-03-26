@@ -756,6 +756,44 @@ function addSearchToHistory(searchTerm) {
     updateSearchHistoryUI();
 }
 
+function setEnrichedGroupFilter(btn, key) {
+    const $btn = $(btn);
+    const $container = $btn.closest('.children-container');
+    if (!$container.length) return;
+
+    $container.find('.grouped-children-chip').removeClass('selected');
+    $btn.addClass('selected');
+
+    $container.find('.grouped-children-list').addClass('display-none');
+    $container.find('.grouped-children-list[data-group-key="' + key + '"]').removeClass('display-none');
+}
+
+function renderGroupedChildrenFromJson(btn, key) {
+    const $btn = $(btn);
+    const $container = $btn.closest('.children-container');
+    if (!$container.length) return;
+
+    const jsonText = ($container.find('.grouped-children-json').first().text() || '').trim();
+    if (!jsonText) return;
+
+    let grouped;
+    try {
+        grouped = JSON.parse(jsonText);
+    } catch (e) {
+        console.error('Invalid grouped-children JSON payload', e);
+        return;
+    }
+
+    const values = Array.isArray(grouped[key]) ? grouped[key] : [];
+    const html = values.map(function (v) {
+        return "<label class=\"mb-0 text small-font block-text\">'" + String(v) + "'</label>";
+    }).join('');
+
+    $container.find('.grouped-children-chip').removeClass('selected');
+    $btn.addClass('selected');
+    $container.find('.grouped-children-json-list').first().html(html);
+}
+
 /**
  * Handles the opening of the current corpus universe
  */
