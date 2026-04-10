@@ -1,0 +1,88 @@
+## Use an appropriate base image with Java (e.g., OpenJDK)
+#FROM eclipse-temurin:21-jdk
+#
+## Set the working directory inside the container
+#WORKDIR /app
+#
+#RUN apt-get update && apt-get install -y maven
+#
+## Copy the entire uce.portal directory
+#COPY ./uce.portal ./uce.portal
+#
+## Override the pom.xml for the corpus importer to ensure it builds correctly in the container environment
+#COPY ./uce.portal/uce.corpus-importer/pomReplaceMainImporter.xml /app/uce.portal/pom.xml
+#
+## Set the working directory to uce.portal
+#WORKDIR /app/uce.portal
+#
+## Build the project using the overridden pom.xml
+#RUN mvn compile
+#
+## Default command when the container starts
+#CMD ["mvn","exec:java","-Dexec.mainClass=org.texttechnologylab.uce.corpus-importer.DUUICorpusImporter"]
+
+# ---------- build stage ----------
+FROM maven:3.9-eclipse-temurin-21 AS build
+WORKDIR /src
+
+COPY ./uce.portal ./uce.portal
+COPY ./uce.portal/uce.corpus-importer/pomReplaceMainImporter.xml /src/uce.portal/pom.xml
+COPY ./uce.portal/uce.corpus-importer/pomImporter.xml ./uce.portal/uce.corpus-importer/pom.xml
+
+# Build from parent: corpus-importer + all required modules (uce.common)
+WORKDIR /src/uce.portal
+RUN mvn -DskipTests -pl uce.corpus-importer -am clean package
+
+# ---------- runtime stage ----------
+FROM eclipse-temurin:21-jdk
+WORKDIR /app
+
+# shaded fat jar produced by shade plugin (finalName=importer)
+RUN mkdir -p /app/uce.corpus-importer \
+             /app/uce.common/src/main/resources \
+             /app/uce.corpus-importer/src/main/resources \
+             /app/config
+
+COPY --from=build /src/uce.portal/uce.corpus-importer/communication.lua /app/uce.corpus-importer/communication.lua
+COPY --from=build /src/uce.portal/uce.corpus-importer/target/importer.jar /app/importer.jar
+
+EXPOSE 9714
+# since shade sets Main-Class in manifest, -jar is enough
+CMD ["java","-jar","/app/importer.jar"]
+
+## Use an appropriate base image with Java (e.g., OpenJDK)
+#FROM eclipse-temurin:21-jdk
+#
+## Set the working directory inside the container
+#WORKDIR /app
+#RUN apt-get update && apt-get install -y maven
+#
+## Copy the entire uce.portal directory
+#COPY ./uce.portal ./uce.portal
+#
+## Override the default config with release settings (container-to-container hosts)
+#COPY ./uce.portal/uce.corpus-importer/pomReplaceMainImporter.xml /src/uce.portal/pom.xml
+#COPY ./uce.portal/uce.corpus-importer/pomImporter.xml ./uce.portal/uce.corpus-importer/pom.xml
+#
+## Set the working directory to uce.portal
+#WORKDIR /app/uce.portal
+#RUN mvn clean install -DskipTests
+#
+## Build uce.web
+#RUN mvn clean package -DskipTests
+#
+## Expose the port that your Spark application runs on
+## EXPOSE 4567
+#
+#WORKDIR /app/uce.portal/uce.corpus-importer/
+#
+## Command to run the application
+## The name webportal.jar is finalized in the pom.xml of the uce.corpus-importer project.
+##CMD ["java", "-jar", "./target/importer-jar-with-dependencies.jar"]
+
+
+
+
+
+
+
