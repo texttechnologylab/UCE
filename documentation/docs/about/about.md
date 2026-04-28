@@ -1,5 +1,6 @@
 <div class="video-wrapper">
-    <iframe width="1280" height="720" src="https://www.youtube.com/embed/f3kB9pNPjsk?si=xxL39RulhGyFAG3D" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
+    <!--iframe width="1280" height="720" src="https://www.youtube.com/embed/f3kB9pNPjsk?si=xxL39RulhGyFAG3D" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe-->
+    <iframe width="1280" height="720" src="https://www.youtube.com/embed/s1bnPINI8Aw?si=6gwCqySsVtqhm9qU" title="YouTube video player" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share" referrerpolicy="strict-origin-when-cross-origin" allowfullscreen></iframe>
 </div>
 
 The Unified Corpus Explorer is a novel solution for making UIMA-annotated corpora tangible. Herein, UCE stands as a generic interface that, given any corpus and its extracted UIMA-based annotations, makes the underlying data accessible through various features, including:
